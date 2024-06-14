@@ -1,8 +1,5 @@
 package net.splatcraft.forge.mixin;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
@@ -22,6 +19,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 @Mixin(CreativeModeInventoryScreen.class)
 public abstract class CreativeTabMixin implements AbstractContainerAccessor<CreativeModeInventoryScreen.ItemPickerMenu> {

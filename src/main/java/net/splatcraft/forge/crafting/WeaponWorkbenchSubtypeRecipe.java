@@ -1,13 +1,13 @@
 package net.splatcraft.forge.crafting;
 
 import com.google.gson.JsonObject;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
@@ -18,6 +18,9 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.JsonUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 {
@@ -41,7 +44,7 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 
         if(advancement == null)
             return true;
-        if (player.level().isClientSide())
+        if(player.level.isClientSide())
             return isAvailableOnClient(player);
         if(player instanceof ServerPlayer serverPlayer && serverPlayer.getServer().getAdvancements().getAdvancement(advancement) != null)
             return serverPlayer.getAdvancements().getOrStartProgress(serverPlayer.getServer().getAdvancements().getAdvancement(advancement)).isDone();
@@ -56,7 +59,7 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
             return true;
 
         Advancement advancement = clientPlayer.connection.getAdvancements().getAdvancements().get(this.advancement);
-        return clientPlayer.connection.getAdvancements().getAdvancements().progress.containsKey(advancement) && clientPlayer.connection.getAdvancements().progress.get(advancement).isDone();
+        return clientPlayer.connection.getAdvancements().progress.containsKey(advancement) && clientPlayer.connection.getAdvancements().progress.get(advancement).isDone();
     }
 
     public static WeaponWorkbenchSubtypeRecipe fromJson(ResourceLocation recipeId, JsonObject json)
@@ -73,8 +76,8 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
         Component displayComponent;
 
         if(GsonHelper.isStringValue(json, "name"))
-            displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
-        else displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : Component.literal("null");
+            displayComponent = new TranslatableComponent(GsonHelper.getAsString(json, "name"));
+        else displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : new TextComponent("null");
 
         ResourceLocation advancement = json.has("advancement") && !GsonHelper.getAsString(json, "advancement").isEmpty()
                 ? new ResourceLocation(GsonHelper.getAsString(json, "advancement")) : null;

@@ -2,9 +2,6 @@ package net.splatcraft.forge.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
@@ -23,8 +20,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class InkExplosion {
-    private final Level level;
     private final double x;
     private final double y;
     private final double z;
@@ -34,7 +34,6 @@ public class InkExplosion {
     private final List<BlockPos> affectedBlockPositions = Lists.newArrayList();
     private final Vec3 position;
 
-    private final int color;
     private final InkBlockUtils.InkType inkType;
     private final boolean damageMobs;
     private final float minDamage;
@@ -42,8 +41,7 @@ public class InkExplosion {
     private final float blockDamage;
     private final ItemStack weapon;
 
-    public InkExplosion(Level level, @Nullable Entity source, double x, double y, double z, float blockDamage, float minDamage, float maxDamage, boolean damageMobs, float size, int color, InkBlockUtils.InkType inkType, ItemStack weapon) {
-        this.level = level;
+    public InkExplosion(@Nullable Entity source, double x, double y, double z, float blockDamage, float minDamage, float maxDamage, boolean damageMobs, float size, InkBlockUtils.InkType inkType, ItemStack weapon) {
         this.exploder = source;
         this.size = size;
         this.x = x;
@@ -52,7 +50,6 @@ public class InkExplosion {
         this.position = new Vec3(this.x, this.y, this.z);
 
 
-        this.color = color;
         this.inkType = inkType;
         this.damageMobs = damageMobs;
         this.minDamage = minDamage;
@@ -61,19 +58,19 @@ public class InkExplosion {
         this.weapon = weapon;
     }
 
-    public static void createInkExplosion(Level level, Entity source, BlockPos pos, float size, float blockDamage, float damage, boolean damageMobs, int color, InkBlockUtils.InkType type, ItemStack weapon) {
-        createInkExplosion(level, source, pos, size, blockDamage, blockDamage, damage, damageMobs, color, type, weapon);
+    public static void createInkExplosion(Entity source, BlockPos pos, float size, float blockDamage, float damage, boolean damageMobs, InkBlockUtils.InkType type, ItemStack weapon) {
+        createInkExplosion(source, pos, size, blockDamage, 0, damage, damageMobs, type, weapon);
     }
 
-    public static void createInkExplosion(Level level, Entity source, BlockPos pos, float size, float blockDamage, float minDamage, float maxDamage, boolean damageMobs, int color, InkBlockUtils.InkType type, ItemStack weapon) {
+    public static void createInkExplosion(Entity source, BlockPos pos, float size, float blockDamage, float minDamage, float maxDamage, boolean damageMobs, InkBlockUtils.InkType type, ItemStack weapon) {
 
-        if (level.isClientSide())
+        if (source == null || source.getLevel().isClientSide)
             return;
 
-        InkExplosion inksplosion = new InkExplosion(level, source, pos.getX(), pos.getY(), pos.getZ(), blockDamage, minDamage, maxDamage, damageMobs, size, color, type, weapon);
+        InkExplosion inksplosion = new InkExplosion(source, pos.getX(), pos.getY(), pos.getZ(), blockDamage, minDamage, maxDamage, damageMobs, size, type, weapon);
 
         inksplosion.doExplosionA();
-        inksplosion.doExplosionB(false);
+        inksplosion.doExplosionCosmetics(false);
     }
 
     /**
@@ -82,6 +79,7 @@ public class InkExplosion {
     public void doExplosionA()
     {
         Set<BlockPos> set = Sets.newHashSet();
+        Level level = exploder.getLevel();
 
         for (int j = 0; j < 16; ++j)
         {
@@ -98,7 +96,7 @@ public class InkExplosion {
                         d0 = d0 / d3;
                         d1 = d1 / d3;
                         d2 = d2 / d3;
-                        float f = this.size * (0.7F + this.level.getRandom().nextFloat() * 0.6F);
+                        float f = this.size * (0.7F + level.getRandom().nextFloat() * 0.6F);
                         double d4 = this.x;
                         double d6 = this.y;
                         double d8 = this.z;
@@ -123,6 +121,8 @@ public class InkExplosion {
         }
 
         this.affectedBlockPositions.addAll(set);
+        if(!damageMobs)
+            return;
         float f2 = this.size * 1.2f;
         int k1 = Mth.floor(this.x - (double) f2 - 1.0D);
         int l1 = Mth.floor(this.x + (double) f2 + 1.0D);
@@ -130,9 +130,10 @@ public class InkExplosion {
         int i1 = Mth.floor(this.y + (double) f2 + 1.0D);
         int j2 = Mth.floor(this.z - (double) f2 - 1.0D);
         int j1 = Mth.floor(this.z + (double) f2 + 1.0D);
-        List<Entity> list = this.level.getEntities(this.exploder, new AABB(k1, i2, j2, l1, i1, j1));
+        List<Entity> list = level.getEntities(this.exploder, new AABB(k1, i2, j2, l1, i1, j1));
 
         Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
+        int color = ColorUtils.getEntityColor(exploder);
         for (Entity entity : list)
         {
             int targetColor = -2;
@@ -144,7 +145,7 @@ public class InkExplosion {
                 double f2Sq = f2 * f2;
                 float pctg = Math.max(0, (float) ((f2Sq - entity.distanceToSqr(x + 0.5f, y + 0.5f, z + 0.5f)) / f2Sq));
 
-                InkDamageUtils.doSplatDamage(level, (LivingEntity) entity, Mth.lerp(pctg, minDamage, maxDamage) * Explosion.getSeenPercent(explosionPos, entity), color, exploder, weapon, damageMobs);
+                InkDamageUtils.doSplatDamage((LivingEntity) entity, Mth.lerp(pctg, minDamage, maxDamage) * Explosion.getSeenPercent(explosionPos, entity), exploder, weapon);
             }
 
             DyeColor dyeColor = null;
@@ -161,30 +162,35 @@ public class InkExplosion {
     /**
      * Does the second part of the explosion (sound, particles, drop spawn)
      */
-    public void doExplosionB(boolean spawnParticles)
+    public void doExplosionCosmetics(boolean spawnParticles)
     {
+        Level level = exploder.getLevel();
+
         if (spawnParticles)
         {
-            if (!(this.size < 2.0F))
+            if (this.size < 2.0F)
             {
-                this.level.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
-            } else
+                level.addParticle(ParticleTypes.EXPLOSION, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
+            }
+            else
             {
-                this.level.addParticle(ParticleTypes.EXPLOSION, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
+                level.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
             }
         }
 
-        Collections.shuffle(this.affectedBlockPositions, this.level.random);
+        Collections.shuffle(this.affectedBlockPositions, level.random);
 
         for (BlockPos blockpos : this.affectedBlockPositions)
         {
-            BlockState blockstate = this.level.getBlockState(blockpos);
+            BlockState blockstate = level.getBlockState(blockpos);
             if (!blockstate.isAir())
             {
+                int color = ColorUtils.getEntityColor(exploder);
                 if (exploder instanceof Player)
                 {
                     InkBlockUtils.playerInkBlock((Player) exploder, level, blockpos, color, blockDamage, inkType);
-                } else
+                }
+                else
                 {
                     InkBlockUtils.inkBlock(level, blockpos, color, blockDamage, inkType);
                 }

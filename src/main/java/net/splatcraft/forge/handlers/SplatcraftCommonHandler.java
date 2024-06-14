@@ -1,12 +1,5 @@
 package net.splatcraft.forge.handlers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
@@ -30,11 +23,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingDestroyBlockEvent;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -55,14 +44,7 @@ import net.splatcraft.forge.items.InkWaxerItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.RequestPlayerInfoPacket;
 import net.splatcraft.forge.network.c2s.SendPlayerOverlayPacket;
-import net.splatcraft.forge.network.s2c.ReceivePlayerOverlayPacket;
-import net.splatcraft.forge.network.s2c.UpdateBooleanGamerulesPacket;
-import net.splatcraft.forge.network.s2c.UpdateClientColorsPacket;
-import net.splatcraft.forge.network.s2c.UpdateColorScoresPacket;
-import net.splatcraft.forge.network.s2c.UpdateIntGamerulesPacket;
-import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
-import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
-import net.splatcraft.forge.network.s2c.UpdateWeaponSettingsPacket;
+import net.splatcraft.forge.network.s2c.*;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.tileentities.InkedBlockTileEntity;
@@ -70,6 +52,14 @@ import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber
 public class SplatcraftCommonHandler {

@@ -1,17 +1,16 @@
 package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.WeaponTooltip;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, CODEC>, CODEC>
 {
@@ -51,7 +50,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     }
     public SELF setSecret(boolean value)
     {
-        isSecret = value;
+        isSecret = value; // ? what
         return (SELF) this;
     }
 

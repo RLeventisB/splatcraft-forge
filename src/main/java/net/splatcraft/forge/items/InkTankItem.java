@@ -1,11 +1,9 @@
 package net.splatcraft.forge.items;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -18,7 +16,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.IItemRenderProperties;
 import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.client.models.inktanks.AbstractInkTankModel;
 import net.splatcraft.forge.data.SplatcraftTags;
@@ -26,14 +24,15 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
-import net.splatcraft.forge.util.SplatcraftArmorMaterial;
+import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class InkTankItem extends ColoredArmorItem {
     public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
@@ -45,7 +44,7 @@ public class InkTankItem extends ColoredArmorItem {
     private AbstractInkTankModel model;
 
     public InkTankItem(String tagId, float capacity, ArmorMaterial material, Properties properties) {
-        super(material, Type.CHESTPLATE, properties);
+        super(material, EquipmentSlot.CHEST, properties);
         this.capacity = capacity;
         this.properties = properties;
 
@@ -55,7 +54,7 @@ public class InkTankItem extends ColoredArmorItem {
     }
 
     public InkTankItem(String tagId, float capacity, ArmorMaterial material) {
-        this(tagId, capacity, material, new Properties().stacksTo(1));
+        this(tagId, capacity, material, new Properties().tab(SplatcraftItemGroups.GROUP_WEAPONS).stacksTo(1));
 
     }
 
@@ -101,7 +100,7 @@ public class InkTankItem extends ColoredArmorItem {
     public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected) {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player && !level.isClientSide() && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK)) {
+        if (entity instanceof Player player && !level.isClientSide && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK)) {
             float ink = getInkAmount(stack);
             Item using = player.getUseItem().getItem();
 
@@ -127,11 +126,11 @@ public class InkTankItem extends ColoredArmorItem {
         if(!stack.getOrCreateTag().getBoolean("HideTooltip"))
         {
             if (!canRecharge(stack, false)) {
-                tooltip.add(Component.translatable("item.splatcraft.ink_tank.cant_recharge"));
+                tooltip.add(new TranslatableComponent("item.splatcraft.ink_tank.cant_recharge"));
             }
 
             if (flag.isAdvanced()) {
-                tooltip.add(Component.translatable("item.splatcraft.ink_tank.ink", String.format("%.1f", getInkAmount(stack)), capacity));
+                tooltip.add(new TranslatableComponent("item.splatcraft.ink_tank.ink", String.format("%.1f", getInkAmount(stack)), capacity));
             }
         }
 
@@ -140,16 +139,14 @@ public class InkTankItem extends ColoredArmorItem {
 
     private static boolean initModels = false;
 
-
     @OnlyIn(Dist.CLIENT)
     @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+    public void initializeClient(Consumer<IItemRenderProperties> consumer) {
         super.initializeClient(consumer);
-        consumer.accept(new IClientItemExtensions() 
-        {
+        consumer.accept(new IItemRenderProperties() {
             @Nullable
             @Override
-            public HumanoidModel<?> getHumanoidArmorModel(LivingEntity entityLiving, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
+            public HumanoidModel<?> getArmorModel(LivingEntity entityLiving, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel<?> _default) {
                 if (!initModels) //i have NO idea where else to put this
                 {
                     initModels = true;
@@ -157,11 +154,11 @@ public class InkTankItem extends ColoredArmorItem {
                 }
 
                 if (!(itemStack.getItem() instanceof InkTankItem)) {
-                    return IClientItemExtensions.super.getHumanoidArmorModel(entityLiving, itemStack, armorSlot, _default);
+                    return IItemRenderProperties.super.getArmorModel(entityLiving, itemStack, armorSlot, _default);
                 }
 
                 if (model == null) {
-                    return IClientItemExtensions.super.getHumanoidArmorModel(entityLiving, itemStack, armorSlot, _default);
+                    return IItemRenderProperties.super.getArmorModel(entityLiving, itemStack, armorSlot, _default);
                 }
 
                 if (!itemStack.isEmpty()) {
@@ -189,7 +186,7 @@ public class InkTankItem extends ColoredArmorItem {
                     }
                 }
 
-                return IClientItemExtensions.super.getHumanoidArmorModel(entityLiving, itemStack, armorSlot, _default);
+                return IItemRenderProperties.super.getArmorModel(entityLiving, itemStack, armorSlot, _default);
             }
         });
     }

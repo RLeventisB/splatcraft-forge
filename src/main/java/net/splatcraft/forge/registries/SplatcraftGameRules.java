@@ -1,7 +1,5 @@
 package net.splatcraft.forge.registries;
 
-import java.util.ArrayList;
-import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
@@ -12,6 +10,9 @@ import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.util.ClientUtils;
 import org.lwjgl.system.CallbackI;
+
+import java.util.ArrayList;
+import java.util.TreeMap;
 
 public class SplatcraftGameRules {
     public static final TreeMap<Integer, Boolean> booleanRules = new TreeMap<>();

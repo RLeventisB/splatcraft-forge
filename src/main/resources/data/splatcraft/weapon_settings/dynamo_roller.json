@@ -9,6 +9,7 @@
 	"mobility": 0.88
   },
   "swing": {
+	"allow_jumping_on_charge": true,
 	"mobility": 0.24,
 	"ink_consumption": 18,
 	"ink_recovery_cooldown": 22,

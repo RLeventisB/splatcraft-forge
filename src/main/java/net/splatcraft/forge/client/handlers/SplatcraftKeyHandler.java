@@ -2,7 +2,6 @@ package net.splatcraft.forge.client.handlers;
 
 import com.google.common.collect.Iterables;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import java.util.List;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -35,6 +34,8 @@ import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.PlayerCharge;
 import net.splatcraft.forge.util.PlayerCooldown;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.List;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class SplatcraftKeyHandler {

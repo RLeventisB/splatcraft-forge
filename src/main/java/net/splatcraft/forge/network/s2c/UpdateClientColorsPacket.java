@@ -1,28 +1,27 @@
 package net.splatcraft.forge.network.s2c;
 
-import java.util.TreeMap;
-import java.util.UUID;
-
 import net.minecraft.network.FriendlyByteBuf;
 import net.splatcraft.forge.util.ClientUtils;
 
+import java.util.TreeMap;
+
 public class UpdateClientColorsPacket extends PlayS2CPacket
 {
-    final TreeMap<UUID, Integer> colors;
+    final TreeMap<String, Integer> colors;
     final boolean reset;
 
-    protected UpdateClientColorsPacket(TreeMap<UUID, Integer> colors, boolean reset)
+    protected UpdateClientColorsPacket(TreeMap<String, Integer> colors, boolean reset)
     {
         this.colors = colors;
         this.reset = reset;
     }
 
-    public UpdateClientColorsPacket(TreeMap<UUID, Integer> colors)
+    public UpdateClientColorsPacket(TreeMap<String, Integer> colors)
     {
         this(colors, true);
     }
 
-    public UpdateClientColorsPacket(UUID player, int color)
+    public UpdateClientColorsPacket(String player, int color)
     {
         this.colors = new TreeMap<>();
         colors.put(player, color);
@@ -31,13 +30,13 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
 
     public static UpdateClientColorsPacket decode(FriendlyByteBuf buffer)
     {
-        TreeMap<UUID, Integer> colors = new TreeMap<>();
+        TreeMap<String, Integer> colors = new TreeMap<>();
 
         boolean reset = buffer.readBoolean();
         int size = buffer.readVarInt();
         for (int i = 0; i < size; i++)
         {
-            colors.put(buffer.readUUID(), buffer.readInt());
+            colors.put(buffer.readUtf(), buffer.readInt());
         }
         return new UpdateClientColorsPacket(colors, reset);
     }
@@ -59,7 +58,7 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
         buffer.writeVarInt(colors.entrySet().size());
         colors.forEach((key, value) ->
         {
-            buffer.writeUUID(key);
+            buffer.writeUtf(key);
             buffer.writeInt(value);
         });
     }

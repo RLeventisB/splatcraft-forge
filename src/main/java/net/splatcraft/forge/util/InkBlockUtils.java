@@ -1,6 +1,5 @@
 package net.splatcraft.forge.util;
 
-import java.util.HashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +35,8 @@ import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
 
 public class InkBlockUtils {
     public static BlockInkedResult playerInkBlock(@Nullable Player player, Level level, BlockPos pos, int color, float damage, InkType inkType) {

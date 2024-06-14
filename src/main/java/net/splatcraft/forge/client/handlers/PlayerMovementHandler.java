@@ -153,7 +153,7 @@ public class PlayerMovementHandler
         {
             PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
 
-            if (cooldown.storedStack.getItem() instanceof RollerItem)
+            if (cooldown.storedStack.getItem() instanceof RollerItem && !((RollerItem) cooldown.storedStack.getItem()).getSettings(cooldown.storedStack).isAllowJumpingOnCharge())
                 input.jumping = false;
 
             if (!cooldown.canMove()) {

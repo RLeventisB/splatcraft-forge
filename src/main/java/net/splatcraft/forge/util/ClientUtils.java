@@ -1,9 +1,6 @@
 package net.splatcraft.forge.util;
 
 import com.mojang.math.Vector3f;
-import java.util.HashMap;
-import java.util.TreeMap;
-import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -27,10 +24,13 @@ import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 
+import java.util.HashMap;
+import java.util.TreeMap;
+
 public class ClientUtils
 {
     @OnlyIn(Dist.CLIENT)
-    protected static final TreeMap<UUID, Integer> clientColors = new TreeMap<>();
+    protected static final TreeMap<String, Integer> clientColors = new TreeMap<>();
     @OnlyIn(Dist.CLIENT)
     public static final HashMap<String, Stage> clientStages = new HashMap<>();
 
@@ -41,19 +41,19 @@ public class ClientUtils
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static int getClientPlayerColor(UUID player)
+    public static int getClientPlayerColor(String player)
     {
         return clientColors.getOrDefault(player, -1);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void setClientPlayerColor(UUID player, int color)
+    public static void setClientPlayerColor(String player, int color)
     {
         clientColors.put(player, color);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void putClientColors(TreeMap<UUID, Integer> map)
+    public static void putClientColors(TreeMap<String, Integer> map)
     {
         clientColors.putAll(map);
     }
@@ -73,7 +73,7 @@ public class ClientUtils
     {
         Player player = getClientPlayer();
 
-        if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
+        if (!SplatcraftGameRules.getLocalizedRule(player.level, player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
         {
             return 0;
         }

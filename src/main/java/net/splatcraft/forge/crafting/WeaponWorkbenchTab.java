@@ -4,8 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
@@ -36,7 +35,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         this.iconLoc = iconLoc;
         this.pos = pos;
         this.hidden = hidden;
-        this.name = name != null ? name : Component.translatable("weaponTab." + getId().toString());
+        this.name = name != null ? name : new TranslatableComponent("weaponTab." + getId().toString());
     }
 
     @Override
@@ -128,7 +127,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
             Component displayComponent;
 
             if(GsonHelper.isStringValue(json, "name"))
-                displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
+                displayComponent = new TranslatableComponent(GsonHelper.getAsString(json, "name"));
             else displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : null;
             return new WeaponWorkbenchTab(recipeId, new ResourceLocation(GsonHelper.getAsString(json, "icon")), GsonHelper.getAsInt(json, "pos", Integer.MAX_VALUE), displayComponent, GsonHelper.getAsBoolean(json, "hidden", false));
         }

@@ -28,14 +28,13 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
 
         SubWeaponSettings settings = getSettings();
 
-        if (result.getEntity() instanceof LivingEntity target) {
-            InkDamageUtils.doDamage(level(), target, settings.directDamage, getColor(), getOwner(), this, sourceWeapon, bypassMobDamageMultiplier, SPLASH_DAMAGE_TYPE, false);
-        }
-        InkExplosion.createInkExplosion(level(), getOwner(), blockPosition(), settings.explosionSize, settings.indirectDamage, settings.propDamage, bypassMobDamageMultiplier, getColor(), inkType, sourceWeapon);
+        if (result.getEntity() instanceof LivingEntity target)
+            InkDamageUtils.doDamage(target, settings.directDamage, getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false);
+        InkExplosion.createInkExplosion(getOwner(), blockPosition(), settings.explosionSize, settings.indirectDamage, settings.propDamage, true, inkType, sourceWeapon);
 
-        level().broadcastEntityEvent(this, (byte) 1);
-        level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-        if (!level().isClientSide())
+        level.broadcastEntityEvent(this, (byte) 1);
+        level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+        if (!level.isClientSide())
             discard();
     }
 
@@ -43,9 +42,9 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
     protected void onBlockHit(BlockHitResult result)
     {
         SubWeaponSettings settings = getSettings();
-        InkExplosion.createInkExplosion(level(), getOwner(), blockPosition(), settings.explosionSize, settings.indirectDamage, settings.propDamage, bypassMobDamageMultiplier, getColor(), inkType, sourceWeapon);
-        level().broadcastEntityEvent(this, (byte) 1);
-        level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+        InkExplosion.createInkExplosion(getOwner(), blockPosition(), settings.explosionSize, settings.indirectDamage, settings.propDamage, bypassMobDamageMultiplier, inkType, sourceWeapon);
+        level.broadcastEntityEvent(this, (byte) 1);
+        level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
         discard();
     }
 
@@ -54,7 +53,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
     public void handleEntityEvent(byte id) {
         super.handleEntityEvent(id);
         if (id == 1) {
-            level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().explosionSize * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            level.addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().explosionSize * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
 
     }

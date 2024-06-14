@@ -130,7 +130,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 
 		if(fuseTime >= settings.fuseTime)
 		{
-			InkExplosion.createInkExplosion(level, getOwner(), blockPosition(), settings.explosionSize + getCookScale(), settings.propDamage, settings.indirectDamage, settings.directDamage, bypassMobDamageMultiplier, getColor(), inkType, sourceWeapon);
+			InkExplosion.createInkExplosion(getOwner(), blockPosition(), settings.explosionSize + getCookScale(), settings.propDamage, settings.indirectDamage, settings.directDamage, true, inkType, sourceWeapon);
 			level.broadcastEntityEvent(this, (byte) 1);
 			level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			if(!level.isClientSide())
@@ -165,7 +165,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 	protected void onHitEntity(EntityHitResult result)
 	{
 		if(result.getEntity() instanceof LivingEntity)
-			InkDamageUtils.doRollDamage(level, (LivingEntity) result.getEntity(), getSettings().contactDamage, getColor(), getOwner(), this, sourceWeapon, false);
+			InkDamageUtils.doRollDamage((LivingEntity) result.getEntity(), getSettings().contactDamage, getOwner(), this, sourceWeapon);
 
 		double velocityX = this.getDeltaMovement().x;
 		double velocityY = this.getDeltaMovement().y;

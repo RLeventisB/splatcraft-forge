@@ -1,6 +1,5 @@
 package net.splatcraft.forge.items.weapons.settings;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;

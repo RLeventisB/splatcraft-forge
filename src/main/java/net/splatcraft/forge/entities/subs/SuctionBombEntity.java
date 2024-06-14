@@ -67,7 +67,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity {
         if (isActivated()) {
             fuseTime++;
             if (fuseTime >= settings.fuseTime) {
-                InkExplosion.createInkExplosion(level, getOwner(), blockPosition(), settings.explosionSize, settings.propDamage, settings.indirectDamage, settings.directDamage, bypassMobDamageMultiplier, getColor(), inkType, sourceWeapon);
+                InkExplosion.createInkExplosion(getOwner(), blockPosition(), settings.explosionSize, settings.propDamage, settings.indirectDamage, settings.directDamage, true, inkType, sourceWeapon);
                 level.broadcastEntityEvent(this, (byte) 1);
                 level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
                 if(!level.isClientSide())

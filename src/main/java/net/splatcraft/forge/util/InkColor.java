@@ -1,12 +1,13 @@
 package net.splatcraft.forge.util;
 
-import java.util.TreeMap;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.splatcraft.forge.Splatcraft;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.TreeMap;
 
 public class InkColor implements Comparable<InkColor>, IForgeRegistryEntry<InkColor> {
     private static final TreeMap<Integer, InkColor> colorMap = new TreeMap<>();
@@ -38,7 +39,7 @@ public class InkColor implements Comparable<InkColor>, IForgeRegistryEntry<InkCo
 
     public TranslatableComponent getLocalizedName()
     {
-        return Component.translatable(getUnlocalizedName());
+        return new TranslatableComponent(getUnlocalizedName());
     }
 
     public String getUnlocalizedName()
