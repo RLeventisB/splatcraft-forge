@@ -93,7 +93,6 @@ public class SplatcraftTags
     {
         public static final TagKey<EntityType<?>> BYPASSES_SPAWN_SHIELD = createTag("bypasses_spawn_shield");
         public static final TagKey<EntityType<?>> SUB_WEAPONS = createTag("sub_weapons");
-
         private static TagKey<EntityType<?>> createTag(String name)
         {
             return TagKey.create(Registry.ENTITY_TYPE_REGISTRY, new ResourceLocation(Splatcraft.MODID, name));

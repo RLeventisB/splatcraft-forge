@@ -22,7 +22,10 @@ import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.DodgeRollPacket;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.forge.util.ClientUtils;
+import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.forge.util.InkExplosion;
+import net.splatcraft.forge.util.PlayerCooldown;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -109,7 +112,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(activeDualie, getRollCooldown(activeDualie, (int) maxRolls, rollCount), player.getInventory().selected, player.getUsedItemHand(), activeSettings.canMoveAsTurret, true, false, player.isOnGround()));
             if (!player.level.isClientSide) {
                 player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level.random.nextFloat() - player.level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-                InkExplosion.createInkExplosion(player.level, player, player.blockPosition(), 1.2f, 0, 0, false, ColorUtils.getInkColor(activeDualie), InkBlockUtils.getInkType(player), activeDualie);
+                InkExplosion.createInkExplosion(player, player.blockPosition(), 1.9f, 0, 0, false, InkBlockUtils.getInkType(player), activeDualie);
             }
             setRollString(mainDualie, rollCount + 1);
             setRollCooldown(mainDualie, (int) (getRollCooldown(mainDualie, (int) maxRolls, (int) maxRolls) * 0.75f));
@@ -228,18 +231,19 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 ItemStack activeDualie;
                 int rollCount = getRollString(stack);
                 float maxRolls = 0;
-                if (stack.getItem() instanceof DualieItem)
+                if (stack.getItem() instanceof DualieItem dualieItem)
                 {
-                    maxRolls += ((DualieItem) stack.getItem()).getSettings(stack).rollCount;
+                    maxRolls += dualieItem.getSettings(stack).rollCount;
                 }
-                if (offhandDualie.getItem() instanceof DualieItem)
+                if (offhandDualie.getItem() instanceof DualieItem dualieItem)
                 {
-                    maxRolls += ((DualieItem) offhandDualie.getItem()).getSettings(offhandDualie).rollCount;
+                    maxRolls += dualieItem.getSettings(offhandDualie).rollCount;
                 }
                 if (rollCount >= maxRolls - 1)
                 {
                     activeDualie = getRollCooldown(stack, (int) maxRolls, rollCount) >= getRollCooldown(offhandDualie, (int) maxRolls, rollCount) ? stack : offhandDualie;
-                } else
+                }
+                else
                 {
                     activeDualie = maxRolls % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
                 }
@@ -247,6 +251,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 if (enoughInk(entity, this, getInkForRoll(activeDualie), 0, false)) {
                     entity.moveRelative(performRoll((Player) entity, stack, offhandDualie), ClientUtils.getDodgeRollVector((Player) entity));
                     entity.setDeltaMovement(entity.getDeltaMovement().x(), 0.05, entity.getDeltaMovement().z());
+                    entity.setDiscardFriction(true);
                 }
                 SplatcraftPacketHandler.sendToServer(new DodgeRollPacket((Player) entity, stack, offhandDualie));
             }

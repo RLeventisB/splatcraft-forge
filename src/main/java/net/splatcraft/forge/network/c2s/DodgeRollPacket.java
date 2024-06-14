@@ -1,10 +1,11 @@
 package net.splatcraft.forge.network.c2s;
 
-import java.util.UUID;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.items.weapons.DualieItem;
+
+import java.util.UUID;
 
 public class DodgeRollPacket extends PlayC2SPacket
 {

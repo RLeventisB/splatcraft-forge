@@ -6,10 +6,8 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.registries.SplatcraftInkColors;
 import net.splatcraft.forge.util.InkBlockUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 

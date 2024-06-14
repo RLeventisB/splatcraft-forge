@@ -1,16 +1,13 @@
 package net.splatcraft.forge.handlers;
 
 import com.google.common.collect.Maps;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkColor;
+
+import java.util.*;
 
 public class ScoreboardHandler
 {

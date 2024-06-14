@@ -26,7 +26,6 @@ import net.splatcraft.forge.client.gui.InkVatScreen;
 import net.splatcraft.forge.client.gui.WeaponWorkbenchScreen;
 import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.SquidBumperItem;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;

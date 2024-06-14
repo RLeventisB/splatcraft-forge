@@ -2,7 +2,6 @@ package net.splatcraft.forge.client.models.projectiles;// Made with Blockbench 4
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -11,7 +10,6 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.projectiles.InkProjectileModel;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 
 public class ShooterInkProjectileModel extends InkProjectileModel {

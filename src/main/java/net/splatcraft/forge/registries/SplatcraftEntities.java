@@ -1,6 +1,5 @@
 package net.splatcraft.forge.registries;
 
-import java.util.Objects;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
@@ -32,31 +31,24 @@ import net.splatcraft.forge.client.models.inktanks.ArmoredInkTankModel;
 import net.splatcraft.forge.client.models.inktanks.ClassicInkTankModel;
 import net.splatcraft.forge.client.models.inktanks.InkTankJrModel;
 import net.splatcraft.forge.client.models.inktanks.InkTankModel;
-import net.splatcraft.forge.client.models.projectiles.BlasterInkProjectileModel;
-import net.splatcraft.forge.client.models.projectiles.InkProjectileModel;
-import net.splatcraft.forge.client.models.projectiles.RollerInkProjectileModel;
-import net.splatcraft.forge.client.models.projectiles.ShooterInkProjectileModel;
+import net.splatcraft.forge.client.models.projectiles.*;
 import net.splatcraft.forge.client.models.subs.BurstBombModel;
 import net.splatcraft.forge.client.models.subs.CurlingBombModel;
 import net.splatcraft.forge.client.models.subs.SplatBombModel;
 import net.splatcraft.forge.client.models.subs.SuctionBombModel;
-import net.splatcraft.forge.client.renderer.InkProjectileRenderer;
-import net.splatcraft.forge.client.renderer.InkSquidRenderer;
-import net.splatcraft.forge.client.renderer.SpawnShieldRenderer;
-import net.splatcraft.forge.client.renderer.SquidBumperRenderer;
+import net.splatcraft.forge.client.renderer.*;
 import net.splatcraft.forge.client.renderer.subs.BurstBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.CurlingBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.SplatBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.SuctionBombRenderer;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.entities.InkSquidEntity;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.entities.SquidBumperEntity;
+import net.splatcraft.forge.entities.*;
 import net.splatcraft.forge.entities.subs.BurstBombEntity;
 import net.splatcraft.forge.entities.subs.CurlingBombEntity;
 import net.splatcraft.forge.entities.subs.SplatBombEntity;
 import net.splatcraft.forge.entities.subs.SuctionBombEntity;
 import net.splatcraft.forge.mixin.AddLayersAccessor;
+
+import java.util.Objects;
 
 import static net.splatcraft.forge.Splatcraft.MODID;
 
@@ -66,6 +58,7 @@ public class SplatcraftEntities {
 
     public static final RegistryObject<EntityType<InkSquidEntity>> INK_SQUID = create("ink_squid", InkSquidEntity::new, MobCategory.AMBIENT, 0.6f, 0.5f);
 
+    public static final RegistryObject<EntityType<InkDropEntity>> INK_DROP = create("ink_drop", InkDropEntity::new, MobCategory.MISC);
     public static final RegistryObject<EntityType<InkProjectileEntity>> INK_PROJECTILE = create("ink_projectile", InkProjectileEntity::new, MobCategory.MISC);
     public static final RegistryObject<EntityType<SquidBumperEntity>> SQUID_BUMPER = create("squid_bumper", SquidBumperEntity::new, MobCategory.MISC, 0.6f, 1.8f);
     public static final RegistryObject<EntityType<SpawnShieldEntity>> SPAWN_SHIELD = create("spawn_shield", SpawnShieldEntity::new, MobCategory.MISC, 1, 1);
@@ -86,6 +79,7 @@ public class SplatcraftEntities {
 
 
     public static void bindRenderers() {
+        EntityRenderers.register(INK_DROP.get(), InkDropRenderer::new);
         EntityRenderers.register(INK_PROJECTILE.get(), InkProjectileRenderer::new);
         EntityRenderers.register(INK_SQUID.get(), InkSquidRenderer::new);
         EntityRenderers.register(SQUID_BUMPER.get(), SquidBumperRenderer::new);

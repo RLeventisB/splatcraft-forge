@@ -191,7 +191,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings> {
                     }
                     return false;
                 }))) {
-                    if (!target.equals(entity) && (!enoughInk(entity, this, toConsume, 0, false) || !InkDamageUtils.doRollDamage(level, target, settings.rollDamage, ColorUtils.getInkColor(stack), entity, stack, false) || !InkDamageUtils.isSplatted(target))) {
+                    if (!target.equals(entity) && (!enoughInk(entity, this, toConsume, 0, false) || !InkDamageUtils.doRollDamage(target, settings.rollDamage, entity, entity, stack) || !InkDamageUtils.isSplatted(target))) {
                         doPush = true;
                     }
                 }

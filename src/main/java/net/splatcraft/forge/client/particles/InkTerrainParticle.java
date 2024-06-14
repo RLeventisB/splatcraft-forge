@@ -10,9 +10,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.Nullable;
 
 @OnlyIn(Dist.CLIENT)

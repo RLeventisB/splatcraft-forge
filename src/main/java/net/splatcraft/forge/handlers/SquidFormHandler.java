@@ -1,7 +1,5 @@
 package net.splatcraft.forge.handlers;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +42,9 @@ import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.InkDamageUtils;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Mod.EventBusSubscriber
 public class SquidFormHandler {
@@ -120,8 +121,8 @@ public class SquidFormHandler {
                 }
 
                 boolean crouch = player.isCrouching();
-                if (player.level.getRandom().nextFloat() <= (crouch ? 0.3f : 0.6f) && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14)) {
-                    ColorUtils.addInkSplashParticle(player.level, player, crouch ? 0.8f : 1.1f);
+                if (!crouch && player.level.getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14)) {
+                    ColorUtils.addInkSplashParticle(player.level, player, 1.1f);
                 }
             }
 

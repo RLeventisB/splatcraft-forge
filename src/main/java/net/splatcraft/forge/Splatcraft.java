@@ -6,6 +6,7 @@ import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AddPackFindersEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -22,6 +23,7 @@ import net.minecraftforge.resource.PathResourcePack;
 import net.splatcraft.forge.client.handlers.ClientSetupHandler;
 import net.splatcraft.forge.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.forge.data.SplatcraftTags;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.registries.*;
@@ -93,7 +95,11 @@ public class Splatcraft {
             ClientSetupHandler.bindScreenContainers();
         });
     }
-
+    @SubscribeEvent
+    public void registerCaps(RegisterCapabilitiesEvent event)
+    {
+        event.register(PlayerInfoCapability.class);
+    }
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event)
     {

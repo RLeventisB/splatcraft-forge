@@ -1,13 +1,14 @@
 package net.splatcraft.forge.network.s2c;
 
-import java.util.HashMap;
-import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.util.ClientUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class UpdateStageListPacket extends PlayS2CPacket
 {

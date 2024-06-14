@@ -1,8 +1,6 @@
 package net.splatcraft.forge.util;
 
 import com.mojang.math.Vector3f;
-import java.util.HashMap;
-import java.util.TreeMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -25,6 +23,9 @@ import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
+
+import java.util.HashMap;
+import java.util.TreeMap;
 
 public class ClientUtils
 {

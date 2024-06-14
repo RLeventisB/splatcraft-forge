@@ -1,9 +1,7 @@
 package net.splatcraft.forge.items.weapons.settings;
 
-import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.GsonHelper;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -24,6 +22,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public float dashConsumption;
     public int dashTime = 1;
 
+    public boolean allowJumpingOnCharge;
     public float swingMobility;
     public float swingConsumption;
     public int swingInkRecoveryCooldown;
@@ -103,6 +102,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 
         SwingDataRecord swing = data.swing;
 
+        setAllowJumpingOnCharge(swing.allowJumpingOnCharge);
         setSwingMobility(swing.mobility);
         setSwingConsumption(swing.inkConsumption);
         setSwingInkRecoveryCooldown(swing.inkRecoveryCooldown);
@@ -132,7 +132,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public DataRecord serialize()
     {
         return new DataRecord(Optional.of(isBrush), new RollDataRecord(rollSize, Optional.of(rollHitboxSize), rollConsumption, rollInkRecoveryCooldown, rollDamage, rollMobility, Optional.of(dashMobility), Optional.of(dashConsumption), Optional.of(dashTime)),
-                new SwingDataRecord(swingMobility, swingConsumption, swingInkRecoveryCooldown, swingProjectileSpeed, swingTime, swingProjectilePitchCompensation, swingBaseDamage, Optional.of(swingMinDamage), Optional.of(swingDamageDecayStartTick), Optional.of(swingDamageDecayPerTick)),
+                new SwingDataRecord(allowJumpingOnCharge, swingMobility, swingConsumption, swingInkRecoveryCooldown, swingProjectileSpeed, swingTime, swingProjectilePitchCompensation, swingBaseDamage, Optional.of(swingMinDamage), Optional.of(swingDamageDecayStartTick), Optional.of(swingDamageDecayPerTick)),
                 Optional.of(new FlingDataRecord(flingConsumption, flingInkRecoveryCooldown, flingProjectileSpeed, flingTime, flingBaseDamage, Optional.of(flingMinDamage), Optional.of(flingDamageDecayStartTick), Optional.of(flingDamageDecayPerTick))),
                 Optional.of(bypassesMobDamage), Optional.of(isSecret));
     }
@@ -294,6 +294,14 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
         this.flingTime = flingTime;
         return this;
     }
+    public boolean isAllowJumpingOnCharge()
+    {
+        return allowJumpingOnCharge;
+    }
+    public void setAllowJumpingOnCharge(boolean allowJumpingOnCharge)
+    {
+        this.allowJumpingOnCharge = allowJumpingOnCharge;
+    }
 
     public record DataRecord(
         Optional<Boolean> isBrush,
@@ -344,6 +352,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     }
 
     record SwingDataRecord(
+            boolean allowJumpingOnCharge,
             float mobility,
             float inkConsumption,
             int inkRecoveryCooldown,
@@ -358,6 +367,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     {
         public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
+                        Codec.BOOL.fieldOf("allow_jumping_on_charge").orElse(false).forGetter(SwingDataRecord::allowJumpingOnCharge),
                         Codec.FLOAT.fieldOf("mobility").forGetter(SwingDataRecord::mobility),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(SwingDataRecord::inkConsumption),
                         Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SwingDataRecord::inkRecoveryCooldown),

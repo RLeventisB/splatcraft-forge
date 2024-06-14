@@ -1,7 +1,5 @@
 package net.splatcraft.forge.blocks;
 
-import java.util.Collections;
-import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -44,6 +42,9 @@ import net.splatcraft.forge.util.BlockInkedResult;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 {

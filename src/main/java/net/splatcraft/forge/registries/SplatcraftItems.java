@@ -1,9 +1,5 @@
 package net.splatcraft.forge.registries;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.client.renderer.item.ItemPropertyFunction;
@@ -41,6 +37,11 @@ import net.splatcraft.forge.items.remotes.TurfScannerItem;
 import net.splatcraft.forge.items.weapons.*;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.SplatcraftArmorMaterial;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 import static net.splatcraft.forge.Splatcraft.MODID;
 
