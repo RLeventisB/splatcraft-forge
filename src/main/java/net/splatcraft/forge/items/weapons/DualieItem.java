@@ -1,10 +1,13 @@
 package net.splatcraft.forge.items.weapons;
 
 import com.google.common.collect.Lists;
+import net.minecraft.client.player.Input;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
@@ -13,14 +16,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
+import net.splatcraft.forge.client.handlers.PlayerMovementHandler;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.DodgeRollPacket;
+import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ClientUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -74,12 +81,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
     public static int getRollCooldown(ItemStack stack, int maxRolls, int rollCount)
     {
-        if (!(stack.getItem() instanceof DualieItem))
+        if (!(stack.getItem() instanceof DualieItem dualie))
         {
             return 0;
         }
 
-        DualieItem dualie = (DualieItem) stack.getItem();
         return rollCount >= maxRolls - 1 ? dualie.getSettings(stack).lastRollCooldown : dualie.getSettings(stack).rollCooldown;
     }
 
@@ -88,19 +94,20 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         float maxRolls = 0;
         ItemStack activeDualie;
 
-        if (mainDualie.getItem() instanceof DualieItem) {
-            maxRolls += ((DualieItem) mainDualie.getItem()).getSettings(mainDualie).rollCount;
+        if (mainDualie.getItem() instanceof DualieItem dualieItem) {
+            maxRolls += dualieItem.getSettings(mainDualie).rollCount;
         }
-        if (offhandDualie.getItem() instanceof DualieItem)
+        if (offhandDualie.getItem() instanceof DualieItem dualieItem)
         {
-            maxRolls += ((DualieItem) offhandDualie.getItem()).getSettings(offhandDualie).rollCount;
+            maxRolls += dualieItem.getSettings(offhandDualie).rollCount;
         }
 
-
-        if (rollCount >= maxRolls - 1)
+        boolean lastRoll = rollCount >= maxRolls - 1;
+        if (lastRoll)
         {
             activeDualie = getRollCooldown(mainDualie, (int) maxRolls, rollCount) >= getRollCooldown(offhandDualie, (int) maxRolls, rollCount) ? mainDualie : offhandDualie;
-        } else
+        }
+        else
         {
             activeDualie = maxRolls % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : mainDualie;
         }
@@ -109,10 +116,13 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
         if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollInkRecoveryCooldown, !player.level.isClientSide))
         {
-            PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(activeDualie, getRollCooldown(activeDualie, (int) maxRolls, rollCount), player.getInventory().selected, player.getUsedItemHand(), activeSettings.canMoveAsTurret, true, false, player.isOnGround()));
-            if (!player.level.isClientSide) {
+            PlayerCooldown.setPlayerCooldown(player, new RollCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), 4, activeSettings.canMoveAsTurret, lastRoll));
+
+//            PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(activeDualie, getRollCooldown(activeDualie, (int) maxRolls, rollCount), player.getInventory().selected, player.getUsedItemHand(), activeSettings.canMoveAsTurret, false, false, player.isOnGround()));
+            if (!player.level.isClientSide)
+            {
                 player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level.random.nextFloat() - player.level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-                InkExplosion.createInkExplosion(player, player.blockPosition(), 1.9f, 0, 0, false, InkBlockUtils.getInkType(player), activeDualie);
+                InkExplosion.createInkExplosion(player, player.blockPosition(), 1f, 0, 0, false, InkBlockUtils.getInkType(player), activeDualie);
             }
             setRollString(mainDualie, rollCount + 1);
             setRollCooldown(mainDualie, (int) (getRollCooldown(mainDualie, (int) maxRolls, (int) maxRolls) * 0.75f));
@@ -121,7 +131,48 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
         return 0;
     }
+    @Override
+    public void onPlayerCooldownEnd(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
+    {
+        if(cooldown instanceof RollCooldown rollCooldown)
+        {
+            player.setDiscardFriction(false);
+            TurretCooldown playerCooldown = new TurretCooldown(stack, cooldown.getSlotIndex(), player.getUsedItemHand(), getRollCooldown(stack), rollCooldown.canMoveAfter, rollCooldown.lastRoll);
+            PlayerCooldown.setPlayerCooldown(player, playerCooldown);
+        }
+        else if (cooldown instanceof TurretCooldown turretCooldown)
+        {
+            if(player.isLocalPlayer())
+            {
+                Input input = ClientUtils.GetUnmodifiedInput(player);
+                boolean endedTurretMode = input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem();
+                if(!endedTurretMode)
+                {
+                    cooldown.setTime(2);
+                }
+            }
+        }
+        else if(cooldown instanceof StartupCooldown startupCooldown)
+        {
+            ItemStack offhandDualie = ItemStack.EMPTY;
+            if (player.getUsedItemHand().equals(InteractionHand.MAIN_HAND) && player.getMainHandItem().equals(stack) && player.getOffhandItem().getItem() instanceof DualieItem)
+            {
+                offhandDualie = player.getOffhandItem();
+            }
 
+            performRoll(player, player.getMainHandItem(), offhandDualie);
+            player.setDeltaMovement(startupCooldown.getRollDirection().x, -0.5, startupCooldown.getRollDirection().y);
+            player.getAbilities().flying = false;
+
+            SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(player, stack, offhandDualie));
+        }
+        super.onPlayerCooldownEnd(level, player, stack, cooldown);
+    }
+    @Override
+    public void onPlayerCooldownTick(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
+    {
+        super.onPlayerCooldownEnd(level, player, stack, cooldown);
+    }
     public static int getRollString(ItemStack stack)
     {
         if (!stack.hasTag() || !Objects.requireNonNull(stack.getTag()).contains("RollString"))
@@ -169,8 +220,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         };
     }
 
-
-
     @Override
     public @NotNull String getDescriptionId(ItemStack stack)
     {
@@ -195,11 +244,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         CompoundTag nbt = stack.getOrCreateTag();
 
         nbt.putBoolean("IsPlural", false);
-        if (entity instanceof LivingEntity)
+        if (entity instanceof LivingEntity livingEntity)
         {
-            InteractionHand hand = ((LivingEntity) entity).getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+            InteractionHand hand = livingEntity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 
-            if (((LivingEntity) entity).getItemInHand(hand).equals(stack) && ((LivingEntity) entity).getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
+            if (livingEntity.getItemInHand(hand).equals(stack) && livingEntity.getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
             {
                 nbt.putBoolean("IsPlural", true);
             }
@@ -226,8 +275,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
         if (level.isClientSide)
         {
-            if (entity == ClientUtils.getClientPlayer() && ClientUtils.canPerformRoll((Player) entity))
+            if (entity instanceof Player player && player.isLocalPlayer() && ClientUtils.canPerformRoll(player))
             {
+                LocalPlayer localPlayer = (LocalPlayer) player;
                 ItemStack activeDualie;
                 int rollCount = getRollString(stack);
                 float maxRolls = 0;
@@ -247,13 +297,18 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 {
                     activeDualie = maxRolls % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
                 }
+                DualieWeaponSettings activeSettings = getSettings(activeDualie);
+                if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollInkRecoveryCooldown, !player.level.isClientSide))
+                {
+                    Vec3 vec3 = getInputVector(ClientUtils.getDodgeRollVector(localPlayer), activeSettings.rollSpeed, player.getYRot());
 
-                if (enoughInk(entity, this, getInkForRoll(activeDualie), 0, false)) {
-                    entity.moveRelative(performRoll((Player) entity, stack, offhandDualie), ClientUtils.getDodgeRollVector((Player) entity));
-                    entity.setDeltaMovement(entity.getDeltaMovement().x(), 0.05, entity.getDeltaMovement().z());
-                    entity.setDiscardFriction(true);
+                    //performRoll(player, stack, offhandDualie)
+                    // dualies have like, 4/60 of a second of startup, which is nothing but this also fixes not being able to make the player stop crouching if they are in turret mode
+                    // also why does vec2 use floats but vec3 use doubles
+                    PlayerCooldown.setPlayerCooldown(player, new StartupCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), 2, new Vec2((float) vec3.x, (float) vec3.z)));
+                    player.getAbilities().flying = true;
+                    SplatcraftPacketHandler.sendToDim(new UpdatePlayerInfoPacket(player), level.dimension());
                 }
-                SplatcraftPacketHandler.sendToServer(new DodgeRollPacket((Player) entity, stack, offhandDualie));
             }
         } else
         {
@@ -269,7 +324,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 maxRolls += ((DualieItem) offhandDualie.getItem()).getSettings(offhandDualie).rollCount;
             }
 
-            boolean hasCooldown = PlayerInfoCapability.get(entity).hasPlayerCooldown();
+            boolean hasCooldown = PlayerInfoCapability.get(entity).hasPlayerCooldown() && PlayerInfoCapability.get(entity).getPlayerCooldown() instanceof TurretCooldown;
             boolean onRollCooldown = entity.isOnGround() && hasCooldown && rollCount >= Math.max(2, maxRolls);
 
             if (offhandDualie.getItem() instanceof DualieItem) {
@@ -294,7 +349,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
         if (!level.isClientSide && (getUseDuration(stack) - timeLeft - 1) % (firingData.firingSpeed) == 0)
         {
-
             if (reduceInk(entity, this, firingData.inkConsumption, firingData.inkRecoveryCooldown, true))
             {
                 for(int i = 0; i < firingData.projectileCount; i++)
@@ -315,5 +369,129 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
     public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
+    }
+
+    public static Vec3 getInputVector(Vec3 p_20016_, float p_20017_, float p_20018_) {
+        double d0 = p_20016_.lengthSqr();
+        if (d0 < 1.0E-7D) {
+            return Vec3.ZERO;
+        } else {
+            Vec3 vec3 = (d0 > 1.0D ? p_20016_.normalize() : p_20016_).scale(p_20017_);
+            float f = Mth.sin(p_20018_ * ((float)Math.PI / 180F));
+            float f1 = Mth.cos(p_20018_ * ((float)Math.PI / 180F));
+            return new Vec3(vec3.x * (double)f1 - vec3.z * (double)f, vec3.y, vec3.z * (double)f1 + vec3.x * (double)f);
+        }
+    }
+    public static class RollCooldown extends PlayerCooldown
+    {
+        boolean canMoveAfter;
+        boolean lastRoll;
+        public RollCooldown(ItemStack stack, int slotIndex, InteractionHand hand, int duration, boolean canMoveAfter, boolean lastRoll)
+        {
+            super(stack, duration, slotIndex, hand, false, false, true, false);
+            this.lastRoll = lastRoll;
+            this.canMoveAfter = canMoveAfter;
+        }
+        public RollCooldown(CompoundTag nbt)
+        {
+            this(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getInt("Duration"), nbt.getBoolean("CanMoveAfter"), nbt.getBoolean("LastRoll"));
+            setForceCrouch(nbt.getBoolean("ForceCrouch"));
+        }
+
+        @Override
+        public CompoundTag writeNBT(CompoundTag nbt)
+        {
+            nbt.put("StoredStack", storedStack.serializeNBT());
+            nbt.putInt("SlotIndex", getSlotIndex());
+            nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
+            nbt.putBoolean("CanMoveAfter", canMoveAfter);
+            nbt.putBoolean("RollCooldown", true);
+            nbt.putBoolean("CanSlide", canMove());
+            nbt.putBoolean("LastRoll", isLastRoll());
+
+            return nbt;
+        }
+        public boolean isLastRoll()
+        {
+            return lastRoll;
+        }
+        public void setLastRoll(boolean lastRoll)
+        {
+            this.lastRoll = lastRoll;
+        }
+    }
+    public static class TurretCooldown extends PlayerCooldown
+    {
+        private boolean lastRoll;
+        public TurretCooldown(ItemStack stack, int slotIndex, InteractionHand hand, int duration, boolean canSlide, boolean lastRoll)
+        {
+            super(stack, duration, slotIndex, hand, canSlide, true, false, false);
+            this.lastRoll = lastRoll;
+        }
+        public TurretCooldown(CompoundTag nbt)
+        {
+            this(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getInt("Duration"), nbt.getBoolean("CanSlide"), nbt.getBoolean("LastRoll"));
+            setForceCrouch(nbt.getBoolean("ForceCrouch"));
+        }
+
+        @Override
+        public CompoundTag writeNBT(CompoundTag nbt)
+        {
+            nbt.put("StoredStack", storedStack.serializeNBT());
+            nbt.putInt("SlotIndex", getSlotIndex());
+            nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
+            nbt.putBoolean("LastRoll", isLastRoll());
+            nbt.putBoolean("TurretCooldown", true);
+            nbt.putBoolean("ForceCrouch", forceCrouch());
+            nbt.putBoolean("CanSlide", canMove());
+            nbt.putInt("Duration", getTime());
+
+            return nbt;
+        }
+        public boolean isLastRoll()
+        {
+            return lastRoll;
+        }
+        public void setLastRoll(boolean lastRoll)
+        {
+            this.lastRoll = lastRoll;
+        }
+    }
+    public static class StartupCooldown extends PlayerCooldown
+    {
+        private Vec2 rollDirection;
+        public StartupCooldown(ItemStack stack, int slotIndex, InteractionHand hand, int duration, Vec2 rollDirection)
+        {
+            super(stack, duration, slotIndex, hand, false, true, false, false);
+            this.rollDirection = rollDirection;
+        }
+        public StartupCooldown(CompoundTag nbt)
+        {
+            this(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getInt("Duration"), new Vec2(nbt.getFloat("RollX"), nbt.getFloat("RollZ")));
+            setForceCrouch(nbt.getBoolean("ForceCrouch"));
+        }
+
+        @Override
+        public CompoundTag writeNBT(CompoundTag nbt)
+        {
+            nbt.put("StoredStack", storedStack.serializeNBT());
+            nbt.putInt("SlotIndex", getSlotIndex());
+            nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
+            nbt.putBoolean("StartupCooldown", true);
+            nbt.putBoolean("ForceCrouch", forceCrouch());
+            nbt.putInt("Duration", getTime());
+            nbt.putFloat("RollX", rollDirection.x);
+            nbt.putFloat("RollZ", rollDirection.y);
+
+            return nbt;
+        }
+        public Vec2 getRollDirection()
+        {
+            return rollDirection;
+        }
+        public void setRollDirection(Vec2 rollDirection)
+        {
+            this.rollDirection = rollDirection;
+        }
     }
 }

@@ -43,6 +43,8 @@ import net.splatcraft.forge.util.InkDamageUtils;
 import net.splatcraft.forge.util.InkExplosion;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Random;
+
 public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity {
 
     private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
@@ -50,8 +52,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<Float> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> GRAVITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> MAX_VELOCITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> MIN_VELOCITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<Vec3>()
     {
         @Override
@@ -83,6 +85,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public float trailSize = 0;
     public int trailCooldown = 0, trailOffset = 0;
     public String damageType = "splat";
+    public float damageMultiplier = 1;
     public boolean causesHurtCooldown = false;
     public boolean throwerAirborne = false;
     public float charge;
@@ -180,8 +183,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setStraightShotTime(settings.straightShotTickTime);
 
         lifespan = settings.projectileLifeTicks;
-        entityData.set(MAX_VELOCITY, settings.projectileSpeed);
-        entityData.set(MIN_VELOCITY, settings.projectileDecayedSpeed);
+        entityData.set(SPEED, settings.projectileSpeed);
+        entityData.set(HORIZONTAL_DRAG, settings.horizontalDrag);
         setProjectileType(Types.SHOOTER);
         return this;
     }
@@ -200,8 +203,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setStraightShotTime(SplatlingItem.getScaledSettingInt(settings, charge, SplatlingWeaponSettings.FiringData::getStraightShotTickTime));
 
         lifespan = SplatlingItem.getScaledSettingInt(settings, charge, SplatlingWeaponSettings.FiringData::getProjectileLifeTicks);
-        entityData.set(MAX_VELOCITY, SplatlingItem.getScaledSettingFloat(settings, charge, SplatlingWeaponSettings.FiringData::getProjectileSpeed));
-        entityData.set(MIN_VELOCITY, SplatlingItem.getScaledSettingFloat(settings, charge, SplatlingWeaponSettings.FiringData::getProjectileDecayedSpeed));
+        entityData.set(SPEED, SplatlingItem.getScaledSettingFloat(settings, charge, SplatlingWeaponSettings.FiringData::getProjectileSpeed));
+        entityData.set(HORIZONTAL_DRAG, 0.9f);
         setProjectileType(Types.SHOOTER);
         return this;
     }
@@ -218,18 +221,27 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setStraightShotTime(firingData.straightShotTickTime);
 
         lifespan = firingData.projectileLifeTicks;
-        entityData.set(MAX_VELOCITY, firingData.projectileSpeed);
-        entityData.set(MIN_VELOCITY, firingData.projectileDecayedSpeed);
+        entityData.set(SPEED, firingData.projectileSpeed);
+        entityData.set(HORIZONTAL_DRAG, firingData.horizontalDrag);
         setProjectileType(Types.SHOOTER);
         return this;
     }
 
-    public InkProjectileEntity setRollerSwingStats() {
+    public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, float progress) {
         setProjectileType(Types.ROLLER);
 
-        if (throwerAirborne) {
-            trailSize = getProjectileSize() * 0.5f;
+        setGravity(0.15f);
+        if(throwerAirborne)
+        {
+            setStraightShotTime(settings.flingStraightTicks);
+            entityData.set(HORIZONTAL_DRAG, settings.flingHorizontalDrag);
         }
+        else {
+            setStraightShotTime(settings.swingStraightTicks);
+            entityData.set(HORIZONTAL_DRAG, settings.swingHorizontalDrag);
+
+        }
+
         return this;
     }
 
@@ -241,8 +253,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.define(PROJ_SIZE, 1.0f);
         entityData.define(GRAVITY, 0.075f);
         entityData.define(STRAIGHT_SHOT_TIME, 0);
-        entityData.define(MAX_VELOCITY, 0f);
-        entityData.define(MIN_VELOCITY, 0f);
+        entityData.define(SPEED, 0f);
+        entityData.define(HORIZONTAL_DRAG, 1f);
         entityData.define(SHOOT_DIRECTION, new Vec3(0,0,0));
     }
 
@@ -264,13 +276,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     public void tick()
     {
-
         setDeltaMovement(getDeltaMovement().add(getShootVelocity()));
         super.tick();
         setDeltaMovement(getDeltaMovement().subtract(getShootVelocity().scale(0.99)));
 
-        if(straightShotTime >= 0)
-            straightShotTime--;
+        straightShotTime--;
 
         if (isInWater()) {
             discard();
@@ -282,7 +292,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         if (!level.isClientSide && !persistent && lifespan-- <= 0)
         {
-            float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown);
+            float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown) * damageMultiplier;
             InkExplosion.createInkExplosion(getOwner(), blockPosition(), impactCoverage, dmg, explodes ? damage.getMinDamage() : dmg, true, inkType, sourceWeapon);
             if (explodes) {
                 level.broadcastEntityEvent(this, (byte) 3);
@@ -306,10 +316,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     private Vec3 getShootVelocity()
     {
-        double minVelocity = entityData.get(MIN_VELOCITY);
-        double maxVelocity = entityData.get(MAX_VELOCITY);
-        double lerpedVelocity = straightShotTime <= 0 ? minVelocity : minVelocity +  (maxVelocity - minVelocity) * ((double) straightShotTime / entityData.get(STRAIGHT_SHOT_TIME));
-        return entityData.get(SHOOT_DIRECTION).scale(lerpedVelocity);
+        if(straightShotTime >= 0)
+            return entityData.get(SHOOT_DIRECTION);
+        else
+        {
+            double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), -straightShotTime);
+            return entityData.get(SHOOT_DIRECTION).scale(entityData.get(SPEED)).multiply(acumulatedHorizontalDrag, 1, acumulatedHorizontalDrag);
+        }
     }
 
     @Override
@@ -351,7 +364,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         super.onHitEntity(result);
 
         Entity target = result.getEntity();
-        float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown);
+        float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown) * damageMultiplier;
 
         if (!level.isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this)) {
             discard();
@@ -370,6 +383,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if (explodes) {
                 InkExplosion.createInkExplosion(getOwner(), blockPosition(), impactCoverage, damage.getMinDamage(), dmg, true, inkType, sourceWeapon);
                 level.broadcastEntityEvent(this, (byte) 3);
+                level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
                 level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             } else
                 level.broadcastEntityEvent(this, (byte) 2);
@@ -390,7 +404,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         super.onHitBlock(result);
 
-        float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown);
+        float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, charge, isOnRollCooldown) * damageMultiplier;
         InkExplosion.createInkExplosion(getOwner(), blockPosition(), impactCoverage, dmg, explodes ? damage.getMinDamage() : 0, true, inkType, sourceWeapon);
         if (explodes) {
             level.broadcastEntityEvent(this, (byte) 3);
@@ -410,29 +424,15 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         float f2 = Mth.cos(yaw * ((float)Math.PI / 180F)) * Mth.cos(pitch * ((float)Math.PI / 180F));
         this.shoot(f, f1, f2, velocity, inaccuracy);
 
-        super.shootFromRotation(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy);
         InkExplosion.createInkExplosion(getOwner(), thrower.blockPosition(), 0.75f, 0, 0, true, inkType, sourceWeapon);
-
-        Vec3 posDiff = new Vec3(0, 0, 0);
-
-        if (thrower instanceof Player player)
-        {
-            if(WeaponHandler.playerHasPrevPos(player))
-                posDiff = thrower.position().subtract(WeaponHandler.getPlayerPrevPos(player));
-            if (thrower.isOnGround())
-                posDiff.multiply(1, 0, 1);
-        }
-
-
-        moveTo(getX() + posDiff.x(), getY() + posDiff.y(), getZ() + posDiff.z());
-        setDeltaMovement(posDiff);
     }
 
 
     @Override
     public void shoot(double x, double y, double z, float velocity, float inaccuracy)
     {
-        Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * (double)0.0075F * (double)inaccuracy, this.random.nextGaussian() * (double)0.0075F * (double)inaccuracy, this.random.nextGaussian() * (double)0.0075F * (double)inaccuracy);
+        double usedInaccuracy = inaccuracy * 0.0075;
+        Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy);
 
         entityData.set(SHOOT_DIRECTION, vec3.normalize());
 
@@ -442,8 +442,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
 
-	    entityData.set(MIN_VELOCITY, velocity);
-	    entityData.set(MAX_VELOCITY, velocity);
+	    entityData.set(SPEED, velocity);
     }
 
     @Override
@@ -469,8 +468,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (nbt.contains("Color"))
             setColor(ColorUtils.getColorFromNbt(nbt));
 
-        entityData.set(MIN_VELOCITY, nbt.getFloat("MinVelocity"));
-        entityData.set(MAX_VELOCITY, nbt.getFloat("MaxVelocity"));
+        entityData.set(SPEED, nbt.getFloat("Speed"));
+        entityData.set(HORIZONTAL_DRAG, nbt.getFloat("HorizontalDrag"));
 
         if (nbt.contains("Gravity"))
             setGravity(nbt.getFloat("Gravity"));
@@ -513,8 +512,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         nbt.putFloat("Size", getProjectileSize());
         nbt.putInt("Color", getColor());
 
-        nbt.putFloat("MinVelocity", entityData.get(MIN_VELOCITY));
-        nbt.putFloat("MaxVelocity", entityData.get(MAX_VELOCITY));
+        nbt.putFloat("Speed", entityData.get(SPEED));
+        nbt.putFloat("HorizontalDrag", entityData.get(HORIZONTAL_DRAG));
         nbt.putInt("MaxStraightShotTime", getMaxStraightShotTime());
         nbt.putInt("StraightShotTime", straightShotTime);
 
@@ -631,6 +630,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.set(PROJ_TYPE, v);
     }
 
+    public Random getRandom()
+    {
+        return random;
+    }
     public static class Types {
         public static final String DEFAULT = "default";
         public static final String SHOOTER = "shooter";

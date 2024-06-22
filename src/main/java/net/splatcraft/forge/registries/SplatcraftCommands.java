@@ -26,8 +26,7 @@ public class SplatcraftCommands
         ReplaceColorCommand.register(dispatcher);
         ColorScoresCommand.register(dispatcher);
         StageCommand.register(dispatcher);
-
-        //SuperJumpCommand.register(dispatcher);
+        SuperJumpCommand.register(dispatcher);
     }
 
     public static void registerArguments()

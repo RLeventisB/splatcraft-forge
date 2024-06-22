@@ -186,7 +186,9 @@ public class WorldInkHandler
 		{
 			WorldInk worldInk = WorldInkCapability.get(chunk);
 			if(!worldInk.getInkInChunk().isEmpty())
+			{
 				SplatcraftPacketHandler.sendToDim(new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), chunk.getLevel().dimension());
+			}
 		}
 	}
 
@@ -273,7 +275,6 @@ public class WorldInkHandler
 			Vector3f vector3f = new Vector3f((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ());
 			Matrix4f matrix4f = pose.pose();
 			vector3f.transform(pose.normal());
-			int i = 8;
 			int j = aint1.length / 8;
 			MemoryStack memorystack = MemoryStack.stackPush();
 
@@ -351,21 +352,20 @@ public class WorldInkHandler
 					consumer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), f3, f4, f5, 1.0F, texU, texV, packedOverlay, l, vector3f.x(), vector3f.y(), vector3f.z());
 				}
 			} catch (Throwable throwable1) {
-				if (memorystack != null) {
-					try {
-						memorystack.close();
-					} catch (Throwable throwable) {
-						throwable1.addSuppressed(throwable);
-					}
-				}
+                try
+                {
+                    memorystack.close();
+                }
+                catch (Throwable throwable)
+                {
+                    throwable1.addSuppressed(throwable);
+                }
 
-				throw throwable1;
+                throw throwable1;
 			}
 
-			if (memorystack != null) {
-				memorystack.close();
-			}
+            memorystack.close();
 
-		}
+        }
 	}
 }

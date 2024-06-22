@@ -22,17 +22,22 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public float dashConsumption;
     public int dashTime = 1;
 
+    public int swingProjectileCount;
+    public float swingAttackAngle;
     public boolean allowJumpingOnCharge;
     public float swingMobility;
     public float swingConsumption;
     public int swingInkRecoveryCooldown;
     public float swingBaseDamage;
+    public float swingLetalAngle;
+    public float swingOffAnglePenalty = 0.5f;
     public int swingDamageDecayStartTick;
     public float swingDamageDecayPerTick;
     public float swingMinDamage;
     public float swingProjectileSpeed;
     public int swingTime;
-    public float swingProjectilePitchCompensation;
+    public int swingStraightTicks;
+    public float swingHorizontalDrag = 1.0f;
 
     public float flingConsumption;
     public int flingInkRecoveryCooldown;
@@ -42,8 +47,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public float flingMinDamage;
     public float flingProjectileSpeed;
     public int flingTime;
-
-
+    public int flingStraightTicks;
+    public float flingHorizontalDrag = 1.0f;
     public boolean bypassesMobDamage = false;
 
     public RollerWeaponSettings(String name) {
@@ -102,17 +107,23 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 
         SwingDataRecord swing = data.swing;
 
-        setAllowJumpingOnCharge(swing.allowJumpingOnCharge);
+        setSwingProjectileCount(swing.projectileCount);
+        setSwingAttackAngle(swing.attackAngle);
+        setSwingLetalAngle(swing.letalAngle.orElse(16.0f));
+        swing.offAnglePenalty.ifPresent(this::setSwingOffAnglePenalty);
+
+        swing.allowJumpingOnCharge.ifPresent(this::setAllowJumpingOnCharge);
         setSwingMobility(swing.mobility);
         setSwingConsumption(swing.inkConsumption);
         setSwingInkRecoveryCooldown(swing.inkRecoveryCooldown);
         setSwingProjectileSpeed(swing.projectileSpeed);
         setSwingTime(swing.startupTime);
-        setSwingProjectilePitchCompensation(swing.projectilePitchCompensation);
         setSwingBaseDamage(swing.baseDamage);
         swing.minDamage.ifPresent(this::setSwingMinDamage);
         setSwingDamageDecayStartTick(swing.damageDecayStartTick.orElse(0));
         setSwingDamageDecayPerTick(swing.damageDecayPerTick.orElse(0f));
+        setSwingStraightTicks(swing.straightTicks.orElse(0));
+        swing.horizontalDrag.ifPresent(this::setSwingHorizontalDrag);
 
         if(data.fling.isPresent())
         {
@@ -125,6 +136,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
             fling.minDamage.ifPresent(this::setFlingMinDamage);
             setFlingDamageDecayStartTick(fling.damageDecayStartTick.orElse(0));
             setFlingDamageDecayPerTick(fling.damageDecayPerTick.orElse(0f));
+            setFlingStraightTicks(fling.straightTicks.orElse(0));
+            fling.horizontalDrag.ifPresent(this::setFlingHorizontalDrag);
         }
     }
 
@@ -132,8 +145,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public DataRecord serialize()
     {
         return new DataRecord(Optional.of(isBrush), new RollDataRecord(rollSize, Optional.of(rollHitboxSize), rollConsumption, rollInkRecoveryCooldown, rollDamage, rollMobility, Optional.of(dashMobility), Optional.of(dashConsumption), Optional.of(dashTime)),
-                new SwingDataRecord(allowJumpingOnCharge, swingMobility, swingConsumption, swingInkRecoveryCooldown, swingProjectileSpeed, swingTime, swingProjectilePitchCompensation, swingBaseDamage, Optional.of(swingMinDamage), Optional.of(swingDamageDecayStartTick), Optional.of(swingDamageDecayPerTick)),
-                Optional.of(new FlingDataRecord(flingConsumption, flingInkRecoveryCooldown, flingProjectileSpeed, flingTime, flingBaseDamage, Optional.of(flingMinDamage), Optional.of(flingDamageDecayStartTick), Optional.of(flingDamageDecayPerTick))),
+                new SwingDataRecord(swingProjectileCount, swingAttackAngle, Optional.of(allowJumpingOnCharge), swingMobility, swingConsumption, swingInkRecoveryCooldown, swingProjectileSpeed, swingTime, swingBaseDamage, Optional.of(swingLetalAngle), Optional.of(swingOffAnglePenalty), Optional.of(swingMinDamage), Optional.of(swingDamageDecayStartTick), Optional.of(swingDamageDecayPerTick), Optional.of(swingStraightTicks), Optional.of(swingHorizontalDrag)),
+                Optional.of(new FlingDataRecord(flingConsumption, flingInkRecoveryCooldown, flingProjectileSpeed, flingTime, flingBaseDamage, Optional.of(flingMinDamage), Optional.of(flingDamageDecayStartTick), Optional.of(flingDamageDecayPerTick), Optional.of(flingStraightTicks), Optional.of(flingHorizontalDrag))),
                 Optional.of(bypassesMobDamage), Optional.of(isSecret));
     }
 
@@ -250,8 +263,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
         return this;
     }
 
-    public RollerWeaponSettings setSwingProjectilePitchCompensation(float swingProjectilePitchCompensation) {
-        this.swingProjectilePitchCompensation = swingProjectilePitchCompensation;
+    public RollerWeaponSettings setSwingAttackAngle(float swingAttackAngle) {
+        this.swingAttackAngle = swingAttackAngle;
         return this;
     }
 
@@ -294,13 +307,45 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
         this.flingTime = flingTime;
         return this;
     }
-    public boolean isAllowJumpingOnCharge()
-    {
-        return allowJumpingOnCharge;
-    }
-    public void setAllowJumpingOnCharge(boolean allowJumpingOnCharge)
+    public RollerWeaponSettings setAllowJumpingOnCharge(boolean allowJumpingOnCharge)
     {
         this.allowJumpingOnCharge = allowJumpingOnCharge;
+        return this;
+    }
+    public RollerWeaponSettings setSwingProjectileCount(int swingProjectileCount)
+    {
+        this.swingProjectileCount = swingProjectileCount;
+        return this;
+    }
+    public RollerWeaponSettings setSwingLetalAngle(float swingLetalAngle)
+    {
+        this.swingLetalAngle = swingLetalAngle;
+        return this;
+    }
+    public RollerWeaponSettings setSwingOffAnglePenalty(float swingOffAnglePenalty)
+    {
+        this.swingOffAnglePenalty = swingOffAnglePenalty;
+        return this;
+    }
+    public RollerWeaponSettings setSwingStraightTicks(int swingStraightTicks)
+    {
+        this.swingStraightTicks = swingStraightTicks;
+        return this;
+    }
+    public RollerWeaponSettings setFlingStraightTicks(int flingStraightTicks)
+    {
+        this.flingStraightTicks = flingStraightTicks;
+        return this;
+    }
+    public RollerWeaponSettings setSwingHorizontalDrag(float swingHorizontalDrag)
+    {
+        this.swingHorizontalDrag = swingHorizontalDrag;
+        return this;
+    }
+    public RollerWeaponSettings setFlingHorizontalDrag(float flingHorizontalDrag)
+    {
+        this.flingHorizontalDrag = flingHorizontalDrag;
+        return this;
     }
 
     public record DataRecord(
@@ -352,32 +397,43 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     }
 
     record SwingDataRecord(
-            boolean allowJumpingOnCharge,
+            int projectileCount,
+            float attackAngle,
+            Optional<Boolean> allowJumpingOnCharge,
             float mobility,
             float inkConsumption,
             int inkRecoveryCooldown,
             float projectileSpeed,
             int startupTime,
-            float projectilePitchCompensation,
             float baseDamage,
+            Optional<Float> letalAngle,
+            Optional<Float> offAnglePenalty,
             Optional<Float> minDamage,
             Optional<Integer> damageDecayStartTick,
-            Optional<Float> damageDecayPerTick
+            Optional<Float> damageDecayPerTick,
+            Optional<Integer> straightTicks,
+            Optional<Float> horizontalDrag
     )
     {
         public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.BOOL.fieldOf("allow_jumping_on_charge").orElse(false).forGetter(SwingDataRecord::allowJumpingOnCharge),
+                        Codec.INT.fieldOf("swing_blob_count").forGetter(SwingDataRecord::projectileCount),
+                        Codec.FLOAT.fieldOf("swing_attack_angle").forGetter(SwingDataRecord::attackAngle),
+                        Codec.BOOL.optionalFieldOf("allow_jumping_on_charge").forGetter(SwingDataRecord::allowJumpingOnCharge),
                         Codec.FLOAT.fieldOf("mobility").forGetter(SwingDataRecord::mobility),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(SwingDataRecord::inkConsumption),
                         Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SwingDataRecord::inkRecoveryCooldown),
                         Codec.FLOAT.fieldOf("projectile_speed").forGetter(SwingDataRecord::projectileSpeed),
                         Codec.INT.fieldOf("startup_time").forGetter(SwingDataRecord::startupTime),
-                        Codec.FLOAT.fieldOf("projectile_pitch_compensation").forGetter(SwingDataRecord::projectilePitchCompensation),
                         Codec.FLOAT.fieldOf("base_damage").forGetter(SwingDataRecord::baseDamage),
+                        Codec.FLOAT.optionalFieldOf("letal_angle").forGetter(SwingDataRecord::letalAngle),
+                        Codec.FLOAT.optionalFieldOf("offangle_penalty").forGetter(SwingDataRecord::offAnglePenalty),
                         Codec.FLOAT.optionalFieldOf("min_damage").forGetter(SwingDataRecord::minDamage),
                         Codec.INT.optionalFieldOf("damage_decay_start_tick").forGetter(SwingDataRecord::damageDecayStartTick),
-                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(SwingDataRecord::damageDecayPerTick)
+                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(SwingDataRecord::damageDecayPerTick),
+                        Codec.INT.optionalFieldOf("straight_ticks").forGetter(SwingDataRecord::straightTicks),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(SwingDataRecord::horizontalDrag)
+
                 ).apply(instance, SwingDataRecord::new)
         );
     }
@@ -390,7 +446,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
             float baseDamage,
             Optional<Float> minDamage,
             Optional<Integer> damageDecayStartTick,
-            Optional<Float> damageDecayPerTick
+            Optional<Float> damageDecayPerTick,
+            Optional<Integer> straightTicks,
+            Optional<Float> horizontalDrag
     )
     {
         public static final Codec<FlingDataRecord> CODEC = RecordCodecBuilder.create(
@@ -402,7 +460,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
                         Codec.FLOAT.fieldOf("base_damage").forGetter(FlingDataRecord::baseDamage),
                         Codec.FLOAT.optionalFieldOf("min_damage").forGetter(FlingDataRecord::minDamage),
                         Codec.INT.optionalFieldOf("damage_decay_start_tick").forGetter(FlingDataRecord::damageDecayStartTick),
-                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(FlingDataRecord::damageDecayPerTick)
+                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(FlingDataRecord::damageDecayPerTick),
+                        Codec.INT.optionalFieldOf("straight_ticks").forGetter(FlingDataRecord::straightTicks),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(FlingDataRecord::horizontalDrag)
                 ).apply(instance, FlingDataRecord::new)
         );
     }

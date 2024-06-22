@@ -8,19 +8,19 @@ import net.minecraft.world.item.Items;
 import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.items.weapons.DualieItem;
 
 public class PlayerCooldown
 {
     final int maxTime;
     final int slotIndex;
     final InteractionHand hand;
-    final boolean canMove;
-    final boolean forceCrouch;
-    final boolean preventWeaponUse;
+    boolean canMove;
+    boolean forceCrouch;
+    boolean preventWeaponUse;
     final boolean isGrounded;
     public ItemStack storedStack;
     int time;
-
     public boolean cancellable = false;
 
     public static final int OVERLOAD_LIMIT = -28800;
@@ -46,16 +46,19 @@ public class PlayerCooldown
         this(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("Time"), nbt.getInt("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getBoolean("CanMove"), nbt.getBoolean("ForceCrouch"), nbt.getBoolean("PreventWeaponUse"), nbt.getBoolean("IsGrounded"));
         if (nbt.contains("StoredStack"))
             storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
-
     }
 
     public static PlayerCooldown readNBT(CompoundTag nbt)
     {
         if(nbt.getBoolean("SuperJump"))
             return new SuperJumpCommand.SuperJump(nbt);
+        if(nbt.getBoolean("RollCooldown"))
+            return new DualieItem.RollCooldown(nbt);
+        if(nbt.getBoolean("TurretCooldown")) // need an system for this but im lazy
+            return new DualieItem.TurretCooldown(nbt);
+        if(nbt.getBoolean("StartupCooldown"))
+            return new DualieItem.StartupCooldown(nbt);
         else return new PlayerCooldown(nbt);
-
-        //PlayerCooldown result = new PlayerCooldown(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("Time"), nbt.getInt("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getBoolean("CanMove"), nbt.getBoolean("ForceCrouch"), nbt.getBoolean("PreventWeaponUse"), nbt.getBoolean("IsGrounded"));
     }
 
     public PlayerCooldown setCancellable() {
@@ -116,17 +119,26 @@ public class PlayerCooldown
     {
         return canMove;
     }
-
+    public void setCanMove(boolean canMove)
+    {
+        this.canMove = canMove;
+    }
     public boolean forceCrouch()
     {
         return forceCrouch;
     }
-
+    public void setForceCrouch(boolean forceCrouch)
+    {
+        this.forceCrouch = forceCrouch;
+    }
     public boolean preventWeaponUse()
     {
         return preventWeaponUse;
     }
-
+    public void setPreventWeaponUse(boolean preventWeaponUse)
+    {
+        this.preventWeaponUse = preventWeaponUse;
+    }
     public boolean isGrounded()
     {
         return isGrounded;

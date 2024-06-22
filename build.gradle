@@ -58,6 +58,7 @@ minecraft {
         client {
             workingDirectory project.file('run')
             arg "-mixin.config=splatcraft.mixins.json"
+            jvmArg "-XX:+AllowEnhancedClassRedefinition"
 
             // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'

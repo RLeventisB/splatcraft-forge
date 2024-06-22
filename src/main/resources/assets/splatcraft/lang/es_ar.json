@@ -220,6 +220,7 @@
   "subtitle.shooter_firing": "Lanzatintas disparando",
   "subtitle.blaster_firing": "Lanzamotas disparando",
   "subtitle.blaster_explosion": "Mota de tinta explotando",
+  "subtitle.blaster_direct": "Critico de mota de tinta",
   "subtitle.roller_fling": "Tinta de rodillo arrojada",
   "subtitle.roller_roll": "Rodillo rodando",
   "subtitle.brush_fling": "Tinta de pincel arrojada",
@@ -241,6 +242,8 @@
   "subtitle.squid_revert": "Calamar se convierte en niño",
   "subtitle.ink_submerge": "Calamar se sumerge",
   "subtitle.ink_surface": "Calamar emerge",
+  "subtitle.superjump_start": "Jugador supersalta",
+  "subtitle.superjump_land": "Jugador cae del supersalto",
 
   "container.ink_vat": "Creación de tinteros",
   "container.ammo_knights_workbench": "Creación de armas",

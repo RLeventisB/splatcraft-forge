@@ -35,6 +35,7 @@ import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -393,20 +394,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     protected void updateRotation() {
         Vec3 vec3 = this.getDeltaMovement();
         double d0 = vec3.horizontalDistance();
-        this.setXRot(lerpRotation(this.xRotO, (float)(Mth.atan2(vec3.y, d0) * (double)(180F / (float)Math.PI))));
-        this.setYRot(lerpRotation(this.yRotO, (float)(Mth.atan2(vec3.x, vec3.z) * (double)(180F / (float)Math.PI))));
+        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float)(Mth.atan2(vec3.y, d0) * (double)(180F / (float)Math.PI))));
+        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float)(Mth.atan2(vec3.x, vec3.z) * (double)(180F / (float)Math.PI))));
     }
-
-    protected static float lerpRotation(float p_234614_0_, float p_234614_1_) {
-        while(p_234614_1_ - p_234614_0_ < -180.0F) {
-            p_234614_0_ -= 360.0F;
-        }
-
-        while(p_234614_1_ - p_234614_0_ >= 180.0F) {
-            p_234614_0_ += 360.0F;
-        }
-
-        return Mth.lerp(0.2F, p_234614_0_, p_234614_1_);
-    }
-
 }

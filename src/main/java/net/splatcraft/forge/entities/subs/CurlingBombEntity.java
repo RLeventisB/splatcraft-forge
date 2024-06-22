@@ -109,23 +109,47 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		}
 
 		if(!level.isClientSide)
-			for(int i = 0; i <= 2; i++)
-				if(InkBlockUtils.canInkFromFace(level, blockPosition().below(i), Direction.UP))
+		{
+			if(spd > 1.0E-3)
+			{
+				for (float j = -0.15f; j <= 0.15f; j += 0.3f)
 				{
-					InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, blockPosition().below(i), getColor(), settings.contactDamage, inkType);
-					break;
+					Vec3 normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
+					double sideX = -normalized.z;
+					double sideZ = normalized.x;
+
+					for(int i = 0; i <= 2; i++)
+					{
+						BlockPos side = new BlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
+						if(InkBlockUtils.canInkFromFace(level, side, Direction.UP))
+						{
+							InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, side, getColor(), settings.contactDamage, inkType);
+							break;
+						}
+					}
 				}
+			}
+			else
+			{
+				for(int i = 0; i <= 2; i++)
+					if(InkBlockUtils.canInkFromFace(level, blockPosition().below(i), Direction.UP))
+					{
+						InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, blockPosition().below(i), getColor(), settings.contactDamage, inkType);
+						break;
+					}
+			}
+		}
 
 
-		if (!this.onGround || distanceToSqr(this.getDeltaMovement()) > (double)1.0E-5F)
+		if (!onGround || distanceToSqr(getDeltaMovement()) > 1.0E-5)
 		{
 			float f1 = 0.98F;
-			if (this.onGround)
-				f1 = this.level.getBlockState(new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level, new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
+			if (onGround)
+				f1 = this.level.getBlockState(new BlockPos(getX(), getY() - 1.0D, getZ())).getFriction(level, new BlockPos(getX(), getY() - 1.0D, getZ()), this);
 
 			f1 = (float) Math.min(0.98, f1*3f) * Math.min(1, 2 * (1 - fuseTime/(float)settings.fuseTime));
 
-			this.setDeltaMovement(this.getDeltaMovement().multiply(f1, 0.98D, f1));
+			setDeltaMovement(getDeltaMovement().multiply(f1, 0.98D, f1));
 
 		}
 
@@ -141,7 +165,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		else if(spd > 0.01 && fuseTime % (int)Math.max(1, (1-spd)*10) == 0)
 			level.broadcastEntityEvent(this, (byte) 2);
 
-		this.move(MoverType.SELF, this.getDeltaMovement().multiply(0,1,0));
+		move(MoverType.SELF, getDeltaMovement().multiply(0, 1, 0));
 
 		Vec3 vec = getDeltaMovement().multiply(1, 0, 1);
 		vec = position().add(collide(vec));
@@ -165,8 +189,10 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 	@Override
 	protected void onHitEntity(EntityHitResult result)
 	{
-		if(result.getEntity() instanceof LivingEntity)
-			InkDamageUtils.doRollDamage((LivingEntity) result.getEntity(), getSettings().contactDamage, getOwner(), this, sourceWeapon);
+		if(result.getEntity() instanceof LivingEntity livingEntity)
+        {
+			InkDamageUtils.doRollDamage(livingEntity, getSettings().contactDamage, getOwner(), this, sourceWeapon);
+        }
 
 		double velocityX = this.getDeltaMovement().x;
 		double velocityY = this.getDeltaMovement().y;
@@ -202,8 +228,8 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 			this.setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if(Math.abs(velocityY) >= 0.05 && (blockFace == Direction.DOWN))
 			this.setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
-		if(blockFace == Direction.NORTH || blockFace == Direction.SOUTH) this.setDeltaMovement(velocityX, velocityY, -velocityZ);
-
+		if(blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
+			this.setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 
 	@Override

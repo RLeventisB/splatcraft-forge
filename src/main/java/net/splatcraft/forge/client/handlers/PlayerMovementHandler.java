@@ -22,12 +22,14 @@ import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class PlayerMovementHandler
 {
+    public static final HashMap<LocalPlayer, Input> unmodifiedInputMap = new HashMap<>();
     private static final AttributeModifier INK_SWIM_SPEED = new AttributeModifier("Ink swimming speed boost", 0D, AttributeModifier.Operation.ADDITION);
     private static final AttributeModifier SQUID_SWIM_SPEED = new AttributeModifier("Squid swim speed boost", 0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL);
     private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier("Enemy ink speed penalty", -0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL);
@@ -37,10 +39,11 @@ public class PlayerMovementHandler
     @SubscribeEvent
     public static void playerMovement(TickEvent.PlayerTickEvent event)
     {
-        if (!(event.player instanceof LocalPlayer) || event.phase != TickEvent.Phase.END)
+        if (!(event.player instanceof LocalPlayer player) || event.phase != TickEvent.Phase.END)
             return;
 
-        LocalPlayer player = (LocalPlayer) event.player;
+        boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
+        PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
         //MovementInput input = player.movementInput;
         AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
         AttributeInstance swimAttribute = player.getAttribute(ForgeMod.SWIM_SPEED.get());
@@ -63,8 +66,8 @@ public class PlayerMovementHandler
         }
 
         ItemStack useStack = player.getUseItem();
-        if(PlayerCooldown.hasPlayerCooldown(player))
-            useStack = PlayerCooldown.getPlayerCooldown(player).storedStack;
+        if(hasCooldown)
+            useStack = cooldown.storedStack;
         else if(useStack.isEmpty())
             useStack = player.getCooldowns().isOnCooldown(player.getMainHandItem().getItem()) ? player.getMainHandItem() :
                     player.getCooldowns().isOnCooldown(player.getOffhandItem().getItem()) ? player.getOffhandItem() : ItemStack.EMPTY;
@@ -84,11 +87,10 @@ public class PlayerMovementHandler
                 swimAttribute.addTransientModifier(SQUID_SWIM_SPEED);
         }
 
-        if (PlayerCooldown.hasPlayerCooldown(player))
+        if (hasCooldown)
         {
-            PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
             player.getInventory().selected = cooldown.getSlotIndex();
-        }
+         }
 
         if (!player.getAbilities().flying)
         {
@@ -101,9 +103,23 @@ public class PlayerMovementHandler
     @SubscribeEvent
     public static void onInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event)
     {
-
         Input input = event.getInput();
         Player player = event.getPlayer();
+
+        if(player.isLocalPlayer()) // idk if splitscreen exists but just in case
+        {
+            Input clonedInput = new Input();
+            clonedInput.leftImpulse = input.leftImpulse;
+            clonedInput.forwardImpulse = input.forwardImpulse;
+            clonedInput.up = input.up;
+            clonedInput.down = input.down;
+            clonedInput.left = input.left;
+            clonedInput.right = input.right;
+            clonedInput.jumping = input.jumping;
+            clonedInput.shiftKeyDown = input.shiftKeyDown;
+
+            unmodifiedInputMap.put((LocalPlayer) player, clonedInput);
+        }
 
         float speedMod = !input.shiftKeyDown ? PlayerInfoCapability.isSquid(player) && InkBlockUtils.canSquidHide(player) ? 30f : 2f : 1f;
 
@@ -153,16 +169,17 @@ public class PlayerMovementHandler
         {
             PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
 
-            if (cooldown.storedStack.getItem() instanceof RollerItem && !((RollerItem) cooldown.storedStack.getItem()).getSettings(cooldown.storedStack).isAllowJumpingOnCharge())
-                input.jumping = false;
-
             if (!cooldown.canMove()) {
                 input.forwardImpulse = 0;
                 input.leftImpulse = 0;
                 input.jumping = false;
-            } else if (cooldown.storedStack.getItem() instanceof RollerItem) {
-                input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * ((RollerItem) cooldown.storedStack.getItem()).getSettings(cooldown.storedStack).swingMobility;
-                input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * ((RollerItem) cooldown.storedStack.getItem()).getSettings(cooldown.storedStack).swingMobility;
+            }
+            else if (cooldown.storedStack.getItem() instanceof RollerItem rollerItem)
+            {
+                if(!rollerItem.getSettings(cooldown.storedStack).allowJumpingOnCharge)
+                    input.jumping = false;
+                input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(cooldown.storedStack).swingMobility;
+                input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(cooldown.storedStack).swingMobility;
             }
             if (cooldown.forceCrouch() && cooldown.getTime() > 1) {
                 input.shiftKeyDown = !player.getAbilities().flying;

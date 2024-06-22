@@ -26,8 +26,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class InkDamageUtils {
-
+public class InkDamageUtils
+{
+    private static short sameAttackId = 0;
+    public static short getAttackId()
+    {
+        short id = sameAttackId;
+        sameAttackId++;
+        if(sameAttackId == Short.MAX_VALUE - 1)
+            sameAttackId = 0;
+        return id;
+    }
     public static final DamageSource ENEMY_INK = new DamageSource(Splatcraft.MODID + ":enemyInk");
     public static final DamageSource WATER = new DamageSource(Splatcraft.MODID + ":water");
     public static final DamageSource VOID_DAMAGE = new DamageSource(Splatcraft.MODID + ":outOfStage").bypassArmor();

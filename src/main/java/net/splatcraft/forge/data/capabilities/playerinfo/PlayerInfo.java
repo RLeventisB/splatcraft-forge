@@ -20,7 +20,6 @@ public class PlayerInfo
     private PlayerCooldown playerCooldown = null;
     private PlayerCharge playerCharge = null;
     private Player player;
-
     private ItemStack inkBand = ItemStack.EMPTY;
 
     public PlayerInfo(int defaultColor)

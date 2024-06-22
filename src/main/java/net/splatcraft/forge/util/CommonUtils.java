@@ -1,6 +1,7 @@
 package net.splatcraft.forge.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -108,5 +109,16 @@ public class CommonUtils
         boolean isMainOnCooldown = player.getMainHandItem().getItem() instanceof WeaponBaseItem weapon && player.getCooldowns().isOnCooldown(weapon);
         boolean isOffOnCooldown = player.getOffhandItem().getItem() instanceof WeaponBaseItem weapon && player.getCooldowns().isOnCooldown(weapon);
         return isMainOnCooldown || isOffOnCooldown;
+    }
+    public static float lerpRotation(float value, float a, float b) {
+        while(b - a < -180.0F) {
+            a -= 360.0F;
+        }
+
+        while(b - a >= 180.0F) {
+            a += 360.0F;
+        }
+
+        return Mth.lerp(0.2F, a, b);
     }
 }

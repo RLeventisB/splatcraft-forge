@@ -122,7 +122,6 @@ public class WorldInk
 
 	protected BlockPos localizeBlockPos(BlockPos pos)
 	{
-
 		return new BlockPos(Math.floorMod(pos.getX(), 16), pos.getY(), Math.floorMod(pos.getZ(), 16));
 	}
 	
@@ -142,7 +141,6 @@ public class WorldInk
 			ink(NbtUtils.readBlockPos(element.getCompound("Pos")), element.getInt("Color"), InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type"))));
 		});
 
-		INK_MAP.values();
 	}
 
 	public record Entry(int color, InkBlockUtils.InkType type)

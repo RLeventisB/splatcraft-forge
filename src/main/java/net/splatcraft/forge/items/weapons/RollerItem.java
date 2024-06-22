@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -85,15 +86,20 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings> {
 
     @Override
     public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft) {
-        if (!(entity instanceof Player))
+        if (!(entity instanceof Player player))
             return;
+        ItemCooldowns cooldownTracker = player.getCooldowns();
+        if (cooldownTracker.isOnCooldown(this))
+            return;
+
         RollerWeaponSettings settings = getSettings(stack);
         int startupTicks = entity.isOnGround() ? settings.swingTime : settings.flingTime;
         if (getUseDuration(stack) - timeLeft < startupTicks)
         {
             //if (getInkAmount(entity, stack) > inkConsumption){
-            PlayerCooldown cooldown = new PlayerCooldown(stack, startupTicks, ((Player) entity).getInventory().selected, entity.getUsedItemHand(), true, false, true, entity.isOnGround());
-            PlayerCooldown.setPlayerCooldown((Player) entity, cooldown);
+            PlayerCooldown cooldown = new PlayerCooldown(stack, startupTicks, player.getInventory().selected, entity.getUsedItemHand(), true, false, true, entity.isOnGround());
+            PlayerCooldown.setPlayerCooldown(player, cooldown);
+            cooldownTracker.addCooldown(this, startupTicks + 6);
             //} else
             if (settings.isBrush && reduceInk(entity, this, entity.isOnGround() ? settings.swingConsumption : settings.flingConsumption, entity.isOnGround() ? settings.swingInkRecoveryCooldown : settings.flingInkRecoveryCooldown, timeLeft % 4 == 0)) {
                 level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
@@ -213,26 +219,46 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings> {
 
         if (!settings.isBrush && reduceInk(player, this, airborne ? settings.flingConsumption : settings.swingConsumption, airborne ? settings.flingInkRecoveryCooldown : settings.swingInkRecoveryCooldown, true)) {
             level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.rollerFling, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            for (int i = 0; i < settings.rollSize; i++) {
+            if(airborne)
+            {
+                for (int i = 0; i < settings.rollSize; i++)
+                {
+                    InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), 1.6f, settings);
+                    proj.throwerAirborne = true;
+                    proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0,  settings.flingProjectileSpeed, 0.05f);
+                    proj.setRollerSwingStats(settings, (float)i / settings.rollSize);
 
-                InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), 1.6f, settings);
-                proj.throwerAirborne = airborne;
-                proj.shootFromRotation(player, player.getXRot(), player.getYRot(), airborne ? 0.0f : settings.swingProjectilePitchCompensation, airborne ? settings.flingProjectileSpeed : settings.swingProjectileSpeed, 0.05f);
-                proj.setRollerSwingStats();
-                if (airborne) {
-                    double off = (double) i - (settings.rollSize - 1) / 2d;
-                    double yOff = Math.sin(Math.toRadians(player.getXRot() + 90));
-                    double y2Off = Math.cos(Math.toRadians(player.getXRot() + 90));
-                    double xOff = Math.cos(Math.toRadians(player.getYRot() + 90)) * off * y2Off;
-                    double zOff = Math.sin(Math.toRadians(player.getYRot() + 90)) * off * y2Off;
-                    proj.moveTo(proj.getX() + xOff, proj.getY() + yOff * off, proj.getZ() + zOff);
-                } else {
-                    double off = (double) i - (settings.rollSize - 1) / 2d;
-                    double xOff = Math.cos(Math.toRadians(player.getYRot())) * off;
-                    double zOff = Math.sin(Math.toRadians(player.getYRot())) * off;
-                    proj.moveTo(proj.getX() + xOff, proj.getY() - player.getEyeHeight() / 2f, proj.getZ() + zOff);
+                        double off = (double) i - (settings.rollSize - 1) / 2d;
+                        double yOff = Math.sin(Math.toRadians(player.getXRot() + 90));
+                        double y2Off = Math.cos(Math.toRadians(player.getXRot() + 90));
+                        double xOff = Math.cos(Math.toRadians(player.getYRot() + 90)) * off * y2Off;
+                        double zOff = Math.sin(Math.toRadians(player.getYRot() + 90)) * off * y2Off;
+                        proj.moveTo(proj.getX() + xOff, proj.getY() + yOff * off, proj.getZ() + zOff);
+
+                    level.addFreshEntity(proj);
                 }
-                level.addFreshEntity(proj);
+            }
+            else
+            {
+                float side = ColorUtils.random.nextBoolean() ? 0.5f : -0.5f;
+                for (float i = 0; i < settings.swingProjectileCount; i++)
+                {
+                    float progress = 1 - (float)Math.pow(1 - i / (float)(settings.swingProjectileCount - 1), 2);
+                    InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), 1.6f, settings);
+                    proj.throwerAirborne = false;
+                    float extraAngle = settings.swingAttackAngle * (float)(proj.getRandom().nextGaussian());
+                    proj.shootFromRotation(player, player.getXRot(), player.getYRot() + extraAngle * side, 0, settings.swingProjectileSpeed * progress, 0.05f);
+                    proj.moveTo(proj.getX(), proj.getY() + 0.5, proj.getZ());
+
+                    if(extraAngle > settings.swingLetalAngle)
+                    {
+                        proj.damageMultiplier = settings.swingOffAnglePenalty;
+                    }
+                    proj.setRollerSwingStats(settings, progress);
+                    level.addFreshEntity(proj);
+
+                    side = -side;
+                }
             }
         }
     }

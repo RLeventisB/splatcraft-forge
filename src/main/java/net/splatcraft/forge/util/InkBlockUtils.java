@@ -21,6 +21,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.blocks.IColoredBlock;
 import net.splatcraft.forge.blocks.InkedBlock;
+import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
@@ -156,9 +157,12 @@ public class InkBlockUtils {
         return state.getCollisionShape(level, pos).isEmpty() || level.getBlockState(pos).is(SplatcraftTags.Blocks.INK_PASSTHROUGH);
     }
 
-    public static boolean canSquidHide(LivingEntity entity) {
-        return !entity.isSpectator() && (entity.isOnGround() || !entity.level.getBlockState(new BlockPos(entity.getX(), entity.getY() - 0.1, entity.getZ())).getBlock().equals(Blocks.AIR))
-                && canSquidSwim(entity) || canSquidClimb(entity);
+    public static boolean canSquidHide(LivingEntity entity)
+    {
+        if(!(entity instanceof Player player) || !PlayerCooldown.hasPlayerCooldown(player) || !(PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump))
+            return !entity.isSpectator() && (entity.isOnGround() || !entity.level.getBlockState(new BlockPos(entity.getX(), entity.getY() - 0.1, entity.getZ())).getBlock().equals(Blocks.AIR))
+                && (canSquidSwim(entity) || canSquidClimb(entity));
+        return false;
     }
 
     public static boolean canSquidSwim(LivingEntity entity) {

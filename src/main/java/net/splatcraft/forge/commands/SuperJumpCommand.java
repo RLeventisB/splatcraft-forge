@@ -11,6 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +25,10 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
+import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
+import org.jetbrains.annotations.NotNull;
 
 public class SuperJumpCommand
 {
@@ -31,20 +36,19 @@ public class SuperJumpCommand
 	{
 		dispatcher.register(Commands.literal("superjump").requires(commandSource -> commandSource.hasPermission(2)).then(Commands.argument("to", BlockPosArgument.blockPos()).executes(context ->
 		{
-			BlockPos target = BlockPosArgument.getLoadedBlockPos(context, "to");
-			return execute(context, new Vec3(target.getX() + .5d, target.getY(), target.getZ() + .5d));
+			BlockPos target = BlockPosArgument.getSpawnablePos(context, "to");
+			return execute(context, new Vec3(target.getX() + .5d, target.getY(), target.getZ() + .5d), 80);
 		})).then(Commands.argument("target", EntityArgument.entity()).executes(context ->
-				execute(context, EntityArgument.getEntity(context, "target").position()))));
+				execute(context, EntityArgument.getEntity(context, "target").position(), 80))));
 	}
 
-	private static int execute(CommandContext<CommandSourceStack> context, Vec3 target) throws CommandSyntaxException
+	private static int execute(CommandContext<CommandSourceStack> context, Vec3 target, int duration) throws CommandSyntaxException
 	{
 		ServerPlayer player = context.getSource().getPlayerOrException();
 
+		PlayerCooldown.setPlayerCooldown(player, new SuperJump(player.getInventory().selected, target, player.position(), duration, player.noPhysics));
 
-		PlayerCooldown.setPlayerCooldown(player, new SuperJump(player.getInventory().selected, target, player.position(), player.noPhysics));
-
-		player.displayClientMessage(new TextComponent("pchoooooo"), false);
+		player.displayClientMessage(new TextComponent("pchoooooo"), false); // me too
 		SplatcraftPacketHandler.sendToPlayer(new UpdatePlayerInfoPacket(player), player);
 
 		return 0;
@@ -65,107 +69,125 @@ public class SuperJumpCommand
 			PlayerInfo info = PlayerInfoCapability.get(player);
 			PlayerCooldown cooldown = info.getPlayerCooldown();
 
-			if(cooldown instanceof SuperJump)
+			if(cooldown instanceof SuperJump superJump)
 			{
-				Vec3 target = ((SuperJump) cooldown).target;
+				Vec3 target = superJump.target;
+				Vec3 origin = superJump.origin;
 
-				double distLeft = (player.position().multiply(1,0,1).distanceTo(target.multiply(1,0,1)));
-
-				if(distLeft >= ((SuperJump) cooldown).distanceLeft)
-					cooldown.setTime(0);
-
-				((SuperJump) cooldown).setDistanceLeft(distLeft);
-
-				player.stopFallFlying();
 				player.getAbilities().flying = false;
-				double distancePctg = ((SuperJump) cooldown).distanceLeft/((SuperJump) cooldown).distance;
 
-				player.fallDistance = 0;
+				if(cooldown.getTime() == 1) // landed
+				{
+					player.getLevel().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.superjumpLand, SoundSource.PLAYERS, 0.8F, 1);
 
-				if (distancePctg > .2f != info.isSquid()) {
-					info.setIsSquid(!info.isSquid());
+					player.moveTo(target);
+					player.noPhysics = superJump.oldNoClip;
+					player.setInvulnerable(false);
+					PlayerCooldown.setPlayerCooldown(player, null);
+				}
+				else if(cooldown.getTime() > superJump.duration * SuperJump.PrepareFraction) // preparing jump
+				{
+					if(!player.isOnGround())
+					{
+						cooldown.setTime(cooldown.getTime() + 1);
+						return;
+					}
+					double d0 = target.x - player.position().x;
+					double d1 = target.y - player.position().y;
+					double d2 = target.z - player.position().z;
+					double d3 = Math.sqrt(d0 * d0 + d2 * d2);
+					player.setXRot(CommonUtils.lerpRotation(0.2f, player.getXRot(), Mth.wrapDegrees((float)(-(Mth.atan2(d1, d3) * (180.0 / Math.PI))))));
+					player.setYRot(CommonUtils.lerpRotation(0.2f, player.getYRot(), Mth.wrapDegrees((float)(Mth.atan2(d2, d0) * (180.0 / Math.PI)) - 90.0F)));
+					player.setYHeadRot(player.getYRot());
+					if (!info.isSquid())
+                    {
+                        info.setIsSquid(true);
+						if (!player.level.isClientSide()) {
+							SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), info.isSquid()), player);
+						}
+					}
+				}
+				else // actually jumping
+				{
+					if(cooldown.getTime() == (int)(superJump.duration * SuperJump.PrepareFraction))
+						player.getLevel().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.superjumpStart, SoundSource.PLAYERS, 0.8F, 1);
+
+					player.stopFallFlying();
+					player.noPhysics = true;
+					player.fallDistance = 0;
+					player.setInvulnerable(true);
+
+					double progress = cooldown.getTime() / ((superJump.duration - 1) * SuperJump.PrepareFraction);
+					double nextProgress = (cooldown.getTime() - 1) / ((superJump.duration - 1) * SuperJump.PrepareFraction);
+
+					// serious question why does this use first parameter as the interpolation value
+					Vec3 position = getSuperJumpPosition(progress, target, origin);
+					player.setDeltaMovement(getSuperJumpPosition(nextProgress, target, origin).subtract(player.position()));
+
+					if(!player.level.isClientSide())
+					{
+						player.moveTo(position);
+						player.setXRot((float)Math.sin(progress * Math.PI) * 40f);
+					}
+				}
+				if(cooldown.getTime() == (int)(superJump.duration * SuperJump.SquidPortion)) // mid jump conversion
+				{
+					info.setIsSquid(false);
 					if (!player.level.isClientSide()) {
 						SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), info.isSquid()), player);
 					}
 				}
-
-				player.noPhysics = true;
-
-				if(((SuperJump) cooldown).distanceLeft < 0.01)
-					cooldown.setTime(0);
-				else
-				{
-					Vec3 dist = target.subtract(player.position());
-
-					dist = dist.multiply(1, 0, 1).scale(.1f).add(0, distancePctg > 0.9 ? Math.max(2, dist.y) * 1.25 : player.getDeltaMovement().y, 0);
-
-					dist = new Vec3(Math.min(3, dist.x), dist.y, Math.min(3, dist.z));
-
-					player.setDeltaMovement(dist);
-					player.hurtMarked = true;
-
-					//new Vec3((entitylivingbaseIn.getX() - entitylivingbaseIn.xo), (entitylivingbaseIn.getY() - entitylivingbaseIn.yo), (entitylivingbaseIn.getZ() - entitylivingbaseIn.zo)).normalize().y
-				}
 			}
+		}
+		@NotNull
+		private static Vec3 getSuperJumpPosition(double progress, Vec3 target, Vec3 origin)
+		{
+			final double jumpHeight = 28;
+			final double actualJumpCoeficient = 4 * jumpHeight;
 
+			return new Vec3(Mth.lerp(progress, target.x, origin.x), Mth.lerp(progress, target.y, origin.y) - actualJumpCoeficient * progress * progress + actualJumpCoeficient * progress, Mth.lerp(progress, target.z, origin.z));
 		}
 	}
 
 	public static class SuperJump extends PlayerCooldown
 	{
-		final Vec3 target;
-		double distance;
-		double distanceLeft;
-		boolean noClip = false;
-
-
-		public SuperJump(int slotIndex, Vec3 target, Vec3 from, boolean canClip)
+		final Vec3 target, origin;
+		int duration;
+		boolean oldNoClip = false;
+		public final static double PrepareFraction = 0.75, SquidPortion = 0.2;
+		public SuperJump(int slotIndex, Vec3 target, Vec3 from, int duration, boolean couldClip)
 		{
-			this(slotIndex, target, target.multiply(1,0,1).distanceTo(from.multiply(1,0,1)));
-			this.noClip = canClip;
-		}
-
-		public SuperJump(int slotIndex, Vec3 target, double distance)
-		{
-			super(ItemStack.EMPTY, (int) distance, slotIndex, InteractionHand.MAIN_HAND, false, false, false, false);
+			super(ItemStack.EMPTY, duration, slotIndex, InteractionHand.MAIN_HAND, false, false, true, false);
+			this.origin = from;
 			this.target = target;
-			this.distance = distance;
-			distanceLeft = distance;
+			this.duration = duration;
+			this.oldNoClip = couldClip;
 		}
 
 		public SuperJump(CompoundTag nbt)
 		{
-			this(nbt.getInt("SlotIndex"), new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")), nbt.getDouble("Distance"));
-			distanceLeft = nbt.getDouble("DistanceLeft");
-			noClip = nbt.getBoolean("CanClip");
-		}
-
-		public void setDistanceLeft(double distanceLeft) {
-			this.distanceLeft = distanceLeft;
-		}
-
-		@Override
-		public PlayerCooldown setTime(int v)
-		{
-			if(getTime() > 0)
-				super.setTime((int) distanceLeft);
-
-			return this;
+			this(nbt.getInt("SlotIndex"),
+				new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")),
+				new Vec3(nbt.getDouble("OriginX"), nbt.getDouble("OriginY"), nbt.getDouble("OriginZ")),
+			nbt.getInt("Duration"), nbt.getBoolean("CouldClip"));
 		}
 
 		@Override
 		public CompoundTag writeNBT(CompoundTag nbt)
 		{
 			nbt.putInt("SlotIndex", getSlotIndex());
-			nbt.putDouble("Distance", distance);
-			nbt.putDouble("DistanceLeft", distanceLeft);
+			nbt.putInt("Duration", duration);
 
 			nbt.putDouble("TargetX", target.x);
 			nbt.putDouble("TargetY", target.y);
 			nbt.putDouble("TargetZ", target.z);
 
+			nbt.putDouble("OriginX", origin.x);
+			nbt.putDouble("OriginY", origin.y);
+			nbt.putDouble("OriginZ", origin.z);
+
 			nbt.putBoolean("SuperJump", true);
-			nbt.putBoolean("CanClip", noClip);
+			nbt.putBoolean("CouldClip", oldNoClip);
 
 			return nbt;
 		}

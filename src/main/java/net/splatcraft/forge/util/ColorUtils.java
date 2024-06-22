@@ -320,7 +320,8 @@ public class ColorUtils
         return new float[]{r, g, b};
     }
 
-    private static final Random random = new Random();
+    // actual heresy but i am a c# dev so public static!!!!!
+    public static final Random random = new Random();
 
     public static int getRandomStarterColor()
     {

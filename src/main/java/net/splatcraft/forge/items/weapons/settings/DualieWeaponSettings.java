@@ -24,7 +24,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
     {
         public float projectileSize;
         public float projectileSpeed;
-        public float projectileDecayedSpeed;
+        public float horizontalDrag;
         public int projectileCount = 1;
         public int projectileLifeTicks = 600;
         public float projectileInkCoverage;
@@ -78,11 +78,18 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
     {
         return new WeaponTooltip[]
                 {
-                        new WeaponTooltip<DualieWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> settings.standardData.straightShotDistance + calculateDistanceTravelled(settings.standardData.projectileDecayedSpeed, settings.standardData.projectileGravity, 2), WeaponTooltip.RANKER_ASCENDING),
+                        new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, DualieWeaponSettings::calculateAproximateRange, WeaponTooltip.RANKER_ASCENDING),
                         new WeaponTooltip<DualieWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.standardData.baseDamage, WeaponTooltip.RANKER_ASCENDING),
                         new WeaponTooltip<DualieWeaponSettings>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollSpeed * 6, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
                 };
 
+    }
+
+    public static float calculateAproximateRange(DualieWeaponSettings settings)
+    {
+        final float minSpeedToCalculate = 0.01f;
+        double exponent = ((Math.log10(minSpeedToCalculate / settings.turretData.projectileSpeed) / Math.log10(settings.turretData.horizontalDrag)));
+        return (float) (settings.standardData.straightShotDistance * settings.standardData.projectileSpeed + settings.standardData.projectileSpeed * exponent * Math.pow(settings.turretData.horizontalDrag, exponent));
     }
 
     @Override
@@ -103,7 +110,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
         projectile.lifeTicks.ifPresent(this::setProjectileLifeTicks);
 
         setProjectileSpeed(projectile.speed);
-        projectile.decayedSpeed.ifPresent(this::setProjectileDecayedSpeed);
+        setProjectileHorizontalDrag(projectile.horizontalDrag.orElse(0.8f));
         projectile.count.ifPresent(this::setProjectileCount);
 
         projectile.inkCoverageImpact.ifPresent(this::setProjectileInkCoverage);
@@ -148,8 +155,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
             turretProjectile.lifeTicks.ifPresent(this::setTurretProjectileLifeTicks);
 
             turretProjectile.speed.ifPresent(this::setTurretProjectileSpeed);
-            turretProjectile.decayedSpeed.ifPresent(this::setTurretProjectileDecayedSpeed);
             turretProjectile.count.ifPresent(this::setTurretProjectileCount);
+            setProjectileHorizontalDrag(projectile.horizontalDrag.orElse(0.8f));
 
             turretProjectile.inkCoverageImpact.ifPresent(this::setTurretProjectileInkCoverage);
             turretProjectile.inkTrailCoverage.ifPresent(this::setTurretProjectileInkTrailCoverage);
@@ -186,14 +193,15 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
     @Override
     public DataRecord serialize() {
         return new DataRecord(new ProjectileDataRecord(standardData.projectileSize, Optional.of(standardData.projectileLifeTicks), standardData.projectileSpeed, 
-                Optional.of(standardData.projectileDecayedSpeed), standardData.straightShotDistance, Optional.of(standardData.projectileGravity), Optional.of(standardData.projectileCount),
+                Optional.of(standardData.horizontalDrag), standardData.straightShotDistance, Optional.of(standardData.projectileGravity), Optional.of(standardData.projectileCount),
                 Optional.of(standardData.projectileInkCoverage), Optional.of(standardData.projectileInkTrailCoverage), Optional.of(standardData.projectileInkTrailCooldown),
                 standardData.baseDamage, Optional.of(standardData.decayedDamage),
                 Optional.of(standardData.damageDecayStartTick), Optional.of(standardData.damageDecayPerTick)),
-                new ShotDataRecord(Optional.of(standardData.startupTicks), standardData.firingSpeed, standardData.groundInaccuracy, Optional.of(standardData.airInaccuracy), 
+                new ShotDataRecord(
+                        Optional.of(standardData.startupTicks), standardData.firingSpeed, standardData.groundInaccuracy, Optional.of(standardData.airInaccuracy),
                         Optional.of(standardData.pitchCompensation), standardData.inkConsumption, standardData.inkRecoveryCooldown),
-		        Optional.of(new OptionalProjectileDataRecord(Optional.of(turretData.projectileSize), Optional.of(turretData.projectileLifeTicks), Optional.of(turretData.projectileSpeed),
-				        Optional.of(turretData.projectileDecayedSpeed), Optional.of(turretData.straightShotDistance), Optional.of(turretData.projectileGravity), Optional.of(turretData.projectileCount),
+		                Optional.of(new OptionalProjectileDataRecord(Optional.of(turretData.projectileSize), Optional.of(turretData.projectileLifeTicks), Optional.of(turretData.projectileSpeed),
+				        Optional.of(turretData.horizontalDrag), Optional.of(turretData.straightShotDistance), Optional.of(turretData.projectileGravity), Optional.of(turretData.projectileCount),
 				        Optional.of(turretData.projectileInkCoverage), Optional.of(turretData.projectileInkTrailCoverage), Optional.of(turretData.projectileInkTrailCooldown),
 				        Optional.of(turretData.baseDamage), Optional.of(turretData.decayedDamage),
 				        Optional.of(turretData.damageDecayStartTick), Optional.of(turretData.damageDecayPerTick))),
@@ -259,15 +267,13 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
     public DualieWeaponSettings setProjectileSpeed(float projectileSpeed) {
         standardData.projectileSpeed = projectileSpeed;
-        standardData.projectileDecayedSpeed = projectileSpeed;
         turretData.projectileSpeed = projectileSpeed;
-        turretData.projectileDecayedSpeed = projectileSpeed;
         return this;
     }
 
-    public DualieWeaponSettings setProjectileDecayedSpeed(float projectileDecayedSpeed) {
-        standardData.projectileDecayedSpeed = projectileDecayedSpeed;
-        turretData.projectileDecayedSpeed = projectileDecayedSpeed;
+    public DualieWeaponSettings setProjectileHorizontalDrag(float projectileDecayedSpeed) {
+        standardData.horizontalDrag = projectileDecayedSpeed;
+        turretData.horizontalDrag = projectileDecayedSpeed;
         return this;
     }
 
@@ -373,9 +379,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
     public DualieWeaponSettings setStraightShotDistance(float blocks)
     {
-        float speedAvg = (standardData.projectileSpeed + standardData.projectileDecayedSpeed) * 0.5f;
-        standardData.straightShotTickTime = (int) (blocks / speedAvg);
-        standardData.straightShotDistance = standardData.straightShotTickTime * speedAvg; //math so that weapon stat tooltips always yield accurate results
+        standardData.straightShotTickTime = (int) (blocks / standardData.projectileSpeed);
+        standardData.straightShotDistance = standardData.straightShotTickTime * standardData.projectileSpeed; //math so that weapon stat tooltips always yield accurate results
         return this;
     }
 
@@ -394,20 +399,16 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
     public DualieWeaponSettings setTurretProjectileSpeed(float projectileSpeed) {
         turretData.projectileSpeed = projectileSpeed;
-        turretData.projectileDecayedSpeed = projectileSpeed;
         return this;
     }
-
-    public DualieWeaponSettings setTurretProjectileDecayedSpeed(float projectileDecayedSpeed) {
-        turretData.projectileDecayedSpeed = projectileDecayedSpeed;
+    public DualieWeaponSettings setTurretProjectileHorizontalDrag(float horizontalDrag) {
+        turretData.horizontalDrag = horizontalDrag;
         return this;
     }
-
     public DualieWeaponSettings setTurretProjectileCount(int projectileCount) {
         turretData.projectileCount = projectileCount;
         return this;
     }
-
     public DualieWeaponSettings setTurretPitchCompensation(float pitchCompensation) {
         turretData.pitchCompensation = pitchCompensation;
         return this;
@@ -487,17 +488,10 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
     public DualieWeaponSettings setTurretStraightShotDistance(float blocks)
     {
-        float speedAvg = (turretData.projectileSpeed + turretData.projectileDecayedSpeed) * 0.5f;
-        turretData.straightShotTickTime = (int) (blocks / speedAvg);
-        turretData.straightShotDistance = turretData.straightShotTickTime * speedAvg; //math so that weapon stat tooltips always yield accurate results
+        turretData.straightShotTickTime = (int) (blocks / turretData.projectileSpeed);
+        turretData.straightShotDistance = turretData.straightShotTickTime * turretData.projectileSpeed; //math so that weapon stat tooltips always yield accurate results
         return this;
     }
-
-    public int getDualieOffhandFiringOffset(boolean turret)
-    {
-        return standardData.firingSpeed / 2;
-    }
-
     public record DataRecord(
         ProjectileDataRecord projectile,
         ShotDataRecord shot,
@@ -551,7 +545,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
             float size,
             Optional<Integer> lifeTicks,
             float speed,
-            Optional<Float> decayedSpeed,
+            Optional<Float> horizontalDrag,
             float straightShotDistance,
             Optional<Float> gravity,
             Optional<Integer> count,
@@ -569,7 +563,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                         Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
                         Codec.INT.optionalFieldOf("lifespan").forGetter(ProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("decayed_speed").forGetter(ProjectileDataRecord::decayedSpeed),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(ProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.fieldOf("straight_shot_distance").forGetter(ProjectileDataRecord::straightShotDistance),
                         Codec.FLOAT.optionalFieldOf("gravity").forGetter(ProjectileDataRecord::gravity),
                         Codec.INT.optionalFieldOf("count").forGetter(ProjectileDataRecord::count),
@@ -611,7 +605,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
             Optional<Float> size,
             Optional<Integer> lifeTicks,
             Optional<Float> speed,
-            Optional<Float> decayedSpeed,
+            Optional<Float> horizontalDrag,
             Optional<Float> straightShotDistance,
             Optional<Float> gravity,
             Optional<Integer> count,
@@ -629,7 +623,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                         Codec.FLOAT.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
                         Codec.INT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("decayed_speed").forGetter(OptionalProjectileDataRecord::decayedSpeed),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.optionalFieldOf("straight_shot_distance").forGetter(OptionalProjectileDataRecord::straightShotDistance),
                         Codec.FLOAT.optionalFieldOf("gravity").forGetter(OptionalProjectileDataRecord::gravity),
                         Codec.INT.optionalFieldOf("count").forGetter(OptionalProjectileDataRecord::count),
