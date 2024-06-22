@@ -205,9 +205,9 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity {
 
     private void playParticles()
     {
-        if (this.level instanceof ServerLevel)
+        if (this.level instanceof ServerLevel serverLevel)
         {
-            ((ServerLevel) this.level).sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.WHITE_WOOL.defaultBlockState()), this.getX(), this.getEyePosition(0.6666666666666666f).y(), this.getZ(), 10, this.getBbWidth() / 4.0F, this.getBbHeight() / 4.0F, this.getBbWidth() / 4.0F, 0.05D);
+            serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.WHITE_WOOL.defaultBlockState()), this.getX(), this.getEyePosition(0.6666666666666666f).y(), this.getZ(), 10, this.getBbWidth() / 4.0F, this.getBbHeight() / 4.0F, this.getBbWidth() / 4.0F, 0.05D);
         }
 
     }
@@ -235,7 +235,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity {
     private void damageBumper(DamageSource source, float dmg)
     {
         float f = this.getHealth();
-        f = f - dmg;
+        f -= dmg;
         if (f <= 0.5F)
         {
             this.dropBumper();

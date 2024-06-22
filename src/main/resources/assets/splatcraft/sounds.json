@@ -71,6 +71,12 @@
       "splatcraft:blaster_explosion"
     ]
   },
+  "blaster_direct": {
+    "subtitle": "subtitle.blaster_direct",
+    "sounds": [
+      "splatcraft:blaster_direct"
+    ]
+  },
   "roller_fling": {
     "subtitle": "subtitle.roller_fling",
     "sounds": [
@@ -288,6 +294,18 @@
     "subtitle": "subtitle.splat_switch_powered_off",
     "sounds": [
       "splatcraft:splat_switch_powered_off"
+    ]
+  },
+  "superjump_start": {
+    "subtitle": "subtitle.superjump_start",
+    "sounds": [
+      "splatcraft:superjump_start"
+    ]
+  },
+  "superjump_land": {
+    "subtitle": "subtitle.superjump_land",
+    "sounds": [
+      "splatcraft:superjump_land"
     ]
   }
 }

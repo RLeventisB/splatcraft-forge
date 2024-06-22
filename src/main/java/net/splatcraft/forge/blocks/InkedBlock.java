@@ -346,18 +346,16 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
                 return clearInk(levelIn, currentPos);
         }
 
-
-
-        if (levelIn.getBlockEntity(currentPos) instanceof InkedBlockTileEntity)
+        if (levelIn.getBlockEntity(currentPos) instanceof InkedBlockTileEntity inkedBlock)
         {
-            BlockState savedState = ((InkedBlockTileEntity) levelIn.getBlockEntity(currentPos)).getSavedState();
+            BlockState savedState = inkedBlock.getSavedState();
 
             if (savedState != null && !savedState.getBlock().equals(this))
             {
-                if(facingState != null && levelIn.getBlockEntity(facingPos) instanceof InkedBlockTileEntity)
-                    facingState = ((InkedBlockTileEntity) levelIn.getBlockEntity(facingPos)).getSavedState();
+                if(levelIn.getBlockEntity(facingPos) instanceof InkedBlockTileEntity facedInkedBlock)
+                    facingState = facedInkedBlock.getSavedState();
 
-                ((InkedBlockTileEntity) levelIn.getBlockEntity(currentPos)).setSavedState(savedState.getBlock().updateShape(savedState, facing, facingState, levelIn, currentPos, facingPos));
+                inkedBlock.setSavedState(savedState.getBlock().updateShape(savedState, facing, facingState, levelIn, currentPos, facingPos));
             }
         }
 

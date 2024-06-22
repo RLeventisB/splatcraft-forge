@@ -85,15 +85,17 @@ public class SquidFormHandler {
                 squidSubmergeMode.put(player, Math.min(2, Math.max(squidSubmergeMode.get(player) + 1, 1)));
                 //if(!player.isInvisible())
                 //    player.setInvisible(true);
-            } else squidSubmergeMode.put(player, Math.max(-2, Math.min(squidSubmergeMode.get(player) - 1, -1)));
+            }
+            else
+                squidSubmergeMode.put(player, Math.max(-2, Math.min(squidSubmergeMode.get(player) - 1, -1)));
 
 
             if (squidSubmergeMode.get(player) == 1) {
                 player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.level.getRandom().nextFloat() - player.level.getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 
-                if (player.level instanceof ServerLevel) {
+                if (player.level instanceof ServerLevel serverLevel) {
                     for (int i = 0; i < 2; i++)
-                        ColorUtils.addInkSplashParticle((ServerLevel) player.level, player, 1.4f);
+                        ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
                 }
             } else if (squidSubmergeMode.get(player) == -1)
                 player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.level.getRandom().nextFloat() - player.level.getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);

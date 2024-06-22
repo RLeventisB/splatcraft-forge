@@ -73,7 +73,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     {
         entityData.define(DROP_COLOR, ColorUtils.DEFAULT);
         entityData.define(DROP_SIZE, 0.3f);
-        entityData.define(GRAVITY, 0.075f);
+        entityData.define(GRAVITY, 0.175f);
     }
 
     @Override
@@ -166,25 +166,6 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     {
         super.shootFromRotation(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy);
         InkExplosion.createInkExplosion(getOwner(), thrower.blockPosition(), 0.75f, 0, 0, true, inkType, sourceWeapon);
-
-        Vec3 posDiff = new Vec3(0, 0, 0);
-
-        if (thrower instanceof Player player)
-        {
-            if(WeaponHandler.playerHasPrevPos(player))
-                posDiff = thrower.position().subtract(WeaponHandler.getPlayerPrevPos(player));
-            if (thrower.isOnGround())
-                posDiff.multiply(1, 0, 1);
-        }
-
-
-        moveTo(getX() + posDiff.x(), getY() + posDiff.y(), getZ() + posDiff.z());
-        Vec3 throwerSpeed = thrower.getDeltaMovement();
-        Vec3 speed = getDeltaMovement()
-                .subtract(throwerSpeed.x, thrower.isOnGround() ? 0.0 : throwerSpeed.y, throwerSpeed.z)
-                .add(Math.min(2.5, throwerSpeed.x * 0.8), 0.0, Math.min(2.5, throwerSpeed.z * 0.8))
-                .add(posDiff.multiply(0.8, 0.8, 0.8));
-        setDeltaMovement(speed);
     }
 
 

@@ -50,7 +50,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     }
     public SELF setSecret(boolean value)
     {
-        isSecret = value; // ? what
+        isSecret = value; // nvm i get it know
         return (SELF) this;
     }
 

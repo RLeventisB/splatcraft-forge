@@ -27,6 +27,7 @@ public class SplatcraftSounds
     public static SoundEvent noInkSub;
     public static SoundEvent shooterShot;
     public static SoundEvent blasterShot;
+    public static SoundEvent blasterDirect;
     public static SoundEvent blasterExplosion;
     public static SoundEvent rollerFling;
     public static SoundEvent rollerRoll;
@@ -62,7 +63,8 @@ public class SplatcraftSounds
     public static SoundEvent inkedBlockPlace;
     public static SoundEvent inkedBlockHit;
     public static SoundEvent inkedBlockFall;
-
+    public static SoundEvent superjumpStart;
+    public static SoundEvent superjumpLand;
     public static final SoundType SOUND_TYPE_INK = new ForgeSoundType(1.0F, 1.0F, () -> SplatcraftSounds.inkedBlockBreak, () -> SplatcraftSounds.inkedBlockStep, () -> SplatcraftSounds.inkedBlockPlace, () -> SplatcraftSounds.inkedBlockHit, () -> SplatcraftSounds.inkedBlockFall);
     public static final SoundType SOUND_TYPE_SWIMMING = new ForgeSoundType(1.0F, 1.0F, () -> SplatcraftSounds.inkedBlockBreak, () -> SplatcraftSounds.inkedBlockSwim, () -> SplatcraftSounds.inkedBlockPlace, () -> SplatcraftSounds.inkedBlockHit, () -> SplatcraftSounds.inkedBlockFall);
     public static void initSounds()
@@ -82,6 +84,7 @@ public class SplatcraftSounds
         noInkSub = createSoundEvent("no_ink_sub");
         shooterShot = createSoundEvent("shooter_firing");
         blasterShot = createSoundEvent("blaster_firing");
+        blasterDirect = createSoundEvent("blaster_direct");
         blasterExplosion = createSoundEvent("blaster_explosion");
         rollerFling = createSoundEvent("roller_fling");
         rollerRoll = createSoundEvent("roller_roll");
@@ -111,6 +114,9 @@ public class SplatcraftSounds
         squidBumperBreak = createSoundEvent("squid_bumper_break");
         splatSwitchPoweredOn = createSoundEvent("splat_switch_powered_on");
         splatSwitchPoweredOff = createSoundEvent("splat_switch_powered_off");
+
+        superjumpStart = createSoundEvent("superjump_start");
+        superjumpLand = createSoundEvent("superjump_land");
     }
 
     private static SoundEvent createSoundEvent(String id)

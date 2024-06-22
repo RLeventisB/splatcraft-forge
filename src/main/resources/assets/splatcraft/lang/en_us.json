@@ -357,6 +357,7 @@
 
   "subtitle.shooter_firing": "Shooter Firing",
   "subtitle.blaster_firing": "Blaster Firing",
+  "subtitle.blaster_direct": "Blaster Projectile Directs",
   "subtitle.blaster_explosion": "Blaster Projectile Explodes",
   "subtitle.roller_fling": "Roller Flung",
   "subtitle.roller_roll": "Roller Rolling",
@@ -386,6 +387,8 @@
   "subtitle.ink_submerge": "Squid Submerges",
   "subtitle.ink_surface": "Squid Surfaces",
   "subtitle.ink_swim": "Squid Swims Through Ink",
+  "subtitle.superjump_start": "Player superjumps",
+  "subtitle.superjump_land": "Player lands from superjump",
 
   "container.ink_vat": "Inkwell Crafting",
   "container.ammo_knights_workbench": "Weapon Crafting",

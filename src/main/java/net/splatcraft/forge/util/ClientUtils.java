@@ -17,9 +17,11 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.SplatcraftConfig;
+import net.splatcraft.forge.client.handlers.PlayerMovementHandler;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.items.InkTankItem;
+import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
@@ -86,15 +88,14 @@ public class ClientUtils
         return 1;
     }
 
-    public static boolean canPerformRoll(Player entity)
+    public static boolean canPerformRoll(Player player)
     {
-        Input input = ((LocalPlayer) entity).input;
-
-        return !PlayerCooldown.hasPlayerCooldown(entity) && input.jumping && (input.leftImpulse != 0 || input.forwardImpulse != 0);
+        Input input = GetUnmodifiedInput(player);
+        return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.TurretCooldown turretCooldown && !turretCooldown.isLastRoll())) && input.jumping && (input.leftImpulse != 0 || input.forwardImpulse != 0);
     }
 
-    public static Vec3 getDodgeRollVector(Player entity) {
-        Input input = ((LocalPlayer) entity).input;
+    public static Vec3 getDodgeRollVector(Player player) {
+        Input input = GetUnmodifiedInput(player);
         return new Vec3(input.leftImpulse, -0.4f, input.forwardImpulse);
     }
 
@@ -124,5 +125,10 @@ public class ClientUtils
         }
         cap.setIsSquid(newSquid);
         SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
+    }
+
+    public static Input GetUnmodifiedInput(Player player)
+    {
+        return PlayerMovementHandler.unmodifiedInputMap.getOrDefault((LocalPlayer) player, new Input());
     }
 }

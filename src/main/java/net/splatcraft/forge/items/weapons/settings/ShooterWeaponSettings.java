@@ -10,7 +10,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 {
     public float projectileSize;
     public float projectileSpeed;
-    public float projectileDecayedSpeed;
+    public float horizontalDrag = 0.8f;
     public int projectileCount = 1;
     public int projectileLifeTicks = 600;
 
@@ -70,10 +70,16 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
     {
         return new WeaponTooltip[]
                 {
-                        new WeaponTooltip<ShooterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> settings.straightShotDistance + calculateDistanceTravelled(settings.projectileDecayedSpeed, settings.projectileGravity, 2), WeaponTooltip.RANKER_ASCENDING),
+                        new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, ShooterWeaponSettings::calculateAproximateRange, WeaponTooltip.RANKER_ASCENDING),
                         new WeaponTooltip<ShooterWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.baseDamage, WeaponTooltip.RANKER_ASCENDING),
                         new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.firingSpeed, WeaponTooltip.RANKER_DESCENDING)
                 };
+    }
+    public static float calculateAproximateRange(ShooterWeaponSettings settings)
+    {
+        final float minSpeedToCalculate = 0.01f;
+        double exponent = ((Math.log10(minSpeedToCalculate / settings.projectileSpeed) / Math.log10(settings.horizontalDrag)));
+        return (float) (settings.straightShotDistance * settings.projectileSpeed + settings.projectileSpeed * exponent * Math.pow(settings.horizontalDrag, exponent));
     }
 
     @Override
@@ -94,7 +100,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
         projectile.lifeTicks.ifPresent(this::setProjectileLifeTicks);
 
         setProjectileSpeed(projectile.speed);
-        projectile.decayedSpeed.ifPresent(this::setProjectileDecayedSpeed);
+        projectile.horizontalDrag.ifPresent(this::setProjectileHorizontalDrag);
         projectile.count.ifPresent(this::setProjectileCount);
 
         projectile.inkCoverageImpact.ifPresent(this::setProjectileInkCoverage);
@@ -124,7 +130,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 
     @Override
     public DataRecord serialize() {
-        return new DataRecord(new ProjectileDataRecord(projectileSize, Optional.of(projectileLifeTicks), projectileSpeed, Optional.of(projectileDecayedSpeed), straightShotDistance, Optional.of(projectileGravity), Optional.of(projectileCount),
+        return new DataRecord(new ProjectileDataRecord(projectileSize, Optional.of(projectileLifeTicks), projectileSpeed, Optional.of(horizontalDrag), straightShotDistance,  Optional.of(projectileGravity), Optional.of(projectileCount),
                 Optional.of(projectileInkCoverage), Optional.of(projectileInkTrailCoverage), Optional.of(projectileInkTrailCooldown), baseDamage, Optional.of(decayedDamage),
                 Optional.of(damageDecayStartTick), Optional.of(damageDecayPerTick)),
                 new ShotDataRecord(Optional.of(startupTicks), firingSpeed, groundInaccuracy, Optional.of(airInaccuracy), Optional.of(pitchCompensation), inkConsumption, inkRecoveryCooldown),
@@ -146,12 +152,11 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 
     public ShooterWeaponSettings setProjectileSpeed(float projectileSpeed) {
         this.projectileSpeed = projectileSpeed;
-        this.projectileDecayedSpeed = projectileSpeed;
         return this;
     }
 
-    public ShooterWeaponSettings setProjectileDecayedSpeed(float projectileDecayedSpeed) {
-        this.projectileDecayedSpeed = projectileDecayedSpeed;
+    public ShooterWeaponSettings setProjectileHorizontalDrag(float horizontalDrag) {
+        this.horizontalDrag = horizontalDrag;
         return this;
     }
 
@@ -244,9 +249,8 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 
     public ShooterWeaponSettings setStraightShotDistance(float blocks)
     {
-        float speedAvg = (projectileSpeed + projectileDecayedSpeed) * 0.5f;
-        this.straightShotTickTime = (int) (blocks / speedAvg);
-        this.straightShotDistance = straightShotTickTime * speedAvg; //math so that weapon stat tooltips always yield accurate results
+        this.straightShotTickTime = (int) (blocks / projectileSpeed);
+        this.straightShotDistance = straightShotTickTime * projectileSpeed; //math so that weapon stat tooltips always yield accurate results
         return this;
     }
 
@@ -278,7 +282,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
             float size,
             Optional<Integer> lifeTicks,
             float speed,
-            Optional<Float> decayedSpeed,
+            Optional<Float> horizontalDrag,
             float straightShotDistance,
             Optional<Float> gravity,
             Optional<Integer> count,
@@ -296,7 +300,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
                         Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
                         Codec.INT.optionalFieldOf("lifespan").forGetter(ProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("decayed_speed").forGetter(ProjectileDataRecord::decayedSpeed),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(ProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.fieldOf("straight_shot_distance").forGetter(ProjectileDataRecord::straightShotDistance),
                         Codec.FLOAT.optionalFieldOf("gravity").forGetter(ProjectileDataRecord::gravity),
                         Codec.INT.optionalFieldOf("count").forGetter(ProjectileDataRecord::count),
