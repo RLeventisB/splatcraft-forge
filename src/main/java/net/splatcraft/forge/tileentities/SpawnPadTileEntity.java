@@ -57,7 +57,7 @@ public class SpawnPadTileEntity extends InkColorTileEntity
 	}
 
 	@Override
-	public @NotNull void saveAdditional(CompoundTag nbt)
+	public void saveAdditional(CompoundTag nbt)
 	{
 		if(spawnShieldUuid != null)
 			nbt.putUUID("SpawnShield", spawnShieldUuid);

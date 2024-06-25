@@ -9,6 +9,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.subs.CurlingBombModel;
 import net.splatcraft.forge.entities.subs.CurlingBombEntity;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.minecraft.util.Mth.*;
@@ -27,7 +28,7 @@ public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, Cu
 	}
 
 	@Override
-	public void render(CurlingBombEntity entityIn, float entityYaw, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(CurlingBombEntity entityIn, float entityYaw, float partialTicks, PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
 
 		matrixStackIn.pushPose();
 
@@ -60,7 +61,7 @@ public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, Cu
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(CurlingBombEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull CurlingBombEntity entity)
 	{
 		return TEXTURE;
 	}

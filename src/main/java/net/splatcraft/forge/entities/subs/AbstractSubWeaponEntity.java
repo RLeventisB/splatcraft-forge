@@ -329,7 +329,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     @Override
-    public Packet<?> getAddEntityPacket()
+    public @NotNull Packet<?> getAddEntityPacket()
     {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
@@ -350,11 +350,11 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     public void shoot(double p_37266_, double p_37267_, double p_37268_, float p_37269_, float p_37270_) {
-        Vec3 vec3 = (new Vec3(p_37266_, p_37267_, p_37268_)).normalize().add(this.random.nextGaussian() * (double)0.0075F * (double)p_37270_, this.random.nextGaussian() * (double)0.0075F * (double)p_37270_, this.random.nextGaussian() * (double)0.0075F * (double)p_37270_).scale((double)p_37269_);
+        Vec3 vec3 = (new Vec3(p_37266_, p_37267_, p_37268_)).normalize().add(this.random.nextGaussian() * (double)0.0075F * (double)p_37270_, this.random.nextGaussian() * (double)0.0075F * (double)p_37270_, this.random.nextGaussian() * (double)0.0075F * (double)p_37270_).scale(p_37269_);
         this.setDeltaMovement(vec3);
         double d0 = vec3.horizontalDistance();
-        this.setYRot((float)(Mth.atan2(vec3.x, vec3.z) * (double)(180F / (float)Math.PI)));
-        this.setXRot((float)(Mth.atan2(vec3.y, d0) * (double)(180F / (float)Math.PI)));
+        this.setYRot((float)(Mth.atan2(vec3.x, vec3.z) * (180.0 / Math.PI)));
+        this.setXRot((float)(Mth.atan2(vec3.y, d0) * (180.0 / Math.PI)));
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
     }
@@ -394,7 +394,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     protected void updateRotation() {
         Vec3 vec3 = this.getDeltaMovement();
         double d0 = vec3.horizontalDistance();
-        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float)(Mth.atan2(vec3.y, d0) * (double)(180F / (float)Math.PI))));
-        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float)(Mth.atan2(vec3.x, vec3.z) * (double)(180F / (float)Math.PI))));
+        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float)(Mth.atan2(vec3.y, d0) * (180.0 / Math.PI))));
+        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float)(Mth.atan2(vec3.x, vec3.z) * (180.0 / Math.PI))));
     }
 }

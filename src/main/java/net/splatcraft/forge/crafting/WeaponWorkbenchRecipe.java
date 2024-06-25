@@ -2,9 +2,6 @@ package net.splatcraft.forge.crafting;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.util.ArrayList;
-import java.util.List;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
@@ -15,8 +12,12 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<WeaponWorkbenchRecipe>
 {
@@ -40,7 +41,8 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull Container pContainer, @NotNull RegistryAccess pRegistryAccess) {
+    public @NotNull ItemStack assemble(@NotNull Container inv)
+    {
         return ItemStack.EMPTY;
     }
 
@@ -51,7 +53,8 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess pRegistryAccess) {
+    public @NotNull ItemStack getResultItem()
+    {
         return subRecipes.isEmpty() ? ItemStack.EMPTY : subRecipes.get(0).getOutput().copy();
     }
 
@@ -100,12 +103,13 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
         return subRecipes.stream().filter(weaponWorkbenchSubtypeRecipe -> weaponWorkbenchSubtypeRecipe.isAvailable(player)).toList();
     }
 
-    public static class Serializer implements RecipeSerializer<WeaponWorkbenchRecipe>
+    public static class Serializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<WeaponWorkbenchRecipe>
     {
 
         public Serializer(String name)
         {
             super();
+            setRegistryName(name);
         }
 
         @Override

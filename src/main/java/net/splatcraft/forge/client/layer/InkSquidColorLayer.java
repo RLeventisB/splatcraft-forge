@@ -12,6 +12,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.client.models.InkSquidModel;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
 {
@@ -25,7 +26,7 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
+    public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
     {
         int color = ColorUtils.getEntityColor(entity);
         if (SplatcraftConfig.Client.getColorLock())
@@ -39,7 +40,7 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
         coloredCutoutModelCopyLayerRender(getParentModel(), model, TEXTURE, poseStack, bufferSource, packedLight, entity, limbSwing, limbSwingAmount, packedLight, ageInTicks, netHeadYaw, headPitch, r, g, b);
     }
 
-    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(EntityModel<T> parentModel, EntityModel<T> model, ResourceLocation textureLoc, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue) {
+    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(@NotNull EntityModel<T> parentModel, @NotNull EntityModel<T> model, @NotNull ResourceLocation textureLoc, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue) {
         if (!entity.isInvisible()) {
             parentModel.copyPropertiesTo(model);
             renderColoredCutoutModel(model, textureLoc, poseStack, bufferSource, packedLight, entity, red, green, blue);

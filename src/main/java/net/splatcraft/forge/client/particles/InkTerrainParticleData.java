@@ -13,6 +13,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.registries.SplatcraftParticleTypes;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
@@ -21,13 +22,13 @@ public class InkTerrainParticleData implements ParticleOptions
 
     public static final Deserializer<InkTerrainParticleData> DESERIALIZER = new Deserializer<>() {
         @Override
-        public InkTerrainParticleData fromCommand(ParticleType<InkTerrainParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException {
+        public @NotNull InkTerrainParticleData fromCommand(@NotNull ParticleType<InkTerrainParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException {
             reader.expect(' ');
             return new InkTerrainParticleData(InkColorArgument.parseStatic(reader));
         }
 
         @Override
-        public InkTerrainParticleData fromNetwork(ParticleType<InkTerrainParticleData> particleTypeIn, FriendlyByteBuf buffer) {
+        public @NotNull InkTerrainParticleData fromNetwork(@NotNull ParticleType<InkTerrainParticleData> particleTypeIn, FriendlyByteBuf buffer) {
             return new InkTerrainParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
         }
     };
@@ -60,7 +61,7 @@ public class InkTerrainParticleData implements ParticleOptions
     }
 
     @Override
-    public ParticleType<?> getType()
+    public @NotNull ParticleType<?> getType()
     {
         return SplatcraftParticleTypes.INK_TERRAIN;
     }
@@ -74,7 +75,7 @@ public class InkTerrainParticleData implements ParticleOptions
     }
 
     @Override
-    public String writeToString()
+    public @NotNull String writeToString()
     {
         return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registry.PARTICLE_TYPE.getKey(this.getType()), this.red, this.green, this.blue);
     }

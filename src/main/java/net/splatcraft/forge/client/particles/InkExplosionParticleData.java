@@ -8,6 +8,7 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.registries.SplatcraftParticleTypes;
+import org.jetbrains.annotations.NotNull;
 
 public class InkExplosionParticleData extends InkSplashParticleData
 {
@@ -23,7 +24,7 @@ public class InkExplosionParticleData extends InkSplashParticleData
     public static final Deserializer<InkExplosionParticleData> DESERIALIZER = new Deserializer<InkExplosionParticleData>()
     {
         @Override
-        public InkExplosionParticleData fromCommand(ParticleType<InkExplosionParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
+        public @NotNull InkExplosionParticleData fromCommand(@NotNull ParticleType<InkExplosionParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
         {
             reader.expect(' ');
             Integer color = InkColorArgument.parseStatic(reader);
@@ -32,7 +33,7 @@ public class InkExplosionParticleData extends InkSplashParticleData
         }
 
         @Override
-        public InkExplosionParticleData fromNetwork(ParticleType<InkExplosionParticleData> particleTypeIn, FriendlyByteBuf buffer)
+        public @NotNull InkExplosionParticleData fromNetwork(@NotNull ParticleType<InkExplosionParticleData> particleTypeIn, FriendlyByteBuf buffer)
         {
             return new InkExplosionParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
         }

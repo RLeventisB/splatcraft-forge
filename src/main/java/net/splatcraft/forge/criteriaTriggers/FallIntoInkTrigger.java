@@ -6,16 +6,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
 import net.splatcraft.forge.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class FallIntoInkTrigger extends SimpleCriterionTrigger<FallIntoInkTrigger.TriggerInstance>
 {
 	static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "fall_into_ink");
 
-	public ResourceLocation getId() {
+	public @NotNull ResourceLocation getId() {
 		return ID;
 	}
 
-	public FallIntoInkTrigger.TriggerInstance createInstance(JsonObject json, EntityPredicate.Composite composite, DeserializationContext context)
+	public FallIntoInkTrigger.@NotNull TriggerInstance createInstance(@NotNull JsonObject json, EntityPredicate.@NotNull Composite composite, @NotNull DeserializationContext context)
 	{
 		return new FallIntoInkTrigger.TriggerInstance(composite, GsonHelper.getAsFloat(json, "distance", 0));
 	}
@@ -38,7 +39,7 @@ public class FallIntoInkTrigger extends SimpleCriterionTrigger<FallIntoInkTrigge
 			return distance >= this.distance;
 		}
 
-		public JsonObject serializeToJson(SerializationContext context)
+		public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
 		{
 			JsonObject jsonobject = super.serializeToJson(context);
 			jsonobject.addProperty("distance", distance);

@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.entities.SpawnShieldEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
@@ -40,7 +41,7 @@ public class SpawnShieldRenderer extends EntityRenderer<SpawnShieldEntity>
 	}
 
 	@Override
-	public void render(SpawnShieldEntity entity, float entityYaw, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int packedLight)
+	public void render(SpawnShieldEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int packedLight)
 	{
 		float activeTime = entity.getActiveTime();
 		float[] rgb = ColorUtils.hexToRGB(entity.getColor());
@@ -106,7 +107,7 @@ public class SpawnShieldRenderer extends EntityRenderer<SpawnShieldEntity>
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(SpawnShieldEntity p_110775_1_)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull SpawnShieldEntity p_110775_1_)
 	{
 		return new ResourceLocation(Splatcraft.MODID, "textures/blocks/allowed_color_barrier_fancy.png");
 	}

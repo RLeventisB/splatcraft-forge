@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SquidSoulParticle extends TextureSheetParticle
@@ -51,13 +52,13 @@ public class SquidSoulParticle extends TextureSheetParticle
     }
 
     @Override
-    public ParticleRenderType getRenderType()
+    public @NotNull ParticleRenderType getRenderType()
     {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @Override
-    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks)
+    public void render(@NotNull VertexConsumer buffer, Camera renderInfo, float partialTicks)
     {
         Vec3 renderPos = renderInfo.getPosition();
         float lvt_5_1_ = (float) (Mth.lerp(partialTicks, this.xo, this.x) - renderPos.x());
@@ -127,7 +128,7 @@ public class SquidSoulParticle extends TextureSheetParticle
 
         @Nullable
         @Override
-        public Particle createParticle(SquidSoulParticleData typeIn, ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull SquidSoulParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
             return new SquidSoulParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
         }

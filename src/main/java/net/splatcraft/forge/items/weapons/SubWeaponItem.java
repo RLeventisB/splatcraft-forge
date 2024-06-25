@@ -148,7 +148,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     }
 
     @Override
-    public void initializeClient(Consumer<IItemRenderProperties> consumer)
+    public void initializeClient(@NotNull Consumer<IItemRenderProperties> consumer)
     {
         super.initializeClient(consumer);
         consumer.accept(new IItemRenderProperties() {
@@ -165,7 +165,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     public static class DispenseBehavior extends DefaultDispenseItemBehavior
     {
         @Override
-        public ItemStack execute(BlockSource source, ItemStack stack)
+        public @NotNull ItemStack execute(@NotNull BlockSource source, @NotNull ItemStack stack)
         {
             if (SubWeaponItem.singleUse(stack))
             {

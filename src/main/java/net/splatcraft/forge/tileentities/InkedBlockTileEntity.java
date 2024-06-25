@@ -32,7 +32,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
     }
 
     @Override
-    public void setLevel(Level level) {
+    public void setLevel(@NotNull Level level) {
         super.setLevel(level);
     }
     //Used to port Inked Blocks to World Ink system

@@ -13,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.AbstractSubWeaponModel;
 import net.splatcraft.forge.entities.subs.SuctionBombEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SuctionBombModel extends AbstractSubWeaponModel<SuctionBombEntity>
 {
@@ -47,12 +48,12 @@ public class SuctionBombModel extends AbstractSubWeaponModel<SuctionBombEntity>
 	}
 
 	@Override
-	public void setupAnim(SuctionBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(@NotNull SuctionBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 
 	}
 
 	@Override
-	public void prepareMobModel(SuctionBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+	public void prepareMobModel(@NotNull SuctionBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
@@ -71,7 +72,7 @@ public class SuctionBombModel extends AbstractSubWeaponModel<SuctionBombEntity>
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 		Main.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 	}
 }

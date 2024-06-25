@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -50,13 +51,13 @@ public class InkVatColorRecipe implements Recipe<Container>
     }
 
     @Override
-    public boolean matches(Container inv, Level levelIn)
+    public boolean matches(Container inv, @NotNull Level levelIn)
     {
         return ingredient.test(inv.getItem(3));
     }
 
     @Override
-    public ItemStack assemble(Container inv)
+    public @NotNull ItemStack assemble(Container inv)
     {
         return inv.getItem(0);
     }
@@ -68,7 +69,7 @@ public class InkVatColorRecipe implements Recipe<Container>
     }
 
     @Override
-    public ItemStack getResultItem()
+    public @NotNull ItemStack getResultItem()
     {
         return ColorUtils.setInkColor(new ItemStack(SplatcraftBlocks.inkwell.get()), color);
     }
@@ -79,25 +80,25 @@ public class InkVatColorRecipe implements Recipe<Container>
     }
 
     @Override
-    public ResourceLocation getId()
+    public @NotNull ResourceLocation getId()
     {
         return id;
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer()
+    public @NotNull RecipeSerializer<?> getSerializer()
     {
         return SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING;
     }
 
     @Override
-    public RecipeType<?> getType()
+    public @NotNull RecipeType<?> getType()
     {
         return SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE;
     }
 
     @Override
-    public ItemStack getToastSymbol()
+    public @NotNull ItemStack getToastSymbol()
     {
         return new ItemStack(SplatcraftBlocks.inkVat.get());
     }
@@ -112,7 +113,7 @@ public class InkVatColorRecipe implements Recipe<Container>
         }
 
         @Override
-        public InkVatColorRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
+        public @NotNull InkVatColorRecipe fromJson(@NotNull ResourceLocation recipeId, JsonObject json) {
             Ingredient ingredient = json.has("filter") ? Ingredient.fromJson(json.get("filter")) : Ingredient.EMPTY;
             boolean disableOmni = json.has("not_on_omni_filter") && GsonHelper.getAsBoolean(json, "not_on_omni_filter");
             int color;
@@ -145,13 +146,13 @@ public class InkVatColorRecipe implements Recipe<Container>
 
         @Nullable
         @Override
-        public InkVatColorRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer)
+        public InkVatColorRecipe fromNetwork(@NotNull ResourceLocation recipeId, @NotNull FriendlyByteBuf buffer)
         {
             return new InkVatColorRecipe(recipeId, Ingredient.fromNetwork(buffer), buffer.readInt(), buffer.readBoolean());
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buffer, InkVatColorRecipe recipe)
+        public void toNetwork(@NotNull FriendlyByteBuf buffer, InkVatColorRecipe recipe)
         {
             recipe.ingredient.toNetwork(buffer);
             buffer.writeInt(recipe.color);

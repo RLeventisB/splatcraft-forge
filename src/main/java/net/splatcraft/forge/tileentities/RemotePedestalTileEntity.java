@@ -46,7 +46,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public @NotNull CompoundTag getUpdateTag()
     {
         return new CompoundTag(){{saveAdditional(this);}};
     }
@@ -71,7 +71,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
 
 
     @Override
-    public int[] getSlotsForFace(Direction direction) {
+    public int @NotNull [] getSlotsForFace(@NotNull Direction direction) {
         return new int[] {0};
     }
 
@@ -81,7 +81,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public boolean canTakeItemThroughFace(int i, ItemStack itemStack, Direction direction) {
+    public boolean canTakeItemThroughFace(int i, @NotNull ItemStack itemStack, @NotNull Direction direction) {
         return true;
     }
 
@@ -96,17 +96,17 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public ItemStack getItem(int i) {
+    public @NotNull ItemStack getItem(int i) {
         return remote;
     }
 
     @Override
-    public ItemStack removeItem(int i, int count) {
+    public @NotNull ItemStack removeItem(int i, int count) {
         return remote.split(count);
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(int i)
+    public @NotNull ItemStack removeItemNoUpdate(int i)
     {
         ItemStack copy = remote.copy();
         remote = ItemStack.EMPTY;
@@ -114,12 +114,12 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public void setItem(int i, ItemStack itemStack) {
+    public void setItem(int i, @NotNull ItemStack itemStack) {
         remote = itemStack;
     }
 
     @Override
-    public boolean stillValid(Player player)
+    public boolean stillValid(@NotNull Player player)
     {
         if (this.level.getBlockEntity(this.getBlockPos()) != this)
             return false;
@@ -164,7 +164,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public void sendMessage(Component p_145747_1_, UUID p_145747_2_) {}
+    public void sendMessage(@NotNull Component p_145747_1_, @NotNull UUID p_145747_2_) {}
 
     @Override
     public boolean acceptsSuccess() {

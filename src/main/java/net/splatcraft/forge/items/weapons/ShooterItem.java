@@ -53,19 +53,18 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 
         if(time <= 0)
         {
-            if (settings.startupTicks > 0 && entity instanceof Player player) {
-                PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.startupTicks, player.getInventory().selected, player.getUsedItemHand(), true, false, true, player.onGround()));
-            }
-        } else time -= settings.startupTicks;
+            if (settings.shotData.startupTicks() > 0 && entity instanceof Player player)
+                PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.startupTicks(), player.getInventory().selected, player.getUsedItemHand(), true, false, true, player.isOnGround()));
+        } else time -= settings.shotData.startupTicks();
 
-        if (!level.isClientSide() && settings.firingSpeed > 0 && (time - 1) % settings.firingSpeed == 0)
+        if (!level.isClientSide && settings.shotData.firingSpeed() > 0 && (time - 1) % settings.shotData.firingSpeed() == 0)
         {
-            if (reduceInk(entity, this, settings.inkConsumption, settings.inkRecoveryCooldown, true)) {
+            if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true)) {
 
-                for(int i = 0; i < settings.projectileCount; i++)
+                for(int i = 0; i < settings.shotData.projectileCount(); i++)
                 {
-                    InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileSize, settings);
-                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.pitchCompensation, settings.projectileSpeed, entity.onGround() ? settings.groundInaccuracy : settings.airInaccuracy);
+                    InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), entity.isOnGround() ? settings.shotData.groundInaccuracy() : settings.shotData.airborneInaccuracy());
                     proj.setShooterStats(settings);
                     level.addFreshEntity(proj);
                 }

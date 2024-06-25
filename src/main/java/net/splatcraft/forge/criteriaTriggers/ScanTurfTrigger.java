@@ -6,16 +6,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
 import net.splatcraft.forge.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class ScanTurfTrigger extends SimpleCriterionTrigger<ScanTurfTrigger.TriggerInstance>
 {
 	static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "scan_turf");
 
-	public ResourceLocation getId() {
+	public @NotNull ResourceLocation getId() {
 		return ID;
 	}
 
-	public ScanTurfTrigger.TriggerInstance createInstance(JsonObject json, EntityPredicate.Composite composite, DeserializationContext context)
+	public ScanTurfTrigger.@NotNull TriggerInstance createInstance(@NotNull JsonObject json, EntityPredicate.@NotNull Composite composite, @NotNull DeserializationContext context)
 	{
 		return new ScanTurfTrigger.TriggerInstance(composite, GsonHelper.getAsInt(json, "blocks_inked", 0), GsonHelper.getAsBoolean(json, "winner", false));
 	}
@@ -40,7 +41,7 @@ public class ScanTurfTrigger extends SimpleCriterionTrigger<ScanTurfTrigger.Trig
 			return blocksInked >= this.blocksInked && (winner || !this.winner);
 		}
 
-		public JsonObject serializeToJson(SerializationContext context)
+		public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
 		{
 			JsonObject jsonobject = super.serializeToJson(context);
 			jsonobject.addProperty("blocks_inked", blocksInked);

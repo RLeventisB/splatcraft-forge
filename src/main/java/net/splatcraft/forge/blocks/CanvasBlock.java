@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.HitResult;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
@@ -26,14 +26,14 @@ import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
 {
+
     public static final BooleanProperty INKED = BooleanProperty.create("inked");
 
-    public CanvasBlock()
+    public CanvasBlock(String name)
     {
-        super(Properties.of().mapColor(MapColor.WOOL).ignitedByLava().strength(0.8f).sound(SoundType.WOOL));
+        super(Properties.of(Material.WOOL).strength(0.8f).sound(SoundType.WOOL));
         SplatcraftBlocks.inkColoredBlocks.add(this);
         registerDefaultState(defaultBlockState().setValue(INKED, false));
     }
@@ -42,16 +42,12 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
-        BlockState state = super.getStateForPlacement(context);
-        if (state == null) {
-            return null;
-        }
-        return state.setValue(INKED, ColorUtils.getInkColor(context.getItemInHand()) != -1);
+        return super.getStateForPlacement(context).setValue(INKED, ColorUtils.getInkColor(context.getItemInHand()) != -1);
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) 
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
         InkColorTileEntity te = SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
         if (te != null)

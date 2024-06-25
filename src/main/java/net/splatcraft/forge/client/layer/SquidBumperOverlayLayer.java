@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.SquidBumperModel;
 import net.splatcraft.forge.entities.SquidBumperEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperOverlayLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>
 {
@@ -25,7 +26,7 @@ public class SquidBumperOverlayLayer extends RenderLayer<SquidBumperEntity, Squi
 	}
 
 	@Override
-	public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
+	public void render(@NotNull PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
 	{
 		getParentModel().copyPropertiesTo(model);
 		model.prepareMobModel(entity, limbSwing, limbSwingAmount, headPitch);

@@ -10,6 +10,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.splatcraft.forge.items.BlueprintItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class BlueprintLootFunction implements LootItemFunction
 	}
 
 	@Override
-	public LootItemFunctionType getType() {
+	public @NotNull LootItemFunctionType getType() {
 		return null;
 	}
 
@@ -41,7 +42,7 @@ public class BlueprintLootFunction implements LootItemFunction
 	public static class Serializer implements net.minecraft.world.level.storage.loot.Serializer<BlueprintLootFunction>
 	{
 		@Override
-		public void serialize(JsonObject json, BlueprintLootFunction lootFunction, JsonSerializationContext context)
+		public void serialize(JsonObject json, BlueprintLootFunction lootFunction, @NotNull JsonSerializationContext context)
 		{
 			JsonArray array = new JsonArray();
 
@@ -52,7 +53,7 @@ public class BlueprintLootFunction implements LootItemFunction
 				json.addProperty("weapon_pool", lootFunction.weaponType);
 		}
 		@Override
-		public BlueprintLootFunction deserialize(JsonObject json, JsonDeserializationContext context)
+		public @NotNull BlueprintLootFunction deserialize(@NotNull JsonObject json, @NotNull JsonDeserializationContext context)
 		{
 			List<String> advancements = new ArrayList<>();
 

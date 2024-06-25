@@ -78,7 +78,7 @@ public class DebrisBlock extends Block
 	}
 
 	@Override
-	public FluidState getFluidState(BlockState state)
+	public @NotNull FluidState getFluidState(BlockState state)
 	{
 		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
 	}

@@ -72,6 +72,7 @@ public class SplatcraftPacketHandler
         registerMessage(UpdateColorScoresPacket.class, UpdateColorScoresPacket::decode);
         registerMessage(UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);
         registerMessage(DodgeRollPacket.class, DodgeRollPacket::decode);
+        registerMessage(DodgeRollEndPacket.class, DodgeRollEndPacket::decode);
         registerMessage(CraftWeaponPacket.class, CraftWeaponPacket::decode);
         registerMessage(UpdateClientColorsPacket.class, UpdateClientColorsPacket::decode);
         registerMessage(UpdateInkOverlayPacket.class, UpdateInkOverlayPacket::decode);

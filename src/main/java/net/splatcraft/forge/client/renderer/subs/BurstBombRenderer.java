@@ -9,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.subs.BurstBombModel;
 import net.splatcraft.forge.entities.subs.BurstBombEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstBombModel>
 {
@@ -23,7 +24,7 @@ public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstB
 	}
 
 	@Override
-	public void render(BurstBombEntity entityIn, float entityYaw, float partialTicks, PoseStack PoseStackIn, MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(BurstBombEntity entityIn, float entityYaw, float partialTicks, PoseStack PoseStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
 
 		PoseStackIn.pushPose();
 		if(!entityIn.isItem)
@@ -38,7 +39,7 @@ public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstB
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(BurstBombEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull BurstBombEntity entity)
 	{
 		return TEXTURE;
 	}

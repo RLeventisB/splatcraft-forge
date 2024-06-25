@@ -6,6 +6,7 @@ import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -13,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -91,12 +93,17 @@ public class ClientUtils
     public static boolean canPerformRoll(Player player)
     {
         Input input = GetUnmodifiedInput(player);
-        return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.TurretCooldown turretCooldown && !turretCooldown.isLastRoll())) && input.jumping && (input.leftImpulse != 0 || input.forwardImpulse != 0);
+        return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && input.jumping && (input.leftImpulse != 0 || input.forwardImpulse != 0);
     }
 
-    public static Vec3 getDodgeRollVector(Player player) {
+    public static Vec2 getDodgeRollVector(Player player, float rollSpeed) {
         Input input = GetUnmodifiedInput(player);
-        return new Vec3(input.leftImpulse, -0.4f, input.forwardImpulse);
+        Vec2 direction = new Vec2(input.leftImpulse, input.forwardImpulse);
+        float p_20018_ = player.getYRot(); // LocalPlayer::getInputVector
+        Vec2 vec3 = direction.normalized().scale(rollSpeed);
+        float f = Mth.sin(p_20018_ * (0.017453292f));
+        float f1 = Mth.cos(p_20018_ * (0.017453292f));
+        return new Vec2(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
     }
 
     public static boolean shouldRenderSide(BlockEntity te, Direction direction) {

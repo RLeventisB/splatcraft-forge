@@ -26,6 +26,7 @@ import net.splatcraft.forge.blocks.StageBarrierBlock;
 import net.splatcraft.forge.tileentities.StageBarrierTileEntity;
 import net.splatcraft.forge.util.ClientUtils;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StageBarrierTileEntityRenderer implements BlockEntityRenderer<StageBarrierTileEntity>
 {
@@ -70,7 +71,7 @@ public class StageBarrierTileEntityRenderer implements BlockEntityRenderer<Stage
     }
 
     @Override
-    public void render(StageBarrierTileEntity tileEntity, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay)
+    public void render(StageBarrierTileEntity tileEntity, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int combinedLight, int combinedOverlay)
     {
 
         float activeTime = tileEntity.getActiveTime();

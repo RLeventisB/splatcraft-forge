@@ -19,6 +19,7 @@ import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.forge.registries.SplatcraftEntities;
 import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -143,7 +144,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 
 
 	@Override
-	public Packet<?> getAddEntityPacket()
+	public @NotNull Packet<?> getAddEntityPacket()
 	{
 		return NetworkHooks.getEntitySpawningPacket(this);
 	}
@@ -181,7 +182,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose p_213305_1_) {
+	public @NotNull EntityDimensions getDimensions(@NotNull Pose p_213305_1_) {
 		return super.getDimensions(p_213305_1_).scale(getSize());
 	}
 

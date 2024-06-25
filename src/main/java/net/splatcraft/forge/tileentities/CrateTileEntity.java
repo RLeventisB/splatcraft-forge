@@ -91,7 +91,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public @NotNull void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(CompoundTag nbt)
     {
         nbt.putFloat("Health", health);
         nbt.putFloat("MaxHealth", maxHealth);
@@ -121,13 +121,13 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public ItemStack getItem(int index)
+    public @NotNull ItemStack getItem(int index)
     {
         return inventory.get(index);
     }
 
     @Override
-    public ItemStack removeItem(int index, int count)
+    public @NotNull ItemStack removeItem(int index, int count)
     {
         if (getBlockState().getBlock() instanceof CrateBlock && hasLoot())
         {
@@ -144,13 +144,13 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(int index)
+    public @NotNull ItemStack removeItemNoUpdate(int index)
     {
         return ContainerHelper.takeItem(inventory, index);
     }
 
     @Override
-    public void setItem(int index, ItemStack stack)
+    public void setItem(int index, @NotNull ItemStack stack)
     {
         inventory.set(index, stack);
         if (stack.getCount() > this.getMaxStackSize())
@@ -162,7 +162,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public boolean stillValid(Player player)
+    public boolean stillValid(@NotNull Player player)
     {
         return false;
     }

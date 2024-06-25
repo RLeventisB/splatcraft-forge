@@ -28,6 +28,7 @@ import net.splatcraft.forge.registries.SplatcraftStats;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkVatTileEntity;
 import net.splatcraft.forge.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 public class InkVatContainer extends AbstractContainerMenu {
     public final InkVatTileEntity te;
@@ -117,7 +118,7 @@ public class InkVatContainer extends AbstractContainerMenu {
     }
 
     @Override
-    public boolean clickMenuButton(Player playerIn, int id)
+    public boolean clickMenuButton(@NotNull Player playerIn, int id)
     {
         if (this.isIndexInBounds(id))
         {
@@ -189,13 +190,13 @@ public class InkVatContainer extends AbstractContainerMenu {
 
 
     @Override
-    public boolean stillValid(Player playerIn)
+    public boolean stillValid(@NotNull Player playerIn)
     {
         return stillValid(access, playerIn, SplatcraftBlocks.inkVat.get());
     }
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int index)
+    public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int index)
     {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
@@ -253,7 +254,7 @@ public class InkVatContainer extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack)
+        public boolean mayPlace(@NotNull ItemStack stack)
         {
             return validItem.test(stack);
         }
@@ -270,13 +271,13 @@ public class InkVatContainer extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack)
+        public boolean mayPlace(@NotNull ItemStack stack)
         {
             return false;
         }
 
         @Override
-        public ItemStack remove(int amount)
+        public @NotNull ItemStack remove(int amount)
         {
             player.awardStat(SplatcraftStats.INKWELLS_CRAFTED, amount);
             return super.remove(amount);

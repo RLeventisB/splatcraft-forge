@@ -5,6 +5,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AddPackFindersEvent;
@@ -27,6 +28,7 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.registries.*;
+import net.splatcraft.forge.util.InkExplosion;
 import net.splatcraft.forge.worldgen.SplatcraftOreGen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +56,26 @@ public class Splatcraft {
         }
 
         SplatcraftRegisties.register();
-
+        for (int j = 0; j < 16; ++j)
+        {
+            for (int k = 0; k < 16; ++k)
+            {
+                for (int l = 0; l < 16; ++l)
+                {
+                    if (j == 0 || j == 15 || k == 0 || k == 15 || l == 0 || l == 15)
+                    {
+                        double rayX = j / 15.0F * 2.0F - 1.0F;
+                        double rayY = k / 15.0F * 2.0F - 1.0F;
+                        double rayZ = l / 15.0F * 2.0F - 1.0F;
+                        double length = Math.sqrt(rayX * rayX + rayY * rayY + rayZ * rayZ) * (3.3333333333333335);
+                        rayX /= length;
+                        rayY /= length;
+                        rayZ /= length;
+                        InkExplosion.rays.add(new Vec3(rayX, rayY, rayZ));
+                    }
+                }
+            }
+        }
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
         SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
 

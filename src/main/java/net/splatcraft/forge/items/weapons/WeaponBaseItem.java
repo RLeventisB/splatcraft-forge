@@ -175,9 +175,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static void sendNoInkMessage(LivingEntity entity, SoundEvent sound)
     {
-        if (entity instanceof Player)
+        if (entity instanceof Player player)
         {
-            ((Player) entity).displayClientMessage(new TranslatableComponent("status.no_ink").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(new TranslatableComponent("status.no_ink").withStyle(ChatFormatting.RED), true);
             if (sound != null)
                 playNoInkSound(entity, sound);
         }
@@ -261,7 +261,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public int getBarWidth(ItemStack stack)
+    public int getBarWidth(@NotNull ItemStack stack)
     {
         try
         {
@@ -273,14 +273,14 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public int getBarColor(ItemStack stack)
+    public int getBarColor(@NotNull ItemStack stack)
     {
         return !SplatcraftConfig.Client.vanillaInkDurability.get() ? ColorUtils.getInkColor(stack) : super.getBarColor(stack);
     }
 
 
     @Override
-    public boolean isBarVisible(ItemStack stack)
+    public boolean isBarVisible(@NotNull ItemStack stack)
     {
         try
         {

@@ -8,26 +8,28 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.synchronization.ArgumentSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.forge.registries.SplatcraftInkColors;
+import net.splatcraft.forge.util.InkColor;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.synchronization.ArgumentSerializer;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.registries.SplatcraftInkColors;
-import net.splatcraft.forge.util.InkColor;
 
 public class InkColorArgument implements ArgumentType<Integer>
 {
 
-    public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.inkColor.notFound", p_208663_0_));
+    public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> new TranslatableComponent("arg.inkColor.notFound", p_208663_0_));
     public static final int max = 0xFFFFFF;
     private static final Collection<String> EXAMPLES = Arrays.asList("splatcraft:orange", "blue", "#C83D79", "4234555");
 
@@ -166,19 +168,19 @@ public class InkColorArgument implements ArgumentType<Integer>
     public static class Serializer implements ArgumentSerializer<InkColorArgument>
     {
         @Override
-        public void serializeToNetwork(InkColorArgument argument, FriendlyByteBuf buffer)
+        public void serializeToNetwork(@NotNull InkColorArgument argument, @NotNull FriendlyByteBuf buffer)
         {
 
         }
 
         @Override
-        public InkColorArgument deserializeFromNetwork(FriendlyByteBuf buffer)
+        public @NotNull InkColorArgument deserializeFromNetwork(@NotNull FriendlyByteBuf buffer)
         {
             return null;
         }
 
         @Override
-        public void serializeToJson(InkColorArgument p_212244_1_, JsonObject p_212244_2_)
+        public void serializeToJson(@NotNull InkColorArgument p_212244_1_, @NotNull JsonObject p_212244_2_)
         {
 
         }

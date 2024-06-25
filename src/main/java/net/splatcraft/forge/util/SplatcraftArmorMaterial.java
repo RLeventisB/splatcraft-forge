@@ -6,6 +6,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.splatcraft.forge.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class SplatcraftArmorMaterial implements ArmorMaterial
 {
@@ -42,13 +43,13 @@ public class SplatcraftArmorMaterial implements ArmorMaterial
     }
 
     @Override
-    public int getDurabilityForSlot(EquipmentSlot slotIn)
+    public int getDurabilityForSlot(@NotNull EquipmentSlot slotIn)
     {
         return durability;
     }
 
     @Override
-    public int getDefenseForSlot(EquipmentSlot slotIn)
+    public int getDefenseForSlot(@NotNull EquipmentSlot slotIn)
     {
         return damageReduction;
     }
@@ -60,19 +61,19 @@ public class SplatcraftArmorMaterial implements ArmorMaterial
     }
 
     @Override
-    public SoundEvent getEquipSound()
+    public @NotNull SoundEvent getEquipSound()
     {
         return soundEvent;
     }
 
     @Override
-    public Ingredient getRepairIngredient()
+    public @NotNull Ingredient getRepairIngredient()
     {
         return repairMaterial;
     }
 
     @Override
-    public String getName()
+    public @NotNull String getName()
     {
         return name;
     }

@@ -2,6 +2,7 @@ package net.splatcraft.forge.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -19,7 +20,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.layer.InkSquidColorLayer;
 import net.splatcraft.forge.client.models.InkSquidModel;
 import net.splatcraft.forge.entities.InkSquidEntity;
-import org.joml.Matrix4f;
+import org.jetbrains.annotations.NotNull;
 
 public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSquidModel> implements RenderLayerParent<LivingEntity, InkSquidModel>
 {
@@ -42,13 +43,13 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	}
 
 	@Override
-	protected boolean shouldShowName(LivingEntity entity)
+	protected boolean shouldShowName(@NotNull LivingEntity entity)
 	{
 		return super.shouldShowName(entity) && (entity.shouldShowName() || entity.hasCustomName() && entity == this.entityRenderDispatcher.crosshairPickEntity);
 	}
 
 	@Override
-	public void render(LivingEntity entity, float p_115309_, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int p_115313_)
+	public void render(@NotNull LivingEntity entity, float p_115309_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int p_115313_)
 	{
 		super.render(entity, p_115309_, partialTicks, poseStack, bufferSource, p_115313_);
 
@@ -57,7 +58,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(LivingEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull LivingEntity entity)
 	{
 		return TEXTURE;
 	}
@@ -106,10 +107,6 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		poseStack.popPose();
 	}
 
-	@Override
-	protected void setupRotations(LivingEntity p_115317_, PoseStack p_115318_, float p_115319_, float p_115320_, float p_115321_) {
-		super.setupRotations(p_115317_, p_115318_, p_115319_, p_115320_, p_115321_);
-	}
 
 	protected int getHolderBlockLightLevel(Entity p_114496_, BlockPos p_114497_) {
 		return p_114496_.isOnFire() ? 15 : p_114496_.level.getBrightness(LightLayer.BLOCK, p_114497_);

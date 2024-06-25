@@ -15,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
+import org.jetbrains.annotations.NotNull;
 
 public class InkSquidModel extends EntityModel<LivingEntity> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
@@ -61,13 +62,13 @@ public class InkSquidModel extends EntityModel<LivingEntity> {
 	}
 
 	@Override
-	public void setupAnim(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+	public void setupAnim(@NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
 	{
 
 	}
 
 	@Override
-	public void copyPropertiesTo(EntityModel<LivingEntity> other)
+	public void copyPropertiesTo(@NotNull EntityModel<LivingEntity> other)
 	{
 		super.copyPropertiesTo(other);
 
@@ -80,7 +81,7 @@ public class InkSquidModel extends EntityModel<LivingEntity> {
 	}
 
 	@Override
-	public void prepareMobModel(LivingEntity entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
+	public void prepareMobModel(@NotNull LivingEntity entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
 	{
 		super.prepareMobModel(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTickTime);
 		boolean isSwimming = entitylivingbaseIn.isSwimming();
@@ -111,7 +112,7 @@ public class InkSquidModel extends EntityModel<LivingEntity> {
 	}
 	
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 		squid.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 	}
 }

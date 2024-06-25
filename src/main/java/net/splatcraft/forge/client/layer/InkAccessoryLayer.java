@@ -19,6 +19,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>
 {
@@ -33,7 +34,7 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 
 
     @Override
-    public void render(PoseStack matrixStack, MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, @NotNull AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
     {
         if(!PlayerInfoCapability.hasCapability(entity))
             return;

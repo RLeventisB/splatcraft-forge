@@ -8,6 +8,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class PlayerInventoryContainer<T extends PlayerInventoryContainer<?>> extends AbstractContainerMenu
 {
@@ -37,13 +38,13 @@ public abstract class PlayerInventoryContainer<T extends PlayerInventoryContaine
     }
 
     @Override
-    public boolean stillValid(Player playerIn)
+    public boolean stillValid(@NotNull Player playerIn)
     {
         return stillValid(this.levelPosCallable, playerIn, SplatcraftBlocks.weaponWorkbench.get());
     }
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int index)
+    public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int index)
     {
         Slot slot = this.slots.get(index);
         ItemStack stack = slot.getItem();
