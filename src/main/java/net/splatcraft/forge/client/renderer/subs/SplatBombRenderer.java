@@ -9,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.subs.SplatBombModel;
 import net.splatcraft.forge.entities.subs.SplatBombEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatBombModel>
 {
@@ -23,7 +24,7 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
 	}
 
 	@Override
-	public void render(SplatBombEntity entityIn, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(SplatBombEntity entityIn, float entityYaw, float partialTicks, PoseStack poseStack, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
 
 		poseStack.pushPose();
 
@@ -64,7 +65,7 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(SplatBombEntity entity) {
+	public @NotNull ResourceLocation getTextureLocation(@NotNull SplatBombEntity entity) {
 		return TEXTURE;
 	}
 }

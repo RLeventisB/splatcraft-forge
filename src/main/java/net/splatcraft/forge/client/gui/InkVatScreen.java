@@ -18,6 +18,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.tileentities.InkVatTileEntity;
 import net.splatcraft.forge.tileentities.container.InkVatContainer;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
+    public void render(@NotNull PoseStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
         renderBackground(matrixStack);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
@@ -56,7 +57,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     }
 
     @Override
-    protected void renderTooltip(PoseStack matrixStack, int mouseX, int mouseY)
+    protected void renderTooltip(@NotNull PoseStack matrixStack, int mouseX, int mouseY)
     {
         List<Integer> colorSelection = getMenu().sortRecipeList();
 
@@ -77,7 +78,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     }
 
     @Override
-    protected void renderLabels(PoseStack matrixStack, int mouseX, int mouseY)
+    protected void renderLabels(@NotNull PoseStack matrixStack, int mouseX, int mouseY)
     {
         font.draw(matrixStack, title.getString(), (float) imageWidth / 2 - (float) font.width(title.getString()) / 2, 6, 4210752);
 
@@ -141,7 +142,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     }
 
     @Override
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+    protected void renderBg(@NotNull PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShaderTexture(0, TEXTURES);
         int x = (width - imageWidth) / 2;

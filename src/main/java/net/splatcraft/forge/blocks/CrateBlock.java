@@ -241,7 +241,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, @NotNull ItemStack stack)
     {
         super.setPlacedBy(level, pos, state, entity, stack);
 
@@ -251,7 +251,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
         CrateTileEntity te = SplatcraftTileEntities.crateTileEntity.get().create(pos, state);
 

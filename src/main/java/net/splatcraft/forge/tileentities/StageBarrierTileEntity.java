@@ -18,6 +18,7 @@ import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.entities.SpawnShieldEntity;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.util.ClientUtils;
+import org.jetbrains.annotations.NotNull;
 
 import static net.splatcraft.forge.util.InkDamageUtils.VOID_DAMAGE;
 
@@ -89,7 +90,7 @@ public class StageBarrierTileEntity extends BlockEntity
     }
 
     @Override
-    public void load(CompoundTag nbt)
+    public void load(@NotNull CompoundTag nbt)
     {
         super.load(nbt);
 
@@ -108,7 +109,7 @@ public class StageBarrierTileEntity extends BlockEntity
 
 
     @Override
-    public CompoundTag getUpdateTag()
+    public @NotNull CompoundTag getUpdateTag()
     {
         return new CompoundTag(){{saveAdditional(this);}};
     }

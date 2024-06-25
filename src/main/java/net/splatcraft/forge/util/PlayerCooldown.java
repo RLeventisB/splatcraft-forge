@@ -27,7 +27,7 @@ public class PlayerCooldown
 
     public PlayerCooldown(ItemStack stack, int time, int maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded) {
         this.storedStack = stack;
-        this.time = ++time;
+        this.time = time;
         this.maxTime = maxTime;
         this.slotIndex = slotIndex;
         this.hand = hand;
@@ -52,15 +52,10 @@ public class PlayerCooldown
     {
         if(nbt.getBoolean("SuperJump"))
             return new SuperJumpCommand.SuperJump(nbt);
-        if(nbt.getBoolean("RollCooldown"))
-            return new DualieItem.RollCooldown(nbt);
-        if(nbt.getBoolean("TurretCooldown")) // need an system for this but im lazy
-            return new DualieItem.TurretCooldown(nbt);
-        if(nbt.getBoolean("StartupCooldown"))
-            return new DualieItem.StartupCooldown(nbt);
+        if(nbt.getBoolean("DodgeRollCooldown")) // need an system for this but im lazy
+            return new DualieItem.DodgeRollCooldown(nbt);
         else return new PlayerCooldown(nbt);
     }
-
     public PlayerCooldown setCancellable() {
         this.cancellable = true;
         return this;
@@ -168,7 +163,10 @@ public class PlayerCooldown
     {
         return hand;
     }
+    public void tick(Player player)
+    {
 
+    }
     public CompoundTag writeNBT(CompoundTag nbt)
     {
         nbt.putInt("Time", time);
@@ -184,5 +182,8 @@ public class PlayerCooldown
         }
 
         return nbt;
+    }
+    public void onStart(Player player)
+    {
     }
 }

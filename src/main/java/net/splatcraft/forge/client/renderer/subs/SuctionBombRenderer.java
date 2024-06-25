@@ -9,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.subs.SuctionBombModel;
 import net.splatcraft.forge.entities.subs.SuctionBombEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, SuctionBombModel>
 {
@@ -23,7 +24,7 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 	}
 
 	@Override
-	public void render(SuctionBombEntity entityIn, float entityYaw, float partialTicks, PoseStack PoseStackIn, MultiBufferSource bufferIn, int packedLightIn) {
+	public void render(SuctionBombEntity entityIn, float entityYaw, float partialTicks, PoseStack PoseStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn) {
 
 		PoseStackIn.pushPose();
 		if(!entityIn.isItem)
@@ -55,7 +56,7 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 
 
 	@Override
-	public ResourceLocation getTextureLocation(SuctionBombEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull SuctionBombEntity entity)
 	{
 		return TEXTURE;
 	}

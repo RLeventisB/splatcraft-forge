@@ -12,6 +12,7 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ColoredShapedRecipe extends ShapedRecipe
 {
@@ -22,7 +23,7 @@ public class ColoredShapedRecipe extends ShapedRecipe
 
 
 	@Override
-	public ItemStack assemble(CraftingContainer inventory)
+	public @NotNull ItemStack assemble(CraftingContainer inventory)
 	{
 		int color = 0, j = 0, curColor = 0;
 		boolean colorLock = false;
@@ -49,13 +50,13 @@ public class ColoredShapedRecipe extends ShapedRecipe
 	}
 
 	@Override
-	public boolean matches(CraftingContainer p_77569_1_, Level p_77569_2_)
+	public boolean matches(@NotNull CraftingContainer p_77569_1_, @NotNull Level p_77569_2_)
 	{
 		return super.matches(p_77569_1_, p_77569_2_);
 	}
 
 	@Override
-	public RecipeSerializer<?> getSerializer() {
+	public @NotNull RecipeSerializer<?> getSerializer() {
 		return super.getSerializer();
 	}
 
@@ -69,14 +70,14 @@ public class ColoredShapedRecipe extends ShapedRecipe
 		}
 
 		@Override
-		public ShapedRecipe fromJson(ResourceLocation p_199425_1_, JsonObject p_199425_2_)
+		public @NotNull ShapedRecipe fromJson(@NotNull ResourceLocation p_199425_1_, @NotNull JsonObject p_199425_2_)
 		{
 			ShapedRecipe recipe = super.fromJson(p_199425_1_, p_199425_2_);
 			return new ColoredShapedRecipe(recipe.getId(), recipe.getGroup(), recipe.getRecipeWidth(), recipe.getRecipeHeight(), recipe.getIngredients(), recipe.getResultItem().copy());
 		}
 
 		@Override
-		public ShapedRecipe fromNetwork(ResourceLocation p_199426_1_, FriendlyByteBuf p_199426_2_)
+		public ShapedRecipe fromNetwork(@NotNull ResourceLocation p_199426_1_, @NotNull FriendlyByteBuf p_199426_2_)
 		{
 			ShapedRecipe recipe = super.fromNetwork(p_199426_1_, p_199426_2_);
 			return new ColoredShapedRecipe(recipe.getId(), recipe.getGroup(), recipe.getRecipeWidth(), recipe.getRecipeHeight(), recipe.getIngredients(), recipe.getResultItem().copy());

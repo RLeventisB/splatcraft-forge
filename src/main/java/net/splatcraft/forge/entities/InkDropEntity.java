@@ -13,7 +13,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +26,6 @@ import net.splatcraft.forge.blocks.ColoredBarrierBlock;
 import net.splatcraft.forge.blocks.StageBarrierBlock;
 import net.splatcraft.forge.client.particles.InkExplosionParticleData;
 import net.splatcraft.forge.client.particles.InkSplashParticleData;
-import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.registries.SplatcraftEntities;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.ColorUtils;
@@ -245,20 +243,20 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 
     @Deprecated() //Modify sourceWeapon variable instead
     @Override
-    public void setItem(ItemStack itemStack) {}
+    public void setItem(@NotNull ItemStack itemStack) {}
 
     @Override
-    protected ItemStack getItemRaw() {
+    protected @NotNull ItemStack getItemRaw() {
         return sourceWeapon;
     }
 
     @Override
-    public Packet<?> getAddEntityPacket() {
+    public @NotNull Packet<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     @Override
-    public EntityDimensions getDimensions(Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
         return super.getDimensions(pose).scale(getProjectileSize() / 2f);
     }
     public float getProjectileSize() {
@@ -272,7 +270,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     }
 
     @Override
-    public ItemStack getItem() {
+    public @NotNull ItemStack getItem() {
         return ItemStack.EMPTY;
     }
     @Override

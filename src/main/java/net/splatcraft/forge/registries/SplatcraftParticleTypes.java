@@ -9,6 +9,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.splatcraft.forge.client.particles.*;
+import org.jetbrains.annotations.NotNull;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftParticleTypes
@@ -16,14 +17,14 @@ public class SplatcraftParticleTypes
 
     public static final ParticleType<InkSplashParticleData> INK_SPLASH = new ParticleType<>(false, InkSplashParticleData.DESERIALIZER) {
         @Override
-        public Codec<InkSplashParticleData> codec() {
+        public @NotNull Codec<InkSplashParticleData> codec() {
             return InkSplashParticleData.CODEC;
         }
     };
     public static final ParticleType<InkExplosionParticleData> INK_EXPLOSION = new ParticleType<InkExplosionParticleData>(false, InkExplosionParticleData.DESERIALIZER)
     {
         @Override
-        public Codec<InkExplosionParticleData> codec()
+        public @NotNull Codec<InkExplosionParticleData> codec()
         {
             return InkExplosionParticleData.CODEC;
         }
@@ -31,7 +32,7 @@ public class SplatcraftParticleTypes
     public static final ParticleType<SquidSoulParticleData> SQUID_SOUL = new ParticleType<SquidSoulParticleData>(false, SquidSoulParticleData.DESERIALIZER)
     {
         @Override
-        public Codec<SquidSoulParticleData> codec()
+        public @NotNull Codec<SquidSoulParticleData> codec()
         {
             return SquidSoulParticleData.CODEC;
         }
@@ -39,7 +40,7 @@ public class SplatcraftParticleTypes
     public static final ParticleType<InkTerrainParticleData> INK_TERRAIN = new ParticleType<InkTerrainParticleData>(false, InkTerrainParticleData.DESERIALIZER)
     {
         @Override
-        public Codec<InkTerrainParticleData> codec()
+        public @NotNull Codec<InkTerrainParticleData> codec()
         {
             return InkTerrainParticleData.CODEC;
         }

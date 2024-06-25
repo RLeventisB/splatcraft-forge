@@ -17,7 +17,7 @@ public class SubWeaponSettings extends AbstractWeaponSettings<SubWeaponSettings,
 	public int inkRecoveryCooldown;
 	public int fuseTime;
 	public float throwVelocity = 0.75f;
-	public float throwAngle = -30f;
+	public float throwAngle = -30;
 	public int holdTime = WeaponBaseItem.USE_DURATION;
 	
 	//Curling

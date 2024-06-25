@@ -13,6 +13,7 @@ import net.splatcraft.forge.util.PlayerCooldown;
 
 public class PlayerInfo
 {
+    private int dodgeCount;
     private int color;
     private boolean isSquid = false;
     private boolean initialized = false;
@@ -123,6 +124,7 @@ public class PlayerInfo
     
     public CompoundTag writeNBT(CompoundTag nbt)
     {
+        nbt.putInt("DodgeCount", getDodgeCount());
         nbt.putInt("Color", getColor());
         nbt.putBoolean("IsSquid", isSquid());
         nbt.putString("InkType", getInkType().getSerializedName());
@@ -150,6 +152,7 @@ public class PlayerInfo
     
     public void readNBT(CompoundTag nbt)
     {
+        setDodgeCount(nbt.getInt("DodgeCount"));
         setColor(ColorUtils.getColorFromNbt(nbt));
         setIsSquid(nbt.getBoolean("IsSquid"));
         setInitialized(nbt.getBoolean("Initialized"));
@@ -169,5 +172,13 @@ public class PlayerInfo
         {
             setPlayerCooldown(PlayerCooldown.readNBT(nbt.getCompound("PlayerCooldown")));
         }
+    }
+    public int getDodgeCount()
+    {
+        return dodgeCount;
+    }
+    public void setDodgeCount(int dodgeCount)
+    {
+        this.dodgeCount = dodgeCount;
     }
 }

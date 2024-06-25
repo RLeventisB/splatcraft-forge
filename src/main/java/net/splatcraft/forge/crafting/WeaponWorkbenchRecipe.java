@@ -13,6 +13,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistryEntry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,13 +35,13 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
     }
 
     @Override
-    public boolean matches(Container inv, Level levelIn)
+    public boolean matches(@NotNull Container inv, @NotNull Level levelIn)
     {
         return true;
     }
 
     @Override
-    public ItemStack assemble(Container inv)
+    public @NotNull ItemStack assemble(@NotNull Container inv)
     {
         return ItemStack.EMPTY;
     }
@@ -52,25 +53,25 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
     }
 
     @Override
-    public ItemStack getResultItem()
+    public @NotNull ItemStack getResultItem()
     {
         return subRecipes.isEmpty() ? ItemStack.EMPTY : subRecipes.get(0).getOutput().copy();
     }
 
     @Override
-    public ResourceLocation getId()
+    public @NotNull ResourceLocation getId()
     {
         return id;
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer()
+    public @NotNull RecipeSerializer<?> getSerializer()
     {
         return SplatcraftRecipeTypes.WEAPON_STATION;
     }
 
     @Override
-    public RecipeType<?> getType()
+    public @NotNull RecipeType<?> getType()
     {
         return SplatcraftRecipeTypes.WEAPON_STATION_TYPE;
     }
@@ -112,7 +113,7 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
         }
 
         @Override
-        public WeaponWorkbenchRecipe fromJson(ResourceLocation recipeId, JsonObject json)
+        public @NotNull WeaponWorkbenchRecipe fromJson(@NotNull ResourceLocation recipeId, JsonObject json)
         {
             List<WeaponWorkbenchSubtypeRecipe> recipes = new ArrayList<>();
             JsonArray arr = json.getAsJsonArray("recipes");
@@ -136,7 +137,7 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
 
         @Nullable
         @Override
-        public WeaponWorkbenchRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer)
+        public WeaponWorkbenchRecipe fromNetwork(@NotNull ResourceLocation recipeId, FriendlyByteBuf buffer)
         {
             List<WeaponWorkbenchSubtypeRecipe> s = new ArrayList<>();
             int count = buffer.readInt();

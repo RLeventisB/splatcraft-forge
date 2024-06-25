@@ -18,6 +18,7 @@ import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock, EntityBlock
@@ -33,11 +34,10 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
     }
 
     @Override
-    public boolean useShapeForLightOcclusion(BlockState p_220074_1_) {
+    public boolean useShapeForLightOcclusion(@NotNull BlockState p_220074_1_) {
         return true;
     }
 
-    @Nullable
     @Override
     public float[] getBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
     {
@@ -51,7 +51,7 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
     {
         if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
         {
@@ -62,7 +62,7 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
 
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter reader, BlockPos pos, BlockState state)
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter reader, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         ItemStack stack = super.getCloneItemStack(reader, pos, state);
 
@@ -156,7 +156,7 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
         return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
     }
 }

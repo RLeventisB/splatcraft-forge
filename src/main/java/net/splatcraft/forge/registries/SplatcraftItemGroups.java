@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.items.ColoredBlockItem;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -18,7 +19,7 @@ public class SplatcraftItemGroups
     public static final CreativeModeTab GROUP_GENERAL = new CreativeModeTab("splatcraft_general")
     {
         @Override
-        public ItemStack makeIcon()
+        public @NotNull ItemStack makeIcon()
         {
             return new ItemStack(sardiniumBlock.get());
         }
@@ -27,7 +28,7 @@ public class SplatcraftItemGroups
     public static final CreativeModeTab GROUP_WEAPONS = new CreativeModeTab("splatcraft_weapons")
     {
         @Override
-        public ItemStack makeIcon()
+        public @NotNull ItemStack makeIcon()
         {
             return ColorUtils.setInkColor(new ItemStack(splattershot.get()), ColorUtils.ORANGE);
         }
@@ -44,12 +45,12 @@ public class SplatcraftItemGroups
         }
 
         @Override
-        public ItemStack makeIcon() {
+        public @NotNull ItemStack makeIcon() {
             return ColorUtils.setInkColor(new ItemStack(inkwell.get()), ColorUtils.ORANGE);
         }
 
         @Override
-        public void fillItemList(NonNullList<ItemStack> list)
+        public void fillItemList(@NotNull NonNullList<ItemStack> list)
         {
             for(Item item : colorTabItems)
             {

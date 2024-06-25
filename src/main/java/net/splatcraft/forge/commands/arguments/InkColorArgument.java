@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.registries.SplatcraftInkColors;
 import net.splatcraft.forge.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -167,19 +168,19 @@ public class InkColorArgument implements ArgumentType<Integer>
     public static class Serializer implements ArgumentSerializer<InkColorArgument>
     {
         @Override
-        public void serializeToNetwork(InkColorArgument argument, FriendlyByteBuf buffer)
+        public void serializeToNetwork(@NotNull InkColorArgument argument, @NotNull FriendlyByteBuf buffer)
         {
 
         }
 
         @Override
-        public InkColorArgument deserializeFromNetwork(FriendlyByteBuf buffer)
+        public @NotNull InkColorArgument deserializeFromNetwork(@NotNull FriendlyByteBuf buffer)
         {
             return null;
         }
 
         @Override
-        public void serializeToJson(InkColorArgument p_212244_1_, JsonObject p_212244_2_)
+        public void serializeToJson(@NotNull InkColorArgument p_212244_1_, @NotNull JsonObject p_212244_2_)
         {
 
         }

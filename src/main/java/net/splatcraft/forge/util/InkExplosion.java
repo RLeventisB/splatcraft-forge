@@ -20,11 +20,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class InkExplosion {
+public class InkExplosion
+{
+    public static final List<Vec3> rays = new ArrayList<>();
     private final double x;
     private final double y;
     private final double z;
@@ -80,50 +83,32 @@ public class InkExplosion {
     {
         Set<BlockPos> set = Sets.newHashSet();
         Level level = exploder.getLevel();
+        Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
 
-        for (int j = 0; j < 16; ++j)
+        for (Vec3 ray : rays)
         {
-            for (int k = 0; k < 16; ++k)
+            float intensity = this.size * (0.7F + level.getRandom().nextFloat() * 0.6F);
+            double x = explosionPos.x();
+            double y = explosionPos.y();
+            double z = explosionPos.z();
+
+            while(intensity > 0.0)
             {
-                for (int l = 0; l < 16; ++l)
-                {
-                    if (j == 0 || j == 15 || k == 0 || k == 15 || l == 0 || l == 15)
-                    {
-                        double d0 = (float) j / 15.0F * 2.0F - 1.0F;
-                        double d1 = (float) k / 15.0F * 2.0F - 1.0F;
-                        double d2 = (float) l / 15.0F * 2.0F - 1.0F;
-                        double d3 = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
-                        d0 = d0 / d3;
-                        d1 = d1 / d3;
-                        d2 = d2 / d3;
-                        float f = this.size * (0.7F + level.getRandom().nextFloat() * 0.6F);
-                        double d4 = this.x;
-                        double d6 = this.y;
-                        double d8 = this.z;
+                BlockHitResult raytrace = level.clip(new ClipContext(new Vec3(explosionPos.x, explosionPos.y, explosionPos.z), new Vec3(x, y, z), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+                if (InkBlockUtils.canInkFromFace(level, raytrace.getBlockPos(), raytrace.getDirection()))
+                    set.add(raytrace.getBlockPos());
 
-                        for (; f > 0.0F; f -= 0.22500001F) {
-                            BlockHitResult raytrace = level.clip(new ClipContext(new Vec3(x + 0.5f, y + 0.5f, z + 0.5f), new Vec3(d4 + 0.5f, d6 + 0.5f, d8 + 0.5f), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
-                            BlockPos blockpos;
-                            f -= 0.3f * 0.3F;
-
-                            blockpos = raytrace.getBlockPos();
-                            if (InkBlockUtils.canInkFromFace(level, blockpos, raytrace.getDirection()))
-                                set.add(blockpos);
-
-
-                            d4 += d0 * (double) 0.3F;
-                            d6 += d1 * (double) 0.3F;
-                            d8 += d2 * (double) 0.3F;
-                        }
-                    }
-                }
+                x += ray.x;
+                y += ray.y;
+                z += ray.z;
+                intensity -= 0.315f;
             }
         }
 
         this.affectedBlockPositions.addAll(set);
         if(!damageMobs)
             return;
-        float f2 = this.size * 1.2f;
+        float f2 = this.size;
         int k1 = Mth.floor(this.x - (double) f2 - 1.0D);
         int l1 = Mth.floor(this.x + (double) f2 + 1.0D);
         int i2 = Mth.floor(this.y - (double) f2 - 1.0D);
@@ -132,7 +117,6 @@ public class InkExplosion {
         int j1 = Mth.floor(this.z + (double) f2 + 1.0D);
         List<Entity> list = level.getEntities(this.exploder, new AABB(k1, i2, j2, l1, i1, j1));
 
-        Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
         int color = ColorUtils.getEntityColor(exploder);
         for (Entity entity : list)
         {
@@ -153,8 +137,10 @@ public class InkExplosion {
             if (InkColor.getByHex(color) != null)
                 dyeColor = InkColor.getByHex(color).getDyeColor();
 
-            if (dyeColor != null && entity instanceof Sheep)
-                ((Sheep) entity).setColor(dyeColor);
+            if (dyeColor != null && entity instanceof Sheep sheep)
+            {
+                sheep.setColor(dyeColor);
+            }
         }
 
     }
@@ -186,9 +172,9 @@ public class InkExplosion {
             if (!blockstate.isAir())
             {
                 int color = ColorUtils.getEntityColor(exploder);
-                if (exploder instanceof Player)
+                if (exploder instanceof Player player)
                 {
-                    InkBlockUtils.playerInkBlock((Player) exploder, level, blockpos, color, blockDamage, inkType);
+                    InkBlockUtils.playerInkBlock(player, level, blockpos, color, blockDamage, inkType);
                 }
                 else
                 {

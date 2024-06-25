@@ -16,6 +16,7 @@ import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -32,7 +33,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         int color = getColor((Level) level, pos);
         if(color < 0)
@@ -41,7 +42,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
     {
         if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
         {
@@ -52,7 +53,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
         return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
     }
@@ -77,7 +78,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
         return super.getStateForPlacement(context);
     }
@@ -128,7 +129,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
         }
 
         @Override
-        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+        protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> builder)
         {
             super.createBlockStateDefinition(builder);
             builder.add(COLORED);

@@ -36,6 +36,7 @@ import net.splatcraft.forge.tileentities.InkedBlockTileEntity;
 import net.splatcraft.forge.util.BlockInkedResult;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
@@ -105,13 +106,13 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
         return type == SplatcraftTileEntities.inkedTileEntity.get() ? InkedBlockTileEntity::tick : null;
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
 
         return SplatcraftTileEntities.inkedTileEntity.get().create(pos, state);
     }
@@ -190,7 +191,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public void playerDestroy(Level level, Player playerEntity, BlockPos pos, BlockState state, @Nullable BlockEntity tileEntity, ItemStack stack)
+    public void playerDestroy(@NotNull Level level, @NotNull Player playerEntity, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable BlockEntity tileEntity, @NotNull ItemStack stack)
     {
         if(tileEntity instanceof InkedBlockTileEntity)
         {
@@ -209,7 +210,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     */
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter levelIn, BlockPos pos, CollisionContext context)
+    public @NotNull VoxelShape getShape(@NotNull BlockState state, BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
         if(!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity))
             return Shapes.empty();
@@ -238,7 +239,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter levelIn, BlockPos pos, CollisionContext context)
+    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
         if(!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity))
             return super.getCollisionShape(state, levelIn, pos, context);
@@ -256,7 +257,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 
 
     @Override
-    public VoxelShape getVisualShape(BlockState state, BlockGetter levelIn, BlockPos pos, CollisionContext context)
+    public @NotNull VoxelShape getVisualShape(@NotNull BlockState state, BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
         if(!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity))
             return super.getVisualShape(state, levelIn, pos, context);
@@ -273,13 +274,13 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public PushReaction getPistonPushReaction(BlockState state)
+    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
     {
         return PushReaction.BLOCK;
     }
 
     @Override
-    public float getDestroyProgress(BlockState state, Player player, BlockGetter levelIn, BlockPos pos)
+    public float getDestroyProgress(@NotNull BlockState state, @NotNull Player player, BlockGetter levelIn, @NotNull BlockPos pos)
     {
         if (!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
             return super.getDestroyProgress(state, player, levelIn, pos);
@@ -317,7 +318,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, Random rand)
+    public void randomTick(@NotNull BlockState state, @NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull Random rand)
     {
         if (SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_DECAY) && level.getBlockEntity(pos) instanceof InkedBlockTileEntity)
         {
@@ -338,7 +339,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor levelIn, BlockPos currentPos, BlockPos facingPos)
+    public @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
         if (isTouchingLiquid(levelIn, currentPos))
         {

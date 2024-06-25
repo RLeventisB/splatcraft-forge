@@ -16,6 +16,7 @@ import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.splatcraft.forge.blocks.InkStainedBlock.COLORED;
@@ -30,7 +31,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         int color = getColor((Level) level, pos);
         if(color < 0)
@@ -39,7 +40,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     }
 
     @Override
-    public boolean canBeReplaced(BlockState state, BlockPlaceContext context)
+    public boolean canBeReplaced(@NotNull BlockState state, BlockPlaceContext context)
     {
         ItemStack stack = context.getItemInHand();
 
@@ -50,7 +51,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
     {
         if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
         {
@@ -61,7 +62,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
         return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
     }
@@ -86,7 +87,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
         return super.getStateForPlacement(context);
     }
@@ -137,7 +138,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
         }
 
         @Override
-        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+        protected void createBlockStateDefinition(StateDefinition.@NotNull Builder<Block, BlockState> builder)
         {
             super.createBlockStateDefinition(builder);
             builder.add(COLORED);

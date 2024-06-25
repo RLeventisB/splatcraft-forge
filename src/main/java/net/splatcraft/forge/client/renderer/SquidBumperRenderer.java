@@ -15,6 +15,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.layer.SquidBumperColorLayer;
 import net.splatcraft.forge.client.models.SquidBumperModel;
 import net.splatcraft.forge.entities.SquidBumperEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity, SquidBumperModel> implements RenderLayerParent<SquidBumperEntity, SquidBumperModel>
 {
@@ -35,7 +36,7 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 	}
 
 	@Override
-	protected void renderNameTag(SquidBumperEntity entityIn, Component displayNameIn, PoseStack PoseStackIn, MultiBufferSource bufferIn, int packedLightIn)
+	protected void renderNameTag(SquidBumperEntity entityIn, @NotNull Component displayNameIn, @NotNull PoseStack PoseStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
 		if (entityIn.hasCustomName())
 		{
@@ -49,7 +50,7 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 	}
 
 	@Override
-	protected void setupRotations(SquidBumperEntity entityLiving, PoseStack PoseStackIn, float ageInTicks, float rotationYaw, float partialTicks)
+	protected void setupRotations(SquidBumperEntity entityLiving, @NotNull PoseStack PoseStackIn, float ageInTicks, float rotationYaw, float partialTicks)
 	{
 		//PoseStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
 		float punchTime = (float) (entityLiving.level.getGameTime() - entityLiving.punchCooldown) + partialTicks;
@@ -68,7 +69,7 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(SquidBumperEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull SquidBumperEntity entity)
 	{
 		return TEXTURE;
 	}

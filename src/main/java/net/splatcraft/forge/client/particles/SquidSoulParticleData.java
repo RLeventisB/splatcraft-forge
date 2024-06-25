@@ -13,6 +13,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.registries.SplatcraftParticleTypes;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
@@ -21,13 +22,13 @@ public class SquidSoulParticleData implements ParticleOptions
 
     public static final Deserializer<SquidSoulParticleData> DESERIALIZER = new Deserializer<>() {
         @Override
-        public SquidSoulParticleData fromCommand(ParticleType<SquidSoulParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException {
+        public @NotNull SquidSoulParticleData fromCommand(@NotNull ParticleType<SquidSoulParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException {
             reader.expect(' ');
             return new SquidSoulParticleData(InkColorArgument.parseStatic(reader));
         }
 
         @Override
-        public SquidSoulParticleData fromNetwork(ParticleType<SquidSoulParticleData> particleTypeIn, FriendlyByteBuf buffer) {
+        public @NotNull SquidSoulParticleData fromNetwork(@NotNull ParticleType<SquidSoulParticleData> particleTypeIn, FriendlyByteBuf buffer) {
             return new SquidSoulParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
         }
     };
@@ -60,7 +61,7 @@ public class SquidSoulParticleData implements ParticleOptions
     }
 
     @Override
-    public ParticleType<?> getType()
+    public @NotNull ParticleType<?> getType()
     {
         return SplatcraftParticleTypes.SQUID_SOUL;
     }
@@ -74,7 +75,7 @@ public class SquidSoulParticleData implements ParticleOptions
     }
 
     @Override
-    public String writeToString()
+    public @NotNull String writeToString()
     {
         return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registry.PARTICLE_TYPE.getKey(this.getType()), this.red, this.green, this.blue);
     }

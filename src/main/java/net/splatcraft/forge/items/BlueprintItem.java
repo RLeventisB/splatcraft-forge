@@ -27,6 +27,7 @@ import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.items.weapons.*;
 import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -61,7 +62,7 @@ public class BlueprintItem extends Item
 
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components, TooltipFlag flag)
+	public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> components, @NotNull TooltipFlag flag)
 	{
 		super.appendHoverText(stack, level, components, flag);
 
@@ -93,7 +94,7 @@ public class BlueprintItem extends Item
 	}
 
 	@Override
-	public void fillItemCategory(CreativeModeTab tab, NonNullList<ItemStack> list)
+	public void fillItemCategory(@NotNull CreativeModeTab tab, @NotNull NonNullList<ItemStack> list)
 	{
 		if(tab == CreativeModeTab.TAB_SEARCH)
 			weaponPools.forEach((key, value) -> list.add(setPoolFromWeaponType(new ItemStack(this), key)));
@@ -176,7 +177,7 @@ public class BlueprintItem extends Item
 	}
 
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
+	public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand)
 	{
 		if(!(player instanceof ServerPlayer serverPlayer))
 			return super.use(level, player, hand);

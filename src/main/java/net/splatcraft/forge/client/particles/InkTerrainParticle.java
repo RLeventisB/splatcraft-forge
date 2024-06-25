@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @OnlyIn(Dist.CLIENT)
@@ -37,24 +38,24 @@ public class InkTerrainParticle extends TextureSheetParticle {
 		this.vo = this.random.nextFloat() * 3.0F;
 	}
 
-	public ParticleRenderType getRenderType() {
+	public @NotNull ParticleRenderType getRenderType() {
 		return ParticleRenderType.TERRAIN_SHEET;
 	}
 
 	protected float getU0() {
-		return this.sprite.getU((double)((this.uo + 1.0F) / 4.0F * 16.0F));
+		return this.sprite.getU((this.uo + 1.0F) / 4.0F * 16.0F);
 	}
 
 	protected float getU1() {
-		return this.sprite.getU((double)(this.uo / 4.0F * 16.0F));
+		return this.sprite.getU(this.uo / 4.0F * 16.0F);
 	}
 
 	protected float getV0() {
-		return this.sprite.getV((double)(this.vo / 4.0F * 16.0F));
+		return this.sprite.getV(this.vo / 4.0F * 16.0F);
 	}
 
 	protected float getV1() {
-		return this.sprite.getV((double)((this.vo + 1.0F) / 4.0F * 16.0F));
+		return this.sprite.getV((this.vo + 1.0F) / 4.0F * 16.0F);
 	}
 
 	public int getLightColor(float p_108291_) {
@@ -64,7 +65,7 @@ public class InkTerrainParticle extends TextureSheetParticle {
 
 	@OnlyIn(Dist.CLIENT)
 	public static class Provider implements ParticleProvider<BlockParticleOption> {
-		public Particle createParticle(BlockParticleOption p_108304_, ClientLevel p_108305_, double p_108306_, double p_108307_, double p_108308_, double p_108309_, double p_108310_, double p_108311_) {
+		public Particle createParticle(BlockParticleOption p_108304_, @NotNull ClientLevel p_108305_, double p_108306_, double p_108307_, double p_108308_, double p_108309_, double p_108310_, double p_108311_) {
 			BlockState blockstate = p_108304_.getState();
 			return !blockstate.isAir() && !blockstate.is(Blocks.MOVING_PISTON) ? (new net.minecraft.client.particle.TerrainParticle(p_108305_, p_108306_, p_108307_, p_108308_, p_108309_, p_108310_, p_108311_, blockstate)).updateSprite(blockstate, p_108304_.getPos()) : null;
 		}
@@ -89,7 +90,7 @@ public class InkTerrainParticle extends TextureSheetParticle {
 
 		@Nullable
 		@Override
-		public Particle createParticle(InkTerrainParticleData typeIn, ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+		public Particle createParticle(InkTerrainParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
 		{
 			return new InkTerrainParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn.red, typeIn.green, typeIn.blue);
 		}

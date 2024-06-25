@@ -12,6 +12,7 @@ import net.splatcraft.forge.blocks.InkwellBlock;
 import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SingleUseSubRecipe extends CustomRecipe
 {
@@ -20,7 +21,7 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public boolean matches(CraftingContainer inv, Level levelIn) {
+    public boolean matches(CraftingContainer inv, @NotNull Level levelIn) {
         int sub = 0;
         int inkwell = 0;
         int sardinium = 0;
@@ -49,7 +50,7 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public ItemStack assemble(CraftingContainer inv)
+    public @NotNull ItemStack assemble(CraftingContainer inv)
     {
 
         ItemStack itemstack = ItemStack.EMPTY;
@@ -74,7 +75,7 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public NonNullList<ItemStack> getRemainingItems(CraftingContainer inv)
+    public @NotNull NonNullList<ItemStack> getRemainingItems(CraftingContainer inv)
     {
         NonNullList<ItemStack> restult = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
 
@@ -96,7 +97,7 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public @NotNull RecipeSerializer<?> getSerializer() {
         return SplatcraftRecipeTypes.SINGLE_USE_SUB;
     }
 }

@@ -14,6 +14,7 @@ import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.client.models.SquidBumperModel;
 import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperColorLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>
 {
@@ -27,7 +28,7 @@ public class SquidBumperColorLayer extends RenderLayer<SquidBumperEntity, SquidB
     }
 
     @Override
-    public void render(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
+    public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
     {
         int color = ColorUtils.getEntityColor(entity);
         if (SplatcraftConfig.Client.getColorLock())

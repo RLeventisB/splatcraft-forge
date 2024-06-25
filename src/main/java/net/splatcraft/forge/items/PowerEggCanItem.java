@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
+import org.jetbrains.annotations.NotNull;
 
 public class PowerEggCanItem extends Item
 {
@@ -21,7 +22,7 @@ public class PowerEggCanItem extends Item
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level levelIn, Player playerIn, InteractionHand handIn)
+    public @NotNull InteractionResultHolder<ItemStack> use(Level levelIn, Player playerIn, @NotNull InteractionHand handIn)
     {
         ItemStack itemstack = playerIn.getItemInHand(handIn);
         levelIn.playSound(null, playerIn.getX(), playerIn.getY(), playerIn.getZ(), SplatcraftSounds.powerEggCanOpen, SoundSource.PLAYERS, 0.5F, 0.4F / (playerIn.getRandom().nextFloat() * 0.4F + 0.8F));

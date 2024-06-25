@@ -30,6 +30,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.forge.tileentities.container.WeaponWorkbenchContainer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock
@@ -85,7 +86,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level levelIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit)
+    public @NotNull InteractionResult use(@NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
     {
         if (levelIn.isClientSide)
         {
@@ -97,7 +98,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     }
 
     @Override
-    public MenuProvider getMenuProvider(BlockState state, Level levelIn, BlockPos pos)
+    public MenuProvider getMenuProvider(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos)
     {
         return new SimpleMenuProvider((id, inventory, player) -> new WeaponWorkbenchContainer(inventory, ContainerLevelAccess.create(levelIn, pos), id), CONTAINER_NAME);
     }
@@ -118,13 +119,13 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     }
 
     @Override
-    public FluidState getFluidState(BlockState state)
+    public @NotNull FluidState getFluidState(BlockState state)
     {
         return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter levelIn, BlockPos pos, CollisionContext context)
+    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
         return SHAPES[state.getValue(FACING).get2DDataValue()];
     }

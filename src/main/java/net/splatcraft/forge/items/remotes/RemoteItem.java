@@ -36,6 +36,7 @@ import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ClientUtils;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -150,7 +151,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level levelIn, List<Component> tooltip, TooltipFlag flagIn)
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level levelIn, @NotNull List<Component> tooltip, @NotNull TooltipFlag flagIn)
     {
         super.appendHoverText(stack, levelIn, tooltip, flagIn);
 
@@ -178,7 +179,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     protected static final Style TARGETS_STYLE = Style.EMPTY.withColor(ChatFormatting.DARK_BLUE).withItalic(true);
 
     @Override
-    public InteractionResult useOn(UseOnContext context)
+    public @NotNull InteractionResult useOn(UseOnContext context)
     {
         if (context.getLevel().isClientSide)
         {
@@ -197,7 +198,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level levelIn, Player playerIn, InteractionHand handIn)
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level levelIn, Player playerIn, @NotNull InteractionHand handIn)
     {
         ItemStack stack = playerIn.getItemInHand(handIn);
         int mode = getRemoteMode(stack);
@@ -256,7 +257,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     }
 
     @Override
-    public void sendMessage(Component p_145747_1_, UUID p_145747_2_) {
+    public void sendMessage(@NotNull Component p_145747_1_, @NotNull UUID p_145747_2_) {
 
     }
 

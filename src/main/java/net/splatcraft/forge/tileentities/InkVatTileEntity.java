@@ -29,6 +29,7 @@ import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.container.InkVatContainer;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InkVatTileEntity extends BaseContainerBlockEntity implements WorldlyContainer
@@ -48,19 +49,19 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public int[] getSlotsForFace(Direction side)
+    public int @NotNull [] getSlotsForFace(@NotNull Direction side)
     {
         return side == Direction.UP ? INPUT_SLOTS : OUTPUT_SLOTS;
     }
 
     @Override
-    public boolean canPlaceItemThroughFace(int index, ItemStack itemStackIn, @Nullable Direction direction)
+    public boolean canPlaceItemThroughFace(int index, @NotNull ItemStack itemStackIn, @Nullable Direction direction)
     {
         return canPlaceItem(index, itemStackIn);
     }
 
     @Override
-    public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction)
+    public boolean canTakeItemThroughFace(int index, @NotNull ItemStack stack, @NotNull Direction direction)
     {
         return index == 4;
     }
@@ -78,13 +79,13 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public ItemStack getItem(int index)
+    public @NotNull ItemStack getItem(int index)
     {
         return inventory.get(index);
     }
 
     @Override
-    public ItemStack removeItem(int index, int count)
+    public @NotNull ItemStack removeItem(int index, int count)
     {
         if (index == 4 && !consumeIngredients(count))
         {
@@ -135,13 +136,13 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public ItemStack removeItemNoUpdate(int index)
+    public @NotNull ItemStack removeItemNoUpdate(int index)
     {
         return ContainerHelper.takeItem(inventory, index);
     }
 
     @Override
-    public void setItem(int index, ItemStack stack)
+    public void setItem(int index, @NotNull ItemStack stack)
     {
         inventory.set(index, stack);
         if (stack.getCount() > this.getMaxStackSize())
@@ -153,7 +154,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public boolean stillValid(Player player)
+    public boolean stillValid(@NotNull Player player)
     {
         if (this.level.getBlockEntity(this.getBlockPos()) != this)
         {
@@ -188,20 +189,20 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    protected Component getDefaultName()
+    protected @NotNull Component getDefaultName()
     {
         return new TranslatableComponent("container.ink_vat");
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int id, Inventory player)
+    protected @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory player)
     {
         return new InkVatContainer(id, player, this, false);
     }
 
     //Nbt Read
     @Override
-    public void load(CompoundTag nbt)
+    public void load(@NotNull CompoundTag nbt)
     {
         super.load(nbt);
         color = ColorUtils.getColorFromNbt(nbt);
@@ -213,7 +214,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public @NotNull CompoundTag getUpdateTag()
     {
         return new CompoundTag(){{saveAdditional(this);}};
     }
@@ -236,7 +237,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public boolean canPlaceItem(int index, ItemStack stack) {
+    public boolean canPlaceItem(int index, @NotNull ItemStack stack) {
         return switch (index) {
             case 0 -> ItemStack.isSame(stack, new ItemStack(Items.INK_SAC));
             case 1 -> ItemStack.isSame(stack, new ItemStack(SplatcraftItems.powerEgg.get()));
@@ -271,7 +272,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing)
+    public <T> net.minecraftforge.common.util.@NotNull LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.@NotNull Capability<T> capability, @Nullable Direction facing)
     {
         if (!this.isRemoved() && facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
         {

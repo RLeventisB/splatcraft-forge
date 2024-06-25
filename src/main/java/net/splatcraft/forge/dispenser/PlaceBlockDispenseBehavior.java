@@ -9,11 +9,12 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.DirectionalPlaceContext;
 import net.minecraft.world.level.block.DispenserBlock;
+import org.jetbrains.annotations.NotNull;
 
 public class PlaceBlockDispenseBehavior extends OptionalDispenseItemBehavior
 {
     @Override
-    protected ItemStack execute(BlockSource source, ItemStack stack)
+    protected @NotNull ItemStack execute(@NotNull BlockSource source, ItemStack stack)
     {
         this.setSuccess(false);
         Item item = stack.getItem();

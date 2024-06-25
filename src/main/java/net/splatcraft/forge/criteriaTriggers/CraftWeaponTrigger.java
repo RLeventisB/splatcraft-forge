@@ -6,16 +6,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class CraftWeaponTrigger  extends SimpleCriterionTrigger<CraftWeaponTrigger.TriggerInstance>
 {
 	static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "craft_weapon");
 
-	public ResourceLocation getId() {
+	public @NotNull ResourceLocation getId() {
 		return ID;
 	}
 
-	public CraftWeaponTrigger.TriggerInstance createInstance(JsonObject json, EntityPredicate.Composite composite, DeserializationContext context) {
+	public CraftWeaponTrigger.@NotNull TriggerInstance createInstance(JsonObject json, EntityPredicate.@NotNull Composite composite, @NotNull DeserializationContext context) {
 		ItemPredicate itempredicate = ItemPredicate.fromJson(json.get("item"));
 		return new CraftWeaponTrigger.TriggerInstance(composite, itempredicate);
 	}
@@ -37,7 +38,7 @@ public class CraftWeaponTrigger  extends SimpleCriterionTrigger<CraftWeaponTrigg
 			return this.item.matches(otherItem);
 		}
 
-		public JsonObject serializeToJson(SerializationContext context)
+		public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
 		{
 			JsonObject jsonobject = super.serializeToJson(context);
 			jsonobject.add("item", this.item.serializeToJson());

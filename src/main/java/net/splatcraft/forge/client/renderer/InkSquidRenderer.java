@@ -20,6 +20,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.layer.InkSquidColorLayer;
 import net.splatcraft.forge.client.models.InkSquidModel;
 import net.splatcraft.forge.entities.InkSquidEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSquidModel> implements RenderLayerParent<LivingEntity, InkSquidModel>
 {
@@ -42,13 +43,13 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	}
 
 	@Override
-	protected boolean shouldShowName(LivingEntity entity)
+	protected boolean shouldShowName(@NotNull LivingEntity entity)
 	{
 		return super.shouldShowName(entity) && (entity.shouldShowName() || entity.hasCustomName() && entity == this.entityRenderDispatcher.crosshairPickEntity);
 	}
 
 	@Override
-	public void render(LivingEntity entity, float p_115309_, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int p_115313_)
+	public void render(@NotNull LivingEntity entity, float p_115309_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int p_115313_)
 	{
 		super.render(entity, p_115309_, partialTicks, poseStack, bufferSource, p_115313_);
 
@@ -57,7 +58,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	}
 
 	@Override
-	public ResourceLocation getTextureLocation(LivingEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull LivingEntity entity)
 	{
 		return TEXTURE;
 	}
@@ -75,9 +76,9 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		Vec3 vec31 = squid.getLeashOffset();
 		double d1 = Math.cos(d0) * vec31.z + Math.sin(d0) * vec31.x;
 		double d2 = Math.sin(d0) * vec31.z - Math.cos(d0) * vec31.x;
-		double d3 = Mth.lerp((double)partialTicks, squid.xo, squid.getX()) + d1;
-		double d4 = Mth.lerp((double)partialTicks, squid.yo, squid.getY()) + vec31.y;
-		double d5 = Mth.lerp((double)partialTicks, squid.zo, squid.getZ()) + d2;
+		double d3 = Mth.lerp(partialTicks, squid.xo, squid.getX()) + d1;
+		double d4 = Mth.lerp(partialTicks, squid.yo, squid.getY()) + vec31.y;
+		double d5 = Mth.lerp(partialTicks, squid.zo, squid.getZ()) + d2;
 		poseStack.translate(d1, vec31.y, d2);
 		float f = (float)(vec3.x - d3);
 		float f1 = (float)(vec3.y - d4);

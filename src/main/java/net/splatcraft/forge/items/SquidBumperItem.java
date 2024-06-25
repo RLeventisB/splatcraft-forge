@@ -48,7 +48,7 @@ public class SquidBumperItem extends Item implements IColoredItem
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag)
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
     {
         super.appendHoverText(stack, level, tooltip, flag);
 
@@ -70,7 +70,7 @@ public class SquidBumperItem extends Item implements IColoredItem
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
@@ -106,7 +106,7 @@ public class SquidBumperItem extends Item implements IColoredItem
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext context)
+    public @NotNull InteractionResult useOn(UseOnContext context)
     {
         if (context.getClickedFace() == Direction.DOWN)
             return InteractionResult.FAIL;

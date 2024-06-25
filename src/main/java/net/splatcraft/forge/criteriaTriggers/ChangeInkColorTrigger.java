@@ -10,16 +10,17 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.registries.SplatcraftInkColors;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColorTrigger.TriggerInstance>
 {
 	static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "change_ink_color");
 
-	public ResourceLocation getId() {
+	public @NotNull ResourceLocation getId() {
 		return ID;
 	}
 
-	public ChangeInkColorTrigger.TriggerInstance createInstance(JsonObject json, EntityPredicate.Composite composite, DeserializationContext context)
+	public ChangeInkColorTrigger.@NotNull TriggerInstance createInstance(JsonObject json, EntityPredicate.@NotNull Composite composite, @NotNull DeserializationContext context)
 	{
 		int color = -1;
 
@@ -57,7 +58,7 @@ public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColor
 			return color == -1 || ColorUtils.getPlayerColor(player) == color;
 		}
 
-		public JsonObject serializeToJson(SerializationContext context)
+		public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
 		{
 			JsonObject jsonobject = super.serializeToJson(context);
 			jsonobject.addProperty("color", color);

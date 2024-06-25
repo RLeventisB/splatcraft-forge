@@ -15,6 +15,7 @@ import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +35,7 @@ public class InkOverlayLayer<E extends LivingEntity, M extends EntityModel<E>> e
 	}
 
 	@Override
-	public void render(PoseStack matrixStack, MultiBufferSource bufferIn, int packedLightIn, E entity, float v, float v1, float v2, float v3, float v4, float v5)
+	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull E entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
 		int overlay = -1;
 		float[] rgb = ColorUtils.hexToRGB(ColorUtils.DEFAULT);

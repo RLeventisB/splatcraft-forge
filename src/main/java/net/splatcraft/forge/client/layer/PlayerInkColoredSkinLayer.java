@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -59,7 +60,7 @@ public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer,
     }
 
     @Override
-    public void render(PoseStack matrixStack, MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5) {
+    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5) {
         if (entity.isSpectator() || entity.isInvisible() || !PlayerInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUUID())) {
             return;
         }

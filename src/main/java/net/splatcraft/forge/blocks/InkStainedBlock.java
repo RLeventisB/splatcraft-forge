@@ -17,6 +17,7 @@ import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state)
+    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         int color = getColor((Level) level, pos);
         if(color < 0)
@@ -42,7 +43,7 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
     }
 
     @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
     {
         if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
         {
@@ -53,7 +54,7 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
         return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
     }
@@ -78,7 +79,7 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
         return super.getStateForPlacement(context);
     }
@@ -165,7 +166,7 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
         }
 
         @Override
-        public List<ItemStack> getDrops(BlockState p_60537_, LootContext.Builder p_60538_) {
+        public @NotNull List<ItemStack> getDrops(@NotNull BlockState p_60537_, LootContext.@NotNull Builder p_60538_) {
             return super.getDrops(p_60537_, p_60538_);
         }
     }

@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InkSplashParticle extends TextureSheetParticle
@@ -55,13 +56,13 @@ public class InkSplashParticle extends TextureSheetParticle
     }
 
     @Override
-    public ParticleRenderType getRenderType()
+    public @NotNull ParticleRenderType getRenderType()
     {
         return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
     }
 
     @Override
-    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks)
+    public void render(@NotNull VertexConsumer buffer, @NotNull Camera renderInfo, float partialTicks)
     {
         if (!(Minecraft.getInstance().options.getCameraType().equals(CameraType.FIRST_PERSON) && distanceToSqr(Minecraft.getInstance().player, x, y, z) < 0.2))
         {
@@ -91,7 +92,7 @@ public class InkSplashParticle extends TextureSheetParticle
 
         @Nullable
         @Override
-        public Particle createParticle(InkSplashParticleData typeIn, ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull InkSplashParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
             return new InkSplashParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
         }

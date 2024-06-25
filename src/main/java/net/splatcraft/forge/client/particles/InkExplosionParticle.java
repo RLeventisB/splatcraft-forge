@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InkExplosionParticle extends TextureSheetParticle
@@ -49,7 +50,7 @@ public class InkExplosionParticle extends TextureSheetParticle
     }
 
     @Override
-    public ParticleRenderType getRenderType()
+    public @NotNull ParticleRenderType getRenderType()
     {
         return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
     }
@@ -68,7 +69,7 @@ public class InkExplosionParticle extends TextureSheetParticle
 
         @Nullable
         @Override
-        public Particle createParticle(InkExplosionParticleData typeIn, ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull InkExplosionParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
             return new InkExplosionParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
         }

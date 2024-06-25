@@ -49,8 +49,10 @@ public class WeaponHandler {
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		Player player = event.player;
-		if (PlayerCooldown.hasPlayerCooldown(player)) {
-			player.getInventory().selected = PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
+		boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
+		PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
+		if (hasCooldown) {
+			player.getInventory().selected = cooldown.getSlotIndex();
 		}
 
 		if (event.phase != TickEvent.Phase.START) {
@@ -60,28 +62,34 @@ public class WeaponHandler {
 		boolean canUseWeapon = true;
 		//Vec3 prevPos = PlayerInfoCapability.get(player).getPrevPos();
 
-		if(PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).cancellable && PlayerInfoCapability.isSquid(player))
+		if(hasCooldown)
 		{
-			PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-			ItemStack stack = cooldown.storedStack;
-
-			if (stack.getItem() instanceof WeaponBaseItem weapon)
-				weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
-			PlayerCooldown.setPlayerCooldown(player, null);
-		}
-        else if (PlayerCooldown.shrinkCooldownTime(player, 1) != null) {
-            player.setSprinting(false);
-            PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-
-			canUseWeapon = !cooldown.preventWeaponUse();
-	        ItemStack stack = cooldown.storedStack;
-
-	        if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
+			if(cooldown.cancellable && PlayerInfoCapability.isSquid(player))
 			{
-				if (cooldown.getTime() == 1)
+				ItemStack stack = cooldown.storedStack;
+
+				if (stack.getItem() instanceof WeaponBaseItem weapon)
 					weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
-				else if (cooldown.getTime() > 1)
-					weapon.onPlayerCooldownTick(player.level, player, stack, cooldown);
+				PlayerCooldown.setPlayerCooldown(player, null);
+			}
+			else
+			{
+				if(cooldown.getTime() == cooldown.getMaxTime())
+					cooldown.onStart(player);
+				cooldown.tick(player);
+				player.setSprinting(false);
+
+				canUseWeapon = !cooldown.preventWeaponUse();
+				ItemStack stack = cooldown.storedStack;
+
+				if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
+				{
+					if (cooldown.getTime() == 1)
+						weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
+					else if (cooldown.getTime() > 1)
+						weapon.onPlayerCooldownTick(player.level, player, stack, cooldown);
+				}
+				cooldown.setTime(cooldown.getTime() - 1);
 			}
 		}
 		if (canUseWeapon && player.getUseItemRemainingTicks() > 0 && !CommonUtils.anyWeaponOnCooldown(player)) {

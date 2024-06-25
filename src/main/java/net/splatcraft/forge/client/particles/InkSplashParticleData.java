@@ -13,6 +13,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.registries.SplatcraftParticleTypes;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
@@ -22,7 +23,7 @@ public class InkSplashParticleData implements ParticleOptions
     public static final Deserializer<InkSplashParticleData> DESERIALIZER = new Deserializer<InkSplashParticleData>()
     {
         @Override
-        public InkSplashParticleData fromCommand(ParticleType<InkSplashParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
+        public @NotNull InkSplashParticleData fromCommand(@NotNull ParticleType<InkSplashParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
         {
             reader.expect(' ');
             Integer color = InkColorArgument.parseStatic(reader);
@@ -31,7 +32,7 @@ public class InkSplashParticleData implements ParticleOptions
         }
 
         @Override
-        public InkSplashParticleData fromNetwork(ParticleType<InkSplashParticleData> particleTypeIn, FriendlyByteBuf buffer)
+        public @NotNull InkSplashParticleData fromNetwork(@NotNull ParticleType<InkSplashParticleData> particleTypeIn, FriendlyByteBuf buffer)
         {
             return new InkSplashParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
         }
@@ -68,7 +69,7 @@ public class InkSplashParticleData implements ParticleOptions
     }
 
     @Override
-    public ParticleType<?> getType()
+    public @NotNull ParticleType<?> getType()
     {
         return SplatcraftParticleTypes.INK_SPLASH;
     }
@@ -83,7 +84,7 @@ public class InkSplashParticleData implements ParticleOptions
     }
 
     @Override
-    public String writeToString()
+    public @NotNull String writeToString()
     {
         return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f", Registry.PARTICLE_TYPE.getKey(this.getType()), this.red, this.green, this.blue, this.scale);
     }

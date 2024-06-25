@@ -1,67 +1,48 @@
 {
-	"type": "splatcraft:dualie",
-	"full_damage_to_mobs": false,
-	"mobility": 0.6,
-
-	"projectile":
-	{
-		"size": 0.8,
-		"speed": 2.1,
-		"decayed_speed": 1,
-		"count": 1,
-
-		"ink_coverage_on_impact": 0.68,
-		"ink_trail_coverage": 0.8,
-		"ink_trail_tick_interval": 2,
-
-		"straight_shot_distance": 4,
-		"gravity": 0.075,
-
-		"base_damage": 7.3,
-		"decayed_damage": 3.6,
-
-		"damage_decay_start_tick": 2,
-		"damage_decay_per_tick": 1.35
-	},
-
-	"shot":
-	{
-		"startup_ticks": 0,
-		"firing_speed": 8,
-
-		"ground_inaccuracy": 4,
-		"airborne_inaccuracy": 8,
-		"pitch_compensation": 0,
-
-		"ink_consumption": 1.4,
-		"ink_recovery_cooldown": 7
-	},
-	"dodge_roll":
-	{
-		"count": 1,
-		"movement_impulse": 0.7,
-		"ink_consumption": 8,
-		"ink_recovery_cooldown": 23,
-		"turret_duration": 12,
-		"final_roll_turret_duration": 24
-	},
-
-	"turret_projectile":
-	{
-		"speed": 2.3,
-		"decayed_speed": 2.25,
-		"straight_shot_distance": 9,
-
-		"base_damage": 10.6,
-		"decayed_damage": 5.26,
-
-		"damage_decay_start_tick": 2,
-		"damage_decay_per_tick": 3
-	},
-
-	"turret_shot":
-	{
-		"firing_speed": 4,
-		"ground_inaccuracy": 2
-	}
+    "type": "splatcraft:dualie",
+    "full_damage_to_mobs": false,
+    "mobility": 0.6,
+    "projectile": {
+        "size": 0.8,
+        "speed": 2.85,
+        "count": 1,
+        "ink_coverage_on_impact": 0.68,
+        "ink_trail_coverage": 0.8,
+        "ink_trail_tick_interval": 2,
+        "straight_shot_ticks": 1,
+        "gravity": 0.075,
+        "base_damage": 7.3,
+        "decayed_damage": 3.6,
+        "damage_decay_start_tick": 2,
+        "damage_decay_per_tick": 0.11
+    },
+    "shot": {
+        "startup_ticks": 0,
+        "firing_speed": 8,
+        "ground_inaccuracy": 4,
+        "airborne_inaccuracy": 8,
+        "pitch_compensation": 0,
+        "ink_consumption": 1.4,
+        "ink_recovery_cooldown": 7
+    },
+    "dodge_roll": {
+        "count": 1,
+        "movement_impulse": 0.6,
+        "ink_consumption": 8,
+        "ink_recovery_cooldown": 23,
+        "turret_duration": 12,
+        "final_roll_turret_duration": 24
+    },
+    "turret_projectile": {
+        "speed": 3.2,
+        "straight_shot_ticks": 1,
+        "base_damage": 10.6,
+        "decayed_damage": 5.26,
+        "damage_decay_start_tick": 2,
+        "damage_decay_per_tick": 0.178
+    },
+    "turret_shot": {
+        "firing_speed": 6,
+        "ground_inaccuracy": 2
+    }
 }

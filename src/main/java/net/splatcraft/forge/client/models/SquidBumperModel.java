@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.entities.SquidBumperEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperModel extends EntityModel<SquidBumperEntity> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
@@ -46,13 +47,13 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity> {
 	}
 
 	@Override
-	public void setupAnim(SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(@NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 
 	}
 
 	private float scale = 1;
 	@Override
-	public void prepareMobModel(SquidBumperEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+	public void prepareMobModel(@NotNull SquidBumperEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
@@ -74,7 +75,7 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
 	{
 		Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 

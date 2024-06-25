@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.tileentities.RemotePedestalTileEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class RemotePedestalTileEntityRenderer implements BlockEntityRenderer<RemotePedestalTileEntity>
 {
@@ -17,7 +18,7 @@ public class RemotePedestalTileEntityRenderer implements BlockEntityRenderer<Rem
 
 
     @Override
-    public void render(RemotePedestalTileEntity remotePedestalTileEntity, float partialTicks, PoseStack matrixStack, MultiBufferSource buffer, int combinedLight, int combinedOverlay)
+    public void render(RemotePedestalTileEntity remotePedestalTileEntity, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int combinedLight, int combinedOverlay)
     {
         ItemStack stack = remotePedestalTileEntity.getItem(0);
 

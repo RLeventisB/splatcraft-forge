@@ -17,6 +17,7 @@ import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InkWaxerItem extends Item
 {
@@ -39,7 +40,7 @@ public class InkWaxerItem extends Item
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext context)
+    public @NotNull InteractionResult useOn(UseOnContext context)
     {
         WorldInk worldInk = WorldInkCapability.get(context.getLevel(), context.getClickedPos());
 
@@ -75,17 +76,17 @@ public class InkWaxerItem extends Item
     }
 
     @Override
-    public boolean canAttackBlock(BlockState state, Level levelIn, BlockPos pos, Player player) {
+    public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player) {
         return false;
     }
 
     @Override
-    public float getDestroySpeed(ItemStack stack, BlockState state) {
+    public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state) {
         return 0;
     }
 
     @Override
-    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+    public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair) {
         return repair.getItem().equals(Items.HONEYCOMB) || super.isValidRepairItem(toRepair, repair);
     }
 }

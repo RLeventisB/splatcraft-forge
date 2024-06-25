@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.models.AbstractSubWeaponModel;
 import net.splatcraft.forge.entities.subs.CurlingBombEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
@@ -85,12 +86,12 @@ public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity> 
 	}
 
 	@Override
-	public void setupAnim(CurlingBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
+	public void setupAnim(@NotNull CurlingBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
 	{
 	}
 
 	@Override
-	public void prepareMobModel(CurlingBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+	public void prepareMobModel(@NotNull CurlingBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
@@ -100,7 +101,7 @@ public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity> 
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 		blades.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		bumper1.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 		bumper2.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
