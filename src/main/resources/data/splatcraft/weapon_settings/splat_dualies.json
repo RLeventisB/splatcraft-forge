@@ -4,7 +4,7 @@
     "mobility": 0.8,
     "projectile": {
         "size": 0.2,
-        "speed": 5.04,
+        "speed": 3.56,
         "ink_coverage_on_impact": 1.12,
         "ink_drop_coverage": 0.93,
         "distance_between_drops": 7,
@@ -23,7 +23,7 @@
     },
     "dodge_roll": {
         "count": 1,
-        "movement_impulse": 0.5,
+        "movement_impulse": 0.625,
         "ink_consumption": 9,
         "ink_recovery_cooldown": 23,
         "roll_startup": 1,

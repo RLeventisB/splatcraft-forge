@@ -16,6 +16,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.registries.SplatcraftItems;
@@ -158,6 +159,10 @@ public class PlayerMovementHandler
 					//input = player.movementInput;
 					input.forwardImpulse *= 5.0F;
 					//input = player.movementInput;
+					if (stack.getItem() instanceof DualieItem && (input.leftImpulse != 0 || input.forwardImpulse != 0))
+					{
+						input.jumping = false;
+					}
 				}
 			}
 		}

@@ -90,7 +90,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	public int lifespan = 600;
 	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
-	public float impactCoverage, visualSize, dropImpactSize, distanceBetweenDrops, dropRemainderDistance;
+	public float impactCoverage, dropImpactSize, distanceBetweenDrops, dropRemainderDistance;
 	public float dropSkipDistance;
 	public String damageType = "splat";
 	public float damageMultiplier = 1;
@@ -214,7 +214,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	}
 	public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
 	{
-		visualSize = settings.visualSize();
 		dropImpactSize = settings.inkDropCoverage();
 		distanceBetweenDrops = settings.distanceBetweenInkDrops();
 		if (distanceBetweenDrops > 0)
@@ -261,8 +260,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	public void tick()
 	{
 		Vec3 lastPosition = position();
-//		if (getOwner() != null) // horrible use of format ahead
-//			getOwner().sendMessage(new TextComponent("pos: " + String.format(Locale.ROOT, "%.1f / %.1f / %.1f", getX(), getY(), getZ()) + ", frame: " + tickCount + ", velocity: " + String.format("%.1f", getShootVelocity().multiply(1, 0, 1).length())), getUUID());
 		setDeltaMovement(getShootVelocity());
 		super.tick();
 		
@@ -277,14 +274,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		if (!level.isClientSide && !persistent && lifespan-- <= 0)
 		{
-//			float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, data) * damageMultiplier;
 			if (Objects.equals(getProjectileType(), Types.BLASTER) && data.length >= 4)
 			{
-				// check blaster explosion pos!!
-//				ParticleOptions options = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Registry.BLOCK.getOptional(new ResourceLocation("minecraft:barrier")).get().defaultBlockState());
-//				if (!level.isClientSide)
-//					((ServerLevel) level).sendParticles(options, getX(), getY(), getZ(), 1, 0, 0, 0, 0);
-				
 				InkExplosion.createInkExplosion(getOwner(), position(), (float) data[3], (float) data[0], damage.getMinDamage() * damageMultiplier, (float) data[1] * damageMultiplier, inkType, sourceWeapon);
 				createDrop(getX(), getY(), getZ(), 0, (float) data[3]);
 				level.broadcastEntityEvent(this, (byte) 3);
@@ -316,8 +307,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			{
 				calculateDrops(lastPosition);
 			}
-
-//			InkExplosion.createInkExplosion(getOwner(), blockPosition(), dropImpactSize, 0, 0, inkType, sourceWeapon);
 		}
 		straightShotTime--;
 	}
@@ -358,10 +347,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	}
 	public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize)
 	{
-//		ParticleOptions options = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Registry.BLOCK.getOptional(new ResourceLocation("minecraft:barrier")).get().defaultBlockState());
-//		if (!level.isClientSide)
-//			((ServerLevel) level).sendParticles(options, dropX, dropY, dropZ, 1, 0, 0, 0, 0);
-		
 		InkDropEntity proj = new InkDropEntity(level, this, getColor(), inkType, dropImpactSize, sourceWeapon);
 		Vec3 velocity = new Vec3(getDeltaMovement().x, Math.min(getDeltaMovement().y, 0) - 2.5, getDeltaMovement().z);
 		velocity = velocity.scale(Math.pow(0.99, extraFrame)).multiply(Math.pow(0.9, extraFrame), 1, Math.pow(0.9, extraFrame)).subtract(0, 0.175 * extraFrame, 0);
