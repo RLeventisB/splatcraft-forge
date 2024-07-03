@@ -40,123 +40,122 @@ import java.util.Objects;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(Splatcraft.MODID)
-public class Splatcraft {
-    public static final String MODID = "splatcraft";
-    public static final String MODNAME = "Splatcraft";
-    public static String version;
-    public static final Logger LOGGER = LogManager.getLogger(MODNAME);
-
-    public Splatcraft() {
-        for (IModInfo m : ModList.get().getMods()) { // Forge is stupid
-            if (Objects.equals(m.getModId(), MODID) && m.getVersion() != null)
-            {
-                version = m.getVersion().toString();
-                break;
-            }
-        }
-
-        SplatcraftRegisties.register();
-        for (int j = 0; j < 16; ++j)
-        {
-            for (int k = 0; k < 16; ++k)
-            {
-                for (int l = 0; l < 16; ++l)
-                {
-                    if (j == 0 || j == 15 || k == 0 || k == 15 || l == 0 || l == 15)
-                    {
-                        double rayX = j / 15.0F * 2.0F - 1.0F;
-                        double rayY = k / 15.0F * 2.0F - 1.0F;
-                        double rayZ = l / 15.0F * 2.0F - 1.0F;
-                        double length = Math.sqrt(rayX * rayX + rayY * rayY + rayZ * rayZ) * (3.3333333333333335);
-                        rayX /= length;
-                        rayY /= length;
-                        rayZ /= length;
-                        InkExplosion.rays.add(new Vec3(rayX, rayY, rayZ));
-                    }
-                }
-            }
-        }
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
-        SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
-
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupBuiltInPacks);
-
-        MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(FMLJavaModLoadingContext.get().getModEventBus());
-
-        //addBuiltinPack("classic_weapons", new TextComponent("Splatcraft - Classic Weapons"));
-
-    }
-
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
-        SplatcraftPacketHandler.registerMessages();
-
-        SplatcraftGameRules.registerGamerules();
-        SplatcraftTags.register();
-        SplatcraftStats.register();
-        ScoreboardHandler.register();
-        SplatcraftCommands.registerArguments();
-
-        SplatcraftOreGen.registerOres();
-        SplatcraftItems.postRegister();
-    }
-
-    private void clientSetup(final FMLClientSetupEvent event) {
-        SplatcraftEntities.bindRenderers();
-        SplatcraftKeyHandler.registerKeys();
-        SplatcraftBlocks.setRenderLayers();
-        SplatcraftTileEntities.bindTESR();
-
-        event.enqueueWork(() ->
-        {
-            SplatcraftItems.registerModelProperties();
-            ClientSetupHandler.bindScreenContainers();
-        });
-    }
-    @SubscribeEvent
-    public void registerCaps(RegisterCapabilitiesEvent event)
-    {
-        event.register(PlayerInfoCapability.class);
-    }
-    @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event)
-    {
-        SplatcraftGameRules.booleanRules.replaceAll((k, v) -> event.getServer().getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
-        SplatcraftGameRules.intRules.replaceAll((k, v) -> event.getServer().getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
-    }
-
-    private static final ArrayList<ResourcePack> BUILTIN_PACKS = new ArrayList<>();
-    public void setupBuiltInPacks(AddPackFindersEvent event)
-    {
-        if(event.getPackType() == PackType.CLIENT_RESOURCES)
-        {
-            for(ResourcePack pack : BUILTIN_PACKS)
-                try {
-                Path path = ModList.get().getModFileById(MODID).getFile().findResource("resourcepacks/" + pack.folder);
-                PathResourcePack packPath = new PathResourcePack(ModList.get().getModFileById(MODID).getFile().getFileName() + ":" + path, path);
-                PackMetadataSection section = packPath.getMetadataSection(PackMetadataSection.SERIALIZER);
-
-                if(section != null)
-                {
-                    event.addRepositorySource((packConsumer, packConstructor) -> packConsumer.accept(packConstructor.create(
-                            "builtin/" + Splatcraft.MODID, pack.displayName, false,
-                            () -> packPath, section, Pack.Position.BOTTOM, PackSource.BUILT_IN, false
-                    )));
-                }
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-        }
-    }
-
-    record ResourcePack(String folder, Component displayName){}
-
-    public void addBuiltinPack(String folder, Component displayName)
-    {
-        BUILTIN_PACKS.add(new ResourcePack(folder, displayName));
-    }
+public class Splatcraft
+{
+	public static final String MODID = "splatcraft";
+	public static final String MODNAME = "Splatcraft";
+	public static String version;
+	public static final Logger LOGGER = LogManager.getLogger(MODNAME);
+	public Splatcraft()
+	{
+		for (IModInfo m : ModList.get().getMods())
+		{ // Forge is stupid
+			if (Objects.equals(m.getModId(), MODID) && m.getVersion() != null)
+			{
+				version = m.getVersion().toString();
+				break;
+			}
+		}
+		
+		SplatcraftRegisties.register();
+		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
+		SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
+		
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setupBuiltInPacks);
+		
+		MinecraftForge.EVENT_BUS.register(this);
+		MinecraftForge.EVENT_BUS.register(FMLJavaModLoadingContext.get().getModEventBus());
+		
+		//addBuiltinPack("classic_weapons", new TextComponent("Splatcraft - Classic Weapons"));
+		
+	}
+	private void commonSetup(final FMLCommonSetupEvent event)
+	{
+		SplatcraftPacketHandler.registerMessages();
+		
+		SplatcraftGameRules.registerGamerules();
+		SplatcraftTags.register();
+		SplatcraftStats.register();
+		ScoreboardHandler.register();
+		SplatcraftCommands.registerArguments();
+		
+		SplatcraftOreGen.registerOres();
+		SplatcraftItems.postRegister();
+	}
+	private void clientSetup(final FMLClientSetupEvent event)
+	{
+		SplatcraftEntities.bindRenderers();
+		SplatcraftKeyHandler.registerKeys();
+		SplatcraftBlocks.setRenderLayers();
+		SplatcraftTileEntities.bindTESR();
+		
+		event.enqueueWork(() ->
+		{
+			SplatcraftItems.registerModelProperties();
+			ClientSetupHandler.bindScreenContainers();
+		});
+	}
+	@SubscribeEvent
+	public void registerCaps(RegisterCapabilitiesEvent event)
+	{
+		event.register(PlayerInfoCapability.class);
+	}
+	@SubscribeEvent
+	public void onServerStarted(ServerStartedEvent event)
+	{
+		InkExplosion.rays.clear();
+		final double step = 2.0 / 15; // precalculate rays because InkExplosion.doExplosionA has a big CPU overhead
+		for (double j = -1; j <= 1; j += step)
+		{
+			for (double k = -1; k <= 1; k += step)
+			{
+				for (double l = -1; l <= 1; l += step)
+				{
+					if (j == -1 || j == 1 || k == -1 || k == 1 || l == -1 || l == 1)
+					{
+						Vec3 ray = new Vec3(j, k, l);
+						InkExplosion.rays.add(ray.normalize());
+					}
+				}
+			}
+		}
+		
+		SplatcraftGameRules.booleanRules.replaceAll((k, v) -> event.getServer().getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
+		SplatcraftGameRules.intRules.replaceAll((k, v) -> event.getServer().getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
+	}
+	private static final ArrayList<ResourcePack> BUILTIN_PACKS = new ArrayList<>();
+	public void setupBuiltInPacks(AddPackFindersEvent event)
+	{
+		if (event.getPackType() == PackType.CLIENT_RESOURCES)
+		{
+			for (ResourcePack pack : BUILTIN_PACKS)
+				try
+				{
+					Path path = ModList.get().getModFileById(MODID).getFile().findResource("resourcepacks/" + pack.folder);
+					PathResourcePack packPath = new PathResourcePack(ModList.get().getModFileById(MODID).getFile().getFileName() + ":" + path, path);
+					PackMetadataSection section = packPath.getMetadataSection(PackMetadataSection.SERIALIZER);
+					
+					if (section != null)
+					{
+						event.addRepositorySource((packConsumer, packConstructor) -> packConsumer.accept(packConstructor.create(
+							"builtin/" + Splatcraft.MODID, pack.displayName, false,
+							() -> packPath, section, Pack.Position.BOTTOM, PackSource.BUILT_IN, false
+						)));
+					}
+				}
+				catch (IOException e)
+				{
+					throw new RuntimeException(e);
+				}
+		}
+	}
+	record ResourcePack(String folder, Component displayName)
+	{
+	}
+	public void addBuiltinPack(String folder, Component displayName)
+	{
+		BUILTIN_PACKS.add(new ResourcePack(folder, displayName));
+	}
 }

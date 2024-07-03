@@ -38,14 +38,15 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	@Override
 	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
 	{
-		ItemCooldowns cooldownTracker = ((Player) entity).getCooldowns();
+		Player player = (Player) entity;
+		ItemCooldowns cooldownTracker = player.getCooldowns();
 		if (!cooldownTracker.isOnCooldown(this))
 		{
 			BlasterWeaponSettings settings = getSettings(stack);
-			PlayerCooldown.setPlayerCooldown((Player) entity, new PlayerCooldown(stack, settings.shotData.startupTicks(), ((Player) entity).getInventory().selected, entity.getUsedItemHand(), true, false, true, entity.isOnGround()));
+			PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.startupTicks(), player.getInventory().selected, entity.getUsedItemHand(), true, false, true, player.isOnGround()));
 			if (!level.isClientSide)
 			{
-				cooldownTracker.addCooldown(this, settings.shotData.endlagTicks());
+				cooldownTracker.addCooldown(this, settings.shotData.startupTicks() + settings.shotData.endlagTicks());
 			}
 		}
 	}

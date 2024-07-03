@@ -2,6 +2,7 @@ package net.splatcraft.forge.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -19,6 +20,7 @@ import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.TreeMap;
 
 public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> implements RenderLayerParent<InkProjectileEntity, InkProjectileModel>
@@ -44,21 +46,41 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 		if (entityIn.isInvisible())
 			return;
 		
-		if (entityIn.tickCount >= 3 || this.entityRenderDispatcher.camera.getEntity().distanceToSqr(entityIn) >= 12.25D)
+		if (this.entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.position()) >= 16D)
 		{
-			float scale = entityIn.getProjectileSize() * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
+			float visualSize = entityIn.getProjectileVisualSize();
+			float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
 			int color = entityIn.getColor();
 			
 			if (SplatcraftConfig.Client.getColorLock())
 				color = ColorUtils.getLockedColor(color);
 			
-			float r = (float) (Math.floor((float) color / (256 * 256)) / 255f);
-			float g = (float) (Math.floor((float) color / 256) % 256 / 255f);
-			float b = (color % 256) / 255f;
+			int rInt = (color & 0x00FF0000) >> 16;
+			int gInt = (color & 0x0000FF00) >> 8;
+			int bInt = color & 0x000000FF;
+			final boolean makeShinier = true; // TODO create a configuration for this, because you can't really see the projectiles well when gaming
+			
+			if (makeShinier)
+			{
+				float[] values = new float[3];
+				Color.RGBtoHSB(rInt, gInt, bInt, values);
+				values[2] = Mth.lerp(0.9f, values[2], 1);
+				values[1] = Mth.lerp(0.5f, values[1], 0);
+				
+				color = Color.HSBtoRGB(values[0], values[1], values[2]);
+				rInt = (color & 0x00FF0000) >> 16;
+				gInt = (color & 0x0000FF00) >> 8;
+				bInt = color & 0x000000FF;
+				packedLightIn = 0x00F00000;
+			}
+			
+			float r = (rInt / 255f);
+			float g = (gInt / 255f);
+			float b = (bInt / 255f);
 			
 			//0.30000001192092896D
 			matrixStackIn.pushPose();
-			matrixStackIn.translate(0.0D, 0.4d/*0.15000000596046448D*/, 0.0D);
+			matrixStackIn.translate(0.0D, visualSize / 4 /*0.15000000596046448D*/, 0.0D);
 			matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
 			matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
 			matrixStackIn.scale(scale, scale, scale);
@@ -66,7 +88,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
 			
 			model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
-			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
+			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), makeShinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
 			matrixStackIn.popPose();
 			
 			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);

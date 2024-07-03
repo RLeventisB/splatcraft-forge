@@ -108,8 +108,8 @@ public class SuperJumpCommand
 					double d1 = target.y - player.position().y;
 					double d2 = target.z - player.position().z;
 					double d3 = Math.sqrt(d0 * d0 + d2 * d2);
-					player.setXRot(CommonUtils.lerpRotation(0.2f, player.getXRot(), Mth.wrapDegrees((float) (-(Mth.atan2(d1, d3) * (180.0 / Math.PI))))));
-					player.setYRot(CommonUtils.lerpRotation(0.2f, player.getYRot(), Mth.wrapDegrees((float) (Mth.atan2(d2, d0) * (180.0 / Math.PI)) - 90.0F)));
+					player.setXRot(CommonUtils.lerpRotation(0.2f, player.getXRot(), Mth.wrapDegrees((float) (-(Mth.atan2(d1, d3) * Mth.RAD_TO_DEG)))));
+					player.setYRot(CommonUtils.lerpRotation(0.2f, player.getYRot(), Mth.wrapDegrees((float) (Mth.atan2(d2, d0) * Mth.RAD_TO_DEG) - 90.0F)));
 					player.setYHeadRot(player.getYRot());
 					if (!info.isSquid())
 					{
@@ -140,7 +140,7 @@ public class SuperJumpCommand
 					if (!player.level.isClientSide())
 					{
 						player.moveTo(position);
-						player.setXRot((float) Math.sin(progress * Math.PI) * 40f);
+//						player.setXRot((float) Math.sin(progress * Math.PI) * 40f);
 					}
 				}
 				if (cooldown.getTime() == (int) (superJump.duration * SuperJump.SquidPortion)) // mid jump conversion

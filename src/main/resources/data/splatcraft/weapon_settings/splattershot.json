@@ -1,37 +1,29 @@
 {
-	"type": "splatcraft:shooter",
-	"projectile":
-	{
-		"size": 1,
-		"speed": 2,
-		"decayed_speed": 0.5,
-		"count": 1,
-
-		"ink_coverage_on_impact": 0.85,
-		"ink_trail_coverage": 0.75,
-		"ink_trail_tick_interval": 3,
-
-		"straight_shot_distance": 8,
-		"gravity": 0.075,
-
-		"base_damage": 8,
-		"decayed_damage": 4,
-		"damage_decay_start_tick": 3,
-		"damage_decay_per_tick": 0.34
-	},
-
-	"shot":
-	{
-		"startup_ticks": 0,
-		"firing_speed": 3,
-
-		"ground_inaccuracy": 6,
-		"airborne_inaccuracy": 12,
-		"pitch_compensation": 0,
-
-		"ink_consumption": 0.9,
-		"ink_recovery_cooldown": 7
-	},
-	"full_damage_to_mobs": false,
-	"mobility": 0.72
+    "type": "splatcraft:shooter",
+    "projectile": {
+        "size": 1,
+        "speed": 2,
+        "decayed_speed": 0.5,
+        "count": 1,
+        "ink_coverage_on_impact": 0.85,
+        "ink_drop_coverage": 0.75,
+        "distance_between_drops": 3,
+        "straight_shot_ticks": 8,
+        "gravity": 0.075,
+        "base_damage": 8,
+        "decayed_damage": 4,
+        "damage_decay_start_tick": 3,
+        "damage_decay_per_tick": 0.34
+    },
+    "shot": {
+        "startup_ticks": 0,
+        "endlag_ticks": 3,
+        "ground_inaccuracy": 6,
+        "airborne_inaccuracy": 12,
+        "pitch_compensation": 0,
+        "ink_consumption": 0.9,
+        "ink_recovery_cooldown": 7
+    },
+    "full_damage_to_mobs": false,
+    "mobility": 0.72
 }

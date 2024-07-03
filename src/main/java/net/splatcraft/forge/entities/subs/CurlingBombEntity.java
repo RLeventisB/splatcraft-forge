@@ -146,7 +146,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		
 		if (fuseTime >= settings.fuseTime)
 		{
-			InkExplosion.createInkExplosion(getOwner(), blockPosition(), settings.explosionSize + getCookScale(), settings.propDamage, settings.indirectDamage, settings.directDamage, true, inkType, sourceWeapon);
+			InkExplosion.createInkExplosion(getOwner(), getBoundingBox().getCenter(), settings.explosionSize + getCookScale(), settings.explosionSize + getCookScale(), settings.indirectDamage, settings.directDamage, inkType, sourceWeapon);
 			level.broadcastEntityEvent(this, (byte) 1);
 			level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			if (!level.isClientSide())
