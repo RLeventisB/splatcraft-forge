@@ -12,33 +12,28 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public CommonRecords.ShotDataRecord standardShotData = CommonRecords.ShotDataRecord.DEFAULT, turretShotData = CommonRecords.ShotDataRecord.DEFAULT;
 	public RollDataRecord rollData = RollDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
-	
 	public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings("default");
-	
 	public DualieWeaponSettings(String name)
 	{
 		super(name);
 	}
-	
 	@Override
-	public float calculateDamage(int tickCount, boolean airborne, float charge, boolean isOnRollCooldown)
+	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
 	{
-		if (isOnRollCooldown)
+		if (data.length > 0 && (data[0] instanceof Boolean rollProjectile) && rollProjectile)
 		{
-			int e = tickCount - turretProjectileData.damageDecayStartTick();
+			float e = tickCount - turretProjectileData.damageDecayStartTick();
 			return Math.max(e > 0 ? turretProjectileData.baseDamage() - e * turretProjectileData.damageDecayPerTick() : turretProjectileData.baseDamage(), turretProjectileData.minDamage());
 		}
 		
-		int e = tickCount - standardProjectileData.damageDecayStartTick();
+		float e = tickCount - standardProjectileData.damageDecayStartTick();
 		return Math.max(e > 0 ? standardProjectileData.baseDamage() - e * standardProjectileData.damageDecayPerTick() : standardProjectileData.baseDamage(), standardProjectileData.minDamage());
 	}
-	
 	@Override
 	public float getMinDamage()
 	{
 		return standardProjectileData.minDamage();
 	}
-	
 	@Override
 	public WeaponTooltip<DualieWeaponSettings>[] tooltipsToRegister()
 	{
@@ -48,15 +43,12 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 				new WeaponTooltip<DualieWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.standardProjectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
 				new WeaponTooltip<DualieWeaponSettings>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.speed * 6, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
 			};
-		
 	}
-	
 	@Override
 	public Codec<DataRecord> getCodec()
 	{
 		return DataRecord.CODEC;
 	}
-	
 	@Override
 	public void deserialize(DataRecord data)
 	{
@@ -70,7 +62,6 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
 	}
-	
 	@Override
 	public DataRecord serialize()
 	{
@@ -84,13 +75,11 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 			bypassesMobDamage,
 			isSecret);
 	}
-	
 	public DualieWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
 	{
 		this.bypassesMobDamage = bypassesMobDamage;
 		return this;
 	}
-	
 	public record DataRecord(
 		CommonRecords.ProjectileDataRecord projectile,
 		CommonRecords.ShotDataRecord shot,
@@ -123,14 +112,15 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 				CommonRecords.OptionalProjectileDataRecord localTurretProjectile = turretProjectile.get(); // ok so i just moved the boilerplate code to another place, great!!!!
 				parsedTurretProjectile = new CommonRecords.ProjectileDataRecord(
 					localTurretProjectile.size().orElse(projectile.size()),
+					localTurretProjectile.visualSize().orElse(projectile.visualSize()),
 					localTurretProjectile.lifeTicks().orElse(projectile.lifeTicks()),
 					localTurretProjectile.speed().orElse(projectile.speed()),
 					localTurretProjectile.horizontalDrag().orElse(projectile.horizontalDrag()),
 					localTurretProjectile.straightShotTicks().orElse(projectile.straightShotTicks()),
 					localTurretProjectile.gravity().orElse(projectile.gravity()),
 					localTurretProjectile.inkCoverageImpact().orElse(projectile.inkCoverageImpact()),
-					localTurretProjectile.inkTrailCoverage().orElse(projectile.inkTrailCoverage()),
-					localTurretProjectile.inkTrailCooldown().orElse(projectile.inkTrailCooldown()),
+					localTurretProjectile.inkDropCoverage().orElse(projectile.inkDropCoverage()),
+					localTurretProjectile.distanceBetweenInkDrops().orElse(projectile.distanceBetweenInkDrops()),
 					localTurretProjectile.baseDamage().orElse(projectile.baseDamage()),
 					localTurretProjectile.minDamage().orElse(projectile.minDamage()),
 					localTurretProjectile.damageDecayStartTick().orElse(projectile.damageDecayStartTick()),
@@ -147,7 +137,6 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 				parsedTurretShot = new CommonRecords.ShotDataRecord(
 					localTurretShot.startupTicks().orElse(shot.startupTicks()),
 					localTurretShot.endlagTicks().orElse(shot.endlagTicks()),
-					localTurretShot.firingSpeed().orElse(shot.firingSpeed()),
 					localTurretShot.projectileCount().orElse(shot.projectileCount()),
 					localTurretShot.groundInaccuracy().orElse(shot.groundInaccuracy()),
 					localTurretShot.airborneInaccuracy().orElse(shot.airborneInaccuracy()),
@@ -163,16 +152,15 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 			return new DataRecord(projectile, shot, parsedTurretProjectile, parsedTurretShot, roll, mobility, bypassesMobDamage, isSecret);
 		}
 	}
-	
 	public record RollDataRecord(
 		float count,
 		float speed,
 		float inkConsumption,
 		int inkRecoveryCooldown,
-		int rollStartup,
-		int rollCooldown,
+		byte rollStartup,
+		byte rollEndlag,
 		int turretDuration,
-		int lastRollCooldown,
+		int lastRollTurretDuration,
 		boolean canMove
 	)
 	{
@@ -182,13 +170,13 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 				Codec.FLOAT.fieldOf("movement_impulse").forGetter(RollDataRecord::speed),
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollDataRecord::inkConsumption),
 				Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollDataRecord::inkRecoveryCooldown),
-				Codec.INT.optionalFieldOf("roll_startup", 2).forGetter(RollDataRecord::rollStartup),
-				Codec.INT.optionalFieldOf("roll_endlag", 2).forGetter(RollDataRecord::rollCooldown),
+				Codec.BYTE.optionalFieldOf("roll_startup", (byte) 2).forGetter(RollDataRecord::rollStartup),
+				Codec.BYTE.optionalFieldOf("roll_endlag", (byte) 2).forGetter(RollDataRecord::rollEndlag),
 				Codec.INT.fieldOf("turret_duration").forGetter(RollDataRecord::turretDuration),
-				Codec.INT.fieldOf("final_roll_turret_duration").forGetter(RollDataRecord::lastRollCooldown),
+				Codec.INT.fieldOf("final_roll_turret_duration").forGetter(RollDataRecord::lastRollTurretDuration),
 				Codec.BOOL.optionalFieldOf("allows_movement", false).forGetter(RollDataRecord::canMove)
 			).apply(instance, RollDataRecord::new)
 		);
-		public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, 2, 2, 0, 0, false);
+		public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 2, 0, 0, false);
 	}
 }

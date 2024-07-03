@@ -1,25 +1,23 @@
-{"type": "splatcraft:blaster",
-	"projectile": 
-	{
-		"size": 2.25,
-		"range": 5.25,
-		"speed": 1.05,
-		"ink_explosion_radius": 1.9125,
-		"ink_trail_coverage": 1.125,
-		"ink_trail_tick_interval": 0,
-
-		"direct_damage": 25.0,
-		"splash_damage": 10.0
-	},
-	"shot":
-	{
-		"startup_ticks": 4,
-		"endlag_ticks": 20,
-		"ground_inaccuracy": 0.0,
-		"airborne_inaccuracy": 8.0,
-		"ink_consumption": 10.0,
-		"ink_recovery_cooldown": 20.0
-	},
-	"full_damage_to_mobs": false,
-	"mobility": 0.45
+{
+    "type": "splatcraft:blaster",
+    "projectile": {
+        "size": 0.2,
+        "straght_shot_ticks": 4,
+        "speed": 0.72,
+        "ink_explosion_radius": 1.9125,
+        "ink_drop_coverage": 1.125,
+        "distance_between_drops": 0,
+        "direct_damage": 25.0,
+        "splash_damage": 10.0
+    },
+    "shot": {
+        "startup_ticks": 4,
+        "endlag_ticks": 20,
+        "ground_inaccuracy": 0.0,
+        "airborne_inaccuracy": 8.0,
+        "ink_consumption": 10.0,
+        "ink_recovery_cooldown": 20.0
+    },
+    "full_damage_to_mobs": false,
+    "mobility": 0.45
 }

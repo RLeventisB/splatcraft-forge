@@ -7,8 +7,8 @@
         "speed": 2.85,
         "count": 1,
         "ink_coverage_on_impact": 0.68,
-        "ink_trail_coverage": 0.8,
-        "ink_trail_tick_interval": 2,
+        "ink_drop_coverage": 0.8,
+        "distance_between_drops": 2,
         "straight_shot_ticks": 1,
         "gravity": 0.075,
         "base_damage": 7.3,
@@ -18,7 +18,7 @@
     },
     "shot": {
         "startup_ticks": 0,
-        "firing_speed": 8,
+        "endlag_ticks": 6,
         "ground_inaccuracy": 4,
         "airborne_inaccuracy": 8,
         "pitch_compensation": 0,
@@ -42,7 +42,7 @@
         "damage_decay_per_tick": 0.178
     },
     "turret_shot": {
-        "firing_speed": 6,
+        "endlag_ticks": 6,
         "ground_inaccuracy": 2
     }
 }

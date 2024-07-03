@@ -9,27 +9,22 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	public CommonRecords.ProjectileDataRecord projectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
 	public CommonRecords.ShotDataRecord shotData = CommonRecords.ShotDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
-	
 	public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings("default");
-	
 	public ShooterWeaponSettings(String name)
 	{
 		super(name);
 	}
-	
 	@Override
-	public float calculateDamage(int tickCount, boolean airborne, float charge, boolean isOnRollCooldown)
+	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
 	{
-		int e = tickCount - projectileData.damageDecayStartTick();
+		float e = tickCount - projectileData.damageDecayStartTick();
 		return Math.max(e > 0 ? projectileData.baseDamage() - (e * projectileData.damageDecayPerTick()) : projectileData.baseDamage(), projectileData.minDamage());
 	}
-	
 	@Override
 	public float getMinDamage()
 	{
 		return projectileData.minDamage();
 	}
-	
 	@Override
 	public WeaponTooltip<ShooterWeaponSettings>[] tooltipsToRegister()
 	{
@@ -37,16 +32,14 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 			{
 				new WeaponTooltip<ShooterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
 				new WeaponTooltip<ShooterWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-				new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.firingSpeed(), WeaponTooltip.RANKER_DESCENDING)
+				new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.getFiringSpeed(), WeaponTooltip.RANKER_DESCENDING)
 			};
 	}
-	
 	@Override
 	public Codec<DataRecord> getCodec()
 	{
 		return DataRecord.CODEC;
 	}
-	
 	@Override
 	public void deserialize(DataRecord data)
 	{
@@ -67,7 +60,6 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	{
 		return new DataRecord(projectileData, shotData, moveSpeed, bypassesMobDamage, isSecret);
 	}
-	
 	public record DataRecord(
 		CommonRecords.ProjectileDataRecord projectile,
 		CommonRecords.ShotDataRecord shot,

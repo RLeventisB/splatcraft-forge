@@ -4,8 +4,8 @@
         "size": 1.1,
         "speed": 2.2,
         "ink_coverage_on_impact": 0.935,
-        "ink_trail_coverage": 0.736,
-        "ink_trail_tick_interval": 2,
+        "ink_drop_coverage": 0.736,
+        "distance_between_drops": 2,
         "straight_shot_ticks": 3,
         "gravity": 0.075,
         "base_damage": 10.4,
@@ -14,7 +14,7 @@
         "damage_decay_per_tick": 0.83
     },
     "shot": {
-        "firing_speed": 5,
+        "endlag_ticks": 5,
         "ground_inaccuracy": 6,
         "airborne_inaccuracy": 12,
         "pitch_compensation": 0,

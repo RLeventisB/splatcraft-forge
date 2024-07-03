@@ -16,27 +16,22 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	public boolean bypassesMobDamage = false;
 	public float inkConsumption;
 	public int inkRecoveryCooldown;
-	
 	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
-	
 	public SplatlingWeaponSettings(String name)
 	{
 		super(name);
 	}
-	
 	@Override
-	public float calculateDamage(int tickCount, boolean airborne, float charge, boolean isOnRollCooldown)
+	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
 	{
-		int e = tickCount - firstChargeLevelProjectile.damageDecayStartTick();
+		float e = tickCount - firstChargeLevelProjectile.damageDecayStartTick();
 		return Math.max(e > 0 ? firstChargeLevelProjectile.baseDamage() - (e * firstChargeLevelProjectile.damageDecayPerTick()) : firstChargeLevelProjectile.baseDamage(), firstChargeLevelProjectile.minDamage());
 	}
-	
 	@Override
 	public float getMinDamage()
 	{
 		return firstChargeLevelProjectile.minDamage();
 	}
-	
 	@Override
 	public WeaponTooltip<SplatlingWeaponSettings>[] tooltipsToRegister()
 	{
@@ -48,15 +43,12 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				new WeaponTooltip<SplatlingWeaponSettings>("charge_speed", WeaponTooltip.Metrics.SECONDS, settings -> (settings.chargeData.firstChargeTime + settings.chargeData.secondChargeTime) / 20f, WeaponTooltip.RANKER_DESCENDING),
 				new WeaponTooltip<SplatlingWeaponSettings>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.moveSpeed, WeaponTooltip.RANKER_ASCENDING)
 			};
-		
 	}
-	
 	@Override
 	public Codec<DataRecord> getCodec()
 	{
 		return DataRecord.CODEC;
 	}
-	
 	@Override
 	public void deserialize(DataRecord data)
 	{
@@ -72,36 +64,30 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		setInkConsumption(data.inkConsumption);
 		setInkRecoveryCooldown(data.inkRecoveryCooldown);
 	}
-	
 	@Override
 	public DataRecord serialize()
 	{
 		return new DataRecord(firstChargeLevelProjectile, firstChargeLevelShot, secondChargeLevelProjectile, secondChargeLevelShot, chargeData, inkConsumption, inkRecoveryCooldown, moveSpeed, (bypassesMobDamage), (isSecret));
 	}
-	
 	public SplatlingWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
 	{
 		this.bypassesMobDamage = bypassesMobDamage;
 		return this;
 	}
-	
 	public SplatlingWeaponSettings setInkConsumption(float inkConsumption)
 	{
 		this.inkConsumption = inkConsumption;
 		return this;
 	}
-	
 	public SplatlingWeaponSettings setInkRecoveryCooldown(int inkRecoveryCooldown)
 	{
 		this.inkRecoveryCooldown = inkRecoveryCooldown;
 		return this;
 	}
-	
 	public int getDualieOffhandFiringOffset(boolean secondChargeLevel) // ok this would be funny to implement
 	{
 		return firstChargeLevelShot.firingSpeed / 2;
 	}
-	
 	public record DataRecord(
 		CommonRecords.ProjectileDataRecord projectile,
 		ShotDataRecord shot,
@@ -164,7 +150,6 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 			return new ChargeDataRecord(firstChargeTime, secondChargeTime, emptyTankFirstChargeTime.orElse(firstChargeTime * 6), emptyTankSecondChargeTime.orElse(secondChargeTime * 6), firingDuration, moveSpeed, chargeStorageTime, canRechargeWhileFiring);
 		}
 	}
-	
 	public record ShotDataRecord(
 		int startupTicks,
 		int firingSpeed,

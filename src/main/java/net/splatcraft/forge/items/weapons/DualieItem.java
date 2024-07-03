@@ -38,26 +38,20 @@ import java.util.ArrayList;
 @SuppressWarnings("UnusedReturnValue")
 public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 {
-	
 	public static final ArrayList<DualieItem> dualies = Lists.newArrayList();
-	
 	public String settings;
-	
 	public static RegistryObject<DualieItem> create(DeferredRegister<Item> registry, String settings)
 	{
 		return registry.register(settings, () -> new DualieItem(settings));
 	}
-	
 	public static RegistryObject<DualieItem> create(DeferredRegister<Item> registry, RegistryObject<DualieItem> parent, String name)
 	{
 		return registry.register(name, () -> new DualieItem(parent.get().settingsId.toString()));
 	}
-	
 	public static RegistryObject<DualieItem> create(DeferredRegister<Item> registry, String settings, String name)
 	{
 		return registry.register(name, () -> new DualieItem(settings));
 	}
-	
 	protected DualieItem(String settings)
 	{
 		super(settings);
@@ -66,22 +60,19 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		dualies.add(this);
 	}
-	
 	@Override
 	public Class<DualieWeaponSettings> getSettingsClass()
 	{
 		return DualieWeaponSettings.class;
 	}
-	
 	private static float getInkForRoll(ItemStack stack)
 	{
 		return stack.getItem() instanceof DualieItem ? ((DualieItem) stack.getItem()).getSettings(stack).rollData.inkConsumption() : 0;
 	}
-	
-	public static int getRollCooldown(ItemStack stack, boolean lastRoll)
+	public static int getRollTurretDuration(ItemStack stack, boolean lastRoll)
 	{
 		if (stack.getItem() instanceof DualieItem dualie)
-			return lastRoll ? dualie.getSettings(stack).rollData.lastRollCooldown() : dualie.getSettings(stack).rollData.rollCooldown();
+			return lastRoll ? dualie.getSettings(stack).rollData.lastRollTurretDuration() : dualie.getSettings(stack).rollData.turretDuration();
 		
 		return 0;
 	}
@@ -94,8 +85,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level.isClientSide))
 		{
-			int rollCooldown = getRollCooldown(activeDualie, lastRoll);
-			PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), rollDirection, (byte) 1, (byte) 2, (byte) rollCooldown, activeSettings.rollData.canMove(), lastRoll));
+			int turretDuration = getRollTurretDuration(activeDualie, lastRoll);
+			PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
 			
 			PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
 			return activeDualie.getItem() instanceof DualieItem ? activeSettings.rollData.speed() : 0;
@@ -136,7 +127,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			return mainLeft && entity.getMainHandItem().equals(stack) || !mainLeft && entity.getOffhandItem().equals(stack) ? 1 : 0;
 		};
 	}
-	
 	@Override
 	public @NotNull String getDescriptionId(ItemStack stack)
 	{
@@ -146,13 +136,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		}
 		return super.getDescriptionId(stack);
 	}
-	
 	@Override
 	public @NotNull Component getName(@NotNull ItemStack stack)
 	{
 		return super.getName(stack);
 	}
-	
 	@Override
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
@@ -171,7 +159,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 		}
 	}
-	
 	@Override
 	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
 	{
@@ -181,6 +168,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			offhandDualie = entity.getOffhandItem();
 		}
 		
+		Player player = (Player) entity;
+		player.setYBodyRot(player.getYHeadRot()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 		if (level.isClientSide)
 		{
 			if (entity instanceof LocalPlayer localPlayer)
@@ -193,7 +182,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					boolean lastRoll = rollCount == maxRolls - 1;
 					if (lastRoll)
 					{
-						activeDualie = getRollCooldown(stack, true) >= getRollCooldown(offhandDualie, true) ? stack : offhandDualie;
+						activeDualie = getRollTurretDuration(stack, true) >= getRollTurretDuration(offhandDualie, true) ? stack : offhandDualie;
 					}
 					else
 					{
@@ -214,9 +203,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		}
 		else
 		{
-			Player player = (Player) entity;
+			player.yBodyRotO = player.getYHeadRot();
 			int rollCount = getRollCount(player);
-			int maxRolls = getMaxRollCount(player);
 			
 			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
 			boolean onRollCooldown = entity.isOnGround() && hasCooldown && rollCount >= 1;
@@ -229,7 +217,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					DualieWeaponSettings settings = dualieItem.getSettings(offhandDualie);
 					CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
 					
-					dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.firingSpeed() / 2, entity.isOnGround() && hasCooldown);
+					dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.isOnGround() && hasCooldown);
 				}
 			}
 			if (canShoot)
@@ -238,21 +226,20 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 		}
 	}
-	
 	protected void fireDualie(Level level, LivingEntity entity, ItemStack stack, int timeLeft, boolean onRollCooldown)
 	{
 		DualieWeaponSettings settings = getSettings(stack);
 		CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
 		CommonRecords.ProjectileDataRecord projectileData = onRollCooldown ? settings.turretProjectileData : settings.standardProjectileData;
 		
-		if (!level.isClientSide && (getUseDuration(stack) - timeLeft - 1) % (firingData.firingSpeed()) == 0)
+		if (!level.isClientSide && (getUseDuration(stack) - timeLeft - 1) % (firingData.getFiringSpeed()) == 0)
 		{
 			if (reduceInk(entity, this, firingData.inkConsumption(), firingData.inkRecoveryCooldown(), true))
 			{
 				for (int i = 0; i < firingData.projectileCount(); i++)
 				{
 					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
-					proj.isOnRollCooldown = onRollCooldown;
+					proj.data = new Object[] {onRollCooldown};
 					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), entity.isOnGround() ? firingData.groundInaccuracy() : firingData.airborneInaccuracy());
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
@@ -262,7 +249,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 		}
 	}
-	
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
 	{
@@ -271,7 +257,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public static class DodgeRollCooldown extends PlayerCooldown
 	{
 		final byte rollFrame, rollEndFrame, turretModeFrame;
-		static final byte ROLL_DURATION = 6;
+		static final byte ROLL_DURATION = 4;
 		final boolean lastRoll;
 		final Vec2 rollDirection;
 		boolean canSlide;
@@ -306,13 +292,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				if (!local)
 				{
 					player.level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level.random.nextFloat() - player.level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-					InkExplosion.createInkExplosion(player, player.blockPosition(), 1f, 0, 0, false, InkBlockUtils.getInkType(player), storedStack);
+					InkExplosion.createInkExplosion(player, player.position(), 0.9f, 0, 0, InkBlockUtils.getInkType(player), storedStack);
 				}
 				player.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
 			}
-			else if (getTime() == rollEndFrame)
+			else if (getTime() == rollEndFrame + 1)
 			{
 				player.setDiscardFriction(false);
+			}
+			else if (getTime() == rollEndFrame)
+			{
 				if (canSlide)
 					setCanMove(true);
 			}

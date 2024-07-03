@@ -22,7 +22,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	{
 		this.name = name;
 	}
-	public abstract float calculateDamage(int tickCount, boolean airborne, float charge, boolean isOnRollCooldown);
+	public abstract float calculateDamage(float tickCount, boolean airborne, Object[] data);
 	public abstract float getMinDamage();
 	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{
@@ -71,14 +71,16 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	}
 	public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
 	{
-		final float minSpeedToCalculate = 0.01f;
-		int exponent = (int) ((Math.log10(minSpeedToCalculate / settings.speed()) / Math.log10(settings.horizontalDrag())));
-		double dragDistance = 0, draggedSpeed = settings.speed() * settings.horizontalDrag();
+		final float minSpeedToCalculate = 0.001f;
+		float drag = settings.horizontalDrag();
+		float speed = settings.speed();
+		int exponent = (int) Math.round(Math.log10(minSpeedToCalculate / speed) / Math.log10(drag));
+		float dragDistance = 0, draggedSpeed = speed * drag;
 		for (int i = 0; i < exponent; i++)
 		{
 			dragDistance += draggedSpeed;
-			draggedSpeed *= settings.horizontalDrag();
+			draggedSpeed *= drag;
 		}
-		return (float) (settings.straightShotTicks() * settings.speed() + dragDistance);
+		return ((settings.straightShotTicks() + 1) * speed + dragDistance);
 	}
 }

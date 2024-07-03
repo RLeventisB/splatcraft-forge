@@ -4,26 +4,24 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.forge.util.WeaponTooltip;
 
+import java.util.Optional;
+
 public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponSettings, BlasterWeaponSettings.DataRecord>
 {
 	public CommonRecords.ProjectileDataRecord projectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
 	public CommonRecords.ShotDataRecord shotData = CommonRecords.ShotDataRecord.DEFAULT;
 	public DetonationRecord blasterData = DetonationRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
-	
 	public static final BlasterWeaponSettings DEFAULT = new BlasterWeaponSettings("default");
-	
 	public BlasterWeaponSettings(String name)
 	{
 		super(name);
 	}
-	
 	@Override
-	public float calculateDamage(int tickCount, boolean airborne, float charge, boolean isOnRollCooldown)
+	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
 	{
 		return projectileData.baseDamage();
 	}
-	
 	@Override
 	public float getMinDamage()
 	{
@@ -39,13 +37,11 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 				new WeaponTooltip<BlasterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.startupTicks() + settings.shotData.endlagTicks(), WeaponTooltip.RANKER_DESCENDING)
 			};
 	}
-	
 	@Override
 	public Codec<DataRecord> getCodec()
 	{
 		return DataRecord.CODEC;
 	}
-	
 	@Override
 	public void deserialize(DataRecord data)
 	{
@@ -67,7 +63,6 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	{
 		return new DataRecord(projectileData, shotData, blasterData, moveSpeed, bypassesMobDamage, isSecret);
 	}
-	
 	public record DataRecord(
 		CommonRecords.ProjectileDataRecord projectile,
 		CommonRecords.ShotDataRecord shot,
@@ -91,16 +86,28 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	public record DetonationRecord(
 		float maxIndirectDamage,
 		float minIndirectDamage,
-		float explosionRadius
+		float explosionRadius,
+		float sparkDamagePenalty,
+		float explosionPaint
 	)
 	{
 		public static final Codec<DetonationRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.fieldOf("max_indirect_damage").forGetter(DetonationRecord::maxIndirectDamage),
 				Codec.FLOAT.fieldOf("min_indirect_damage").forGetter(DetonationRecord::minIndirectDamage),
-				Codec.FLOAT.fieldOf("explosion_radius").forGetter(DetonationRecord::explosionRadius)
-			).apply(instance, DetonationRecord::new)
+				Codec.FLOAT.fieldOf("explosion_radius").forGetter(DetonationRecord::explosionRadius),
+				Codec.FLOAT.optionalFieldOf("spark_damage_multiplier", 0.5f).forGetter(DetonationRecord::sparkDamagePenalty),
+				Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint))
+			).apply(instance, DetonationRecord::create)
 		);
-		public static final DetonationRecord DEFAULT = new DetonationRecord(0, 0, 0);
+		public static DetonationRecord create(float maxIndirectDamage,
+		                                      float minIndirectDamage,
+		                                      float explosionRadius,
+		                                      float sparkPenalty,
+		                                      Optional<Float> explosionPaint)
+		{
+			return new DetonationRecord(maxIndirectDamage, minIndirectDamage, explosionRadius, sparkPenalty, explosionPaint.orElse(explosionRadius));
+		}
+		public static final DetonationRecord DEFAULT = new DetonationRecord(0, 0, 0, 0, 0);
 	}
 }
