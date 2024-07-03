@@ -157,23 +157,14 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				nbt.putBoolean("IsPlural", true);
 			}
-		}
-	}
-	@Override
-	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
-	{
-		ItemStack offhandDualie = ItemStack.EMPTY;
-		if (entity.getUsedItemHand().equals(InteractionHand.MAIN_HAND) && entity.getMainHandItem().equals(stack) && entity.getOffhandItem().getItem() instanceof DualieItem)
-		{
-			offhandDualie = entity.getOffhandItem();
-		}
-		
-		Player player = (Player) entity;
-		player.setYBodyRot(player.getYHeadRot()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
-		if (level.isClientSide)
-		{
-			if (entity instanceof LocalPlayer localPlayer)
+			if (entity instanceof LocalPlayer localPlayer && localPlayer.getItemInHand(hand) == stack && localPlayer.isUsingItem())
 			{
+				ItemStack offhandDualie = ItemStack.EMPTY;
+				if (localPlayer.getUsedItemHand().equals(InteractionHand.MAIN_HAND) && localPlayer.getMainHandItem().equals(stack) && localPlayer.getOffhandItem().getItem() instanceof DualieItem)
+				{
+					offhandDualie = localPlayer.getOffhandItem();
+				}
+				
 				int rollCount = getRollCount(localPlayer);
 				int maxRolls = getMaxRollCount(localPlayer);
 				if (rollCount < maxRolls && ClientUtils.canPerformRoll(localPlayer))
@@ -201,29 +192,35 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				}
 			}
 		}
-		else
+	}
+	@Override
+	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
+	{
+		ItemStack offhandDualie = ItemStack.EMPTY;
+		if (entity.getUsedItemHand().equals(InteractionHand.MAIN_HAND) && entity.getMainHandItem().equals(stack) && entity.getOffhandItem().getItem() instanceof DualieItem)
+		{
+			offhandDualie = entity.getOffhandItem();
+		}
+		
+		Player player = (Player) entity;
+		player.setYBodyRot(player.getYHeadRot()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
+		
+		if (!level.isClientSide)
 		{
 			player.yBodyRotO = player.getYHeadRot();
 			int rollCount = getRollCount(player);
 			
 			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
-			boolean onRollCooldown = entity.isOnGround() && hasCooldown && rollCount >= 1;
+			boolean onRollCooldown = hasCooldown && rollCount >= 1;
 			
-			boolean canShoot = !entity.isOnGround() && !hasCooldown || entity.isOnGround();
 			if (offhandDualie.getItem() instanceof DualieItem dualieItem)
 			{
-				if (canShoot)
-				{
-					DualieWeaponSettings settings = dualieItem.getSettings(offhandDualie);
-					CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
-					
-					dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.isOnGround() && hasCooldown);
-				}
+				DualieWeaponSettings settings = dualieItem.getSettings(offhandDualie);
+				CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
+				
+				dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.isOnGround() && hasCooldown);
 			}
-			if (canShoot)
-			{
-				fireDualie(level, entity, stack, timeLeft, onRollCooldown);
-			}
+			fireDualie(level, entity, stack, timeLeft, onRollCooldown);
 		}
 	}
 	protected void fireDualie(Level level, LivingEntity entity, ItemStack stack, int timeLeft, boolean onRollCooldown)
@@ -315,7 +312,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				if (local)
 				{
 					Input input = ClientUtils.GetUnmodifiedInput(player);
-					boolean endedTurretMode = input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
+					boolean endedTurretMode = input.jumping || input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
 					if (endedTurretMode)
 					{
 						setTime(0);

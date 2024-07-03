@@ -71,7 +71,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	}
 	public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
 	{
-		final float minSpeedToCalculate = 0.001f;
+		final float minSpeedToCalculate = 0.01f;
 		float drag = settings.horizontalDrag();
 		float speed = settings.speed();
 		int exponent = (int) Math.round(Math.log10(minSpeedToCalculate / speed) / Math.log10(drag));

@@ -89,27 +89,6 @@ public class InkExplosion
 		ServerLevel level = (ServerLevel) exploder.getLevel();
 		Vec3 explosionPos = new Vec3(x, y, z);
 		getBlocksInSphereWithNoise(set, level);
-//		level.sendParticles(ParticleTypes.SOUL, x, y, z, 1, 0, 0, 0, 0);
-
-//		for (Vec3 ray : rays)
-//		{
-//			level.sendParticles(ParticleTypes.BUBBLE_POP, x + ray.x, y + ray.y, z + ray.z, 1, 0, 0, 0, 0);
-//			float intensity = this.paintSize * level.getRandom().nextFloat(0.8F, 1.2F);
-//			Vec3 finalRay = ray.scale(intensity);
-//			Vec3 endPos = explosionPos.add(finalRay);
-//			ClipContext clipContext = new ClipContext(new Vec3(x, y, z), endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null);
-//
-//			BlockHitResult raytrace = BlockGetter.traverseBlocks(new Vec3(x, y, z), endPos, clipContext, (clipContext1, blockPos) ->
-//			{
-//				BlockState blockstate = level.getBlockState(blockPos);
-//				VoxelShape voxelshape = clipContext.getBlockShape(blockstate, level, blockPos);
-//				return level.clipWithInteractionOverride(clipContext1.getFrom(), clipContext1.getTo(), blockPos, voxelshape, blockstate);
-//			}, (clipContext1) -> BlockHitResult.miss(clipContext1.getFrom(), Direction.getNearest(finalRay.x, finalRay.y, finalRay.z), new BlockPos(clipContext1.getTo())));
-//			if (!set.contains(raytrace.getBlockPos()) && InkBlockUtils.canInkFromFace(level, raytrace.getBlockPos(), raytrace.getDirection()))
-//			{
-//				set.add(raytrace.getBlockPos());
-//			}
-//		}
 		
 		this.affectedBlockPositions.addAll(set);
 		if (minDamage <= 0.1 && maxDamage <= 0.1 || damageRadius == 0)
@@ -164,7 +143,6 @@ public class InkExplosion
 	{
 		final float noiseRange = 0.2f;
 		int cubeSizeHalf = ((int) Math.ceil(paintRadius + noiseRange) >> 1) + 1;
-//		float randomAngle = level.getRandom().nextFloat(Mth.TWO_PI);
 		
 		for (int x = -cubeSizeHalf; x <= cubeSizeHalf; x++)
 			for (int y = -cubeSizeHalf; y <= cubeSizeHalf; y++)
@@ -176,7 +154,6 @@ public class InkExplosion
 					double blockCenterX = pos.getX() + 0.5;
 					double blockCenterY = pos.getY() + 0.5;
 					double blockCenterZ = pos.getZ() + 0.5;
-//					level.sendParticles(ParticleTypes.SOUL, blockCenterX, blockCenterY, blockCenterZ, 1, 0, 0, 0, 0);
 					
 					double dX = blockCenterX - position.x();
 					double dY = blockCenterY - position.y();
@@ -205,23 +182,10 @@ public class InkExplosion
 						if (position.z < blockCenterZ)
 							points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY, blockCenterZ - 0.5), Direction.NORTH));
 						points.sort((tuple1, tuple2) -> Double.compare(tuple1.getA().distanceToSqr(position), tuple2.getA().distanceToSqr(position)));
-						// the commented methods are a husk of the various ways i tried to do this god forsaken collision checking because it painted over the glass cover
-						// the joys of programming
-						// but at least it's 1% faster now!!!! i can shoot more than 2 aerosprays!!!!
-
-//								new Vec3(pos.getX() + 0, pos.getY() + 0, pos.getZ() + 0),
-//								new Vec3(pos.getX() + 1, pos.getY() + 0, pos.getZ() + 0),
-//								new Vec3(pos.getX() + 1, pos.getY() + 1, pos.getZ() + 0),
-//								new Vec3(pos.getX() + 1, pos.getY() + 0, pos.getZ() + 1),
-//								new Vec3(pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1),
-//								new Vec3(pos.getX() + 0, pos.getY() + 1, pos.getZ() + 1),
-//								new Vec3(pos.getX() + 0, pos.getY() + 1, pos.getZ() + 0),
-//								new Vec3(pos.getX() + 0, pos.getY() + 0, pos.getZ() + 1)
 						
-						for (int i = 0; i < points.size(); i++)
+						for (Tuple<Vec3, Direction> point : points)
 						{
-//							BlockHitResult raytrace = raycastAndGetDirection(position, points.get(i).getA(), level);
-							if (raycastAndGetDirection(position, points.get(i).getA(), level, pos) && InkBlockUtils.canInkFromFace(level, pos, points.get(i).getB()))
+							if (raycastAndGetDirection(position, point.getA(), level, pos) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
 							{
 								set.add(pos);
 								break;
@@ -232,33 +196,15 @@ public class InkExplosion
 	}
 	private boolean raycastAndGetDirection(Vec3 startPos, Vec3 endPos, ServerLevel level, BlockPos expectedPos)
 	{
-//		Vec3 delta = startPos.subtract(endPos);
 		ClipContext clipContext = new ClipContext(new Vec3(x, y, z), endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null); // actually don't know if it's faster to inline a method but ok
 		BlockHitResult hitResult = BlockGetter.traverseBlocks(startPos, endPos, clipContext, (clipContext1, blockPos1) ->
 		{
 			BlockState blockstate = level.getBlockState(blockPos1);
 			VoxelShape voxelshape = blockstate.getCollisionShape(level, blockPos1);
-//			level.sendParticles(ParticleTypes.BUBBLE_COLUMN_UP, blockPos1.getX() + 0.5, blockPos1.getY() + 0.5, blockPos1.getZ() + 0.5, 1, 0, 0, 0, 0);
 			return level.clipWithInteractionOverride(clipContext1.getFrom(), clipContext1.getTo(), blockPos1, voxelshape, blockstate);
 		}, (clipContext1) ->
 			BlockHitResult.miss(startPos, Direction.UP, BlockPos.ZERO));
 		return hitResult.getBlockPos().equals(expectedPos) || hitResult.getType() == HitResult.Type.MISS;
-
-//		double dist = startPos.distanceTo(endPos);
-//		for (double i = 0; i < dist; i++)
-//		{
-//			double j = i / dist;
-//			Vec3 between = new Vec3(Mth.lerp(j, startPos.x, endPos.x), Mth.lerp(j, startPos.y, endPos.y), Mth.lerp(j, startPos.z, endPos.z));
-//			BlockPos pos = new BlockPos(between);
-//			BlockState blockstate = level.getBlockState(pos);
-//			VoxelShape voxelshape = blockstate.getCollisionShape(level, pos);
-//			BlockHitResult hitResult = level.clipWithInteractionOverride(startPos, endPos, pos, voxelshape, blockstate);
-//			if (hitResult != null && hitResult.getBlockPos().equals(expectedPos) && hitResult.getType() != HitResult.Type.MISS)
-//				return false;
-//			level.sendParticles(ParticleTypes.BUBBLE_COLUMN_UP, between.x(), between.y(), between.z(), 1, 0, 0, 0, 0);
-//
-//		}
-//		return true;
 	}
 	/**
 	 * Does the second part of the explosion (sound, particles, drop spawn)
