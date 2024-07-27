@@ -5,7 +5,7 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:weapons/ancient_splattershot"
+    "0": "splatcraft:item/weapons/ancient_splattershot"
   },
   "elements": [
     {

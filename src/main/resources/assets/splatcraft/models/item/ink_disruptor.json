@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "splatcraft:items/ink_disruptor"
+    "layer0": "splatcraft:item/ink_disruptor"
   },
   "overrides": [
     {

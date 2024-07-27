@@ -1,10 +1,10 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:weapons/splat_charger",
-		"1": "splatcraft:weapons/ink_color",
-		"2": "splatcraft:weapons/kelp_splat_charger_details",
-		"particle": "splatcraft:weapons/splat_charger"
+		"0": "splatcraft:item/weapons/splat_charger",
+		"1": "splatcraft:item/weapons/ink_color",
+		"2": "splatcraft:item/weapons/kelp_splat_charger_details",
+		"particle": "splatcraft:item/weapons/splat_charger"
 	},
 	"elements": [
 		{

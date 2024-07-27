@@ -1,7 +1,7 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "splatcraft:weapons/e_liter_3k"
+		"1": "splatcraft:item/weapons/e_liter_3k"
 	},
 	"elements": [
 		{

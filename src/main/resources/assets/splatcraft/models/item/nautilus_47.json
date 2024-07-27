@@ -1,7 +1,7 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"1": "splatcraft:weapons/nautilus_47"
+		"1": "splatcraft:item/weapons/nautilus_47"
 	},
 	"elements": [
 		{

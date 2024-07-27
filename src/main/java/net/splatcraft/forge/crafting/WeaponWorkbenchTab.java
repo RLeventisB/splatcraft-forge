@@ -2,9 +2,9 @@ package net.splatcraft.forge.crafting;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
@@ -14,7 +14,6 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
 		this.iconLoc = iconLoc;
 		this.pos = pos;
 		this.hidden = hidden;
-		this.name = name != null ? name : new TranslatableComponent("weaponTab." + getId());
+		this.name = name != null ? name : Component.translatable("weaponTab." + getId());
 	}
 	@Override
 	public boolean matches(@NotNull Container inv, @NotNull Level levelIn)
@@ -43,7 +42,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
 		return true;
 	}
 	@Override
-	public @NotNull ItemStack assemble(@NotNull Container inv)
+	public @NotNull ItemStack assemble(@NotNull Container inv, @NotNull RegistryAccess access)
 	{
 		return ItemStack.EMPTY;
 	}
@@ -53,7 +52,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
 		return false;
 	}
 	@Override
-	public @NotNull ItemStack getResultItem()
+	public @NotNull ItemStack getResultItem(@NotNull RegistryAccess access)
 	{
 		return ItemStack.EMPTY;
 	}
@@ -99,20 +98,15 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
 	{
 		return name;
 	}
-	public static class WeaponWorkbenchTabSerializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<WeaponWorkbenchTab>
+	public static class WeaponWorkbenchTabSerializer implements RecipeSerializer<WeaponWorkbenchTab>
 	{
-		public WeaponWorkbenchTabSerializer(String name)
-		{
-			super();
-			setRegistryName(name);
-		}
 		@Override
 		public @NotNull WeaponWorkbenchTab fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json)
 		{
 			Component displayComponent;
 			
 			if (GsonHelper.isStringValue(json, "name"))
-				displayComponent = new TranslatableComponent(GsonHelper.getAsString(json, "name"));
+				displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
 			else
 				displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : null;
 			return new WeaponWorkbenchTab(recipeId, new ResourceLocation(GsonHelper.getAsString(json, "icon")), GsonHelper.getAsInt(json, "pos", Integer.MAX_VALUE), displayComponent, GsonHelper.getAsBoolean(json, "hidden", false));

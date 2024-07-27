@@ -67,14 +67,15 @@ public class PlayerInfoCapability
 	{
 		event.register(PlayerInfo.class);
 	}
+	@Nullable
 	public static PlayerInfo get(LivingEntity entity)
 	{
 		LazyOptional<PlayerInfo> capability = entity.getCapability(CAPABILITY);
-		return capability.isPresent() ? capability.orElse(null) : null;
+		return capability.resolve().orElse(null);
 	}
 	public static boolean hasCapability(LivingEntity entity)
 	{
-		return CAPABILITY != null && entity.getCapability(CAPABILITY).isPresent();
+		return get(entity) != null;
 	}
 	public static boolean isSquid(LivingEntity entity)
 	{

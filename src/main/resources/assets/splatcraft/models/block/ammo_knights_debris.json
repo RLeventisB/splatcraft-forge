@@ -2,9 +2,9 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "splatcraft:blocks/ammo_knights_debris",
-		"2": "splatcraft:blocks/ammo_knights_debris_glow",
-		"particle": "splatcraft:blocks/ammo_knights_debris"
+		"0": "splatcraft:block/ammo_knights_debris",
+		"2": "splatcraft:block/ammo_knights_debris_glow",
+		"particle": "splatcraft:block/ammo_knights_debris"
 	},
 	"elements": [
 		{

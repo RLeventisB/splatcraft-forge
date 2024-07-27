@@ -1,10 +1,10 @@
 {
   "credit": "Made with Blockbench",
-  "parent": "block/block",
+  "parent": "block/cube_all",
   "textures": {
-    "end": "splatcraft:blocks/crate_top",
-    "side": "splatcraft:blocks/crate_side",
-    "particle": "splatcraft:blocks/crate_top"
+    "end": "splatcraft:block/crate_top",
+    "side": "splatcraft:block/crate_side",
+    "particle": "splatcraft:block/crate_top"
   },
   "elements": [
     {

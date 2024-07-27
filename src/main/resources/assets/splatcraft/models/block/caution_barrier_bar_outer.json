@@ -2,8 +2,8 @@
   "credit": "Made with Blockbench",
   "parent": "block/thin_block",
   "textures": {
-    "0": "splatcraft:blocks/caution_barrier_bar",
-    "particle": "splatcraft:blocks/caution_barrier_bar"
+    "0": "splatcraft:block/caution_barrier_bar",
+    "particle": "splatcraft:block/caution_barrier_bar"
   },
   "elements": [
     {

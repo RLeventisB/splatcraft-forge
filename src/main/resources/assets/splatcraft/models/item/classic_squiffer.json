@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "splatcraft:weapons/classic_squiffer",
-		"particle": "splatcraft:weapons/classic_squiffer"
+		"0": "splatcraft:item/weapons/classic_squiffer",
+		"particle": "splatcraft:item/weapons/classic_squiffer"
 	},
 	"elements": [
 		{

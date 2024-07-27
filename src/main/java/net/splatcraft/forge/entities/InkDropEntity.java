@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -57,20 +58,12 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		this.inkType = inkType;
 		this.sourceWeapon = sourceWeapon;
 	}
-	public InkDropEntity(Level level, InkProjectileEntity projectile, int color, InkBlockUtils.InkType inkType, float splatSize)
-	{
-		this(level, projectile, color, inkType, splatSize, ItemStack.EMPTY);
-	}
-	public InkDropEntity(Level level, InkProjectileEntity projectile, ItemStack sourceWeapon, InkBlockUtils.InkType inkType, float splatSize)
-	{
-		this(level, projectile, ColorUtils.getInkColor(sourceWeapon), inkType, splatSize, sourceWeapon);
-	}
 	@Override
 	protected void defineSynchedData()
 	{
 		entityData.define(DROP_COLOR, ColorUtils.DEFAULT);
 		entityData.define(DROP_SIZE, 0.3f);
-		entityData.define(GRAVITY, 0.175f);
+		entityData.define(GRAVITY, 0.275f);
 	}
 	@Override
 	public void onSyncedDataUpdated(EntityDataAccessor<?> dataParameter)
@@ -92,7 +85,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		Vec3 vel = getDeltaMovement();
 		setDeltaMovement(vel.x * 0.9, vel.y, vel.z * 0.9);
 		
-		if (isInWater())
+		if (isInWater() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
 		{
 			discard();
 			return;
@@ -101,7 +94,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		if (isRemoved())
 			return;
 		
-		if (!level.isClientSide && lifespan-- <= 0)
+		if (!level().isClientSide && lifespan-- <= 0)
 		{
 			discard();
 		}
@@ -113,8 +106,8 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		
 		if (!Vec3.ZERO.equals(motion))
 		{
-			this.setXRot(lerpRotation(this.xRotO, (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * (double) (180F / (float) Math.PI))));
-			this.setYRot(lerpRotation(this.yRotO, (float) (Mth.atan2(motion.x, motion.z) * (double) (180F / (float) Math.PI))));
+			this.setXRot(lerpRotation(this.xRotO, (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG)));
+			this.setYRot(lerpRotation(this.yRotO, (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG)));
 		}
 	}
 	@Override
@@ -125,32 +118,29 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		switch (id)
 		{
 			case -1 ->
-				level.addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+				level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
 			case 1 ->
-				level.addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+				level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
 		}
 	}
 	@Override
 	protected void onHitBlock(BlockHitResult result)
 	{
-		if (InkBlockUtils.canInkPassthrough(level, result.getBlockPos()))
+		if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
 			return;
 		
-		if (level.getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
+		if (level().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
 			coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
 			return;
-//		ParticleOptions options = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Registry.BLOCK.getOptional(new ResourceLocation("minecraft:barrier")).get().defaultBlockState());
-//		if (!level.isClientSide)
-//			((ServerLevel) level).sendParticles(options, result.getLocation().x, result.getLocation().y, result.getLocation().z, 1, 0, 0, 0, 0);
 		
 		super.onHitBlock(result);
 		
 		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal()), impactCoverage, 0, 0, inkType, sourceWeapon);
-		if (level.getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
-			level.broadcastEntityEvent(this, (byte) -1);
+		if (level().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
+			level().broadcastEntityEvent(this, (byte) -1);
 		else
-			level.broadcastEntityEvent(this, (byte) 1);
-		if (!level.isClientSide)
+			level().broadcastEntityEvent(this, (byte) 1);
+		if (!level().isClientSide)
 		{
 			this.discard();
 		}
@@ -245,7 +235,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 		return sourceWeapon;
 	}
 	@Override
-	public @NotNull Packet<?> getAddEntityPacket()
+	public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket()
 	{
 		return NetworkHooks.getEntitySpawningPacket(this);
 	}

@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:weapons/grim_blaster",
-		"particle": "splatcraft:weapons/grim_blaster"
+		"0": "splatcraft:item/weapons/grim_blaster",
+		"particle": "splatcraft:item/weapons/grim_blaster"
 	},
 	"elements": [
 		{

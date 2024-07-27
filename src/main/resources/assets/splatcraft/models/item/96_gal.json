@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:weapons/gal",
-    "particle": "splatcraft:weapons/gal"
+    "0": "splatcraft:item/weapons/gal",
+    "particle": "splatcraft:item/weapons/gal"
   },
   "elements": [
     {

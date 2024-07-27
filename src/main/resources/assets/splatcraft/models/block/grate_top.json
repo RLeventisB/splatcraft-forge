@@ -2,9 +2,9 @@
   "credit": "Made with Blockbench",
   "parent": "block/thin_block",
   "textures": {
-    "0": "splatcraft:blocks/grate",
-    "2": "splatcraft:blocks/grate_side",
-    "particle": "splatcraft:blocks/grate"
+    "0": "splatcraft:block/grate",
+    "2": "splatcraft:block/grate_side",
+    "particle": "splatcraft:block/grate"
   },
   "elements": [
     {

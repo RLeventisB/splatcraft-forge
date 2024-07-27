@@ -2,10 +2,10 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "0": "splatcraft:blocks/inkwell_side",
-    "2": "splatcraft:blocks/inkwell_bottom",
-    "5": "splatcraft:blocks/inkwell_top",
-    "particle": "splatcraft:blocks/inkwell_side"
+    "0": "splatcraft:block/inkwell_side",
+    "2": "splatcraft:block/inkwell_bottom",
+    "5": "splatcraft:block/inkwell_top",
+    "particle": "splatcraft:block/inkwell_side"
   },
   "elements": [
     {

@@ -1,7 +1,7 @@
 {
   "parent": "item/handheld",
   "textures": {
-    "layer0": "splatcraft:items/wax_applicator"
+    "layer0": "splatcraft:item/wax_applicator"
   },
   "display": {
         "thirdperson_righthand": {

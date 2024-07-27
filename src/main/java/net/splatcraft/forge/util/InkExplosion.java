@@ -27,12 +27,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InkExplosion
 {
-	public static final List<Vec3> rays = new ArrayList<>();
 	private final double x;
 	private final double y;
 	private final double z;
@@ -72,7 +70,7 @@ public class InkExplosion
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float minDamage, float maxDamage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		if (source == null || source.getLevel().isClientSide)
+		if (source == null || source.level().isClientSide)
 			return;
 		
 		InkExplosion inksplosion = new InkExplosion(source, pos.x(), pos.y(), pos.z(), damageRadius, minDamage, maxDamage, paintRadius, type, weapon);
@@ -86,7 +84,7 @@ public class InkExplosion
 	public void doExplosionA()
 	{
 		List<BlockPos> set = new ArrayList<>();
-		ServerLevel level = (ServerLevel) exploder.getLevel();
+		ServerLevel level = (ServerLevel) exploder.level();
 		Vec3 explosionPos = new Vec3(x, y, z);
 		getBlocksInSphereWithNoise(set, level);
 		
@@ -148,7 +146,7 @@ public class InkExplosion
 			for (int y = -cubeSizeHalf; y <= cubeSizeHalf; y++)
 				for (int z = -cubeSizeHalf; z <= cubeSizeHalf; z++)
 				{
-					BlockPos pos = new BlockPos(position.x() + x, position.y() + y, position.z() + z);
+					BlockPos pos = CommonUtils.createBlockPos(position.x() + x, position.y() + y, position.z() + z);
 					if (InkBlockUtils.isUninkable(level, pos))
 						continue;
 					double blockCenterX = pos.getX() + 0.5;
@@ -213,7 +211,7 @@ public class InkExplosion
 	{
 		Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
 		
-		Level level = exploder.getLevel();
+		Level level = exploder.level();
 		
 		if (spawnParticles)
 		{
@@ -226,8 +224,8 @@ public class InkExplosion
 				level.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
 			}
 		}
-		
-		Collections.shuffle(this.affectedBlockPositions, level.random);
+
+//		Collections.shuffle(this.affectedBlockPositions, level.getRandom());
 		
 		for (BlockPos blockpos : this.affectedBlockPositions)
 		{

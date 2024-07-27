@@ -1,0 +1,10 @@
+{
+    "replace": false,
+    "values": [
+        "splatcraft:enemy_ink",
+        "splatcraft:splat",
+        "splatcraft:roll",
+        "splatcraft:water",
+        "splatcraft:out_of_stage"
+    ]
+}

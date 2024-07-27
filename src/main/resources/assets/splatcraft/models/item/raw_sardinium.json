@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "splatcraft:items/raw_sardinium"
+    "layer0": "splatcraft:item/raw_sardinium"
   },
   "overrides": [
     {

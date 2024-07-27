@@ -78,7 +78,7 @@ public class PlayerMovementHandler
 			
 			if (PlayerInfoCapability.isSquid(player))
 			{
-				if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.isOnGround())
+				if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.onGround())
 					speedAttribute.addTransientModifier(INK_SWIM_SPEED);
 				if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED))
 					swimAttribute.addTransientModifier(SQUID_SWIM_SPEED);
@@ -92,7 +92,7 @@ public class PlayerMovementHandler
 			if (!player.getAbilities().flying)
 			{
 				if (speedAttribute.hasModifier(INK_SWIM_SPEED))
-					player.moveRelative((float) player.getAttributeValue(SplatcraftItems.INK_SWIM_SPEED) * (player.isOnGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
+					player.moveRelative((float) player.getAttributeValue(SplatcraftItems.INK_SWIM_SPEED) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
 			}
 		}
 	}
@@ -100,11 +100,10 @@ public class PlayerMovementHandler
 	public static void onInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event)
 	{
 		Input input = event.getInput();
-		Player player = event.getPlayer();
+		Player player = event.getEntity();
 		
 		if (player.isLocalPlayer()) // idk if splitscreen exists but just in case
 		{
-//			player.sendMessage(new TextComponent(input.leftImpulse + ", " + input.forwardImpulse), player.getUUID());
 			Input clonedInput = new Input();
 			clonedInput.leftImpulse = input.leftImpulse;
 			clonedInput.forwardImpulse = input.forwardImpulse;

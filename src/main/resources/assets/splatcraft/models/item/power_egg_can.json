@@ -2,9 +2,9 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "0": "splatcraft:items/power_egg_can",
-    "1": "splatcraft:items/power_egg_can_lid",
-    "particle": "splatcraft:items/power_egg_can"
+    "0": "splatcraft:item/power_egg_can",
+    "1": "splatcraft:item/power_egg_can_lid",
+    "particle": "splatcraft:item/power_egg_can"
   },
   "elements": [
     {
