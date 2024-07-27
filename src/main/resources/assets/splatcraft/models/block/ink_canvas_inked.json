@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "block/block",
 	"textures": {
-		"0": "splatcraft:blocks/ink_canvas_inked",
-		"particle": "splatcraft:blocks/ink_canvas"
+		"0": "splatcraft:block/ink_canvas_inked",
+		"particle": "splatcraft:block/ink_canvas"
 	},
 	"elements": [
 		{

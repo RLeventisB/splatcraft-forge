@@ -67,7 +67,8 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	public abstract CODEC serialize();
 	public void serializeToBuffer(FriendlyByteBuf buffer)
 	{
-		buffer.writeWithCodec(getCodec(), serialize());
+		buffer.writeJsonWithCodec(getCodec(), serialize());
+//		buffer.writeWithCodec(getCodec(), serialize());
 	}
 	public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
 	{

@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "splatcraft:items/turf_scanner"
+    "layer0": "splatcraft:item/turf_scanner"
   },
   "overrides": [
     {

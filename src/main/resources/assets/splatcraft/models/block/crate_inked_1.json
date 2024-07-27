@@ -2,10 +2,10 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "2": "splatcraft:blocks/crate_ink_1",
-    "particle": "splatcraft:blocks/crate_top",
-    "end": "splatcraft:blocks/crate_top",
-    "side": "splatcraft:blocks/crate_side"
+    "2": "splatcraft:block/crate_ink_1",
+    "particle": "splatcraft:block/crate_top",
+    "end": "splatcraft:block/crate_top",
+    "side": "splatcraft:block/crate_side"
   },
   "elements": [
     {

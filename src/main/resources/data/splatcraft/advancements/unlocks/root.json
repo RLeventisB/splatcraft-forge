@@ -1,41 +1,40 @@
 {
-  "display": {
-    "icon": {
-      "item": "splatcraft:blueprint"
+    "display": {
+        "icon": {
+            "item": "splatcraft:blueprint"
+        },
+        "title": {
+            "translate": "advancements.splatcraft.unlocks.root.name"
+        },
+        "description": {
+            "translate": "advancements.splatcraft.unlocks.root.description"
+        },
+        "background": "splatcraft:textures/block/crate_side.png",
+        "frame": "task",
+        "show_toast": false,
+        "announce_to_chat": false,
+        "hidden": false
     },
-    "title": {
-      "translate": "advancements.splatcraft.unlocks.root.name"
+    "criteria": {
+        "blueprint": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "items": [
+                            "splatcraft:blueprint"
+                        ]
+                    }
+                ]
+            }
+        }
     },
-    "description": {
-      "translate": "advancements.splatcraft.unlocks.root.description"
-    },
-    "background": "splatcraft:textures/blocks/crate_side.png",
-    "frame": "task",
-    "show_toast": false,
-    "announce_to_chat": false,
-    "hidden": false
-  },
-  "criteria": {
-    "blueprint": {
-      "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "splatcraft:blueprint"
-            ]
-          }
+    "requirements": [
+        [
+            "blueprint"
         ]
-      }
+    ],
+    "rewards": {
+        "function": "splatcraft:advancements/unlock_categories"
     }
-  },
-  "requirements": [
-    [
-      "blueprint"
-    ]
-  ],
-  "rewards":
-  {
-    "function": "splatcraft:advancements/unlock_categories"
-  }
 }

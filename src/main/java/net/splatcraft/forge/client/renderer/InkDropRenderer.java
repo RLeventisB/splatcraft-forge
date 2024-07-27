@@ -1,7 +1,6 @@
 package net.splatcraft.forge.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -11,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.SplatcraftConfig;
+import net.splatcraft.forge.VectorUtils;
 import net.splatcraft.forge.client.models.projectiles.InkDropModel;
 import net.splatcraft.forge.client.models.projectiles.ShooterInkProjectileModel;
 import net.splatcraft.forge.entities.InkDropEntity;
@@ -48,8 +48,8 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
 			//0.30000001192092896D
 			matrixStackIn.pushPose();
 			matrixStackIn.translate(0.0D, scale, 0.0D);
-			matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
-			matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
+			matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
+			matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.XP, Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
 			matrixStackIn.scale(scale, scale, scale);
 			
 			InkDropModel model = MODEL;

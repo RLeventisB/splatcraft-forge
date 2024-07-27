@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:weapons/aerospray_mg",
-    "particle": "splatcraft:weapons/aerospray_mg"
+    "0": "splatcraft:item/weapons/aerospray_mg",
+    "particle": "splatcraft:item/weapons/aerospray_mg"
   },
   "elements": [
     {

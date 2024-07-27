@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "splatcraft:weapons/splattershot",
-		"particle": "splatcraft:weapons/splattershot"
+		"0": "splatcraft:item/weapons/splattershot",
+		"particle": "splatcraft:item/weapons/splattershot"
 	},
 	"elements": [
 		{

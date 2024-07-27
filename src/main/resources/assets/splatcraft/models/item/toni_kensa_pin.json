@@ -1,9 +1,9 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:items/toni_kensa_pin",
-		"1": "splatcraft:weapons/kensa_details",
-		"particle": "splatcraft:items/toni_kensa_pin"
+		"0": "splatcraft:item/toni_kensa_pin",
+		"1": "splatcraft:item/weapons/kensa_details",
+		"particle": "splatcraft:item/toni_kensa_pin"
 	},
 	"elements": [
 		{

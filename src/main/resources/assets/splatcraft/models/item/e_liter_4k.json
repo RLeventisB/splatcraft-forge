@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:weapons/e_liter_4k",
-    "particle": "splatcraft:weapons/e_liter_4k"
+    "0": "splatcraft:item/weapons/e_liter_4k",
+    "particle": "splatcraft:item/weapons/e_liter_4k"
   },
   "elements": [
     {

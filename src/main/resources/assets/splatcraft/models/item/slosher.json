@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:weapons/slosher",
-    "particle": "splatcraft:weapons/slosher"
+    "0": "splatcraft:item/weapons/slosher",
+    "particle": "splatcraft:item/weapons/slosher"
   },
   "elements": [
     {

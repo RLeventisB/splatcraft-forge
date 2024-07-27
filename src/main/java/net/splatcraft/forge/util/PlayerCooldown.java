@@ -12,13 +12,14 @@ import net.splatcraft.forge.items.weapons.DualieItem;
 
 public class PlayerCooldown
 {
-	final int maxTime;
-	final int slotIndex;
-	final InteractionHand hand;
+	int maxTime;
+	int slotIndex;
+	InteractionHand hand;
+	boolean interruptRecharge;
 	boolean canMove;
 	boolean forceCrouch;
 	boolean preventWeaponUse;
-	final boolean isGrounded;
+	boolean isGrounded;
 	public ItemStack storedStack;
 	int time;
 	public boolean cancellable = false;
@@ -41,9 +42,21 @@ public class PlayerCooldown
 	}
 	public PlayerCooldown(CompoundTag nbt)
 	{
-		this(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("Time"), nbt.getInt("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, nbt.getBoolean("CanMove"), nbt.getBoolean("ForceCrouch"), nbt.getBoolean("PreventWeaponUse"), nbt.getBoolean("IsGrounded"));
-		if (nbt.contains("StoredStack"))
-			storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
+		fromNbt(nbt);
+	}
+	public final void fromNbt(CompoundTag nbt)
+	{
+		this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
+		this.time = nbt.getInt("Time");
+		this.maxTime = nbt.getInt("MaxTime");
+		this.slotIndex = nbt.getInt("SlotIndex");
+		this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+		this.canMove = nbt.getBoolean("CanMove");
+		this.forceCrouch = nbt.getBoolean("ForceCrouch");
+		this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
+		this.isGrounded = nbt.getBoolean("IsGrounded");
+		if (nbt.contains("InterruptRecharge"))
+			interruptRecharge = nbt.getBoolean("InterruptRecharge");
 	}
 	public static PlayerCooldown readNBT(CompoundTag nbt)
 	{
@@ -105,6 +118,10 @@ public class PlayerCooldown
 		PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
 		return cooldown != null;
 	}
+	public boolean interruptsRecharge()
+	{
+		return interruptRecharge;
+	}
 	public boolean canMove()
 	{
 		return canMove;
@@ -128,6 +145,10 @@ public class PlayerCooldown
 	public void setPreventWeaponUse(boolean preventWeaponUse)
 	{
 		this.preventWeaponUse = preventWeaponUse;
+	}
+	public void setInterruptRecharge(boolean interruptRecharge)
+	{
+		this.interruptRecharge = interruptRecharge;
 	}
 	public boolean isGrounded()
 	{
@@ -168,6 +189,7 @@ public class PlayerCooldown
 		nbt.putBoolean("PreventWeaponUse", preventWeaponUse);
 		nbt.putBoolean("IsGrounded", isGrounded);
 		nbt.putBoolean("MainHand", hand.equals(InteractionHand.MAIN_HAND));
+		nbt.putBoolean("InterruptRecharge", interruptRecharge);
 		if (storedStack.getItem() != Items.AIR)
 		{
 			nbt.put("StoredStack", storedStack.serializeNBT());

@@ -8,7 +8,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.material.Material;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ public class InkSplashParticle extends TextureSheetParticle
 		{
 			this.yd -= 0.004D + 0.04D * (double) this.gravity;
 		}
-		if (this.level.getBlockState(new BlockPos(this.x, this.y, this.z)).getMaterial() == Material.WATER)
+		if (this.level.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).liquid())
 		{
 			this.remove();
 		}

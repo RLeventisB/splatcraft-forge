@@ -1,9 +1,9 @@
 {
   "parent": "block/block",
   "textures": {
-    "particle": "splatcraft:blocks/inked_block",
-    "base": "splatcraft:blocks/inked_block",
-    "overlay": "splatcraft:blocks/glitter"
+    "particle": "splatcraft:block/inked_block",
+    "base": "splatcraft:block/inked_block",
+    "overlay": "splatcraft:block/glitter"
   },
   "elements": [
     {

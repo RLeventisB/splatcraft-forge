@@ -1,6 +1,5 @@
 package net.splatcraft.forge.entities.subs;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -14,6 +13,7 @@ import net.splatcraft.forge.client.particles.InkExplosionParticleData;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkExplosion;
 
 public class SplatBombEntity extends AbstractSubWeaponEntity
@@ -38,11 +38,11 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
 		prevFuseTime = fuseTime;
 		SubWeaponSettings settings = getSettings();
 		
-		if (!this.onGround || distanceToSqr(this.getDeltaMovement()) > (double) 1.0E-5F)
+		if (!this.onGround() || distanceToSqr(this.getDeltaMovement()) > (double) 1.0E-5F)
 		{
 			float f1 = 0.98F;
-			if (this.onGround)
-				f1 = this.level.getBlockState(new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level, new BlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
+			if (this.onGround())
+				f1 = this.level.getBlockState(CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level, CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
 			
 			f1 = (float) Math.min(0.98, f1 * 1.5f);
 			
@@ -55,7 +55,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
             }*/
 		}
 		
-		if (onGround)
+		if (onGround())
 			fuseTime++;
 		if (fuseTime >= settings.fuseTime)
 		{

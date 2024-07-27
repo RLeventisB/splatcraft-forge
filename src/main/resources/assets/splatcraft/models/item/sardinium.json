@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:items/sardinium",
-    "particle": "splatcraft:items/sardinium"
+    "0": "splatcraft:item/sardinium",
+    "particle": "splatcraft:item/sardinium"
   },
   "elements": [
     {

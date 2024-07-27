@@ -13,15 +13,23 @@ import net.splatcraft.forge.loot.BlueprintLootFunction;
 import net.splatcraft.forge.loot.ChestLootModifier;
 import net.splatcraft.forge.loot.FishingLootModifier;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
-
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = Splatcraft.MODID)
 public class SplatcraftLoot
 {
-    protected static final DeferredRegister<Codec<? extends IGlobalLootModifier>> MODIFIER_REGISTRY = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, MODID);
-    protected static final DeferredRegister<LootItemFunctionType> REGISTRY = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, MODID);
-
-    public static final RegistryObject<LootItemFunctionType> BLUEPRINT = REGISTRY.register("blueprint_pool", () -> new LootItemFunctionType(new BlueprintLootFunction.Serializer()));
-    public static final RegistryObject<Codec<FishingLootModifier>> FISHING_MODIFIER = MODIFIER_REGISTRY.register("fishing", () -> FishingLootModifier.CODEC);
-    public static final RegistryObject<Codec<ChestLootModifier>> CHEST_LOOT_MODIFIER = MODIFIER_REGISTRY.register("chest_loot", () -> ChestLootModifier.CODEC);
+	public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> REGISTRY = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, Splatcraft.MODID);
+	static
+	{
+		REGISTRY.register("fishing", FishingLootModifier.CODEC);
+		REGISTRY.register("chest_loot", ChestLootModifier.CODEC);
+	}
+	public static final DeferredRegister<LootItemFunctionType> REGISTRY2 = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, Splatcraft.MODID);
+	public static final RegistryObject<LootItemFunctionType> BLUEPRINT = REGISTRY2.register("blueprint_pool", () -> new LootItemFunctionType(new BlueprintLootFunction.Serializer()));
+//	@SubscribeEvent
+//	public static void registerGLM(NewRegistryEvent event)
+//	{
+//		IForgeRegistry<Codec<? extends IGlobalLootModifier>> registry = ForgeRegistries.GLOBAL_LOOT_MODIFIER_SERIALIZERS.get();
+//
+//		registry.register(new ResourceLocation(Splatcraft.MODID, "fishing"), new FishingLootModifier.Serializer());
+//		registry.register(new ChestLootModifier.Serializer().setRegistryName(new ResourceLocation(Splatcraft.MODID, "chest_loot")));
+//	}
 }

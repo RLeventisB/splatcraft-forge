@@ -7,7 +7,6 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
@@ -28,8 +27,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
@@ -54,7 +54,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 	public final boolean isSunken;
 	public CrateBlock(String name, boolean isSunken)
 	{
-		super(Properties.of(Material.WOOD).sound(SoundType.WOOD).strength(2.0f));
+		super(Properties.of().mapColor(MapColor.WOOD).ignitedByLava().instrument(NoteBlockInstrument.BASS).sound(SoundType.WOOD).strength(2.0f));
 		
 		this.isSunken = isSunken;
 		
@@ -67,8 +67,8 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 		
 		BlockPos pos = crate.getBlockPos();
 		
-		LootContext.Builder contextBuilder = new LootContext.Builder((ServerLevel) level);
-		return level.getServer().getLootTables().get(crate.getLootTable()).getRandomItems(contextBuilder.withLuck(luckValue)
+		LootParams.Builder contextBuilder = new LootParams.Builder((ServerLevel) level);
+		return level.getServer().getLootData().getLootTable(crate.getLootTable()).getRandomItems(contextBuilder.withLuck(luckValue)
 			.withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
 	}
 	@Override
@@ -81,7 +81,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 			return;
 		
 		if (isSunken || compoundnbt.contains("LootTable"))
-			tooltip.add(new TranslatableComponent("block.splatcraft.crate.loot"));
+			tooltip.add(Component.translatable("block.splatcraft.crate.loot"));
 		else if (compoundnbt.contains("Items", 9))
 		{
 			NonNullList<ItemStack> nonnulllist = NonNullList.withSize(27, ItemStack.EMPTY);
@@ -107,7 +107,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 			
 			if (j - i > 0)
 			{
-				tooltip.add(new TranslatableComponent("container.shulkerBox.more", j - i).withStyle(ChatFormatting.ITALIC));
+				tooltip.add(Component.translatable("container.shulkerBox.more", j - i).withStyle(ChatFormatting.ITALIC));
 			}
 		}
 	}
@@ -158,7 +158,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 		}
 	}
 	@Override
-	public @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootContext.Builder builder)
+	public @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.Builder builder)
 	{
 		ItemStack tool = builder.getOptionalParameter(LootContextParams.TOOL);
 		Level level = builder.getLevel();

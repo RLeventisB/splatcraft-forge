@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:weapons/refurbished_mini_splatling",
-		"particle": "splatcraft:weapons/refurbished_mini_splatling"
+		"0": "splatcraft:item/weapons/refurbished_mini_splatling",
+		"particle": "splatcraft:item/weapons/refurbished_mini_splatling"
 	},
 	"elements": [
 		{

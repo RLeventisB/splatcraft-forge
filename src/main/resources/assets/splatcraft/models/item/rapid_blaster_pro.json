@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:weapons/rapid_blaster",
-		"particle": "splatcraft:weapons/rapid_blaster"
+		"0": "splatcraft:item/weapons/rapid_blaster",
+		"particle": "splatcraft:item/weapons/rapid_blaster"
 	},
 	"elements": [
 		{

@@ -7,8 +7,8 @@ import net.minecraft.world.level.material.MapColor;
 
 public class MetalBlock extends Block
 {
-    public MetalBlock(MapColor mapColor)
-    {
-        super(BlockBehaviour.Properties.of().mapColor(mapColor).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL));
-    }
+	public MetalBlock(MapColor color)
+	{
+		super(BlockBehaviour.Properties.of().mapColor(color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL));
+	}
 }

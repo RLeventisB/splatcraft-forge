@@ -1,10 +1,10 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:weapons/kensa_octobrush",
-		"1": "splatcraft:weapons/kensa_octobrush_head",
-		"2": "splatcraft:weapons/kensa_details",
-		"particle": "splatcraft:weapons/kensa_octobrush"
+		"0": "splatcraft:item/weapons/kensa_octobrush",
+		"1": "splatcraft:item/weapons/kensa_octobrush_head",
+		"2": "splatcraft:item/weapons/kensa_details",
+		"particle": "splatcraft:item/weapons/kensa_octobrush"
 	},
 	"elements": [
 		{
