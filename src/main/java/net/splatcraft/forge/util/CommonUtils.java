@@ -7,8 +7,11 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -31,11 +34,22 @@ public class CommonUtils
 		
 		spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
 	}
+	public static void spawnTestText(Level level, Vec3 pos, String text)
+	{
+		if (level != null)
+		{
+			Display.TextDisplay entity = new Display.TextDisplay(EntityType.TEXT_DISPLAY, Minecraft.getInstance().level);
+			entity.setPos(pos);
+			entity.setText(Component.literal(text));
+			entity.setBillboardConstraints(Display.BillboardConstraints.CENTER);
+			level.addFreshEntity(entity);
+		}
+	}
 	public static void spawnTestParticle(Vec3 pos, Color color)
 	{
 		float[] rgb = color.getRGBColorComponents(null);
 		
-		spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 1), pos);
+		spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
 	}
 	public static void spawnTestBlockParticle(Vec3 pos, BlockState state)
 	{

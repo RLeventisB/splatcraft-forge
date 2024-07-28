@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		super(name);
 	}
 	@Override
-	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
+	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
 	{
 		return projectileData.baseDamage();
 	}

@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponSettings, ShooterWeaponSettings.DataRecord>
@@ -15,7 +16,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 		super(name);
 	}
 	@Override
-	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
+	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
 	{
 		float e = tickCount - projectileData.damageDecayStartTick();
 		return Math.max(e > 0 ? projectileData.baseDamage() - (e * projectileData.damageDecayPerTick()) : projectileData.baseDamage(), projectileData.minDamage());
