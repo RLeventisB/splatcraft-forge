@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.TooltipFlag;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.WeaponTooltip;
 
@@ -22,7 +23,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	{
 		this.name = name;
 	}
-	public abstract float calculateDamage(float tickCount, boolean airborne, Object[] data);
+	public abstract float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data);
 	public abstract float getMinDamage();
 	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{

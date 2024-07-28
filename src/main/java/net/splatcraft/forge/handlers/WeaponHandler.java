@@ -64,7 +64,6 @@ public class WeaponHandler
 		}
 		
 		boolean canUseWeapon = true;
-		//Vec3 prevPos = PlayerInfoCapability.get(player).getPrevPos();
 		
 		if (hasCooldown)
 		{

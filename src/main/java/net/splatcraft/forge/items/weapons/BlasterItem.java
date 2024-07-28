@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
@@ -58,9 +59,13 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 			BlasterWeaponSettings settings = getSettings(stack);
 			if (reduceInk(player, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 			{
-				InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings).setShooterTrail();
+				InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
 				proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), player.onGround() ? settings.shotData.groundInaccuracy() : settings.shotData.airborneInaccuracy());
 				proj.setBlasterStats(settings);
+				proj.setExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData.explosionRadius(),
+					settings.blasterData.maxIndirectDamage(),
+					settings.blasterData.sparkDamagePenalty(),
+					settings.blasterData.explosionPaint()));
 				level.addFreshEntity(proj);
 				level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}

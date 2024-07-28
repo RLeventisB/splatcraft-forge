@@ -9,6 +9,7 @@ import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.DualieItem;
+import net.splatcraft.forge.items.weapons.SlosherItem;
 
 public class PlayerCooldown
 {
@@ -62,6 +63,8 @@ public class PlayerCooldown
 	{
 		if (nbt.getBoolean("SuperJump"))
 			return new SuperJumpCommand.SuperJump(nbt);
+		if (nbt.getBoolean("SloshCooldown"))
+			return new SlosherItem.SloshCooldown(nbt);
 		if (nbt.getBoolean("DodgeRollCooldown")) // need an system for this but im lazy
 			return new DualieItem.DodgeRollCooldown(nbt);
 		else return new PlayerCooldown(nbt);

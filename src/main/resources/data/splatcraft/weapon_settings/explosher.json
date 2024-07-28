@@ -1,11 +1,11 @@
 {
     "type": "splatcraft:slosher",
     "projectile": {
-        "size": 2,
-        "speed": 0.75,
-        "ink_coverage_on_impact": 1.7,
-        "ink_drop_coverage": 0.8,
-        "distance_between_drops": 4,
+        "size": 0.4,
+        "speed": 2.11575,
+        "ink_coverage_on_impact": 2.04,
+        "ink_drop_coverage": 0.65,
+        "distance_between_drops": 1,
         "count": 1,
         "angle_between_projectiles": 0,
         "direct_damage": 11,

@@ -5,7 +5,7 @@
         "speed": 5.04,
         "ink_coverage_on_impact": 1.056,
         "ink_drop_coverage": 0.72,
-        "distance_between_drops": 7,
+        "distance_between_drops": 5,
         "straight_shot_ticks": 2.33,
         "base_damage": 6.4,
         "decayed_damage": 3.2,

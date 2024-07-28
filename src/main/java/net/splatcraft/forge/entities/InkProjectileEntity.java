@@ -65,6 +65,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	private static final EntityDataAccessor<Float> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<ExtraSaveData> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
 	private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<Vec3>()
 	{
 		@Override
@@ -86,14 +87,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		}
 	});
 	protected float straightShotTime = -1;
-	public int lifespan = 600;
+	public float lifespan = 600;
 	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
 	public float impactCoverage, dropImpactSize, distanceBetweenDrops;
 	public float dropSkipDistance;
 	public float damageMultiplier = 1;
 	public boolean causesHurtCooldown, throwerAirborne;
-	public Object[] data = new Object[0];
 	public AbstractWeaponSettings damage = ShooterWeaponSettings.DEFAULT;
 	public InkBlockUtils.InkType inkType;
 	private float accumulatedDrops;
@@ -124,6 +124,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	{
 		EntityDataSerializers.registerSerializer(SHOOT_DIRECTION.getSerializer());
 		EntityDataSerializers.registerSerializer(PROJ_SIZE.getSerializer());
+		EntityDataSerializers.registerSerializer(EXTRA_DATA.getSerializer());
 	}
 	public InkProjectileEntity setShooterTrail()
 	{
@@ -134,7 +135,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	}
 	public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings settings)
 	{
-		data = new Object[] {charge};
 		dropImpactSize = settings.projectileInkTrailCoverage;
 		distanceBetweenDrops = settings.projectileInkTrailCooldown;
 		if (distanceBetweenDrops > 0)
@@ -150,24 +150,23 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	public InkProjectileEntity setBlasterStats(BlasterWeaponSettings settings)
 	{
 		setCommonProjectileStats(settings.projectileData);
-		data = new Object[]
-			{
-				settings.blasterData.explosionRadius(),
-				settings.blasterData.maxIndirectDamage(),
-				settings.blasterData.sparkDamagePenalty(),
-				settings.blasterData.explosionPaint(),
-			};
 		explodes = true;
 		setProjectileType(Types.BLASTER);
 		return this;
 	}
-	public InkProjectileEntity setSlosherStats(SlosherWeaponSettings settings)
+	public InkProjectileEntity setSlosherStats(SlosherWeaponSettings.SlosherProjectileDataRecord settings)
 	{
-		dropImpactSize = settings.projectileInkTrailCoverage;
-		distanceBetweenDrops = settings.projectileInkTrailCooldown;
+		dropImpactSize = settings.inkDropCoverage();
+		distanceBetweenDrops = settings.distanceBetweenInkDrops();
 		if (distanceBetweenDrops > 0)
-			dropSkipDistance = CommonUtils.nextFloat(random, 0, distanceBetweenDrops);
-		impactCoverage = settings.projectileInkCoverage;
+			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
+		impactCoverage = settings.inkCoverageImpact();
+		
+		setProjectileVisualSize(settings.visualSize());
+		setGravity(settings.gravity());
+		setStraightShotTime(settings.straightShotTicks());
+		
+		entityData.set(HORIZONTAL_DRAG, settings.horizontalDrag());
 		
 		setProjectileType(Types.SHOOTER);
 		return this;
@@ -188,7 +187,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	}
 	public InkProjectileEntity setDualieStats(CommonRecords.ProjectileDataRecord settings)
 	{
-		
 		setCommonProjectileStats(settings);
 		setProjectileType(Types.SHOOTER);
 		return this;
@@ -219,6 +217,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 		impactCoverage = settings.inkCoverageImpact();
 		
+		setProjectileVisualSize(settings.visualSize());
 		setGravity(settings.gravity());
 		setStraightShotTime(settings.straightShotTicks());
 		
@@ -239,6 +238,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		entityData.define(SPEED, 0f);
 		entityData.define(HORIZONTAL_DRAG, 1F);
 		entityData.define(SHOOT_DIRECTION, new Vec3(0, 0, 0));
+		entityData.define(EXTRA_DATA, new ExtraSaveData.EmptyExtraData());
 	}
 	@Override
 	public void onSyncedDataUpdated(EntityDataAccessor<?> dataParameter)
@@ -258,8 +258,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	@Override
 	public void tick()
 	{
+		tick(1);
+	}
+	public void tick(float timeDelta)
+	{
 		Vec3 lastPosition = position();
-		Vec3 velocity = getShootVelocity();
+		Vec3 velocity = getShootVelocity().scale(timeDelta);
 		setDeltaMovement(velocity);
 		super.tick();
 		setDeltaMovement(velocity);
@@ -273,12 +277,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		if (isRemoved())
 			return;
 		
-		if (!level.isClientSide && !persistent && lifespan-- <= 0)
+		if (!level.isClientSide && !persistent && (lifespan -= timeDelta) <= 0)
 		{
-			if (Objects.equals(getProjectileType(), Types.BLASTER) && data.length >= 4)
+			if (Objects.equals(getProjectileType(), Types.BLASTER) && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				InkExplosion.createInkExplosion(getOwner(), position(), (float) data[3], (float) data[0], damage.getMinDamage() * damageMultiplier, (float) data[1] * damageMultiplier, inkType, sourceWeapon);
-				createDrop(getX(), getY(), getZ(), 0, (float) data[3]);
+				InkExplosion.createInkExplosion(getOwner(), position(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
+				createDrop(getX(), getY(), getZ(), 0, explosionExtraData.explosionPaint);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -309,7 +313,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 				calculateDrops(lastPosition);
 			}
 		}
-		straightShotTime--;
+		straightShotTime -= timeDelta;
 	}
 	private void calculateDrops(Vec3 lastPosition)
 	{
@@ -416,7 +420,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		super.onHitEntity(result);
 		
 		Entity target = result.getEntity();
-		float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, data) * damageMultiplier;
+		float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, getExtraData()) * damageMultiplier;
 		
 		if (!level.isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
@@ -431,7 +435,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown);
 			if (!level.isClientSide && didDamage)
 			{
-				if ((Objects.equals(getProjectileType(), Types.CHARGER) && (float) data[0] >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
+				if ((getExtraData() instanceof ExtraSaveData.ChargeExtraData chargeExtraData && chargeExtraData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
 					Objects.equals(getProjectileType(), Types.BLASTER))
 				{
 					level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
@@ -441,9 +445,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		if (!canPierce)
 		{
-			if (explodes && Objects.equals(getProjectileType(), Types.BLASTER) && data.length >= 4)
+			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), (float) data[3], (float) data[0], damage.getMinDamage() * damageMultiplier, (float) data[1] * damageMultiplier, inkType, sourceWeapon);
+				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -472,10 +476,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		{
 			level.broadcastEntityEvent(this, (byte) 2);
 			Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
-			if (Objects.equals(getProjectileType(), Types.BLASTER) && data.length >= 4)
+			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				damageMultiplier *= (float) data[2];
-				InkExplosion.createInkExplosion(getOwner(), impactPos, (float) data[3], (float) data[0], damage.getMinDamage() * damageMultiplier, (float) data[1] * damageMultiplier, inkType, sourceWeapon);
+				damageMultiplier *= explosionExtraData.sparkDamagePenalty;
+				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
 				level.broadcastEntityEvent(this, (byte) 3);
 //				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -490,15 +494,23 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	@Override
 	public void shootFromRotation(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
 	{
+		shootFromRotation(pitch, yaw, pitchOffset, velocity, inaccuracy, 0);
+	}
+	public void shootFromRotation(float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
+	{
 		float f = -Mth.sin(yaw * (Mth.DEG_TO_RAD)) * Mth.cos(pitch * (Mth.DEG_TO_RAD));
 		float f1 = -Mth.sin((pitch + pitchOffset) * (Mth.DEG_TO_RAD));
 		float f2 = Mth.cos(yaw * (Mth.DEG_TO_RAD)) * Mth.cos(pitch * (Mth.DEG_TO_RAD));
-		this.shoot(f, f1, f2, velocity, inaccuracy);
-		
-		createDrop(getX(), getY(), getZ(), 0, 1.5f); // ik that in splatoon weapons don't always paint their feet but that's such a bs mechanic so why not
+		this.shoot(f, f1, f2, velocity, inaccuracy, partialTicks);
+
+//		createDrop(getX(), getY(), getZ(), 0, 1.5f); // ik that in splatoon weapons don't always paint their feet but that's such a bs mechanic so why not
 	}
 	@Override
 	public void shoot(double x, double y, double z, float velocity, float inaccuracy)
+	{
+		shoot(x, y, z, velocity, inaccuracy, 0);
+	}
+	public void shoot(double x, double y, double z, float velocity, float inaccuracy, float partialTicks)
 	{
 		double usedInaccuracy = inaccuracy * 0.0075;
 		Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy).normalize();
@@ -509,8 +521,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		double d0 = vec3.horizontalDistance();
 		this.setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
 		this.setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
-		this.yRotO = this.getYRot();
-		this.xRotO = this.getXRot();
+		this.yRotO = this.getViewYRot(partialTicks);
+		this.xRotO = this.getViewXRot(partialTicks);
 		
 		entityData.set(SPEED, velocity);
 	}
@@ -599,7 +611,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		nbt.put("Direction", directionTag);
 		
 		nbt.putFloat("Gravity", getGravity());
-		nbt.putInt("Lifespan", lifespan);
+		nbt.putFloat("Lifespan", lifespan);
 		nbt.putFloat("TrailSize", dropImpactSize);
 		nbt.putFloat("TrailFrequency", distanceBetweenDrops);
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
@@ -616,6 +628,14 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		super.addAdditionalSaveData(nbt);
 		nbt.remove("Item");
+	}
+	public ExtraSaveData getExtraData()
+	{
+		return entityData.get(EXTRA_DATA);
+	}
+	public void setExtraData(ExtraSaveData saveData)
+	{
+		entityData.set(EXTRA_DATA, saveData);
 	}
 	@Deprecated //Modify sourceWeapon variable instead
 	@Override
