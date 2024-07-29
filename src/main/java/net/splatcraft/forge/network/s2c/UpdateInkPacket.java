@@ -1,6 +1,5 @@
 package net.splatcraft.forge.network.s2c;
 
-import java.util.HashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -11,76 +10,71 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
 import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
 import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+
+import java.util.HashMap;
 
 public class UpdateInkPacket extends PlayS2CPacket
 {
 	private final ChunkPos chunkPos;
-	private final HashMap<RelativeBlockPos, WorldInk.Entry> dirty;
-
+	private final HashMap<BlockPos, WorldInk.Entry> dirty;
 	public UpdateInkPacket(BlockPos pos, int color, InkBlockUtils.InkType type)
 	{
-		chunkPos = new ChunkPos(pos);
+		chunkPos = new ChunkPos(Math.floorDiv(pos.getX(), 16), Math.floorDiv(pos.getZ(), 16));
 		this.dirty = new HashMap<>();
-		dirty.put(RelativeBlockPos.fromAbsolute(pos), new WorldInk.Entry(color, type));
+		dirty.put(new BlockPos(Math.floorMod(pos.getX(), 16), pos.getY(), Math.floorMod(pos.getZ(), 16)), new WorldInk.Entry(color, type));
 	}
-
-	public UpdateInkPacket(ChunkPos pos, HashMap<RelativeBlockPos, WorldInk.Entry> dirty)
+	public UpdateInkPacket(ChunkPos pos, HashMap<BlockPos, WorldInk.Entry> dirty)
 	{
 		this.chunkPos = pos;
 		this.dirty = dirty;
 	}
-
-	public static UpdateInkPacket decode(FriendlyByteBuf buffer)
-	{
-		ChunkPos pos = buffer.readChunkPos();
-		HashMap<RelativeBlockPos, WorldInk.Entry> dirty = new HashMap<>();
-		int size = buffer.readInt();
-		for (int i = 0; i < size; i++) {
-			dirty.put(RelativeBlockPos.fromBuf(buffer), new WorldInk.Entry(buffer.readInt(), InkBlockUtils.InkType.values.getOrDefault(buffer.readResourceLocation(), null)));
-		}
-
-		return new UpdateInkPacket(pos, dirty);
-	}
-
 	@Override
 	public void encode(FriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
-
+		
 		dirty.forEach((pos, entry) ->
 		{
-			pos.writeBuf(buffer);
+			buffer.writeBlockPos(pos);
 			buffer.writeInt(entry.color());
 			buffer.writeResourceLocation(entry.type() == null ? new ResourceLocation("") : entry.type().getName());
 		});
 	}
-
+	public static UpdateInkPacket decode(FriendlyByteBuf buffer)
+	{
+		ChunkPos pos = buffer.readChunkPos();
+		HashMap<BlockPos, WorldInk.Entry> dirty = new HashMap<>();
+		int size = buffer.readInt();
+		for (int i = 0; i < size; i++)
+			dirty.put(buffer.readBlockPos(), new WorldInk.Entry(buffer.readInt(), InkBlockUtils.InkType.values.getOrDefault(buffer.readResourceLocation(), null)));
+		
+		return new UpdateInkPacket(pos, dirty);
+	}
 	@Override
 	public void execute()
 	{
 		ClientLevel level = Minecraft.getInstance().level;
-
-		if(level != null)
+		
+		if (level != null)
 		{
-            // the dedicated server will crash if you pass the level and pos directly. wow.
-            WorldInk worldInk = WorldInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
-
+			WorldInk worldInk = WorldInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
+			
 			dirty.forEach((pos, entry) ->
 			{
-				if (entry == null || entry.type() == null) {
-					worldInk.removeInk(pos);
-				} else {
-					worldInk.setInk(pos, entry.color(), entry.type());
+				if (entry == null || entry.type() == null)
+				{
+					worldInk.clearInk(pos);
 				}
-
-
-				BlockPos blockPos = pos.toAbsolute(chunkPos);
-				BlockState state = level.getBlockState(blockPos);
-				level.sendBlockUpdated(blockPos, state, state, 0);
+				else
+				{
+					worldInk.ink(pos, entry.color(), entry.type());
+				}
+				
+				pos = new BlockPos(pos.getX() + chunkPos.x * 16, pos.getY(), pos.getZ() + chunkPos.z * 16);
+				BlockState state = level.getBlockState(pos);
+				level.sendBlockUpdated(pos, state, state, 0);
 			});
 		}
-
 	}
 }

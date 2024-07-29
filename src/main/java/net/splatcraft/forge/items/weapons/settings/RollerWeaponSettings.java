@@ -2,7 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.splatcraft.forge.entities.ExtraSaveData;
+import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	{
 		super(name);
 	}
-	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
+	public float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list)
 	{
 		if (airborne)
 		{

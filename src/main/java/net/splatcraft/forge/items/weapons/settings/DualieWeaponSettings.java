@@ -3,6 +3,7 @@ package net.splatcraft.forge.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.forge.entities.ExtraSaveData;
+import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -19,9 +20,10 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		super(name);
 	}
 	@Override
-	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
+	public float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list)
 	{
-		if (data instanceof ExtraSaveData.DualieExtraData dualieExtraData && dualieExtraData.rollBullet)
+		ExtraSaveData.DualieExtraData dualieData = list.getFirstExtraData(ExtraSaveData.DualieExtraData.class);
+		if (dualieData != null && dualieData.rollBullet)
 		{
 			float e = tickCount - turretProjectileData.damageDecayStartTick();
 			return Math.max(e > 0 ? turretProjectileData.baseDamage() - e * turretProjectileData.damageDecayPerTick() : turretProjectileData.baseDamage(), turretProjectileData.minDamage());
