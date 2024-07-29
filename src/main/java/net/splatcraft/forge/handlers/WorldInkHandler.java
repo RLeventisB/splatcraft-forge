@@ -24,7 +24,6 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -58,14 +57,6 @@ import java.util.stream.StreamSupport;
 @Mod.EventBusSubscriber
 public class WorldInkHandler
 {
-	@SubscribeEvent
-	public static void renderInk(RenderLevelStageEvent event)
-	{
-		if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SOLID_BLOCKS)
-		{
-			"why".isEmpty();
-		}
-	}
 	@SubscribeEvent //Ink Removal
 	public static void onBlockUpdate(BlockEvent.NeighborNotifyEvent event)
 	{

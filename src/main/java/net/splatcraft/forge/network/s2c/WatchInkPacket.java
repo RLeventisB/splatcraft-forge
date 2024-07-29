@@ -19,13 +19,12 @@ public class WatchInkPacket extends PlayS2CPacket
 		this.chunkPos = pos;
 		this.dirty = dirty;
 	}
-
 	@Override
 	public void encode(FriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
-
+		
 		dirty.forEach((pos, entry) ->
 		{
 			buffer.writeBlockPos(pos);
@@ -33,18 +32,16 @@ public class WatchInkPacket extends PlayS2CPacket
 			buffer.writeResourceLocation(entry.type() == null ? new ResourceLocation("") : entry.type().getName());
 		});
 	}
-
 	public static WatchInkPacket decode(FriendlyByteBuf buffer)
 	{
 		ChunkPos pos = buffer.readChunkPos();
 		HashMap<BlockPos, WorldInk.Entry> dirty = new HashMap<>();
 		int size = buffer.readInt();
-		for(int i = 0; i < size; i++)
+		for (int i = 0; i < size; i++)
 			dirty.put(buffer.readBlockPos(), new WorldInk.Entry(buffer.readInt(), InkBlockUtils.InkType.values.getOrDefault(buffer.readResourceLocation(), null)));
-
+		
 		return new WatchInkPacket(pos, dirty);
 	}
-
 	@Override
 	public void execute()
 	{
