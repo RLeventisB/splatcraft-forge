@@ -156,16 +156,16 @@ public class ColorUtils
 	}
 	public static boolean setInkColor(BlockEntity te, int color)
 	{
-		if (te instanceof InkColorTileEntity)
+		if (te instanceof InkColorTileEntity colorTileEntity)
 		{
-			((InkColorTileEntity) te).setColor(color);
+			colorTileEntity.setColor(color);
 			return true;
 		}
 		
 		te.getBlockState();
-		if (te.getBlockState().getBlock() instanceof IColoredBlock)
+		if (te.getBlockState().getBlock() instanceof IColoredBlock block)
 		{
-			return ((IColoredBlock) te.getBlockState().getBlock()).setColor(te.getLevel(), te.getBlockPos(), color);
+			return block.setColor(te.getLevel(), te.getBlockPos(), color);
 		}
 		return false;
 	}
@@ -243,6 +243,10 @@ public class ColorUtils
 	public static boolean colorEquals(Level level, BlockPos pos, int colorA, int colorB)
 	{
 		return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.UNIVERSAL_INK) || colorA == colorB;
+	}
+	public static boolean colorEquals(Level level, BlockPos pos, int otherColor)
+	{
+		return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.UNIVERSAL_INK) || getInkColor(level, pos) == otherColor;
 	}
 	public static boolean colorEquals(Entity entity, BlockEntity te)
 	{
