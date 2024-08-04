@@ -3,7 +3,6 @@ package net.splatcraft.forge.handlers;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,19 +16,14 @@ import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.PlayerCharge;
 import net.splatcraft.forge.util.PlayerCooldown;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class WeaponHandler
 {
-	private static final Map<Player, Vec3> prevPosMap = new LinkedHashMap<>();
 	@SubscribeEvent
 	public static void onLivingDeath(LivingDeathEvent event)
 	{
 		if (event.getEntity() instanceof Player target && !event.getEntity().isSpectator())
 		{
-			
 			int color = ColorUtils.getPlayerColor(target);
 			((ServerLevel) target.level).sendParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);
 			
@@ -71,7 +65,7 @@ public class WeaponHandler
 			{
 				ItemStack stack = cooldown.storedStack;
 				
-				if (stack.getItem() instanceof WeaponBaseItem weapon)
+				if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
 					weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
 				PlayerCooldown.setPlayerCooldown(player, null);
 			}
@@ -112,15 +106,5 @@ public class WeaponHandler
 		{
 			PlayerCharge.dischargeWeapon(player);
 		}
-		
-		prevPosMap.put(player, player.position());
-	}
-	public static boolean playerHasPrevPos(Player player)
-	{
-		return prevPosMap.containsKey(player);
-	}
-	public static Vec3 getPlayerPrevPos(Player player)
-	{
-		return prevPosMap.get(player);
 	}
 }

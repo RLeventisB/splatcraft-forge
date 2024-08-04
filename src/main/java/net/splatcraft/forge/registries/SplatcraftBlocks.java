@@ -1,7 +1,5 @@
 package net.splatcraft.forge.registries;
 
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockGetter;
@@ -19,7 +17,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.MissingMappingsEvent;
 import net.minecraftforge.registries.RegistryObject;
 import net.splatcraft.forge.blocks.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,24 +65,6 @@ public class SplatcraftBlocks
 	public static final RegistryObject<Block> stageVoid = REGISTRY.register("stage_void", () -> new StageBarrierBlock(true));
 	public static final RegistryObject<Block> allowedColorBarrier = REGISTRY.register("allowed_color_barrier", () -> new ColoredBarrierBlock(false));
 	public static final RegistryObject<Block> deniedColorBarrier = REGISTRY.register("denied_color_barrier", () -> new ColoredBarrierBlock(true));
-	public static void setRenderLayers()
-	{
-		ItemBlockRenderTypes.setRenderLayer(inkedGlass.get(), RenderType.translucent());
-		ItemBlockRenderTypes.setRenderLayer(inkedGlassPane.get(), RenderType.translucent());
-		
-		ItemBlockRenderTypes.setRenderLayer(emptyInkwell.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(inkwell.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(spawnPad.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(grate.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(grateRamp.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(crate.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(sunkenCrate.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(ammoKnightsDebris.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(remotePedestal.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(splatSwitch.get(), RenderType.cutout());
-		ItemBlockRenderTypes.setRenderLayer(glassCover.get(), RenderType.cutout());
-	}
-	@NotNull
 	public static boolean noRedstoneConduct(BlockState state, BlockGetter getter, BlockPos pos)
 	{
 		return false;

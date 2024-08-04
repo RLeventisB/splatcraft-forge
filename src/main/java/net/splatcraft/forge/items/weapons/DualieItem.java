@@ -313,7 +313,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				if (local)
 				{
-					Input input = ClientUtils.getUnmodifiedInput(player);
+					Input input = ClientUtils.getUnmodifiedInput((LocalPlayer) player);
 					boolean endedTurretMode = input.jumping || input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
 					if (endedTurretMode)
 					{

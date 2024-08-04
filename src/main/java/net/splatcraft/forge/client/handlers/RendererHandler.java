@@ -13,7 +13,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.model.BakedModel;
@@ -76,8 +75,6 @@ public class RendererHandler
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void playerRender(RenderPlayerEvent event)
 	{
-		EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-		
 		Player player = event.getEntity();
 		if (player.isSpectator()) return;
 		

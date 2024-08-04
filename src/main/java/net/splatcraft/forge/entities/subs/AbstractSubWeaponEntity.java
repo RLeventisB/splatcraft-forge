@@ -34,7 +34,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkHooks;
 import net.splatcraft.forge.client.particles.InkExplosionParticleData;
 import net.splatcraft.forge.entities.IColoredEntity;
-import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.util.ColorUtils;
@@ -190,11 +189,11 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 		
 		Vec3 posDiff = new Vec3(0, 0, 0);
 		
-		if (thrower instanceof Player)
+		if (thrower instanceof Player player)
 		{
 			try
 			{
-				posDiff = thrower.position().subtract(WeaponHandler.getPlayerPrevPos((Player) thrower));
+				posDiff = thrower.position().subtract(player.getPosition(0));
 				if (thrower.onGround())
 					posDiff.multiply(1, 0, 1);
 			}

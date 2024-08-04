@@ -115,7 +115,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 						BlockPos side = CommonUtils.createBlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
 						if (InkBlockUtils.canInkFromFace(level, side, Direction.UP))
 						{
-							InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, side, getColor(), settings.contactDamage, inkType);
+							InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, side, getColor(), Direction.UP, inkType, settings.contactDamage);
 							break;
 						}
 					}
@@ -126,7 +126,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 				for (int i = 0; i <= 2; i++)
 					if (InkBlockUtils.canInkFromFace(level, blockPosition().below(i), Direction.UP))
 					{
-						InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, blockPosition().below(i), getColor(), settings.contactDamage, inkType);
+						InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, blockPosition().below(i), getColor(), Direction.UP, inkType, settings.contactDamage);
 						break;
 					}
 			}

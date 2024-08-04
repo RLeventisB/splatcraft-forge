@@ -43,16 +43,18 @@ import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.InkDamageUtils;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Mod.EventBusSubscriber
 public class SquidFormHandler
 {
+	private static final Map<Player, List<BlockPos>> collidedBlockMap = new LinkedHashMap<>();
 	private static final Map<Player, Integer> squidSubmergeMode = new LinkedHashMap<>();
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onLivingHurt(LivingHurtEvent event)
 	{
-		if (event.getSource().getMsgId().equals("splatcraft:enemy_ink") && event.getEntity().getHealth() <= 4)
+		if (event.getSource().is(InkDamageUtils.ENEMY_INK) && event.getEntity().getHealth() <= 4)
 			event.setCanceled(true);
 	}
 	@SubscribeEvent
@@ -63,8 +65,8 @@ public class SquidFormHandler
 		if (InkBlockUtils.onEnemyInk(player))
 		{
 			if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.level().getDifficulty() != Difficulty.PEACEFUL)
-				player.hurt(player.damageSources().source(InkDamageUtils.ENEMY_INK), 2f);
-			if (player.level().getRandom().nextFloat() < 0.7f)
+				player.hurt(player.damageSources().source(InkDamageUtils.ENEMY_INK), Math.min(-4 + player.getHealth(), 2f));
+			if (player.level().getRandom().nextFloat() < 0.5f)
 				ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
 		}
 		
@@ -247,10 +249,9 @@ public class SquidFormHandler
 		if (InkOverlayCapability.hasCapability(living))
 		{
 			InkOverlayInfo info = InkOverlayCapability.get(living);
-			Vec3 prev = info.getPrevPosOrDefault(living.position());
+			Vec3 prev = living.getPosition(0);
 			
 			info.setSquidRot(Math.abs(living.getY() - prev.y()) * new Vec3((living.getX() - prev.x), (living.getY() - prev.y), (living.getZ() - prev.z)).normalize().y);
-			info.setPrevPos(living.position());
 		}
 	}
 	@SubscribeEvent
@@ -265,5 +266,9 @@ public class SquidFormHandler
 		{
 			player.setDeltaMovement(player.getDeltaMovement().x(), player.getDeltaMovement().y() * 1.1, player.getDeltaMovement().z());
 		}
+	}
+	public static List<BlockPos> getPlayerCollidedBlocks(Player player)
+	{
+		return collidedBlockMap.get(player);
 	}
 }

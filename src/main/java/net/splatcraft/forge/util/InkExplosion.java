@@ -38,7 +38,7 @@ public class InkExplosion
 	@Nullable
 	private final Entity exploder;
 	private final float paintRadius;
-	private final List<BlockPos> affectedBlockPositions = Lists.newArrayList();
+	private final List<BlockFace> affectedBlockPositions = Lists.newArrayList();
 	private final Vec3 position;
 	private final InkBlockUtils.InkType inkType;
 	private final float minDamage;
@@ -93,7 +93,7 @@ public class InkExplosion
 	 */
 	public void doExplosionA()
 	{
-		List<BlockPos> set = new ArrayList<>();
+		List<BlockFace> set = new ArrayList<>();
 		ServerLevel level = (ServerLevel) exploder.level();
 		Vec3 explosionPos = new Vec3(x, y, z);
 		getBlocksInSphereWithNoise(set, level);
@@ -147,7 +147,7 @@ public class InkExplosion
 			}
 		}
 	}
-	private void getBlocksInSphereWithNoise(List<BlockPos> set, ServerLevel level)
+	private void getBlocksInSphereWithNoise(List<BlockFace> set, ServerLevel level)
 	{
 		final float noiseRange = 0.2f;
 		int cubeSizeHalf = ((int) Math.ceil(paintRadius + noiseRange) >> 1) + 1;
@@ -188,7 +188,7 @@ public class InkExplosion
 						
 						for (Tuple<Vec3, Direction> point : points)
 						{
-							if (raycastAndGetDirection(position, point.getA(), level, pos) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
+							if (raycastAndGetDirection(position, point.getA(), level, pos, point.getB()) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
 							{
 								dX = point.getA().x - position.x;
 								dY = point.getA().y - position.y;
@@ -204,15 +204,14 @@ public class InkExplosion
 								}
 								if (inRadius)
 								{
-									set.add(pos);
-									break;
+									set.add(new BlockFace(pos, point.getB()));
 								}
 							}
 						}
 					}
 				}
 	}
-	private boolean raycastAndGetDirection(Vec3 startPos, Vec3 endPos, ServerLevel level, BlockPos expectedPos)
+	private boolean raycastAndGetDirection(Vec3 startPos, Vec3 endPos, ServerLevel level, BlockPos expectedPos, Direction expectedFace)
 	{
 		ClipContext clipContext = new ClipContext(new Vec3(x, y, z), endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null); // actually don't know if it's faster to inline a method but ok
 		BlockHitResult hitResult = BlockGetter.traverseBlocks(startPos, endPos, clipContext, (clipContext1, blockPos1) ->
@@ -221,8 +220,11 @@ public class InkExplosion
 			VoxelShape voxelshape = blockstate.getCollisionShape(level, blockPos1);
 			return level.clipWithInteractionOverride(clipContext1.getFrom(), clipContext1.getTo(), blockPos1, voxelshape, blockstate);
 		}, (clipContext1) ->
-			BlockHitResult.miss(startPos, Direction.UP, BlockPos.ZERO));
-		return hitResult.getBlockPos().equals(expectedPos) || hitResult.getType() == HitResult.Type.MISS;
+		{
+			return BlockHitResult.miss(endPos, expectedFace, expectedPos);
+//			return BlockHitResult.miss(startPos, Direction.UP, BlockPos.ZERO);
+		});
+		return (hitResult.getBlockPos().equals(expectedPos) && hitResult.getDirection().equals(expectedFace)) || hitResult.getType() == HitResult.Type.MISS;
 	}
 	/**
 	 * Does the second part of the explosion (sound, particles, drop spawn)
@@ -244,23 +246,21 @@ public class InkExplosion
 				level.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.x, this.y, this.z, 1.0D, 0.0D, 0.0D);
 			}
 		}
-
-//		Collections.shuffle(this.affectedBlockPositions, level.getRandom());
 		
-		for (BlockPos blockpos : this.affectedBlockPositions)
+		for (BlockFace blockFace : this.affectedBlockPositions)
 		{
-			BlockState blockstate = level.getBlockState(blockpos);
+			BlockState blockstate = level.getBlockState(blockFace.pos());
 			if (!blockstate.isAir())
 			{
 				int color = ColorUtils.getEntityColor(exploder);
-				float percentage = (float) Math.sqrt(blockpos.distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z)) / damageRadius;
+				float percentage = (float) Math.sqrt(blockFace.pos().distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z)) / damageRadius;
 				if (exploder instanceof Player player)
 				{
-					InkBlockUtils.playerInkBlock(player, level, blockpos, color, Mth.lerp(percentage, minDamage, maxDamage), inkType);
+					InkBlockUtils.playerInkBlock(player, level, blockFace.pos(), color, blockFace.face(), inkType, Mth.lerp(percentage, minDamage, maxDamage));
 				}
 				else
 				{
-					InkBlockUtils.inkBlock(level, blockpos, color, Mth.lerp(percentage, minDamage, maxDamage), inkType);
+					InkBlockUtils.inkBlock(level, blockFace.pos(), color, blockFace.face(), inkType, Mth.lerp(percentage, minDamage, maxDamage));
 				}
 			}
 		}

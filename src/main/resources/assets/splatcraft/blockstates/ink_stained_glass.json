@@ -1,7 +1,7 @@
 {
-  "variants": {
-    "": {
-      "model": "splatcraft:block/ink_stained_glass"
+    "variants": {
+        "": {
+            "model": "splatcraft:block/ink_stained_glass"
+        }
     }
-  }
 }
