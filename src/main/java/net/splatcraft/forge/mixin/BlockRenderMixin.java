@@ -23,9 +23,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
 import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
-import net.splatcraft.forge.handlers.WorldInkHandler;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.forge.handlers.ChunkInkHandler;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,7 +37,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 //TODO use RenderLevelStageEvent to render ink over blocks instead of overriding block rendering with mixins,
@@ -52,7 +54,7 @@ public class BlockRenderMixin
 			target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFF[IIZ)V"))
 		public void getBlockPosFromQuad(BlockAndTintGetter level, BlockState pState, BlockPos blockPos, VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, CallbackInfo ci)
 		{
-			if (level instanceof RenderChunkRegion region && WorldInkHandler.Render.splatcraft$renderInkedBlock(region, blockPos, consumer, pose, quad, new float[] {pBrightness0, pBrightness1, pBrightness2, pBrightness3}, new int[] {pLightmap0, pLightmap1, pLightmap2, pLightmap3}, pPackedOverlay, true))
+			if (level instanceof RenderChunkRegion region && ChunkInkHandler.Render.splatcraft$renderInkedBlock(region, blockPos, consumer, pose, quad, new float[] {pBrightness0, pBrightness1, pBrightness2, pBrightness3}, new int[] {pLightmap0, pLightmap1, pLightmap2, pLightmap3}, pPackedOverlay, true))
 				ci.cancel();
 		}
 	}
@@ -71,20 +73,22 @@ public class BlockRenderMixin
 		{
 			splatcraft$level = ((ChunkRegionAccessor) renderchunkregion).getLevel();
 			splatcraft$blockPos = blockpos2;
-			splatcraft$renderAsCube = InkBlockUtils.isInked(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE);
+			splatcraft$renderAsCube = InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE);
 		}
 		@WrapOperation(method = "compile", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/ChunkRenderTypeSet;"))
 		public ChunkRenderTypeSet getRenderLayer(BakedModel instance, BlockState state, RandomSource randomSource, ModelData modelData, Operation<ChunkRenderTypeSet> original)
 		{
-			if (WorldInkCapability.get(splatcraft$level, splatcraft$blockPos).isInked(splatcraft$blockPos))
+			ChunkInk chunkInk = ChunkInkCapability.getOrNull(splatcraft$level, splatcraft$blockPos);
+			if (chunkInk.isntEmpty())
 			{
-				WorldInk.Entry ink = WorldInkCapability.get(splatcraft$level, splatcraft$blockPos).getInk(splatcraft$blockPos);
-				
-				if (ink.type() == InkBlockUtils.InkType.GLOWING)
-					return ChunkRenderTypeSet.of(RenderType.translucent());
-				else if (ink.type() == InkBlockUtils.InkType.NORMAL)
-					return ChunkRenderTypeSet.of(RenderType.solid());
+				if (chunkInk.isInkedAny(splatcraft$blockPos))
+				{
+					ChunkInk.BlockEntry ink = chunkInk.getInk(splatcraft$blockPos);
+					
+					if (Arrays.stream(ink.entries).filter(Objects::nonNull).anyMatch(v -> v.type() == InkBlockUtils.InkType.GLOWING || v.type() == InkBlockUtils.InkType.CLEAR))
+						return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
+				}
 			}
 			return original.call(instance, state, randomSource, modelData);
 		}

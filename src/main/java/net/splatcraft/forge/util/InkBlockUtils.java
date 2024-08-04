@@ -10,11 +10,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.forge.Splatcraft;
@@ -22,26 +24,27 @@ import net.splatcraft.forge.blocks.IColoredBlock;
 import net.splatcraft.forge.blocks.InkedBlock;
 import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.SplatcraftTags;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateInkPacket;
+import net.splatcraft.forge.handlers.ChunkInkHandler;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftStats;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class InkBlockUtils
 {
-	public static BlockInkedResult playerInkBlock(@Nullable Player player, Level level, BlockPos pos, int color, float damage, InkType inkType)
+	public static BlockInkedResult playerInkBlock(@Nullable Player player, Level level, BlockPos pos, int color, Direction direction, InkType inkType, float damage)
 	{
-		BlockInkedResult inked = inkBlock(level, pos, color, damage, inkType);
+		BlockInkedResult inked = inkBlock(level, pos, color, direction, inkType, damage);
 		
 		if (player != null && inked == BlockInkedResult.SUCCESS)
 		{
@@ -50,26 +53,64 @@ public class InkBlockUtils
 		
 		return inked;
 	}
-	public static boolean clearInk(Level level, BlockPos pos, boolean removePermanent)
+	public static Direction getRandomInkedFace(Level level, BlockPos pos)
 	{
-		WorldInk worldInk = WorldInkCapability.get(level, pos);
-		if (worldInk.isInked(pos))
+		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
+		if (worldInk.isInkedAny(pos))
 		{
-			boolean removed = worldInk.clearInk(pos);
-			if ((removePermanent && worldInk.removePermanentInk(pos)))
-				removed = true;
-			
-			if (removed)
+			List<Integer> indices = new ArrayList<>(6);
+			ChunkInk.InkEntry[] entries = worldInk.getInk(pos).entries;
+			for (int i = 0; i < entries.length; i++)
 			{
-				level.getChunkAt(pos).setUnsaved(true);
+				ChunkInk.InkEntry entry = entries[i];
+				if (entry != null && entry.isInked())
+				{
+					indices.add(i);
+				}
+			}
+			return Direction.from3DDataValue(CommonUtils.selectRandom(level.random, indices));
+		}
+		return null;
+	}
+	public static boolean clearInk(Level level, BlockPos pos, Direction direction, boolean removePermanent)
+	{
+		return clearInk(level, pos, direction.get3DDataValue(), removePermanent);
+	}
+	public static boolean clearInk(Level level, BlockPos pos, int index, boolean removePermanent)
+	{
+		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
+		if (worldInk.isInkedAny(pos))
+		{
+			if (worldInk.clearInk(pos, index, removePermanent))
+			{
 				if (!level.isClientSide)
-					SplatcraftPacketHandler.sendToDim(new UpdateInkPacket(pos, -1, null), level.dimension());
+				{
+					if (worldInk.isInkedAny(pos))
+						ChunkInkHandler.addInkToUpdate(level, pos);
+					else
+						ChunkInkHandler.addInkToRemove(level, pos);
+				}
 				return true;
 			}
 		}
 		return false;
 	}
-	public static BlockInkedResult inkBlock(Level level, BlockPos pos, int color, float damage, InkType inkType)
+	public static boolean clearBlock(Level level, BlockPos pos, boolean removePermanent)
+	{
+		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
+		if (worldInk.isInkedAny(pos))
+		{
+			if (worldInk.clearBlock(pos, removePermanent))
+			{
+				level.getChunkAt(pos).setUnsaved(true);
+				if (!level.isClientSide)
+					ChunkInkHandler.addInkToRemove(level, pos);
+				return true;
+			}
+		}
+		return false;
+	}
+	public static BlockInkedResult inkBlock(Level level, BlockPos pos, int color, Direction direction, InkType inkType, float damage)
 	{
 		if (isUninkable(level, pos))
 			return BlockInkedResult.FAIL;
@@ -89,14 +130,14 @@ public class InkBlockUtils
 		if (!SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INKABLE_GROUND))
 			return BlockInkedResult.FAIL;
 		
-		WorldInk worldInk = WorldInkCapability.get(level, pos);
+		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
 		
-		boolean sameColor = worldInk.isInked(pos) && worldInk.getInk(pos).color() == color;
+		boolean sameColor = worldInk.isInkedAny(pos) && worldInk.getInk(pos).color(direction) == color;
 		
-		if (sameColor && worldInk.getInk(pos).type() == inkType)
+		if (sameColor && worldInk.getInk(pos).type(direction) == inkType)
 			return BlockInkedResult.ALREADY_INKED;
 		
-		worldInk.ink(pos, color, inkType);
+		worldInk.ink(pos, direction, color, inkType);
 		level.getChunkAt(pos).setUnsaved(true);
 		
 		if (SplatcraftGameRules.getLocalizedRule(level, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
@@ -104,7 +145,7 @@ public class InkBlockUtils
 			level.destroyBlock(pos.above(), true);
 		
 		if (!level.isClientSide)
-			SplatcraftPacketHandler.sendToDim(new UpdateInkPacket(pos, color, inkType), level.dimension());
+			ChunkInkHandler.addInkToUpdate(level, pos);
 		
 		return sameColor ? BlockInkedResult.ALREADY_INKED : BlockInkedResult.SUCCESS;
 	}
@@ -116,13 +157,25 @@ public class InkBlockUtils
 	{
 		return (inkType == null ? InkType.NORMAL : inkType).block.defaultBlockState();
 	}
-	public static WorldInk.Entry getInk(Level level, BlockPos pos)
+	public static ChunkInk.BlockEntry getInkBlock(Level level, BlockPos pos)
 	{
-		return WorldInkCapability.get(level, pos).getInk(pos);
+		return ChunkInkCapability.get(level, pos).getInk(pos);
 	}
-	public static boolean isInked(Level level, BlockPos pos)
+	public static ChunkInk.InkEntry getInkInFace(Level level, BlockPos pos, Direction direction)
 	{
-		return WorldInkCapability.get(level, pos).isInked(pos);
+		return ChunkInkCapability.get(level, pos).getInk(pos).get(direction);
+	}
+	public static boolean isInked(Level level, BlockPos pos, Direction direction)
+	{
+		return isInked(level, pos, direction.get3DDataValue());
+	}
+	public static boolean isInked(Level level, BlockPos pos, int index)
+	{
+		return ChunkInkCapability.get(level, pos).isInked(pos, index);
+	}
+	public static boolean isInkedAny(Level level, BlockPos pos)
+	{
+		return ChunkInkCapability.get(level, pos).isInkedAny(pos);
 	}
 	public static boolean canInkFromFace(Level level, BlockPos pos, Direction face)
 	{
@@ -157,19 +210,24 @@ public class InkBlockUtils
 	}
 	public static boolean canSquidHide(LivingEntity entity)
 	{
-		if (!(entity instanceof Player player) || !PlayerCooldown.hasPlayerCooldown(player) || !(PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump))
-			return !entity.isSpectator() && (canSquidSwim(entity) || canSquidClimb(entity));
-		return false;
+		if (entity instanceof Player player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump)
+		{
+			return false;
+		}
+		PlayerInfo playerInfo = PlayerInfoCapability.get(entity);
+		if (playerInfo == null)
+			return false;
+		return !entity.isSpectator() && (canSquidSwim(entity) || playerInfo.getClimbedDirection().isPresent());
 	}
 	public static boolean canSquidSwim(LivingEntity entity)
 	{
 		boolean canSwim = false;
 		
-		BlockPos down = getBlockStandingOnPos(entity, 0.1);
+		BlockPos down = entity.getOnPos();
 		Block standingBlock = entity.level().getBlockState(down).getBlock();
 		
-		if (isInked(entity.level(), down))
-			return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInk(entity.level(), down).color());
+		if (isInked(entity.level(), down, Direction.UP))
+			return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down).color(Direction.UP));
 		
 		if (standingBlock instanceof IColoredBlock coloredBlock)
 			canSwim = coloredBlock.canSwim();
@@ -202,33 +260,38 @@ public class InkBlockUtils
 			return false;
 		BlockPos pos = getBlockStandingOnPos(entity);
 		
-		if (isInked(entity.level(), pos))
+		if (isInked(entity.level(), pos, Direction.UP))
 			return !canSquidSwim(entity);
 		else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.level(), pos) != -1 && !canSquidSwim(entity);
 		else return false;
 	}
-	public static boolean canSquidClimb(LivingEntity entity)
+	public static Direction canSquidClimb(LivingEntity entity)
 	{
 		if (onEnemyInk(entity))
-			return false;
-		for (int i = 0; i < 4; i++)
+			return null;
+		
+		BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level, entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(entity.xxa, 0, entity.zza), entity.getYRot())), false, (bro, what) ->
+			bro);
+		
+		while (collisions.hasNext())
 		{
-			float xOff = (i < 2 ? .32f : 0) * (i % 2 == 0 ? 1 : -1), zOff = (i < 2 ? 0 : .32f) * (i % 2 == 0 ? 1 : -1);
-			BlockPos pos = CommonUtils.createBlockPos(entity.getX() - xOff, entity.getY(), entity.getZ() - zOff);
-			Block block = entity.level().getBlockState(pos).getBlock();
-			VoxelShape shape = entity.level().getBlockState(pos).getCollisionShape(entity.level(), pos, CollisionContext.of(entity));
-			
-			if (pos.equals(getBlockStandingOnPos(entity)) || (!shape.isEmpty() && (shape.bounds().maxY < (entity.getY() - entity.blockPosition().getY()) || shape.bounds().minY > (entity.getY() - entity.blockPosition().getY()))))
-				continue;
-			
-			if (isInked(entity.level(), pos) && ColorUtils.colorEquals(entity.level(), pos, ColorUtils.getEntityColor(entity), getInk(entity.level(), pos).color()))
-				return true;
-			
-			if ((!(block instanceof IColoredBlock) || ((IColoredBlock) block).canClimb()) && entity.level().getBlockEntity(pos) instanceof InkColorTileEntity && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(pos)) && !entity.isPassenger())
-				return true;
+			BlockPos collidedBlock = collisions.next();
+			Vec3 center = collidedBlock.getCenter();
+			Direction xDirection = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
+			if (isInked(entity.level, collidedBlock, xDirection) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(xDirection)))
+				return xDirection;
+			Direction zDirection = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
+			if (isInked(entity.level, collidedBlock, zDirection) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(zDirection)))
+				return zDirection;
 		}
-		return false;
+		return null;
+	}
+	public static boolean isSquidStillClimbing(LivingEntity entity, Direction face)
+	{
+		BlockPos collidedBlock = entity.blockPosition().relative(face);
+		Direction blockFaceToCheck = face.getOpposite();
+		return isInked(entity.level, collidedBlock, blockFaceToCheck) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck));
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{
@@ -254,22 +317,24 @@ public class InkBlockUtils
 	public static class InkType implements Comparable<InkType>
 	{
 		public static final HashMap<ResourceLocation, InkType> values = new HashMap<>();
-		public static final InkType NORMAL = new InkType(new ResourceLocation(Splatcraft.MODID, "normal"), SplatcraftBlocks.inkedBlock.get());
-		public static final InkType GLOWING = new InkType(new ResourceLocation(Splatcraft.MODID, "glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get());
-		public static final InkType CLEAR = new InkType(new ResourceLocation(Splatcraft.MODID, "clear"), SplatcraftItems.clearBand.get(), SplatcraftBlocks.clearInkedBlock.get());
+		public static final InkType NORMAL = new InkType(0, new ResourceLocation(Splatcraft.MODID, "normal"), SplatcraftBlocks.inkedBlock.get());
+		public static final InkType GLOWING = new InkType(1, new ResourceLocation(Splatcraft.MODID, "glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get());
+		public static final InkType CLEAR = new InkType(2, new ResourceLocation(Splatcraft.MODID, "clear"), SplatcraftItems.clearBand.get(), SplatcraftBlocks.clearInkedBlock.get());
 		private final ResourceLocation name;
 		private final Item repItem;
 		private final InkedBlock block;
-		public InkType(ResourceLocation name, Item repItem, InkedBlock inkedBlock)
+		private final byte id;
+		public InkType(int id, ResourceLocation name, Item repItem, InkedBlock inkedBlock)
 		{
 			values.put(name, this);
+			this.id = (byte) id;
 			this.name = name;
 			this.repItem = repItem;
 			this.block = inkedBlock;
 		}
-		public InkType(ResourceLocation name, InkedBlock inkedBlock)
+		public InkType(int id, ResourceLocation name, InkedBlock inkedBlock)
 		{
-			this(name, Items.AIR, inkedBlock);
+			this(id, name, Items.AIR, inkedBlock);
 		}
 		@Override
 		public int compareTo(InkType o)
@@ -292,6 +357,20 @@ public class InkBlockUtils
 		public String getSerializedName()
 		{
 			return getName().toString();
+		}
+		public byte getId()
+		{
+			return id;
+		}
+		public static InkType fromId(int id)
+		{
+			return switch (id)
+			{
+				case 0 -> NORMAL;
+				case 1 -> GLOWING;
+				case 2 -> CLEAR;
+				default -> throw new IllegalStateException("Unexpected value: " + id);
+			};
 		}
 	}
 }

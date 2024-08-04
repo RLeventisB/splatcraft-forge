@@ -66,7 +66,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		
 		poseStack.pushPose();
 		Vec3 vec3 = holder.getRopeHoldPosition(partialTicks);
-		double d0 = (double) (Mth.lerp(partialTicks, squid.yBodyRot, squid.yBodyRotO) * ((float) Math.PI / 180F)) + (Math.PI / 2D);
+		float d0 = (Mth.lerp(partialTicks, squid.yBodyRot, squid.yBodyRotO) * Mth.DEG_TO_RAD) + Mth.HALF_PI;
 		Vec3 vec31 = squid.getLeashOffset(partialTicks);
 		double d1 = Math.cos(d0) * vec31.z + Math.sin(d0) * vec31.x;
 		double d2 = Math.sin(d0) * vec31.z - Math.cos(d0) * vec31.x;
@@ -77,7 +77,6 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		float f = (float) (vec3.x - d3);
 		float f1 = (float) (vec3.y - d4);
 		float f2 = (float) (vec3.z - d5);
-		float f3 = 0.025F;
 		VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.leash());
 		Matrix4f matrix4f = poseStack.last().pose();
 		float f4 = (float) (Math.sqrt(f * f + f2 * f2) * 0.025F / 2.0F);

@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "minecraft:block/white_stained_glass"
-  }
+    "parent": "minecraft:item/generated",
+    "render_type": "translucent",
+    "textures": {
+        "layer0": "minecraft:block/white_stained_glass"
+    }
 }

@@ -4,52 +4,64 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.util.InkBlockUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 
-public class UpdateInkPacket extends PlayS2CPacket
+public class UpdateInkPacket extends IncrementalChunkBasedPacket
 {
-	private final ChunkPos chunkPos;
-	private final HashMap<BlockPos, WorldInk.Entry> dirty;
-	public UpdateInkPacket(BlockPos pos, int color, InkBlockUtils.InkType type)
+	protected final HashMap<BlockPos, ChunkInk.BlockEntry> dirty;
+	public UpdateInkPacket(ChunkPos chunkPos)
 	{
-		chunkPos = new ChunkPos(Math.floorDiv(pos.getX(), 16), Math.floorDiv(pos.getZ(), 16));
-		this.dirty = new HashMap<>();
-		dirty.put(new BlockPos(Math.floorMod(pos.getX(), 16), pos.getY(), Math.floorMod(pos.getZ(), 16)), new WorldInk.Entry(color, type));
+		this(chunkPos, new HashMap<>());
 	}
-	public UpdateInkPacket(ChunkPos pos, HashMap<BlockPos, WorldInk.Entry> dirty)
+	public UpdateInkPacket(ChunkPos chunkPos, HashMap<BlockPos, ChunkInk.BlockEntry> dirty)
 	{
-		this.chunkPos = pos;
+		super(chunkPos);
 		this.dirty = dirty;
+	}
+	@Override
+	public void add(Level level, BlockPos pos)
+	{
+		add(pos, InkBlockUtils.getInkBlock(level, pos));
+	}
+	public void add(BlockPos pos, ChunkInk.BlockEntry inkBlock)
+	{
+		dirty.put(pos, inkBlock);
 	}
 	@Override
 	public void encode(FriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
-		
-		dirty.forEach((pos, entry) ->
+		for (var blockPosTupleEntry : dirty.entrySet())
 		{
-			buffer.writeBlockPos(pos);
-			buffer.writeInt(entry.color());
-			buffer.writeResourceLocation(entry.type() == null ? new ResourceLocation("") : entry.type().getName());
-		});
+			BlockPos blockPos = blockPosTupleEntry.getKey();
+			
+			buffer.writeBlockPos(blockPos);
+			blockPosTupleEntry.getValue().writeToBuffer(buffer);
+		}
 	}
 	public static UpdateInkPacket decode(FriendlyByteBuf buffer)
 	{
-		ChunkPos pos = buffer.readChunkPos();
-		HashMap<BlockPos, WorldInk.Entry> dirty = new HashMap<>();
-		int size = buffer.readInt();
-		for (int i = 0; i < size; i++)
-			dirty.put(buffer.readBlockPos(), new WorldInk.Entry(buffer.readInt(), InkBlockUtils.InkType.values.getOrDefault(buffer.readResourceLocation(), null)));
+		ChunkPos chunkPos = buffer.readChunkPos();
+		int changedBlocks = buffer.readInt();
+		HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>(changedBlocks);
 		
-		return new UpdateInkPacket(pos, dirty);
+		for (int i = 0; i < changedBlocks; i++)
+		{
+			BlockPos pos = buffer.readBlockPos();
+			ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
+			dirty.put(pos, entry);
+		}
+		
+		return new UpdateInkPacket(chunkPos, dirty);
 	}
 	@Override
 	public void execute()
@@ -58,23 +70,15 @@ public class UpdateInkPacket extends PlayS2CPacket
 		
 		if (level != null)
 		{
-			WorldInk worldInk = WorldInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
+			ChunkInk chunkInk = ChunkInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
 			
-			dirty.forEach((pos, entry) ->
+			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{
-				if (entry == null || entry.type() == null)
-				{
-					worldInk.clearInk(pos);
-				}
-				else
-				{
-					worldInk.ink(pos, entry.color(), entry.type());
-				}
-				
-				pos = new BlockPos(pos.getX() + chunkPos.x * 16, pos.getY(), pos.getZ() + chunkPos.z * 16);
+				BlockPos pos = entry.getKey();
+				entry.getValue().apply(chunkInk, pos);
 				BlockState state = level.getBlockState(pos);
 				level.sendBlockUpdated(pos, state, state, 0);
-			});
+			}
 		}
 	}
 }

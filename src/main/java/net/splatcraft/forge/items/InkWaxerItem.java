@@ -1,6 +1,7 @@
 package net.splatcraft.forge.items;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -11,13 +12,14 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
-import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InkWaxerItem extends Item
 {
@@ -26,50 +28,43 @@ public class InkWaxerItem extends Item
 		super(new Properties().durability(256));
 		SplatcraftItemGroups.addGeneralItem(this);
 	}
-	public void onBlockStartBreak(ItemStack itemstack, BlockPos pos, Level level)
+	// wait why does it work like this
+	public void onBlockStartBreak(BlockPos pos, Level level, @Nullable Direction face)
 	{
-		if (InkBlockUtils.isInked(level, pos))
+		if (InkBlockUtils.isInkedAny(level, pos))
 		{
-			ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInk(level, pos).color());
+			ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInkInFace(level, pos, face).color());
 			
 			SoundType soundType = SplatcraftSounds.SOUND_TYPE_INK;
 			level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundSource.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
 			
-			InkBlockUtils.clearInk(level, pos, true);
+			InkBlockUtils.clearInk(level, pos, face, true);
+			
+			// alternative behaviour where breaking an inked block only breaks the wax, making it not permanent
+			/*
+			
+			ChunkInk.BlockEntry ink = worldInk.getInk(pos);
+			ink.permanent = true;
+			
+			context.getLevel().levelEvent(context.getPlayer(), 3004, context.getClickedPos(), 0);
+			
+			 */
 		}
 	}
 	@Override
 	public @NotNull InteractionResult useOn(UseOnContext context)
 	{
-		WorldInk worldInk = WorldInkCapability.get(context.getLevel(), context.getClickedPos());
+		ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), context.getClickedPos());
 		
-		if (worldInk.isInked(context.getClickedPos()))
+		if (worldInk.isInkedAny(context.getClickedPos()))
 		{
-			WorldInk.Entry ink = worldInk.getInk(context.getClickedPos());
-			worldInk.setPermanentInk(context.getClickedPos(), ink.color(), ink.type());
+			ChunkInk.BlockEntry ink = worldInk.getInk(context.getClickedPos());
+			ink.permanent = true;
 			
 			context.getLevel().levelEvent(context.getPlayer(), 3003, context.getClickedPos(), 0);
 			
 			return InteractionResult.SUCCESS;
 		}
-
-        /*
-        if(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof InkedBlockTileEntity)
-        {
-            InkedBlockTileEntity te = (InkedBlockTileEntity) context.getLevel().getBlockEntity(context.getClickedPos());
-
-            if(te.getPermanentColor() != te.getColor())
-            {
-                te.setPermanentColor(te.getColor());
-                te.setPermanentInkType(InkBlockUtils.getInkType(context.getLevel().getBlockState(context.getClickedPos())));
-
-                context.getLevel().globalLevelEvent(2005, context.getClickedPos(), 0);
-                if(context.getPlayer() instanceof ServerPlayer && !context.getPlayer().isCreative())
-                    context.getItemInHand().hurtAndBreak(1, context.getPlayer(), player -> player.broadcastBreakEvent(context.getHand()));
-                return InteractionResult.SUCCESS;
-            }
-        }
-        */
 		
 		return super.useOn(context);
 	}

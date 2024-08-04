@@ -114,43 +114,6 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 	}
 	private static BlockState clearInk(LevelAccessor level, BlockPos pos)
 	{
-        /*
-        InkedBlockTileEntity te = (InkedBlockTileEntity) level.getBlockEntity(pos);
-        int color = te.getPermanentColor();
-        if(te.hasPermanentColor())
-        {
-            if(te.getColor() == color)
-                return level.getBlockState(pos);
-
-            if(!InkBlockUtils.getInkType(level.getBlockState(pos)).equals(te.getPermanentInkType()) && (level instanceof Level))
-            {
-                level.setBlock(pos, InkBlockUtils.getInkState(te.getPermanentInkType()), 2);
-                InkedBlockTileEntity newTe = (InkedBlockTileEntity) level.getBlockEntity(pos);
-                newTe.setSavedState(te.getSavedState());
-                newTe.setSavedColor(te.getSavedColor());
-                newTe.setPermanentInkType(te.getPermanentInkType());
-                newTe.setPermanentColor(te.getPermanentColor());
-                ((Level)level).setBlockEntity(newTe);
-                te = newTe;
-            }
-            te.setColor(color);
-
-        }
-        else if (te.hasSavedState())
-        {
-            level.setBlock(pos, te.getSavedState(), 3);
-
-            if (te.hasSavedColor() && te.getSavedState().getBlock() instanceof IColoredBlock)
-            {
-                if(te.getSavedState().getBlock() instanceof EntityBlock)
-                ((Level) level).setBlockEntity(Objects.requireNonNull(((EntityBlock) te.getSavedState().getBlock()).newBlockEntity(pos, te.getSavedState())));
-                ((IColoredBlock) te.getSavedState().getBlock()).setColor((Level) level, pos, te.getSavedColor());
-            }
-
-            return te.getSavedState();
-        }
-        */
-		
 		return level.getBlockState(pos);
 	}
 	@Override

@@ -16,8 +16,7 @@ import net.splatcraft.forge.util.InkColor;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.splatcraft.forge.registries.SplatcraftItems.sardiniumBlock;
-import static net.splatcraft.forge.registries.SplatcraftItems.splattershot;
+import static net.splatcraft.forge.registries.SplatcraftItems.*;
 
 public class SplatcraftItemGroups
 {
@@ -45,7 +44,7 @@ public class SplatcraftItemGroups
 			})
 			.build());
 	public static final RegistryObject<CreativeModeTab> COLORS_TAB = CREATIVE_MODE_TABS.register("splatcraft_colors",
-		() -> CreativeModeTab.builder().icon(() -> new ItemStack(splattershot.get()))
+		() -> CreativeModeTab.builder().icon(() -> new ItemStack(inkwell.get()))
 			.title(Component.translatable("itemGroup.splatcraft_colors"))
 			.displayItems((pParameters, pOutput) ->
 			{
@@ -57,23 +56,9 @@ public class SplatcraftItemGroups
 						pOutput.accept(ColorUtils.setInverted(new ItemStack(item), true));
 				}
 			})
-			.withSearchBar()
+			.withSearchBar(90)
 			.build());
 	public static List<ItemLike> general = new ArrayList<>(), weapons = new ArrayList<>(), colors = new ArrayList<>();
-	//	public static void register()
-//	{
-//		createTab("splatcraft_general", () -> general, new ItemStack(sardiniumBlock.get()), v -> v);
-//		createTab("splatcraft_weapons", () -> weapons, ColorUtils.setInkColor(new ItemStack(splattershot.get()), ColorUtils.ORANGE), v -> v);
-//		createTab("splatcraft_colors", () -> colors, ColorUtils.setInkColor(new ItemStack(inkwell.get()), ColorUtils.ORANGE), CreativeModeTab.Builder::withSearchBar);
-//
-//		for (Item item : colorTabItems)
-//		{
-//			for (InkColor color : SplatcraftInkColors.REGISTRY.get().getValues().stream().sorted().toList())
-//				colors.add(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(item), color.getColor()), true));
-//			if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
-//				colors.add(ColorUtils.setInverted(new ItemStack(item), true));
-//		}
-//	}
 	public static void addGeneralItem(Item item)
 	{
 		general.add(item);
@@ -82,22 +67,4 @@ public class SplatcraftItemGroups
 	{
 		weapons.add(item);
 	}
-	//	private static void createTab(String name, Supplier<List<ItemLike>> itemList, ItemStack icon, Function<CreativeModeTab.Builder, CreativeModeTab.Builder> extraModifications)
-//	{
-//		CreativeModeTab.Builder builder = CreativeModeTab.builder().withTabsBefore(CreativeModeTabs.HOTBAR)
-//			.icon(() -> icon)
-//			.title(Component.translatable("itemGroup." + name))
-//			.displayItems((pParameters, pOutput) ->
-//			{
-//				for (ItemLike item : itemList.get())
-//				{
-//					pOutput.accept(item);
-//				}
-//			});
-//		builder = extraModifications.apply(builder);
-//		Registry.register(ForgeRegistries.CREATIVE_MODE_TAB, ResourceKey.create(Registries.CREATIVE_MODE_TAB, new ResourceLocation(name)),
-//			builder.build()
-//		);
-//	}
-	public static final ArrayList<Item> colorTabItems = new ArrayList<>();
 }

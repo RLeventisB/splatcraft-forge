@@ -2,7 +2,6 @@
     "replace": false,
     "values": [
         "#minecraft:carpets",
-        "minecraft:snow",
-        "minecraft:air"
+        "minecraft:snow"
     ]
 }
