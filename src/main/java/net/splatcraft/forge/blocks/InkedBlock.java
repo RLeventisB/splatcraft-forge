@@ -55,7 +55,11 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 	{
 		return Properties.of().mapColor(MapColor.TERRACOTTA_BLACK).randomTicks().requiresCorrectToolForDrops().sound(SplatcraftSounds.SOUND_TYPE_INK).noOcclusion().dynamicShape();
 	}
-	public static boolean isTouchingLiquid(BlockGetter reader, BlockPos pos)
+	public static boolean isTouchingLiquid(BlockGetter reader, BlockPos pos, Direction direction)
+	{
+		return isTouchingLiquid(reader, pos, new Direction[] {direction});
+	}
+	public static boolean isTouchingLiquid(BlockGetter reader, BlockPos pos, Direction... directions)
 	{
 		boolean flag = false;
 		BlockPos.MutableBlockPos blockpos$mutable = pos.mutable();
@@ -67,7 +71,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 			return true;
 		}
 		
-		for (Direction direction : Direction.values())
+		for (Direction direction : directions)
 		{
 			blockpos$mutable.setWithOffset(pos, direction);
 			BlockState blockstate = reader.getBlockState(blockpos$mutable);

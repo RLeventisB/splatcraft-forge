@@ -136,8 +136,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			
 			xRot += xDelta * (didSound ? 1 : 0.4f);
 			yRot += yDelta * (didSound ? 1 : 0.4f);
-			if (didSound)
-				xRot += 4;
 			
 			for (int i = 0; i < sloshes.size(); i++)
 			{
