@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySelector;
@@ -28,6 +27,7 @@ import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
+import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
@@ -121,7 +121,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		}
 		
 		float toConsume = Math.min(1, (float) (getUseDuration(stack) - timeLeft) / (float) settings.dashTime) * (settings.dashConsumption - settings.rollConsumption) + settings.rollConsumption;
-		isMoving = Math.abs(entity.yHeadRotO - entity.yHeadRot) > 0 || (player.walkDist != player.walkDistO);
+		isMoving = Math.abs(entity.yHeadRotO - entity.yHeadRot) > 0 || (level.isClientSide ? Math.abs(entity.getDeltaMovement().x()) > 0 || Math.abs(entity.getDeltaMovement().z()) > 0
+			: entity.position().multiply(1, 0, 1).distanceTo(WeaponHandler.getPlayerPrevPos((Player) entity).multiply(1, 0, 1)) > 0);
 		
 		double dxOff = 0;
 		double dzOff = 0;
@@ -167,12 +168,12 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					{
 						VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
 						
-						result = InkBlockUtils.playerInkBlock(player, level, pos, ColorUtils.getInkColor(stack), Direction.UP, InkBlockUtils.getInkType(player), settings.rollDamage);
+						result = InkBlockUtils.playerInkBlock((Player) entity, level, pos, ColorUtils.getInkColor(stack), settings.rollDamage, InkBlockUtils.getInkType(entity));
 						double blockHeight = shape.isEmpty() ? 0 : shape.bounds().maxY;
 						
 						if (yOff != -3 && !(shape.bounds().minX <= 0 && shape.bounds().minZ <= 0 && shape.bounds().maxX >= 1 && shape.bounds().maxZ >= 1))
 						{
-							BlockInkedResult secondResult = InkBlockUtils.playerInkBlock(player, level, pos.below(), ColorUtils.getInkColor(stack), Direction.UP, InkBlockUtils.getInkType(entity), settings.rollDamage);
+							BlockInkedResult secondResult = InkBlockUtils.playerInkBlock((Player) entity, level, pos.below(), ColorUtils.getInkColor(stack), settings.rollDamage, InkBlockUtils.getInkType(entity));
 							if (result == BlockInkedResult.FAIL)
 							{
 								result = secondResult;

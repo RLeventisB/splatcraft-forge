@@ -7,12 +7,17 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.splatcraft.forge.blocks.IColoredBlock;
+import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class InkedBlockTileEntity extends InkColorTileEntity
 {
@@ -30,14 +35,23 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 		super.setLevel(level);
 	}
 	//Used to port Inked Blocks to World Ink system
-	// uhhhhhhhhhhhhhhhh can i delet this
 	public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T te)
 	{
 		if (!level.isClientSide && te instanceof InkedBlockTileEntity inkedBlock)
 		{
 			if (inkedBlock.hasSavedState())
 			{
-				inkedBlock.setSavedState(null);
+				level.setBlock(pos, inkedBlock.savedState, 2);
+				if (inkedBlock.hasPermanentColor())
+					WorldInkCapability.get(level, pos).setPermanentInk(pos, inkedBlock.getPermanentColor(), inkedBlock.getPermanentInkType());
+				InkBlockUtils.inkBlock(level, pos, inkedBlock.getColor(), 0, getInkType(state));
+				
+				if (inkedBlock.hasSavedColor() && inkedBlock.getSavedState().getBlock() instanceof IColoredBlock coloredBlock)
+				{
+					if (inkedBlock.getSavedState().getBlock() instanceof EntityBlock)
+						level.setBlockEntity(Objects.requireNonNull(((EntityBlock) inkedBlock.getSavedState().getBlock()).newBlockEntity(pos, inkedBlock.getSavedState())));
+					coloredBlock.setColor(level, pos, inkedBlock.getSavedColor());
+				}
 			}
 		}
 	}

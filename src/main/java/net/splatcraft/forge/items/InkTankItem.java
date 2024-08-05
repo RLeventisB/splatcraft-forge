@@ -162,7 +162,7 @@ public class InkTankItem extends ColoredArmorItem
 				
 				if (!itemStack.isEmpty())
 				{
-					if (itemStack.getItem() instanceof InkTankItem item)
+					if (itemStack.getItem() instanceof InkTankItem)
 					{
 						model.rightLeg.visible = armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.FEET;
 						model.leftLeg.visible = armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.FEET;
@@ -181,7 +181,7 @@ public class InkTankItem extends ColoredArmorItem
 						model.rightArmPose = _default.rightArmPose;
 						model.leftArmPose = _default.leftArmPose;
 						
-						model.setInkLevels(InkTankItem.getInkAmount(itemStack) / item.capacity);
+						model.setInkLevels(InkTankItem.getInkAmount(itemStack) / ((InkTankItem) itemStack.getItem()).capacity);
 						
 						return model;
 					}

@@ -25,9 +25,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
+import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
+import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
+import net.splatcraft.forge.handlers.WorldInkHandler;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -35,8 +35,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.Arrays;
 
 public class SodiumMixin
 {
@@ -52,24 +50,20 @@ public class SodiumMixin
 		{
 			if (world instanceof WorldSlice worldSlice)
 			{
-				ChunkInk worldInk = ChunkInkCapability.get(((WorldSliceAccessor) worldSlice).getWorld(), pos);
-				if (worldInk.isInkedAny(pos))
+				WorldInk worldInk = WorldInkCapability.get(((WorldSliceAccessor) worldSlice).getWorld(), pos);
+				if (worldInk.isInked(pos))
 				{
-					ChunkInk.BlockEntry ink = worldInk.getInk(pos);
-					int index = bakedQuad.getDirection().get3DDataValue();
-					if (ink.isInked(bakedQuad.getDirection()))
-					{
-						float[] rgb = ColorUtils.hexToRGB(ink.color(index));
-						int color = ColorABGR.pack(rgb[0], rgb[1], rgb[2]);
-						
-						splatcraft$renderInkQuad(color, ink.type(index) == InkBlockUtils.InkType.CLEAR ? null : ChunkInkHandler.Render.getInkedBlockSprite(), ink.type(index) == InkBlockUtils.InkType.GLOWING,
+					WorldInk.Entry ink = worldInk.getInk(pos);
+					float[] rgb = ColorUtils.hexToRGB(ink.color());
+					int color = ColorABGR.pack(rgb[0], rgb[1], rgb[2]);
+					
+					splatcraft$renderInkQuad(color, ink.type() == InkBlockUtils.InkType.CLEAR ? null : WorldInkHandler.Render.getInkedBlockSprite(), ink.type() == InkBlockUtils.InkType.GLOWING,
+						origin, vertices, indices, blockOffset, bakedQuad, light, model);
+					
+					if (ink.type() == InkBlockUtils.InkType.GLOWING)
+						splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), WorldInkHandler.Render.getGlitterSprite(), true,
 							origin, vertices, indices, blockOffset, bakedQuad, light, model);
-						
-						if (ink.type(index) == InkBlockUtils.InkType.GLOWING)
-							splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getGlitterSprite(), true,
-								origin, vertices, indices, blockOffset, bakedQuad, light, model);
-						return;
-					}
+					return;
 				}
 			}
 			
@@ -82,6 +76,13 @@ public class SodiumMixin
 		{
 			ModelQuadView src = (ModelQuadView) bakedQuad;
 			ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(light.br);
+
+			/*
+			int[] colors = null;
+			if (bakedQuad.isTinted()) {
+				colors = this.colorBlender.getColors(world, pos, src, colorSampler, state);
+			}
+			*/
 			
 			int vertexStart = vertices.getVertexCount();
 			
@@ -91,7 +92,7 @@ public class SodiumMixin
 				float x = src.getX(j) + (float) blockOffset.x();
 				float y = src.getY(j) + (float) blockOffset.y();
 				float z = src.getZ(j) + (float) blockOffset.z();
-				int color = ColorABGR.mul(packedColor, Math.max(light.br[j], Math.min(1, light.br[j] + (emissive ? 0.5f : 0))));
+				int color = ColorABGR.mul(packedColor /*colors != null ? colors[j] : src.getColor(j)*/, Math.max(light.br[j], Math.min(1, light.br[j] + (emissive ? 0.5f : 0))));
 				float u = src.getTexU(j);
 				float v = src.getTexV(j);
 				
@@ -128,20 +129,21 @@ public class SodiumMixin
 		{
 			splatcraft$level = ((WorldSliceAccessor) instance).getWorld();
 			splatcraft$blockPos = new BlockPos(x, y, z);
-			return InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE) ?
+			return InkBlockUtils.isInked(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE) ?
 				SplatcraftBlocks.inkedBlock.get().defaultBlockState() : original.call(instance, x, y, z);
 		}
 		@WrapOperation(method = "performBuild", remap = false, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;canRenderInLayer(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/renderer/RenderType;)Z"))
 		public boolean canRenderInLayer(BlockState state, RenderType type, Operation<Boolean> original)
 		{
-			if (InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos))
+			if (InkBlockUtils.isInked(splatcraft$level, splatcraft$blockPos))
 			{
-				ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(splatcraft$level, splatcraft$blockPos);
+				WorldInk.Entry ink = InkBlockUtils.getInk(splatcraft$level, splatcraft$blockPos);
 				
-				if (Arrays.stream(ink.entries).anyMatch(v -> v.type() == InkBlockUtils.InkType.GLOWING || v.type() == InkBlockUtils.InkType.CLEAR))
+				if (ink.type() == InkBlockUtils.InkType.GLOWING)
 					return type == RenderType.translucent();
-				return type == RenderType.solid();
+				else if (ink.type() == InkBlockUtils.InkType.NORMAL)
+					return type == RenderType.solid();
 			}
 			return original.call(state, type);
 		}

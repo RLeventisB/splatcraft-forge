@@ -170,7 +170,7 @@ public class SplatcraftItems
 	public static final RegistryObject<Item> inkVat = REGISTRY.register("ink_vat", () -> new BlockItem(SplatcraftBlocks.inkVat.get()));
 	public static final RegistryObject<Item> weaponWorkbench = REGISTRY.register("ammo_knights_workbench", () -> new BlockItem(SplatcraftBlocks.weaponWorkbench.get()));
 	//Map Items
-	public static final RegistryObject<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.get(), 16, emptyInkwell.get()));
+	public static final RegistryObject<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.get(), 16, emptyInkwell.get()).addStarterColors());
 	public static final RegistryObject<Item> spawnPad = REGISTRY.register("spawn_pad", () -> new ColoredBlockItem(SplatcraftBlocks.spawnPad.get(), 1));
 	public static final RegistryObject<Item> grate = REGISTRY.register("grate", () -> new BlockItem(SplatcraftBlocks.grate.get()));
 	public static final RegistryObject<Item> grateRamp = REGISTRY.register("grate_ramp", () -> new BlockItem(SplatcraftBlocks.grateRamp.get()));
@@ -203,7 +203,7 @@ public class SplatcraftItems
 	//Misc
 	public static void postRegister()
 	{
-		SplatcraftItemGroups.colors.addAll(new ArrayList<>()
+		SplatcraftItemGroups.colorTabItems.addAll(new ArrayList<>()
 		{{
 			add(inkwell.get());
 			add(spawnPad.get());

@@ -84,9 +84,9 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
 	@Override
 	public int getColor(Level level, BlockPos pos)
 	{
-		if (level.getBlockEntity(pos) instanceof InkColorTileEntity blockEntity)
+		if (level.getBlockEntity(pos) instanceof InkColorTileEntity)
 		{
-			return blockEntity.getColor();
+			return ((InkColorTileEntity) level.getBlockEntity(pos)).getColor();
 		}
 		return -1;
 	}
@@ -94,14 +94,46 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
 	public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
 	{
 		BlockState state = level.getBlockState(pos);
-		if (level.getBlockEntity(pos) instanceof InkColorTileEntity blockEntity && blockEntity.getColor() != newColor)
+		if (level.getBlockEntity(pos) instanceof InkColorTileEntity && ((InkColorTileEntity) level.getBlockEntity(pos)).getColor() != newColor)
 		{
-			blockEntity.setColor(newColor);
+			((InkColorTileEntity) level.getBlockEntity(pos)).setColor(newColor);
 			level.sendBlockUpdated(pos, state, state, 2);
 			return true;
 		}
 		return false;
 	}
+	/*
+	@Override
+	public BlockInkedResult inkBlock(Level level, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
+	{
+		if (InkedBlock.isTouchingLiquid(level, pos) || !SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INKABLE_GROUND))
+		{
+			return BlockInkedResult.FAIL;
+		}
+
+		int woolColor = -1;
+
+		if (level.getBlockEntity(pos) instanceof InkColorTileEntity)
+		{
+			woolColor = ((InkColorTileEntity) level.getBlockEntity(pos)).getColor();
+		}
+
+		BlockState state = level.getBlockState(pos);
+		BlockState inkState = InkBlockUtils.getInkState(inkType);
+		level.setBlock(pos, inkState, 3);
+		level.setBlockEntity(SplatcraftBlocks.inkedBlock.get().newBlockEntity(pos, inkState));
+		InkedBlockTileEntity inkte = (InkedBlockTileEntity) level.getBlockEntity(pos);
+		if (inkte == null)
+		{
+			return BlockInkedResult.FAIL;
+		}
+		inkte.setColor(color);
+		inkte.setSavedState(state);
+		inkte.setSavedColor(woolColor);
+
+		return BlockInkedResult.SUCCESS;
+	}
+	 */
 	@Override
 	public boolean remoteInkClear(Level level, BlockPos pos)
 	{

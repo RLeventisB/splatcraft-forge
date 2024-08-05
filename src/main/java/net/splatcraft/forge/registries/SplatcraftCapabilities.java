@@ -16,36 +16,40 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.forge.data.capabilities.worldink.WorldInkCapability;
 
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class SplatcraftCapabilities
 {
-	@SubscribeEvent
-	public static void registerCapabilities(RegisterCapabilitiesEvent event)
-	{
-		event.register(PlayerInfo.class);
-		event.register(InkOverlayInfo.class);
-		event.register(SaveInfo.class);
-	}
-	@SubscribeEvent
-	public static void attachEntityCapabilities(final AttachCapabilitiesEvent<Entity> event)
-	{
-		if (event.getObject() instanceof Player)
-			event.addCapability(new ResourceLocation(Splatcraft.MODID, "player_info"), new PlayerInfoCapability());
-		event.addCapability(new ResourceLocation(Splatcraft.MODID, "ink_overlay"), new InkOverlayCapability());
-	}
-	@SubscribeEvent
-	public static void attachWorldCapabilities(final AttachCapabilitiesEvent<Level> event)
-	{
-		if (event.getObject().dimension() == Level.OVERWORLD)
-		{
-			event.addCapability(new ResourceLocation(Splatcraft.MODID, "save_info"), new SaveInfoCapability());
-		}
-	}
-	@SubscribeEvent
-	public static void attachChunkCapabilities(final AttachCapabilitiesEvent<LevelChunk> event)
-	{
-		event.addCapability(new ResourceLocation(Splatcraft.MODID, "world_ink"), new ChunkInkCapability());
-	}
+    @SubscribeEvent
+    public static void registerCapabilities(RegisterCapabilitiesEvent event)
+    {
+        event.register(PlayerInfo.class);
+        event.register(InkOverlayInfo.class);
+        event.register(SaveInfo.class);
+    }
+
+    @SubscribeEvent
+    public static void attachEntityCapabilities(final AttachCapabilitiesEvent<Entity> event)
+    {
+        if (event.getObject() instanceof Player)
+            event.addCapability(new ResourceLocation(Splatcraft.MODID, "player_info"), new PlayerInfoCapability());
+        event.addCapability(new ResourceLocation(Splatcraft.MODID, "ink_overlay"), new InkOverlayCapability());
+
+    }
+
+    @SubscribeEvent
+    public static void attachWorldCapabilities(final AttachCapabilitiesEvent<Level> event)
+    {
+        if (event.getObject().dimension() == Level.OVERWORLD)
+        {
+            event.addCapability(new ResourceLocation(Splatcraft.MODID, "save_info"), new SaveInfoCapability());
+        }
+    }
+
+    @SubscribeEvent
+    public static void attachChunkCapabilities(final AttachCapabilitiesEvent<LevelChunk> event)
+    {
+        event.addCapability(new ResourceLocation(Splatcraft.MODID, "world_ink"), new WorldInkCapability());
+    }
 }

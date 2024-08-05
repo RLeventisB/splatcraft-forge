@@ -2,8 +2,6 @@ package net.splatcraft.forge.client.handlers;
 
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -17,13 +15,10 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
@@ -34,7 +29,7 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class PlayerMovementHandler
 {
-	public static final HashMap<LocalPlayer, Input> unmodifiedInput = new HashMap<>();
+	public static final HashMap<LocalPlayer, Input> unmodifiedInputMap = new HashMap<>();
 	private static final AttributeModifier INK_SWIM_SPEED = new AttributeModifier("Ink swimming speed boost", 0D, AttributeModifier.Operation.ADDITION);
 	private static final AttributeModifier SQUID_SWIM_SPEED = new AttributeModifier("Squid swim speed boost", 0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL);
 	private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier("Enemy ink speed penalty", -0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL);
@@ -43,38 +38,8 @@ public class PlayerMovementHandler
 	@SubscribeEvent
 	public static void playerMovement(TickEvent.PlayerTickEvent event)
 	{
-		
-		if (event.player instanceof ServerPlayer player)
-		{
-			PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-			if (playerInfo == null)
-				playerInfo = new PlayerInfo();
-			
-			if (playerInfo.getClimbedDirection().isPresent())
-			{
-				if (!InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
-				{
-					playerInfo.setClimbedDirection(null);
-					SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerInfoPacket(player), player);
-				}
-			}
-			
-			if (playerInfo.getClimbedDirection().isEmpty())
-			{
-				Direction newDirection = InkBlockUtils.canSquidClimb(player);
-				if (newDirection != null)
-				{
-					playerInfo.setClimbedDirection(newDirection);
-					SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerInfoPacket(player), player);
-				}
-			}
-		}
 		if (event.player instanceof LocalPlayer player && event.phase == TickEvent.Phase.END)
 		{
-			PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-			if (playerInfo == null)
-				playerInfo = new PlayerInfo();
-			
 			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
 			PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
 			AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
@@ -111,7 +76,7 @@ public class PlayerMovementHandler
 					speedAttribute.addTransientModifier(mod);
 			}
 			
-			if (playerInfo.isSquid())
+			if (PlayerInfoCapability.isSquid(player))
 			{
 				if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.onGround())
 					speedAttribute.addTransientModifier(INK_SWIM_SPEED);
@@ -136,9 +101,7 @@ public class PlayerMovementHandler
 	{
 		Input input = event.getInput();
 		Player player = event.getEntity();
-		PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-		if (playerInfo == null)
-			playerInfo = new PlayerInfo();
+		
 		if (player.isLocalPlayer()) // idk if splitscreen exists but just in case
 		{
 			Input clonedInput = new Input();
@@ -151,51 +114,37 @@ public class PlayerMovementHandler
 			clonedInput.jumping = input.jumping;
 			clonedInput.shiftKeyDown = input.shiftKeyDown;
 			
-			unmodifiedInput.put((LocalPlayer) player, clonedInput);
+			unmodifiedInputMap.put((LocalPlayer) player, clonedInput);
 		}
 		
-		float speedMod = !input.shiftKeyDown ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 30f : 2f : 1f;
+		float speedMod = !input.shiftKeyDown ? PlayerInfoCapability.isSquid(player) && InkBlockUtils.canSquidHide(player) ? 30f : 2f : 1f;
 		
 		input.forwardImpulse *= speedMod;
 		//input = player.movementInput;
 		input.leftImpulse *= speedMod;
 		//input = player.movementInput;
 		
-		if (playerInfo.isSquid())
+		if (PlayerInfoCapability.isSquid(player) && InkBlockUtils.canSquidClimb(player) && !player.getAbilities().flying)
 		{
-			if (playerInfo.getClimbedDirection().isPresent())
+			AttributeInstance gravity = player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_GRAVITY.get());
+			boolean flag = player.getDeltaMovement().y <= 0.0D;
+			if (flag && player.hasEffect(MobEffects.SLOW_FALLING))
 			{
-				if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
-				{
-					AttributeInstance gravity = player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_GRAVITY.get());
-					if (player.getDeltaMovement().y <= 0.0D && player.hasEffect(MobEffects.SLOW_FALLING))
-					{
-						if (!gravity.hasModifier(SLOW_FALLING))
-							gravity.addTransientModifier(SLOW_FALLING);
-						player.fallDistance = 0.0F;
-					}
-					else if (gravity.hasModifier(SLOW_FALLING))
-						gravity.removeModifier(SLOW_FALLING);
-					
-					if (player.getDeltaMovement().y() < (input.jumping ? 0.46f : 0.4f))
-						player.moveRelative(0.06f * (input.jumping ? 2f : 1.7f), new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());
-					if (player.getDeltaMovement().y() <= 0 && !input.shiftKeyDown)
-						player.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
-					
-					if (input.shiftKeyDown)
-						player.setDeltaMovement(player.getDeltaMovement().x, Math.max(0, player.getDeltaMovement().y()), player.getDeltaMovement().z);
-				}
-				else
-				{
-					playerInfo.setClimbedDirection(null);
-				}
+				if (!gravity.hasModifier(SLOW_FALLING))
+					gravity.addTransientModifier(SLOW_FALLING);
+				player.fallDistance = 0.0F;
 			}
+			else if (gravity.hasModifier(SLOW_FALLING))
+				gravity.removeModifier(SLOW_FALLING);
+			//player.setDeltaMovement(player.getDeltaMovement().add(0.0D, d0 / 4.0D, 0.0D));
 			
-			if (playerInfo.getClimbedDirection().isEmpty())
-			{
-				Direction newDirection = InkBlockUtils.canSquidClimb(player);
-				playerInfo.setClimbedDirection(newDirection);
-			}
+			if (player.getDeltaMovement().y() < (input.jumping ? 0.46f : 0.4f))
+				player.moveRelative(0.06f * (input.jumping ? 2f : 1.7f), new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());
+			if (player.getDeltaMovement().y() <= 0 && !input.shiftKeyDown)
+				player.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
+			
+			if (input.shiftKeyDown)
+				player.setDeltaMovement(player.getDeltaMovement().x, Math.max(0, player.getDeltaMovement().y()), player.getDeltaMovement().z);
 		}
 		
 		if (player.isUsingItem())

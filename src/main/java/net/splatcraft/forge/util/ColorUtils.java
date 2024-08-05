@@ -3,7 +3,6 @@ package net.splatcraft.forge.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -42,7 +41,12 @@ import java.util.Random;
 
 public class ColorUtils
 {
+	public static final int ORANGE = 0xDF641A;
+	public static final int BLUE = 0x26229F;
+	public static final int GREEN = 0x409d3b;
+	public static final int PINK = 0xc83d79;
 	public static final int DEFAULT = 0x1F1F2D;
+	public static final int[] STARTER_COLORS = new int[] {ORANGE, BLUE, GREEN, PINK};
 	public static int getColorFromNbt(CompoundTag nbt)
 	{
 		if (!nbt.contains("Color"))
@@ -316,8 +320,8 @@ public class ColorUtils
 	{
 		int color = DEFAULT;
 		BlockPos pos = InkBlockUtils.getBlockStandingOnPos(entity);
-		if (InkBlockUtils.isInkedAny(level, pos))
-			color = InkBlockUtils.getInkBlock(level, pos).color(Direction.UP);
+		if (InkBlockUtils.isInked(level, pos))
+			color = InkBlockUtils.getInk(level, pos).color();
 		else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			color = coloredBlock.getColor(level, pos);
 		addInkSplashParticle(level, color, entity.getX() + (level.getRandom().nextFloat() * 0.8 - 0.4), entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ() + (level.getRandom().nextFloat() * 0.8 - 0.4), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));
@@ -357,20 +361,21 @@ public class ColorUtils
 			int j = Math.max(2, Mth.ceil(d2 / 0.25D));
 			int k = Math.max(2, Mth.ceil(d3 / 0.25D));
 			
-			for (int x = 0; x < i; ++x)
+			for (int l = 0; l < i; ++l)
 			{
-				for (int y = 0; y < j; ++y)
+				for (int i1 = 0; i1 < j; ++i1)
 				{
-					for (int z = 0; z < k; ++z)
+					for (int j1 = 0; j1 < k; ++j1)
 					{
-						double d4 = (x + 0.5D) / i;
-						double d5 = (y + 0.5D) / j;
-						double d6 = (z + 0.5D) / k;
+						double d4 = ((double) l + 0.5D) / (double) i;
+						double d5 = ((double) i1 + 0.5D) / (double) j;
+						double d6 = ((double) j1 + 0.5D) / (double) k;
 						double d7 = d4 * d1 + p_172273_;
 						double d8 = d5 * d2 + p_172274_;
 						double d9 = d6 * d3 + p_172275_;
 						
 						addInkTerrainParticle(level, color, (double) pos.getX() + d7, (double) pos.getY() + d8, (double) pos.getZ() + d9, d4 - 0.5D, d5 - 0.5D, d6 - 0.5D, 1);
+						//this.add(new TerrainParticle(this.level, (double)p_107356_.getX() + d7, (double)p_107356_.getY() + d8, (double)p_107356_.getZ() + d9, d4 - 0.5D, d5 - 0.5D, d6 - 0.5D, p_107357_, p_107356_).updateSprite(p_107357_, p_107356_));
 					}
 				}
 			}

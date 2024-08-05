@@ -36,6 +36,7 @@ import java.util.List;
 public class ColoredBlockItem extends BlockItem implements IColoredItem
 {
 	private Item clearItem;
+	private boolean addStartersToTab = false;
 	private boolean matchColor = true;
 	public ColoredBlockItem(Block block, Properties properties, Item clearItem)
 	{
@@ -115,6 +116,11 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
 		}
 		else if (matchColor)
 			tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
+	}
+	public ColoredBlockItem addStarterColors()
+	{
+		addStartersToTab = true;
+		return this;
 	}
 	public ColoredBlockItem clearsToSelf()
 	{

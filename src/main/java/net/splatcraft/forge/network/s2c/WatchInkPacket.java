@@ -2,31 +2,22 @@ package net.splatcraft.forge.network.s2c;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
+import net.splatcraft.forge.data.capabilities.worldink.WorldInk;
+import net.splatcraft.forge.handlers.WorldInkHandler;
 import net.splatcraft.forge.util.InkBlockUtils;
 
 import java.util.HashMap;
-import java.util.Map;
 
-public class WatchInkPacket extends IncrementalChunkBasedPacket
+public class WatchInkPacket extends PlayS2CPacket
 {
-	private final HashMap<BlockPos, ChunkInk.BlockEntry> dirty;
-	public WatchInkPacket(ChunkPos chunkPos, HashMap<BlockPos, ChunkInk.BlockEntry> dirty)
+	private final ChunkPos chunkPos;
+	private final HashMap<BlockPos, WorldInk.Entry> dirty;
+	public WatchInkPacket(ChunkPos pos, HashMap<BlockPos, WorldInk.Entry> dirty)
 	{
-		super(chunkPos);
+		this.chunkPos = pos;
 		this.dirty = dirty;
-	}
-	@Override
-	public void add(Level level, BlockPos pos)
-	{
-		add(pos, InkBlockUtils.getInkBlock(level, pos));
-	}
-	public void add(BlockPos pos, ChunkInk.BlockEntry inkBlock)
-	{
-		dirty.put(pos, inkBlock);
 	}
 	@Override
 	public void encode(FriendlyByteBuf buffer)
@@ -34,30 +25,26 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
 		
-		for (Map.Entry<BlockPos, ChunkInk.BlockEntry> pair : dirty.entrySet())
+		dirty.forEach((pos, entry) ->
 		{
-			BlockPos blockPos = pair.getKey();
-			ChunkInk.BlockEntry entry = pair.getValue();
-			if (entry == null)
-				entry = new ChunkInk.BlockEntry();
-			
-			buffer.writeBlockPos(blockPos);
-			entry.writeToBuffer(buffer);
-		}
+			buffer.writeBlockPos(pos);
+			buffer.writeInt(entry.color());
+			buffer.writeResourceLocation(entry.type() == null ? new ResourceLocation("") : entry.type().getName());
+		});
 	}
 	public static WatchInkPacket decode(FriendlyByteBuf buffer)
 	{
 		ChunkPos pos = buffer.readChunkPos();
-		HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
+		HashMap<BlockPos, WorldInk.Entry> dirty = new HashMap<>();
 		int size = buffer.readInt();
 		for (int i = 0; i < size; i++)
-			dirty.put(buffer.readBlockPos(), ChunkInk.BlockEntry.readFromBuffer(buffer));
+			dirty.put(buffer.readBlockPos(), new WorldInk.Entry(buffer.readInt(), InkBlockUtils.InkType.values.getOrDefault(buffer.readResourceLocation(), null)));
 		
 		return new WatchInkPacket(pos, dirty);
 	}
 	@Override
 	public void execute()
 	{
-		ChunkInkHandler.markInkInChunkForUpdate(chunkPos, dirty);
+		WorldInkHandler.markInkInChunkForUpdate(chunkPos, dirty);
 	}
 }

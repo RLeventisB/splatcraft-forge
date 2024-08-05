@@ -72,6 +72,8 @@ public class Splatcraft
 	private void clientSetup(final FMLClientSetupEvent event)
 	{
 		SplatcraftEntities.bindRenderers();
+//		SplatcraftKeyHandler.registerKeys();
+		SplatcraftBlocks.setRenderLayers();
 		SplatcraftTileEntities.bindTESR();
 		
 		event.enqueueWork(() ->

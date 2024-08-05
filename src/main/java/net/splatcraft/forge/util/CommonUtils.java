@@ -16,7 +16,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ProjectileWeaponItem;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,7 +25,6 @@ import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.function.Predicate;
 
 public class CommonUtils
@@ -70,15 +68,6 @@ public class CommonUtils
 	{
 		return min + (max - min) * random.nextDouble();
 	}
-	@SuppressWarnings("unchecked")
-	public static <T> T selectRandom(RandomSource random, Collection<T> collection)
-	{
-		if (collection.size() == 1)
-			return collection.iterator().next();
-		if (collection.isEmpty())
-			return null;
-		return (T) collection.toArray()[random.nextInt(collection.size())]; // ok i think that java generics are a little bit worse than c# generics now
-	}
 	public static Vec3i round(Vec3 vec3)
 	{
 		return new Vec3i((int) Math.floor(vec3.x), (int) Math.floor(vec3.y), (int) Math.floor(vec3.z));
@@ -86,10 +75,6 @@ public class CommonUtils
 	public static BlockPos createBlockPos(double x, double y, double z)
 	{
 		return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-	}
-	public static ChunkPos getChunkPos(BlockPos pos)
-	{
-		return new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
 	}
 	public static BlockPos createBlockPos(Vec3 vec3)
 	{

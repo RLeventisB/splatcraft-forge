@@ -87,11 +87,11 @@ public class SplatcraftCommonHandler
 		}
 		
 		BlockState savedState = te.getSavedState();
-		if (event.getState().getBlock() instanceof IColoredBlock block && (event.isCanceled() ||
+		if (event.getState().getBlock() instanceof IColoredBlock && (event.isCanceled() ||
 			(event.getEntity() instanceof EnderDragon && savedState.is(BlockTags.DRAGON_IMMUNE)) ||
 			(event.getEntity() instanceof WitherBoss && savedState.is(BlockTags.WITHER_IMMUNE))))
 		{
-			block.remoteInkClear(event.getEntity().level(), event.getPos());
+			((IColoredBlock) event.getState().getBlock()).remoteInkClear(event.getEntity().level(), event.getPos());
 			event.setCanceled(true);
 		}
 	}
@@ -106,6 +106,8 @@ public class SplatcraftCommonHandler
 		Player player = event.getEntity();
 		event.getOriginal().reviveCaps(); // Mod devs should not have to do this
 		PlayerInfoCapability.get(player).readNBT(PlayerInfoCapability.get(event.getOriginal()).writeNBT(new CompoundTag()));
+		event.getOriginal().invalidateCaps();
+		
 		event.getOriginal().invalidateCaps();
 		
 		NonNullList<ItemStack> matchInv = PlayerInfoCapability.get(player).getMatchInventory();
@@ -151,9 +153,9 @@ public class SplatcraftCommonHandler
 		LivingEntity entity = event.getEntity();
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
 		
-		if (stack.getItem() instanceof InkTankItem item)
+		if (stack.getItem() instanceof InkTankItem)
 		{
-			item.refill(stack);
+			((InkTankItem) stack.getItem()).refill(stack);
 		}
 	}
 	@SubscribeEvent
@@ -269,7 +271,7 @@ public class SplatcraftCommonHandler
 	{
 		LocalPlayer player = event.getPlayer();
 		File file = Paths.get(SplatcraftConfig.Client.inkColoredSkinLayerPath).toFile();
-		if (file.exists())
+		if (player != null && file.exists())
 		{
 			try
 			{
@@ -293,6 +295,8 @@ public class SplatcraftCommonHandler
 			SplatcraftPacketHandler.sendToServer(new SendPlayerOverlayPacket(event.getPlayer().getUUID(), new byte[0]));
 		}
 	}
+	@Deprecated
+	public static final HashMap<Player, Integer> LOCAL_COLOR = new HashMap<>();
 	@SubscribeEvent
 	public static void capabilityUpdateEvent(TickEvent.PlayerTickEvent event)
 	{
@@ -302,6 +306,11 @@ public class SplatcraftCommonHandler
 			if (event.player.deathTime <= 0 && !info.isInitialized())
 			{
 				info.setInitialized(true);
+				info.setPlayer(event.player);
+				if (LOCAL_COLOR.containsKey(event.player))
+				{
+					info.setColor(LOCAL_COLOR.get(event.player));
+				}
 				
 				if (event.side.isClient())
 				{
@@ -367,9 +376,9 @@ public class SplatcraftCommonHandler
 	@SubscribeEvent
 	public static void onBlockLeftClick(PlayerInteractEvent.LeftClickBlock event)
 	{
-		if (event.getItemStack().getItem() instanceof InkWaxerItem waxItem)
+		if (event.getItemStack().getItem() instanceof InkWaxerItem)
 		{
-			waxItem.onBlockStartBreak(event.getPos(), event.getLevel(), event.getFace());
+			((InkWaxerItem) event.getItemStack().getItem()).onBlockStartBreak(event.getItemStack(), event.getPos(), event.getLevel());
 		}
 	}
 }

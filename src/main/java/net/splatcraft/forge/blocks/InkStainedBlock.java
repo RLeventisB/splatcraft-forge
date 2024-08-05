@@ -12,12 +12,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 {
@@ -79,9 +82,9 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 	@Override
 	public int getColor(Level level, BlockPos pos)
 	{
-		if (level.getBlockEntity(pos) instanceof InkColorTileEntity blockEntity)
+		if (level.getBlockEntity(pos) instanceof InkColorTileEntity)
 		{
-			return blockEntity.getColor();
+			return ((InkColorTileEntity) level.getBlockEntity(pos)).getColor();
 		}
 		return -1;
 	}
@@ -90,9 +93,9 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 	{
 		BlockState state = level.getBlockState(pos);
 		
-		if (level.getBlockEntity(pos) instanceof InkColorTileEntity blockEntity && blockEntity.getColor() != newColor)
+		if (level.getBlockEntity(pos) instanceof InkColorTileEntity && ((InkColorTileEntity) level.getBlockEntity(pos)).getColor() != newColor)
 		{
-			blockEntity.setColor(newColor);
+			((InkColorTileEntity) level.getBlockEntity(pos)).setColor(newColor);
 			level.sendBlockUpdated(pos, state, state, 2);
 			return true;
 		}
@@ -138,9 +141,14 @@ public class InkStainedBlock extends Block implements IColoredBlock, EntityBlock
 			else return -1;
 		}
 		@Override
-		public @Nullable BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
+		public @Nullable BlockState getStateForPlacement(BlockPlaceContext context)
 		{
 			return super.getStateForPlacement(context).setValue(COLORED, ColorUtils.getInkColor(context.getItemInHand()) >= 0);
+		}
+		@Override
+		public @NotNull List<ItemStack> getDrops(@NotNull BlockState p_60537_, LootParams.@NotNull Builder p_60538_)
+		{
+			return super.getDrops(p_60537_, p_60538_);
 		}
 	}
 }

@@ -1,9 +1,8 @@
 {
-    "credit": "Made with Blockbench",
-    "parent": "splatcraft:block/tarp",
-    "render_type": "cutout",
-    "textures": {
-        "0": "minecraft:block/glass",
-        "particle": "minecraft:block/glass"
-    }
+	"credit": "Made with Blockbench",
+	"parent": "splatcraft:block/tarp",
+	"textures": {
+		"0": "minecraft:block/glass",
+		"particle": "minecraft:block/glass"
+	}
 }
