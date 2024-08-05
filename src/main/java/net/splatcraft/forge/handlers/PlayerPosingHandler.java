@@ -23,7 +23,7 @@ public class PlayerPosingHandler
 {
 	@SuppressWarnings("all")
 	@OnlyIn(Dist.CLIENT)
-	public static void setupPlayerAngles(Player player, PlayerModel model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float partialTicks)
+	public static void setupPlayerAngles(Player player, PlayerModel model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float deltaTicks)
 	{
 		
 		if (model == null || player == null || !PlayerInfoCapability.hasCapability(player) || PlayerInfoCapability.isSquid(player))
@@ -64,7 +64,7 @@ public class PlayerPosingHandler
 					if (offStack.getItem() instanceof WeaponBaseItem && ((WeaponBaseItem) offStack.getItem()).getPose(offStack).equals(WeaponPose.DUAL_FIRE))
 					{
 						offHand.yRot = -0.1F + model.getHead().yRot;
-						offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
+						offHand.xRot = -((float) Math.PI / 2F) + model.getHead().xRot;
 					}
 				case FIRE:
 					mainHand.yRot = -0.1F + model.getHead().yRot;
@@ -84,15 +84,17 @@ public class PlayerPosingHandler
 					
 					break;
 				case BUCKET_SWING:
-					animTime = ((SlosherItem) mainStack.getItem()).getSettings(mainStack).shotData.endlagTicks();
+					animTime = ((SlosherItem) mainStack.getItem()).getSettings(mainStack).lowestStartup;
 					mainHand.yRot = 0;
 					mainHand.xRot = -0.36f;
 					
 					if (PlayerCooldown.hasPlayerCooldown(player))
 					{
 						cooldown = PlayerCooldown.getPlayerCooldown(player);
-						angle = (cooldown.getTime() - partialTicks) / cooldown.getMaxTime();
-						mainHand.xRot = -0.36f + 0.5f + Mth.cos(angle) * 0.5f;
+						angle = (cooldown.getMaxTime() - cooldown.getTime() + deltaTicks) / animTime;
+						angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + deltaTicks) / animTime * Math.PI) + ((float) Math.PI) / 1.8f;
+						if (angle < 6.5f)
+							mainHand.xRot = Mth.cos(angle * 0.6662F);
 					}
 					break;
 				case BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge pose 😭😭😭😭 sorry
@@ -100,16 +102,15 @@ public class PlayerPosingHandler
 					{
 						mainHand.yRot = -0.1F + model.getHead().yRot;
 						offHand.yRot = 0.1F + model.getHead().yRot + 0.4F;
-						
-						mainHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
-						offHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
+						mainHand.xRot = (-(float) Math.PI / 2F) + model.getHead().xRot;
+						offHand.xRot = (-(float) Math.PI / 2F) + model.getHead().xRot;
 					}
 					else
 					{
 						offHand.yRot = -0.1F + model.getHead().yRot - 0.4F;
 						mainHand.yRot = 0.1F + model.getHead().yRot;
-						offHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
-						mainHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
+						offHand.xRot = (-(float) Math.PI / 2F) + model.getHead().xRot;
+						mainHand.xRot = (-(float) Math.PI / 2F) + model.getHead().xRot;
 					}
 					break;
 				case ROLL:
@@ -119,7 +120,7 @@ public class PlayerPosingHandler
 					{
 						cooldown = PlayerCooldown.getPlayerCooldown(player);
 						animTime = cooldown.isGrounded() ? ((RollerItem) mainStack.getItem()).getSettings(mainStack).swingTime : ((RollerItem) mainStack.getItem()).getSettings(mainStack).flingTime;
-						angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
+						angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + deltaTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 						mainHand.xRot = Mth.cos(angle) + (0.1F * 0.5F - ((float) Math.PI / 10F));//+ 0.36f;
 					}
 					else
@@ -134,7 +135,7 @@ public class PlayerPosingHandler
 					{
 						cooldown = PlayerCooldown.getPlayerCooldown(player);
 						animTime = cooldown.isGrounded() ? ((RollerItem) mainStack.getItem()).getSettings(mainStack).swingTime : ((RollerItem) mainStack.getItem()).getSettings(mainStack).flingTime;
-						angle = (float) -((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
+						angle = (float) -((cooldown.getMaxTime() - cooldown.getTime() + deltaTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 						
 						mainHand.yRot = model.getHead().yRot + Mth.cos(angle);
 					}

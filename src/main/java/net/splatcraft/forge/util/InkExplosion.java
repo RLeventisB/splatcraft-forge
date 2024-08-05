@@ -34,7 +34,6 @@ public class InkExplosion
 	private final double x;
 	private final double y;
 	private final double z;
-	private final AttackId attackId;
 	@Nullable
 	private final Entity exploder;
 	private final float paintRadius;
@@ -45,14 +44,13 @@ public class InkExplosion
 	private final float maxDamage;
 	private final float damageRadius;
 	private final ItemStack weapon;
-	public InkExplosion(@Nullable Entity source, double x, double y, double z, float damageRadius, float minDamage, float maxDamage, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
+	public InkExplosion(@Nullable Entity source, double x, double y, double z, float damageRadius, float minDamage, float maxDamage, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon)
 	{
 		this.exploder = source;
 		this.paintRadius = paintRadius;
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.attackId = attackId;
 		this.position = new Vec3(this.x, this.y, this.z);
 		
 		this.inkType = inkType;
@@ -66,24 +64,16 @@ public class InkExplosion
 		float modifier = 0.01f;
 		return pos.add(normal.getX() * modifier, normal.getY() * modifier, normal.getZ() * modifier);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
-	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, 0, damage, type, weapon, attackId);
-	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, 0, damage, type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, damageRadius, 0, damage, type, weapon);
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float minDamage, float maxDamage, InkBlockUtils.InkType type, ItemStack weapon)
-	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, minDamage, maxDamage, type, weapon, AttackId.NONE);
-	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float minDamage, float maxDamage, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
 		if (source == null || source.level().isClientSide)
 			return;
 		
-		InkExplosion inksplosion = new InkExplosion(source, pos.x(), pos.y(), pos.z(), damageRadius, minDamage, maxDamage, paintRadius, type, weapon, attackId);
+		InkExplosion inksplosion = new InkExplosion(source, pos.x(), pos.y(), pos.z(), damageRadius, minDamage, maxDamage, paintRadius, type, weapon);
 		
 		inksplosion.doExplosionA();
 		inksplosion.doExplosionCosmetics(false);
@@ -126,13 +116,13 @@ public class InkExplosion
 				float seenPercent = Explosion.getSeenPercent(explosionPos, entity);
 				if (sameDamage)
 				{
-					InkDamageUtils.doSplatDamage(entity, maxDamage * seenPercent, exploder, weapon, attackId);
+					InkDamageUtils.doSplatDamage(entity, maxDamage * seenPercent, exploder, weapon);
 				}
 				else
 				{
 					float pctg = Mth.sqrt(distance) / damageRadius;
 					
-					InkDamageUtils.doSplatDamage(entity, Mth.lerp(pctg, maxDamage, minDamage) * seenPercent, exploder, weapon, attackId);
+					InkDamageUtils.doSplatDamage(entity, Mth.lerp(pctg, maxDamage, minDamage) * seenPercent, exploder, weapon);
 				}
 			}
 			

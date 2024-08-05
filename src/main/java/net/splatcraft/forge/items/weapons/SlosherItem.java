@@ -18,7 +18,6 @@ import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
 
@@ -90,7 +89,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		public SlosherWeaponSettings sloshData = null;
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
 		public boolean didSound;
-		public AttackId attackId;
 		public SloshCooldown(ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, int duration)
 		{
 			super(stack, duration, slotIndex, hand, true, false, true, false);
@@ -103,8 +101,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 					sloshes.add(new CalculatedSloshData(slosh.startupTicks() + j * slosh.delayBetweenProjectiles(), j, i));
 				}
 			}
-			attackId = AttackId.registerAttack();
-			attackId.countProjectile(sloshes.size());
 		}
 		public SloshCooldown(CompoundTag nbt)
 		{
@@ -122,6 +118,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				return;
 			
 			float frame = getMaxTime() - getTime();
+			float lastFrame = Math.max(0, frame - 1);
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
 			SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
 			
@@ -145,7 +142,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 							projectileSetting.projectile().speed() - projectileSetting.speedSubstract() * sloshTime.indexInSlosh,
 							0,
 							partialTick);
-						proj.setAttackId(attackId);
 						List<Object> dataList = new ArrayList<>();
 						dataList.add(sloshTime.sloshDataIndex);
 						switch (slosherItem.slosherType)
@@ -195,6 +191,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			nbt.putInt("SlotIndex", getSlotIndex());
 			nbt.putBoolean("DidSound", didSound);
 			nbt.putBoolean("MainHand", getHand().equals(InteractionHand.MAIN_HAND));
+			
 			if (storedStack.getItem() != Items.AIR)
 			{
 				nbt.put("StoredStack", storedStack.serializeNBT());

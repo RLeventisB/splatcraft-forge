@@ -1,7 +1,7 @@
 {
     "type": "splatcraft:slosher",
     "shot": {
-        "pitch_compensation": -5,
+        "pitch_compensation": -15,
         "endlag_ticks": 10,
         "ink_consumption": 7,
         "ink_recovery_cooldown": 13,
@@ -14,7 +14,6 @@
                 "slosh_projectile": {
                     "size": 0.85,
                     "visual_size": 1.05,
-                    "gravity": 0.3,
                     "speed": 2.64135,
                     "ink_coverage_on_impact": 1.6,
                     "straight_shot_ticks": 0.66666666666666,
@@ -30,8 +29,7 @@
                 "speed_substract_per_projectile": 0.3,
                 "slosh_projectile": {
                     "size": 0.45,
-                    "visual_size": 0.6,
-                    "gravity": 0.3,
+                    "visual_size": 0.3,
                     "speed": 1.65,
                     "ink_coverage_on_impact": 0.6,
                     "straight_shot_ticks": 0.66666666666666,

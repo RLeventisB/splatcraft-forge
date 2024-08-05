@@ -247,7 +247,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		SplatlingWeaponSettings settings = getSettings(stack);
 		
-		double appliedMobility = entity.getUseItem().equals(stack) && settings.chargeData.moveSpeed().isPresent() ? settings.chargeData.moveSpeed().get() : settings.moveSpeed;
+		double appliedMobility = entity.getUseItem().equals(stack) ? settings.chargeData.moveSpeed().get() : settings.moveSpeed;
 		
 		return new AttributeModifier(SplatcraftItems.SPEED_MOD_UUID, "Splatling Mobility", appliedMobility - 1, AttributeModifier.Operation.MULTIPLY_TOTAL);
 	}

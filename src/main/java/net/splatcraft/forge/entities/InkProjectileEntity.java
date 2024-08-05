@@ -97,7 +97,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	public AbstractWeaponSettings damage = ShooterWeaponSettings.DEFAULT;
 	public InkBlockUtils.InkType inkType;
 	private float accumulatedDrops;
-	private AttackId attackId = AttackId.NONE;
 	public InkProjectileEntity(EntityType<InkProjectileEntity> type, Level level)
 	{
 		super(type, level);
@@ -433,7 +432,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		{
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
 			
-			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown, attackId);
+			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown);
 			if (!level.isClientSide && didDamage)
 			{
 				if ((getExtraData() instanceof ExtraSaveData.ChargeExtraData chargeExtraData && chargeExtraData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
@@ -448,7 +447,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		{
 			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -480,7 +479,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
 				damageMultiplier *= explosionExtraData.sparkDamagePenalty;
-				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
 				level.broadcastEntityEvent(this, (byte) 3);
 //				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -541,11 +540,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		}
 	}
 	@Override
-	public boolean canHitEntity(@NotNull Entity entity)
-	{
-		return entity != getOwner() && entity.canBeHitByProjectile() && InkDamageUtils.canDamage(entity, entityData.get(COLOR));
-	}
-	@Override
 	public void readAdditionalSaveData(@NotNull CompoundTag nbt)
 	{
 		super.readAdditionalSaveData(nbt);
@@ -596,8 +590,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			damage = settings;
 		else if (sourceWeapon.getItem() instanceof WeaponBaseItem<?> weapon)
 			damage = weapon.getSettings(sourceWeapon);
-		if (nbt.contains("AttackId"))
-			attackId = AttackId.readNbt(nbt.getCompound("AttackId"));
 	}
 	@Override
 	public void addAdditionalSaveData(CompoundTag nbt)
@@ -633,8 +625,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		nbt.putString("ProjectileType", getProjectileType());
 		nbt.putString("InkType", inkType.getSerializedName());
 		nbt.put("SourceWeapon", sourceWeapon.save(new CompoundTag()));
-		if (attackId != AttackId.NONE)
-			nbt.put("AttackId", attackId.serializeNbt());
 		
 		super.addAdditionalSaveData(nbt);
 		nbt.remove("Item");
@@ -716,12 +706,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		refreshDimensions();
 	}
 	@Override
-	public void remove(@NotNull RemovalReason pReason)
-	{
-		attackId.projectileRemoved();
-		super.remove(pReason);
-	}
-	@Override
 	public @NotNull ItemStack getItem()
 	{
 		return ItemStack.EMPTY;
@@ -747,10 +731,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	public RandomSource getRandom()
 	{
 		return random;
-	}
-	public void setAttackId(AttackId attackId)
-	{
-		this.attackId = attackId;
 	}
 	public static class Types
 	{

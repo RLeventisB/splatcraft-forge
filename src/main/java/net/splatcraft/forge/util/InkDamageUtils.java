@@ -30,6 +30,15 @@ import java.util.Objects;
 
 public class InkDamageUtils
 {
+	private static short sameAttackId = 0;
+	public static short getAttackId()
+	{
+		short id = sameAttackId;
+		sameAttackId++;
+		if (sameAttackId == Short.MAX_VALUE - 1)
+			sameAttackId = 0;
+		return id;
+	}
 	public static final ResourceKey<DamageType> SPLAT = register("splat");
 	public static final ResourceKey<DamageType> ROLL = register("roll");
 	public static final ResourceKey<DamageType> ENEMY_INK = register("enemy_ink");
@@ -39,13 +48,13 @@ public class InkDamageUtils
 	{
 		return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(Splatcraft.MODID, name));
 	}
-	public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
+	public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem)
 	{
-		return doDamage(target, damage, source, source, sourceItem, SPLAT, false, attackId);
+		return doDamage(target, damage, source, source, sourceItem, SPLAT, false);
 	}
 	public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
 	{
-		return doDamage(target, damage, source, owner, sourceItem, ROLL, true, AttackId.NONE);
+		return doDamage(target, damage, source, owner, sourceItem, ROLL, true);
 	}
 	public static boolean canDamage(Entity target, Entity source)
 	{
@@ -66,14 +75,14 @@ public class InkDamageUtils
 	{
 		return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_FRIENDLY_FIRE) || !ColorUtils.colorEquals(level, pos, targetColor, sourceColor);
 	}
-	public static boolean doDamage(LivingEntity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown, AttackId attackId)
+	public static boolean doDamage(LivingEntity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown)
 	{
 		Level targetLevel = target.level();
 		int color = ColorUtils.getEntityColor(projectile);
 //		InkDamageSource damageSource = new InkDamageSource(targetLevel.damageSources().source(damageType).type(), projectile, owner, sourceItem);
 		DamageSource damageSource = targetLevel.damageSources().source(damageType);
 		
-		if (!attackId.checkEntity(target) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
+		if (damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
 			return false;
 		
 		if (InkOverlayCapability.hasCapability(target) && InkOverlayCapability.get(target).isInkproof())

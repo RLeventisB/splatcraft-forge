@@ -12,7 +12,6 @@ import net.splatcraft.forge.client.particles.InkExplosionParticleData;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
 import net.splatcraft.forge.util.InkDamageUtils;
 import net.splatcraft.forge.util.InkExplosion;
 
@@ -30,7 +29,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
 		SubWeaponSettings settings = getSettings();
 		
 		if (result.getEntity() instanceof LivingEntity target)
-			InkDamageUtils.doDamage(target, settings.directDamage, getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
+			InkDamageUtils.doDamage(target, settings.directDamage, getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false);
 		InkExplosion.createInkExplosion(getOwner(), result.getLocation(), settings.explosionSize, settings.explosionSize, settings.indirectDamage, settings.indirectDamage, inkType, sourceWeapon);
 		
 		level.broadcastEntityEvent(this, (byte) 1);
