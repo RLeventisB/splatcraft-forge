@@ -33,6 +33,11 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		return Math.max(e > 0 ? standardProjectileData.baseDamage() - e * standardProjectileData.damageDecayPerTick() : standardProjectileData.baseDamage(), standardProjectileData.minDamage());
 	}
 	@Override
+	public float getMinDamage()
+	{
+		return standardProjectileData.minDamage();
+	}
+	@Override
 	public WeaponTooltip<DualieWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]

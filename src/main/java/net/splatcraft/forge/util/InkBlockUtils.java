@@ -36,8 +36,9 @@ import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class InkBlockUtils
 {
@@ -54,11 +55,20 @@ public class InkBlockUtils
 	}
 	public static Direction getRandomInkedFace(Level level, BlockPos pos)
 	{
-		ChunkInk chunkInk = ChunkInkCapability.get(level, pos);
-		ChunkInk.BlockEntry entry = chunkInk.getInk(pos);
-		if (entry != null && entry.isInkedAny())
+		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
+		if (worldInk.isInkedAny(pos))
 		{
-			return Direction.from3DDataValue(CommonUtils.<Byte>selectRandom(level.random, Arrays.stream(entry.getActiveIndices()).toList()));
+			List<Integer> indices = new ArrayList<>(6);
+			ChunkInk.InkEntry[] entries = worldInk.getInk(pos).entries;
+			for (int i = 0; i < entries.length; i++)
+			{
+				ChunkInk.InkEntry entry = entries[i];
+				if (entry != null && entry.isInked())
+				{
+					indices.add(i);
+				}
+			}
+			return Direction.from3DDataValue(CommonUtils.selectRandom(level.random, indices));
 		}
 		return null;
 	}
@@ -88,8 +98,7 @@ public class InkBlockUtils
 	public static boolean clearBlock(Level level, BlockPos pos, boolean removePermanent)
 	{
 		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
-		ChunkInk.BlockEntry entry = worldInk.getInk(pos);
-		if (entry != null)
+		if (worldInk.isInkedAny(pos))
 		{
 			if (worldInk.clearBlock(pos, removePermanent))
 			{
@@ -103,11 +112,7 @@ public class InkBlockUtils
 	}
 	public static BlockInkedResult inkBlock(Level level, BlockPos pos, int color, Direction direction, InkType inkType, float damage)
 	{
-		return inkBlock(level, pos, color, direction.get3DDataValue(), inkType, damage);
-	}
-	public static BlockInkedResult inkBlock(Level level, BlockPos pos, int color, int index, InkType inkType, float damage)
-	{
-		if (isUninkable(level, pos, Direction.from3DDataValue(index)))
+		if (isUninkable(level, pos, direction))
 			return BlockInkedResult.FAIL;
 		
 		for (SpawnShieldEntity shieldEntity : level.getEntitiesOfClass(SpawnShieldEntity.class, new AABB(pos)))
@@ -127,17 +132,12 @@ public class InkBlockUtils
 		
 		ChunkInk worldInk = ChunkInkCapability.get(level, pos);
 		
-		ChunkInk.BlockEntry entry = worldInk.getInk(pos);
-		boolean isInked = entry != null && entry.isInked(index);
-		if (entry != null && entry.inmutable)
-			return BlockInkedResult.IS_PERMANENT;
+		boolean sameColor = worldInk.isInkedAny(pos) && worldInk.getInk(pos).color(direction) == color;
 		
-		boolean sameColor = isInked && entry.color(index) == color;
-		
-		if (sameColor && entry.type(index) == inkType)
+		if (sameColor && worldInk.getInk(pos).type(direction) == inkType)
 			return BlockInkedResult.ALREADY_INKED;
 		
-		worldInk.ink(pos, index, color, inkType);
+		worldInk.ink(pos, direction, color, inkType);
 		level.getChunkAt(pos).setUnsaved(true);
 		
 		if (SplatcraftGameRules.getLocalizedRule(level, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
@@ -163,7 +163,7 @@ public class InkBlockUtils
 	}
 	public static ChunkInk.InkEntry getInkInFace(Level level, BlockPos pos, Direction direction)
 	{
-		return getInkBlock(level, pos).get(direction.get3DDataValue());
+		return ChunkInkCapability.get(level, pos).getInk(pos).get(direction);
 	}
 	public static boolean isInked(Level level, BlockPos pos, Direction direction)
 	{
@@ -230,7 +230,7 @@ public class InkBlockUtils
 		Block standingBlock = entity.level().getBlockState(down).getBlock();
 		
 		if (isInked(entity.level(), down, Direction.UP))
-			return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down).color(Direction.UP.get3DDataValue()));
+			return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down).color(Direction.UP));
 		
 		if (standingBlock instanceof IColoredBlock coloredBlock)
 			canSwim = coloredBlock.canSwim();
@@ -282,16 +282,10 @@ public class InkBlockUtils
 			BlockPos collidedBlock = collisions.next();
 			Vec3 center = collidedBlock.getCenter();
 			Direction xDirection = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
-			if (isInked(entity.level, collidedBlock, xDirection) &&
-				ColorUtils.colorEquals(entity.level(), collidedBlock,
-					ColorUtils.getEntityColor(entity),
-					getInkBlock(entity.level(), collidedBlock).color(xDirection.get3DDataValue())))
+			if (isInked(entity.level, collidedBlock, xDirection) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(xDirection)))
 				return xDirection;
 			Direction zDirection = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
-			if (isInked(entity.level, collidedBlock, zDirection) &&
-				ColorUtils.colorEquals(entity.level(), collidedBlock,
-					ColorUtils.getEntityColor(entity),
-					getInkBlock(entity.level(), collidedBlock).color(zDirection.get3DDataValue())))
+			if (isInked(entity.level, collidedBlock, zDirection) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(zDirection)))
 				return zDirection;
 		}
 		return null;
@@ -300,10 +294,7 @@ public class InkBlockUtils
 	{
 		BlockPos collidedBlock = entity.blockPosition().relative(face);
 		Direction blockFaceToCheck = face.getOpposite();
-		return isInked(entity.level, collidedBlock, blockFaceToCheck) &&
-			ColorUtils.colorEquals(entity.level(), collidedBlock,
-				ColorUtils.getEntityColor(entity),
-				getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck.get3DDataValue()));
+		return isInked(entity.level, collidedBlock, blockFaceToCheck) && ColorUtils.colorEquals(entity.level(), collidedBlock, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck));
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{

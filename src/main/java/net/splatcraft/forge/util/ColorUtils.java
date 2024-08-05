@@ -28,7 +28,6 @@ import net.splatcraft.forge.blocks.IColoredBlock;
 import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.client.particles.InkTerrainParticleData;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.entities.IColoredEntity;
 import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
@@ -321,9 +320,8 @@ public class ColorUtils
 	{
 		int color = DEFAULT;
 		BlockPos pos = InkBlockUtils.getBlockStandingOnPos(entity);
-		ChunkInk.BlockEntry entry = InkBlockUtils.getInkBlock(level, pos);
-		if (entry != null && entry.isInkedAny())
-			color = entry.color(Direction.UP.get3DDataValue());
+		if (InkBlockUtils.isInkedAny(level, pos))
+			color = InkBlockUtils.getInkBlock(level, pos).color(Direction.UP);
 		else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			color = coloredBlock.getColor(level, pos);
 		addInkSplashParticle(level, color, entity.getX() + (level.getRandom().nextFloat() * 0.8 - 0.4), entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ() + (level.getRandom().nextFloat() * 0.8 - 0.4), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));

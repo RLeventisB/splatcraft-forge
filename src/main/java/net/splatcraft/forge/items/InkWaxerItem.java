@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
 import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ColorUtils;
@@ -55,19 +54,19 @@ public class InkWaxerItem extends Item
 	@Override
 	public @NotNull InteractionResult useOn(UseOnContext context)
 	{
-		BlockPos clickedPos = context.getClickedPos();
-		ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), clickedPos);
-		ChunkInk.BlockEntry ink = worldInk.getInk(clickedPos);
-		if (ink != null && ink.inmutable)
-			return InteractionResult.FAIL;
-		worldInk.markInmutable(clickedPos);
+		ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), context.getClickedPos());
 		
-		context.getLevel().levelEvent(context.getPlayer(), 3003, clickedPos, 0);
-		ChunkInkHandler.addInkToUpdate(context.getLevel(), clickedPos);
-		BlockState state = context.getLevel().getBlockState(clickedPos);
-		context.getLevel().sendBlockUpdated(clickedPos, state, state, 0);
+		if (worldInk.isInkedAny(context.getClickedPos()))
+		{
+			ChunkInk.BlockEntry ink = worldInk.getInk(context.getClickedPos());
+			ink.permanent = true;
+			
+			context.getLevel().levelEvent(context.getPlayer(), 3003, context.getClickedPos(), 0);
+			
+			return InteractionResult.SUCCESS;
+		}
 		
-		return InteractionResult.SUCCESS;
+		return super.useOn(context);
 	}
 	@Override
 	public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player)

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /*  TODO
 	make old inked blocks decay instantly
@@ -26,15 +27,10 @@ import java.util.Map;
  */
 public class ChunkInk
 {
-	// mental note for how this works
-	// this stores whether a block is "permanent" or is inked
-	// a block is inked when any of their faces isnt null
-	// when removing ink of a block, the InkEntry becomes null, and the INK_MAP unregisters the block if it has no inked faces and isnt permanent
 	private final HashMap<BlockPos, BlockEntry> INK_MAP = new HashMap<>();
 	public boolean isInkedAny(BlockPos pos)
 	{
-		BlockEntry entry = getInk(pos);
-		return entry != null && entry.isInkedAny();
+		return INK_MAP.containsKey(localizeBlockPos(pos));
 	}
 	public boolean isInked(BlockPos pos, Direction direction)
 	{
@@ -42,61 +38,68 @@ public class ChunkInk
 	}
 	public boolean isInked(BlockPos pos, int index)
 	{
-		BlockEntry entry = getInk(pos);
+		BlockEntry entry = INK_MAP.get(localizeBlockPos(pos));
 		return entry != null && entry.isInked(index);
 	}
 	public void ink(BlockPos pos, Direction direction, int color, InkBlockUtils.InkType type)
 	{
 		ink(pos, direction.get3DDataValue(), color, type);
 	}
+	public void ink(BlockPos pos, Direction direction, int color, InkBlockUtils.InkType type, boolean permanent)
+	{
+		ink(pos, direction.get3DDataValue(), color, type, permanent);
+	}
 	public void ink(BlockPos pos, int index, int color, InkBlockUtils.InkType type)
 	{
 		pos = localizeBlockPos(pos);
 		BlockEntry entry = INK_MAP.getOrDefault(pos, new BlockEntry());
-		entry.paint(index, color, type);
+		entry.setColor(index, color).setType(index, type);
+		INK_MAP.put(pos, entry);
+	}
+	public void ink(BlockPos pos, int index, int color, InkBlockUtils.InkType type, boolean permanent)
+	{
+		pos = localizeBlockPos(pos);
+		BlockEntry entry = INK_MAP.getOrDefault(pos, new BlockEntry());
+		entry.setColor(index, color).setType(index, type).setPermanent(permanent);
 		INK_MAP.put(pos, entry);
 	}
 	public boolean clearInk(BlockPos pos, Direction direction)
 	{
 		return clearInk(pos, direction, false);
 	}
+	public boolean clearInk(BlockPos pos, Direction direction, boolean removePermanent)
+	{
+		return clearInk(pos, direction.get3DDataValue(), removePermanent);
+	}
 	public boolean clearInk(BlockPos pos, int index)
 	{
 		return clearInk(pos, index, false);
 	}
-	public boolean clearInk(BlockPos pos, Direction direction, boolean removeInmutable)
+	public boolean clearInk(BlockPos pos, int index, boolean removePermanent)
 	{
-		return clearInk(pos, direction.get3DDataValue(), removeInmutable);
-	}
-	public boolean clearInk(BlockPos pos, int index, boolean removeInmutable)
-	{
+		pos = localizeBlockPos(pos);
 		BlockEntry entry = getInk(pos);
-		if (entry == null || (entry.inmutable && !removeInmutable))
+		if (!isInkedAny(pos))
 			return false;
-		if (!entry.clear(index) && !entry.inmutable)
-			INK_MAP.remove(pos);
+		if (!entry.permanent || removePermanent)
+		{
+			if (!entry.clear(index))
+				INK_MAP.remove(pos);
+		}
 		
 		return true;
 	}
-	/**
-	 * @param pos the block to remove
-	 * @return true if the block existed and was removed, false if there wasnt a block or the block was permanent
-	 */
 	public boolean clearBlock(BlockPos pos)
 	{
 		return clearBlock(pos, false);
 	}
-	/**
-	 * @param pos             the block to remove
-	 * @param removePermanent whether remove permanent blocks too
-	 * @return true if the block existed and was removed, false if there wasnt a block or the block was permanent and removePermanent was false
-	 */
 	public boolean clearBlock(BlockPos pos, boolean removePermanent)
 	{
 		BlockEntry entry = getInk(pos);
-		if (entry == null || (entry.inmutable && !removePermanent))
+		if (entry == null || (entry.permanent && !removePermanent))
 			return false;
-		return INK_MAP.remove(localizeBlockPos(pos)) != null;
+		INK_MAP.remove(localizeBlockPos(pos));
+		return true;
 	}
 	public HashMap<BlockPos, BlockEntry> getInkInChunk()
 	{
@@ -115,12 +118,11 @@ public class ChunkInk
 		{
 			BlockPos pos = pair.getKey();
 			BlockEntry entry = pair.getValue();
-			CompoundTag element = new CompoundTag();
-			element.put("Pos", NbtUtils.writeBlockPos(pos));
-			element.putBoolean("IsPermanent", entry.inmutable);
 			if (!entry.isInkedAny())
 				continue;
-			
+			CompoundTag element = new CompoundTag();
+			element.put("Pos", NbtUtils.writeBlockPos(pos));
+			element.putBoolean("IsPermanent", entry.permanent);
 			element.putByte("Faces", entry.getActiveFlag());
 			for (byte index : entry.getActiveIndices())
 			{
@@ -178,12 +180,19 @@ public class ChunkInk
 				
 				if (entry != null)
 				{
-					entry.inmutable = true;
-					if (entry.color(0) != color)// in the case where the permanent ink doesnt have the same color as the actual ink
+					entry.permanent = true;
+					if (entry.color(0) != color)
 					{
 						for (byte i = 0; i < 6; i++)
 						{
-							entry.paint(i, color, inkType);
+							entry.setColor(i, color);
+						}
+					}
+					if (entry.type(0) != inkType)
+					{
+						for (byte i = 0; i < 6; i++)
+						{
+							entry.setType(i, inkType);
 						}
 					}
 				}
@@ -196,21 +205,16 @@ public class ChunkInk
 				CompoundTag element = (CompoundTag) tag;
 				boolean isPermanent = element.getBoolean("IsPermanent");
 				BlockPos pos = NbtUtils.readBlockPos(element.getCompound("Pos"));
-				if (element.contains("Faces"))
+				Byte[] activeIndices = BlockEntry.getIndicesFromActiveFlag(element.getByte("Faces"));
+				for (Byte activeIndex : activeIndices)
 				{
-					Byte[] activeIndices = BlockEntry.getIndicesFromActiveFlag(element.getByte("Faces"));
-					for (Byte activeIndex : activeIndices)
-					{
-						Direction direction = Direction.from3DDataValue(activeIndex);
-						
-						ink(pos,
-							activeIndex,
-							element.getInt("Color" + direction.name()),
-							InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type" + direction.name())))
-						);
-						if (isPermanent)
-							markInmutable(pos);
-					}
+					Direction direction = Direction.from3DDataValue(activeIndex);
+					
+					ink(pos,
+						activeIndex,
+						element.getInt("Color" + direction.name()),
+						InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type" + direction.name()))),
+						isPermanent);
 				}
 			}
 		}
@@ -219,64 +223,113 @@ public class ChunkInk
 	{
 		return !INK_MAP.isEmpty();
 	}
-	public void markInmutable(BlockPos pos)
-	{
-		pos = localizeBlockPos(pos);
-		BlockEntry entry = INK_MAP.getOrDefault(pos, new BlockEntry());
-		entry.inmutable = true;
-		INK_MAP.put(pos, entry);
-	}
-	public void markMutable(BlockPos pos)
-	{
-		pos = localizeBlockPos(pos);
-		BlockEntry entry = INK_MAP.getOrDefault(pos, new BlockEntry());
-		entry.inmutable = false;
-		INK_MAP.put(pos, entry);
-	}
 	public static final class BlockEntry
 	{
 		public final InkEntry[] entries = new InkEntry[6];
-		public boolean inmutable;
+		public boolean permanent;
+		public BlockEntry(boolean permanent)
+		{
+			this.permanent = permanent;
+		}
 		public BlockEntry()
 		{
-			this.inmutable = false;
+			this.permanent = false;
 		}
 		public InkEntry get(int index)
 		{
-			return entries[index];
+			return get(index, true);
+		}
+		public InkEntry get(int index, boolean make)
+		{
+			InkEntry entry = entries[index];
+			if (entry == null && make)
+			{
+				entry = new InkEntry(-1, InkBlockUtils.InkType.NORMAL);
+				entries[index] = entry;
+			}
+			return entry;
+		}
+		public InkEntry get(Direction direction)
+		{
+			return get(direction.get3DDataValue(), true);
+		}
+		public InkEntry get(Direction direction, boolean make)
+		{
+			return get(direction.get3DDataValue(), make);
 		}
 		public int color(int index)
 		{
 			return get(index).color();
 		}
+		public int color(Direction direction)
+		{
+			return get(direction).color();
+		}
 		public InkBlockUtils.InkType type(int index)
 		{
 			return get(index).type();
 		}
-		public BlockEntry paint(int index, int color, InkBlockUtils.InkType type)
+		public InkBlockUtils.InkType type(Direction direction)
 		{
-			entries[index] = new InkEntry(color, type);
+			return get(direction).type();
+		}
+		public BlockEntry setColor(int index, int color)
+		{
+			get(index).color = color;
 			return this;
 		}
-		public BlockEntry setInmutable(boolean inmutable)
+		public BlockEntry setColor(Direction direction, int color)
 		{
-			this.inmutable = inmutable;
+			get(direction).color = color;
+			return this;
+		}
+		public BlockEntry setType(int index, InkBlockUtils.InkType type)
+		{
+			get(index).type = type;
+			return this;
+		}
+		public BlockEntry setType(Direction direction, InkBlockUtils.InkType type)
+		{
+			get(direction).type = type;
+			return this;
+		}
+		public BlockEntry setPermanent(boolean permanent)
+		{
+			this.permanent = permanent;
 			return this;
 		}
 		/**
+		 * @param direction the direction to clear the block
+		 * @return whether the block has any faces colored
+		 */
+		public boolean clear(Direction direction)
+		{
+			return clear(direction.get3DDataValue());
+		}
+		/**
 		 * @param index the index to clear the block
-		 * @return whether the block has any faces colored left
+		 * @return whether the block has any faces colored
 		 */
 		public boolean clear(int index)
 		{
-			entries[index] = null;
+			if (entries[index] != null)
+				get(index).clear();
 			return isInkedAny();
+		}
+		public void reset()
+		{
+			for (byte i = 0; i < 6; i++)
+			{
+				if (entries[i] != null)
+					get(i).clear();
+			}
+			permanent = false;
 		}
 		public boolean isInkedAny()
 		{
 			for (InkEntry v : entries)
 			{
-				if (v != null)
+				if (v != null && v.color != -1)
 				{
 					return true;
 				}
@@ -285,7 +338,12 @@ public class ChunkInk
 		}
 		public boolean isInked(int index)
 		{
-			return entries[index] != null;
+			InkEntry entry = entries[index];
+			return entry != null && entry.isInked();
+		}
+		public boolean isInked(Direction direction)
+		{
+			return isInked(direction.get3DDataValue());
 		}
 		public byte getActiveFlag()
 		{
@@ -325,11 +383,13 @@ public class ChunkInk
 		}
 		public void writeToBuffer(FriendlyByteBuf buffer)
 		{
-			// format:
-			// first bit = whether there's any ink in the block
-			// second - seventh bit: state of the face
-			// eigth bit: whether the block is permanent/static
-			buffer.writeByte((isInkedAny() ? 1 : 0) | (getActiveFlag() << 1) | (inmutable ? 128 : 0));
+			if (!isInkedAny())
+			{
+				buffer.writeByte(0);
+				return;
+			}
+			
+			buffer.writeByte(1 | (getActiveFlag() << 1) | (permanent ? 128 : 0));
 			for (byte i = 0; i < 6; i++)
 			{
 				if (isInked(i))
@@ -343,9 +403,9 @@ public class ChunkInk
 		{
 			BlockEntry entry = new BlockEntry();
 			byte state = buffer.readByte();
-			entry.inmutable = (state & 128) == 128;
 			if ((state & 1) == 1)
 			{
+				entry.permanent = (state & 128) == 128;
 				Boolean[] inked = getStateFromActiveFlag((byte) (state >> 1));
 				for (int i = 0; i < 6; i++)
 				{
@@ -353,7 +413,7 @@ public class ChunkInk
 					{
 						int color = buffer.readInt();
 						InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
-						entry.paint(i, color, type);
+						entry.setColor(i, color).setType(i, type);
 					}
 					else
 					{
@@ -361,7 +421,10 @@ public class ChunkInk
 					}
 				}
 			}
-			
+			else
+			{
+				entry.reset();
+			}
 			return entry;
 		}
 		public void apply(ChunkInk worldInk, BlockPos pos)
@@ -380,11 +443,53 @@ public class ChunkInk
 				else
 					worldInk.clearInk(pos, i);
 			}
-			if (inmutable) worldInk.markInmutable(pos);
-			else worldInk.markMutable(pos);
 		}
 	}
-	public record InkEntry(int color, InkBlockUtils.InkType type)
+	public static final class InkEntry
+	{
+		private int color;
+		private InkBlockUtils.InkType type;
+		public InkEntry(int color, InkBlockUtils.InkType type)
+		{
+			this.color = color;
+			this.type = type;
+		}
+		@Override
+		public boolean equals(Object o)
+		{
+			return this == o || (o instanceof InkEntry entry && color == entry.color && Objects.equals(type, entry.type));
+		}
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(color, type);
+		}
+		public int color()
+		{
+			return color;
+		}
+		public InkBlockUtils.InkType type()
+		{
+			return type;
+		}
+		public boolean isInked()
+		{
+			return color != -1;
+		}
+		public void clear()
+		{
+			color = -1;
+			type = InkBlockUtils.InkType.NORMAL;
+		}
+		@Override
+		public String toString()
+		{
+			return "InkEntry[" +
+				"color=" + color + ", " +
+				"type=" + type + ']';
+		}
+	}
+	public record InkFace(InkEntry entry, Direction face)
 	{
 	}
 }

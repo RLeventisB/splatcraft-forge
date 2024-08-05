@@ -3,7 +3,6 @@ package net.splatcraft.forge.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.util.DamageRangesRecord;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -23,6 +22,11 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	public float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list)
 	{
 		return projectileData.baseDamage();
+	}
+	@Override
+	public float getMinDamage()
+	{
+		return blasterData.minIndirectDamage();
 	}
 	@Override
 	public WeaponTooltip<BlasterWeaponSettings>[] tooltipsToRegister()
@@ -81,24 +85,30 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		);
 	}
 	public record DetonationRecord(
-		DamageRangesRecord damageRadiuses,
+		float maxIndirectDamage,
+		float minIndirectDamage,
+		float explosionRadius,
 		float sparkDamagePenalty,
 		float explosionPaint
 	)
 	{
 		public static final Codec<DetonationRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				DamageRangesRecord.CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
+				Codec.FLOAT.fieldOf("max_indirect_damage").forGetter(DetonationRecord::maxIndirectDamage),
+				Codec.FLOAT.fieldOf("min_indirect_damage").forGetter(DetonationRecord::minIndirectDamage),
+				Codec.FLOAT.fieldOf("explosion_radius").forGetter(DetonationRecord::explosionRadius),
 				Codec.FLOAT.optionalFieldOf("spark_damage_multiplier", 0.5f).forGetter(DetonationRecord::sparkDamagePenalty),
 				Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint))
 			).apply(instance, DetonationRecord::create)
 		);
-		public static DetonationRecord create(DamageRangesRecord damageRadiuses,
+		public static DetonationRecord create(float maxIndirectDamage,
+		                                      float minIndirectDamage,
+		                                      float explosionRadius,
 		                                      float sparkPenalty,
 		                                      Optional<Float> explosionPaint)
 		{
-			return new DetonationRecord(damageRadiuses, sparkPenalty, explosionPaint.orElse(damageRadiuses.getMaxRegisteredDistance()));
+			return new DetonationRecord(maxIndirectDamage, minIndirectDamage, explosionRadius, sparkPenalty, explosionPaint.orElse(explosionRadius));
 		}
-		public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, 0, 0);
+		public static final DetonationRecord DEFAULT = new DetonationRecord(0, 0, 0, 0, 0);
 	}
 }

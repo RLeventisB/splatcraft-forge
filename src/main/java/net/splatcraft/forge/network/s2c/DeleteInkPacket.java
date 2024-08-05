@@ -66,11 +66,9 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 			
 			for (BlockPos blockPos : toDelete)
 			{
-				if (chunkInk.clearBlock(blockPos, true))
-				{
-					BlockState state = level.getBlockState(blockPos);
-					level.sendBlockUpdated(blockPos, state, state, 0);
-				}
+				chunkInk.clearBlock(blockPos, true);
+				BlockState state = level.getBlockState(blockPos);
+				level.sendBlockUpdated(blockPos, state, state, 0);
 			}
 		}
 	}

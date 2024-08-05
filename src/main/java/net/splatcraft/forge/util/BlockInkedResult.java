@@ -1,10 +1,8 @@
 package net.splatcraft.forge.util;
 
-public enum BlockInkedResult
-{
-	SUCCESS,
-	ALREADY_INKED,
-	FAIL,
-	PASS,
-	IS_PERMANENT
+public enum BlockInkedResult {
+    SUCCESS,
+    ALREADY_INKED,
+    FAIL,
+    PASS
 }

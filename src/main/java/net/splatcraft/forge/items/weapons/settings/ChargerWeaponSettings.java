@@ -51,6 +51,11 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		return minChargeDamage;
 	}
 	@Override
+	public float getMinDamage()
+	{
+		return minChargeDamage;
+	}
+	@Override
 	public WeaponTooltip<ChargerWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]

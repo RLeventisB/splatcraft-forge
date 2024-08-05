@@ -62,7 +62,8 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 				InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
 				proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), player.onGround() ? settings.shotData.groundInaccuracy() : settings.shotData.airborneInaccuracy());
 				proj.setBlasterStats(settings);
-				proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData.damageRadiuses(),
+				proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData.explosionRadius(),
+					settings.blasterData.maxIndirectDamage(),
 					settings.blasterData.sparkDamagePenalty(),
 					settings.blasterData.explosionPaint()));
 				level.addFreshEntity(proj);

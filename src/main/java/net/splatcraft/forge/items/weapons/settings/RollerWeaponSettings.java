@@ -62,6 +62,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		float e = tickCount - swingDamageDecayStartTick;
 		return Math.max(e > 0 ? swingBaseDamage - (e * swingDamageDecayPerTick) : swingBaseDamage, swingMinDamage);
 	}
+	public float getMinDamage()
+	{
+		return 0;
+	}
 	@Override
 	public WeaponTooltip<RollerWeaponSettings>[] tooltipsToRegister()
 	{

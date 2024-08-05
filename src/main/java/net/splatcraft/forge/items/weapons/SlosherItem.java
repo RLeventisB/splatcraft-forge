@@ -158,6 +158,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 							0,
 							partialTick);
 						proj.setAttackId(attackId);
+						List<Object> dataList = new ArrayList<>();
+						dataList.add(sloshTime.sloshDataIndex);
 						switch (slosherItem.slosherType)
 						{
 							case EXPLODING:
@@ -166,8 +168,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 								{
 									proj.explodes = true;
 									proj.setProjectileType(InkProjectileEntity.Types.BLASTER);
-									BlasterWeaponSettings.DetonationRecord detonationRecord = detonationData.get();
-									proj.addExtraData(new ExtraSaveData.ExplosionExtraData(detonationRecord.damageRadiuses(), detonationRecord.sparkDamagePenalty(), detonationRecord.explosionPaint()));
+									proj.addExtraData(new ExtraSaveData.ExplosionExtraData(detonationData.get().explosionRadius(),
+										detonationData.get().maxIndirectDamage(),
+										detonationData.get().sparkDamagePenalty(),
+										detonationData.get().explosionPaint()));
 								}
 							case CYCLONE:
 								proj.canPierce = true;

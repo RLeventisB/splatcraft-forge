@@ -103,15 +103,6 @@ public class ChunkInkHandler
 			event.getNotifiedSides().forEach(direction -> checkForInkRemoval(level, event.getPos().relative(direction)));
 		}
 	}
-	@SubscribeEvent
-	public static void onBlockBreak(BlockEvent.BreakEvent event)
-	{
-		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(event.getPlayer().level, event.getPos());
-		if (inkBlock != null)
-		{
-			InkBlockUtils.clearBlock(event.getPlayer().level, event.getPos(), true);
-		}
-	}
 	private static void checkForInkRemoval(Level level, BlockPos pos)
 	{
 		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(level, pos);
@@ -173,7 +164,7 @@ public class ChunkInkHandler
 							
 							if (!SplatcraftGameRules.getLocalizedRule(level, clearPos, SplatcraftGameRules.INK_DECAY) ||
 								level.random.nextFloat() >= SplatcraftGameRules.getIntRuleValue(level, SplatcraftGameRules.INK_DECAY_RATE) * 0.001f || //TODO make localized int rules
-								decayableInk.get(pos).inmutable)
+								decayableInk.get(pos).permanent)
 							{
 								decayableInk.remove(pos);
 								continue;
@@ -254,7 +245,7 @@ public class ChunkInkHandler
 				{
 					newEntry.entries[i] = toCopy.entries[i];
 				}
-				newEntry.inmutable = toCopy.inmutable;
+				newEntry.permanent = toCopy.permanent;
 			}
 		}
 	}
@@ -315,30 +306,16 @@ public class ChunkInkHandler
 		{
 			return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(new ResourceLocation(Splatcraft.MODID, "block/glitter"));
 		}
-		public static TextureAtlasSprite getPermanentInkSprite()
-		{
-			return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(new ResourceLocation(Splatcraft.MODID, "block/permanent_ink_overlay"));
-		}
 		public static boolean splatcraft$renderInkedBlock(RenderChunkRegion region, BlockPos pos, VertexConsumer
 			consumer, PoseStack.Pose pose, BakedQuad quad, float[] brightness, int[] lightmap, int f2, boolean f3)
 		{
 			ChunkInk worldInk = ChunkInkCapability.get(((BlockRenderMixin.ChunkRegionAccessor) region).getLevel(), pos);
 			
-			int index = quad.getDirection().get3DDataValue();
-			ChunkInk.BlockEntry ink = worldInk.getInk(pos);
-			if (ink == null)
+			Direction index = quad.getDirection();
+			if (!worldInk.isInked(pos, index))
 				return false;
 			
-			if (!worldInk.isInked(pos, index))
-			{
-				if (ink.inmutable)
-				{
-					
-					splatcraft$putBulkData(getPermanentInkSprite(), consumer, pose, quad, brightness, 1, 1, 1, lightmap, f2, f3, false);
-					return false;
-				}
-				return false;
-			}
+			ChunkInk.BlockEntry ink = worldInk.getInk(pos);
 			
 			float[] rgb = ColorUtils.hexToRGB(ink.color(index));
 			TextureAtlasSprite sprite = null;
@@ -350,9 +327,6 @@ public class ChunkInkHandler
 			splatcraft$putBulkData(sprite, consumer, pose, quad, brightness, rgb[0], rgb[1], rgb[2], lightmap, f2, f3, type == InkBlockUtils.InkType.GLOWING);
 			if (type == InkBlockUtils.InkType.GLOWING)
 				splatcraft$putBulkData(getGlitterSprite(), consumer, pose, quad, brightness, 1, 1, 1, lightmap, f2, f3, true);
-			
-			if (ink.inmutable)
-				splatcraft$putBulkData(getPermanentInkSprite(), consumer, pose, quad, brightness, 1, 1, 1, lightmap, f2, f3, false);
 			
 			return true;
 		}
