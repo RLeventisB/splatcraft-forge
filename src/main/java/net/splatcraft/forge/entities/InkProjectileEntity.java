@@ -1,6 +1,5 @@
 package net.splatcraft.forge.entities;
 
-import com.google.common.reflect.TypeToken;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -37,15 +36,13 @@ import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
 
 public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity
 {
 	private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
 	private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.INT);
-	private static final EntityDataAccessor<Vec2> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<>()
+	private static final EntityDataAccessor<Vec2> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<Vec2>()
 	{
 		@Override
 		public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec2 vec2)
@@ -68,8 +65,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	private static final EntityDataAccessor<Float> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
-	private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
-	private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<>()
+	private static final EntityDataAccessor<ExtraSaveData> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
+	private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<Vec3>()
 	{
 		@Override
 		public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3 vec3)
@@ -129,6 +126,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		EntityDataSerializers.registerSerializer(SHOOT_DIRECTION.getSerializer());
 		EntityDataSerializers.registerSerializer(PROJ_SIZE.getSerializer());
 		EntityDataSerializers.registerSerializer(EXTRA_DATA.getSerializer());
+	}
+	public InkProjectileEntity setShooterTrail()
+	{
+		distanceBetweenDrops = 3;
+//		dropSkipDistance = CommonUtils.nextFloat(random, 0, distanceBetweenDrops);
+		dropImpactSize = getProjectileSize() * 0.75f;
+		return this;
 	}
 	public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings settings)
 	{
@@ -235,7 +239,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		entityData.define(SPEED, 0f);
 		entityData.define(HORIZONTAL_DRAG, 1F);
 		entityData.define(SHOOT_DIRECTION, new Vec3(0, 0, 0));
-		entityData.define(EXTRA_DATA, new ExtraDataList());
+		entityData.define(EXTRA_DATA, new ExtraSaveData.EmptyExtraData());
 	}
 	@Override
 	public void onSyncedDataUpdated(EntityDataAccessor<?> dataParameter)
@@ -276,11 +280,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		if (!level.isClientSide && !persistent && (lifespan -= timeDelta) <= 0)
 		{
-			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-			if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
+			if (Objects.equals(getProjectileType(), Types.BLASTER) && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
-				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
+				InkExplosion.createInkExplosion(getOwner(), position(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
+				createDrop(getX(), getY(), getZ(), 0, explosionExtraData.explosionPaint);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -418,7 +421,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		super.onHitEntity(result);
 		
 		Entity target = result.getEntity();
-		float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, getExtraDatas()) * damageMultiplier;
+		float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, getExtraData()) * damageMultiplier;
 		
 		if (!level.isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
@@ -433,8 +436,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown, attackId);
 			if (!level.isClientSide && didDamage)
 			{
-				ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-				if ((chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
+				if ((getExtraData() instanceof ExtraSaveData.ChargeExtraData chargeExtraData && chargeExtraData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
 					Objects.equals(getProjectileType(), Types.BLASTER))
 				{
 					level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
@@ -444,10 +446,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		if (!canPierce)
 		{
-			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-			if (explodes && explosionData != null)
+			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -476,11 +477,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		{
 			level.broadcastEntityEvent(this, (byte) 2);
 			Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
-			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-			if (explodes && explosionData != null)
+			if (explodes && getExtraData() instanceof ExtraSaveData.ExplosionExtraData explosionExtraData)
 			{
-				damageMultiplier *= explosionData.sparkDamagePenalty;
-				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				damageMultiplier *= explosionExtraData.sparkDamagePenalty;
+				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionExtraData.explosionPaint, explosionExtraData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionExtraData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
 				level.broadcastEntityEvent(this, (byte) 3);
 //				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -639,23 +639,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		super.addAdditionalSaveData(nbt);
 		nbt.remove("Item");
 	}
-	/**
-	 * @return a exposed list to the synched list that manages the extra data sent to the connection or smtinh
-	 * @apiNote this list if updated isnt going to be synched!!!!! for this use addExtraData instead, or sendExtraData
-	 */
-	public ExtraDataList getExtraDatas()
+	public ExtraSaveData getExtraData()
 	{
 		return entityData.get(EXTRA_DATA);
 	}
-	public void sendExtraData(ExtraDataList list)
+	public void setExtraData(ExtraSaveData saveData)
 	{
-		entityData.set(EXTRA_DATA, list);
-	}
-	public void addExtraData(ExtraSaveData data)
-	{
-		ExtraDataList list = entityData.get(EXTRA_DATA);
-		list.add(data);
-		entityData.set(EXTRA_DATA, list);
+		entityData.set(EXTRA_DATA, saveData);
 	}
 	@Deprecated //Modify sourceWeapon variable instead
 	@Override
@@ -769,31 +759,5 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		public static final String CHARGER = "charger";
 		public static final String ROLLER = "roller";
 		public static final String BLASTER = "blaster";
-	}
-	public static final class ExtraDataList extends ArrayList<ExtraSaveData>
-	{
-		public ExtraDataList(int count)
-		{
-			super(count);
-		}
-		public ExtraDataList()
-		{
-			super();
-		}
-		public ExtraDataList(Collection<ExtraSaveData> collection)
-		{
-			super(collection);
-		}
-		public <T extends ExtraSaveData> T getFirstExtraData(Class<T> tClass)
-		{
-			TypeToken<T> token = TypeToken.of(tClass);
-			
-			for (ExtraSaveData extraData : this)
-			{
-				if (token.isSupertypeOf(TypeToken.of(extraData.getClass())))
-					return (T) extraData;
-			}
-			return null;
-		}
 	}
 }

@@ -2,7 +2,6 @@ package net.splatcraft.forge.items.weapons;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -63,7 +62,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			if (!cooldownTracker.isOnCooldown(this))
 			{
 				pendingSloshes.addAll(settings.shotData.sloshes());
-				PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks()));
+				PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks()));
 				if (!level.isClientSide && settings.shotData.endlagTicks() > 0)
 				{
 					cooldownTracker.addCooldown(this, settings.shotData.endlagTicks());
@@ -92,12 +91,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
 		public boolean didSound;
 		public AttackId attackId;
-		public float xRot, xDelta, yRot, yDelta, xRotOld, yRotOld;
-		public SloshCooldown(Player player, ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, int duration)
+		public SloshCooldown(ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, int duration)
 		{
 			super(stack, duration, slotIndex, hand, true, false, true, false);
-			xRot = xRotOld = player.getXRot();
-			yRot = yRotOld = player.getYRot();
 			this.sloshData = sloshData;
 			for (int i = 0; i < sloshData.shotData.sloshes().size(); i++)
 			{
@@ -129,16 +125,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
 			SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
 			
-			xDelta = xDelta * 0.7f + (Mth.degreesDifference(xRot, player.getXRot())) * 0.12f;
-			yDelta = yDelta * 0.7f + (Mth.degreesDifference(yRot, player.getYRot())) * 0.12f;
-			xRotOld = xRot;
-			yRotOld = yRot;
-			
-			xRot += xDelta * (didSound ? 1 : 0.4f);
-			yRot += yDelta * (didSound ? 1 : 0.4f);
-			if (didSound)
-				xRot += 4;
-			
 			for (int i = 0; i < sloshes.size(); i++)
 			{
 				CalculatedSloshData sloshTime = sloshes.get(i);
@@ -153,8 +139,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						
 						InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileSetting.projectile().size(), sloshData);
 						proj.shootFromRotation(
-							Mth.lerp(partialTick, xRotOld, xRot),
-							Mth.lerp(partialTick, yRotOld, yRot) + projectileSetting.offsetAngle(),
+							player.getViewXRot(partialTick),
+							player.getViewYRot(partialTick) + projectileSetting.offsetAngle(),
 							shotSetting.pitchCompensation(),
 							projectileSetting.projectile().speed() - projectileSetting.speedSubstract() * sloshTime.indexInSlosh,
 							0,
@@ -170,15 +156,15 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 								{
 									proj.explodes = true;
 									proj.setProjectileType(InkProjectileEntity.Types.BLASTER);
-									proj.addExtraData(new ExtraSaveData.ExplosionExtraData(detonationData.get().explosionRadius(),
-										detonationData.get().maxIndirectDamage(),
-										detonationData.get().sparkDamagePenalty(),
-										detonationData.get().explosionPaint()));
+									dataList.add(detonationData.get().explosionRadius());
+									dataList.add(detonationData.get().maxIndirectDamage());
+									dataList.add(detonationData.get().sparkDamagePenalty());
+									dataList.add(detonationData.get().explosionPaint());
 								}
 							case CYCLONE:
 								proj.canPierce = true;
 						}
-						proj.addExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex));
+						proj.setExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex));
 						proj.setSlosherStats(projectileSetting.projectile());
 						level.addFreshEntity(proj);
 						

@@ -17,55 +17,44 @@ import static net.splatcraft.forge.Splatcraft.MODID;
 @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public abstract class ExtraSaveData
 {
-	public static Supplier<IForgeRegistry<Class<? extends ExtraSaveData>>> REGISTRY;
+	public static Supplier<IForgeRegistry<Class<?>>> REGISTRY;
 	@SubscribeEvent
 	public static void registerRegistry(final NewRegistryEvent event)
 	{
-		RegistryBuilder<Class<? extends ExtraSaveData>> registryBuilder = new RegistryBuilder<>();
+		RegistryBuilder<Class<?>> registryBuilder = new RegistryBuilder<>();
 		registryBuilder.setName(new ResourceLocation(MODID, "extra_save_data"));
 		REGISTRY = event.create(registryBuilder, (registry) ->
 		{
 			registry.register(new ResourceLocation(MODID, "charge_data"), ChargeExtraData.class);
 			registry.register(new ResourceLocation(MODID, "blaster_explosion_data"), ExplosionExtraData.class);
-			registry.register(new ResourceLocation(MODID, "slosher_data"), SloshExtraData.class);
-			registry.register(new ResourceLocation(MODID, "dualie_data"), DualieExtraData.class);
 		});
 	}
-	public static final EntityDataSerializer<InkProjectileEntity.ExtraDataList> SERIALIZER = new EntityDataSerializer<>()
+	public static final EntityDataSerializer<ExtraSaveData> SERIALIZER = new EntityDataSerializer<ExtraSaveData>()
 	{
 		@Override
-		public void write(@NotNull FriendlyByteBuf buf, @NotNull InkProjectileEntity.ExtraDataList saveData)
+		public void write(@NotNull FriendlyByteBuf buf, @NotNull ExtraSaveData saveData)
 		{
-			buf.writeInt(saveData.size());
-			for (ExtraSaveData data : saveData)
+			buf.writeResourceLocation(REGISTRY.get().getKey(saveData.getClass()));
+			saveData.save(buf);
+		}
+		@Override
+		public @NotNull ExtraSaveData read(@NotNull FriendlyByteBuf buf)
+		{
+			Class<?> saveData = REGISTRY.get().getValue(buf.readResourceLocation());
+			
+			try
 			{
-				buf.writeResourceLocation(REGISTRY.get().getKey(data.getClass()));
-				data.save(buf);
+				return ((ExtraSaveData) saveData.newInstance()).load(buf);
+			}
+			catch (InstantiationException | IllegalAccessException e)
+			{
+				throw new RuntimeException(e);
 			}
 		}
 		@Override
-		public @NotNull InkProjectileEntity.ExtraDataList read(@NotNull FriendlyByteBuf buf)
+		public @NotNull ExtraSaveData copy(@NotNull ExtraSaveData saveData)
 		{
-			int count = buf.readInt();
-			InkProjectileEntity.ExtraDataList saveDatas = new InkProjectileEntity.ExtraDataList(count);
-			for (int i = 0; i < count; i++)
-			{
-				Class<? extends ExtraSaveData> saveData = REGISTRY.get().getValue(buf.readResourceLocation());
-				try
-				{
-					saveDatas.add((saveData.newInstance()).load(buf));
-				}
-				catch (InstantiationException | IllegalAccessException e)
-				{
-					throw new RuntimeException(e);
-				}
-			}
-			return saveDatas;
-		}
-		@Override
-		public @NotNull InkProjectileEntity.ExtraDataList copy(@NotNull InkProjectileEntity.ExtraDataList saveData)
-		{
-			return new InkProjectileEntity.ExtraDataList(saveData.stream().map(ExtraSaveData::copy).toList());
+			return saveData.copy();
 		}
 	};
 	public abstract void save(@NotNull FriendlyByteBuf buffer);
@@ -116,7 +105,7 @@ public abstract class ExtraSaveData
 			return new ChargeExtraData(charge);
 		}
 	}
-	public static class ExplosionExtraData extends ExtraSaveData
+	public static final class ExplosionExtraData extends ExtraSaveData
 	{
 		public float explosionRadius;
 		public float maxIndirectDamage;
@@ -171,7 +160,7 @@ public abstract class ExtraSaveData
 			return new DualieExtraData(rollBullet);
 		}
 	}
-	public static class SloshExtraData extends ExtraSaveData
+	public static final class SloshExtraData extends ExtraSaveData
 	{
 		public int sloshDataIndex;
 		public SloshExtraData(int sloshDataIndex)

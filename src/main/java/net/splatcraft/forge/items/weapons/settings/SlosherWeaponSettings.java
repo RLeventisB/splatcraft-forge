@@ -3,7 +3,6 @@ package net.splatcraft.forge.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -22,12 +21,11 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		super(name);
 	}
 	@Override
-	public float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list)
+	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
 	{
-		ExtraSaveData.SloshExtraData sloshData = list.getFirstExtraData(ExtraSaveData.SloshExtraData.class);
-		if (sloshData != null)
+		if (data instanceof ExtraSaveData.SloshExtraData sloshExtraData)
 		{
-			return shotData.sloshes.get(sloshData.sloshDataIndex).projectile.directDamage;
+			return shotData.sloshes.get(sloshExtraData.sloshDataIndex).projectile.directDamage;
 		}
 		return sampleProjectile.directDamage;
 	}
