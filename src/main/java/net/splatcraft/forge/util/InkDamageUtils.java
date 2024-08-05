@@ -73,7 +73,7 @@ public class InkDamageUtils
 //		InkDamageSource damageSource = new InkDamageSource(targetLevel.damageSources().source(damageType).type(), projectile, owner, sourceItem);
 		DamageSource damageSource = targetLevel.damageSources().source(damageType);
 		
-		if ((attackId != null && !attackId.checkEntity(target)) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
+		if (!attackId.checkEntity(target) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
 			return false;
 		
 		if (InkOverlayCapability.hasCapability(target) && InkOverlayCapability.get(target).isInkproof())
