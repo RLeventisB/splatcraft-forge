@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.handlers.ChunkInkHandler;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -26,7 +27,10 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 	}
 	public void add(BlockPos pos, ChunkInk.BlockEntry inkBlock)
 	{
-		dirty.put(pos, inkBlock);
+		if (inkBlock != null)
+			dirty.put(pos, inkBlock);
+		else
+			Splatcraft.LOGGER.warn("Tried adding null ink object");
 	}
 	@Override
 	public void encode(FriendlyByteBuf buffer)
@@ -38,9 +42,6 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 		{
 			BlockPos blockPos = pair.getKey();
 			ChunkInk.BlockEntry entry = pair.getValue();
-			if (entry == null)
-				entry = new ChunkInk.BlockEntry();
-			
 			buffer.writeBlockPos(blockPos);
 			entry.writeToBuffer(buffer);
 		}

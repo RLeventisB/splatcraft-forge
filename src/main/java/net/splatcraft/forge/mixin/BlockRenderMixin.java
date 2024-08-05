@@ -37,9 +37,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Set;
 
 //TODO use RenderLevelStageEvent to render ink over blocks instead of overriding block rendering with mixins,
@@ -84,10 +82,7 @@ public class BlockRenderMixin
 			{
 				if (chunkInk.isInkedAny(splatcraft$blockPos))
 				{
-					ChunkInk.BlockEntry ink = chunkInk.getInk(splatcraft$blockPos);
-					
-					if (Arrays.stream(ink.entries).filter(Objects::nonNull).anyMatch(v -> v.type() == InkBlockUtils.InkType.GLOWING || v.type() == InkBlockUtils.InkType.CLEAR))
-						return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
+					return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
 				}
 			}
 			return original.call(instance, state, randomSource, modelData);
