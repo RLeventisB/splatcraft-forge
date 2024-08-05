@@ -23,6 +23,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
@@ -105,17 +106,18 @@ public class ChunkInkHandler
 	}
 	private static void checkForInkRemoval(Level level, BlockPos pos)
 	{
-		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(level, pos);
-		if (inkBlock != null && inkBlock.isInkedAny())
+		if (InkBlockUtils.isInkedAny(level, pos) && InkBlockUtils.isUninkable(level, pos))
 		{
+			ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(level, pos);
+			
 			for (int i = 0; i < 6; i++)
 			{
-				if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(level, pos, Direction.from3DDataValue(i)))
-				{
-					ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
-					inkBlock.clear(i);
-				}
+				if (!inkBlock.isInked(i))
+					continue;
+				Vec3 normal = Vec3.atLowerCornerOf(Direction.from3DDataValue(i).getNormal());
+				ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
 			}
+			InkBlockUtils.clearBlock(level, pos, true);
 		}
 	}
 	@SubscribeEvent //prevent foliage placement on ink if inkDestroysFoliage is on

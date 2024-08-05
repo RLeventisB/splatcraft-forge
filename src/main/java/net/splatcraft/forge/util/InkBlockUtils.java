@@ -112,7 +112,7 @@ public class InkBlockUtils
 	}
 	public static BlockInkedResult inkBlock(Level level, BlockPos pos, int color, Direction direction, InkType inkType, float damage)
 	{
-		if (isUninkable(level, pos, direction))
+		if (isUninkable(level, pos))
 			return BlockInkedResult.FAIL;
 		
 		for (SpawnShieldEntity shieldEntity : level.getEntitiesOfClass(SpawnShieldEntity.class, new AABB(pos)))
@@ -179,22 +179,19 @@ public class InkBlockUtils
 	}
 	public static boolean canInkFromFace(Level level, BlockPos pos, Direction face)
 	{
-		if (!(level.getBlockState(pos).getBlock() instanceof IColoredBlock) && isUninkable(level, pos, face))
+		if (!(level.getBlockState(pos).getBlock() instanceof IColoredBlock) && isUninkable(level, pos))
 			return false;
 //		if (Minecraft.getInstance().player != null)
 //			Minecraft.getInstance().player.sendMessage(Component.literal(pos + " -> " + face), UUID.randomUUID());
 		
 		return canInkPassthrough(level, pos.relative(face)) || !level.getBlockState(pos.relative(face)).is(SplatcraftTags.Blocks.BLOCKS_INK);
 	}
-	public static boolean isUninkable(Level level, BlockPos pos, Direction direction)
+	public static boolean isUninkable(Level level, BlockPos pos)
 	{
-		if (InkedBlock.isTouchingLiquid(level, pos, direction))
+		
+		if (InkedBlock.isTouchingLiquid(level, pos))
 			return true;
 		
-		return isBlockUninkable(level, pos);
-	}
-	public static boolean isBlockUninkable(Level level, BlockPos pos)
-	{
 		BlockState state = level.getBlockState(pos);
 		
 		if (state.is(SplatcraftTags.Blocks.UNINKABLE_BLOCKS))

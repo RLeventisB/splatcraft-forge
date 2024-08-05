@@ -56,7 +56,7 @@ public class TurfScannerItem extends RemoteItem
 					BlockPos checkPos = getTopSolidOrLiquidBlock(new BlockPos(x, 0, z), level, minPos.getY(), maxPos.getY() + 1);
 					BlockState checkState = level.getBlockState(checkPos);
 					
-					if (checkPos.getY() > maxPos.getY() || !checkState.blocksMotion() || checkState.liquid())
+					if (checkPos.getY() > maxPos.getY() || !checkState.blocksMotion() || checkState.liquid() || InkBlockUtils.isUninkable(level, checkPos))
 						continue;
 					
 					int color;
@@ -115,10 +115,10 @@ public class TurfScannerItem extends RemoteItem
 								break;
 						}
 						
-						if (isWall)
+						if (isWall || InkBlockUtils.isUninkable(level, checkPos))
 							continue;
 						
-						if (!checkState.blocksMotion() || checkState.liquid())
+						if (!checkState.blocksMotion() || checkState.liquid() || InkBlockUtils.isUninkable(level, checkPos))
 							continue;
 						
 						int color;

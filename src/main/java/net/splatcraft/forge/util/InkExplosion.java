@@ -24,8 +24,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -160,7 +158,7 @@ public class InkExplosion
 				for (int z = -cubeSizeHalf; z <= cubeSizeHalf; z++)
 				{
 					BlockPos pos = CommonUtils.createBlockPos(position.x() + x, position.y() + y, position.z() + z);
-					if (InkBlockUtils.isBlockUninkable(level, pos))
+					if (InkBlockUtils.isUninkable(level, pos))
 						continue;
 					double blockCenterX = pos.getX() + 0.5;
 					double blockCenterY = pos.getY() + 0.5;
@@ -216,28 +214,10 @@ public class InkExplosion
 	private boolean raycastAndGetDirection(Vec3 startPos, Vec3 endPos, ServerLevel level, BlockPos expectedPos, Direction expectedFace)
 	{
 		ClipContext clipContext = new ClipContext(new Vec3(x, y, z), endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null); // actually don't know if it's faster to inline a method but ok
-		int ownerColor = ColorUtils.getEntityColor(exploder);
 		BlockHitResult hitResult = BlockGetter.traverseBlocks(startPos, endPos, clipContext, (clipContext1, blockPos1) ->
 		{
 			BlockState blockstate = level.getBlockState(blockPos1);
 			VoxelShape voxelshape = blockstate.getCollisionShape(level, blockPos1);
-			
-			if (blockstate.is(SplatcraftBlocks.allowedColorBarrier.get()))
-			{
-				ColoredBarrierBlock block = (ColoredBarrierBlock) blockstate.getBlock();
-				if (ColorUtils.colorEquals(level, blockPos1, ownerColor, block.getColor(level, blockPos1)))
-				{
-					return null;
-				}
-			}
-			if (blockstate.is(SplatcraftBlocks.deniedColorBarrier.get()))
-			{
-				ColoredBarrierBlock block = (ColoredBarrierBlock) blockstate.getBlock();
-				if (!ColorUtils.colorEquals(level, blockPos1, ownerColor, block.getColor(level, blockPos1)))
-				{
-					return null;
-				}
-			}
 			return level.clipWithInteractionOverride(clipContext1.getFrom(), clipContext1.getTo(), blockPos1, voxelshape, blockstate);
 		}, (clipContext1) ->
 		{
