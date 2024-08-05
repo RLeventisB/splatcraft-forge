@@ -6,8 +6,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:item/weapons/splattershot_jr",
-    "particle": "splatcraft:item/weapons/splattershot_jr"
+    "0": "splatcraft:weapons/splattershot_jr",
+    "particle": "splatcraft:weapons/splattershot_jr"
   },
   "elements": [
     {

@@ -2,9 +2,9 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/thin_block",
 	"textures": {
-		"0": "splatcraft:block/splat_switch",
-		"1": "splatcraft:block/splat_switch_back",
-		"particle": "splatcraft:block/splat_switch"
+		"0": "splatcraft:blocks/splat_switch",
+		"1": "splatcraft:blocks/splat_switch_back",
+		"particle": "splatcraft:blocks/splat_switch"
 	},
 	"elements": [
 		{

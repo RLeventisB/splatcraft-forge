@@ -1,6 +1,6 @@
 {
   "parent": "block/cube_all",
   "textures": {
-    "all": "splatcraft:block/ink_canvas"
+    "all": "splatcraft:blocks/ink_canvas"
   }
 }

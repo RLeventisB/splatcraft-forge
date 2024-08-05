@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:item/weapons/enperry_splat_dualies",
-    "particle": "splatcraft:item/weapons/enperry_splat_dualies"
+    "0": "splatcraft:weapons/enperry_splat_dualies",
+    "particle": "splatcraft:weapons/enperry_splat_dualies"
   },
   "elements": [
     {

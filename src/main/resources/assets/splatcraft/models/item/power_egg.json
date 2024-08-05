@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "block/cube",
 	"textures": {
-		"0": "splatcraft:item/power_egg",
-		"particle": "splatcraft:item/power_egg"
+		"0": "splatcraft:items/power_egg",
+		"particle": "splatcraft:items/power_egg"
 	},
 	"elements": [
 		{

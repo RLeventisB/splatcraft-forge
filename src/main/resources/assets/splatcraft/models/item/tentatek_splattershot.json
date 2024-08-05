@@ -1,9 +1,9 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:item/weapons/splattershot",
-		"1": "splatcraft:item/weapons/tentatek_sticker",
-		"particle": "splatcraft:item/weapons/splattershot"
+		"0": "splatcraft:weapons/splattershot",
+		"1": "splatcraft:weapons/tentatek_sticker",
+		"particle": "splatcraft:weapons/splattershot"
 	},
 	"elements": [
 		{

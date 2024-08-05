@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "splatcraft:item/weapons/n-zap85",
-		"particle": "splatcraft:item/weapons/n-zap85"
+		"0": "splatcraft:weapons/n-zap85",
+		"particle": "splatcraft:weapons/n-zap85"
 	},
 	"elements": [
 		{

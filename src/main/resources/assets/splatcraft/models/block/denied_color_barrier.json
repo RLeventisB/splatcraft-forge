@@ -2,8 +2,8 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "0": "splatcraft:block/denied_color_barrier",
-    "particle": "splatcraft:block/denied_color_barrier"
+    "0": "splatcraft:blocks/denied_color_barrier",
+    "particle": "splatcraft:blocks/denied_color_barrier"
   },
   "elements": [
     {

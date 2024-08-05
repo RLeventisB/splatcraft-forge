@@ -6,9 +6,9 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:block/inkwell_vat",
-    "1": "splatcraft:block/machine_base",
-    "particle": "splatcraft:block/inkwell_vat"
+    "0": "splatcraft:blocks/inkwell_vat",
+    "1": "splatcraft:blocks/machine_base",
+    "particle": "splatcraft:blocks/inkwell_vat"
   },
   "elements": [
     {

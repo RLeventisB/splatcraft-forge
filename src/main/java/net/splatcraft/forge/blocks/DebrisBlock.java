@@ -13,10 +13,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.material.*;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +25,7 @@ public class DebrisBlock extends Block
 {
 	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 	public static final DirectionProperty DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
+
 	private static final HashMap<Direction, VoxelShape> SHAPES = new HashMap<>()
 	{{
 		put(Direction.WEST, box(2.4, 0, 0, 15.2, 8, 16));
@@ -35,45 +33,54 @@ public class DebrisBlock extends Block
 		put(Direction.EAST, box(0.8, 0, 0, 13.6, 8, 16));
 		put(Direction.SOUTH, box(0, 0, 0.8, 16, 8, 13.6));
 	}};
-	public DebrisBlock(MapColor color)
+
+
+	public DebrisBlock(Material material, MaterialColor color)
 	{
-		super(BlockBehaviour.Properties.of().mapColor(color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL).lightLevel(
-			(state) -> 1
+		super(BlockBehaviour.Properties.of(material, color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL).lightLevel(
+				(state) -> 1
 		));
 		this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
 	}
+
 	@Override
 	public boolean useShapeForLightOcclusion(@NotNull BlockState state)
 	{
 		return true;
 	}
+
 	@Override
 	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPES.get(state.getValue(DIRECTION));
 	}
+
 	@Override
 	public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
 	{
 		return PushReaction.DESTROY;
 	}
+
 	@Nullable
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context)
 	{
 		return defaultBlockState().setValue(DIRECTION, context.getHorizontalDirection())
-			.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+				.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
 	}
+
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
 	{
 		builder.add(WATERLOGGED, DIRECTION);
 	}
+
 	@Override
 	public @NotNull FluidState getFluidState(BlockState state)
 	{
 		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
 	}
+
 	@Override
 	public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
 	{
@@ -81,7 +88,7 @@ public class DebrisBlock extends Block
 		{
 			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
 		}
-		
+
 		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 }

@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.HitResult;
@@ -48,7 +48,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 	private Aux auxBlock;
 	public SpawnPadBlock()
 	{
-		super(Properties.of().mapColor(MapColor.METAL).strength(2.0f).requiresCorrectToolForDrops());
+		super(Properties.of(Material.METAL).strength(2.0f).requiresCorrectToolForDrops());
 		this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
 		
 		SplatcraftBlocks.inkColoredBlocks.add(this);
@@ -122,10 +122,10 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 	@Override
 	public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
-		ItemStack stack = new ItemStack(this);
+		ItemStack stack = super.getCloneItemStack(reader, pos, state);
 		
-		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
-			ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(tileEntity)), true);
+		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity)
+			ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(reader.getBlockEntity(pos))), true);
 		
 		return stack;
 	}
@@ -135,19 +135,19 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		return false;
 	}
 	@Override
-	public boolean isPossibleToRespawnInThis(@NotNull BlockState state)
+	public boolean isPossibleToRespawnInThis()
 	{
 		return true;
 	}
 	@Override
 	public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
 	{
-		if (stack.getTag() != null && level.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
+		if (stack.getTag() != null && level.getBlockEntity(pos) instanceof SpawnPadTileEntity)
 		{
 			ColorUtils.setInkColor(level.getBlockEntity(pos), ColorUtils.getInkColor(stack));
 			
 			SpawnShieldEntity shield = new SpawnShieldEntity(level, pos, ColorUtils.getInkColorOrInverted(stack));
-			spawnPadTile.setSpawnShield(shield);
+			((SpawnPadTileEntity) level.getBlockEntity(pos)).setSpawnShield(shield);
 			
 			level.addFreshEntity(shield);
 		}
@@ -196,7 +196,10 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 	{
 		if (level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
 		{
-			return tileEntity.getColor();
+			if (tileEntity != null)
+			{
+				return tileEntity.getColor();
+			}
 		}
 		return -1;
 	}

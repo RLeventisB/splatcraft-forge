@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:block/stairs",
   "textures": {
-    "all": "splatcraft:block/colored_coralite",
+    "all": "splatcraft:blocks/colored_coralite",
     "particle": "#all"
   },
   "elements": [

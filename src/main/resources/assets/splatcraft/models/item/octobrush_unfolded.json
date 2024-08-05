@@ -1,9 +1,9 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:item/weapons/octobrush",
-		"1": "splatcraft:item/weapons/octobrush_head",
-		"particle": "splatcraft:item/weapons/octobrush"
+		"0": "splatcraft:weapons/octobrush",
+		"1": "splatcraft:weapons/octobrush_head",
+		"particle": "splatcraft:weapons/octobrush"
 	},
 	"elements": [
 		{

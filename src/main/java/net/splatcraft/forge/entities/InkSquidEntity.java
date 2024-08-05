@@ -70,12 +70,12 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 		}
 	}
 	@Override
-	public int getExperienceReward()
+	protected int getExperienceReward(@NotNull Player player)
 	{
 		return 0;
 	}
 	@Override
-	public boolean shouldDropExperience()
+	protected boolean shouldDropExperience()
 	{
 		return false;
 	}

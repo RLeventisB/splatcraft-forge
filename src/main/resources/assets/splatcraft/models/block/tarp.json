@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"parent": "minecraft:block/thin_block",
 	"textures": {
-		"0": "splatcraft:block/tarp",
-		"particle": "splatcraft:block/tarp"
+		"0": "splatcraft:blocks/tarp",
+		"particle": "splatcraft:blocks/tarp"
 	},
 	"elements": [
 		{

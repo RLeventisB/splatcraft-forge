@@ -21,37 +21,38 @@ import org.jetbrains.annotations.NotNull;
 
 public class InkWaxerItem extends Item
 {
-	public InkWaxerItem()
-	{
-		super(new Properties().durability(256));
-		SplatcraftItemGroups.addGeneralItem(this);
-	}
-	public void onBlockStartBreak(ItemStack itemstack, BlockPos pos, Level level)
-	{
-		if (InkBlockUtils.isInked(level, pos))
-		{
-			ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInk(level, pos).color());
-			
-			SoundType soundType = SplatcraftSounds.SOUND_TYPE_INK;
-			level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundSource.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
-			
-			InkBlockUtils.clearInk(level, pos, true);
-		}
-	}
-	@Override
-	public @NotNull InteractionResult useOn(UseOnContext context)
-	{
-		WorldInk worldInk = WorldInkCapability.get(context.getLevel(), context.getClickedPos());
-		
-		if (worldInk.isInked(context.getClickedPos()))
-		{
-			WorldInk.Entry ink = worldInk.getInk(context.getClickedPos());
-			worldInk.setPermanentInk(context.getClickedPos(), ink.color(), ink.type());
-			
-			context.getLevel().levelEvent(context.getPlayer(), 3003, context.getClickedPos(), 0);
-			
-			return InteractionResult.SUCCESS;
-		}
+    public InkWaxerItem()
+    {
+        super(new Properties().durability(256).tab(SplatcraftItemGroups.GROUP_GENERAL));
+    }
+
+    public void onBlockStartBreak(ItemStack itemstack, BlockPos pos, Level level)
+    {
+        if(InkBlockUtils.isInked(level, pos))
+        {
+            ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInk(level, pos).color());
+
+            SoundType soundType = SplatcraftSounds.SOUND_TYPE_INK;
+            level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundSource.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
+
+            InkBlockUtils.clearInk(level, pos, true);
+        }
+    }
+
+    @Override
+    public @NotNull InteractionResult useOn(UseOnContext context)
+    {
+        WorldInk worldInk = WorldInkCapability.get(context.getLevel(), context.getClickedPos());
+
+        if(worldInk.isInked(context.getClickedPos()))
+        {
+            WorldInk.Entry ink = worldInk.getInk(context.getClickedPos());
+            worldInk.setPermanentInk(context.getClickedPos(), ink.color(), ink.type());
+
+            context.getLevel().levelEvent(context.getPlayer(), 3003, context.getClickedPos(), 0);
+
+            return InteractionResult.SUCCESS;
+        }
 
         /*
         if(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof InkedBlockTileEntity)
@@ -70,22 +71,22 @@ public class InkWaxerItem extends Item
             }
         }
         */
-		
-		return super.useOn(context);
-	}
-	@Override
-	public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player)
-	{
-		return false;
-	}
-	@Override
-	public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state)
-	{
-		return 0;
-	}
-	@Override
-	public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair)
-	{
-		return repair.getItem().equals(Items.HONEYCOMB) || super.isValidRepairItem(toRepair, repair);
-	}
+
+        return super.useOn(context);
+    }
+
+    @Override
+    public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player) {
+        return false;
+    }
+
+    @Override
+    public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state) {
+        return 0;
+    }
+
+    @Override
+    public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair) {
+        return repair.getItem().equals(Items.HONEYCOMB) || super.isValidRepairItem(toRepair, repair);
+    }
 }

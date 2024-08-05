@@ -1,7 +1,0 @@
-{
-  
-  "forge": 
-  {
-    "loader": "splatcraft:weapon_loader"
-  }
-}

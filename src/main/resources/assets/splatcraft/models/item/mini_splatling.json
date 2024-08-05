@@ -1,8 +1,8 @@
 {
 	"credit": "Made with Blockbench",
 	"textures": {
-		"0": "splatcraft:item/weapons/mini_splatling",
-		"particle": "splatcraft:item/weapons/mini_splatling"
+		"0": "splatcraft:weapons/mini_splatling",
+		"particle": "splatcraft:weapons/mini_splatling"
 	},
 	"elements": [
 		{

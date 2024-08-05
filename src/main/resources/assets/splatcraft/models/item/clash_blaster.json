@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:item/weapons/clash_blaster",
-    "particle": "splatcraft:item/weapons/clash_blaster"
+    "0": "splatcraft:weapons/clash_blaster",
+    "particle": "splatcraft:weapons/clash_blaster"
   },
   "elements": [
     {

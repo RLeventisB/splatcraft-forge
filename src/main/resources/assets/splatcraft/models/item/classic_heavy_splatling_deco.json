@@ -2,10 +2,10 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "splatcraft:item/weapons/heavy_splatling",
-		"1": "splatcraft:item/weapons/heavy_splatling_ink",
-		"4": "splatcraft:item/weapons/gal_deco",
-		"particle": "splatcraft:item/weapons/heavy_splatling"
+		"0": "splatcraft:weapons/heavy_splatling",
+		"1": "splatcraft:weapons/heavy_splatling_ink",
+		"4": "splatcraft:weapons/gal_deco",
+		"particle": "splatcraft:weapons/heavy_splatling"
 	},
 	"elements": [
 		{

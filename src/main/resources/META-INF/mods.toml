@@ -1,10 +1,10 @@
-modLoader = "javafml"
+modLoader           = "javafml"
 loaderVersion = "[40.0,)"
 license = "https://github.com/splatcraft/splatcraft-forge/blob/HEAD/LICENSE"
 
 [[mods]]
-modId = "splatcraft"
-displayName = "Splatcraft"
+modId           = "splatcraft"
+displayName     = "Splatcraft"
 description = '''
         Splatcraft is a Minecraft mod based on Nintendo's popular game Splatoon!
         This mod aims to add items and mechanics based on the game in a cohesive way, such as Turf Wars, Weapons, Squid Transformations and many more!
@@ -37,14 +37,14 @@ displayURL = "https://curseforge.com/minecraft/mc-mods/splatcraft"
 issueTrackerURL = "https://github.com/splatcraft/splatcraft-forge/issues"
 
 [[dependencies.splatcraft]]
-modId = "forge"
+modId           = "forge"
 mandatory = true
-versionRange = "[47.3.0,47.3.4)"
+versionRange = "[40.2.4,41)"
 ordering = "NONE"
-side = "BOTH"
+side            = "BOTH"
 [[dependencies.splatcraft]]
-modId = "minecraft"
+modId           = "minecraft"
 mandatory = true
-versionRange = "[1.20.1]"
+versionRange = "[1.18.2]"
 ordering = "NONE"
-side = "BOTH"
+side            = "BOTH"

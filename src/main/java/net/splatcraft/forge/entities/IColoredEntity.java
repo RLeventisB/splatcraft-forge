@@ -1,17 +1,17 @@
 package net.splatcraft.forge.entities;
 
-import net.minecraft.world.damagesource.DamageSource;
+import net.splatcraft.forge.util.InkDamageUtils;
 
 public interface IColoredEntity
 {
-	int getColor();
-	void setColor(int color);
-	default boolean onEntityInked(DamageSource source, float damage, int color)
-	{
-		return false;
-	}
-	default boolean handleInkOverlay()
-	{
-		return false;
-	}
+    int getColor();
+
+    void setColor(int color);
+
+    default boolean onEntityInked(InkDamageUtils.InkDamageSource source, float damage, int color)
+    {
+        return false;
+    }
+
+    default boolean handleInkOverlay() {return false;}
 }

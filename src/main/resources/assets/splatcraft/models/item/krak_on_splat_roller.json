@@ -1,11 +1,11 @@
 {
   "credit": "Made with Blockbench",
   "textures": {
-    "0": "splatcraft:item/weapons/splat_roller_1",
-    "1": "splatcraft:item/weapons/ink_color",
-    "2": "splatcraft:item/weapons/splat_roller_2",
-    "3": "splatcraft:item/weapons/krak_on_splat_roller_overlay",
-    "particle": "splatcraft:item/weapons/ink_color"
+    "0": "splatcraft:weapons/splat_roller_1",
+    "1": "splatcraft:weapons/ink_color",
+    "2": "splatcraft:weapons/splat_roller_2",
+    "3": "splatcraft:weapons/krak_on_splat_roller_overlay",
+    "particle": "splatcraft:weapons/ink_color"
   },
   "elements": [
     {

@@ -14,7 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -31,7 +32,7 @@ public class StageBarrierBlock extends Block implements EntityBlock
 	public final boolean damagesPlayer;
 	public StageBarrierBlock(boolean damagesPlayer)
 	{
-		super(Properties.of().pushReaction(PushReaction.BLOCK).strength(-1.0F, 3600000.8F).noOcclusion());
+		super(Properties.of(Material.BARRIER, MaterialColor.NONE).strength(-1.0F, 3600000.8F).noDrops().noOcclusion());
 		this.damagesPlayer = damagesPlayer;
 	}
 	@Override
@@ -39,13 +40,14 @@ public class StageBarrierBlock extends Block implements EntityBlock
 	{
 		return true;
 	}
-	/* ???
-	@Override
-	public boolean addHitEffects(BlockState state, Level levelObj, HitResult target, ParticleManager manager)
-	{
-		return true;
-	}
-	*/
+
+    /* ???
+    @Override
+    public boolean addHitEffects(BlockState state, Level levelObj, HitResult target, ParticleManager manager)
+    {
+        return true;
+    }
+    */
 	@Override
 	public boolean addRunningEffects(BlockState state, Level level, BlockPos pos, Entity entity)
 	{

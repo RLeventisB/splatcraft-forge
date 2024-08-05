@@ -5,9 +5,9 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:item/weapons/inkbrush",
-    "1": "splatcraft:item/weapons/inkbrush_head_inked",
-    "particle": "splatcraft:item/weapons/inkbrush"
+    "0": "splatcraft:weapons/inkbrush",
+    "1": "splatcraft:weapons/inkbrush_head_inked",
+    "particle": "splatcraft:weapons/inkbrush"
   },
   "elements": [
     {

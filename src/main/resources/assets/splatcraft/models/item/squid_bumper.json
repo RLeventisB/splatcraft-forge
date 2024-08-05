@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "splatcraft:item/squid_bumper",
-    "layer1": "splatcraft:item/squid_bumper_overlay"
+    "layer0": "splatcraft:items/squid_bumper",
+    "layer1": "splatcraft:items/squid_bumper_overlay"
   }
 }

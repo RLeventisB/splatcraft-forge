@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -44,7 +44,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 	public RemotePedestalBlock()
 	{
-		super(Properties.of().mapColor(MapColor.METAL).strength(2.0f).requiresCorrectToolForDrops());
+		super(Properties.of(Material.METAL).strength(2.0f).requiresCorrectToolForDrops());
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 		registerDefaultState(defaultBlockState().setValue(POWERED, false));
 	}

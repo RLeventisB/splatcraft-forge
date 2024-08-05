@@ -5,8 +5,8 @@
     32
   ],
   "textures": {
-    "0": "splatcraft:item/weapons/soda_slosher",
-    "particle": "splatcraft:item/weapons/soda_slosher"
+    "0": "splatcraft:weapons/soda_slosher",
+    "particle": "splatcraft:weapons/soda_slosher"
   },
   "elements": [
     {

@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
 import net.minecraft.world.phys.HitResult;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
@@ -31,7 +31,7 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
 	public static final BooleanProperty INKED = BooleanProperty.create("inked");
 	public CanvasBlock(String name)
 	{
-		super(Properties.of().mapColor(MapColor.WOOL).ignitedByLava().strength(0.8f).sound(SoundType.WOOL));
+		super(Properties.of(Material.WOOL).strength(0.8f).sound(SoundType.WOOL));
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 		registerDefaultState(defaultBlockState().setValue(INKED, false));
 	}

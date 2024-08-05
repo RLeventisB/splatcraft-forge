@@ -218,7 +218,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				DualieWeaponSettings settings = dualieItem.getSettings(offhandDualie);
 				CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
 				
-				dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.onGround() && hasCooldown);
+				dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.isOnGround() && hasCooldown);
 			}
 			fireDualie(level, entity, stack, timeLeft, onRollCooldown);
 		}
@@ -237,7 +237,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				{
 					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
 					proj.data = new Object[] {onRollCooldown};
-					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), entity.onGround() ? firingData.groundInaccuracy() : firingData.airborneInaccuracy());
+					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), entity.isOnGround() ? firingData.groundInaccuracy() : firingData.airborneInaccuracy());
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
 				}
@@ -279,7 +279,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				nbt.getByte("TurretModeFrames"),
 				nbt.getBoolean("CanSlide"),
 				nbt.getBoolean("LastRoll"));
-			setTime(nbt.getInt("Time"));
 		}
 		@Override
 		public void tick(Player player)
@@ -312,7 +311,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				if (local)
 				{
-					Input input = ClientUtils.getUnmodifiedInput(player);
+					Input input = ClientUtils.GetUnmodifiedInput(player);
 					boolean endedTurretMode = input.jumping || input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
 					if (endedTurretMode)
 					{
@@ -325,7 +324,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						setTime(2);
 					}
 				}
-				else if (getTime() > 0)
+				else
 				{
 					setTime(2);
 				}
@@ -352,7 +351,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			nbt.putBoolean("LastRoll", isLastRoll());
 			nbt.putFloat("RollDirectionX", rollDirection.x);
 			nbt.putFloat("RollDirectionZ", rollDirection.y);
-			nbt.putInt("Time", getTime());
 			
 			return nbt;
 		}

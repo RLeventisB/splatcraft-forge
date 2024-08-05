@@ -25,7 +25,6 @@ import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.InkDamageUtils;
 import net.splatcraft.forge.util.InkExplosion;
@@ -43,10 +42,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 	public float bladeRot = 0;
 	public float prevBladeRot = 0;
 	private boolean playedActivationSound = false;
+	private boolean playAlertAnim = false;
 	public CurlingBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
 	{
 		super(type, level);
-		setMaxUpStep(.7f);
+		maxUpStep = .7f;
 	}
 	@Override
 	protected void defineSynchedData()
@@ -87,12 +87,13 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		
 		double spd = getDeltaMovement().multiply(1, 0, 1).length();
 		prevBladeRot = bladeRot;
-		bladeRot += (float) spd;
+		bladeRot += spd;
 		
 		prevFuseTime = fuseTime;
 		fuseTime++;
 		
-		boolean playAlertAnim = fuseTime == 30;
+		if (fuseTime == 30)
+			playAlertAnim = true;
 		
 		if (fuseTime >= settings.fuseTime - FLASH_DURATION && !playedActivationSound)
 		{
@@ -112,7 +113,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 					
 					for (int i = 0; i <= 2; i++)
 					{
-						BlockPos side = CommonUtils.createBlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
+						BlockPos side = new BlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
 						if (InkBlockUtils.canInkFromFace(level, side, Direction.UP))
 						{
 							InkBlockUtils.playerInkBlock(getOwner() instanceof Player player ? player : null, level, side, getColor(), settings.contactDamage, inkType);
@@ -132,11 +133,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 			}
 		}
 		
-		if (!onGround() || distanceToSqr(getDeltaMovement()) > 1.0E-5)
+		if (!onGround || distanceToSqr(getDeltaMovement()) > 1.0E-5)
 		{
 			float f1 = 0.98F;
-			if (onGround())
-				f1 = this.level.getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getFriction(level, CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ()), this);
+			if (onGround)
+				f1 = this.level.getBlockState(new BlockPos(getX(), getY() - 1.0D, getZ())).getFriction(level, new BlockPos(getX(), getY() - 1.0D, getZ()), this);
 			
 			f1 = (float) Math.min(0.98, f1 * 3f) * Math.min(1, 2 * (1 - fuseTime / (float) settings.fuseTime));
 			
@@ -210,7 +211,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		
 		Direction blockFace = result.getDirection();
 		
-		if (level.getBlockState(result.getBlockPos()).getCollisionShape(level, result.getBlockPos()).bounds().maxY - (position().y() - blockPosition().getY()) < .7f)
+		if (level.getBlockState(result.getBlockPos()).getCollisionShape(level, result.getBlockPos()).bounds().maxY - (position().y() - blockPosition().getY()) < maxUpStep)
 			return;
 		
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
@@ -238,7 +239,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		boolean flag = p_20273_.x != vec3.x;
 		boolean flag1 = p_20273_.y != vec3.y;
 		boolean flag2 = p_20273_.z != vec3.z;
-		boolean flag3 = this.onGround() || flag1 && p_20273_.y < 0.0D;
+		boolean flag3 = this.onGround || flag1 && p_20273_.y < 0.0D;
 		float stepHeight = getStepHeight();
 		if (stepHeight > 0.0F && flag3 && (flag || flag2))
 		{
@@ -266,7 +267,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		boolean flag = p_20273_.x != vec3.x;
 		boolean flag1 = p_20273_.y != vec3.y;
 		boolean flag2 = p_20273_.z != vec3.z;
-		boolean flag3 = this.onGround() || flag1 && p_20273_.y < 0.0D;
+		boolean flag3 = this.onGround || flag1 && p_20273_.y < 0.0D;
 		float stepHeight = getStepHeight();
 		if (stepHeight > 0.0F && flag3 && (flag || flag2))
 		{

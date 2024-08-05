@@ -1,7 +1,6 @@
 package net.splatcraft.forge.entities.subs;
 
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -162,7 +161,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
 		inGround = nbt.getBoolean("InGround");
 		shakeTime = nbt.getInt("ShakeTime");
 		if (nbt.contains("InBlockState", 10))
-			this.inBlockState = NbtUtils.readBlockState(level().holderLookup(Registries.BLOCK), nbt.getCompound("inBlockState"));
+			this.inBlockState = NbtUtils.readBlockState(nbt.getCompound("inBlockState"));
 		
 		fuseTime = nbt.getInt("FuseTime");
 		prevFuseTime = fuseTime;

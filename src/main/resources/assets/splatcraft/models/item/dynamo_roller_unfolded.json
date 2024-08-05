@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
-		"2": "splatcraft:item/weapons/dynamo_roller",
-		"3": "splatcraft:item/weapons/dynamo_roller_2"
+		"2": "splatcraft:weapons/dynamo_roller",
+		"3": "splatcraft:weapons/dynamo_roller_2"
 	},
 	"elements": [
 		{

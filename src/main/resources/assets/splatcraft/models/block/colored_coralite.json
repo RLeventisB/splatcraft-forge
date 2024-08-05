@@ -2,8 +2,8 @@
   "credit": "Made with Blockbench",
   "parent": "block/block",
   "textures": {
-    "0": "splatcraft:block/colored_coralite",
-    "particle": "splatcraft:block/colored_coralite"
+    "0": "splatcraft:blocks/colored_coralite",
+    "particle": "splatcraft:blocks/colored_coralite"
   },
   "elements": [
     {

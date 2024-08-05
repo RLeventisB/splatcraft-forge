@@ -5,13 +5,13 @@ import net.splatcraft.forge.registries.SplatcraftItemGroups;
 
 public class BlockItem extends net.minecraft.world.item.BlockItem
 {
-	public BlockItem(Block block)
-	{
-		super(block, new Properties());
-		SplatcraftItemGroups.addGeneralItem(this);
-	}
-	public BlockItem(Block block, Properties properties)
-	{
-		super(block, properties);
-	}
+    public BlockItem(Block block)
+    {
+        super(block, new Properties().tab(SplatcraftItemGroups.GROUP_GENERAL));
+    }
+
+    public BlockItem(Block block, Properties properties)
+    {
+        super(block, properties);
+    }
 }

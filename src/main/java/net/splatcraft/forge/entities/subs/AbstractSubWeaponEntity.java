@@ -5,15 +5,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,7 +37,6 @@ import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.InkDamageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +44,7 @@ import java.util.UUID;
 
 public abstract class AbstractSubWeaponEntity extends Entity implements IColoredEntity
 {
-	protected static final ResourceKey<DamageType> SPLASH_DAMAGE_TYPE = InkDamageUtils.SPLAT;
+	protected static final String SPLASH_DAMAGE_TYPE = "splat";
 	private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<ItemStack> DATA_ITEM_STACK = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.ITEM_STACK);
 	public boolean isItem = false;
@@ -58,8 +54,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 	private UUID ownerUUID;
 	private int ownerNetworkId;
 	private boolean leftOwner;
-	//	@Deprecated //use AbstractWeaponEntity.create
-//	no
+	@Deprecated //use AbstractWeaponEntity.create
 	public AbstractSubWeaponEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
 	{
 		super(type, level);
@@ -111,7 +106,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 		Vec3 raytraceOffset = new Vec3(getBbWidth() / 2f * Math.signum(getDeltaMovement().x), getBbHeight() * Math.max(0, Math.signum(getDeltaMovement().y)), getBbWidth() / 2f * Math.signum(getDeltaMovement().z));
 		
 		setDeltaMovement(getDeltaMovement().add(raytraceOffset));
-		HitResult raytraceresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+		HitResult raytraceresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
 		setDeltaMovement(getDeltaMovement().subtract(raytraceOffset));
 		
 		boolean flag = false;
@@ -195,7 +190,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 			try
 			{
 				posDiff = thrower.position().subtract(WeaponHandler.getPlayerPrevPos((Player) thrower));
-				if (thrower.onGround())
+				if (thrower.isOnGround())
 					posDiff.multiply(1, 0, 1);
 			}
 			catch (NullPointerException ignored)
@@ -332,7 +327,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 		}
 	}
 	@Override
-	public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket()
+	public @NotNull Packet<?> getAddEntityPacket()
 	{
 		return NetworkHooks.getEntitySpawningPacket(this);
 	}
@@ -372,7 +367,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 		float f2 = Mth.cos(p_234612_3_ * (Mth.DEG_TO_RAD)) * Mth.cos(p_234612_2_ * (Mth.DEG_TO_RAD));
 		this.shoot(f, f1, f2, p_234612_5_, p_234612_6_);
 		Vec3 vector3d = p_234612_1_.getDeltaMovement();
-		this.setDeltaMovement(this.getDeltaMovement().add(vector3d.x, p_234612_1_.onGround() ? 0.0D : vector3d.y, vector3d.z));
+		this.setDeltaMovement(this.getDeltaMovement().add(vector3d.x, p_234612_1_.isOnGround() ? 0.0D : vector3d.y, vector3d.z));
 	}
 	@OnlyIn(Dist.CLIENT)
 	public void lerpMotion(double p_70016_1_, double p_70016_3_, double p_70016_5_)
@@ -381,8 +376,8 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 		if (this.xRotO == 0.0F && this.yRotO == 0.0F)
 		{
 			float f = Mth.sqrt((float) (p_70016_1_ * p_70016_1_ + p_70016_5_ * p_70016_5_));
-			this.setXRot((float) (Mth.atan2(p_70016_3_, f) * Mth.RAD_TO_DEG));
-			this.setYRot((float) (Mth.atan2(p_70016_1_, p_70016_5_) * Mth.RAD_TO_DEG));
+			this.setXRot((float) (Mth.atan2(p_70016_3_, f) * (double) (180F / (float) Math.PI)));
+			this.setYRot((float) (Mth.atan2(p_70016_1_, p_70016_5_) * (double) (180F / (float) Math.PI)));
 			this.xRotO = this.getXRot();
 			this.yRotO = this.getYRot();
 			this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
