@@ -130,7 +130,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 					float extraTime = frame - sloshTime.time;
 					float partialTick = 1 - extraTime;
 					
-					if (didSound || reduceInk(player, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true))
+					if (reduceInk(player, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true))
 					{
 						SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(sloshTime.sloshDataIndex);
 						
