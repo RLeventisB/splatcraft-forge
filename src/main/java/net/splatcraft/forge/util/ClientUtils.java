@@ -75,9 +75,9 @@ public class ClientUtils
 		}
 		
 		ItemStack chestpiece = player.getItemBySlot(EquipmentSlot.CHEST);
-		if (chestpiece.getItem() instanceof InkTankItem item)
+		if (chestpiece.getItem() instanceof InkTankItem)
 		{
-			return InkTankItem.getInkAmount(chestpiece) / item.capacity;
+			return InkTankItem.getInkAmount(chestpiece) / ((InkTankItem) chestpiece.getItem()).capacity;
 		}
 		return 1;
 	}

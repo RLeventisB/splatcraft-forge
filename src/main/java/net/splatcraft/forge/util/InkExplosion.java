@@ -89,7 +89,7 @@ public class InkExplosion
 		getBlocksInSphereWithNoise(set, level);
 		
 		this.affectedBlockPositions.addAll(set);
-		if (damageRadius == 0 || minDamage <= 0.1 && maxDamage <= 0.1)
+		if (minDamage <= 0.1 && maxDamage <= 0.1 || damageRadius == 0)
 			return;
 		boolean sameDamage = minDamage == maxDamage;
 		float radiusSquared = this.damageRadius * this.damageRadius;
@@ -141,7 +141,6 @@ public class InkExplosion
 	{
 		final float noiseRange = 0.2f;
 		int cubeSizeHalf = ((int) Math.ceil(paintRadius + noiseRange) >> 1) + 1;
-//		CommonUtils.spawnTestText(level, position, position.toString());
 		
 		for (int x = -cubeSizeHalf; x <= cubeSizeHalf; x++)
 			for (int y = -cubeSizeHalf; y <= cubeSizeHalf; y++)
@@ -158,7 +157,13 @@ public class InkExplosion
 					double dY = blockCenterY - position.y();
 					double dZ = blockCenterZ - position.z();
 					double dist = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-					if (dist <= paintRadius + noiseRange + 0.5f * Math.sqrt(2))
+					boolean inRadius = dist <= paintRadius - noiseRange;
+					if (!inRadius && dist <= paintRadius + noiseRange)
+					{
+						double noiseProgress = (dist - (paintRadius - noiseRange)) / (noiseRange * 2);
+						inRadius = (1 - noiseProgress * noiseProgress * noiseProgress) >= level.getRandom().nextFloat();
+					}
+					if (inRadius)
 					{
 						List<Tuple<Vec3, Direction>> points = new ArrayList<>(6);
 						
@@ -180,23 +185,8 @@ public class InkExplosion
 						{
 							if (raycastAndGetDirection(position, point.getA(), level, pos) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
 							{
-								dX = point.getA().x - position.x;
-								dY = point.getA().y - position.y;
-								dZ = point.getA().z - position.z;
-								dist = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-//								CommonUtils.spawnTestText(level, point.getA(), Double.toString(dist));
-								
-								boolean inRadius = dist <= paintRadius - noiseRange;
-								if (!inRadius && dist <= paintRadius + noiseRange)
-								{
-									double noiseProgress = (dist - (paintRadius - noiseRange)) / (noiseRange * 2);
-									inRadius = (noiseProgress * noiseProgress) <= level.getRandom().nextFloat();
-								}
-								if (inRadius)
-								{
-									set.add(pos);
-									break;
-								}
+								set.add(pos);
+								break;
 							}
 						}
 					}

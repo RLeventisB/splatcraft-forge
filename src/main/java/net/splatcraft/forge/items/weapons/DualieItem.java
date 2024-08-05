@@ -19,7 +19,6 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
@@ -237,8 +236,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				for (int i = 0; i < firingData.projectileCount(); i++)
 				{
 					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
+					proj.data = new Object[] {onRollCooldown};
 					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), entity.onGround() ? firingData.groundInaccuracy() : firingData.airborneInaccuracy());
-					proj.setExtraData(new ExtraSaveData.DualieExtraData(onRollCooldown));
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
 				}

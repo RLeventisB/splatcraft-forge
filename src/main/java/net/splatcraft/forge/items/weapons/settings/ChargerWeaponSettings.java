@@ -2,7 +2,6 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -40,13 +39,10 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		super(name);
 	}
 	@Override
-	public float calculateDamage(float tickCount, boolean airborne, ExtraSaveData data)
+	public float calculateDamage(float tickCount, boolean airborne, Object[] data)
 	{
-		if (data instanceof ExtraSaveData.ChargeExtraData extraData)
-		{
-			return extraData.charge >= 1.0f ? chargedDamage : minChargeDamage + (baseChargeDamage - minChargeDamage) * extraData.charge;
-		}
-		return minChargeDamage;
+		float charge = (float) data[0];
+		return charge >= 1.0f ? chargedDamage : minChargeDamage + (baseChargeDamage - minChargeDamage) * charge;
 	}
 	@Override
 	public float getMinDamage()
