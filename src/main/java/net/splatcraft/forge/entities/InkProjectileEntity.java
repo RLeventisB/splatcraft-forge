@@ -279,7 +279,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
 			{
-				InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon);
+				InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
 				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
@@ -447,7 +447,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
-				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, attackId);
 				level.broadcastEntityEvent(this, (byte) 3);
 				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
@@ -479,8 +479,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
-				damageMultiplier *= explosionData.sparkDamagePenalty;
-				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.explosionRadius, damage.getMinDamage() * damageMultiplier, explosionData.maxIndirectDamage * damageMultiplier, inkType, sourceWeapon, attackId);
+				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(explosionData.sparkDamagePenalty * damageMultiplier), inkType, sourceWeapon, attackId);
 				level.broadcastEntityEvent(this, (byte) 3);
 //				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}

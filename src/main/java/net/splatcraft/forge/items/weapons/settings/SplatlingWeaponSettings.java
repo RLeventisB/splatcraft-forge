@@ -29,11 +29,6 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		return Math.max(e > 0 ? firstChargeLevelProjectile.baseDamage() - (e * firstChargeLevelProjectile.damageDecayPerTick()) : firstChargeLevelProjectile.baseDamage(), firstChargeLevelProjectile.minDamage());
 	}
 	@Override
-	public float getMinDamage()
-	{
-		return firstChargeLevelProjectile.minDamage();
-	}
-	@Override
 	public WeaponTooltip<SplatlingWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]

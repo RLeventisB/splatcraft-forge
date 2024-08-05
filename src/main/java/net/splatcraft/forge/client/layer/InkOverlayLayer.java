@@ -23,42 +23,37 @@ import java.util.List;
 public class InkOverlayLayer<E extends LivingEntity, M extends EntityModel<E>> extends RenderLayer<E, M>
 {
 	private final List<RenderType> BUFFERS = Arrays.asList(
-			RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 0 + ".png")),
-			RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 1 + ".png")),
-			RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 2 + ".png")),
-			RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 3 + ".png")),
-			RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 4 + ".png"))
+		RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 0 + ".png")),
+		RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 1 + ".png")),
+		RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 2 + ".png")),
+		RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 3 + ".png")),
+		RenderType.entitySmoothCutout(new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + 4 + ".png"))
 	);
-
-	public InkOverlayLayer(RenderLayerParent<E, M> parent) {
+	public InkOverlayLayer(RenderLayerParent<E, M> parent)
+	{
 		super(parent);
 	}
-
 	@Override
 	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull E entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
 		int overlay = -1;
 		float[] rgb = ColorUtils.hexToRGB(ColorUtils.DEFAULT);
-
+		
 		if (InkOverlayCapability.hasCapability(entity))
 		{
 			InkOverlayInfo info = InkOverlayCapability.get(entity);
 			rgb = ColorUtils.hexToRGB(info.getColor());
 			overlay = (int) (Math.min(info.getAmount() / (entity instanceof SquidBumperEntity ? SquidBumperEntity.maxInkHealth : entity.getMaxHealth()) * 4, 4) - 1);
 		}
-
+		
 		if (overlay <= -1)
 		{
 			return;
 		}
-
+		
 		//alex mob coming in clutch
+		// hell yeah
 		VertexConsumer ivertexbuilder = bufferIn.getBuffer(BUFFERS.get(overlay));
 		this.getParentModel().renderToBuffer(matrixStack, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], 1.0F);
-
-		//if(getParentModel() instanceof SquidBumperModel)
-		//	((SquidBumperModel) getParentModel()).renderBumper(matrixStack, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], 1.0F);
-
-		//renderCopyCutoutModel(getParentModel(), MODEL, new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_overlay_" + overlay + ".png"), matrixStack, bufferIn, packedLightIn, entity, v, v1, v2, v3, v4, v5, 1, 1, 1);
 	}
 }

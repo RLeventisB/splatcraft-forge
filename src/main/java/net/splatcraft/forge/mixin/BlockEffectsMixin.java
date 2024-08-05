@@ -28,7 +28,7 @@ public class BlockEffectsMixin
 		{
 			if (InkBlockUtils.isInked(level, pos, Direction.UP))
 			{
-				ColorUtils.addInkSplashParticle(level, InkBlockUtils.getInkBlock(level, pos).color(Direction.UP), entity.getX(), entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ(), (float) (Math.sqrt(i) * 0.3f));
+				ColorUtils.addInkSplashParticle(level, InkBlockUtils.getInkBlock(level, pos).color(Direction.UP.get3DDataValue()), entity.getX(), entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ(), (float) (Math.sqrt(i) * 0.3f));
 				return true;
 			}
 			return original.call(state, level, pos, blockState, entity, i);
@@ -51,7 +51,7 @@ public class BlockEffectsMixin
 		{
 			if (InkBlockUtils.isInked(level, pos, Direction.UP))
 			{
-				ColorUtils.addInkSplashParticle(level, InkBlockUtils.getInkBlock(level, pos).color(Direction.UP), entity.getX() + level.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5,
+				ColorUtils.addInkSplashParticle(level, InkBlockUtils.getInkBlock(level, pos).color(Direction.UP.get3DDataValue()), entity.getX() + level.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5,
 					entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ() + level.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5, 0.3f + level.random.nextFloat() * 0.4f);
 				return true;
 			}

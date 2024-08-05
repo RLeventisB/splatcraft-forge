@@ -8,8 +8,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
+import net.splatcraft.forge.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import static net.splatcraft.forge.Splatcraft.MODID;
@@ -118,34 +120,31 @@ public abstract class ExtraSaveData
 	}
 	public static class ExplosionExtraData extends ExtraSaveData
 	{
-		public float explosionRadius;
-		public float maxIndirectDamage;
+		public DamageRangesRecord damageCalculator;
 		public float sparkDamagePenalty;
 		public float explosionPaint;
-		public ExplosionExtraData(float explosionRadius, float maxIndirectDamage, float sparkDamagePenalty, float explosionPaint)
+		public ExplosionExtraData(DamageRangesRecord damageCalculator, float sparkDamagePenalty, float explosionPaint)
 		{
-			this.explosionRadius = explosionRadius;
-			this.maxIndirectDamage = maxIndirectDamage;
+			this.damageCalculator = damageCalculator;
 			this.sparkDamagePenalty = sparkDamagePenalty;
 			this.explosionPaint = explosionPaint;
 		}
 		@Override
 		public void save(@NotNull FriendlyByteBuf buffer)
 		{
-			buffer.writeFloat(explosionRadius);
-			buffer.writeFloat(maxIndirectDamage);
+			damageCalculator.writeToBuffer(buffer);
 			buffer.writeFloat(sparkDamagePenalty);
 			buffer.writeFloat(explosionPaint);
 		}
 		@Override
 		public ExplosionExtraData load(@NotNull FriendlyByteBuf buffer)
 		{
-			return new ExplosionExtraData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
+			return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readFloat());
 		}
 		@Override
 		public ExplosionExtraData copy()
 		{
-			return new ExplosionExtraData(explosionRadius, maxIndirectDamage, sparkDamagePenalty, explosionPaint);
+			return new ExplosionExtraData(new DamageRangesRecord((TreeMap<Float, Float>) damageCalculator.damageValues().clone(), damageCalculator.lerpBetween()), sparkDamagePenalty, explosionPaint);
 		}
 	}
 	public static final class DualieExtraData extends ExtraSaveData

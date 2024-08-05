@@ -22,11 +22,6 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 		return Math.max(e > 0 ? projectileData.baseDamage() - (e * projectileData.damageDecayPerTick()) : projectileData.baseDamage(), projectileData.minDamage());
 	}
 	@Override
-	public float getMinDamage()
-	{
-		return projectileData.minDamage();
-	}
-	@Override
 	public WeaponTooltip<ShooterWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]

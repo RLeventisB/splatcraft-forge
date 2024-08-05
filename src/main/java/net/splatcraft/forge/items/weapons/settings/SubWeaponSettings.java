@@ -34,11 +34,6 @@ public class SubWeaponSettings extends AbstractWeaponSettings<SubWeaponSettings,
 		return directDamage;
 	}
 	@Override
-	public float getMinDamage()
-	{
-		return indirectDamage;
-	}
-	@Override
 	public WeaponTooltip<SubWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]

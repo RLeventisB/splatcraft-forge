@@ -24,7 +24,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		this.name = name;
 	}
 	public abstract float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list);
-	public abstract float getMinDamage();
 	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{
 		for (WeaponTooltip<SELF> stat : statTooltips)

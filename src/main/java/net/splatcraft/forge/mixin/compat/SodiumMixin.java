@@ -53,22 +53,36 @@ public class SodiumMixin
 			if (world instanceof WorldSlice worldSlice)
 			{
 				ChunkInk worldInk = ChunkInkCapability.get(((WorldSliceAccessor) worldSlice).getWorld(), pos);
-				if (worldInk.isInkedAny(pos))
+				ChunkInk.BlockEntry ink = worldInk.getInk(pos);
+				if (ink != null)
 				{
-					ChunkInk.BlockEntry ink = worldInk.getInk(pos);
 					int index = bakedQuad.getDirection().get3DDataValue();
-					if (ink.isInked(bakedQuad.getDirection()))
+					if (ink.isInkedAny())
 					{
-						float[] rgb = ColorUtils.hexToRGB(ink.color(index));
-						int color = ColorABGR.pack(rgb[0], rgb[1], rgb[2]);
-						
-						splatcraft$renderInkQuad(color, ink.type(index) == InkBlockUtils.InkType.CLEAR ? null : ChunkInkHandler.Render.getInkedBlockSprite(), ink.type(index) == InkBlockUtils.InkType.GLOWING,
-							origin, vertices, indices, blockOffset, bakedQuad, light, model);
-						
-						if (ink.type(index) == InkBlockUtils.InkType.GLOWING)
-							splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getGlitterSprite(), true,
+						if (ink.isInked(bakedQuad.getDirection().get3DDataValue()))
+						{
+							float[] rgb = ColorUtils.hexToRGB(ink.color(index));
+							int color = ColorABGR.pack(rgb[0], rgb[1], rgb[2]);
+							
+							splatcraft$renderInkQuad(color, ink.type(index) == InkBlockUtils.InkType.CLEAR ? null : ChunkInkHandler.Render.getInkedBlockSprite(), ink.type(index) == InkBlockUtils.InkType.GLOWING,
 								origin, vertices, indices, blockOffset, bakedQuad, light, model);
-						return;
+							
+							if (ink.type(index) == InkBlockUtils.InkType.GLOWING)
+								splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getGlitterSprite(), true,
+									origin, vertices, indices, blockOffset, bakedQuad, light, model);
+							
+							if (ink.inmutable)
+								splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getPermanentInkSprite(), false,
+									origin, vertices, indices, blockOffset, bakedQuad, light, model);
+							
+							return;
+						}
+					}
+					else
+					{
+						if (ink.inmutable)
+							splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getPermanentInkSprite(), false,
+								origin, vertices, indices, blockOffset, bakedQuad, light, model);
 					}
 				}
 			}

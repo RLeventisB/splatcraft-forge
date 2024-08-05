@@ -43,11 +43,9 @@ public class InkExplosion
 	private final List<BlockFace> affectedBlockPositions = Lists.newArrayList();
 	private final Vec3 position;
 	private final InkBlockUtils.InkType inkType;
-	private final float minDamage;
-	private final float maxDamage;
-	private final float damageRadius;
+	private final DamageRangesRecord dmgCalculator;
 	private final ItemStack weapon;
-	public InkExplosion(@Nullable Entity source, double x, double y, double z, float damageRadius, float minDamage, float maxDamage, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
+	public InkExplosion(@Nullable Entity source, double x, double y, double z, DamageRangesRecord damageCalculator, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
 	{
 		this.exploder = source;
 		this.paintRadius = paintRadius;
@@ -58,9 +56,7 @@ public class InkExplosion
 		this.position = new Vec3(this.x, this.y, this.z);
 		
 		this.inkType = inkType;
-		this.minDamage = minDamage;
-		this.maxDamage = maxDamage;
-		this.damageRadius = damageRadius;
+		this.dmgCalculator = damageCalculator;
 		this.weapon = weapon;
 	}
 	public static Vec3 adjustPosition(Vec3 pos, Vec3i normal)
@@ -68,24 +64,20 @@ public class InkExplosion
 		float modifier = 0.01f;
 		return pos.add(normal.getX() * modifier, normal.getY() * modifier, normal.getZ() * modifier);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
-	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, 0, damage, type, weapon, attackId);
-	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, 0, damage, type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(damage, damageRadius), type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float minDamage, float maxDamage, InkBlockUtils.InkType type, ItemStack weapon)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, damageRadius, minDamage, maxDamage, type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float minDamage, float maxDamage, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
 		if (source == null || source.level().isClientSide)
 			return;
 		
-		InkExplosion inksplosion = new InkExplosion(source, pos.x(), pos.y(), pos.z(), damageRadius, minDamage, maxDamage, paintRadius, type, weapon, attackId);
+		InkExplosion inksplosion = new InkExplosion(source, pos.x(), pos.y(), pos.z(), damageManager, paintRadius, type, weapon, attackId);
 		
 		inksplosion.doExplosionA();
 		inksplosion.doExplosionCosmetics(false);
@@ -101,16 +93,15 @@ public class InkExplosion
 		getBlocksInSphereWithNoise(set, level);
 		
 		this.affectedBlockPositions.addAll(set);
-		if (damageRadius == 0 || minDamage <= 0.1 && maxDamage <= 0.1)
+		if (dmgCalculator.isInsignificant())
 			return;
-		boolean sameDamage = minDamage == maxDamage;
-		float radiusSquared = this.damageRadius * this.damageRadius;
-		int k1 = Mth.floor(this.x - (double) this.damageRadius - 1.0D);
-		int l1 = Mth.floor(this.x + (double) this.damageRadius + 1.0D);
-		int i2 = Mth.floor(this.y - (double) this.damageRadius - 1.0D);
-		int i1 = Mth.floor(this.y + (double) this.damageRadius + 1.0D);
-		int j2 = Mth.floor(this.z - (double) this.damageRadius - 1.0D);
-		int j1 = Mth.floor(this.z + (double) this.damageRadius + 1.0D);
+		float radiusSquared = dmgCalculator.getMaxRegisteredDistance() * dmgCalculator.getMaxRegisteredDistance();
+		int k1 = Mth.floor(this.x - dmgCalculator.getMaxRegisteredDistance() - 1F);
+		int l1 = Mth.floor(this.x + dmgCalculator.getMaxRegisteredDistance() + 1F);
+		int i2 = Mth.floor(this.y - dmgCalculator.getMaxRegisteredDistance() - 1F);
+		int i1 = Mth.floor(this.y + dmgCalculator.getMaxRegisteredDistance() + 1F);
+		int j2 = Mth.floor(this.z - dmgCalculator.getMaxRegisteredDistance() - 1F);
+		int j1 = Mth.floor(this.z + dmgCalculator.getMaxRegisteredDistance() + 1F);
 		List<LivingEntity> list = level.getEntitiesOfClass(LivingEntity.class, new AABB(k1, i2, j2, l1, i1, j1));
 		
 		int color = ColorUtils.getEntityColor(exploder);
@@ -126,16 +117,8 @@ public class InkExplosion
 			if (targetColor == -1 || (color != targetColor && targetColor > -1))
 			{
 				float seenPercent = Explosion.getSeenPercent(explosionPos, entity);
-				if (sameDamage)
-				{
-					InkDamageUtils.doSplatDamage(entity, maxDamage * seenPercent, exploder, weapon, attackId);
-				}
-				else
-				{
-					float pctg = Mth.sqrt(distance) / damageRadius;
-					
-					InkDamageUtils.doSplatDamage(entity, Mth.lerp(pctg, maxDamage, minDamage) * seenPercent, exploder, weapon, attackId);
-				}
+				
+				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getDamage(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
 			}
 			
 			DyeColor dyeColor = null;
@@ -273,14 +256,14 @@ public class InkExplosion
 			if (!blockstate.isAir())
 			{
 				int color = ColorUtils.getEntityColor(exploder);
-				float percentage = (float) Math.sqrt(blockFace.pos().distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z)) / damageRadius;
+				float dist = (float) Math.sqrt(blockFace.pos().distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z));
 				if (exploder instanceof Player player)
 				{
-					InkBlockUtils.playerInkBlock(player, level, blockFace.pos(), color, blockFace.face(), inkType, Mth.lerp(percentage, minDamage, maxDamage));
+					InkBlockUtils.playerInkBlock(player, level, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator.getDamage(dist));
 				}
 				else
 				{
-					InkBlockUtils.inkBlock(level, blockFace.pos(), color, blockFace.face(), inkType, Mth.lerp(percentage, minDamage, maxDamage));
+					InkBlockUtils.inkBlock(level, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator.getDamage(dist));
 				}
 			}
 		}

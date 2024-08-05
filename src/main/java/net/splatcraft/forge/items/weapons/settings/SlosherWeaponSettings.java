@@ -32,11 +32,6 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		return sampleProjectile.directDamage;
 	}
 	@Override
-	public float getMinDamage()
-	{
-		return 0;
-	}
-	@Override
 	public WeaponTooltip<SlosherWeaponSettings>[] tooltipsToRegister()
 	{
 		return new WeaponTooltip[]
