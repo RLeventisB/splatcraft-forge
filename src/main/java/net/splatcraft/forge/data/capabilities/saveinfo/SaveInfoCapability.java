@@ -13,16 +13,14 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable<CompoundTag>
-{
-    public static Capability<SaveInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
-
+public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable<CompoundTag> {
+    public static Capability<SaveInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {
+    });
     private SaveInfo saveInfo = null;
     private final LazyOptional<SaveInfo> opt = LazyOptional.of(() ->
             saveInfo == null ? (saveInfo = new SaveInfo()) : saveInfo);
 
-    public static SaveInfo get(MinecraftServer server) throws NullPointerException
-    {
+    public static SaveInfo get(MinecraftServer server) throws NullPointerException {
         return server.getLevel(Level.OVERWORLD).getCapability(CAPABILITY).orElseThrow(() -> new NullPointerException("Couldn't find WorldData capability!"));
     }
 
@@ -38,8 +36,7 @@ public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt)
-    {
+    public void deserializeNBT(CompoundTag nbt) {
         opt.orElse(null).readNBT(nbt);
     }
 }

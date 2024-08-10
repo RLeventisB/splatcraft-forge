@@ -43,160 +43,183 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
+@SuppressWarnings("deprecation")
 public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock, IForgeBlockState
 {
-	public static final HashMap<Item, ColoredBlockItem> inkCoatingRecipes = new HashMap<>();
-	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-	public static final SoundType SOUND_TYPE = new ForgeSoundType(1.0F, 1.0F, () -> SoundEvents.STONE_BREAK, () -> SoundEvents.SLIME_BLOCK_STEP, () -> SoundEvents.GLASS_PLACE, () -> SoundEvents.GLASS_HIT, () -> SoundEvents.SLIME_BLOCK_FALL);
-	private static final VoxelShape SHAPE = Shapes.or(
-		box(0, 0, 0, 16, 12, 16),
-		box(1, 12, 1, 14, 13, 14),
-		box(0, 13, 0, 16, 16, 16));
-	public InkwellBlock()
-	{
-		super(Properties.of().isRedstoneConductor((state, getter, pos) -> false).instrument(NoteBlockInstrument.HAT).strength(0.35f).sound(SOUND_TYPE));
-		this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false));
-		
-		SplatcraftBlocks.inkColoredBlocks.add(this);
-	}
-	@Override
-	public float[] getBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
-	{
-		return ColorUtils.hexToRGB(getColor((Level) level, pos));
-	}
-	@Nullable
-	@Override
-	public BlockState getStateForPlacement(BlockPlaceContext context)
-	{
-		return defaultBlockState().setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
-	}
-	@Override
-	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
-	{
-		builder.add(WATERLOGGED);
-	}
-	@Override
-	public @NotNull FluidState getFluidState(BlockState state)
-	{
-		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
-	}
-	@Override
-	public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
-	{
-		if (stateIn.getValue(WATERLOGGED))
-			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
-		
-		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
-	}
-	@Override
-	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
-	{
-		return SHAPE;
-	}
-	@Override
-	public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
-	{
-		return PushReaction.DESTROY;
-	}
-	@Override
-	public @NotNull ItemStack getCloneItemStack(HitResult target, BlockGetter reader, BlockPos pos, Player player)
-	{
-		ItemStack stack = IForgeBlockState.super.getCloneItemStack(target, reader, pos, player);
-		
-		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
-			ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(colorTileEntity)), true);
-		
-		return stack;
-	}
-	@Override
-	public boolean isPathfindable(@NotNull BlockState p_60475_, @NotNull BlockGetter p_60476_, @NotNull BlockPos p_60477_, @NotNull PathComputationType p_60478_)
-	{
-		return false;
-	}
-	@Override
-	public boolean isPossibleToRespawnInThis(@NotNull BlockState pState)
-	{
-		return true;
-	}
-	@Override
-	public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
-	{
-		if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
-		{
-			ColorUtils.setInkColor(level.getBlockEntity(pos), ColorUtils.getInkColor(stack));
-		}
-		super.setPlacedBy(level, pos, state, entity, stack);
-	}
-	@Override
-	public boolean shouldCheckWeakPower(SignalGetter level, BlockPos pos, Direction side)
-	{
-		return true;
-	}
-	@Override
-	public boolean canClimb()
-	{
-		return false;
-	}
-	@Override
-	public boolean canSwim()
-	{
-		return true;
-	}
-	@Override
-	public boolean canDamage()
-	{
-		return false;
-	}
-	@Override
-	public int getColor(Level level, BlockPos pos)
-	{
-		if (level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
-		{
-			return tileEntity.getColor();
-		}
-		return -1;
-	}
-	@Override
-	public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
-	{
-		BlockState state = level.getBlockState(pos);
-		BlockEntity tileEntity = level.getBlockEntity(pos);
-		if (tileEntity instanceof InkColorTileEntity colorTileEntity && colorTileEntity.getColor() != newColor)
-		{
-			colorTileEntity.setColor(newColor);
-			level.sendBlockUpdated(pos, state, state, 3);
-			state.updateNeighbourShapes(level, pos, 3);
-			return true;
-		}
-		return false;
-	}
-	@Override
-	public boolean remoteInkClear(Level level, BlockPos pos)
-	{
-		return false;
-	}
-	@Nullable
-	@Override
-	public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
-	{
-		return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
-	}
-	@Nullable
-	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType)
-	{
-		return level.isClientSide() ? null : (tickLevel, pos, tickState, te) -> tick(tickLevel, pos, tickState, (InkColorTileEntity) te);
-	}
-	private static void tick(Level level, BlockPos pos, BlockState state, InkColorTileEntity t)
-	{
-		AABB bb = new AABB(t.getBlockPos().above());
-		
-		for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, bb))
-		{
-			ItemStack stack = entity.getItem();
-			
-			if (inkCoatingRecipes.containsKey(stack.getItem()))
-				entity.setItem(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(inkCoatingRecipes.get(stack.getItem()), stack.getCount()), t.getColor()), true));
-		}
-	}
+    public static final HashMap<Item, ColoredBlockItem> inkCoatingRecipes = new HashMap<>();
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final SoundType SOUND_TYPE = new ForgeSoundType(1.0F, 1.0F, () -> SoundEvents.STONE_BREAK, () -> SoundEvents.SLIME_BLOCK_STEP, () -> SoundEvents.GLASS_PLACE, () -> SoundEvents.GLASS_HIT, () -> SoundEvents.SLIME_BLOCK_FALL);
+    private static final VoxelShape SHAPE = Shapes.or(
+            box(0, 0, 0, 16, 12, 16),
+            box(1, 12, 1, 14, 13, 14),
+            box(0, 13, 0, 16, 16, 16));
+
+    public InkwellBlock()
+    {
+        super(Properties.of().isRedstoneConductor((state, getter, pos) -> false).instrument(NoteBlockInstrument.HAT).strength(0.35f).sound(SOUND_TYPE));
+        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false));
+
+        SplatcraftBlocks.inkColoredBlocks.add(this);
+    }
+
+    @Override
+    public float[] getBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
+    {
+        return ColorUtils.hexToRGB(getColor((Level) level, pos));
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context)
+    {
+        return defaultBlockState().setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+    {
+        builder.add(WATERLOGGED);
+    }
+
+    @Override
+    public @NotNull FluidState getFluidState(BlockState state)
+    {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    @Override
+    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    {
+        if (stateIn.getValue(WATERLOGGED))
+            levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+
+        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+    }
+
+    @Override
+    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    {
+        return SHAPE;
+    }
+
+    @Override
+    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
+    {
+        return PushReaction.DESTROY;
+    }
+
+    @Override
+    public @NotNull ItemStack getCloneItemStack(HitResult target, BlockGetter reader, BlockPos pos, Player player)
+    {
+        ItemStack stack = IForgeBlockState.super.getCloneItemStack(target, reader, pos, player);
+
+        if (reader.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
+            ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(colorTileEntity)), true);
+
+        return stack;
+    }
+
+    @Override
+    public boolean isPathfindable(@NotNull BlockState p_60475_, @NotNull BlockGetter p_60476_, @NotNull BlockPos p_60477_, @NotNull PathComputationType p_60478_)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isPossibleToRespawnInThis(@NotNull BlockState pState)
+    {
+        return true;
+    }
+
+    @Override
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    {
+        if (stack.getTag() != null && level.getBlockEntity(pos) instanceof InkColorTileEntity)
+        {
+            ColorUtils.setInkColor(level.getBlockEntity(pos), ColorUtils.getInkColor(stack));
+        }
+        super.setPlacedBy(level, pos, state, entity, stack);
+    }
+
+    @Override
+    public boolean shouldCheckWeakPower(SignalGetter level, BlockPos pos, Direction side)
+    {
+        return true;
+    }
+
+    @Override
+    public boolean canClimb()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean canSwim()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean canDamage()
+    {
+        return false;
+    }
+
+    @Override
+    public int getColor(Level level, BlockPos pos)
+    {
+        if (level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
+        {
+            return tileEntity.getColor();
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
+    {
+        BlockState state = level.getBlockState(pos);
+        BlockEntity tileEntity = level.getBlockEntity(pos);
+        if (tileEntity instanceof InkColorTileEntity colorTileEntity && colorTileEntity.getColor() != newColor)
+        {
+            colorTileEntity.setColor(newColor);
+            level.sendBlockUpdated(pos, state, state, 3);
+            state.updateNeighbourShapes(level, pos, 3);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean remoteInkClear(Level level, BlockPos pos)
+    {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+    {
+        return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType)
+    {
+        return level.isClientSide() ? null : (tickLevel, pos, tickState, te) -> tick(tickLevel, pos, tickState, (InkColorTileEntity) te);
+    }
+
+    private static void tick(Level level, BlockPos pos, BlockState state, InkColorTileEntity t)
+    {
+        AABB bb = new AABB(t.getBlockPos().above());
+
+        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, bb))
+        {
+            ItemStack stack = entity.getItem();
+
+            if (inkCoatingRecipes.containsKey(stack.getItem()))
+                entity.setItem(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(inkCoatingRecipes.get(stack.getItem()), stack.getCount()), t.getColor()), true));
+        }
+    }
 }

@@ -45,58 +45,63 @@ import java.util.Set;
 @OnlyIn(Dist.CLIENT)
 public class BlockRenderMixin
 {
-	@Mixin(ModelBlockRenderer.class)
-	public static class Renderer
-	{
-		@Inject(method = "putQuadData", cancellable = true, at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
-			target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFF[IIZ)V"))
-		public void getBlockPosFromQuad(BlockAndTintGetter level, BlockState pState, BlockPos blockPos, VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, CallbackInfo ci)
-		{
-			if (level instanceof RenderChunkRegion region && ChunkInkHandler.Render.splatcraft$renderInkedBlock(region, blockPos, consumer, pose, quad, new float[] {pBrightness0, pBrightness1, pBrightness2, pBrightness3}, new int[] {pLightmap0, pLightmap1, pLightmap2, pLightmap3}, pPackedOverlay, true))
-				ci.cancel();
-		}
-	}
-	@Mixin(ChunkRenderDispatcher.RenderChunk.RebuildTask.class)
-	public static class ChunkRenderDispatcherMixin
-	{
-		@Unique
-		private BlockPos splatcraft$blockPos;
-		@Unique
-		private Level splatcraft$level;
-		@Unique
-		private static boolean splatcraft$renderAsCube;
-		@Inject(method = "compile", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
-		public void getBlockData(float pX, float pY, float pZ, ChunkBufferBuilderPack pChunkBufferBuilderPack, CallbackInfoReturnable<ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults> cir, ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults chunkrenderdispatcher$renderchunk$rebuildtask$compileresults, int i, BlockPos blockpos, BlockPos blockpos1, VisGraph visgraph, RenderChunkRegion renderchunkregion, PoseStack posestack, Set set, RandomSource randomsource, BlockRenderDispatcher blockrenderdispatcher, Iterator var15, BlockPos blockpos2)
-		{
-			splatcraft$level = ((ChunkRegionAccessor) renderchunkregion).getLevel();
-			splatcraft$blockPos = blockpos2;
-			splatcraft$renderAsCube = InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE);
-		}
-		@WrapOperation(method = "compile", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/ChunkRenderTypeSet;"))
-		public ChunkRenderTypeSet getRenderLayer(BakedModel instance, BlockState state, RandomSource randomSource, ModelData modelData, Operation<ChunkRenderTypeSet> original)
-		{
-			ChunkInk chunkInk = ChunkInkCapability.getOrNull(splatcraft$level, splatcraft$blockPos);
-			if (chunkInk.isntEmpty())
-			{
-				if (chunkInk.isInkedAny(splatcraft$blockPos))
-				{
-					return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
-				}
-			}
-			return original.call(instance, state, randomSource, modelData);
-		}
-		@WrapOperation(method = "compile", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
-		public BlockState getBlockState(RenderChunkRegion region, BlockPos pos, Operation<BlockState> original)
-		{
-			return splatcraft$renderAsCube ? SplatcraftBlocks.inkedBlock.get().defaultBlockState() : original.call(region, pos);
-		}
-	}
-	@Mixin(RenderChunkRegion.class)
-	public interface ChunkRegionAccessor
-	{
-		@Accessor("level")
-		Level getLevel();
-	}
+    @Mixin(ModelBlockRenderer.class)
+    public static class Renderer
+    {
+        @Inject(method = "putQuadData", cancellable = true, at = @At(value = "INVOKE", shift = At.Shift.BEFORE,
+                target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFF[IIZ)V"))
+        public void getBlockPosFromQuad(BlockAndTintGetter level, BlockState pState, BlockPos blockPos, VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, CallbackInfo ci)
+        {
+            if (level instanceof RenderChunkRegion region && ChunkInkHandler.Render.splatcraft$renderInkedBlock(region, blockPos, consumer, pose, quad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, new int[]{pLightmap0, pLightmap1, pLightmap2, pLightmap3}, pPackedOverlay, true))
+                ci.cancel();
+        }
+    }
+
+    @Mixin(ChunkRenderDispatcher.RenderChunk.RebuildTask.class)
+    public static class ChunkRenderDispatcherMixin
+    {
+        @Unique
+        private BlockPos splatcraft$blockPos;
+        @Unique
+        private Level splatcraft$level;
+        @Unique
+        private static boolean splatcraft$renderAsCube;
+
+        @Inject(method = "compile", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
+                target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+        public void getBlockData(float pX, float pY, float pZ, ChunkBufferBuilderPack pChunkBufferBuilderPack, CallbackInfoReturnable<ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults> cir, ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults chunkrenderdispatcher$renderchunk$rebuildtask$compileresults, int i, BlockPos blockpos, BlockPos blockpos1, VisGraph visgraph, RenderChunkRegion renderchunkregion, PoseStack posestack, Set<?> set, RandomSource randomsource, BlockRenderDispatcher blockrenderdispatcher, Iterator<?> var15, BlockPos blockpos2)
+        {
+            splatcraft$level = ((ChunkRegionAccessor) renderchunkregion).getLevel();
+            splatcraft$blockPos = blockpos2;
+            splatcraft$renderAsCube = InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE);
+        }
+
+        @WrapOperation(method = "compile", at = @At(value = "INVOKE",
+                target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/ChunkRenderTypeSet;"))
+        public ChunkRenderTypeSet getRenderLayer(BakedModel instance, BlockState state, RandomSource randomSource, ModelData modelData, Operation<ChunkRenderTypeSet> original)
+        {
+            ChunkInk chunkInk = ChunkInkCapability.getOrNull(splatcraft$level, splatcraft$blockPos);
+            if (chunkInk.isntEmpty())
+            {
+                if (chunkInk.isInkedAny(splatcraft$blockPos))
+                {
+                    return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
+                }
+            }
+            return original.call(instance, state, randomSource, modelData);
+        }
+
+        @WrapOperation(method = "compile", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+        public BlockState getBlockState(RenderChunkRegion region, BlockPos pos, Operation<BlockState> original)
+        {
+            return splatcraft$renderAsCube ? SplatcraftBlocks.inkedBlock.get().defaultBlockState() : original.call(region, pos);
+        }
+    }
+
+    @Mixin(RenderChunkRegion.class)
+    public interface ChunkRegionAccessor
+    {
+        @Accessor("level")
+        Level getLevel();
+    }
 }
