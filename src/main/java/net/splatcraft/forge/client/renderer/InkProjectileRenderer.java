@@ -25,87 +25,92 @@ import java.util.TreeMap;
 
 public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> implements RenderLayerParent<InkProjectileEntity, InkProjectileModel>
 {
-	private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/shooter_projectile.png");
-	private final TreeMap<String, InkProjectileModel> MODELS;
-	public InkProjectileRenderer(EntityRendererProvider.Context context)
-	{
-		super(context);
-		
-		MODELS = new TreeMap<String, InkProjectileModel>()
-		{{
-			put(InkProjectileEntity.Types.DEFAULT, new InkProjectileModel(context.bakeLayer(InkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.SHOOTER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.CHARGER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.BLASTER, new BlasterInkProjectileModel(context.bakeLayer(BlasterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.ROLLER, new RollerInkProjectileModel(context.bakeLayer(RollerInkProjectileModel.LAYER_LOCATION)));
-		}};
-	}
-	@Override
-	public void render(InkProjectileEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
-	{
-		if (entityIn.isInvisible())
-			return;
-		
-		if (this.entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.position()) >= 16D)
-		{
-			float visualSize = entityIn.getProjectileVisualSize();
-			float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
-			int color = entityIn.getColor();
-			
-			if (SplatcraftConfig.Client.getColorLock())
-				color = ColorUtils.getLockedColor(color);
-			
-			int rInt = (color & 0x00FF0000) >> 16;
-			int gInt = (color & 0x0000FF00) >> 8;
-			int bInt = color & 0x000000FF;
-			final boolean makeShinier = true; // TODO create a configuration for this, because you can't really see the projectiles well when gaming
-			
-			if (makeShinier)
-			{
-				float[] values = new float[3];
-				Color.RGBtoHSB(rInt, gInt, bInt, values);
-				values[2] = Mth.lerp(0.9f, values[2], 1);
-				values[1] = Mth.lerp(0.5f, values[1], 0);
-				
-				color = Color.HSBtoRGB(values[0], values[1], values[2]);
-				rInt = (color & 0x00FF0000) >> 16;
-				gInt = (color & 0x0000FF00) >> 8;
-				bInt = color & 0x000000FF;
-				packedLightIn = 0x00F00000;
-			}
-			
-			float r = (rInt / 255f);
-			float g = (gInt / 255f);
-			float b = (bInt / 255f);
-			
-			//0.30000001192092896D
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(0.0D, visualSize / 4 /*0.15000000596046448D*/, 0.0D);
-			matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
-			matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.XP, Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-			matrixStackIn.scale(scale, scale, scale);
-			
-			InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
-			
-			model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
-			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), makeShinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
-			matrixStackIn.popPose();
-			
-			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
-		}
-	}
-	protected float handleRotationFloat(InkProjectileEntity livingBase, float partialTicks)
-	{
-		return (float) livingBase.tickCount + partialTicks;
-	}
-	@Override
-	public @NotNull InkProjectileModel getModel()
-	{
-		return MODELS.get(InkProjectileEntity.Types.DEFAULT);
-	}
-	@Override
-	public @NotNull ResourceLocation getTextureLocation(InkProjectileEntity entity)
-	{
-		return new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_projectile_" + entity.getProjectileType() + ".png");
-	}
+    private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/shooter_projectile.png");
+    private final TreeMap<String, InkProjectileModel> MODELS;
+
+    public InkProjectileRenderer(EntityRendererProvider.Context context)
+    {
+        super(context);
+
+        MODELS = new TreeMap<>()
+        {{
+            put(InkProjectileEntity.Types.DEFAULT, new InkProjectileModel(context.bakeLayer(InkProjectileModel.LAYER_LOCATION)));
+            put(InkProjectileEntity.Types.SHOOTER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
+            put(InkProjectileEntity.Types.CHARGER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
+            put(InkProjectileEntity.Types.BLASTER, new BlasterInkProjectileModel(context.bakeLayer(BlasterInkProjectileModel.LAYER_LOCATION)));
+            put(InkProjectileEntity.Types.ROLLER, new RollerInkProjectileModel(context.bakeLayer(RollerInkProjectileModel.LAYER_LOCATION)));
+        }};
+    }
+
+    @Override
+    public void render(InkProjectileEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+    {
+        if (entityIn.isInvisible())
+            return;
+
+        if (this.entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.position()) >= 16D)
+        {
+            float visualSize = entityIn.getProjectileVisualSize();
+            float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
+            int color = entityIn.getColor();
+
+            if (SplatcraftConfig.Client.getColorLock())
+                color = ColorUtils.getLockedColor(color);
+
+            int rInt = (color & 0x00FF0000) >> 16;
+            int gInt = (color & 0x0000FF00) >> 8;
+            int bInt = color & 0x000000FF;
+            final boolean makeShinier = true; // TODO create a configuration for this, because you can't really see the projectiles well when gaming
+
+            if (makeShinier)
+            {
+                float[] values = new float[3];
+                Color.RGBtoHSB(rInt, gInt, bInt, values);
+                values[2] = Mth.lerp(0.9f, values[2], 1);
+                values[1] = Mth.lerp(0.5f, values[1], 0);
+
+                color = Color.HSBtoRGB(values[0], values[1], values[2]);
+                rInt = (color & 0x00FF0000) >> 16;
+                gInt = (color & 0x0000FF00) >> 8;
+                bInt = color & 0x000000FF;
+                packedLightIn = 0x00F00000;
+            }
+
+            float r = (rInt / 255f);
+            float g = (gInt / 255f);
+            float b = (bInt / 255f);
+
+            //0.30000001192092896D
+            matrixStackIn.pushPose();
+            matrixStackIn.translate(0.0D, visualSize / 4 /*0.15000000596046448D*/, 0.0D);
+            matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
+            matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.XP, Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
+            matrixStackIn.scale(scale, scale, scale);
+
+            InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
+
+            model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
+            model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), makeShinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
+            matrixStackIn.popPose();
+
+            super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+        }
+    }
+
+    protected float handleRotationFloat(InkProjectileEntity livingBase, float partialTicks)
+    {
+        return (float) livingBase.tickCount + partialTicks;
+    }
+
+    @Override
+    public @NotNull InkProjectileModel getModel()
+    {
+        return MODELS.get(InkProjectileEntity.Types.DEFAULT);
+    }
+
+    @Override
+    public @NotNull ResourceLocation getTextureLocation(InkProjectileEntity entity)
+    {
+        return new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_projectile_" + entity.getProjectileType() + ".png");
+    }
 }

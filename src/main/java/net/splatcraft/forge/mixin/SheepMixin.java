@@ -18,32 +18,34 @@ import java.util.List;
 @Mixin(Sheep.class)
 public class SheepMixin
 {
-	@WrapOperation(method = "onSheared", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"), remap = false)
-	public boolean getWool(List<ItemStack> list, Object stack, Operation<Boolean> original)
-	{
-		Sheep that = (Sheep) (Object) this;
-		if (InkOverlayCapability.hasCapability(that))
-		{
-			int color = InkOverlayCapability.get(that).getWoolColor();
-			if (color > -1) {
-				return original.call(list, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), color), true));
-			}
-		}
-		return original.call(list, stack);
-	}
+    @WrapOperation(method = "onSheared", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"), remap = false)
+    public boolean getWool(List<ItemStack> list, Object stack, Operation<Boolean> original)
+    {
+        Sheep that = (Sheep) (Object) this;
+        if (InkOverlayCapability.hasCapability(that))
+        {
+            int color = InkOverlayCapability.get(that).getWoolColor();
+            if (color > -1)
+            {
+                return original.call(list, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), color), true));
+            }
+        }
+        return original.call(list, stack);
+    }
 
 
-	@WrapOperation(method = "shear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Sheep;spawnAtLocation(Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/world/entity/item/ItemEntity;"))
-	public ItemEntity spawnAtLocation(Sheep instance, ItemLike iItemProvider, int i, Operation<ItemEntity> original)
-	{
-		if(InkOverlayCapability.hasCapability(instance))
-		{
-			InkOverlayInfo info = InkOverlayCapability.get(instance);
-			if (info.getWoolColor() > -1) {
-				return original.call(instance, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), info.getWoolColor()), true), i);
-			}
-		}
+    @WrapOperation(method = "shear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Sheep;spawnAtLocation(Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/world/entity/item/ItemEntity;"))
+    public ItemEntity spawnAtLocation(Sheep instance, ItemLike iItemProvider, int i, Operation<ItemEntity> original)
+    {
+        if (InkOverlayCapability.hasCapability(instance))
+        {
+            InkOverlayInfo info = InkOverlayCapability.get(instance);
+            if (info.getWoolColor() > -1)
+            {
+                return original.call(instance, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), info.getWoolColor()), true).getItem(), i);
+            }
+        }
 
-		return original.call(instance, iItemProvider, i);
-	}
+        return original.call(instance, iItemProvider, i);
+    }
 }

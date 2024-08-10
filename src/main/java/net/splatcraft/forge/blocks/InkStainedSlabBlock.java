@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static net.splatcraft.forge.blocks.InkStainedBlock.COLORED;
 
+@SuppressWarnings("deprecation")
 public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, EntityBlock
 {
     public InkStainedSlabBlock(Properties properties)
@@ -34,7 +35,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         int color = getColor((Level) level, pos);
-        if(color < 0)
+        if (color < 0)
             return ColorUtils.setInkColor(super.getCloneItemStack(level, pos, state), color);
         return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getCloneItemStack(level, pos, state), color), true);
     }
@@ -44,9 +45,9 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     {
         ItemStack stack = context.getItemInHand();
 
-        if(getColor(context.getLevel(), context.getClickedPos()) != ColorUtils.getInkColor(stack))
+        if (getColor(context.getLevel(), context.getClickedPos()) != ColorUtils.getInkColor(stack))
             return false;
-        
+
         return super.canBeReplaced(state, context);
     }
 
@@ -147,7 +148,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
         @Override
         public int getColor(Level level, BlockPos pos)
         {
-            if(level.getBlockState(pos).getValue(COLORED))
+            if (level.getBlockState(pos).getValue(COLORED))
                 return super.getColor(level, pos);
             else return -1;
         }
@@ -155,7 +156,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
         @Override
         public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
         {
-            if(!level.getBlockState(pos).getValue(COLORED))
+            if (!level.getBlockState(pos).getValue(COLORED))
                 return false;
 
             return super.remoteColorChange(level, pos, newColor);
@@ -169,7 +170,7 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
         }
 
         @Override
-        public @Nullable BlockState getStateForPlacement(BlockPlaceContext context)
+        public @Nullable BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
         {
             return super.getStateForPlacement(context).setValue(COLORED, ColorUtils.getInkColor(context.getItemInHand()) >= 0);
         }

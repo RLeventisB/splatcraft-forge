@@ -13,9 +13,8 @@ import java.util.Map;
 public class SaveInfo
 {
     private ArrayList<Integer> colorScores = new ArrayList<>();
-    private HashMap<String, Stage> stages = new HashMap<>();
+    private final HashMap<String, Stage> stages = new HashMap<>();
 
-    
     public Collection<Integer> getInitializedColorScores()
     {
         return colorScores;
@@ -41,7 +40,7 @@ public class SaveInfo
     {
         return stages;
     }
-    
+
     public CompoundTag writeNBT(CompoundTag nbt)
     {
         int[] arr = new int[colorScores.size()];
@@ -54,7 +53,7 @@ public class SaveInfo
 
         CompoundTag stageNbt = new CompoundTag();
 
-        for(Map.Entry<String, Stage> e : stages.entrySet())
+        for (Map.Entry<String, Stage> e : stages.entrySet())
             stageNbt.put(e.getKey(), e.getValue().writeData());
 
         nbt.put("Stages", stageNbt);
@@ -76,7 +75,7 @@ public class SaveInfo
         ServerLifecycleHooks.getCurrentServer();
 
         stages.clear();
-        for(String key : nbt.getCompound("Stages").getAllKeys())
-            stages.put(key,new Stage(nbt.getCompound("Stages").getCompound(key)));
+        for (String key : nbt.getCompound("Stages").getAllKeys())
+            stages.put(key, new Stage(nbt.getCompound("Stages").getCompound(key)));
     }
 }

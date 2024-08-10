@@ -19,10 +19,8 @@ public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
 
     public UpdateBooleanGamerulesPacket(GameRules.Key<GameRules.BooleanValue> rule, boolean value)
     {
-        this.booleanRules = new TreeMap<Integer, Boolean>()
-        {{
-            put(SplatcraftGameRules.getRuleIndex(rule), value);
-        }};
+        this.booleanRules = new TreeMap<>();
+        this.booleanRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
     }
 
     public static UpdateBooleanGamerulesPacket decode(FriendlyByteBuf buffer)
@@ -45,14 +43,16 @@ public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
 
         buffer.writeInt(entrySet.size());
 
-        for (Map.Entry<Integer, Boolean> rule : entrySet) {
+        for (Map.Entry<Integer, Boolean> rule : entrySet)
+        {
             buffer.writeInt(rule.getKey());
             buffer.writeBoolean(rule.getValue());
         }
     }
 
     @Override
-    public void execute() {
+    public void execute()
+    {
         SplatcraftGameRules.booleanRules.putAll(booleanRules);
     }
 }
