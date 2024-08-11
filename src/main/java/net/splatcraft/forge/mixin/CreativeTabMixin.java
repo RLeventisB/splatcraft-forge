@@ -20,38 +20,38 @@ public abstract class CreativeTabMixin implements AbstractContainerAccessor<Crea
 		if (tab == SplatcraftItemGroups.GROUP_COLORS && !searchValue.isEmpty())
 		{
 			CreativeModeInventoryScreen.ItemPickerMenu menu = this.getMenu();
-			
+
 			String invertedStr = ChatFormatting.stripFormatting(Component.translatable("ink_color.invert", "%s").getString()).toLowerCase(Locale.ROOT);
 			boolean inverted = false;
-			
+
 			if (!invertedStr.isEmpty())
 			{
 				int argIndex = invertedStr.indexOf("%s");
 				String invertedStrSuffix = invertedStr.substring(argIndex + "%s".length());
-				
+
 				inverted = searchValue.startsWith(invertedStr.substring(0, argIndex)) && searchValue.endsWith(invertedStrSuffix);
-				
+
 				if (inverted)
 					searchValue = searchValue.substring(argIndex, searchValue.length() - invertedStrSuffix.length());
 			}
-			
+
 			if (!inverted && (searchValue.startsWith("!") || searchValue.startsWith("-")))
 			{
 				searchValue = searchValue.substring(1);
 				inverted = true;
 			}
-			
+
 			if (searchValue.indexOf('#') == 0)
 			{
 				try
 				{
 					searchValue = searchValue.substring(1);
 					int color = searchValue.isEmpty() ? 0 : Mth.clamp(Integer.parseInt(searchValue, 16), 0, 0xFFFFFF);
-					
+
 					menu.items.clear();
 					for (Item item : SplatcraftItemGroups.colorTabItems)
 						menu.items.add(ColorUtils.setColorLocked(ColorUtils.setInverted(ColorUtils.setInkColor(new ItemStack(item), color), inverted), true));
-					
+
 					splatcraft$endSearchResults(ci, menu);
 				}
 				catch (NumberFormatException ignored)
@@ -64,17 +64,17 @@ public abstract class CreativeTabMixin implements AbstractContainerAccessor<Crea
 				boolean findExact = !searchValue.isEmpty() && searchValue.indexOf('.') == searchValue.length() - 1;
 				if (findExact)
 					searchValue = searchValue.substring(0, searchValue.length() - 1);
-				
+
 				for (InkColor color : SplatcraftInkColors.REGISTRY.get())
 				{
 					String name = ChatFormatting.stripFormatting(color.getLocalizedName().getString()).toLowerCase(Locale.ROOT);
 					ResourceLocation key = SplatcraftInkColors.REGISTRY.get().getKey(color);
-					
+
 					if (findExact ? (key.toString().equals(searchValue) || name.equals(searchValue)) :
 						(key.toString().contains(searchValue) || name.contains(searchValue)))
 						colors.add(color.getColor());
 				}
-				
+
 				if (colors.isEmpty())
 				{
 					try
@@ -85,14 +85,14 @@ public abstract class CreativeTabMixin implements AbstractContainerAccessor<Crea
 					{
 					}
 				}
-				
+
 				if (!colors.isEmpty())
 				{
 					menu.items.clear();
 					for (Item item : SplatcraftItemGroups.colorTabItems)
 						for (int color : colors)
 							menu.items.add(ColorUtils.setColorLocked(ColorUtils.setInverted(ColorUtils.setInkColor(new ItemStack(item), color), inverted), true));
-					
+
 					splatcraft$endSearchResults(ci, menu);
 				}
 			}

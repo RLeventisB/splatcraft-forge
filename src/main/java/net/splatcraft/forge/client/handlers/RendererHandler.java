@@ -3,6 +3,10 @@ package net.splatcraft.forge.client.handlers;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
+import java.awt.TextComponent;
+import java.util.HashMap;
+import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.PlayerModel;
@@ -13,6 +17,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.model.BakedModel;
@@ -45,6 +50,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.VectorUtils;
@@ -57,11 +63,11 @@ import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.items.weapons.IChargeableWeapon;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.util.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.splatcraft.forge.util.ClientUtils;
+import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.forge.util.PlayerCharge;
+import net.splatcraft.forge.util.PlayerCooldown;
 
 import static net.splatcraft.forge.items.weapons.WeaponBaseItem.enoughInk;
 
@@ -97,7 +103,7 @@ public class RendererHandler
     public static void onRenderTick(TickEvent.RenderTickEvent event)
     {
         Player player = Minecraft.getInstance().player;
-        if (PlayerCooldown.hasPlayerCooldown(player) && !player.isSpectator())
+        if (PlayerCooldown.hasPlayerCooldown(player) && !player.isSpectator() && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
         {
             player.getInventory().selected = PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
         }
@@ -200,25 +206,25 @@ public class RendererHandler
         p_228399_1_.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, ((float) i * -45.0F)));
     }
 
-    public static void renderItem(ItemStack itemStackIn, ItemDisplayContext pDisplayContext, boolean leftHand, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn, BakedModel modelIn)
+    public static void renderItem(ItemStack itemStackIn, ItemDisplayContext context, boolean leftHand, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn, BakedModel modelIn)
     {
         if (!itemStackIn.isEmpty())
         {
             ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
 
             matrixStackIn.pushPose();
-            boolean flag = pDisplayContext == ItemDisplayContext.GUI || pDisplayContext == ItemDisplayContext.GROUND || pDisplayContext == ItemDisplayContext.FIXED;
+            boolean flag = context == ItemDisplayContext.GUI || pDisplayContext == ItemDisplayContext.GROUND || pDisplayContext == ItemDisplayContext.FIXED;
             if (itemStackIn.getItem() == Items.TRIDENT && flag)
             {
                 modelIn = itemRenderer.getItemModelShaper().getModelManager().getModel(new ModelResourceLocation("minecraft", "trident", "inventory"));
             }
 
-            modelIn = modelIn.applyTransform(pDisplayContext, matrixStackIn, leftHand);
+            modelIn = modelIn.applyTransform(context, matrixStackIn, leftHand);
             matrixStackIn.translate(-0.5D, -0.5D, -0.5D);
             if (!modelIn.isCustomRenderer() && (itemStackIn.getItem() != Items.TRIDENT || flag))
             {
                 boolean flag1;
-                if (pDisplayContext != ItemDisplayContext.GUI && !pDisplayContext.firstPerson() && itemStackIn.getItem() instanceof BlockItem blockItem)
+                if (context != ItemDisplayContext.GUI && !context.firstPerson() && itemStackIn.getItem() instanceof BlockItem blockItem)
                 {
                     Block block = blockItem.getBlock();
                     flag1 = !(block instanceof HalfTransparentBlock) && !(block instanceof StainedGlassPaneBlock);
@@ -240,10 +246,11 @@ public class RendererHandler
                     {
                         matrixStackIn.pushPose();
                         PoseStack.Pose matrixstack$entry = matrixStackIn.last();
-                        if (pDisplayContext == ItemDisplayContext.GUI)
+                        if (context == ItemDisplayContext.GUI)
                         {
                             matrixstack$entry.pose().scale(0.5F);
-                        } else if (pDisplayContext.firstPerson())
+                        }
+                        else if (context.firstPerson())
                         {
                             matrixstack$entry.pose().scale(0.75F);
                         }
@@ -286,50 +293,45 @@ public class RendererHandler
         return RenderType.create("item_entity_translucent", VertexFormat.Mode.NEW_ENTITY, 7, 256, true, false, rendertype$state);
     }
     */
+
     @SubscribeEvent
     public static void onChatMessage(ClientChatReceivedEvent event)
     {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level != null && SplatcraftGameRules.getBooleanRuleValue(level, SplatcraftGameRules.COLORED_PLAYER_NAMES) && event.getMessage() instanceof MutableComponent component)
+        if (level != null && SplatcraftConfig.Client.coloredPlayerNames.get())
         {
-
-            List<String> players = new ArrayList<>();
+            HashMap<String, UUID> players = new HashMap<>();
             ClientPacketListener connection = Minecraft.getInstance().getConnection();
             if (connection != null)
-                connection.getOnlinePlayers().forEach(info -> players.add(getDisplayName(info).getString()));
-
-            if (component.getContents() instanceof TranslatableContents translatableContents
-//				&& translatableContents.getKey().equals("chat.type.text")
-            )
             {
-                for (Object arg : translatableContents.getArgs())
+                for (PlayerInfo info : connection.getOnlinePlayers()) {
+                    players.put(getDisplayName(info).getString(), info.getProfile().getId());
+                }
+            }
+
+            if (!(event.getMessage().getContents() instanceof TranslatableContents translatableContents)) {
+                return;
+            }
+
+            for (Object arg : translatableContents.getArgs()) {
+                if (!(arg instanceof MutableComponent msgChildren))
                 {
-                    if (!(arg instanceof MutableComponent msgChildren))
                         continue;
+                }
 
                     String key = msgChildren.getString();
 
-                    if (players.contains(key))
-                        msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ClientUtils.getClientPlayerColor(key))));
+                    if (players.containsKey(key)) {
+                        msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ClientUtils.getClientPlayerColor(players.get(key)))));
+                }
                 }
             }
-//			for (Component obj : component.getContents())
-//			{
-//				if (!(obj instanceof MutableComponent msgChildren))
-//					continue;
-//
-//				String key = msgChildren.getString();
-//
-//				if (players.contains(key))
-//					msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ClientUtils.getClientPlayerColor(key))));
-//			}
-        }
     }
 
     @SubscribeEvent
     public static void renderNameplate(RenderNameTagEvent event)
     {
-        if (SplatcraftGameRules.getBooleanRuleValue(event.getEntity().level(), SplatcraftGameRules.COLORED_PLAYER_NAMES) && event.getEntity() instanceof LivingEntity)
+        if (SplatcraftConfig.Client.coloredPlayerNames.get() && event.getEntity() instanceof LivingEntity)
         {
             int color = ColorUtils.getEntityColor(event.getEntity());
             if (SplatcraftConfig.Client.getColorLock())
@@ -345,7 +347,7 @@ public class RendererHandler
 
     public static Component getDisplayName(PlayerInfo info)
     {
-        return info.getTabListDisplayName() != null ? info.getTabListDisplayName().copy() : PlayerTeam.formatNameForTeam(info.getTeam(), Component.translatable(info.getProfile().getName()));
+        return info.getTabListDisplayName() != null ? info.getTabListDisplayName().copy() : PlayerTeam.formatNameForTeam(info.getTeam(), Component.literal(info.getProfile().getName()));
     }
 
     //Render Player HUD elements
@@ -356,8 +358,8 @@ public class RendererHandler
     @SubscribeEvent
     public static void renderGui(RenderGuiOverlayEvent.Pre event)
     {
-//		if (!event.getWindow().equals(RenderGuiOverlayEvent.ElementType.LAYER))
-//			return;
+        if(!event.getOverlay().id().equals("idk"))
+            return;
 
         Player player = Minecraft.getInstance().player;
         if (player == null || player.isSpectator() || !PlayerInfoCapability.hasCapability(player))

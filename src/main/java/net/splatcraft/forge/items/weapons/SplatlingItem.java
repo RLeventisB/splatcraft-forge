@@ -68,9 +68,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		{
 			return;
 		}
-		
+
 		SoundEvent soundEvent = PlayerCharge.getChargeValue(player, stack) > 1 ? SplatcraftSounds.splatlingChargeSecondLevel : SplatcraftSounds.splatlingCharge;
-		
+
 		if (chargingSound == null || chargingSound.isStopped() || !chargingSound.getSoundEvent().equals(soundEvent))
 		{
 			boolean exsistingSound = chargingSound != null;
@@ -88,30 +88,30 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		if (!(entity instanceof Player player))
 			return;
-		
+
 		if (PlayerCooldown.hasPlayerCooldown(player))
 			PlayerCooldown.setPlayerCooldown(player, null);
-		
+
 		SplatlingWeaponSettings settings = getSettings(stack);
-		
-		if (level.isClientSide)
+
+        if (level.isClientSide())
 		{
-			
+
 			float prevCharge = PlayerCharge.getChargeValue(player, stack);
 			float newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.secondChargeTime() : settings.chargeData.firstChargeTime());
-			
+
 			if (!enoughInk(entity, this, Mth.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, timeLeft % 4 == 0))
 			{
 				if (!hasInkInTank(player, this) || !InkTankItem.canRecharge(player.getItemBySlot(EquipmentSlot.CHEST), true))
 					return;
 				newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.emptyTankSecondChargeTime() : settings.chargeData.emptyTankFirstChargeTime());
 			}
-			
+
 			playChargingSound(player, stack);
-			
+
 			if (prevCharge < maxCharges && newCharge >= Math.ceil(prevCharge) && prevCharge > 0)
 				playChargeReadySound(player, newCharge / maxCharges);
-			
+
 			PlayerCharge.addChargeValue(player, stack, newCharge - prevCharge, true, maxCharges);
 		}
 		else if (timeLeft % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
@@ -122,15 +122,15 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		if (cooldown.getTime() > 0)
 		{
-			if (!level.isClientSide)
+            if (!level.isClientSide())
 			{
 				SplatlingWeaponSettings settings = getSettings(stack);
-				
+
 				float chargeLevel = cooldown.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
 				float cooldownLeft = cooldown.getTime() / (float) cooldown.getMaxTime();
 				float inkConsumed = Mth.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
 				float inkRefunded = inkConsumed * cooldownLeft;
-				
+
 				refundInk(player, inkRefunded);
 			}
 			else if (PlayerCharge.hasCharge(player) && player.equals(Minecraft.getInstance().player))
@@ -144,17 +144,17 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	@Override
 	public void onPlayerCooldownTick(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
 	{
-		if (level.isClientSide)
+        if (level.isClientSide())
 			return;
-		
+
 		SplatlingWeaponSettings settings = getSettings(stack);
 		float charge = stack.getOrCreateTag().getFloat("Charge");
-		
+
 		SplatlingWeaponSettings.ShotDataRecord firingData = charge > 1 ? settings.secondChargeLevelShot : settings.firstChargeLevelShot;
 		CommonRecords.ProjectileDataRecord projectileData = charge > 1 ? settings.secondChargeLevelProjectile : settings.firstChargeLevelProjectile;
-		
+
 		int firingSpeed = getScaledShotSettingInt(settings, charge, SplatlingWeaponSettings.ShotDataRecord::firingSpeed);
-		
+
 		if (firingSpeed > 0 && (cooldown.getTime() - 1) % firingSpeed == 0)
 		{
 			for (int i = 0; i < firingData.projectileCount(); i++)
@@ -165,7 +165,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 				proj.setSplatlingStats(settings, charge);
 				level.addFreshEntity(proj);
 			}
-			
+
 			level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.splatlingShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 		}
 	}
@@ -173,9 +173,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public void onReleaseCharge(Level level, Player player, ItemStack stack, float charge)
 	{
 		SplatlingWeaponSettings settings = getSettings(stack);
-		
+
 		stack.getOrCreateTag().putFloat("Charge", charge);
-		
+
 		int cooldownTime = (int) (getDecayTicks(stack) * charge);
 		reduceInk(player, this, Mth.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
 		PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, cooldownTime, player.getInventory().selected, player.getUsedItemHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.onGround()).setCancellable());
@@ -184,14 +184,14 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity, int timeLeft)
 	{
 		super.releaseUsing(stack, level, entity, timeLeft);
-		
-		if (level.isClientSide && entity instanceof Player player && player.equals(Minecraft.getInstance().player))
+
+        if (level.isClientSide() && entity instanceof Player player && player.equals(Minecraft.getInstance().player))
 		{
 			if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).preventWeaponUse())
 				return;
-			
+
 			PlayerCharge charge = PlayerCharge.getCharge(player);
-			
+
 			if (charge == null)
 				return;
 			if (!SplatcraftKeyHandler.isSquidKeyDown() && charge.charge > 0.05f) //checking for squid key press so it doesn't immediately release charge when squidding
@@ -246,9 +246,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
 		SplatlingWeaponSettings settings = getSettings(stack);
-		
+
 		double appliedMobility = entity.getUseItem().equals(stack) && settings.chargeData.moveSpeed().isPresent() ? settings.chargeData.moveSpeed().get() : settings.moveSpeed;
-		
+
 		return new AttributeModifier(SplatcraftItems.SPEED_MOD_UUID, "Splatling Mobility", appliedMobility - 1, AttributeModifier.Operation.MULTIPLY_TOTAL);
 	}
 }

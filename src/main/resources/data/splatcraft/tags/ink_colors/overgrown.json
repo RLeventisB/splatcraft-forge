@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "splatcraft:moth_green",
+    "splatcraft:light_green",
+    "splatcraft:lumigreen",
+    "splatcraft:winter_green",
+    "splatcraft:pumpkin",
+    "splatcraft:redwood"
+  ]
+}

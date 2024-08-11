@@ -36,38 +36,39 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 			return;
 		PlayerInfo info = PlayerInfoCapability.get(entity);
 		ItemStack inkBand = info.getInkBand();
-		
+
 		if (!inkBand.isEmpty() && ((entity.getMainHandItem().equals(inkBand, false) || entity.getOffhandItem().equals(inkBand, false))))
 			return;
-		
+
 		boolean isFoil = inkBand.hasFoil();
-		ResourceLocation stackLoc = ForgeRegistries.ITEMS.getKey(inkBand.getItem());
-		
+        ResourceLocation stackLoc = ForgeRegistries.ITEMS.getKey(inkBand.getItem());
+
 		String customModelData = "";
-		
+
 		if (inkBand.getOrCreateTag().contains("CustomModelData") && Minecraft.getInstance().getResourceManager().getResource(new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + "_" + inkBand.getOrCreateTag().getInt("CustomModelData") + ".png")).isPresent())
 		{
 			customModelData = "_" + inkBand.getOrCreateTag().getInt("CustomModelData");
 		}
-		
+
 		ResourceLocation texture = new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + ".png");
 		ResourceLocation coloredTexture = new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + "_colored.png");
-		
+
 		MODEL.leftArm.visible = entity.getMainArm() == HumanoidArm.LEFT;
 		MODEL.leftLeg.visible = entity.getMainArm() == HumanoidArm.LEFT;
 		MODEL.rightArm.visible = entity.getMainArm() == HumanoidArm.RIGHT;
 		MODEL.rightLeg.visible = entity.getMainArm() == HumanoidArm.RIGHT;
-		
+
 		int color = ColorUtils.getPlayerColor(entity);
 		float r = ((color & 16711680) >> 16) / 255.0f;
 		float g = ((color & '\uff00') >> 8) / 255.0f;
 		float b = (color & 255) / 255.0f;
-		
-		if (Minecraft.getInstance().getResourceManager().getResource(texture).isPresent())
+
+
+        if (Minecraft.getInstance().getResourceManager().getResource(texture).isPresent())
 		{
 			this.getParentModel().copyPropertiesTo(MODEL);
 			this.render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, 1.0F, 1.0F, 1.0F, texture);
-			if (Minecraft.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
+            if (Minecraft.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
 				this.render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, r, g, b, coloredTexture);
 		}
 	}

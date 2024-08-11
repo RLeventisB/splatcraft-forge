@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "net.splatcraft.forge.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "splatcraft.refmap.json",
   "mixins": [
     "BlockEffectsMixin$EntityMixin",
@@ -9,6 +9,7 @@
     "EntityMixin",
     "PlayerListMixin",
     "PlayerMixin",
+    "ServerGamePacketMixin",
     "SheepMixin",
     "SquidPassthroughMixin"
   ],
@@ -27,6 +28,7 @@
     "ItemRendererMixin",
     "MinecraftClientAccessor",
     "PlayerModelMixin",
+    "PlayerTabOverlayMixin",
     "RecipeCategoryMixin",
     "SheepWoolLayerMixin",
     "WeaponHotkeyMixin$MinecraftInstance",

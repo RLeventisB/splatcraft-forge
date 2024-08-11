@@ -57,7 +57,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 	{
 		super(properties);
 		remotes.add(this);
-		
+
 		this.totalModes = totalModes;
 	}
 	public static int getRemoteMode(ItemStack stack)
@@ -87,42 +87,42 @@ public abstract class RemoteItem extends Item implements CommandSource
 		if (!hasCoordSet(stack))
 			return null;
 		CompoundTag nbt = stack.getTag();
-		
+
 		if (nbt.contains("Stage"))
 		{
 			Stage stage = level.isClientSide() ? ClientUtils.clientStages.get(nbt.getString("Stage")) : SaveInfoCapability.get(level.getServer()).getStages().get(nbt.getString("Stage"));
 			if (stage == null)
 				return null;
-			
+
 			return new Tuple<>(stage.cornerA, stage.cornerB);
 		}
-		
+
 		return new Tuple<>(NbtUtils.readBlockPos(nbt.getCompound("PointA")), NbtUtils.readBlockPos(nbt.getCompound("PointB")));
 	}
 	public static boolean addCoords(Level level, ItemStack stack, BlockPos pos)
 	{
 		if (hasCoordSet(stack))
 			return false;
-		
+
 		CompoundTag nbt = stack.getOrCreateTag();
-		
+
 		if (!nbt.contains("Dimension"))
 			nbt.putString("Dimension", level.dimension().location().toString());
 		else if (!level.equals(getLevel(level, stack)))
 			return false;
-		
+
 		nbt.put("Point" + (stack.getOrCreateTag().contains("PointA") ? "B" : "A"), NbtUtils.writeBlockPos(pos));
-		
+
 		return true;
 	}
 	public static Level getLevel(Level level, ItemStack stack)
 	{
 		CompoundTag nbt = stack.getOrCreateTag();
-		
-		Level result = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, nbt.contains("Stage") ?
+
+        Level result = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, nbt.contains("Stage") ?
 			(level.isClientSide() ? ClientUtils.clientStages.get(nbt.getString("Stage")) : SaveInfoCapability.get(level.getServer()).getStages().get(nbt.getString("Stage"))).dimID
 			: new ResourceLocation(nbt.getString("Dimension"))));
-		
+
 		return result == null ? level : result;
 	}
 	public static RemoteResult createResult(boolean success, Component output)
@@ -141,26 +141,26 @@ public abstract class RemoteItem extends Item implements CommandSource
 	public void appendHoverText(@NotNull ItemStack stack, @Nullable Level levelIn, @NotNull List<Component> tooltip, @NotNull TooltipFlag flagIn)
 	{
 		super.appendHoverText(stack, levelIn, tooltip, flagIn);
-		
+
 		CompoundTag nbt = stack.getOrCreateTag();
-		
+
 		if (!nbt.contains("Stage") || ClientUtils.clientStages.containsKey(nbt.getString("Stage")))
 		{
 			if (hasCoordSet(stack))
 			{
 				Tuple<BlockPos, BlockPos> set = getCoordSet(stack, levelIn);
-				tooltip.add(Component.translatable("item.remote.coords.b", set.getA().getX(), set.getA().getY(), set.getA().getZ(),
+                tooltip.add(Component.translatable("item.remote.coords.b", set.getA().getX(), set.getA().getY(), set.getA().getZ(),
 					set.getB().getX(), set.getB().getY(), set.getB().getZ()));
 			}
 			else if (stack.getOrCreateTag().contains("PointA"))
 			{
 				BlockPos pos = NbtUtils.readBlockPos(nbt.getCompound("PointA"));
-				tooltip.add(Component.translatable("item.remote.coords.a", pos.getX(), pos.getY(), pos.getZ()));
+                tooltip.add(Component.translatable("item.remote.coords.a", pos.getX(), pos.getY(), pos.getZ()));
 			}
 		}
 		else
 			tooltip.add(Component.translatable("item.remote.coords.invalid").withStyle(Style.EMPTY.withColor(ChatFormatting.RED).withItalic(true)));
-		
+
 		if (nbt.contains("Targets") && !nbt.getString("Targets").isEmpty())
 			tooltip.add(ComponentUtils.mergeStyles(Component.literal(nbt.getString("Targets")), TARGETS_STYLE));
 	}
@@ -168,17 +168,17 @@ public abstract class RemoteItem extends Item implements CommandSource
 	@Override
 	public @NotNull InteractionResult useOn(UseOnContext context)
 	{
-		if (context.getLevel().isClientSide)
+        if (context.getLevel().isClientSide())
 		{
 			return hasCoordSet(context.getItemInHand()) ? InteractionResult.PASS : InteractionResult.SUCCESS;
 		}
-		
+
 		if (addCoords(context.getLevel(), context.getItemInHand(), context.getClickedPos()))
 		{
 			String key = context.getItemInHand().getOrCreateTag().contains("PointB") ? "b" : "a";
 			BlockPos pos = context.getClickedPos();
-			
-			context.getPlayer().displayClientMessage(Component.translatable("status.coord_set." + key, pos.getX(), pos.getY(), pos.getZ()), true);
+
+            context.getPlayer().displayClientMessage(Component.translatable("status.coord_set." + key, pos.getX(), pos.getY(), pos.getZ()), true);
 			return InteractionResult.SUCCESS;
 		}
 		return InteractionResult.PASS;
@@ -188,21 +188,21 @@ public abstract class RemoteItem extends Item implements CommandSource
 	{
 		ItemStack stack = playerIn.getItemInHand(handIn);
 		int mode = getRemoteMode(stack);
-		
+
 		if (playerIn.isCrouching() && totalModes > 1)
 		{
 			mode = cycleRemoteMode(stack);
 			String statusMsg = getDescriptionId() + ".mode." + mode;
-			
-			if (levelIn.isClientSide && I18n.exists(statusMsg))
+
+            if (levelIn.isClientSide() && I18n.exists(statusMsg))
 			{
-				playerIn.displayClientMessage(Component.translatable("status.remote_mode", Component.translatable(statusMsg)), true);
+                playerIn.displayClientMessage(Component.translatable("status.remote_mode", Component.translatable(statusMsg)), true);
 			}
 		}
-		else if (hasCoordSet(stack) && !levelIn.isClientSide)
+		else if (hasCoordSet(stack) && !levelIn.isClientSide())
 		{
 			RemoteResult remoteResult = onRemoteUse(levelIn, stack, ColorUtils.getPlayerColor(playerIn), playerIn.position(), playerIn);
-			
+
 			if (remoteResult.getOutput() != null)
 			{
 				playerIn.displayClientMessage(remoteResult.getOutput(), true);
@@ -210,7 +210,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 			levelIn.playSound(null, playerIn.getX(), playerIn.getY(), playerIn.getZ(), SplatcraftSounds.remoteUse, SoundSource.BLOCKS, 0.8f, 1);
 			return new InteractionResultHolder<>(remoteResult.wasSuccessful() ? InteractionResult.SUCCESS : InteractionResult.FAIL, stack);
 		}
-		
+
 		return super.use(levelIn, playerIn, handIn);
 	}
 	public static final Collection<ServerPlayer> ALL_TARGETS = new ArrayList<>();
@@ -218,22 +218,22 @@ public abstract class RemoteItem extends Item implements CommandSource
 	public RemoteResult onRemoteUse(Level usedOnWorld, ItemStack stack, int colorIn, Vec3 pos, Entity user)
 	{
 		Tuple<BlockPos, BlockPos> coordSet = getCoordSet(stack, usedOnWorld);
-		
+
 		if (coordSet == null)
-			return new RemoteResult(false, Component.translatable("status.remote.undefined_area"));
-		
+            return new RemoteResult(false, Component.translatable("status.remote.undefined_area"));
+
 		Collection<ServerPlayer> targets = ALL_TARGETS;
-		
+
 		if (stack.getTag().contains("Targets") && !stack.getTag().getString("Targets").isEmpty())
 			try
 			{
 				targets = EntityArgument.players().parse(new StringReader(stack.getTag().getString("Targets"))).findPlayers(createCommandSourceStack(stack, (ServerLevel) usedOnWorld, pos, user));
-			}
+            }
 			catch (CommandSyntaxException e)
 			{
 				return new RemoteResult(false, Component.literal(e.getMessage()));
 			}
-		
+
 		return onRemoteUse(usedOnWorld, coordSet.getA(), coordSet.getB(), stack, colorIn, getRemoteMode(stack), targets);
 	}
 	public CommandSourceStack createCommandSourceStack(ItemStack stack, ServerLevel level, Vec3 pos, Entity user)
@@ -243,7 +243,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 	@Override
 	public void sendSystemMessage(@NotNull Component p_145747_1_)
 	{
-	
+
 	}
 	@Override
 	public boolean acceptsSuccess()

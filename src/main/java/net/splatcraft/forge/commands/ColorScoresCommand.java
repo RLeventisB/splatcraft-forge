@@ -39,7 +39,7 @@ public class ColorScoresCommand
 	{
 		int color = InkColorArgument.getInkColor(context, "color");
 		CommandSourceStack source = context.getSource();
-		
+
 		if (ScoreboardHandler.hasColorCriterion(color))
 		{
 			throw CRITERION_ALREADY_EXISTS_EXCEPTION.create();
@@ -47,9 +47,9 @@ public class ColorScoresCommand
 		ScoreboardHandler.createColorCriterion(color);
 		SaveInfoCapability.get(context.getSource().getServer()).addInitializedColorScores(color);
 		update();
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.colorscores.add.success", InkColorCommand.getColorName(color)), true);
-		
+
 		return color;
 	}
 	protected static int remove(CommandContext<CommandSourceStack> context)
@@ -58,15 +58,15 @@ public class ColorScoresCommand
 		ScoreboardHandler.removeColorCriterion(color);
 		SaveInfoCapability.get(context.getSource().getServer()).removeColorScore(color);
 		update();
-		
+
 		context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.remove.success", InkColorCommand.getColorName(color)), true);
-		
+
 		return color;
 	}
 	protected static int list(CommandContext<CommandSourceStack> context)
 	{
 		Collection<Integer> collection = ScoreboardHandler.getCriteriaKeySet();
-		
+
 		if (collection.isEmpty())
 		{
 			context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.list.empty"), false);
@@ -77,7 +77,7 @@ public class ColorScoresCommand
 			collection.forEach(color ->
 				context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.list.entry", ScoreboardHandler.getColorIdentifier(color), InkColorCommand.getColorName(color)), false));
 		}
-		
+
 		return collection.size();
 	}
 }

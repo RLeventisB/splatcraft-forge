@@ -15,57 +15,66 @@ import net.splatcraft.forge.util.ClientUtils;
 import net.splatcraft.forge.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements IHasTeam {
+public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements IHasTeam
+{
     protected int color = ColorUtils.DEFAULT;
     private boolean inverted = false;
     private String team = "";
 
-    public ColoredBarrierTileEntity(BlockPos pos, BlockState state) {
+    public ColoredBarrierTileEntity(BlockPos pos, BlockState state)
+    {
         super(SplatcraftTileEntities.colorBarrierTileEntity.get(), pos, state);
     }
 
     @Override
-    public void tick() {
-        if (activeTime > 0) {
+    public void tick()
+    {
+        if (activeTime > 0)
+        {
             activeTime--;
         }
 
-        for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05))) {
-            if (entity instanceof SpawnShieldEntity)
+        for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05)))
+        {
+            if(entity instanceof SpawnShieldEntity)
                 continue;
 
-            if (ColorUtils.getEntityColor(entity) > -1 && (getBlockState().getBlock() instanceof ColoredBarrierBlock &&
-                    !((ColoredBarrierBlock) getBlockState().getBlock()).canAllowThrough(getBlockPos(), entity)))
+            if(ColorUtils.getEntityColor(entity) > -1 && (getBlockState().getBlock() instanceof ColoredBarrierBlock bb &&
+                    !bb.canAllowThrough(getBlockPos(), entity)))
                 resetActiveTime();
         }
 
-        if (level.isClientSide && ClientUtils.getClientPlayer().isCreative()) {
+        if (level.isClientSide() && ClientUtils.getClientPlayer().isCreative())
+        {
             boolean canRender = true;
             Player player = ClientUtils.getClientPlayer();
             int renderDistance = SplatcraftConfig.Client.barrierRenderDistance.get();
 
             if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
                 canRender = false;
-            else if (SplatcraftConfig.Client.holdBarrierToRender.get()) {
+            else if (SplatcraftConfig.Client.holdBarrierToRender.get())
+            {
                 canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
                         player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
             }
             if (canRender)
                 resetActiveTime();
         }
-
     }
 
-    public int getColor() {
+    public int getColor()
+    {
         return color;
     }
 
-    public void setColor(int color) {
+    public void setColor(int color)
+    {
         this.color = color;
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt) {
+    public void load(@NotNull CompoundTag nbt)
+    {
         super.load(nbt);
         setColor(ColorUtils.getColorFromNbt(nbt));
         setTeam(nbt.getString("Team"));
@@ -73,7 +82,8 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(CompoundTag compound)
+    {
         compound.putInt("Color", getColor());
         compound.putString("Team", getTeam());
         compound.putBoolean("Inverted", inverted);

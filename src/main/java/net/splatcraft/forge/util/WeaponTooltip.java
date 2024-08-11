@@ -3,6 +3,7 @@ package net.splatcraft.forge.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+
 import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
 
@@ -16,6 +17,7 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
     private final IStatValueGetter<S> valueGetter;
     private final IStatRanker ranker;
     private final Metrics metric;
+
     public static final IStatRanker RANKER_ASCENDING = Float::compare;
     public static final IStatRanker RANKER_DESCENDING = (a, b) -> Float.compare(b, a);
 

@@ -33,7 +33,7 @@ public class StageBarrierBlock extends Block implements EntityBlock
 
     public StageBarrierBlock(boolean damagesPlayer)
     {
-        super(Properties.of().pushReaction(PushReaction.BLOCK).strength(-1.0F, 3600000.8F).noOcclusion());
+        super(Properties.of().pushReaction(PushReaction.BLOCK).strength(-1.0F, 3600000.8F).noLootTable().noOcclusion());
         this.damagesPlayer = damagesPlayer;
     }
 

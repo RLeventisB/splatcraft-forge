@@ -19,6 +19,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -85,10 +86,12 @@ public class StageCommand
 						.executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn")))))))
 		);
 	}
+
 	public static RequiredArgumentBuilder<CommandSourceStack, String> stageId(String argumentName)
 	{
 		return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest((context.getSource().getLevel().isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).keySet(), builder));
 	}
+
 	public static RequiredArgumentBuilder<CommandSourceStack, String> stageTeam(String argumentName, String stageArgumentName)
 	{
 		return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) ->
@@ -98,181 +101,193 @@ public class StageCommand
 				Stage stage = (context.getSource().getLevel().isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).get(StringArgumentType.getString(context, stageArgumentName));
 				if (stage == null)
 					return Suggestions.empty();
-				
+
 				return SharedSuggestionProvider.suggest(stage.getTeamIds(), builder);
 			}
 			catch (IllegalArgumentException ignored)
 			{
 			} //happens when used inside execute, vanilla won't bother to fix it so neither will i >_>
-			
+
 			return Suggestions.empty();
 		});
 	}
+
 	public static RequiredArgumentBuilder<CommandSourceStack, String> stageSetting(String argumentName)
 	{
 		return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) ->
-			SharedSuggestionProvider.suggest(Stage.VALID_SETTINGS, builder));
+				SharedSuggestionProvider.suggest(Stage.VALID_SETTINGS.keySet(), builder));
 	}
+
 	private static int add(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return add(context.getSource(), StringArgumentType.getString(context, "name"), getOrLoadBlockPos(context, "from"), getOrLoadBlockPos(context, "to"));
 	}
+
 	private static int remove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return remove(context.getSource(), StringArgumentType.getString(context, "stage"));
 	}
+
 	private static int setSetting(CommandContext<CommandSourceStack> context, @Nullable Boolean value) throws CommandSyntaxException
 	{
 		return setSetting(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "setting"), value);
 	}
+
 	private static int setStageCorner(CommandContext<CommandSourceStack> context, boolean isCornerA) throws CommandSyntaxException
 	{
 		return setStageCoords(context.getSource(), StringArgumentType.getString(context, "stage"), BlockPosArgument.getLoadedBlockPos(context, "pos"), isCornerA);
 	}
+
 	private static int getStageCorner(CommandContext<CommandSourceStack> context, boolean isCornerA) throws CommandSyntaxException
 	{
 		return getStageCoords(context.getSource(), StringArgumentType.getString(context, "stage"), isCornerA);
 	}
+
 	private static int getSetting(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return getSetting(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "setting"));
 	}
-	private static int setTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-	{
+
+	private static int setTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
 		return setTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "teamName"), InkColorArgument.getInkColor(context, "teamColor"));
 	}
-	private static int getTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-	{
+
+	private static int getTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
 		return getTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "teamName"));
 	}
-	private static int removeTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
-	{
+
+	private static int removeTeam(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
 		return removeTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "teamName"));
 	}
+
 	private static int warp(CommandContext<CommandSourceStack> context, boolean setSpawn) throws CommandSyntaxException
-	{
+    {
 		return warpPlayers(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), setSpawn);
 	}
+
 	private static int warp(CommandContext<CommandSourceStack> context, boolean setSpawn, int color) throws CommandSyntaxException
-	{
+    {
 		return warpPlayers(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), setSpawn, color);
 	}
+
 	private static int warpAny(CommandContext<CommandSourceStack> context, boolean setSpawn) throws CommandSyntaxException
-	{
+    {
 		return warpPlayersToAny(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), setSpawn);
 	}
+
 	private static int warpToTeam(CommandContext<CommandSourceStack> context, boolean setSpawn, String team) throws CommandSyntaxException
 	{
-		
+
 		String stageId = StringArgumentType.getString(context, "stage");
 		HashMap<String, Stage> stages = SaveInfoCapability.get(context.getSource().getServer()).getStages();
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		if (!stage.hasTeam(team))
 			throw TEAM_NOT_FOUND.create(new Object[] {team, stageId});
-		
+
 		return warpPlayers(context.getSource(), stageId, EntityArgument.getPlayers(context, "players"), setSpawn, stage.getTeamColor(team));
 	}
+
 	private static int warpSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return warpPlayers(context.getSource(), StringArgumentType.getString(context, "stage"), Collections.singleton(context.getSource().getPlayerOrException()), false);
 	}
-	private static int add(CommandSourceStack source, String stageId, BlockPos from, BlockPos to) throws CommandSyntaxException
-	{
-		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
-		if (stages.containsKey(stageId))
+
+	private static int add(CommandSourceStack source, String stageId, BlockPos from, BlockPos to) throws CommandSyntaxException {
+
+		if(!SaveInfoCapability.get(source.getServer()).createStage(source.getLevel(), stageId, from, to))
 			throw STAGE_ALREADY_EXISTS.create(stageId);
-		
-		stages.put(stageId, new Stage(source.getLevel(), from, to));
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.add.success", stageId), true);
-		
-		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-		
+
+
 		return 1;
 	}
+
 	private static int remove(CommandSourceStack source, String stageId) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		stages.remove(stageId);
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.remove.success", stageId), true);
-		
+
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-		
+
 		return 1;
 	}
+
 	private static int setSetting(CommandSourceStack source, String stageId, String setting, @Nullable Boolean value) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
-		if (!Stage.VALID_SETTINGS.contains(setting))
+
+		if (!Stage.VALID_SETTINGS.containsKey(setting))
 			throw SETTING_NOT_FOUND.create(setting);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		stage.applySetting(setting, value);
-		
+
 		if (value == null)
 			source.sendSuccess(() -> Component.translatable("commands.stage.setting.success.default", setting, stageId), true);
 		else
 			source.sendSuccess(() -> Component.translatable("commands.stage.setting.success", setting, stageId, value), true);
-		
+
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-		
+
 		return 1;
 	}
+
 	private static int getSetting(CommandSourceStack source, String stageId, String setting) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
-		if (!Stage.VALID_SETTINGS.contains(setting))
+
+		if (!Stage.VALID_SETTINGS.containsKey(setting))
 			throw SETTING_NOT_FOUND.create(setting);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		if (!stage.hasSetting(setting))
 			source.sendSuccess(() -> Component.translatable("commands.stage.setting.get.default", setting, stageId), true);
 		else
 			source.sendSuccess(() -> Component.translatable("commands.stage.setting.get", setting, stageId, stage.getSetting(setting)), true);
-		
+
 		return 1;
 	}
+
 	private static int setTeam(CommandSourceStack source, String stageId, String teamId, int teamColor) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
 		Level stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
-		
+
 		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		
+
 		int affectedBlocks = 0;
-		
+
 		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
 			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
 				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
 				{
 					BlockPos pos = new BlockPos(x, y, z);
-					
+
 					if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
 					{
 						if (colorTile.getColor() == teamColor && !colorTile.getTeam().equals(teamId))
@@ -282,58 +297,59 @@ public class StageCommand
 						}
 					}
 				}
-		
+
 		stage.setTeamColor(teamId, teamColor);
 		int finalAffectedBlocks = affectedBlocks;
 		source.sendSuccess(() -> Component.translatable("commands.stage.teams.set.success", finalAffectedBlocks, stageId, Component.literal(teamId).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(teamColor)))), true);
-		
+
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-		
+
 		return 1;
 	}
+
 	private static int getTeam(CommandSourceStack source, String stageId, String teamId) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		if (!stage.hasTeam(teamId))
 			throw TEAM_NOT_FOUND.create(new Object[] {teamId, stageId});
-		
+
 		int teamColor = stage.getTeamColor(teamId);
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.teams.get.success", teamId, stageId, ColorUtils.getFormatedColorName(teamColor, false)), true);
 		return teamColor;
 	}
 	private static int removeTeam(CommandSourceStack source, String stageId, String teamId) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		if (!stage.hasTeam(teamId))
 			throw TEAM_NOT_FOUND.create(new Object[] {teamId, stageId});
-		
+
 		int teamColor = stage.getTeamColor(teamId);
-		
+
 		Level stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
 		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		
+
 		int affectedBlocks = 0;
-		
+
 		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
 			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
 				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
 				{
 					BlockPos pos = new BlockPos(x, y, z);
-					
+
 					if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
 					{
 						if (colorTile.getColor() == teamColor && !colorTile.getTeam().equals(teamId))
@@ -343,168 +359,140 @@ public class StageCommand
 						}
 					}
 				}
-		
+
 		stage.removeTeam(teamId);
-		
+
 		final int finalAffectedBlocks = affectedBlocks;
 		source.sendSuccess(() -> Component.translatable("commands.stage.teams.remove.success", Component.literal(teamId).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(teamColor))), stageId, finalAffectedBlocks), true);
 		return teamColor;
 	}
+
 	private static int warpPlayers(CommandSourceStack source, String stageId, Collection<ServerPlayer> targets, boolean setSpawn) throws CommandSyntaxException
 	{
 		return warpPlayers(source, stageId, targets, setSpawn, -1);
 	}
+
 	private static int warpPlayers(CommandSourceStack source, String stageId, Collection<ServerPlayer> targets, boolean setSpawn, int color) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
-		
-		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		
-		HashMap<Integer, ArrayList<SpawnPadTileEntity>> spawnPads = new HashMap<>();
-		
-		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
-			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
-				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
-				{
-					BlockPos pos = new BlockPos(x, y, z);
-					if (stageLevel.getBlockEntity(pos) instanceof SpawnPadTileEntity te)
-					{
-						if (!spawnPads.containsKey(te.getColor()))
-							spawnPads.put(te.getColor(), new ArrayList<>());
-						spawnPads.get(te.getColor()).add(te);
-					}
-				}
-		
-		if (spawnPads.isEmpty())
+		HashMap<Integer, ArrayList<SpawnPadTileEntity>> spawnPads = stage.getSpawnPads(source.getLevel());
+		ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, stage.dimID));
+
+		if(spawnPads.isEmpty())
 			throw NO_SPAWN_PADS_FOUND.create(stageId);
-		
+
 		HashMap<Integer, Integer> playersTeleported = new HashMap<>();
 		for (ServerPlayer player : targets)
 		{
 			int playerColor = color == -1 ? ColorUtils.getPlayerColor(player) : color;
-			
+
 			if (spawnPads.containsKey(playerColor))
 			{
 				if (!playersTeleported.containsKey(playerColor))
 					playersTeleported.put(playerColor, 0);
-				
+
 				SpawnPadTileEntity te = spawnPads.get(playerColor).get(playersTeleported.get(playerColor) % spawnPads.get(playerColor).size());
-				
+
 				float pitch = te.getLevel().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot();
-				
-				if (stageLevel == player.level)
+
+                if (stageLevel == player.level())
 					player.connection.teleport(te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ() + .5, pitch, 0);
 				else
 					player.teleportTo(stageLevel, te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ(), pitch, 0);
-				
-				if (setSpawn)
-					player.setRespawnPosition(player.level.dimension(), te.getBlockPos(), player.level.getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
-				
+
+                if (setSpawn) {
+                    player.setRespawnPosition(player.level().dimension(), te.getBlockPos(), player.level().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+                }
+
 				playersTeleported.put(playerColor, playersTeleported.get(playerColor) + 1);
 			}
 		}
-		
+
 		int result = playersTeleported.values().stream().mapToInt(i -> i).sum();
-		
+
 		if (result == 0)
 			throw NO_PLAYERS_FOUND.create(stageId);
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.warp.success", result, stageId), true);
 		return result;
 	}
 	private static int warpPlayersToAny(CommandSourceStack source, String stageId, Collection<ServerPlayer> targets, boolean setSpawn) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
-		
-		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		
-		ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>();
-		
-		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
-			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
-				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
-				{
-					BlockPos pos = new BlockPos(x, y, z);
-					if (stageLevel.getBlockEntity(pos) instanceof SpawnPadTileEntity te)
-					{
-						spawnPads.add(te);
-					}
-				}
-		
+		ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registry.DIMENSION_REGISTRY, stage.dimID));
+		ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(source.getLevel()));
+
 		if (spawnPads.isEmpty())
 			throw NO_SPAWN_PADS_FOUND.create(stageId);
-		
+
 		int playersTeleported = 0;
 		for (ServerPlayer player : targets)
 		{
-			
+
 			SpawnPadTileEntity te = spawnPads.get(playersTeleported % spawnPads.size());
-			
+
 			float pitch = te.getLevel().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot();
-			
-			if (stageLevel == player.level)
+
+            if (stageLevel == player.level())
 				player.connection.teleport(te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ() + .5, pitch, 0);
 			else
 				player.teleportTo(stageLevel, te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ(), pitch, 0);
-			
-			if (setSpawn)
-				player.setRespawnPosition(player.level.dimension(), te.getBlockPos(), player.level.getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
-			
+
+			if (setSpawn){
+				player.setRespawnPosition(player.level().dimension(), te.getBlockPos(), player.level().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+            }
+
 			playersTeleported++;
 		}
-		
+
 		int result = playersTeleported;
-		
+
 		if (result == 0)
 			throw NO_PLAYERS_FOUND.create(stageId);
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.warp.success", result, stageId), true);
 		return result;
 	}
 	private static int setStageCoords(CommandSourceStack source, String stageId, BlockPos pos, boolean isCornerA) throws CommandSyntaxException
 	{
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		
-		if (isCornerA)
-			stage.cornerA = pos;
-		else stage.cornerB = pos;
-		
+
+		if(isCornerA)
+			stage.updateBounds(source.getLevel(), pos, stage.cornerB);
+		else stage.updateBounds(source.getLevel(), stage.cornerA, pos);
+
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		source.sendSuccess(() -> Component.translatable("commands.stage.setting.area.success", isCornerA ? "A" : "B", stageId, pos.getX(), pos.getY(), pos.getZ()), true);
 		return 1;
 	}
-	private static int getStageCoords(CommandSourceStack source, String stageId, boolean isCornerA) throws CommandSyntaxException
-	{
+
+	private static int getStageCoords(CommandSourceStack source, String stageId, boolean isCornerA) throws CommandSyntaxException {
 		HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
-		
+
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
-		
+
 		Stage stage = stages.get(stageId);
-		
+
 		BlockPos pos = isCornerA ? stage.cornerA : stage.cornerB;
-		
+
 		source.sendSuccess(() -> Component.translatable("commands.stage.setting.area.get", isCornerA ? "A" : "B", stageId, pos.getX(), pos.getY(), pos.getZ()), true);
-		
+
 		return 1;
 	}
 	public static BlockPos getOrLoadBlockPos(CommandContext<CommandSourceStack> p_118243_, String p_118244_) throws CommandSyntaxException

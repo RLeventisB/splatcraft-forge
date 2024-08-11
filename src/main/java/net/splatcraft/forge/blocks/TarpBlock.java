@@ -25,6 +25,7 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,10 +73,23 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
-        BlockState state = context.getLevel().getBlockState(context.getClickedPos()).is(this) ? context.getLevel().getBlockState(context.getClickedPos()) :
-                super.getStateForPlacement(context).setValue(DOWN, false).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        BlockState superState = super.getStateForPlacement(context);
+        Level level = context.getLevel();
+
+        BlockState state;
+        if (level.getBlockState(context.getClickedPos()).is(this))
+        {
+            state = level.getBlockState(context.getClickedPos());
+        }
+        else
+        {
+            if (superState == null) {
+                return null;
+            }
+            state = superState.setValue(DOWN, false).setValue(WATERLOGGED, level.getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        }
 
         state = state.setValue(FACING_TO_PROPERTY_MAP.get(context.getClickedFace().getOpposite()), true);
 

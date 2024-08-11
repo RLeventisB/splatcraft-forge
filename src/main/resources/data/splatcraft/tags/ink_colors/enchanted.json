@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "splatcraft:mojang",
+    "splatcraft:cobalt",
+    "splatcraft:ice",
+    "splatcraft:floral",
+    "splatcraft:omni_green",
+    "splatcraft:mana_purple"
+  ]
+}

@@ -39,12 +39,18 @@ import net.splatcraft.forge.client.models.subs.BurstBombModel;
 import net.splatcraft.forge.client.models.subs.CurlingBombModel;
 import net.splatcraft.forge.client.models.subs.SplatBombModel;
 import net.splatcraft.forge.client.models.subs.SuctionBombModel;
-import net.splatcraft.forge.client.renderer.*;
+import net.splatcraft.forge.client.renderer.InkProjectileRenderer;
+import net.splatcraft.forge.client.renderer.InkSquidRenderer;
+import net.splatcraft.forge.client.renderer.SpawnShieldRenderer;
+import net.splatcraft.forge.client.renderer.SquidBumperRenderer;
 import net.splatcraft.forge.client.renderer.subs.BurstBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.CurlingBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.SplatBombRenderer;
 import net.splatcraft.forge.client.renderer.subs.SuctionBombRenderer;
-import net.splatcraft.forge.entities.*;
+import net.splatcraft.forge.entities.InkProjectileEntity;
+import net.splatcraft.forge.entities.InkSquidEntity;
+import net.splatcraft.forge.entities.SpawnShieldEntity;
+import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.entities.subs.BurstBombEntity;
 import net.splatcraft.forge.entities.subs.CurlingBombEntity;
 import net.splatcraft.forge.entities.subs.SplatBombEntity;
@@ -83,12 +89,12 @@ public class SplatcraftEntities
 		EntityRenderers.register(INK_PROJECTILE.get(), InkProjectileRenderer::new);
 		EntityRenderers.register(INK_SQUID.get(), InkSquidRenderer::new);
 		EntityRenderers.register(SQUID_BUMPER.get(), SquidBumperRenderer::new);
-		
+
 		EntityRenderers.register(SPLAT_BOMB.get(), SplatBombRenderer::new);
 		EntityRenderers.register(BURST_BOMB.get(), BurstBombRenderer::new);
 		EntityRenderers.register(SUCTION_BOMB.get(), SuctionBombRenderer::new);
 		EntityRenderers.register(CURLING_BOMB.get(), CurlingBombRenderer::new);
-		
+
 		EntityRenderers.register(SPAWN_SHIELD.get(), SpawnShieldRenderer::new);
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -97,17 +103,17 @@ public class SplatcraftEntities
 	{
 		event.registerLayerDefinition(InkSquidModel.LAYER_LOCATION, InkSquidModel::createBodyLayer);
 		event.registerLayerDefinition(SquidBumperModel.LAYER_LOCATION, SquidBumperModel::createBodyLayer);
-		
+
 		event.registerLayerDefinition(SplatBombModel.LAYER_LOCATION, SplatBombModel::createBodyLayer);
 		event.registerLayerDefinition(BurstBombModel.LAYER_LOCATION, BurstBombModel::createBodyLayer);
 		event.registerLayerDefinition(SuctionBombModel.LAYER_LOCATION, SuctionBombModel::createBodyLayer);
 		event.registerLayerDefinition(CurlingBombModel.LAYER_LOCATION, CurlingBombModel::createBodyLayer);
-		
+
 		event.registerLayerDefinition(InkProjectileModel.LAYER_LOCATION, InkProjectileModel::createBodyLayer);
 		event.registerLayerDefinition(ShooterInkProjectileModel.LAYER_LOCATION, ShooterInkProjectileModel::createBodyLayer);
 		event.registerLayerDefinition(BlasterInkProjectileModel.LAYER_LOCATION, BlasterInkProjectileModel::createBodyLayer);
 		event.registerLayerDefinition(RollerInkProjectileModel.LAYER_LOCATION, RollerInkProjectileModel::createBodyLayer);
-		
+
 		event.registerLayerDefinition(InkTankModel.LAYER_LOCATION, InkTankModel::createBodyLayer);
 		event.registerLayerDefinition(ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::createBodyLayer);
 		event.registerLayerDefinition(InkTankJrModel.LAYER_LOCATION, InkTankJrModel::createBodyLayer);
@@ -118,12 +124,15 @@ public class SplatcraftEntities
 	{
 		event.put(SplatcraftEntities.INK_SQUID.get(), InkSquidEntity.setCustomAttributes().build());
 		event.put(SplatcraftEntities.SQUID_BUMPER.get(), SquidBumperEntity.setCustomAttributes().build());
-		
+
 		InkProjectileEntity.registerDataAccessors();
 	}
-	public static AttributeSupplier.Builder injectPlayerAttributes(AttributeSupplier.Builder builder)
-	{
-		builder.add(SplatcraftItems.INK_SWIM_SPEED, 0.075);
+
+    public static AttributeSupplier.Builder injectPlayerAttributes(AttributeSupplier.Builder builder) {
+        builder.add(SplatcraftAttributes.inkSwimSpeed.get(), SplatcraftAttributes.inkSwimSpeed.get().getDefaultValue());
+        builder.add(SplatcraftAttributes.superJumpTravelTime.get(), SplatcraftAttributes.superJumpTravelTime.get().getDefaultValue());
+        builder.add(SplatcraftAttributes.superJumpWindupTime.get(), SplatcraftAttributes.superJumpWindupTime.get().getDefaultValue());
+        builder.add(SplatcraftAttributes.superJumpHeight.get(), SplatcraftAttributes.superJumpHeight.get().getDefaultValue());
 		return builder;
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -138,7 +147,7 @@ public class SplatcraftEntities
 		event.getSkins().forEach(renderer ->
 		{
 			LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> skin = event.getSkin(renderer);
-			
+
 			skin.addLayer(new InkAccessoryLayer(skin, new HumanoidModel<>(event.getEntityModels().bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
 			skin.addLayer(new PlayerInkColoredSkinLayer(skin, new PlayerModel<>(event.getEntityModels().bakeLayer(renderer.equals("slim") ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER), renderer.equals("slim"))));
 			attachInkOverlay(Objects.requireNonNull(skin));

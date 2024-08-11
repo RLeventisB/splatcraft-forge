@@ -17,7 +17,6 @@ public class InkBandItem extends Item
 	public InkBandItem()
 	{
 		super(new Item.Properties().stacksTo(1));
-		SplatcraftItemGroups.addGeneralItem(this);
 	}
 	@Override
 	public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flags)

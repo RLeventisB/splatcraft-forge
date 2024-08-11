@@ -35,24 +35,28 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	{
 		super(settingsId);
 	}
+
 	@Override
 	public Class<ChargerWeaponSettings> getSettingsClass()
 	{
 		return ChargerWeaponSettings.class;
 	}
+
 	public static RegistryObject<ChargerItem> create(DeferredRegister<Item> register, String settings, String name)
 	{
 		return register.register(name, () -> new ChargerItem(settings));
 	}
+
 	public static RegistryObject<ChargerItem> create(DeferredRegister<Item> register, RegistryObject<ChargerItem> parent, String name)
 	{
 		return register.register(name, () -> new ChargerItem(parent.get().settingsId.toString()));
 	}
+
 	@Override
 	public void onReleaseCharge(Level level, Player player, ItemStack stack, float charge)
 	{
 		ChargerWeaponSettings settings = getSettings(stack);
-		
+
 		InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileSize, settings);
 		proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0f, settings.projectileSpeed, 0.1f);
 		proj.setChargerStats(charge, settings);
@@ -63,12 +67,14 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.endLagTicks, player.getInventory().selected, player.getUsedItemHand(), true, false, false, player.onGround()));
 		player.getCooldowns().addCooldown(this, 7);
 	}
+
 	@OnlyIn(Dist.CLIENT)
 	protected static void playChargeReadySound(Player player)
 	{
 		if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getUUID().equals(player.getUUID()))
 			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.chargerReady, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
 	}
+
 	@OnlyIn(Dist.CLIENT)
 	protected void playChargingSound(Player player)
 	{
@@ -76,14 +82,15 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		{
 			return;
 		}
-		
+
 		chargingSound = new ChargerChargingTickableSound(Minecraft.getInstance().player, SplatcraftSounds.chargerCharge);
 		Minecraft.getInstance().getSoundManager().play(chargingSound);
 	}
+
 	@Override
 	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
 	{
-		if (!level.isClientSide)
+        if (!level.isClientSide())
 		{
 			if (timeLeft % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
 				playNoInkSound(entity, SplatcraftSounds.noInkMain);
@@ -99,7 +106,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 					return;
 				newCharge = prevCharge + (settings.emptyTankChargeSpeed);
 			}
-			
+
 			if (prevCharge < 1 && newCharge >= 1)
 			{
 				playChargeReadySound(player);
@@ -108,42 +115,47 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			{
 				playChargingSound(player);
 			}
-			
+
 			PlayerCharge.addChargeValue(player, stack, newCharge - prevCharge, false);
 		}
 	}
+
 	@Override
 	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity, int timeLeft)
 	{
 		super.releaseUsing(stack, level, entity, timeLeft);
-		
-		if (level.isClientSide && !PlayerInfoCapability.isSquid(entity) && entity instanceof Player player)
+
+        if (level.isClientSide() && !PlayerInfoCapability.isSquid(entity) && entity instanceof Player player)
 		{
 			PlayerCharge charge = PlayerCharge.getCharge(player);
 			if (charge != null && charge.charge > 0.05f)
 			{
 				ChargerWeaponSettings settings = getSettings(stack);
-				PlayerCooldown.setPlayerCooldown((Player) entity, new PlayerCooldown(stack, settings.endLagTicks, ((Player) entity).getInventory().selected, entity.getUsedItemHand(), true, false, false, entity.onGround()));
+				PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.endLagTicks, player.getInventory().selected, entity.getUsedItemHand(), true, false, false, entity.onGround()));
 				SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack));
 				charge.reset();
 			}
 		}
 	}
+
 	public float getInkConsumption(ItemStack stack, float charge)
 	{
 		ChargerWeaponSettings settings = getSettings(stack);
 		return settings.minInkConsumption + (settings.maxInkConsumption - settings.minInkConsumption) * charge;
 	}
+
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
 	{
 		return PlayerPosingHandler.WeaponPose.BOW_CHARGE;
 	}
+
 	@Override
 	public int getDischargeTicks(ItemStack stack)
 	{
 		return getSettings(stack).chargeStorageTicks;
 	}
+
 	@Override
 	public int getDecayTicks(ItemStack stack)
 	{

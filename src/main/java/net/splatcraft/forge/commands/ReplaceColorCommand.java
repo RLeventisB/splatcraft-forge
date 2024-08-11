@@ -41,10 +41,10 @@ public class ReplaceColorCommand
 	{
 		String stageId = StringArgumentType.getString(context, "stage");
 		Stage stage = SaveInfoCapability.get(context.getSource().getServer()).getStages().get(stageId);
-		
+
 		if (stage == null)
 			throw StageCommand.STAGE_NOT_FOUND.create(null);
-		
+
 		if (mode == 0)
 		{
 			return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), -1, mode, stageId, "");
@@ -55,22 +55,22 @@ public class ReplaceColorCommand
 	{
 		String stageId = StringArgumentType.getString(context, "stage");
 		Stage stage = SaveInfoCapability.get(context.getSource().getServer()).getStages().get(stageId);
-		
+
 		if (stage == null)
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
-		
+
 		int color = InkColorArgument.getInkColor(context, "color");
 		String team = StringArgumentType.getString(context, "affectedTeam");
-		
+
 		if (mode == 0)
 			return execute(context.getSource(), stage.cornerA, stage.cornerB, color, -1, mode, stageId, team);
-		
+
 		if (!stage.hasTeam(team))
 			throw StageCommand.TEAM_NOT_FOUND.create(new Object[] {team, stageId});
-		
+
 		int teamColor = stage.getTeamColor(team);
 		stage.setTeamColor(team, color);
-		
+
 		return execute(context.getSource(), stage.cornerA, stage.cornerB, color, teamColor, mode, stageId, team);
 	}
 	public static int execute(CommandContext<CommandSourceStack> context, int mode) throws CommandSyntaxException
@@ -84,8 +84,8 @@ public class ReplaceColorCommand
 	public static int execute(CommandSourceStack source, BlockPos from, BlockPos to, int color, int affectedColor, int mode, String affectedStage, String affectedTeam)
 	{
 		RemoteItem.RemoteResult result = ColorChangerItem.replaceColor(source.getLevel(), from, to, color, mode, affectedColor, affectedStage, affectedTeam);
-		
-		source.sendSuccess(result::getOutput, true);
+
+        source.sendSuccess(result::getOutput, true);
 		return result.getCommandResult();
 	}
 }

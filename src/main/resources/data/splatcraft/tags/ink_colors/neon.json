@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "splatcraft:neon_orange",
+    "splatcraft:neon_blue",
+    "splatcraft:neon_green",
+    "splatcraft:neon_pink",
+    "splatcraft:hero_yellow",
+    "splatcraft:octo_pink",
+    "splatcraft:deep_blue",
+    "splatcraft:fuchsia"
+  ]
+}

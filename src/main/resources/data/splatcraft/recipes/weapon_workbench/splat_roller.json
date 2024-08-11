@@ -63,7 +63,7 @@
     },
     {
       "name": "weaponType.coro_coro",
-      "advancement": "splatcraft:unlocks/coro_coro_splat_roller",
+      "advancement": "splatcraft:unlocks/corocoro_splat_roller",
       "result": {
         "item": "splatcraft:corocoro_splat_roller",
         "count": 1

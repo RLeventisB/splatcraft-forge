@@ -21,6 +21,7 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
 	protected final ItemStack recipeOutput;
 	protected final NonNullList<StackedIngredient> recipeItems;
 	protected final Component name;
+
 	public AbstractWeaponWorkbenchRecipe(ResourceLocation id, Component name, ItemStack recipeOutput, NonNullList<StackedIngredient> recipeItems)
 	{
 		this.id = id;
@@ -28,12 +29,13 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
 		this.recipeItems = recipeItems;
 		this.name = name;
 	}
+
 	@Override
 	public boolean matches(Container inv, @NotNull Level levelIn)
 	{
 		List<ItemStack> inputs = new java.util.ArrayList<>();
 		int i = 0;
-		
+
 		for (int j = 0; j < inv.getContainerSize(); ++j)
 		{
 			ItemStack itemstack = inv.getItem(j);
@@ -43,7 +45,7 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
 				inputs.add(itemstack);
 			}
 		}
-		
+
 		return i == this.recipeItems.size() && net.minecraftforge.common.util.RecipeMatcher.findMatches(inputs, this.recipeItems) != null;
 	}
 	public Component getName()
@@ -91,7 +93,7 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
 	protected static NonNullList<StackedIngredient> readIngredients(JsonArray p_199568_0_)
 	{
 		NonNullList<StackedIngredient> nonnulllist = NonNullList.create();
-		
+
 		for (int i = 0; i < p_199568_0_.size(); ++i)
 		{
 			StackedIngredient ingredient = StackedIngredient.deserialize(p_199568_0_.get(i));
@@ -100,7 +102,7 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
 				nonnulllist.add(ingredient);
 			}
 		}
-		
+
 		return nonnulllist;
 	}
 }

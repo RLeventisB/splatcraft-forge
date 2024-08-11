@@ -29,6 +29,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.blocks.IColoredBlock;
 import net.splatcraft.forge.client.layer.PlayerInkColoredSkinLayer;
@@ -67,14 +68,13 @@ public class SplatcraftCommonHandler
 	public static void onPlayerJump(LivingEvent.LivingJumpEvent event)
 	{
 		LivingEntity entity = event.getEntity();
-		
+
 		if (!(entity instanceof Player))
 		{
 			return;
 		}
-		
-		if (InkBlockUtils.onEnemyInk(event.getEntity()))
-		{
+
+        if (InkBlockUtils.onEnemyInk(event.getEntityLiving())) {
 			entity.setDeltaMovement(entity.getDeltaMovement().x, Math.min(entity.getDeltaMovement().y, 0.1f), entity.getDeltaMovement().z);
 		}
 	}
@@ -85,7 +85,7 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-		
+
 		BlockState savedState = te.getSavedState();
 		if (event.getState().getBlock() instanceof IColoredBlock block && (event.isCanceled() ||
 			(event.getEntity() instanceof EnderDragon && savedState.is(BlockTags.DRAGON_IMMUNE)) ||
@@ -102,14 +102,15 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-		
+
 		Player player = event.getEntity();
+
 		event.getOriginal().reviveCaps(); // Mod devs should not have to do this
 		PlayerInfoCapability.get(player).readNBT(PlayerInfoCapability.get(event.getOriginal()).writeNBT(new CompoundTag()));
 		event.getOriginal().invalidateCaps();
-		
+
 		NonNullList<ItemStack> matchInv = PlayerInfoCapability.get(player).getMatchInventory();
-		
+
 		if (!matchInv.isEmpty())
 		{
 			for (int i = 0; i < matchInv.size(); i++)
@@ -120,7 +121,7 @@ public class SplatcraftCommonHandler
 					player.drop(stack, true, true);
 				}
 			}
-			
+
 			PlayerInfoCapability.get(player).setMatchInventory(NonNullList.create());
 		}
 		PlayerCooldown.setPlayerCooldown(player, null);
@@ -128,7 +129,7 @@ public class SplatcraftCommonHandler
 	private static boolean putStackInSlot(Inventory inventory, ItemStack stack, int i)
 	{
 		ItemStack invStack = inventory.getItem(i);
-		
+
 		if (invStack.isEmpty())
 		{
 			inventory.setItem(i, stack);
@@ -140,7 +141,7 @@ public class SplatcraftCommonHandler
 			int count = Math.min(invStack.getMaxStackSize(), stack.getCount() + invStack.getCount());
 			invStack.setCount(count);
 			stack.shrink(count - invCount);
-			
+
 			return stack.isEmpty();
 		}
 		return false;
@@ -150,7 +151,7 @@ public class SplatcraftCommonHandler
 	{
 		LivingEntity entity = event.getEntity();
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
-		
+
 		if (stack.getItem() instanceof InkTankItem item)
 		{
 			item.refill(stack);
@@ -163,7 +164,7 @@ public class SplatcraftCommonHandler
 		if (event.getEntity() instanceof Sheep && InkOverlayCapability.hasCapability(event.getEntity()))
 		{
 			InkOverlayInfo info = InkOverlayCapability.get(event.getEntity());
-			
+
 			if (info.getWoolColor() > -1)
 			{
 				for (ItemEntity itemEntity : event.getDrops())
@@ -176,14 +177,14 @@ public class SplatcraftCommonHandler
 				}
 			}
 		}
-		
+
 		//Handle keepMatchItems
 		if (event.getEntity() instanceof Player player)
 		{
 			NonNullList<ItemStack> matchInv = PlayerInfoCapability.get(player).getMatchInventory();
-			
+
 			event.getDrops().removeIf(drop -> matchInv.contains(drop.getItem()));
-			
+
 			for (int i = 0; i < matchInv.size(); i++)
 			{
 				ItemStack stack = matchInv.get(i);
@@ -201,7 +202,7 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-		
+
 		if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
 		{
 			PlayerInfo playerCapability;
@@ -213,9 +214,9 @@ public class SplatcraftCommonHandler
 			{
 				return;
 			}
-			
+
 			NonNullList<ItemStack> matchInv = NonNullList.withSize(player.getInventory().getContainerSize(), ItemStack.EMPTY);
-			
+
 			for (int i = 0; i < matchInv.size(); i++)
 			{
 				ItemStack stack = player.getInventory().getItem(i);
@@ -224,37 +225,39 @@ public class SplatcraftCommonHandler
 					matchInv.set(i, stack);
 				}
 			}
-			
+
 			playerCapability.setMatchInventory(matchInv);
 		}
 	}
+
 	public static final HashMap<UUID, byte[]> COLOR_SKIN_OVERLAY_SERVER_CACHE = new HashMap<>();
-	@SubscribeEvent
+
+    @SubscribeEvent
 	public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event)
 	{
 		ServerPlayer player = (ServerPlayer) event.getEntity();
 		SplatcraftPacketHandler.sendToPlayer(new UpdateBooleanGamerulesPacket(SplatcraftGameRules.booleanRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
-		
+
 		int[] criteriaColors = new int[ScoreboardHandler.getCriteriaKeySet().size()];
 		int criteriaColorIndex = 0;
 		for (int criteriaColor : ScoreboardHandler.getCriteriaKeySet())
 		{
 			criteriaColors[criteriaColorIndex++] = criteriaColor;
 		}
-		
-		TreeMap<String, Integer> playerColors = new TreeMap<>();
-		
+
+        TreeMap<UUID, Integer> playerColors = new TreeMap<>();
+
 		for (Player p : event.getEntity().level().players())
 		{
 			if (PlayerInfoCapability.hasCapability(p))
 			{
-				playerColors.put(p.getDisplayName().getString(), PlayerInfoCapability.get(p).getColor());
+				playerColors.put(p.getGameProfile().getId(), PlayerInfoCapability.get(p).getColor());
 			}
 		}
-		
-		SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(event.getEntity().getDisplayName().getString(), PlayerInfoCapability.get(event.getEntity()).getColor()));
+
+        SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(event.getEntity().getGameProfile().getId(), PlayerInfoCapability.get(event.getEntity()).getColor()));
 		SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, criteriaColors), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get(event.getEntity().level().getServer()).getStages()), player);
@@ -277,7 +280,7 @@ public class SplatcraftCommonHandler
 			}
 			catch (IOException e)
 			{
-				e.printStackTrace(System.out);
+				Splatcraft.LOGGER.error("Could not send player overlay packet", e);
 			}
 		}
 	}
@@ -287,7 +290,7 @@ public class SplatcraftCommonHandler
 	{
 		PlayerInkColoredSkinLayer.TEXTURES.values().forEach(Minecraft.getInstance().getTextureManager()::release);
 		PlayerInkColoredSkinLayer.TEXTURES.clear();
-		
+
 		if (event.getPlayer() != null)
 		{
 			SplatcraftPacketHandler.sendToServer(new SendPlayerOverlayPacket(event.getPlayer().getUUID(), new byte[0]));
@@ -302,17 +305,17 @@ public class SplatcraftCommonHandler
 			if (event.player.deathTime <= 0 && !info.isInitialized())
 			{
 				info.setInitialized(true);
-				
+
 				if (event.side.isClient())
 				{
 					SplatcraftPacketHandler.sendToServer(new RequestPlayerInfoPacket(event.player));
 				}
 			}
-			
+
 			if (event.side.isServer())
 			{
 				ItemStack inkBand = CommonUtils.getItemInInventory(event.player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
-				
+
 				if (!info.getInkBand().equals(inkBand, false))
 				{
 					info.setInkBand(inkBand);
@@ -325,7 +328,7 @@ public class SplatcraftCommonHandler
 	public static void onWorldTick(TickEvent.LevelTickEvent event)
 	{
 		Level level = event.level;
-		if (level.isClientSide)
+		if (level.isClientSide())
 		{
 			return;
 		}

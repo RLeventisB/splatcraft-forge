@@ -47,7 +47,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     public static final VoxelShape[] SHAPES = createVoxelShapes(BOTTOM_LEFT, BOTTOM_RIGHT, BASE, DETAIL, HANDLE);
     private static final MutableComponent CONTAINER_NAME = Component.translatable("container.ammo_knights_workbench");
 
-    public WeaponWorkbenchBlock(String name)
+    public WeaponWorkbenchBlock()
     {
         super(Properties.of().mapColor(MapColor.STONE).instrument(NoteBlockInstrument.BASEDRUM).strength(2.0f).requiresCorrectToolForDrops());
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
@@ -57,16 +57,12 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     {
         AABB bb = shape.bounds();
 
-        switch (facing)
-        {
-            case EAST:
-                return Shapes.create(new AABB(1 - bb.minZ, bb.minY, 1 - bb.minX, 1 - bb.maxZ, bb.maxY, 1 - bb.maxX));
-            case SOUTH:
-                return Shapes.create(new AABB(1 - bb.maxX, bb.minY, 1 - bb.maxZ, 1 - bb.minX, bb.maxY, 1 - bb.minZ));
-            case WEST:
-                return Shapes.create(new AABB(bb.minZ, bb.minY, bb.minX, bb.maxZ, bb.maxY, bb.maxX));
-        }
-        return shape;
+        return switch (facing) {
+            case EAST -> Shapes.create(new AABB(1 - bb.minZ, bb.minY, 1 - bb.minX, 1 - bb.maxZ, bb.maxY, 1 - bb.maxX));
+            case SOUTH -> Shapes.create(new AABB(1 - bb.maxX, bb.minY, 1 - bb.maxZ, 1 - bb.minX, bb.maxY, 1 - bb.minZ));
+            case WEST -> Shapes.create(new AABB(bb.minZ, bb.minY, bb.minX, bb.maxZ, bb.maxY, bb.maxX));
+            default -> shape;
+        };
     }
 
     public static VoxelShape[] createVoxelShapes(VoxelShape... shapes)
@@ -88,7 +84,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
     @Override
     public @NotNull InteractionResult use(@NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
     {
-        if (levelIn.isClientSide)
+        if (levelIn.isClientSide())
         {
             return InteractionResult.SUCCESS;
         }

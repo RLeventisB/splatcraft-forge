@@ -68,40 +68,40 @@ public class SplatcraftKeyHandler
 	{
 		Minecraft mc = Minecraft.getInstance();
 		Player player = mc.player;
-		
+
 		if (player == null || player.isSpectator() || !PlayerInfoCapability.hasCapability(player))
 		{
 			return;
 		}
-		
+
 		if (!mc.options.keyUse.isDown() && PlayerCharge.hasCharge(player) && PlayerInfoCapability.isSquid(player)) //Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
 		{
 			PlayerCharge.getCharge(player).reset();
 			SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
 		}
-		
+
 		boolean canHold = canHoldKeys(Minecraft.getInstance());
-		
+
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SHOOT_KEYBIND, autoSquidDelay);
-		
+
 		PlayerInfo info = PlayerInfoCapability.get(player);
 		KeyMode squidKeyMode = SplatcraftConfig.Client.squidKeyMode.get();
-		
+
 		SQUID_KEYBIND.tick(squidKeyMode, canHold);
 		updatePressState(SQUID_KEYBIND, 0);
-		
+
 		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
-		
+
 		if ((PlayerCooldown.hasPlayerCooldown(player) && !(PlayerCooldown.getPlayerCooldown(player).cancellable && SQUID_KEYBIND.active))
 			|| CommonUtils.anyWeaponOnCooldown(player))
 		{
 			return;
 		}
-		
+
 		ToggleableKey last = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
-		
+
 		if (!Minecraft.getInstance().isPaused())
 		{
 			int autoSquidMaxDelay = PlayerCooldown.hasPlayerCooldown(player) ? PlayerCooldown.getPlayerCooldown(player).getTime() + 10 :
@@ -109,18 +109,19 @@ public class SplatcraftKeyHandler
 			SplatcraftKeyHandler.autoSquidDelay = SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || PlayerCooldown.hasPlayerCooldown(player) ? autoSquidMaxDelay :
 				Mth.clamp(SplatcraftKeyHandler.autoSquidDelay - 1, 0, autoSquidMaxDelay);
 		}
-		
+
 		if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
 		{
 			// Unsquid so we can actually fire
 			ClientUtils.setSquid(info, false);
 		}
-		
+
 		if (SUB_WEAPON_KEYBIND.equals(last))
 		{
 			ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
-			
-			if (sub.isEmpty() || (info.isSquid() && player.level().getBlockCollisions(player,
+
+			if (sub.isEmpty() || (info.isSquid() && player.level().getBlockCollisions(
+                    player,
 				new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext()))
 			{
 				player.displayClientMessage(Component.translatable("status.cant_use"), true);
@@ -128,21 +129,21 @@ public class SplatcraftKeyHandler
 			else
 			{
 				ClientUtils.setSquid(info, false);
-				
+
 				if (SUB_WEAPON_KEYBIND.pressed)
 				{
 					if (!player.getItemInHand(InteractionHand.OFF_HAND).equals(sub))
 					{
 						slot = player.getInventory().findSlotMatchingItem(sub);
 						SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
-						
+
 						ItemStack stack = player.getOffhandItem();
 						player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
 						player.getInventory().setItem(slot, stack);
 						player.stopUsingItem();
 					}
 					else if (!usingSubWeaponHotkey) slot = -1;
-					
+
 					usingSubWeaponHotkey = true;
 					startUsingItemInHand(InteractionHand.OFF_HAND);
 				}
@@ -154,22 +155,23 @@ public class SplatcraftKeyHandler
 			{
 				mc.gameMode.releaseUsingItem(player);
 			}
-			
+
 			if (slot != -1)
 			{
 				ItemStack stack = player.getOffhandItem();
 				player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
 				player.getInventory().setItem(slot, stack);
 				player.stopUsingItem();
-				
+
 				SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 				usingSubWeaponHotkey = false;
 				slot = -1;
 			}
 		}
-		
+
 		if (player.getVehicle() == null &&
-			!player.level().getBlockCollisions(player,
+			!player.level().getBlockCollisions(
+                        player,
 				new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext())
 		{
 			if (SQUID_KEYBIND.equals(last) || !SQUID_KEYBIND.active)
@@ -226,7 +228,7 @@ public class SplatcraftKeyHandler
 							{
 								actionresulttype = mc.gameMode.interact(mc.player, entity, hand);
 							}
-							
+
 							if (actionresulttype.consumesAction())
 							{
 								if (actionresulttype.shouldSwing())
@@ -236,7 +238,7 @@ public class SplatcraftKeyHandler
 										mc.player.swing(hand);
 									}
 								}
-								
+
 								return;
 							}
 							break;
@@ -257,22 +259,22 @@ public class SplatcraftKeyHandler
 										mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 									}
 								}
-								
+
 								return;
 							}
-							
+
 							if (actionresulttype1 == InteractionResult.FAIL)
 							{
 								return;
 							}
 					}
 				}
-				
+
 				if (itemstack.isEmpty() && (mc.hitResult == null || mc.hitResult.getType() == HitResult.Type.MISS))
 				{
 					net.minecraftforge.common.ForgeHooks.onEmptyClick(mc.player, hand);
 				}
-				
+
 				if (!itemstack.isEmpty())
 				{
 					InteractionResult actionresulttype2 = mc.gameMode.useItem(mc.player, hand);
@@ -282,7 +284,7 @@ public class SplatcraftKeyHandler
 						{
 							mc.player.swing(hand);
 						}
-						
+
 						mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 					}
 				}
@@ -319,7 +321,7 @@ public class SplatcraftKeyHandler
 			{
 				active = !active;
 			}
-			
+
 			pressed = isKeyDown && !wasKeyDown;
 			released = !isKeyDown && wasKeyDown;
 			wasKeyDown = isKeyDown;

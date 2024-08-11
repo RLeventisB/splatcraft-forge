@@ -42,17 +42,17 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
 	{
 		ShooterWeaponSettings settings = getSettings(stack);
-		
+
 		int time = getUseDuration(stack) - timeLeft;
-		
+
 		if (time <= 0)
 		{
 			if (settings.shotData.startupTicks() > 0 && entity instanceof Player player)
 				PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.startupTicks(), player.getInventory().selected, player.getUsedItemHand(), true, false, true, player.onGround()));
 		}
 		else time -= settings.shotData.startupTicks();
-		
-		if (!level.isClientSide && settings.shotData.getFiringSpeed() > 0 && (time - 1) % settings.shotData.getFiringSpeed() == 0)
+
+		if (!level.isClientSide() && settings.shotData.getFiringSpeed() > 0 && (time - 1) % settings.shotData.getFiringSpeed() == 0)
 		{
 			if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 			{
@@ -63,7 +63,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 					proj.setShooterStats(settings);
 					level.addFreshEntity(proj);
 				}
-				
+
 				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
 		}

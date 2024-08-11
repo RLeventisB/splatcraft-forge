@@ -23,53 +23,65 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	{
 		this.name = name;
 	}
+
 	public abstract float calculateDamage(float tickCount, boolean airborne, InkProjectileEntity.ExtraDataList list);
 	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{
 		for (WeaponTooltip<SELF> stat : statTooltips)
 			tooltip.add(stat.getTextComponent((SELF) this, flag.isAdvanced()));
 	}
+
 	private AttributeModifier SPEED_MODIFIER;
 	public AttributeModifier getSpeedModifier()
 	{
 		if (SPEED_MODIFIER == null)
 			SPEED_MODIFIER = new AttributeModifier(SplatcraftItems.SPEED_MOD_UUID, name + " mobility", moveSpeed - 1, AttributeModifier.Operation.MULTIPLY_TOTAL);
-		
+
 		return SPEED_MODIFIER;
 	}
+
 	public SELF setMoveSpeed(float value)
 	{
 		moveSpeed = value;
 		return (SELF) this;
 	}
+
 	public SELF setSecret(boolean value)
 	{
 		isSecret = value;
 		return (SELF) this;
 	}
+
 	public void registerStatTooltips()
 	{
 		Collections.addAll(statTooltips, tooltipsToRegister());
 	}
+
 	public abstract WeaponTooltip<SELF>[] tooltipsToRegister();
+
 	public abstract Codec<CODEC> getCodec();
+
 	public void castAndDeserialize(Object o)
 	{
 		try
 		{
-			deserialize((CODEC) o);
+            deserialize((CODEC) o);
 		}
 		catch (ClassCastException ignored)
 		{
 		}
 	}
-	public abstract void deserialize(CODEC o);
+
+    public abstract void deserialize(CODEC o);
+
 	public abstract CODEC serialize();
+
 	public void serializeToBuffer(FriendlyByteBuf buffer)
 	{
 		buffer.writeJsonWithCodec(getCodec(), serialize());
-//		buffer.writeWithCodec(getCodec(), serialize());
+//		buffer.writeJsonWithCodec(getCodec(), serialize());
 	}
+
 	public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
 	{
 		final float minSpeedToCalculate = 0.01f;

@@ -40,7 +40,8 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 		else
 		{
 			float health = 20 - entityIn.getInkHealth();
-			super.renderNameTag(entityIn, Component.translatable((health >= 20 ? ChatFormatting.DARK_RED : "") + String.format("%.1f", health)), PoseStackIn, bufferIn, packedLightIn);
+			super.renderNameTag(entityIn, Component.literal((health >= 20 ? ChatFormatting.DARK_RED : "") + String.format("%.1f", health)), PoseStackIn, bufferIn, packedLightIn);
+
 		}
 	}
 	@Override
@@ -49,7 +50,7 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 		//PoseStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
 		float punchTime = (float) (entityLiving.level().getGameTime() - entityLiving.punchCooldown) + partialTicks;
 		float hurtTime = (float) (entityLiving.level().getGameTime() - entityLiving.hurtCooldown) + partialTicks;
-		
+
 		if (punchTime < 5.0F)
 		{
 			PoseStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, Mth.sin(punchTime / 1.5F * (float) Math.PI) * 3.0F));

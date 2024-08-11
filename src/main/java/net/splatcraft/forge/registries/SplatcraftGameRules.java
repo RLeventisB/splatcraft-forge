@@ -4,10 +4,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.util.ClientUtils;
+import org.lwjgl.system.CallbackI;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -21,7 +23,6 @@ public class SplatcraftGameRules {
     public static GameRules.Key<GameRules.IntegerValue> INK_DECAY_RATE;
     public static GameRules.Key<GameRules.BooleanValue> INKABLE_GROUND;
     public static GameRules.Key<GameRules.BooleanValue> INK_DESTROYS_FOLIAGE;
-    public static GameRules.Key<GameRules.BooleanValue> COLORED_PLAYER_NAMES;
     public static GameRules.Key<GameRules.BooleanValue> KEEP_MATCH_ITEMS;
     public static GameRules.Key<GameRules.BooleanValue> UNIVERSAL_INK;
     public static GameRules.Key<GameRules.BooleanValue> DROP_CRATE_LOOT;
@@ -34,11 +35,12 @@ public class SplatcraftGameRules {
     public static GameRules.Key<GameRules.BooleanValue> INK_DAMAGE_COOLDOWN;
     public static GameRules.Key<GameRules.BooleanValue> INFINITE_INK_IN_CREATIVE;
     public static GameRules.Key<GameRules.BooleanValue> RECHARGEABLE_INK_TANK;
+    public static GameRules.Key<GameRules.BooleanValue> GLOBAL_SUPERJUMPING;
+    public static GameRules.Key<GameRules.IntegerValue> SUPERJUMP_DISTANCE_LIMIT;
 
     public static void registerGamerules() {
         INK_DECAY = createBooleanRule("inkDecay", GameRules.Category.UPDATES, true);
         INK_DECAY_RATE = createIntRule("inkDecayRate", GameRules.Category.UPDATES, 3);
-        COLORED_PLAYER_NAMES = createBooleanRule("coloredPlayerNames", GameRules.Category.PLAYER, false);
         KEEP_MATCH_ITEMS = createBooleanRule("keepMatchItems", GameRules.Category.PLAYER, false);
         UNIVERSAL_INK = createBooleanRule("universalInk", GameRules.Category.PLAYER, false);
         DROP_CRATE_LOOT = createBooleanRule("dropCrateLoot", GameRules.Category.DROPS, false);
@@ -48,6 +50,8 @@ public class SplatcraftGameRules {
         INK_HEALING = createBooleanRule("inkHealing", GameRules.Category.PLAYER, true);
         INK_HEALING_CONSUMES_HUNGER = createBooleanRule("inkHealingConsumesHunger", GameRules.Category.PLAYER, true);
         INK_DAMAGE_COOLDOWN = createBooleanRule("inkDamageCooldown", GameRules.Category.PLAYER, false);
+        GLOBAL_SUPERJUMPING = createBooleanRule("globalSuperJumping", GameRules.Category.PLAYER, true);
+        SUPERJUMP_DISTANCE_LIMIT = createIntRule("superJumpDistanceLimit", GameRules.Category.PLAYER, 1000);
         INK_MOB_DAMAGE_PERCENTAGE = createIntRule("inkMobDamagePercentage", GameRules.Category.MOBS, 70);
         INFINITE_INK_IN_CREATIVE = createBooleanRule("infiniteInkInCreative", GameRules.Category.PLAYER, true);
         INKABLE_GROUND = createBooleanRule("inkableGround", GameRules.Category.MISC, true);
@@ -56,20 +60,20 @@ public class SplatcraftGameRules {
     }
 
     public static boolean getLocalizedRule(Level level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule) {
-        ArrayList<Stage> stages = new ArrayList<>(level.isClientSide ? ClientUtils.clientStages.values() : SaveInfoCapability.get(level.getServer()).getStages().values());
+        ArrayList<Stage> stages = Stage.getStagesForPosition(level, new Vec3(pos.getX(), pos.getY(), pos.getZ()));
 
         Stage localStage = null;
         AABB localStageBounds = null;
 
 
-        for (Object obj : stages.stream().filter(stage -> stage.dimID.equals(level.dimension().location()) && new AABB(stage.cornerA, stage.cornerB).expandTowards(1, 1, 1).contains(pos.getX(), pos.getY(), pos.getZ())).toArray()) {
-            Stage stage = (Stage) obj;
-            AABB stageBounds = new AABB(stage.cornerA, stage.cornerB);
+        for (Stage stage : stages)
+        {
+            AABB stageBounds = stage.getBounds();
 
             if (localStage == null || stageBounds.getSize() < localStageBounds.getSize())
             {
                 localStage = stage;
-                localStageBounds = new AABB(stage.cornerA, stage.cornerB);
+                localStageBounds = stage.getBounds();
             }
         }
 
@@ -105,11 +109,11 @@ public class SplatcraftGameRules {
     }
 
     public static boolean getBooleanRuleValue(Level level, GameRules.Key<GameRules.BooleanValue> rule) {
-        return level.isClientSide ? getClientsideBooleanValue(rule) : level.getGameRules().getBoolean(rule);
+        return level.isClientSide() ? getClientsideBooleanValue(rule) : level.getGameRules().getBoolean(rule);
     }
 
     public static int getIntRuleValue(Level level, GameRules.Key<GameRules.IntegerValue> rule) {
-        return level.isClientSide ? getClientsideIntValue(rule) : level.getGameRules().getInt(rule);
+        return level.isClientSide() ? getClientsideIntValue(rule) : level.getGameRules().getInt(rule);
     }
 
     public static boolean getClientsideBooleanValue(GameRules.Key<GameRules.BooleanValue> rule) {

@@ -20,9 +20,9 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("deprecation")
 public class GrateBlock extends Block implements SimpleWaterloggedBlock
@@ -30,6 +30,7 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final Properties PROPERTIES = Properties.of().mapColor(MapColor.METAL).noOcclusion().requiresCorrectToolForDrops().strength(4.0f).sound(SoundType.METAL);
+
     protected static final HashMap<Direction, VoxelShape> AABBS = new HashMap<>()
     {{
         put(Direction.NORTH, Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D));

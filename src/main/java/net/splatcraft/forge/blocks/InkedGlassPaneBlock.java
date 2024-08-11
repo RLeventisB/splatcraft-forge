@@ -64,7 +64,11 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
-        return super.getStateForPlacement(context).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        BlockState state = super.getStateForPlacement(context);
+        if (state == null) {
+            return null;
+        }
+        return state.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
     }
 
     @Override
@@ -72,8 +76,8 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
     {
         ItemStack stack = super.getCloneItemStack(reader, pos, state);
 
-        if (reader.getBlockEntity(pos) instanceof InkColorTileEntity)
-            ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(reader.getBlockEntity(pos))), true);
+        if (reader.getBlockEntity(pos) instanceof InkColorTileEntity te)
+            ColorUtils.setColorLocked(ColorUtils.setInkColor(stack, ColorUtils.getInkColor(te)), true);
 
         return stack;
     }
@@ -99,9 +103,9 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
     @Override
     public int getColor(Level level, BlockPos pos)
     {
-        if (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
+        if (level.getBlockEntity(pos) instanceof InkColorTileEntity te)
         {
-            return colorTileEntity.getColor();
+            return te.getColor();
         }
         return -1;
     }
@@ -110,9 +114,9 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
     public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
     {
         BlockState state = level.getBlockState(pos);
-        if (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity && colorTileEntity.getColor() != newColor)
+        if (level.getBlockEntity(pos) instanceof InkColorTileEntity te && te.getColor() != newColor)
         {
-            colorTileEntity.setColor(newColor);
+            te.setColor(newColor);
             level.sendBlockUpdated(pos, state, state, 2);
             return true;
         }

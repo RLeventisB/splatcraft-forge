@@ -26,12 +26,12 @@ public class WeaponHandler
 		{
 			int color = ColorUtils.getPlayerColor(target);
 			((ServerLevel) target.level).sendParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);
-			
+
 			if (ScoreboardHandler.hasColorCriterion(color))
 			{
 				target.getScoreboard().forAllObjectives(ScoreboardHandler.getDeathsAsColor(color), target.getScoreboardName(), score -> score.add(1));
 			}
-			
+
 			if (event.getSource().getDirectEntity() instanceof Player source)
 			{
 				if (ScoreboardHandler.hasColorCriterion(color))
@@ -45,28 +45,27 @@ public class WeaponHandler
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event)
 	{
 		Player player = event.player;
-		boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
-		PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-		if (hasCooldown)
-		{
+        boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
+        PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
+        if (hasCooldown && cooldown.getSlotIndex() >= 0) {
 			player.getInventory().selected = cooldown.getSlotIndex();
 		}
-		
+
 		if (event.phase != TickEvent.Phase.START)
 		{
 			return;
 		}
-		
+
 		boolean canUseWeapon = true;
-		
+
 		if (hasCooldown)
 		{
 			if (cooldown.cancellable && PlayerInfoCapability.isSquid(player))
 			{
 				ItemStack stack = cooldown.storedStack;
-				
+
 				if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-					weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
+					weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
 				PlayerCooldown.setPlayerCooldown(player, null);
 			}
 			else
@@ -75,20 +74,22 @@ public class WeaponHandler
 					cooldown.onStart(player);
 				cooldown.tick(player);
 				player.setSprinting(false);
-				
+
 				canUseWeapon = !cooldown.preventWeaponUse();
 				ItemStack stack = cooldown.storedStack;
-				
+
 				if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
 				{
 					if (cooldown.getTime() == 1)
-					{
-						weapon.onPlayerCooldownEnd(player.level, player, stack, cooldown);
+                    {
+						weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
 						PlayerCooldown.setPlayerCooldown(player, null);
 						hasCooldown = false;
 					}
-					else if (cooldown.getTime() > 1)
-						weapon.onPlayerCooldownTick(player.level, player, stack, cooldown);
+                    else if (cooldown.getTime() > 1)
+                    {
+						weapon.onPlayerCooldownTick(player.level(), player, stack, cooldown);
+                    }
 				}
 				cooldown.setTime(cooldown.getTime() - 1);
 			}
@@ -98,7 +99,7 @@ public class WeaponHandler
 			ItemStack stack = player.getItemInHand(player.getUsedItemHand());
 			if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			{
-				weapon.weaponUseTick(player.level, player, stack, player.getUseItemRemainingTicks());
+				weapon.weaponUseTick(player.level(), player, stack, player.getUseItemRemainingTicks());
 				player.setSprinting(false);
 			}
 		}

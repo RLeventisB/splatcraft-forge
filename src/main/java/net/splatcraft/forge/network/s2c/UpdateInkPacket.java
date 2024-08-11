@@ -1,5 +1,6 @@
 package net.splatcraft.forge.network.s2c;
 
+import java.util.HashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -11,6 +12,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.forge.util.RelativeBlockPos;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +49,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		for (var blockPosTupleEntry : dirty.entrySet())
 		{
 			BlockPos blockPos = blockPosTupleEntry.getKey();
-			
+
 			buffer.writeBlockPos(blockPos);
 			blockPosTupleEntry.getValue().writeToBuffer(buffer);
 		}
@@ -57,29 +59,31 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		ChunkPos chunkPos = buffer.readChunkPos();
 		int changedBlocks = buffer.readInt();
 		HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>(changedBlocks);
-		
+
 		for (int i = 0; i < changedBlocks; i++)
 		{
 			BlockPos pos = buffer.readBlockPos();
 			ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
 			dirty.put(pos, entry);
 		}
-		
+
 		return new UpdateInkPacket(chunkPos, dirty);
 	}
 	@Override
 	public void execute()
 	{
 		ClientLevel level = Minecraft.getInstance().level;
-		
+
 		if (level != null)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
-			
+            // the dedicated server will crash if you pass the level and pos directly. wow.
+            // yes i will keep this comment in case i test on a dedicated server
+            ChunkInk chunkInk = ChunkInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
+
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{
 				BlockPos pos = entry.getKey();
-				entry.getValue().apply(chunkInk, pos);
+				entry.getValue().apply(chunkInk, RelativeBlockPos.fromAbsolute(pos));
 				BlockState state = level.getBlockState(pos);
 				level.sendBlockUpdated(pos, state, state, 0);
 			}

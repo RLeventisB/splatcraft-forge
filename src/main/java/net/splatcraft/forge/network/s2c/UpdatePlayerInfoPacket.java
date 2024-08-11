@@ -46,7 +46,7 @@ public class UpdatePlayerInfoPacket extends PlayS2CPacket
 
         if (target != null) {
             PlayerInfoCapability.get(target).readNBT(nbt);
-            ClientUtils.setClientPlayerColor(target.getDisplayName().getString(), ColorUtils.getColorFromNbt(this.nbt));
+            ClientUtils.setClientPlayerColor(this.target, ColorUtils.getColorFromNbt(this.nbt));
         }
     }
 }

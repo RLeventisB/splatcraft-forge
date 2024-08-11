@@ -27,43 +27,49 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 {
 	private static EntityRendererProvider.Context squidFormContext;
 	private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_squid_overlay.png");
+
 	public InkSquidRenderer(EntityRendererProvider.Context context)
 	{
 		super(context, new InkSquidModel(context.bakeLayer(InkSquidModel.LAYER_LOCATION)), 0.5f);
 		addLayer(new InkSquidColorLayer(this, context.getModelSet()));
-		
+
 		if (squidFormContext == null)
 			squidFormContext = context;
 	}
+
 	public static EntityRendererProvider.Context getContext()
 	{
 		return squidFormContext;
 	}
+
 	@Override
 	protected boolean shouldShowName(@NotNull LivingEntity entity)
 	{
 		return super.shouldShowName(entity) && (entity.shouldShowName() || entity.hasCustomName() && entity == this.entityRenderDispatcher.crosshairPickEntity);
 	}
+
 	@Override
 	public void render(@NotNull LivingEntity entity, float p_115309_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int p_115313_)
 	{
 		super.render(entity, p_115309_, partialTicks, poseStack, bufferSource, p_115313_);
-		
+
 		if (entity instanceof InkSquidEntity squid)
 			renderLeash(squid, partialTicks, poseStack, bufferSource);
 	}
+
 	@Override
 	public @NotNull ResourceLocation getTextureLocation(@NotNull LivingEntity entity)
 	{
 		return TEXTURE;
 	}
+
 	private void renderLeash(InkSquidEntity squid, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource)
 	{
 		Entity holder = squid.getLeashHolder();
-		
+
 		if (holder == null)
 			return;
-		
+
 		poseStack.pushPose();
 		Vec3 vec3 = holder.getRopeHoldPosition(partialTicks);
 		float d0 = (Mth.lerp(partialTicks, squid.yBodyRot, squid.yBodyRotO) * Mth.DEG_TO_RAD) + Mth.HALF_PI;
@@ -88,23 +94,31 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		int j = getHolderBlockLightLevel(holder, blockpos1);
 		int k = squid.level().getBrightness(LightLayer.SKY, blockpos);
 		int l = squid.level().getBrightness(LightLayer.SKY, blockpos1);
-		
+
 		for (int i1 = 0; i1 <= 24; ++i1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.025F, f5, f6, i1, false);
 		}
-		
+
 		for (int j1 = 24; j1 >= 0; --j1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.0F, f5, f6, j1, true);
 		}
-		
+
 		poseStack.popPose();
 	}
+
+	@Override
+	protected void setupRotations(@NotNull LivingEntity p_115317_, @NotNull PoseStack p_115318_, float p_115319_, float p_115320_, float p_115321_)
+    {
+		super.setupRotations(p_115317_, p_115318_, p_115319_, p_115320_, p_115321_);
+	}
+
 	protected int getHolderBlockLightLevel(Entity p_114496_, BlockPos p_114497_)
-	{
+    {
 		return p_114496_.isOnFire() ? 15 : p_114496_.level().getBrightness(LightLayer.BLOCK, p_114497_);
 	}
+
 	private static void addVertexPair(VertexConsumer p_174308_, Matrix4f p_174309_, float p_174310_, float p_174311_, float p_174312_, int p_174313_, int p_174314_, int p_174315_, int p_174316_, float p_174317_, float p_174318_, float p_174319_, float p_174320_, int p_174321_, boolean p_174322_)
 	{
 		float f = (float) p_174321_ / 24.0F;

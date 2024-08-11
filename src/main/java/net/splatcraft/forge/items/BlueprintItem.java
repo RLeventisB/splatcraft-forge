@@ -22,7 +22,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.items.weapons.*;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,6 @@ public class BlueprintItem extends Item
     public BlueprintItem()
     {
         super(new Properties().stacksTo(16));
-        SplatcraftItemGroups.addGeneralItem(this);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -91,16 +89,6 @@ public class BlueprintItem extends Item
         components.add(Component.translatable("item.splatcraft.blueprint.tooltip.empty"));
     }
 
-    //	@Override
-//	public void fillItemCategory(@NotNull CreativeModeTab tab, @NotNull NonNullList<ItemStack> list)
-//	{
-//		if (tab == CreativeModeTab.TAB_SEARCH)
-//			weaponPools.forEach((key, value) -> list.add(setPoolFromWeaponType(new ItemStack(this), key)));
-//		else if (allowdedIn(tab))
-//		{
-//			list.add(setPoolFromWeaponType(new ItemStack(this), "wildcard"));
-//		}
-//	}
     public static ItemStack addToAdvancementPool(ItemStack blueprint, String... advancementIds)
     {
         return addToAdvancementPool(blueprint, Arrays.stream(advancementIds));

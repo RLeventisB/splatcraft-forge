@@ -23,19 +23,23 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	{
 		return registry.register(name, () -> new BlasterItem(settings));
 	}
+
 	public static RegistryObject<BlasterItem> createBlaster(DeferredRegister<Item> registry, RegistryObject<BlasterItem> parent, String name)
 	{
 		return registry.register(name, () -> new BlasterItem(parent.get().settingsId.toString()));
 	}
+
 	protected BlasterItem(String settings)
 	{
 		super(settings);
 	}
+
 	@Override
 	public Class<BlasterWeaponSettings> getSettingsClass()
 	{
 		return BlasterWeaponSettings.class;
 	}
+
 	@Override
 	public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
 	{
@@ -45,16 +49,17 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 		{
 			BlasterWeaponSettings settings = getSettings(stack);
 			PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.startupTicks(), player.getInventory().selected, entity.getUsedItemHand(), true, false, true, player.onGround()));
-			if (!level.isClientSide)
+			if (!level.isClientSide())
 			{
 				cooldownTracker.addCooldown(this, settings.shotData.startupTicks() + settings.shotData.endlagTicks());
 			}
 		}
 	}
+
 	@Override
 	public void onPlayerCooldownEnd(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
 	{
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 		{
 			BlasterWeaponSettings settings = getSettings(stack);
 			if (reduceInk(player, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
@@ -70,6 +75,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 			}
 		}
 	}
+
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
 	{

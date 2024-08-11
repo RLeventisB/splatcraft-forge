@@ -55,28 +55,28 @@ public class ScanTurfCommand
 	}
 	private static int executeStage(CommandSourceStack source, String stageId, int mode, Collection<ServerPlayer> targets) throws CommandSyntaxException
 	{
-		
+
 		Stage stage = SaveInfoCapability.get(source.getServer()).getStages().get(stageId);
-		
+
 		if (stage == null)
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
-		
+
 		int result = execute(source, stage.cornerA, stage.cornerB, mode, targets);
-		
+
 		for (String team : stage.getTeamIds())
 		{
 			if (stage.getTeamColor(team) == result)
 				source.getLevel().getScoreboard().forAllObjectives(Stats.CUSTOM.get(SplatcraftStats.TURF_WARS_WON), "[" + team + "]", score -> score.add(1));
 		}
-		
+
 		return result;
 	}
 	private static int execute(CommandSourceStack source, BlockPos from, BlockPos to, int mode, Collection<ServerPlayer> targets)
 	{
 		RemoteItem.RemoteResult result = TurfScannerItem.scanTurf(source.getLevel(), source.getLevel(), from, to, mode, targets);
-		
-		source.sendSuccess(result::getOutput, true);
-		
+
+        source.sendSuccess(result::getOutput, true);
+
 		return result.getCommandResult();
 	}
 }

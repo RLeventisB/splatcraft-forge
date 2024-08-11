@@ -1,5 +1,6 @@
 package net.splatcraft.forge.tileentities;
 
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -15,8 +16,6 @@ import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class CrateTileEntity extends InkColorTileEntity implements Container
 {
     private final NonNullList<ItemStack> inventory = NonNullList.withSize(1, ItemStack.EMPTY);
@@ -31,7 +30,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
 
     public void ink(int color, float damage)
     {
-        if (level != null && level.isClientSide)
+        if (level != null && level.isClientSide())
         {
             return;
         }

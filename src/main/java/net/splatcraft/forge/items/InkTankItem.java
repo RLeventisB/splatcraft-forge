@@ -23,7 +23,6 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,10 @@ import java.util.function.Consumer;
 public class InkTankItem extends ColoredArmorItem
 {
     public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
+
     public final float capacity;
     public final Properties properties;
+
     @OnlyIn(Dist.CLIENT)
     private AbstractInkTankModel model;
 
@@ -49,7 +50,6 @@ public class InkTankItem extends ColoredArmorItem
         this.properties = properties;
 
         SplatcraftItems.weapons.add(this);
-        SplatcraftItemGroups.addGeneralItem(this);
         inkTanks.add(this);
         SplatcraftTags.Items.putInkTankTags(this, tagId);
     }
@@ -106,7 +106,7 @@ public class InkTankItem extends ColoredArmorItem
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player && !level.isClientSide && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
+        if (entity instanceof Player player && !level.isClientSide() && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
         {
             float ink = getInkAmount(stack);
             Item using = player.getUseItem().getItem();

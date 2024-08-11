@@ -13,12 +13,14 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 	Integer[] colors;
 	Float[] scores;
 	int length;
+
 	public SendScanTurfResultsPacket(Integer[] colors, Float[] scores)
 	{
 		this.colors = colors;
 		this.scores = scores;
 		this.length = Math.min(colors.length, scores.length);
 	}
+
 	public static SendScanTurfResultsPacket decode(FriendlyByteBuf buffer)
 	{
 		ArrayList<Integer> colorList = new ArrayList<>();
@@ -29,9 +31,10 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 			colorList.add(buffer.readInt());
 			scoreList.add(buffer.readFloat());
 		}
-		
+
 		return new SendScanTurfResultsPacket(colorList.toArray(new Integer[0]), scoreList.toArray(new Float[0]));
 	}
+
 	@Override
 	public void encode(FriendlyByteBuf buffer)
 	{
@@ -42,26 +45,27 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 			buffer.writeFloat(scores[i]);
 		}
 	}
+
 	@Override
 	public void execute()
 	{
 		Player player = ClientUtils.getClientPlayer();
 		int winner = -1;
 		float winnerScore = -1;
-		
+
 		for (int i = 0; i < colors.length; i++)
 		{
-			player.displayClientMessage(Component.translatable("status.scan_turf.score", ColorUtils.getFormatedColorName(colors[i], false), String.format("%.1f", scores[i])), false);
+            player.displayClientMessage(Component.translatable("status.scan_turf.score", ColorUtils.getFormatedColorName(colors[i], false), String.format("%.1f", scores[i])), false);
 			if (winnerScore < scores[i])
 			{
 				winnerScore = scores[i];
 				winner = colors[i];
 			}
 		}
-		
+
 		if (winner != -1)
 		{
-			player.displayClientMessage(Component.translatable("status.scan_turf.winner", ColorUtils.getFormatedColorName(winner, false)), false);
+            player.displayClientMessage(Component.translatable("status.scan_turf.winner", ColorUtils.getFormatedColorName(winner, false)), false);
 		}
 	}
 }

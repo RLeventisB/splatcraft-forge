@@ -56,9 +56,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	protected DualieItem(String settings)
 	{
 		super(settings);
-		
+
 		this.settings = settings;
-		
+
 		dualies.add(this);
 	}
 	@Override
@@ -74,25 +74,25 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		if (stack.getItem() instanceof DualieItem dualie)
 			return lastRoll ? dualie.getSettings(stack).rollData.lastRollTurretDuration() : dualie.getSettings(stack).rollData.turretDuration();
-		
+
 		return 0;
 	}
 	public float performRoll(Player player, ItemStack activeDualie, int maxRolls, Vec2 rollDirection, boolean local)
 	{
 		int rollCount = getRollCount(player);
-		
+
 		boolean lastRoll = rollCount >= maxRolls - 1;
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
-		
-		if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level.isClientSide))
+
+		if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
 		{
 			int turretDuration = getRollTurretDuration(activeDualie, lastRoll);
 			PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
-			
+
 			PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
 			return activeDualie.getItem() instanceof DualieItem ? activeSettings.rollData.speed() : 0;
 		}
-		
+
 		return 0;
 	}
 	public static int getRollCount(Player player)
@@ -146,14 +146,14 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, level, entity, itemSlot, isSelected);
-		
+
 		CompoundTag nbt = stack.getOrCreateTag();
-		
+
 		nbt.putBoolean("IsPlural", false);
 		if (entity instanceof LivingEntity livingEntity)
 		{
 			InteractionHand hand = livingEntity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-			
+
 			if (livingEntity.getItemInHand(hand).equals(stack) && livingEntity.getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
 			{
 				nbt.putBoolean("IsPlural", true);
@@ -165,7 +165,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				{
 					offhandDualie = localPlayer.getOffhandItem();
 				}
-				
+
 				int rollCount = getRollCount(localPlayer);
 				int maxRolls = getMaxRollCount(localPlayer);
 				if (rollCount < maxRolls && ClientUtils.canPerformRoll(localPlayer))
@@ -182,11 +182,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					}
 					DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
 					// why does vec2 use floats but vec3 use doubles
-					
+
 					if (reduceInk(localPlayer, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
 					{
 						Vec2 rollDirection = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.speed());
-						
+
 						performRoll(localPlayer, stack, maxRolls, rollDirection, true);
 						SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, maxRolls, rollDirection));
 					}
@@ -202,23 +202,23 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			offhandDualie = entity.getOffhandItem();
 		}
-		
+
 		Player player = (Player) entity;
 		player.setYBodyRot(player.getYHeadRot()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
-		
-		if (!level.isClientSide)
+
+		if (!level.isClientSide())
 		{
 			player.yBodyRotO = player.getYHeadRot();
 			int rollCount = getRollCount(player);
-			
+
 			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
 			boolean onRollCooldown = hasCooldown && rollCount >= 1;
-			
+
 			if (offhandDualie.getItem() instanceof DualieItem dualieItem)
 			{
 				DualieWeaponSettings settings = dualieItem.getSettings(offhandDualie);
 				CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
-				
+
 				dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.onGround() && hasCooldown);
 			}
 			fireDualie(level, entity, stack, timeLeft, onRollCooldown);
@@ -229,8 +229,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		DualieWeaponSettings settings = getSettings(stack);
 		CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
 		CommonRecords.ProjectileDataRecord projectileData = onRollCooldown ? settings.turretProjectileData : settings.standardProjectileData;
-		
-		if (!level.isClientSide && (getUseDuration(stack) - timeLeft - 1) % (firingData.getFiringSpeed()) == 0)
+
+		if (!level.isClientSide() && (getUseDuration(stack) - timeLeft - 1) % (firingData.getFiringSpeed()) == 0)
 		{
 			if (reduceInk(entity, this, firingData.inkConsumption(), firingData.inkRecoveryCooldown(), true))
 			{
@@ -242,7 +242,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
 				}
-				
+
 				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 			}
 		}
@@ -299,16 +299,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				player.setDiscardFriction(false);
 			}
-			else if (getTime() == rollEndFrame)
-			{
-				if (canSlide)
-					setCanMove(true);
-			}
-			else if (getTime() == turretModeFrame)
-			{
-				setForceCrouch(true);
-				setPreventWeaponUse(false);
-			}
 			else if (getTime() == 1)
 			{
 				if (local)
@@ -341,7 +331,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		public CompoundTag writeNBT(CompoundTag nbt)
 		{
 			nbt.putBoolean("DodgeRollCooldown", true);
-			
+
 			int endlagFrames = rollEndFrame - turretModeFrame;
 			nbt.put("StoredStack", storedStack.serializeNBT());
 			nbt.putInt("SlotIndex", getSlotIndex());
@@ -354,7 +344,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			nbt.putFloat("RollDirectionX", rollDirection.x);
 			nbt.putFloat("RollDirectionZ", rollDirection.y);
 			nbt.putInt("Time", getTime());
-			
+
 			return nbt;
 		}
 		public boolean isLastRoll()
@@ -365,5 +355,23 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			return getTime() <= rollEndFrame;
 		}
-	}
+
+        @Override
+        public boolean canMove()
+        {
+            return canSlide && getTime() <= rollEndFrame;
+        }
+
+        @Override
+        public boolean forceCrouch()
+        {
+            return getTime() > turretModeFrame;
+        }
+
+        @Override
+        public boolean preventWeaponUse()
+        {
+            return getTime() > turretModeFrame;
+        }
+    }
 }

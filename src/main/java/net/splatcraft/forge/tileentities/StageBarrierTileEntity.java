@@ -33,6 +33,7 @@ public class StageBarrierTileEntity extends BlockEntity
 	{
 		super(type, pos, state);
 	}
+
 	//@Override
 	public void tick()
 	{
@@ -40,12 +41,12 @@ public class StageBarrierTileEntity extends BlockEntity
 		{
 			activeTime--;
 		}
-		
+
 		for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05)))
 		{
 			if (entity instanceof SpawnShieldEntity)
 				continue;
-			
+
 			resetActiveTime();
 			if (getBlockState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
 				entity instanceof Player)
@@ -53,13 +54,13 @@ public class StageBarrierTileEntity extends BlockEntity
 				entity.hurt(level.damageSources().source(InkDamageUtils.OUT_OF_STAGE), Float.MAX_VALUE);
 			}
 		}
-		
-		if (level.isClientSide && ClientUtils.getClientPlayer().isCreative())
+
+        if (level.isClientSide() && ClientUtils.getClientPlayer().isCreative())
 		{
 			boolean canRender = true;
 			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.Client.barrierRenderDistance.get();
-			
+
 			if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
 			else if (SplatcraftConfig.Client.holdBarrierToRender.get())
@@ -67,24 +68,27 @@ public class StageBarrierTileEntity extends BlockEntity
 				canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
 					player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
 			}
+
 			if (canRender)
-				resetActiveTime();
+                increaseActiveTime();
 		}
 	}
-	//@Override
-	public double getViewDistance()
-	{
-		return SplatcraftConfig.Client.barrierRenderDistance.get();
-	}
+
 	protected void resetActiveTime()
 	{
 		activeTime = maxActiveTime;
 	}
+
+    protected void increaseActiveTime()
+    {
+        activeTime = Math.min(maxActiveTime, activeTime+4);
+    }
+
 	@Override
 	public void load(@NotNull CompoundTag nbt)
 	{
 		super.load(nbt);
-		
+
 		if (nbt.contains("ActiveTime"))
 		{
 			activeTime = nbt.getInt("ActiveTime");

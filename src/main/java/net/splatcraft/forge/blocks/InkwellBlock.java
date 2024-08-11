@@ -13,6 +13,7 @@ import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.SignalGetter;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -33,6 +34,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.extensions.IForgeBlockState;
 import net.minecraftforge.common.util.ForgeSoundType;
+import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.items.ColoredBlockItem;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
@@ -46,7 +48,9 @@ import java.util.HashMap;
 @SuppressWarnings("deprecation")
 public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock, IForgeBlockState
 {
+
     public static final HashMap<Item, ColoredBlockItem> inkCoatingRecipes = new HashMap<>();
+
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final SoundType SOUND_TYPE = new ForgeSoundType(1.0F, 1.0F, () -> SoundEvents.STONE_BREAK, () -> SoundEvents.SLIME_BLOCK_STEP, () -> SoundEvents.GLASS_PLACE, () -> SoundEvents.GLASS_HIT, () -> SoundEvents.SLIME_BLOCK_FALL);
     private static final VoxelShape SHAPE = Shapes.or(
@@ -56,14 +60,14 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
 
     public InkwellBlock()
     {
-        super(Properties.of().isRedstoneConductor((state, getter, pos) -> false).instrument(NoteBlockInstrument.HAT).strength(0.35f).sound(SOUND_TYPE));
+        super(Properties.of().isRedstoneConductor(SplatcraftBlocks::noRedstoneConduct).instrument(NoteBlockInstrument.HAT).strength(0.35f).sound(SOUND_TYPE));
         this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false));
 
         SplatcraftBlocks.inkColoredBlocks.add(this);
     }
 
     @Override
-    public float[] getBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
+    public float @Nullable [] getBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
     {
         return ColorUtils.hexToRGB(getColor((Level) level, pos));
     }
@@ -126,8 +130,7 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     }
 
     @Override
-    public boolean isPossibleToRespawnInThis(@NotNull BlockState pState)
-    {
+    public boolean isPossibleToRespawnInThis(@NotNull BlockState pState) {
         return true;
     }
 
@@ -168,9 +171,9 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     @Override
     public int getColor(Level level, BlockPos pos)
     {
-        if (level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
+        if (level.getBlockEntity(pos) instanceof InkColorTileEntity te)
         {
-            return tileEntity.getColor();
+            return te.getColor();
         }
         return -1;
     }
@@ -180,9 +183,9 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     {
         BlockState state = level.getBlockState(pos);
         BlockEntity tileEntity = level.getBlockEntity(pos);
-        if (tileEntity instanceof InkColorTileEntity colorTileEntity && colorTileEntity.getColor() != newColor)
+        if (tileEntity instanceof InkColorTileEntity te && te.getColor() != newColor)
         {
-            colorTileEntity.setColor(newColor);
+            te.setColor(newColor);
             level.sendBlockUpdated(pos, state, state, 3);
             state.updateNeighbourShapes(level, pos, 3);
             return true;
@@ -207,10 +210,10 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType)
     {
-        return level.isClientSide() ? null : (tickLevel, pos, tickState, te) -> tick(tickLevel, pos, tickState, (InkColorTileEntity) te);
+        return level.isClientSide() ? null : (tickLevel, pos, tickState, te) -> tick(tickLevel, (InkColorTileEntity) te);
     }
 
-    private static void tick(Level level, BlockPos pos, BlockState state, InkColorTileEntity t)
+    private static void tick(Level level, InkColorTileEntity t)
     {
         AABB bb = new AABB(t.getBlockPos().above());
 

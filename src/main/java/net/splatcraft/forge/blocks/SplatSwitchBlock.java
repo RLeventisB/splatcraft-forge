@@ -43,6 +43,7 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
                     box(14, 1, 1, 16, 15, 15),
                     box(0, 1, 1, 2, 15, 15)
             };
+
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -94,8 +95,11 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
-        BlockState state = super.getStateForPlacement(context).setValue(FACING, context.getClickedFace());
-        return state.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        BlockState state = super.getStateForPlacement(context);
+        if (state == null) {
+            return null;
+        }
+        return state.setValue(FACING, context.getClickedFace()).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
     }
 
     @Override
@@ -160,7 +164,7 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
     public int getColor(Level level, BlockPos pos)
     {
         BlockState state = level.getBlockState(pos);
-        return state.getValue(POWERED) && level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity ? tileEntity.getColor() : -1;
+        return state.getValue(POWERED) && level.getBlockEntity(pos) instanceof InkColorTileEntity te ? te.getColor() : -1;
     }
 
     @Override

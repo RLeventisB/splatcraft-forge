@@ -15,7 +15,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -104,7 +108,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
     public InkBlockUtils.InkType inkType;
     private float accumulatedDrops;
-    private AttackId attackId = AttackId.NONE;
+    private final AttackId attackId = AttackId.NONE;
 
     public InkProjectileEntity(EntityType<InkProjectileEntity> type, Level level)
     {
@@ -295,7 +299,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (isRemoved())
             return;
 
-        if (!level.isClientSide && !persistent && (lifespan -= timeDelta) <= 0)
+        if (!level.isClientSide() && !persistent && (lifespan -= timeDelta) <= 0)
         {
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
@@ -476,7 +480,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             } else
                 level.broadcastEntityEvent(this, (byte) 2);
 
-            if (!level.isClientSide)
+            if (!level.isClientSide())
                 discard();
         }
     }
@@ -510,7 +514,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                 InkExplosion.createInkExplosion(getOwner(), impactPos, impactCoverage, 0, 0, inkType, sourceWeapon);
             }
         }
-        if (!level.isClientSide)
+        if (!level.isClientSide())
             this.discard();
     }
 

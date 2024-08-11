@@ -52,11 +52,12 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
     public static final IntegerProperty STATE = IntegerProperty.create("state", 0, 4);
     public static final ResourceLocation STORAGE_SUNKEN_CRATE = new ResourceLocation(Splatcraft.MODID, "storage/sunken_crate");
     public static final ResourceLocation STORAGE_EGG_CRATE = new ResourceLocation(Splatcraft.MODID, "storage/egg_crate");
+
     public final boolean isSunken;
 
-    public CrateBlock(String name, boolean isSunken)
+    public CrateBlock(boolean isSunken)
     {
-        super(Properties.of().mapColor(MapColor.WOOD).ignitedByLava().instrument(NoteBlockInstrument.BASS).sound(SoundType.WOOD).strength(2.0f));
+        super(Properties.of().ignitedByLava().instrument(NoteBlockInstrument.BASS).mapColor(MapColor.WOOD).sound(SoundType.WOOD).strength(2.0f));
 
         this.isSunken = isSunken;
 
@@ -65,7 +66,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 
     public static List<ItemStack> generateLoot(Level level, CrateTileEntity crate, BlockState state, float luckValue)
     {
-        if (level == null || level.isClientSide)
+        if (level == null || level.isClientSide())
             return Collections.emptyList();
 
         BlockPos pos = crate.getBlockPos();
@@ -125,9 +126,9 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
     @Override
     public @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (levelIn.getBlockEntity(currentPos) instanceof CrateTileEntity)
+        if (levelIn.getBlockEntity(currentPos) instanceof CrateTileEntity te)
         {
-            return stateIn.setValue(STATE, ((CrateTileEntity) levelIn.getBlockEntity(currentPos)).getState());
+            return stateIn.setValue(STATE, te.getState());
         }
 
         return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
@@ -143,11 +144,11 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
     public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level levelIn, @NotNull BlockPos pos)
     {
 
-        if (isSunken || !(levelIn.getBlockEntity(pos) instanceof CrateTileEntity))
+        if (isSunken || !(levelIn.getBlockEntity(pos) instanceof CrateTileEntity te))
         {
             return 0;
         }
-        ItemStack stack = ((CrateTileEntity) levelIn.getBlockEntity(pos)).getItem(0);
+        ItemStack stack = te.getItem(0);
         return (int) Math.ceil(stack.getCount() / (float) stack.getMaxStackSize() * 15);
     }
 
@@ -157,10 +158,11 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
         player.awardStat(Stats.BLOCK_MINED.get(this));
         player.causeFoodExhaustion(0.005F);
 
-        if (levelIn.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) <= 0 && levelIn.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
+        if (levelIn.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) <= 0 && levelIn.getBlockEntity(pos) instanceof CrateTileEntity crateTe)
         {
-            crateTileEntity.dropInventory();
-        } else
+            crateTe.dropInventory();
+        }
+        else
         {
             dropResources(state, levelIn, pos, te, player, stack);
         }
@@ -191,9 +193,9 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
     @Override
     public BlockInkedResult inkBlock(Level level, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
     {
-        if (level.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
+        if (level.getBlockEntity(pos) instanceof CrateTileEntity te)
         {
-            crateTileEntity.ink(color, damage);
+            te.ink(color, damage);
         }
 
         return BlockInkedResult.FAIL;

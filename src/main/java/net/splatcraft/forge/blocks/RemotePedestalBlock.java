@@ -72,19 +72,21 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
     @Override
     public @NotNull InteractionResult use(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult rayTrace)
     {
+
         if (level.getBlockEntity(pos) instanceof RemotePedestalTileEntity te)
         {
             if (te.isEmpty() && player.getItemInHand(hand).is(SplatcraftTags.Items.REMOTES))
             {
                 te.setItem(0, player.getItemInHand(hand).copy());
                 player.getItemInHand(hand).setCount(0);
-                return InteractionResult.sidedSuccess(level.isClientSide);
-            } else if (!te.isEmpty())
+                return InteractionResult.sidedSuccess(level.isClientSide());
+            }
+            else if (!te.isEmpty())
             {
                 ItemStack remote = te.removeItemNoUpdate(0);
                 if (!player.addItem(remote))
                     CommonUtils.spawnItem(level, pos.above(), remote);
-                return InteractionResult.sidedSuccess(level.isClientSide);
+                return InteractionResult.sidedSuccess(level.isClientSide());
             }
         }
 
@@ -172,8 +174,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
     @Override
     public boolean canRemoteColorChange(Level level, BlockPos pos, int color, int newColor)
     {
-        RemotePedestalTileEntity te = (RemotePedestalTileEntity) level.getBlockEntity(pos);
-        if (!te.isEmpty() && te.getItem(0).getItem() instanceof IColoredItem)
+        if(level.getBlockEntity(pos) instanceof RemotePedestalTileEntity te && !te.isEmpty() && te.getItem(0).getItem() instanceof IColoredItem)
             return ColorUtils.getInkColor(te.getItem(0)) != newColor;
         return false;
     }

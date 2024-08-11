@@ -71,11 +71,13 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			}
 		}
 	}
+
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
 	{
 		return PlayerPosingHandler.WeaponPose.BUCKET_SWING;
 	}
+
 	public enum Type
 	{
 		DEFAULT,
@@ -121,22 +123,22 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		public void tick(Player player)
 		{
 			Level level = player.level;
-			
+
 			if (level.isClientSide || sloshData == null)
 				return;
-			
+
 			float frame = getMaxTime() - getTime();
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
 			SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
-			
+
 			xDelta = xDelta * 0.7f + (Mth.degreesDifference(xRot, player.getXRot())) * 0.12f;
 			yDelta = yDelta * 0.7f + (Mth.degreesDifference(yRot, player.getYRot())) * 0.12f;
 			xRotOld = xRot;
 			yRotOld = yRot;
-			
+
 			xRot += xDelta * (didSound ? 1 : 0.4f);
 			yRot += yDelta * (didSound ? 1 : 0.4f);
-			
+
 			for (int i = 0; i < sloshes.size(); i++)
 			{
 				CalculatedSloshData sloshTime = sloshes.get(i);
@@ -144,11 +146,11 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				{
 					float extraTime = frame - sloshTime.time;
 					float partialTick = 1 - extraTime;
-					
+
 					if (didSound || reduceInk(player, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true))
 					{
 						SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(sloshTime.sloshDataIndex);
-						
+
 						InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileSetting.projectile().size(), sloshData);
 						proj.shootFromRotation(
 							Mth.lerp(partialTick, xRotOld, xRot),
@@ -175,9 +177,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						proj.addExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex));
 						proj.setSlosherStats(projectileSetting.projectile());
 						level.addFreshEntity(proj);
-						
+
 						proj.tick(extraTime);
-						
+
 						if (!didSound)
 						{
 							level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
@@ -189,7 +191,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						setTime(0);
 						break;
 					}
-					
+
 					sloshes.remove(i);
 					i--;
 				}
@@ -207,9 +209,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			{
 				nbt.put("StoredStack", storedStack.serializeNBT());
 			}
-			
+
 			nbt.putBoolean("SloshCooldown", true);
-			
+
 			return nbt;
 		}
 	}

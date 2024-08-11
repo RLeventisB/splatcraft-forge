@@ -53,17 +53,6 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetupHandler
 {
-    @SubscribeEvent
-    public static void registerModels(ModelEvent.BakingCompleted event)
-    {
-        for (var pair : event.getModels().entrySet())
-        {
-            if (pair.getKey().getNamespace().equals(Splatcraft.MODID))
-            {
-                "".length();
-            }
-        }
-    }
 
     @SubscribeEvent
     public static void onTextureStitch(TextureStitchEvent.Post event)

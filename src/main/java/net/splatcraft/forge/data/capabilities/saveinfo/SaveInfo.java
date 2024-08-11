@@ -1,9 +1,13 @@
 package net.splatcraft.forge.data.capabilities.saveinfo;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
+import net.splatcraft.forge.network.SplatcraftPacketHandler;
+import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +18,9 @@ public class SaveInfo
 {
     private ArrayList<Integer> colorScores = new ArrayList<>();
     private final HashMap<String, Stage> stages = new HashMap<>();
+    private final HashMap<String, Stage> stages = new HashMap<>();
+
+    boolean stagesLoaded = false;
 
     public Collection<Integer> getInitializedColorScores()
     {
@@ -39,6 +46,41 @@ public class SaveInfo
     public HashMap<String, Stage> getStages()
     {
         return stages;
+    }
+
+    public boolean createOrEditStage(Level stageLevel, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
+    {
+        if (stageLevel.isClientSide())
+            return false;
+
+        if (stages.containsKey(stageId))
+        {
+            Stage stage = stages.get(stageId);
+
+            stage.seStagetName(stageName);
+            stage.updateBounds(stageLevel, corner1, corner2);
+            stage.dimID = stageLevel.dimension().location();
+        } else stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
+        SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
+        return true;
+    }
+
+    public boolean createStage(Level level, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
+    {
+        if (level.isClientSide())
+            return false;
+
+        if (stages.containsKey(stageId))
+            return false;
+
+        stages.put(stageId, new Stage(level, corner1, corner2, stageId, stageName));
+        SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
+        return true;
+    }
+
+    public boolean createStage(Level level, String stageId, BlockPos corner1, BlockPos corner2)
+    {
+        return createStage(level, stageId, corner1, corner2, Component.literal(stageId));
     }
 
     public CompoundTag writeNBT(CompoundTag nbt)
@@ -72,10 +114,8 @@ public class SaveInfo
             ScoreboardHandler.createColorCriterion(i);
         }
 
-        ServerLifecycleHooks.getCurrentServer();
-
         stages.clear();
         for (String key : nbt.getCompound("Stages").getAllKeys())
-            stages.put(key, new Stage(nbt.getCompound("Stages").getCompound(key)));
+            stages.put(key, new Stage(nbt.getCompound("Stages").getCompound(key), key));
     }
 }

@@ -31,7 +31,7 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
 {
     public static final BooleanProperty INKED = BooleanProperty.create("inked");
 
-    public CanvasBlock(String name)
+    public CanvasBlock()
     {
         super(Properties.of().mapColor(MapColor.WOOL).ignitedByLava().strength(0.8f).sound(SoundType.WOOL));
         SplatcraftBlocks.inkColoredBlocks.add(this);
@@ -42,7 +42,11 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
     @Override
     public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
     {
-        return super.getStateForPlacement(context).setValue(INKED, ColorUtils.getInkColor(context.getItemInHand()) != -1);
+        BlockState state = super.getStateForPlacement(context);
+        if (state == null) {
+            return null;
+        }
+        return state.setValue(INKED, ColorUtils.getInkColor(context.getItemInHand()) != -1);
     }
 
     @Nullable
@@ -85,10 +89,10 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
             return BlockInkedResult.ALREADY_INKED;
 
         BlockEntity tileEntity = level.getBlockEntity(pos);
-        if (tileEntity instanceof InkColorTileEntity colorTileEntity)
+        if (tileEntity instanceof InkColorTileEntity te)
         {
             BlockState state = level.getBlockState(pos);
-            colorTileEntity.setColor(color);
+            te.setColor(color);
             level.setBlock(pos, state.setValue(INKED, true), 2);
             level.sendBlockUpdated(pos, state, state.setValue(INKED, true), 2);
             return BlockInkedResult.SUCCESS;
@@ -125,9 +129,9 @@ public class CanvasBlock extends Block implements IColoredBlock, EntityBlock
     public boolean setColor(Level level, BlockPos pos, int newColor)
     {
         BlockEntity tileEntity = level.getBlockEntity(pos);
-        if (tileEntity instanceof InkColorTileEntity && ((InkColorTileEntity) tileEntity).getColor() != newColor)
+        if (tileEntity instanceof InkColorTileEntity te && ((InkColorTileEntity) tileEntity).getColor() != newColor)
         {
-            ((InkColorTileEntity) tileEntity).setColor(newColor);
+            te.setColor(newColor);
 
             BlockState state = level.getBlockState(pos);
             level.sendBlockUpdated(pos, state, state, 3);

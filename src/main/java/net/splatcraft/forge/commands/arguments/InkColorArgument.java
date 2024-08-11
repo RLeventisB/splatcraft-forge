@@ -7,20 +7,21 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.registries.SplatcraftInkColors;
-import net.splatcraft.forge.util.InkColor;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.forge.data.InkColorAliases;
+import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.forge.util.InkColor;
+
 
 public class InkColorArgument implements ArgumentType<Integer>
 {
@@ -44,12 +45,12 @@ public class InkColorArgument implements ArgumentType<Integer>
 		final int start = reader.getCursor();
 		boolean hasInt = false;
 		Integer result = null;
-		
+
 		try
 		{
 			result = Integer.parseInt(reader.readString());
 			hasInt = true;
-			
+
 			if (result < 0)
 			{
 				reader.setCursor(start);
@@ -65,28 +66,28 @@ public class InkColorArgument implements ArgumentType<Integer>
 		catch (NumberFormatException ignored)
 		{
 		}
-		
+
 		reader.setCursor(start);
-		
+
 		if (!hasInt)
 		{
 			if (reader.read() == '#')
 			{
 				return parseHex(reader.readString().toLowerCase(), reader);
 			}
-			
+
 			reader.setCursor(start);
 			ResourceLocation resourceLocation = ResourceLocation.read(reader);
-			InkColor color = SplatcraftInkColors.REGISTRY.get().getValue(resourceLocation);
-			
+			InkColor color = InkColor.getByHex(InkColorAliases.getColorByAlias(resourceLocation));
+
 			if (color == null)
 			{
 				throw COLOR_NOT_FOUND.create(resourceLocation);
 			}
-			
+
 			return color.getColor();
 		}
-		
+
 		if (result < 0)
 		{
 			reader.setCursor(start);
@@ -104,7 +105,7 @@ public class InkColorArgument implements ArgumentType<Integer>
 	static <T> void func_210512_a(Iterable<T> p_210512_0_, String p_210512_1_, Function<T, ResourceLocation> p_210512_2_, Consumer<T> p_210512_3_)
 	{
 		boolean flag = p_210512_1_.indexOf(58) > -1;
-		
+
 		for (T t : p_210512_0_)
 		{
 			ResourceLocation resourcelocation = p_210512_2_.apply(t);
@@ -141,7 +142,7 @@ public class InkColorArgument implements ArgumentType<Integer>
 	@Override
 	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
 	{
-		return suggestIterable(SplatcraftInkColors.REGISTRY.get().getKeys(), builder);
+		return suggestIterable(InkColorAliases.getAllAliases(), builder);
 	}
 	@Override
 	public Collection<String> getExamples()

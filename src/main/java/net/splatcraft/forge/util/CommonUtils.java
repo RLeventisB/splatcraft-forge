@@ -33,7 +33,7 @@ public class CommonUtils
 {
 	public static void spawnTestParticle(Vec3 pos)
 	{
-		
+
 		spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
 	}
 	public static void spawnTestText(Level level, Vec3 pos, String text)
@@ -50,7 +50,7 @@ public class CommonUtils
 	public static void spawnTestParticle(Vec3 pos, Color color)
 	{
 		float[] rgb = color.getRGBColorComponents(null);
-		
+
 		spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
 	}
 	public static void spawnTestBlockParticle(Vec3 pos, BlockState state)
@@ -104,7 +104,7 @@ public class CommonUtils
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 	public static boolean validatePathChar(char charValue)
@@ -124,7 +124,7 @@ public class CommonUtils
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 	public static boolean isResourceNameValid(String resourceName)
@@ -148,7 +148,7 @@ public class CommonUtils
 				astring[0] = resourceName.substring(0, i);
 			}
 		}
-		
+
 		return astring;
 	}
 	public static void blockDrop(Level levelIn, BlockPos pos, ItemStack stack)
@@ -158,7 +158,7 @@ public class CommonUtils
 	}
 	public static void spawnItem(Level levelIn, BlockPos pos, ItemStack stack)
 	{
-		if (!levelIn.isClientSide && !stack.isEmpty())
+		if (!levelIn.isClientSide() && !stack.isEmpty())
 		{
 			double d0 = (double) (levelIn.random.nextFloat() * 0.5F) + 0.25D;
 			double d1 = (double) (levelIn.random.nextFloat() * 0.5F) + 0.25D;
@@ -181,7 +181,7 @@ public class CommonUtils
 				if (predicate.test(itemstack1))
 					return itemstack1;
 			}
-			
+
 			return ItemStack.EMPTY;
 		}
 	}
@@ -197,12 +197,12 @@ public class CommonUtils
 		{
 			a -= 360.0F;
 		}
-		
+
 		while (b - a >= 180.0F)
 		{
 			a += 360.0F;
 		}
-		
+
 		return Mth.lerp(0.2F, a, b);
 	}
 }

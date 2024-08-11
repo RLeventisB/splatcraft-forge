@@ -1,7 +1,11 @@
 package net.splatcraft.forge.items.remotes;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -30,7 +34,6 @@ public class TurfScannerItem extends RemoteItem
     public TurfScannerItem()
     {
         super(new Properties().stacksTo(1), 2);
-        SplatcraftItemGroups.addGeneralItem(this);
     }
 
     public static TurfScanResult scanTurf(Level level, Level outputWorld, BlockPos blockpos, BlockPos blockpos1, int mode, Collection<ServerPlayer> targets)
@@ -41,7 +44,7 @@ public class TurfScannerItem extends RemoteItem
         if (!level.isInWorldBounds(minPos) || !level.isInWorldBounds(maxPos))
             return new TurfScanResult(false, Component.translatable("status.scan_turf.out_of_stage"));
 
-        if (level.isClientSide)
+        if (level.isClientSide())
         {
             return new TurfScanResult(true, null);
         }

@@ -7,12 +7,18 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.splatcraft.forge.blocks.IColoredBlock;
+import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftTileEntities;
 import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.forge.util.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class InkedBlockTileEntity extends InkColorTileEntity {
     private BlockState savedState = Blocks.AIR.defaultBlockState();
@@ -30,11 +36,28 @@ public class InkedBlockTileEntity extends InkColorTileEntity {
     }
 
     //Used to port Inked Blocks to World Ink system
-    // uhhhhhhhhhhhhhhhh can i delet this
-    public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T te) {
-        if (!level.isClientSide && te instanceof InkedBlockTileEntity inkedBlock) {
-            if (inkedBlock.hasSavedState()) {
-                inkedBlock.setSavedState(null);
+    // ok fine
+    public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T te)
+    {
+        if (!level.isClientSide() && te instanceof InkedBlockTileEntity inkedBlock)
+        {
+            if(inkedBlock.hasSavedState())
+            {
+                level.setBlock(pos, inkedBlock.savedState, 2);
+                if (inkedBlock.hasPermanentColor()) {
+                    ChunkInkCapability.get(level, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos), inkedBlock.getPermanentColor(), inkedBlock.getPermanentInkType());
+                }
+                for (int i = 0; i < 6; i++)
+                {
+                    InkBlockUtils.inkBlock(level, pos, inkedBlock.getColor(), i, getInkType(state), 0);
+                }
+
+                if (inkedBlock.hasSavedColor() && inkedBlock.getSavedState().getBlock() instanceof IColoredBlock coloredBlock)
+                {
+                    if(inkedBlock.getSavedState().getBlock() instanceof EntityBlock)
+                        level.setBlockEntity(Objects.requireNonNull(((EntityBlock) inkedBlock.getSavedState().getBlock()).newBlockEntity(pos, inkedBlock.getSavedState())));
+                    coloredBlock.setColor(level, pos, inkedBlock.getSavedColor());
+                }
             }
         }
     }
