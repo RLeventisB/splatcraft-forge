@@ -49,6 +49,13 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         super(SplatcraftTileEntities.inkVatTileEntity.get(), pos, state);
     }
 
+    public static void tick(Level level, BlockPos pos, BlockState state, InkVatTileEntity te)
+    {
+        te.updateRecipeOutput();
+        if (!level.isClientSide())
+            level.setBlock(pos, state.setValue(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
+    }
+
     @Override
     public int @NotNull [] getSlotsForFace(@NotNull Direction side)
     {
@@ -85,23 +92,6 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         return inventory.get(index);
     }
 
-    @Override
-    public @NotNull ItemStack removeItem(int index, int count)
-    {
-        if (index == 4 && !consumeIngredients(count))
-        {
-            return ItemStack.EMPTY;
-        }
-
-        ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
-        if (!itemstack.isEmpty())
-        {
-            this.setChanged();
-        }
-
-        return itemstack;
-    }
-
     public boolean consumeIngredients(int count)
     {
         if (inventory.get(0).getCount() >= count && inventory.get(1).getCount() >= count && inventory.get(2).getCount() >= count)
@@ -114,28 +104,35 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         return false;
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, InkVatTileEntity te)
+    @Override
+    public @NotNull ItemStack removeItem(int index, int count)
     {
-        te.updateRecipeOutput();
-        if (!level.isClientSide)
+        if (index == 4 && !consumeIngredients(count))
         {
-            level.setBlock(pos, state.setValue(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
+            return ItemStack.EMPTY;
         }
+
+        ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
+        if (!itemstack.isEmpty())
+            this.setChanged();
+
+        return itemstack;
     }
 
     public void updateRecipeOutput()
     {
         if (hasRecipe())
-        {
             setItem(4, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkwell.get(), Math.min(SplatcraftItems.inkwell.get().getMaxStackSize(),
                     Math.min(Math.min(inventory.get(0).getCount(), inventory.get(1).getCount()), inventory.get(2).getCount()))), getColor()), true));
-        } else setItem(4, ItemStack.EMPTY);
+        else
+            setItem(4, ItemStack.EMPTY);
     }
 
     public boolean hasOmniFilter()
     {
         if (inventory.get(3).getItem() instanceof FilterItem filter)
             return filter.isOmni();
+
         return false;
     }
 
@@ -160,10 +157,8 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     @Override
     public boolean stillValid(@NotNull Player player)
     {
-        if (this.level.getBlockEntity(this.getBlockPos()) != this)
-        {
+        if (this.level != null && this.level.getBlockEntity(this.getBlockPos()) != this)
             return false;
-        }
         return !(player.distanceToSqr((double) this.getBlockPos().getX() + 0.5D, (double) this.getBlockPos().getY() + 0.5D, (double) this.getBlockPos().getZ() + 0.5D) > 64.0D);
     }
 
@@ -250,9 +245,9 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     {
         return switch (index)
         {
-            case 0 -> ItemStack.isSameItem(stack, new ItemStack(Items.INK_SAC));
-            case 1 -> ItemStack.isSameItem(stack, new ItemStack(SplatcraftItems.powerEgg.get()));
-            case 2 -> ItemStack.isSameItem(stack, new ItemStack(SplatcraftItems.emptyInkwell.get()));
+            case 0 -> stack.is(Items.INK_SAC);
+            case 1 -> stack.is(SplatcraftItems.powerEgg.get());
+            case 2 -> stack.is(SplatcraftItems.emptyInkwell.get());
             case 3 -> stack.is(SplatcraftTags.Items.FILTERS);
             default -> false;
         };
@@ -262,7 +257,8 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     {
         if (hasRecipe())
         {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
+            if (level != null)
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
             if (pointer != -1 && recipeEntries > 0)
             {
                 pointer = (pointer + 1) % recipeEntries;
@@ -294,10 +290,12 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
             if (facing == Direction.UP)
             {
                 return handlers[0].cast();
-            } else if (facing == Direction.DOWN)
+            }
+            else if (facing == Direction.DOWN)
             {
                 return handlers[1].cast();
-            } else
+            }
+            else
             {
                 return handlers[2].cast();
             }
@@ -318,7 +316,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         }
     }
 
-    public boolean setColorAndUpdate(int color)
+    public void setColorAndUpdate(int color)
     {
         boolean changeState = Math.min(color, 0) != Math.min(getColor(), 0);
         setColor(color);
@@ -327,11 +325,11 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
             if (changeState)
             {
                 level.setBlock(getBlockPos(), getBlockState().setValue(InkVatBlock.ACTIVE, hasRecipe()), 2);
-            } else
+            }
+            else
             {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
             }
         }
-        return true;
     }
 }

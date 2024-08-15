@@ -109,7 +109,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
         if (isInWater())
         {
-            level.broadcastEntityEvent(this, (byte) -1);
+            level().broadcastEntityEvent(this, (byte) -1);
             discard();
         }
 
@@ -123,18 +123,18 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         if (raytraceresult.getType() == HitResult.Type.BLOCK)
         {
             BlockPos blockpos = ((BlockHitResult) raytraceresult).getBlockPos();
-            BlockState blockstate = this.level.getBlockState(blockpos);
+            BlockState blockstate = this.level().getBlockState(blockpos);
             if (blockstate.is(Blocks.NETHER_PORTAL))
             {
                 this.handleInsidePortal(blockpos);
                 flag = true;
-            } else if (blockstate.is(Blocks.END_GATEWAY))
+            }
+            else if (blockstate.is(Blocks.END_GATEWAY))
             {
-                if (this.level.getBlockEntity(blockpos) instanceof TheEndGatewayBlockEntity gate && TheEndGatewayBlockEntity.canEntityTeleport(this))
+                if (this.level().getBlockEntity(blockpos) instanceof TheEndGatewayBlockEntity gate && TheEndGatewayBlockEntity.canEntityTeleport(this))
                 {
-                    TheEndGatewayBlockEntity.teleportEntity(level, blockpos, blockstate, this, gate);
+                    TheEndGatewayBlockEntity.teleportEntity(level(), blockpos, blockstate, this, gate);
                 }
-
                 flag = true;
             }
         }
@@ -158,11 +158,12 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         {
             for (int i = 0; i < 4; ++i)
             {
-                this.level.addParticle(ParticleTypes.BUBBLE, d2 - vector3d.x * 0.25D, d0 - vector3d.y * 0.25D, d1 - vector3d.z * 0.25D, vector3d.x, vector3d.y, vector3d.z);
+                this.level().addParticle(ParticleTypes.BUBBLE, d2 - vector3d.x * 0.25D, d0 - vector3d.y * 0.25D, d1 - vector3d.z * 0.25D, vector3d.x, vector3d.y, vector3d.z);
             }
 
             f = 0.8F;
-        } else
+        }
+        else
         {
             f = 0.99F;
         }
@@ -185,7 +186,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
         if (id == -1)
         {
-            level.addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
     }
 
@@ -202,7 +203,8 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
                 posDiff = thrower.position().subtract(player.getPosition(0));
                 if (thrower.onGround())
                     posDiff.multiply(1, 0, 1);
-            } catch (NullPointerException ignored)
+            }
+            catch (NullPointerException ignored)
             {
             }
         }
@@ -281,7 +283,8 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         if (rayType == HitResult.Type.ENTITY)
         {
             this.onHitEntity((EntityHitResult) result);
-        } else if (rayType == HitResult.Type.BLOCK)
+        }
+        else if (rayType == HitResult.Type.BLOCK)
         {
             onBlockHit((BlockHitResult) result);
         }
@@ -340,12 +343,13 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     @Nullable
     public Entity getOwner()
     {
-        if (this.ownerUUID != null && this.level instanceof ServerLevel)
+        if (this.ownerUUID != null && this.level() instanceof ServerLevel serverLevel)
         {
-            return ((ServerLevel) this.level).getEntity(this.ownerUUID);
-        } else
+            return serverLevel.getEntity(this.ownerUUID);
+        }
+        else
         {
-            return this.ownerNetworkId != 0 ? this.level.getEntity(this.ownerNetworkId) : null;
+            return this.ownerNetworkId != 0 ? this.level().getEntity(this.ownerNetworkId) : null;
         }
     }
 
@@ -360,7 +364,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         Entity entity = this.getOwner();
         if (entity != null)
         {
-            for (Entity entity1 : this.level.getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
+            for (Entity entity1 : this.level().getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
                     !p_234613_0_.isSpectator() && p_234613_0_.isPickable()))
             {
                 if (entity1.getRootVehicle() == entity.getRootVehicle())
@@ -415,7 +419,8 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         {
             Entity entity = this.getOwner();
             return entity == null || this.leftOwner || !entity.isPassengerOfSameVehicle(p_230298_1_);
-        } else
+        }
+        else
         {
             return false;
         }

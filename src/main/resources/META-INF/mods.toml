@@ -12,21 +12,21 @@ description = '''
 
 authors = "Cibernet, Octol1ttle"
 credits = '''
-        Thanks to Nintendo and Mojang, for making such great games!
+Thanks to Nintendo and Mojang, for making such great games!
 
-        Programming and Design by Cibernet and Octol1ttle
-        Models by Cibernet & JustHatless
-        French translation by Flyse and Este
-        Portuguese translation by gatoazulado
-        Simplified Chinese translation by White Mind
-        Spanish translation by Cibernet and Chichi
-        Russian translation by jskces
-        Italian translation by Alessio798
+Programming and Design by Cibernet and Octol1ttle
+Models by Cibernet & JustHatless
+French translation by Flyse and Este
+Portuguese translation by gatoazulado
+Simplified Chinese translation by White Mind
+Spanish translation by Cibernet and Chichi
+Russian translation by jskces
+Italian translation by Alessio798
 
-        Block of Power Eggs texture by rose bushes
+Block of Power Eggs texture by rose bushes
 
-        Special Thanks to Andante and seamuskills
-        '''
+Special Thanks to Andante and seamuskills
+'''
 
 logoFile = "pack.png"
 

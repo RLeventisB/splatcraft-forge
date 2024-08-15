@@ -117,7 +117,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         public @NotNull WeaponWorkbenchTab fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json)
         {
             Component displayComponent;
-
+            
             if (GsonHelper.isStringValue(json, "name"))
                 displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
             else

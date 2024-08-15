@@ -62,7 +62,6 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 
     public static WeaponWorkbenchSubtypeRecipe fromJson(ResourceLocation recipeId, JsonObject json)
     {
-
         JsonObject resultJson = GsonHelper.getAsJsonObject(json, "result");
         ItemStack output = ShapedRecipe.itemStackFromJson(resultJson);
 

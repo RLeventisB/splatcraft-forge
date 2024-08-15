@@ -11,7 +11,7 @@ public class GuiOverlayHandler
     @SubscribeEvent
     public static void registerGuiOverlays(RegisterGuiOverlaysEvent event)
     {
-        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "splatcraft_overlay", RendererHandler::renderGui);
+        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "splatcraft_overlay", RendererHandler::renderGuiInternal);
         event.registerAbove(VanillaGuiOverlay.HOTBAR.id(), "splatcraft_jump_lure", JumpLureHudHandler::renderGui);
     }
 }

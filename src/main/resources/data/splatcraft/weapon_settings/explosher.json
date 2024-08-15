@@ -1,41 +1,41 @@
 {
-    "type": "splatcraft:slosher",
-    "shot": {
-        "pitch_compensation": -5,
-        "endlag_ticks": 18,
-        "ink_consumption": 11.7,
-        "ink_recovery_cooldown": 23,
-        "sloshes_data": [
-            {
-                "startup_ticks": 5.3333333333,
-                "slosh_count": 1,
-                "slosh_projectile": {
-                    "size": 0.4,
-                    "visual_size": 0.85,
-                    "gravity": 0.3,
-                    "speed": 2.11575,
-                    "ink_coverage_on_impact": 2.25,
-                    "straight_shot_ticks": 2.66666666666666,
-                    "ink_drop_coverage": 0.65,
-                    "distance_between_drops": 0.2,
-                    "direct_damage": 11,
-                    "horizontal_drag": 0.729,
-                    "detonation_data": {
-                        "damage_data": {
-                            "points": [
-                                {
-                                    "max_range": 1.4,
-                                    "damage": 7
-                                }
-                            ]
-                        },
-                        "spark_damage_multiplier": 1,
-                        "explosion_paint_size": 2.25
-                    }
+  "type": "splatcraft:slosher",
+  "shot": {
+    "pitch_compensation": -5,
+    "endlag_ticks": 18,
+    "ink_consumption": 11.7,
+    "ink_recovery_cooldown": 23,
+    "sloshes_data": [
+      {
+        "startup_ticks": 5.3333333333,
+        "slosh_count": 1,
+        "slosh_projectile": {
+          "size": 0.4,
+          "visual_size": 0.85,
+          "gravity": 0.3,
+          "speed": 2.11575,
+          "ink_coverage_on_impact": 2.25,
+          "straight_shot_ticks": 2.66666666666666,
+          "ink_drop_coverage": 0.65,
+          "distance_between_drops": 0.2,
+          "direct_damage": 11,
+          "horizontal_drag": 0.729,
+          "detonation_data": {
+            "damage_data": {
+              "points": [
+                {
+                  "max_range": 1.75,
+                  "damage": 7
                 }
-            }
-        ]
-    },
-    "full_damage_to_mobs": false,
-    "mobility": 0.45
+              ]
+            },
+            "spark_damage_multiplier": 1,
+            "explosion_paint_size": 2.25
+          }
+        }
+      }
+    ]
+  },
+  "full_damage_to_mobs": false,
+  "mobility": 0.45
 }

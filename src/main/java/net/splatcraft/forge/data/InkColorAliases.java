@@ -3,24 +3,23 @@ package net.splatcraft.forge.data;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.storage.loot.Deserializers;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InkColorAliases
 {
     private static final HashMap<ResourceLocation, Integer> MAP = new HashMap<>();
-
-
 
     public static int getColorByAlias(ResourceLocation location)
     {
@@ -34,22 +33,22 @@ public class InkColorAliases
 
     public static int getColorByAliasOrHex(String value)
     {
-        if(CommonUtils.isResourceNameValid(value)) {
+        if (CommonUtils.isResourceNameValid(value))
+        {
             ResourceLocation location = new ResourceLocation(value);
-            if (isValidAlias(location)) {
+            if (isValidAlias(location))
                 return getColorByAlias(location);
-            }
         }
-
-        try {
-            if (value.charAt(0) == '#') {
+        try
+        {
+            if (value.charAt(0) == '#')
                 return Integer.parseInt(value.substring(1), 16);
-            } else {
+            else
                 return Integer.parseInt(value);
-            }
-        } catch (NumberFormatException ignored) {
         }
-
+        catch (NumberFormatException ignored)
+        {
+        }
         return ColorUtils.DEFAULT;
     }
 
@@ -58,14 +57,29 @@ public class InkColorAliases
         List<ResourceLocation> result = new ArrayList<>();
         MAP.forEach((alias, c) ->
         {
-            if(c == color)
+            if (c == color)
                 result.add(alias);
         });
 
         return result;
     }
 
-    public static Iterable<ResourceLocation> getAllAliases() {
+    public static ResourceLocation getFirstAliasForColor(int color)
+    {
+        for (Map.Entry<ResourceLocation, Integer> entry : MAP.entrySet())
+        {
+            ResourceLocation alias = entry.getKey();
+            Integer c = entry.getValue();
+            if (c == color)
+            {
+                return alias;
+            }
+        }
+        return null;
+    }
+
+    public static Iterable<ResourceLocation> getAllAliases()
+    {
         return MAP.keySet();
     }
 
@@ -74,48 +88,45 @@ public class InkColorAliases
         private static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
         private static final String folder = "ink_colors";
 
-        public Listener() {
+        public Listener()
+        {
             super(GSON_INSTANCE, folder);
         }
 
         @Override
-        protected Map<ResourceLocation, JsonElement> prepare(ResourceManager pResourceManager, ProfilerFiller pProfiler)
+        protected @NotNull Map<ResourceLocation, JsonElement> prepare(@NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler)
         {
             MAP.clear();
             return super.prepare(pResourceManager, pProfiler);
         }
 
         @Override
-        protected void apply(Map<ResourceLocation, JsonElement> resourceList, ResourceManager resourceManagerIn, ProfilerFiller profilerIn)
+        protected void apply(Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
         {
-            resourceList.forEach((key, j) ->
+            for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
             {
-
+                ResourceLocation key = entry.getKey();
+                JsonElement j = entry.getValue();
                 JsonObject json = j.getAsJsonObject();
-                int color = -1;
-                if(json.has("value"))
+                if (json.has("value"))
                 {
-                    if(GsonHelper.isNumberValue(json))
-                        color = json.getAsInt();
-                    else
+                    JsonElement numberValue = json.get("value");
+                    String str = numberValue.getAsString();
+                    int color = Integer.decode(str);
+                    if (color == -1)
                     {
-                        String str = json.getAsString();
-                        if(str.indexOf('#') == 0)
-                            color =  Integer.parseInt(str);
-                        else
+//                        ResourceLocation loc = new ResourceLocation(key); ??????
+                        if (InkColorAliases.isValidAlias(key))
                         {
-                            ResourceLocation loc = new ResourceLocation(str);
-                            if(InkColorAliases.isValidAlias(loc))
-                                color =  InkColorAliases.getColorByAlias(loc);
+                            color = InkColorAliases.getColorByAlias(key);
                         }
                     }
-
-                    if (color >= 0 && color <= 0xFFFFFF) {
+                    if (color >= 0 && color <= 0xFFFFFF)
+                    {
                         MAP.put(key, color);
                     }
                 }
-            });
-
+            }
         }
     }
 }

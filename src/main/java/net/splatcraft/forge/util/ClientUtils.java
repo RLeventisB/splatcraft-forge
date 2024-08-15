@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec2;
@@ -29,12 +30,12 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.TreeMap;
+import java.util.UUID;
 
-@SuppressWarnings("deprecation")
 public class ClientUtils
 {
     @OnlyIn(Dist.CLIENT)
-    protected static final TreeMap<String, Integer> clientColors = new TreeMap<>();
+    protected static final TreeMap<UUID, Integer> clientColors = new TreeMap<>();
     @OnlyIn(Dist.CLIENT)
     public static final HashMap<String, Stage> clientStages = new HashMap<>();
 
@@ -45,19 +46,19 @@ public class ClientUtils
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static int getClientPlayerColor(String player)
+    public static int getClientPlayerColor(UUID player)
     {
         return clientColors.getOrDefault(player, -1);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void setClientPlayerColor(String player, int color)
+    public static void setClientPlayerColor(UUID player, int color)
     {
         clientColors.put(player, color);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static void putClientColors(TreeMap<String, Integer> map)
+    public static void putClientColors(TreeMap<UUID, Integer> map)
     {
         clientColors.putAll(map);
     }
@@ -123,7 +124,7 @@ public class ClientUtils
         {
             if (direction == null) return true;
             BlockState relative = te.getLevel().getBlockState(tePos.relative(direction));
-            return !relative.isSolid() || !relative.isCollisionShapeFullBlock(te.getLevel(), tePos.relative(direction));
+            return relative.equals(Blocks.BARRIER.defaultBlockState()) || !relative.isSolid() || !relative.isCollisionShapeFullBlock(te.getLevel(), tePos.relative(direction));
         }
 
         return false;
@@ -150,7 +151,8 @@ public class ClientUtils
         if (d0 < 1.0E-7)
         {
             return Vec3.ZERO;
-        } else
+        }
+        else
         {
             Vec3 vec3 = (d0 > 1.0 ? pRelative.normalize() : pRelative).scale(0.1);
             float f = Mth.sin(pFacing * 0.017453292F);

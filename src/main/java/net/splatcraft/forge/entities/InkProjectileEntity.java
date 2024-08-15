@@ -213,7 +213,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         {
             setStraightShotTime(settings.flingStraightTicks);
             entityData.set(HORIZONTAL_DRAG, settings.flingHorizontalDrag);
-        } else
+        }
+        else
         {
             setStraightShotTime(settings.swingStraightTicks);
             entityData.set(HORIZONTAL_DRAG, settings.swingHorizontalDrag);
@@ -295,35 +296,41 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (isRemoved())
             return;
 
-        if (!level.isClientSide && !persistent && (lifespan -= timeDelta) <= 0)
+        if (!level().isClientSide() && !persistent && (lifespan -= timeDelta) <= 0)
         {
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
             {
                 InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
                 createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
-                level.broadcastEntityEvent(this, (byte) 3);
-                level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            } else
+                level().broadcastEntityEvent(this, (byte) 3);
+                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+            }
+            else
             {
                 InkExplosion.createInkExplosion(getOwner(), position(), impactCoverage, 0, 0, inkType, sourceWeapon);
             }
             if (distanceBetweenDrops == 0)
             {
                 createDrop(getX(), getY(), getZ(), 0);
-            } else
+            }
+            else
             {
                 calculateDrops(lastPosition);
             }
             discard();
-        } else if (dropImpactSize > 0)
+        }
+        else if (dropImpactSize > 0)
         {
             if (!isInvisible())
-                level.broadcastEntityEvent(this, (byte) 1);
+            {
+                level().broadcastEntityEvent(this, (byte) 1);
+            }
             if (distanceBetweenDrops == 0)
             {
                 createDrop(getX(), getY(), getZ(), 0);
-            } else
+            }
+            else
             {
                 calculateDrops(lastPosition);
             }
@@ -340,7 +347,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if ((dropSkipDistance -= dropsTravelled) > 0)
             {
                 dropsTravelled = 0;
-            } else
+            }
+            else
             {
                 dropsTravelled = -dropSkipDistance;
             }
@@ -369,11 +377,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize)
     {
-        InkDropEntity proj = new InkDropEntity(level, this, getColor(), inkType, dropImpactSize, sourceWeapon);
+        InkDropEntity proj = new InkDropEntity(level(), this, getColor(), inkType, dropImpactSize, sourceWeapon);
         Vec3 velocity = new Vec3(getDeltaMovement().x * 0.7, getDeltaMovement().y - 3.5, getDeltaMovement().z * 0.7);
         velocity = velocity.scale(Math.pow(0.99, extraFrame)).subtract(0, 0.275 * extraFrame, 0).multiply(Math.pow(0.9, extraFrame), 1, Math.pow(0.9, extraFrame));
         Vec3 nextAproximatePos = new Vec3(dropX, dropY, dropZ).add(velocity);
-        HitResult hitresult = this.level.clip(new ClipContext(new Vec3(dropX, dropY, dropZ), nextAproximatePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
+        HitResult hitresult = this.level().clip(new ClipContext(new Vec3(dropX, dropY, dropZ), nextAproximatePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
         if (hitresult.getType() != HitResult.Type.MISS)
         {
             proj.onHit(hitresult);
@@ -385,7 +393,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             return;
         proj.moveTo(nextAproximatePos);
         proj.shoot(velocity.x, velocity.y, velocity.z, (float) proj.getDeltaMovement().length(), 0.02f);
-        level.addFreshEntity(proj);
+        level().addFreshEntity(proj);
     }
 
     private Vec3 getShootVelocity()
@@ -416,22 +424,21 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public void handleEntityEvent(byte id)
     {
         super.handleEntityEvent(id);
-
         switch (id)
         {
             case -1 ->
-                    level.addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                    level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
             case 1 ->
             {
                 if (getProjectileType().equals(Types.CHARGER))
-                    level.addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), this.getX() - this.getDeltaMovement().x() * 0.25D, this.getY() + getBbHeight() * 0.5f - this.getDeltaMovement().y() * 0.25D, this.getZ() - this.getDeltaMovement().z() * 0.25D, 0, -0.1, 0);
+                    level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), this.getX() - this.getDeltaMovement().x() * 0.25D, this.getY() + getBbHeight() * 0.5f - this.getDeltaMovement().y() * 0.25D, this.getZ() - this.getDeltaMovement().z() * 0.25D, 0, -0.1, 0);
                 else
-                    level.addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), this.getX() - this.getDeltaMovement().x() * 0.25D, this.getY() + getBbHeight() * 0.5f - this.getDeltaMovement().y() * 0.25D, this.getZ() - this.getDeltaMovement().z() * 0.25D, this.getDeltaMovement().x(), this.getDeltaMovement().y(), this.getDeltaMovement().z());
+                    level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), this.getX() - this.getDeltaMovement().x() * 0.25D, this.getY() + getBbHeight() * 0.5f - this.getDeltaMovement().y() * 0.25D, this.getZ() - this.getDeltaMovement().z() * 0.25D, this.getDeltaMovement().x(), this.getDeltaMovement().y(), this.getDeltaMovement().z());
             }
             case 2 ->
-                    level.addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                    level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
             case 3 ->
-                    level.addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                    level().addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
     }
 
@@ -443,10 +450,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         Entity target = result.getEntity();
         float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, getExtraDatas()) * damageMultiplier;
 
-        if (!level.isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
+        if (!level().isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
         {
             discard();
-            level.broadcastEntityEvent(this, (byte) -1);
+            level().broadcastEntityEvent(this, (byte) -1);
         }
 
         if (target instanceof LivingEntity livingTarget)
@@ -454,29 +461,29 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if (InkDamageUtils.isSplatted(livingTarget)) return;
 
             boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown, attackId);
-            if (!level.isClientSide && didDamage)
+            if (!level().isClientSide && didDamage)
             {
                 ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
                 if ((chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
                         Objects.equals(getProjectileType(), Types.BLASTER))
                 {
-                    level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
+                    level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
                 }
             }
         }
-
         if (!canPierce)
         {
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
                 InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, attackId);
-                level.broadcastEntityEvent(this, (byte) 3);
-                level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            } else
-                level.broadcastEntityEvent(this, (byte) 2);
+                level().broadcastEntityEvent(this, (byte) 3);
+                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+            }
+            else
+                level().broadcastEntityEvent(this, (byte) 2);
 
-            if (!level.isClientSide)
+            if (!level().isClientSide())
                 discard();
         }
     }
@@ -484,33 +491,33 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     protected void onHitBlock(BlockHitResult result)
     {
-        if (InkBlockUtils.canInkPassthrough(level, result.getBlockPos()))
+        if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
             return;
 
-        if (level.getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
+        if (level().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
                 coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
             return;
 
         super.onHitBlock(result);
-
-        if (level.getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
-            level.broadcastEntityEvent(this, (byte) -1);
+        if (level().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
+            level().broadcastEntityEvent(this, (byte) -1);
         else
         {
-            level.broadcastEntityEvent(this, (byte) 2);
+            level().broadcastEntityEvent(this, (byte) 2);
             Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
                 InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(explosionData.sparkDamagePenalty * damageMultiplier), inkType, sourceWeapon, attackId);
-                level.broadcastEntityEvent(this, (byte) 3);
-//				level.playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            } else
+                level().broadcastEntityEvent(this, (byte) 3);
+//				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+            }
+            else
             {
                 InkExplosion.createInkExplosion(getOwner(), impactPos, impactCoverage, 0, 0, inkType, sourceWeapon);
             }
         }
-        if (!level.isClientSide)
+        if (!level().isClientSide())
             this.discard();
     }
 
@@ -526,8 +533,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         float f1 = -Mth.sin((pitch + pitchOffset) * (Mth.DEG_TO_RAD));
         float f2 = Mth.cos(yaw * (Mth.DEG_TO_RAD)) * Mth.cos(pitch * (Mth.DEG_TO_RAD));
         this.shoot(f, f1, f2, velocity, inaccuracy, partialTicks);
-
-//		createDrop(getX(), getY(), getZ(), 0, 1.5f); // ik that in splatoon weapons don't always paint their feet but that's such a bs mechanic so why not
     }
 
     @Override
@@ -560,7 +565,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (rayType == HitResult.Type.ENTITY)
         {
             this.onHitEntity((EntityHitResult) result);
-        } else if (rayType == HitResult.Type.BLOCK)
+        }
+        else if (rayType == HitResult.Type.BLOCK)
         {
             onHitBlock((BlockHitResult) result);
         }

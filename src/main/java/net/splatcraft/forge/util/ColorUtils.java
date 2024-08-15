@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -16,9 +15,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -27,23 +28,34 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.blocks.IColoredBlock;
 import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.client.particles.InkTerrainParticleData;
+import net.splatcraft.forge.data.InkColorAliases;
+import net.splatcraft.forge.data.InkColorTags;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.entities.IColoredEntity;
-import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.PlayerColorPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftInkColors;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class ColorUtils
 {
+    public static final int ORANGE = 0xDF641A;
+    public static final int BLUE = 0x26229F;
+    public static final int GREEN = 0x409d3b;
+    public static final int PINK = 0xc83d79;
+
     public static final int DEFAULT = 0x1F1F2D;
+
+    public static final int COLOR_LOCK_FRIENDLY = 0xDEA801;
+    public static final int COLOR_LOCK_HOSTILE = 0x4717A9;
+
+    public static final int[] STARTER_COLORS = new int[]{ORANGE, BLUE, GREEN, PINK};
 
     public static int getColorFromNbt(CompoundTag nbt)
     {
@@ -54,16 +66,7 @@ public class ColorUtils
 
         if (!str.isEmpty())
         {
-            if (CommonUtils.isResourceNameValid(str))
-            {
-                InkColor colorObj = SplatcraftInkColors.REGISTRY.get().getValue(new ResourceLocation(str));
-
-                if (colorObj != null)
-                    return colorObj.getColor();
-            }
-
-            if (str.charAt(0) == '#')
-                return Integer.parseInt(str.substring(1), 16);
+            return InkColorAliases.getColorByAliasOrHex(str);
         }
 
         return nbt.getInt("Color");
@@ -73,15 +76,15 @@ public class ColorUtils
     {
         if (entity instanceof Player)
             return getPlayerColor((LivingEntity) entity);
-        else if (entity instanceof IColoredEntity)
-            return ((IColoredEntity) entity).getColor();
+        else if (entity instanceof IColoredEntity coloredEntity)
+            return coloredEntity.getColor();
         else return -1;
     }
 
     public static int getPlayerColor(LivingEntity player)
     {
-        if (player.level().isClientSide)
-            return ClientUtils.getClientPlayerColor(player.getDisplayName().getString());
+        if (player.level().isClientSide() && player instanceof Player p)
+            return ClientUtils.getClientPlayerColor(p.getGameProfile().getId());
         if (PlayerInfoCapability.hasCapability(player))
             return PlayerInfoCapability.get(player).getColor();
         return 0;
@@ -99,9 +102,9 @@ public class ColorUtils
         }
 
         Level level = player.level();
-        if (!level.isClientSide && updateClient)
+        if (!level.isClientSide() && updateClient)
         {
-            SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, color));
+            SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerColorPacket(player, color), player);
         }
     }
 
@@ -137,7 +140,8 @@ public class ColorUtils
     {
         if (color == -1)
             stack.getOrCreateTag().remove("Color");
-        else stack.getOrCreateTag().putInt("Color", color);
+        else
+            stack.getOrCreateTag().putInt("Color", color);
         return stack;
     }
 
@@ -173,13 +177,11 @@ public class ColorUtils
 
     public static boolean setInkColor(BlockEntity te, int color)
     {
-        if (te instanceof InkColorTileEntity colorTileEntity)
+        if (te instanceof InkColorTileEntity te1)
         {
-            colorTileEntity.setColor(color);
+            te1.setColor(color);
             return true;
         }
-
-        te.getBlockState();
         if (te.getBlockState().getBlock() instanceof IColoredBlock block)
         {
             return block.setColor(te.getLevel(), te.getBlockPos(), color);
@@ -187,18 +189,52 @@ public class ColorUtils
         return false;
     }
 
+    public static List<ItemStack> getColorVariantsForItem(ItemLike item, boolean matching, boolean inverted, boolean starter)
+    {
+        List<ItemStack> items = new ArrayList<>();
+
+        if (matching)
+            items.add(ColorUtils.setInkColor(item.asItem().getDefaultInstance(), -1));
+        if (inverted)
+            items.add(ColorUtils.setInverted(ColorUtils.setColorLocked(item.asItem().getDefaultInstance(), false), true));
+
+        if (starter)
+            for (int color : ColorUtils.STARTER_COLORS)
+                items.add(ColorUtils.setColorLocked(ColorUtils.setInkColor(item.asItem().getDefaultInstance(), color), true));
+
+        return items;
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static int getLockedColor(int color)
     {
         return Minecraft.getInstance().player != null
                 ? ColorUtils.getPlayerColor(Minecraft.getInstance().player) == color
-                ? SplatcraftInkColors.colorLockA.getColor()
-                : SplatcraftInkColors.colorLockB.getColor()
+                ? COLOR_LOCK_FRIENDLY
+                : COLOR_LOCK_HOSTILE
                 : -1;
+    }
+
+    public static void forEachColoredBlockInBounds(Level level, AABB bounds, ColoredBlockConsumer action)
+    {
+        final AABB expandedBounds = bounds.expandTowards(1, 1, 1);
+        for (BlockPos.MutableBlockPos chunkPos = new BlockPos.MutableBlockPos(bounds.minX, bounds.minY, bounds.minZ);
+             chunkPos.getX() <= bounds.maxX && chunkPos.getY() <= bounds.maxY && chunkPos.getZ() <= bounds.maxZ; chunkPos.move(16, 16, 16))
+        {
+            level.getChunkAt(chunkPos).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getBlockState().getBlock() instanceof IColoredBlock && expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
+                    .forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getBlockState().getBlock(), entry.getValue()));
+        }
+    }
+
+    public interface ColoredBlockConsumer
+    {
+        void accept(BlockPos pos, IColoredBlock coloredBlock, BlockEntity blockEntity);
     }
 
     public static MutableComponent getColorName(int color)
     {
+
+        /*
         InkColor colorObj = InkColor.getByHex(color);
 
         // String colorFormatting = ""; // ChatFormatting.fromColorIndex(color).toString();
@@ -209,18 +245,13 @@ public class ColorUtils
         }
 
         String fallbackUnloc;
-        String fallbackName;
+        MutableComponent fallbackName;
 
-        try
+        fallbackUnloc = "ink_color." + String.format("%06X", color).toLowerCase();
+        fallbackName = Component.translatable(fallbackUnloc);
+        if (!fallbackUnloc.equals(fallbackName.getString()))
         {
-            fallbackUnloc = "ink_color." + String.format("%06X", color).toLowerCase();
-            fallbackName = Component.translatable(fallbackUnloc).getString();
-            if (!fallbackName.equals(fallbackUnloc))
-            {
-                return Component.literal(fallbackUnloc);
-            }
-        } catch (NoClassDefFoundError ignored)
-        {
+            return fallbackName;
         }
 
         colorObj = InkColor.getByHex(0xFFFFFF - color);
@@ -229,28 +260,16 @@ public class ColorUtils
             return Component.translatable("ink_color.invert", colorObj.getLocalizedName());
         }
 
-        try
-        {
-            fallbackUnloc = "ink_color." + String.format("%06X", 0xFFFFFF - color).toLowerCase();
-            fallbackName = Component.translatable(fallbackUnloc).getString();
+        fallbackUnloc = "ink_color." + String.format("%06X", 0xFFFFFF - color).toLowerCase();
+        fallbackName = Component.translatable(fallbackUnloc);
 
-            if (!fallbackName.equals(fallbackUnloc))
-            {
-                return Component.translatable("ink_color.invert", fallbackName);
-            }
-        } catch (NoClassDefFoundError ignored)
+        if (!fallbackName.getString().equals(fallbackUnloc))
         {
+            return Component.translatable("ink_color.invert", fallbackName);
         }
+        */
 
-        return Component.literal("#" + String.format("%06X", color).toUpperCase());
-    }
-
-    public static String getColorId(int color)
-    {
-        InkColor colorObj = InkColor.getByHex(color);
-        if (colorObj != null)
-            return colorObj.getUnlocalizedName();
-        else return String.format("#%06X", color).toLowerCase();
+        return MutableComponent.create(new InkColorTranslatableContents(color));//Component.literal("#" + String.format("%06X", color).toUpperCase());
     }
 
     public static MutableComponent getFormatedColorName(int color, boolean colorless)
@@ -322,7 +341,7 @@ public class ColorUtils
 
     public static int getRandomStarterColor()
     {
-        return DataHandler.InkColorTagsListener.STARTER_COLORS.getRandom(random);
+        return InkColorTags.STARTER_COLORS.getRandom(random);
     }
 
     public static void addInkSplashParticle(Level level, LivingEntity source, float size)
@@ -343,7 +362,6 @@ public class ColorUtils
         {
             color = PlayerInfoCapability.get(source).getColor();
         }
-
         addInkSplashParticle(level, color, source.getX(), source.getEyePosition(level.getRandom().nextFloat() * 0.3f), source.getZ(), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));
     }
 
@@ -351,11 +369,10 @@ public class ColorUtils
     {
         int color = DEFAULT;
         BlockPos pos = InkBlockUtils.getBlockStandingOnPos(entity);
-        ChunkInk.BlockEntry entry = InkBlockUtils.getInkBlock(level, pos);
-        if (entry != null && entry.isInkedAny())
-            color = entry.color(Direction.UP.get3DDataValue());
-        else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
-            color = coloredBlock.getColor(level, pos);
+        if (InkBlockUtils.isInked(level, pos, Direction.UP))
+            color = InkBlockUtils.getInkBlock(level, pos).color(Direction.UP.get3DDataValue());
+        else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock block)
+            color = block.getColor(level, pos);
         addInkSplashParticle(level, color, entity.getX() + (level.getRandom().nextFloat() * 0.8 - 0.4), entity.getY(level.getRandom().nextFloat() * 0.3f), entity.getZ() + (level.getRandom().nextFloat() * 0.8 - 0.4), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));
     }
 
@@ -364,7 +381,8 @@ public class ColorUtils
         float[] rgb = hexToRGB(color);
         if (level instanceof ServerLevel serverLevel)
             serverLevel.sendParticles(new InkSplashParticleData(rgb[0], rgb[1], rgb[2], size), x, y, z, 1, 0.0D, 0.0D, 0.0D, 0.0F);
-        else level.addParticle(new InkSplashParticleData(rgb[0], rgb[1], rgb[2], size), x, y, z, 0.0D, 0.0D, 0.0D);
+        else
+            level.addParticle(new InkSplashParticleData(rgb[0], rgb[1], rgb[2], size), x, y, z, 0.0D, 0.0D, 0.0D);
     }
 
     public static void addInkSplashParticle(Level level, int color, double x, Vec3 y, double z, float size)

@@ -23,7 +23,6 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,10 @@ import java.util.function.Consumer;
 public class InkTankItem extends ColoredArmorItem
 {
     public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
+
     public final float capacity;
     public final Properties properties;
+
     @OnlyIn(Dist.CLIENT)
     private AbstractInkTankModel model;
 
@@ -48,8 +49,6 @@ public class InkTankItem extends ColoredArmorItem
         this.capacity = capacity;
         this.properties = properties;
 
-        SplatcraftItems.weapons.add(this);
-        SplatcraftItemGroups.addGeneralItem(this);
         inkTanks.add(this);
         SplatcraftTags.Items.putInkTankTags(this, tagId);
     }
@@ -73,6 +72,7 @@ public class InkTankItem extends ColoredArmorItem
     {
         if (!(stack.getItem() instanceof InkTankItem inkTankItem))
             return 0;
+
         float capacity = inkTankItem.capacity;
         if (stack.getOrCreateTag().getBoolean("InfiniteInk")) return capacity;
         return Math.max(0, Math.min(capacity, stack.getOrCreateTag().getFloat("Ink")));
@@ -89,6 +89,7 @@ public class InkTankItem extends ColoredArmorItem
         boolean cannotRecharge = tag.contains("CannotRecharge");
         if (!tag.contains("RecoveryCooldown"))
             tag.putInt("RecoveryCooldown", 0);
+
         int cooldown = tag.getInt("RecoveryCooldown");
         if (cooldown == 0 || !fromTick) return !cannotRecharge;
         tag.putInt("RecoveryCooldown", --cooldown);
@@ -106,13 +107,13 @@ public class InkTankItem extends ColoredArmorItem
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player && !level.isClientSide && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
+        if (entity instanceof Player player && !level.isClientSide() && SplatcraftGameRules.getLocalizedRule(level, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
         {
             float ink = getInkAmount(stack);
             Item using = player.getUseItem().getItem();
 
             if (canRecharge(stack, true) && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
-                    && (!PlayerCooldown.hasPlayerCooldown(player) || PlayerCooldown.getPlayerCooldown(player).interruptsRecharge())
+                    && (!PlayerCooldown.hasPlayerCooldown(player))
                     && !PlayerCharge.hasCharge(player)
                     && (!(using instanceof WeaponBaseItem)
                     || (using instanceof RollerItem r && !r.isMoving))

@@ -5,50 +5,58 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
+import net.minecraft.world.phys.AABB;
+import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class InkDisruptorItem extends RemoteItem
 {
-	public InkDisruptorItem()
-	{
-		super(new Properties().stacksTo(1));
-		SplatcraftItemGroups.addGeneralItem(this);
-	}
-	@Override
-	public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
-	{
-		return clearInk(getLevel(usedOnWorld, stack), posA, posB, false);
-	}
-	public static RemoteResult clearInk(Level level, BlockPos posA, BlockPos posB, boolean removePermanent)
-	{
-		BlockPos minPos = new BlockPos(Math.min(posA.getX(), posB.getX()), Math.min(posB.getY(), posA.getY()), Math.min(posA.getZ(), posB.getZ()));
-		BlockPos maxPos = new BlockPos(Math.max(posA.getX(), posB.getX()), Math.max(posB.getY(), posA.getY()), Math.max(posA.getZ(), posB.getZ()));
-		
-		if (!level.isInWorldBounds(minPos) || !level.isInWorldBounds(maxPos))
-			return createResult(false, Component.translatable("status.clear_ink.out_of_stage"));
-		
-		int count = 0;
-		int blocksTotal = 0;
-		for (int x = minPos.getX(); x <= maxPos.getX(); x++)
-		{
-			for (int y = minPos.getY(); y <= maxPos.getY(); y++)
-			{
-				for (int z = minPos.getZ(); z <= maxPos.getZ(); z++)
-				{
-					BlockPos pos = new BlockPos(x, y, z);
-					
-					if (InkBlockUtils.clearBlock(level, pos, removePermanent))
-					{
-						count++;
-					}
-					blocksTotal++;
-				}
-			}
-		}
-		
-		return createResult(true, Component.translatable("status.clear_ink." + (count > 0 ? "success" : "no_ink"), count)).setIntResults(count, count * 15 / blocksTotal);
-	}
+    public InkDisruptorItem()
+    {
+        super(new Properties().stacksTo(1));
+    }
+
+    @Override
+    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
+    {
+        return clearInk(getLevel(usedOnWorld, stack), posA, posB, false);
+    }
+
+    public static RemoteResult clearInk(Level level, BlockPos from, BlockPos to, boolean removePermanent)
+    {
+        if (!level.isInWorldBounds(from) || !level.isInWorldBounds(to))
+            return createResult(false, Component.translatable("status.clear_ink.out_of_world"));
+
+        /*
+        for (int j = blockpos2.getZ(); j <= blockpos3.getZ(); j += 16)
+        {
+            for (int k = blockpos2.getX(); k <= blockpos3.getX(); k += 16)
+            {
+                if (!level.isLoaded(new BlockPos(k, blockpos3.getY() - blockpos2.getY(), j)))
+                {
+                    return createResult(false, Component.translatable("status.clear_ink.out_of_world"));
+                }
+            }
+        }
+        */
+        AABB bounds = new AABB(from, to);
+        AtomicInteger count = new AtomicInteger();
+        int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
+
+        InkBlockUtils.forEachInkedBlockInBounds(level, bounds, ((pos, ink) ->
+        {
+            if (InkBlockUtils.clearBlock(level, pos, removePermanent))
+                count.incrementAndGet();
+        }));
+        ColorUtils.forEachColoredBlockInBounds(level, bounds, ((pos, coloredBlock, blockEntity) ->
+        {
+            if (coloredBlock.remoteInkClear(level, pos))
+                count.incrementAndGet();
+        }));
+
+        return createResult(true, Component.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
+    }
 }

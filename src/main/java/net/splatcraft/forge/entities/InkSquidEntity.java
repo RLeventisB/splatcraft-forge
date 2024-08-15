@@ -26,106 +26,122 @@ import org.jetbrains.annotations.NotNull;
 
 public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 {
-	private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkSquidEntity.class, EntityDataSerializers.INT);
-	public InkSquidEntity(EntityType<? extends PathfinderMob> type, Level level)
-	{
-		super(type, level);
-	}
-	public static AttributeSupplier.Builder setCustomAttributes()
-	{
-		return Mob.createLivingAttributes()
-			.add(Attributes.MAX_HEALTH, 20)
-			.add(Attributes.MOVEMENT_SPEED, 0.23D)
-			.add(Attributes.FOLLOW_RANGE, 16);
-	}
-	@Override
-	protected void defineSynchedData()
-	{
-		super.defineSynchedData();
-		entityData.define(COLOR, ColorUtils.DEFAULT);
-	}
-	@Override
-	protected void registerGoals()
-	{
-		goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6D));
-		this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-		goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 10.0F));
-	}
-	@Override
-	public void die(@NotNull DamageSource source)
-	{
-		level.broadcastEntityEvent(this, (byte) 60);
-		super.die(source);
-	}
-	@Override
-	public void handleEntityEvent(byte id)
-	{
-		if (id == 60)
-		{
-			level.addParticle(new SquidSoulParticleData(getColor()), this.getX(), this.getY(), this.getZ(), 0, 1, 0);
-		}
-		else
-		{
-			super.handleEntityEvent(id);
-		}
-	}
-	@Override
-	public int getExperienceReward()
-	{
-		return 0;
-	}
-	@Override
-	public boolean shouldDropExperience()
-	{
-		return false;
-	}
-	@Override
-	public void tick()
-	{
-		super.tick();
-		
-		BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
-		
-		if (level.getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level.getBlockEntity(pos) instanceof InkColorTileEntity te)
-		{
-			if (te.getColor() != getColor())
-			{
-				setColor(te.getColor());
-			}
-		}
-	}
-	@Override
-	protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state)
-	{
-		playSound(SoundEvents.HONEY_BLOCK_FALL, 0.15F, 1.0F);
-	}
-	@Override
-	public void readAdditionalSaveData(@NotNull CompoundTag nbt)
-	{
-		super.readAdditionalSaveData(nbt);
-		if (nbt.contains("Color"))
-			setColor(ColorUtils.getColorFromNbt(nbt));
-		else setColor(ColorUtils.getRandomStarterColor());
-	}
-	@Override
-	public void addAdditionalSaveData(@NotNull CompoundTag nbt)
-	{
-		super.addAdditionalSaveData(nbt);
-		nbt.putInt("Color", getColor());
-	}
-	@Override
-	public int getColor()
-	{
-		return entityData.get(COLOR);
-	}
-	@Override
-	public void setColor(int color)
-	{
-		entityData.set(COLOR, color);
-	}
-	@Override
-	public boolean removeWhenFarAway(double distanceToClosestPlayer)
-	{
-		return false;
-	}
+    private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkSquidEntity.class, EntityDataSerializers.INT);
+
+    public InkSquidEntity(EntityType<? extends PathfinderMob> type, Level level)
+    {
+        super(type, level);
+    }
+
+    public static AttributeSupplier.Builder setCustomAttributes()
+    {
+        return Mob.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, 20)
+                .add(Attributes.MOVEMENT_SPEED, 0.23D)
+                .add(Attributes.FOLLOW_RANGE, 16);
+    }
+
+    @Override
+    protected void defineSynchedData()
+    {
+        super.defineSynchedData();
+        entityData.define(COLOR, ColorUtils.DEFAULT);
+    }
+
+    @Override
+    protected void registerGoals()
+    {
+        goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6D));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 10.0F));
+    }
+
+    @Override
+    public void die(@NotNull DamageSource source)
+    {
+        level().broadcastEntityEvent(this, (byte) 60);
+        super.die(source);
+    }
+
+    @Override
+    public void handleEntityEvent(byte id)
+    {
+        if (id == 60)
+        {
+            level().addParticle(new SquidSoulParticleData(getColor()), this.getX(), this.getY(), this.getZ(), 0, 1, 0);
+        }
+        else
+        {
+            super.handleEntityEvent(id);
+        }
+    }
+
+    @Override
+    public int getExperienceReward()
+    {
+        return 0;
+    }
+
+    @Override
+    public boolean shouldDropExperience()
+    {
+        return false;
+    }
+
+    @Override
+    public void tick()
+    {
+        super.tick();
+
+        BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
+        
+        if (level().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level().getBlockEntity(pos) instanceof InkColorTileEntity te)
+        {
+            if (te.getColor() != getColor())
+            {
+                setColor(te.getColor());
+            }
+        }
+    }
+
+    @Override
+    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state)
+    {
+        playSound(SoundEvents.HONEY_BLOCK_FALL, 0.15F, 1.0F);
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull CompoundTag nbt)
+    {
+        super.readAdditionalSaveData(nbt);
+        if (nbt.contains("Color"))
+            setColor(ColorUtils.getColorFromNbt(nbt));
+        else
+            setColor(ColorUtils.getRandomStarterColor());
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag nbt)
+    {
+        super.addAdditionalSaveData(nbt);
+        nbt.putInt("Color", getColor());
+    }
+
+    @Override
+    public int getColor()
+    {
+        return entityData.get(COLOR);
+    }
+
+    @Override
+    public void setColor(int color)
+    {
+        entityData.set(COLOR, color);
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer)
+    {
+        return false;
+    }
 }
