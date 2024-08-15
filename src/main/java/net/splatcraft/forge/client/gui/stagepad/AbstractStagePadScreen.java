@@ -1,9 +1,9 @@
 package net.splatcraft.forge.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -16,11 +16,11 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.items.StagePadItem;
 import net.splatcraft.forge.util.ColorUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Optional;
 
 public abstract class AbstractStagePadScreen extends Screen
@@ -127,7 +127,6 @@ public abstract class AbstractStagePadScreen extends Screen
         return super.mouseClicked(mouseX, mouseY, clickButton);
     }
 
-
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double p_94702_, double p_94703_)
     {
@@ -138,18 +137,16 @@ public abstract class AbstractStagePadScreen extends Screen
         return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
     }
 
-    private void renderTooltips(PoseStack poseStack, int mouseX, int mouseY)
+    private void renderTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
         for (MenuButton button : buttons)
             if (button.visible && button.isHovered())
-                button.renderToolTip(poseStack, mouseX, mouseY);
+                button.render(guiGraphics, mouseX, mouseY, partialTicks);
     }
 
     @Override
-    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
-
-
         MenuButton hoveredButton = null;
 
         for (MenuButton button : buttons)
@@ -165,35 +162,33 @@ public abstract class AbstractStagePadScreen extends Screen
                 hoveredButton.setHovered(true);
         }
 
-
-        renderBackground(poseStack);
-        handleWidgets(poseStack, mouseX, mouseY, partialTicks);
+        renderBackground(guiGraphics);
+        handleWidgets(guiGraphics, mouseX, mouseY, partialTicks);
 
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
         for (MenuButton button : buttons)
         {
-            button.x = button.relativeX + x;
-            button.y = button.relativeY + y;
+            button.setX(button.relativeX + x);
+            button.setY(button.relativeY + y);
         }
         for (MenuTextBox button : textFields)
         {
-            button.x = button.relativeX + x;
-            button.y = button.relativeY + y;
+            button.setX(button.relativeX + x);
+            button.setY(button.relativeY + y);
         }
 
-        super.render(poseStack, mouseX, mouseY, partialTicks);
-        renderTooltips(poseStack, mouseX, mouseY);
+        super.render(guiGraphics, mouseX, mouseY, partialTicks);
+        renderTooltips(guiGraphics, mouseX, mouseY, partialTicks);
 
-
-        buttons.forEach(b -> b.render(poseStack, mouseX, mouseY, partialTicks));
-        textFields.forEach(t -> t.render(poseStack, mouseX, mouseY, partialTicks));
+        buttons.forEach(b -> b.render(guiGraphics, mouseX, mouseY, partialTicks));
+        textFields.forEach(t -> t.render(guiGraphics, mouseX, mouseY, partialTicks));
     }
 
     @Override
-    public void renderBackground(PoseStack poseStack)
+    public void renderBackground(@NotNull GuiGraphics guiGraphics)
     {
-        super.renderBackground(poseStack);
+        super.renderBackground(guiGraphics);
 
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
@@ -205,18 +200,18 @@ public abstract class AbstractStagePadScreen extends Screen
         float[] rgb = ColorUtils.hexToRGB(ColorUtils.getInkColor(stagePad));
         RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 1);
         RenderSystem.setShaderTexture(0, CONTROLLERS_TEXTURE);
-        blit(poseStack, x - 52, y, 0, 0, 54, 130);
-        blit(poseStack, x + imageWidth - 2, y, 62, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x - 52, y, 0, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x + imageWidth - 2, y, 62, 0, 54, 130);
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        blit(poseStack, x - 52, y, 116, 0, 54, 130);
-        blit(poseStack, x + imageWidth - 2, y, 178, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x - 52, y, 116, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x + imageWidth - 2, y, 178, 0, 54, 130);
         RenderSystem.setShaderTexture(0, COMMON_TEXTURE);
-        blit(poseStack, x, y, 0, 0, imageWidth, imageHeight);
+        guiGraphics.blit(COMMON_TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
     }
 
     public boolean isMouseOver(double mouseX, double mouseY, MenuButton button)
     {
-        return isMouseOver(mouseX, mouseY, button.x, button.y, button.x + button.getWidth(), button.y + button.getHeight());
+        return isMouseOver(mouseX, mouseY, button.getX(), button.getY(), button.getX() + button.getWidth(), button.getY() + button.getHeight());
     }
 
     public boolean isMouseOver(double mouseX, double mouseY, double x1, double y1, double x2, double y2)
@@ -224,21 +219,18 @@ public abstract class AbstractStagePadScreen extends Screen
         return mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
     }
 
-
-    public Button.OnTooltip showText(Component... lines)
+    public MenuButton.OnTooltip showText(Component... lines)
     {
-        return (button, poseStack, x, y) ->
-        {
-            renderTooltip(poseStack, Collections.singletonList(lines), Optional.empty(), x, y);
-        };
+        return (button, guiGraphics, x, y, partialTicks) ->
+                guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.stream(lines).toList(), Optional.empty(), x, y);
     }
 
-    public Button.OnTooltip showCopyPos(BlockPosGetter pos)
+    public MenuButton.OnTooltip showCopyPos(BlockPosGetter pos)
     {
-        return (button, poseStack, x, y) ->
+        return (button, guiGraphics, x, y, partialTicks) ->
         {
             if (pos.get() != null)
-                renderTooltip(poseStack, Arrays.asList(Component.translatable("gui.stage_pad.button.position", pos.get().getX(), pos.get().getY(), pos.get().getZ()), Component.translatable("gui.stage_pad.button.copy_position").withStyle(ChatFormatting.YELLOW)),
+                guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.asList(Component.translatable("gui.stage_pad.button.position", pos.get().getX(), pos.get().getY(), pos.get().getZ()), Component.translatable("gui.stage_pad.button.copy_position").withStyle(ChatFormatting.YELLOW)),
                         Optional.empty(), x, y);
         };
     }
@@ -257,48 +249,46 @@ public abstract class AbstractStagePadScreen extends Screen
         BlockPos get();
     }
 
-    public MenuButton.PostDraw drawIcon(ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight)
+    public MenuButton.PostDraw drawIcon(GuiGraphics guiGraphics, ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight)
     {
-        return (poseStack, button) ->
+        return (no, button) ->
         {
             float color = button.active ? 1 : 0.5f;
             RenderSystem.setShaderColor(color, color, color, button.getAlpha());
             RenderSystem.setShaderTexture(0, location);
-            this.blit(poseStack, button.x + xOff, button.y + yOff, texX, texY, texWidth, texHeight);
+            guiGraphics.blit(location, button.getX() + xOff, button.getY() + yOff, texX, texY, texWidth, texHeight);
             RenderSystem.setShaderColor(1, 1, 1, 1);
         };
     }
 
     public MenuButton.PostDraw drawToggleIcon(ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight, boolean offsetTx)
     {
-        return (poseStack, button) ->
+        return (guiGraphics, button) ->
         {
             if (!(button instanceof StageSelectionScreen.ToggleMenuButton t))
             {
-                drawIcon(location, xOff, yOff, texX, texY, texWidth, texHeight).apply(poseStack, button);
+                drawIcon(guiGraphics, location, xOff, yOff, texX, texY, texWidth, texHeight).apply(guiGraphics, button);
                 return;
             }
-
             float color = button.active ? 1 : 0.5f;
             RenderSystem.setShaderColor(color, color, color, button.getAlpha());
             RenderSystem.setShaderTexture(0, location);
-            this.blit(poseStack, button.x + xOff + (t.toggle ? button.getWidth() / 2 : 0), button.y + yOff, texX + (offsetTx & t.toggle ? texWidth : 0), texY, texWidth, texHeight);
+            guiGraphics.blit(location, button.getX() + xOff + (t.toggle ? button.getWidth() / 2 : 0), button.getY() + yOff, texX + (offsetTx & t.toggle ? texWidth : 0), texY, texWidth, texHeight);
             RenderSystem.setShaderColor(1, 1, 1, 1);
         };
     }
 
     public MenuButton.PostDraw drawText(boolean centeredText)
     {
-        return (poseStack, button) -> drawText(button.getMessage(), centeredText).apply(poseStack, button);
+        return (guiGraphics, button) -> drawText(button.getMessage(), centeredText).apply(guiGraphics, button);
     }
 
     public MenuButton.PostDraw drawText(Component label, boolean centeredText)
     {
-        return (poseStack, button) ->
+        return (guiGraphics, button) ->
         {
-
             int j = button.getFGColor();
-            drawString(poseStack, font, label, button.x + (centeredText ? (button.getWidth() - font.width(label)) / 2 : 3), button.y + (button.getHeight() - 8) / 2, j | Mth.ceil(button.getAlpha() * 255.0F) << 24);
+            guiGraphics.drawString(font, label, button.getX() + (centeredText ? (button.getWidth() - font.width(label)) / 2 : 3), button.getY() + (button.getHeight() - 8) / 2, j | Mth.ceil(button.getAlpha() * 255.0F) << 24);
         };
     }
 
@@ -319,14 +309,14 @@ public abstract class AbstractStagePadScreen extends Screen
 
     public abstract void onStagesUpdate();
 
-    public abstract void handleWidgets(PoseStack poseStack, int mouseX, int mouseY, float partialTicks);
+    public abstract void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks);
 
     protected void addOptionsTabs(Component label, String stageId, Screen mainMenu)
     {
-        addButton(new MenuButton(10, 12, 14, 12, goToScreen(() -> mainMenu), Button.NO_TOOLTIP, drawIcon(WIDGETS, 1, 0, 244, 24, 12, 12), MenuButton.ButtonColor.GREEN));
-        addButton(new MenuButton(24, 12, 44, 12, goToScreen(() -> new StageSettingsScreen(label, stageId, mainMenu)), Button.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.settings"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(68, 12, 44, 12, goToScreen(() -> new StageRulesScreen(label, stageId, mainMenu)), Button.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.rules"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(112, 12, 44, 12, goToScreen(() -> new StageTeamsScreen(label, stageId, mainMenu)), Button.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.teams"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(156, 12, 44, 12, goToScreen(() -> new StageActionsScreen(label, stageId, mainMenu)), Button.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.actions"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(10, 12, 14, 12, goToScreen(() -> mainMenu), MenuButton.NO_TOOLTIP, (v, y) -> drawIcon(v, WIDGETS, 1, 0, 244, 24, 12, 12), MenuButton.ButtonColor.GREEN));
+        addButton(new MenuButton(24, 12, 44, 12, goToScreen(() -> new StageSettingsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.settings"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(68, 12, 44, 12, goToScreen(() -> new StageRulesScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.rules"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(112, 12, 44, 12, goToScreen(() -> new StageTeamsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.teams"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(156, 12, 44, 12, goToScreen(() -> new StageActionsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.actions"), true), MenuButton.ButtonColor.PURPLE));
     }
 }

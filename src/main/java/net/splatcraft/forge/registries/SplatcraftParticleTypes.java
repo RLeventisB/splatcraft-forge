@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.particles.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,19 +25,21 @@ public class SplatcraftParticleTypes
             return InkSplashParticleData.CODEC;
         }
     });
-    public static final RegistryObject<ParticleType<InkExplosionParticleData>> INK_EXPLOSION = REGISTRY.register("ink_explosion", () -> new ParticleType<>(false, InkExplosionParticleData.DESERIALIZER) {
-	    @Override
-	    public @NotNull Codec<InkExplosionParticleData> codec()
+    public static final RegistryObject<ParticleType<InkExplosionParticleData>> INK_EXPLOSION = REGISTRY.register("ink_explosion", () -> new ParticleType<>(false, InkExplosionParticleData.DESERIALIZER)
+    {
+        @Override
+        public @NotNull Codec<InkExplosionParticleData> codec()
         {
-		    return InkExplosionParticleData.CODEC;
-	    }
+            return InkExplosionParticleData.CODEC;
+        }
     });
-    public static final RegistryObject<ParticleType<SquidSoulParticleData>> SQUID_SOUL = REGISTRY.register("squid_soul", () -> new ParticleType<>(false, SquidSoulParticleData.DESERIALIZER) {
-	    @Override
-	    public @NotNull Codec<SquidSoulParticleData> codec()
+    public static final RegistryObject<ParticleType<SquidSoulParticleData>> SQUID_SOUL = REGISTRY.register("squid_soul", () -> new ParticleType<>(false, SquidSoulParticleData.DESERIALIZER)
+    {
+        @Override
+        public @NotNull Codec<SquidSoulParticleData> codec()
         {
-		    return SquidSoulParticleData.CODEC;
-	    }
+            return SquidSoulParticleData.CODEC;
+        }
     });
     public static final RegistryObject<ParticleType<InkTerrainParticleData>> INK_TERRAIN = REGISTRY.register("ink_terrain", () -> new ParticleType<InkTerrainParticleData>(false, InkTerrainParticleData.DESERIALIZER)
     {
@@ -46,6 +49,7 @@ public class SplatcraftParticleTypes
             return InkTerrainParticleData.CODEC;
         }
     });
+
     @SubscribeEvent
     public static void registerFactories(RegisterParticleProvidersEvent event)
     {

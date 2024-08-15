@@ -19,9 +19,9 @@ public class ScoreboardHandler
     {
         player.getScoreboard().forAllObjectives(criteria, player.getScoreboardName(), p_195397_1_ -> p_195397_1_.setScore(color));
     }
+
     public static void createColorCriterion(int color)
     {
-
         COLOR_CRITERIA.put(color, new CriteriaInkColor[]
                 {
                         new CriteriaInkColor("colorKills", color),
@@ -31,6 +31,7 @@ public class ScoreboardHandler
                         new CriteriaInkColor("lossesAsColor", color),
                 });
     }
+
     public static void clearColorCriteria()
     {
         for (int color : COLOR_CRITERIA.keySet())
@@ -42,6 +43,7 @@ public class ScoreboardHandler
         }
         COLOR_CRITERIA.clear();
     }
+
     public static void removeColorCriterion(int color)
     {
         if (hasColorCriterion(color))
@@ -53,10 +55,12 @@ public class ScoreboardHandler
             COLOR_CRITERIA.remove(color);
         }
     }
+
     public static boolean hasColorCriterion(int color)
     {
         return COLOR_CRITERIA.containsKey(color);
     }
+
     public static Iterable<String> getCriteriaSuggestions()
     {
         List<String> suggestions = new ArrayList<>();
@@ -77,55 +81,66 @@ public class ScoreboardHandler
 
         return suggestions;
     }
+
     public static Set<Integer> getCriteriaKeySet()
     {
         return COLOR_CRITERIA.keySet();
     }
+
     public static CriteriaInkColor getColorKills(int color)
     {
         return COLOR_CRITERIA.get(color)[0];
     }
+
     public static CriteriaInkColor getDeathsAsColor(int color)
     {
         return COLOR_CRITERIA.get(color)[1];
     }
+
     public static CriteriaInkColor getKillsAsColor(int color)
     {
         return COLOR_CRITERIA.get(color)[2];
     }
+
     public static CriteriaInkColor getColorWins(int color)
     {
         return COLOR_CRITERIA.get(color)[3];
     }
+
     public static CriteriaInkColor getColorLosses(int color)
     {
         return COLOR_CRITERIA.get(color)[4];
     }
+
     public static CriteriaInkColor[] getAllFromColor(int color)
     {
         return COLOR_CRITERIA.get(color);
     }
+
     public static void register()
     {
     }
-	public static String getColorIdentifier(int color)
-	{
-		return InkColor.getByHex(color) == null ? String.format("%06X", color).toLowerCase() : Objects.requireNonNull(SplatcraftInkColors.REGISTRY.get().getKey(InkColor.getByHex(color))).getPath();
-	}
-	public static class CriteriaInkColor extends ObjectiveCriteria
-	{
-		private final String name;
+
+    public static String getColorIdentifier(int color)
+    {
+        return InkColor.getByHex(color) == null ? String.format("%06X", color).toLowerCase() : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getPath();
+    }
+
+    public static class CriteriaInkColor extends ObjectiveCriteria
+    {
+        private final String name;
 
         public CriteriaInkColor(String name, int color)
-		{
-			super((InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(SplatcraftInkColors.REGISTRY.get().getKey(InkColor.getByHex(color))).getNamespace())
-				+ "." + name + "." + getColorIdentifier(color));
-			this.name = (InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(SplatcraftInkColors.REGISTRY.get().getKey(InkColor.getByHex(color))).getNamespace())
-				+ "." + name + "." + getColorIdentifier(color);
+        {
+            super((InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
+                    + "." + name + "." + getColorIdentifier(color));
+            this.name = (InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
+                    + "." + name + "." + getColorIdentifier(color);
         }
-		public void remove()
-		{
-			ObjectiveCriteria.CRITERIA_CACHE.remove(name);
-		}
-	}
+
+        public void remove()
+        {
+            ObjectiveCriteria.CRITERIA_CACHE.remove(name);
+        }
+    }
 }

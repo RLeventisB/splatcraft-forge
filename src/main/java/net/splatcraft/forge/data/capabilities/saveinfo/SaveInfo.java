@@ -18,7 +18,6 @@ public class SaveInfo
 {
     private ArrayList<Integer> colorScores = new ArrayList<>();
     private final HashMap<String, Stage> stages = new HashMap<>();
-    private final HashMap<String, Stage> stages = new HashMap<>();
 
     boolean stagesLoaded = false;
 
@@ -56,11 +55,13 @@ public class SaveInfo
         if (stages.containsKey(stageId))
         {
             Stage stage = stages.get(stageId);
-
             stage.seStagetName(stageName);
             stage.updateBounds(stageLevel, corner1, corner2);
             stage.dimID = stageLevel.dimension().location();
-        } else stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
+        }
+        else
+            stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
+
         SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
         return true;
     }

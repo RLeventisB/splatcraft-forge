@@ -25,10 +25,8 @@ public class SplatcraftRegistries
         SplatcraftTileEntities.CONTAINER_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
         SplatcraftOreGen.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
         SplatcraftLoot.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
+        SplatcraftParticleTypes.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
         SplatcraftCommands.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        SplatcraftParticleTypes.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        SplatcraftParticleTypes.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        SplatcraftCommands.ARGUMENT_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
 
         SplatcraftRecipeTypes.register();
     }

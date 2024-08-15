@@ -14,85 +14,86 @@ import net.splatcraft.forge.items.weapons.SlosherItem;
 
 public class PlayerCooldown
 {
-     int maxTime;
-     int slotIndex;
-     InteractionHand hand;
-     boolean canMove;
-     boolean forceCrouch;
-     boolean preventWeaponUse;
-     boolean isGrounded;
+    int maxTime;
+    int slotIndex;
+    InteractionHand hand;
+    boolean canMove;
+    boolean forceCrouch;
+    boolean preventWeaponUse;
+    boolean isGrounded;
     public ItemStack storedStack;
     int time;
 
     public boolean cancellable = false;
 
-	public static final int OVERLOAD_LIMIT = -28800;
+    public static final int OVERLOAD_LIMIT = -28800;
 
-	public PlayerCooldown(ItemStack stack, int time, int maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
-	{
-		this.storedStack = stack;
-		this.time = time;
-		this.maxTime = maxTime;
-		this.slotIndex = slotIndex;
-		this.hand = hand;
-		this.canMove = canMove;
-		this.forceCrouch = forceCrouch;
-		this.preventWeaponUse = preventWeaponUse;
-		this.isGrounded = isGrounded;
-	}
-	public PlayerCooldown(ItemStack stack, int time, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
-	{
-		this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
+    public PlayerCooldown(ItemStack stack, int time, int maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+    {
+        this.storedStack = stack;
+        this.time = time;
+        this.maxTime = maxTime;
+        this.slotIndex = slotIndex;
+        this.hand = hand;
+        this.canMove = canMove;
+        this.forceCrouch = forceCrouch;
+        this.preventWeaponUse = preventWeaponUse;
+        this.isGrounded = isGrounded;
     }
 
-	public PlayerCooldown(CompoundTag nbt)
-	{
-		fromNbt(nbt);
-	}
+    public PlayerCooldown(ItemStack stack, int time, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+    {
+        this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
+    }
 
-	public final void fromNbt(CompoundTag nbt)
-	{
-		this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
-		this.time = nbt.getInt("Time");
-		this.maxTime = nbt.getInt("MaxTime");
-		this.slotIndex = nbt.getInt("SlotIndex");
-		this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-		this.canMove = nbt.getBoolean("CanMove");
-		this.forceCrouch = nbt.getBoolean("ForceCrouch");
-		this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
-		this.isGrounded = nbt.getBoolean("IsGrounded");
-		if (nbt.contains("InterruptRecharge"))
-			interruptRecharge = nbt.getBoolean("InterruptRecharge");
-	}
-	public static PlayerCooldown readNBT(CompoundTag nbt)
-	{
-		if (nbt.getBoolean("SuperJump"))
-			return new SuperJumpCommand.SuperJump(nbt);
-		if (nbt.getBoolean("SloshCooldown"))
-			return new SlosherItem.SloshCooldown(nbt);
-		if (nbt.getBoolean("DodgeRollCooldown")) // need an system for this but im lazy
-			return new DualieItem.DodgeRollCooldown(nbt);
-		else return new PlayerCooldown(nbt);
-	}
+    public PlayerCooldown(CompoundTag nbt)
+    {
+        fromNbt(nbt);
+    }
 
-	public PlayerCooldown setCancellable()
-	{
-		this.cancellable = true;
-		return this;
-	}
+    public final void fromNbt(CompoundTag nbt)
+    {
+        this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
+        this.time = nbt.getInt("Time");
+        this.maxTime = nbt.getInt("MaxTime");
+        this.slotIndex = nbt.getInt("SlotIndex");
+        this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        this.canMove = nbt.getBoolean("CanMove");
+        this.forceCrouch = nbt.getBoolean("ForceCrouch");
+        this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
+        this.isGrounded = nbt.getBoolean("IsGrounded");
+    }
 
-	public static PlayerCooldown getPlayerCooldown(Player player)
-	{
-		PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-		if (playerInfo == null)
-			return null;
-		return playerInfo.getPlayerCooldown();
-	}
+    public static PlayerCooldown readNBT(CompoundTag nbt)
+    {
+        if (nbt.getBoolean("SuperJump"))
+            return new SuperJumpCommand.SuperJump(nbt);
+        if (nbt.getBoolean("SloshCooldown"))
+            return new SlosherItem.SloshCooldown(nbt);
+        if (nbt.getBoolean("DodgeRollCooldown")) // need an system for this but im lazy
+            return new DualieItem.DodgeRollCooldown(nbt);
+        else
+            return new PlayerCooldown(nbt);
+    }
 
-	public static void setPlayerCooldown(Player player, PlayerCooldown playerCooldown)
-	{
-		PlayerInfoCapability.get(player).setPlayerCooldown(playerCooldown);
-	}
+    public PlayerCooldown setCancellable()
+    {
+        this.cancellable = true;
+        return this;
+    }
+
+    public static PlayerCooldown getPlayerCooldown(Player player)
+    {
+        PlayerInfo playerInfo = PlayerInfoCapability.get(player);
+        if (playerInfo == null)
+            return null;
+        return playerInfo.getPlayerCooldown();
+    }
+
+    public static void setPlayerCooldown(Player player, PlayerCooldown playerCooldown)
+    {
+        PlayerInfoCapability.get(player).setPlayerCooldown(playerCooldown);
+    }
 
     public static PlayerCooldown setCooldownTime(Player player, int time)
     {
@@ -112,7 +113,7 @@ public class PlayerCooldown
 
     public static PlayerCooldown shrinkCooldownTime(Player player, int time)
     {
-        if(!hasOverloadedPlayerCooldown(player))
+        if (!hasOverloadedPlayerCooldown(player))
             return null;
         PlayerCooldown cooldown = setCooldownTime(player, Math.max(OVERLOAD_LIMIT, PlayerInfoCapability.get(player).getPlayerCooldown().getTime() - time));
         return hasPlayerCooldown(player) ? cooldown : null;
@@ -120,7 +121,7 @@ public class PlayerCooldown
 
     public static boolean hasPlayerCooldown(LivingEntity player)
     {
-        if(player == null || !PlayerInfoCapability.hasCapability(player))
+        if (player == null || !PlayerInfoCapability.hasCapability(player))
             return false;
         PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
         return cooldown != null && cooldown.getTime() > 0;
@@ -128,7 +129,7 @@ public class PlayerCooldown
 
     public static boolean hasOverloadedPlayerCooldown(Player player)
     {
-        if(player == null || !PlayerInfoCapability.hasCapability(player))
+        if (player == null || !PlayerInfoCapability.hasCapability(player))
             return false;
         PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
         return cooldown != null;
@@ -149,60 +150,63 @@ public class PlayerCooldown
         return preventWeaponUse;
     }
 
-	public boolean isGrounded()
-	{
-		return isGrounded;
-	}
+    public boolean isGrounded()
+    {
+        return isGrounded;
+    }
 
-	public int getTime()
-	{
-		return time;
-	}
+    public int getTime()
+    {
+        return time;
+    }
 
-	public PlayerCooldown setTime(int v)
-	{
-		time = v;
-		return this;
-	}
+    public PlayerCooldown setTime(int v)
+    {
+        time = v;
+        return this;
+    }
 
     public int getMaxTime()
     {
         return maxTime;
     }
 
-	public int getSlotIndex()
-	{
-		return slotIndex;
-	}
+    public int getSlotIndex()
+    {
+        return slotIndex;
+    }
 
-	public InteractionHand getHand()
-	{
-		return hand;
-	}
+    public InteractionHand getHand()
+    {
+        return hand;
+    }
 
-	public void tick(Player player)
-	{
+    public void tick(Player player)
+    {
+    }
 
-	}
-
-	public CompoundTag writeNBT(CompoundTag nbt)
-	{
-		nbt.putInt("Time", time);
-		nbt.putInt("MaxTime", maxTime);
-		nbt.putInt("SlotIndex", slotIndex);
-		nbt.putBoolean("CanMove", canMove);
-		nbt.putBoolean("ForceCrouch", forceCrouch);
-		nbt.putBoolean("PreventWeaponUse", preventWeaponUse);
-		nbt.putBoolean("IsGrounded", isGrounded);
-		nbt.putBoolean("MainHand", hand.equals(InteractionHand.MAIN_HAND));
+    public CompoundTag writeNBT(CompoundTag nbt)
+    {
+        nbt.putInt("Time", time);
+        nbt.putInt("MaxTime", maxTime);
+        nbt.putInt("SlotIndex", slotIndex);
+        nbt.putBoolean("CanMove", canMove);
+        nbt.putBoolean("ForceCrouch", forceCrouch);
+        nbt.putBoolean("PreventWeaponUse", preventWeaponUse);
+        nbt.putBoolean("IsGrounded", isGrounded);
+        nbt.putBoolean("MainHand", hand.equals(InteractionHand.MAIN_HAND));
         if (storedStack.getItem() != Items.AIR)
         {
-			nbt.put("StoredStack", storedStack.serializeNBT());
-		}
+            nbt.put("StoredStack", storedStack.serializeNBT());
+        }
+        return nbt;
+    }
 
-		return nbt;
-	}
-	public void onStart(Player player)
-	{
-	}
+    public void onStart(Player player)
+    {
+    }
+
+    public void onEnd(Player player)
+    {
+    }
 }

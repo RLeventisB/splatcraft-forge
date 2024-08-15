@@ -14,14 +14,16 @@ import net.minecraftforge.registries.RegistryObject;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.InkColorTags;
 import net.splatcraft.forge.items.ColoredBlockItem;
+import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.util.ColorUtils;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static net.splatcraft.forge.registries.SplatcraftItems.*;
+
 @Mod.EventBusSubscriber
-public class SplatcraftItemGroups {
+public class SplatcraftItemGroups
+{
 
     protected static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Splatcraft.MODID);
 
@@ -102,18 +104,16 @@ public class SplatcraftItemGroups {
                 output.accept(stageVoid.get());
                 output.acceptAll(ColorUtils.getColorVariantsForItem(allowedColorBarrier.get(), true, true, false));
                 output.acceptAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
-
-
             }).build());
-
 
     public static final RegistryObject<CreativeModeTab> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> CreativeModeTab.builder()
             .withTabsBefore(GROUP_GENERAL.getKey())
             .icon(() -> ColorUtils.setInkColor(splattershot.get().getDefaultInstance(), ColorUtils.ORANGE))
             .title(Component.translatable("itemGroup.splatcraft_weapons"))
             .displayItems((parameters, output) ->
-        {
+            {
                 output.acceptAll(weapons.stream().filter(weapon -> !weapon.isSecret).map(Item::getDefaultInstance).toList());
+                output.acceptAll(InkTankItem.inkTanks.stream().map(Item::getDefaultInstance).toList());
 
                 output.accept(inkClothHelmet.get());
                 output.accept(inkClothChestplate.get());
@@ -129,16 +129,15 @@ public class SplatcraftItemGroups {
             .title(Component.translatable("itemGroup.splatcraft_colors"))
             .displayItems((parameters, output) ->
                     {
-                        for(Item item : colorTabItems)
-            {
-                            for(int color : InkColorTags.CREATIVE_TAB_COLORS.getAll().stream().sorted().toList())
+                        for (Item item : colorTabItems)
+                        {
+                            for (int color : InkColorTags.CREATIVE_TAB_COLORS.getAll().stream().sorted().toList())
                                 output.accept(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(item), color), true));
-                            if(!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
+                            if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
                                 output.accept(ColorUtils.setInverted(new ItemStack(item), true));
                         }
-				}
+                    }
             ).build());
-
 
     @SubscribeEvent
     public void addCreative(BuildCreativeModeTabContentsEvent event)

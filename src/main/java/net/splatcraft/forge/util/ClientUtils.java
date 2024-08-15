@@ -1,6 +1,5 @@
 package net.splatcraft.forge.util;
 
-import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -11,6 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec2;
@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.UUID;
 
-@SuppressWarnings("deprecation")
 public class ClientUtils
 {
     @OnlyIn(Dist.CLIENT)
@@ -125,7 +124,7 @@ public class ClientUtils
         {
             if (direction == null) return true;
             BlockState relative = te.getLevel().getBlockState(tePos.relative(direction));
-            return relative.getMaterial().equals(Material.BARRIER) || !relative.getMaterial().isSolidBlocking() || !relative.isCollisionShapeFullBlock(te.getLevel(), tePos.relative(direction));
+            return relative.equals(Blocks.BARRIER.defaultBlockState()) || !relative.isSolid() || !relative.isCollisionShapeFullBlock(te.getLevel(), tePos.relative(direction));
         }
 
         return false;
@@ -152,7 +151,8 @@ public class ClientUtils
         if (d0 < 1.0E-7)
         {
             return Vec3.ZERO;
-        } else
+        }
+        else
         {
             Vec3 vec3 = (d0 > 1.0 ? pRelative.normalize() : pRelative).scale(0.1);
             float f = Mth.sin(pFacing * 0.017453292F);

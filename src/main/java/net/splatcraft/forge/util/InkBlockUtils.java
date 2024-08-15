@@ -11,6 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockCollisions;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -37,8 +38,7 @@ import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 
 public class InkBlockUtils
 {
@@ -161,17 +161,35 @@ public class InkBlockUtils
         return sameColor ? BlockInkedResult.ALREADY_INKED : BlockInkedResult.SUCCESS;
     }
 
-    public static void forEachInkedBlockInBounds(Level level, AABB bounds, InkedBlockConsumer action)
+    public static void forEachInkedBlockInBounds(Level level, final AABB bounds, InkedBlockConsumer action)
     {
-        final AABB expandedBounds = bounds.expandTowards(1, 1, 1);
-        for (BlockPos.MutableBlockPos chunkPos = new BlockPos.MutableBlockPos(bounds.minX, bounds.minY, bounds.minZ);
-             chunkPos.getX() <= bounds.maxX && chunkPos.getY() <= bounds.maxY && chunkPos.getZ() <= bounds.maxZ; chunkPos.move(16, 16, 16))
-        {
-            LevelChunk chunk = level.getChunkAt(chunkPos);
-            ChunkInkCapability.get(chunk).getInkInChunk().entrySet()
-                    .stream().filter(entry -> expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
-                    .forEach(entry -> action.accept(entry.getKey().toAbsolute(chunk.getPos()), entry.getValue()));
-        }
+        int chunkMinX = (int) Math.min(bounds.minX, bounds.maxX) >> 4;
+        int chunkMinY = (int) Math.min(bounds.minY, bounds.maxY) >> 4;
+        int chunkMinZ = (int) Math.min(bounds.minZ, bounds.maxZ) >> 4;
+        int chunkmaxX = (int) Math.max(bounds.minX, bounds.maxX) >> 4;
+        int chunkmaxY = (int) Math.max(bounds.minY, bounds.maxY) >> 4;
+        int chunkmaxZ = (int) Math.max(bounds.minZ, bounds.maxZ) >> 4;
+        for (int x = chunkMinX; x <= chunkmaxX; x++)
+//            for (int y = chunkMinY; y <= chunkmaxY; y++)
+            for (int z = chunkMinZ; z <= chunkmaxZ; z++)
+            {
+                ChunkPos chunkPos = new ChunkPos(x, z);
+                LevelChunk chunk = level.getChunk(x, z);
+                Set<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> uhhh = ChunkInkCapability.get(chunk).getInkInChunk().entrySet();
+                List<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> entries;
+                synchronized (uhhh)
+                {
+                    entries = new ArrayList<>(uhhh);
+                }
+                for (var ink : entries)
+                {
+                    BlockPos blockPos = ink.getKey().toAbsolute(chunkPos);
+                    if (bounds.contains(blockPos.getX(), blockPos.getY(), blockPos.getZ()))
+                    {
+                        action.accept(blockPos, ink.getValue());
+                    }
+                }
+            }
     }
 
     public interface InkedBlockConsumer
@@ -219,7 +237,6 @@ public class InkBlockUtils
         if (!(level.getBlockState(pos).getBlock() instanceof IColoredBlock) && isUninkable(level, pos, face))
             return false;
 
-
         return canInkPassthrough(level, pos.relative(face)) || !level.getBlockState(pos.relative(face)).is(SplatcraftTags.Blocks.BLOCKS_INK);
     }
 
@@ -260,6 +277,7 @@ public class InkBlockUtils
         PlayerInfo playerInfo = PlayerInfoCapability.get(entity);
         if (playerInfo == null)
             return false;
+
         return !entity.isSpectator() && (canSquidSwim(entity) || playerInfo.getClimbedDirection().isPresent());
     }
 
@@ -297,7 +315,6 @@ public class InkBlockUtils
             if (!shape.isEmpty() && shape.bounds().minY <= entity.getY() - result.getY())
                 return result;
         }
-
         return CommonUtils.createBlockPos(entity.getX(), entity.getY() - maxDepth, entity.getZ());
     }
 
@@ -319,7 +336,7 @@ public class InkBlockUtils
         if (onEnemyInk(entity))
             return null;
 
-        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level, entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(entity.xxa, 0, entity.zza), entity.getYRot())), false, (bro, what) ->
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(entity.xxa, 0, entity.zza), entity.getYRot())), false, (bro, what) ->
                 bro);
 
         while (collisions.hasNext())
@@ -327,13 +344,13 @@ public class InkBlockUtils
             BlockPos collidedBlock = collisions.next();
             Vec3 center = collidedBlock.getCenter();
             Direction xDirection = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
-            if (isInked(entity.level, collidedBlock, xDirection) &&
+            if (isInked(entity.level(), collidedBlock, xDirection) &&
                     ColorUtils.colorEquals(entity.level(), collidedBlock,
                             ColorUtils.getEntityColor(entity),
                             getInkBlock(entity.level(), collidedBlock).color(xDirection.get3DDataValue())))
                 return xDirection;
             Direction zDirection = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
-            if (isInked(entity.level, collidedBlock, zDirection) &&
+            if (isInked(entity.level(), collidedBlock, zDirection) &&
                     ColorUtils.colorEquals(entity.level(), collidedBlock,
                             ColorUtils.getEntityColor(entity),
                             getInkBlock(entity.level(), collidedBlock).color(zDirection.get3DDataValue())))
@@ -346,7 +363,7 @@ public class InkBlockUtils
     {
         BlockPos collidedBlock = entity.blockPosition().relative(face);
         Direction blockFaceToCheck = face.getOpposite();
-        return isInked(entity.level, collidedBlock, blockFaceToCheck) &&
+        return isInked(entity.level(), collidedBlock, blockFaceToCheck) &&
                 ColorUtils.colorEquals(entity.level(), collidedBlock,
                         ColorUtils.getEntityColor(entity),
                         getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck.get3DDataValue()));

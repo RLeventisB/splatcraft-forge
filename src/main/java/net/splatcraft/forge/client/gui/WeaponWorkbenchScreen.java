@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
-import java.awt.TextComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -47,7 +46,6 @@ import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.joml.Quaternionf;
 
 public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkbenchContainer>
 {
@@ -86,7 +84,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float v, int i, int i1)
+    protected void renderBg(@NotNull GuiGraphics guiGraphics, float v, int i, int i1)
     {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShaderTexture(0, TEXTURES);
@@ -113,9 +111,9 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
                 }
                 else
                 {
-                    for (int i = -1; i <= 1; i++)
+                    for (int z = -1; z <= 1; z++)
                     {
-                        drawRecipeStack(level, guiGraphics, recipeList, x, y, i);
+                        drawRecipeStack(level, guiGraphics, recipeList, x, y, z);
                     }
                 }
             }
@@ -142,7 +140,8 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         //if(!MinecraftForge.EVENT_BUS.post(new RenderItemEvent(displayStack, ItemCameraTransforms.TransformType.GUI, displayStackMatrix, irendertypebuffer$impl, light, OverlayTexture.NO_OVERLAY, minecraft.getDeltaFrameTime())))
         {
             ItemRenderer itemRenderer = minecraft.getItemRenderer();
-            if (itemRenderer != null) {
+            if (itemRenderer != null)
+            {
                 minecraft.getItemRenderer().render(displayStack, ItemDisplayContext.GUI, false, displayStackMatrix, irendertypebuffer$impl, light, OverlayTexture.NO_OVERLAY, minecraft.getItemRenderer().getModel(displayStack, level, player, 0));
             }
         }
@@ -151,7 +150,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         guiGraphics.pose().popPose();
     }
 
-    @SuppressWarnings({"ConstantConditions", "deprecation"})
+    @SuppressWarnings({"ConstantConditions"})
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY)
     {
@@ -179,8 +178,8 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
             List<FormattedCharSequence> split = font.split(emptyText, boxSize);
 
             int yy = 73 - split.size() * font.lineHeight / 2;
-
-            for (FormattedCharSequence formattedcharsequence : split) {
+            for (FormattedCharSequence formattedcharsequence : split)
+            {
                 guiGraphics.drawString(font, formattedcharsequence, (imageWidth - font.width(formattedcharsequence)) / 2, yy, 0xFFFFFF, true);
                 yy += font.lineHeight;
             }
@@ -294,10 +293,9 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
 
                 if (count != 1)
                 {
-					float zLevel = minecraft.getItemRenderer().blitOffset;
-                    matrixStack.translate(0.0D, 0.0D, zLevel + 200.0F);
+                    guiGraphics.pose().translate(0.0D, 0.0D, 200.0F);
                     font.drawInBatch(s, (float) (ix + 19 - 2 - font.width(s)), (float) (iy + 6 + 3), color, true, guiGraphics.pose().last().pose(), irendertypebuffer$impl, Font.DisplayMode.NORMAL, 0, 15728880);
-                    matrixStack.translate(0.0D, 0.0D, -(zLevel + 200.0F));
+                    guiGraphics.pose().translate(0.0D, 0.0D, -(200.0F));
                     irendertypebuffer$impl.endBatch();
                 }
             }
@@ -338,7 +336,8 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         if (craftButtonState > 0)
         {
             ty = 12;
-        } else if (craftButtonState == 0)
+        }
+        else if (craftButtonState == 0)
         {
             ty = isHovering(71, 93, 34, 12, mouseX, mouseY) ? 24 : 36;
         }
@@ -399,7 +398,6 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
             }
         }
 
-
         if (selectedRecipe != null)
         {
             //Draw Ingredient Tooltips
@@ -427,8 +425,9 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         }
     }
 
-    protected static Component getDisplayName(ItemStack stack) {
-        MutableComponent iformattabletextcomponent = Component.literal(stack.getHoverName());
+    protected static Component getDisplayName(ItemStack stack)
+    {
+        MutableComponent iformattabletextcomponent = MutableComponent.create(stack.getHoverName().getContents());
         if (stack.hasCustomHoverName())
             iformattabletextcomponent.withStyle(ChatFormatting.ITALIC);
 
@@ -555,7 +554,8 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
             {
                 ingredientPos++;
                 playButtonSound();
-            } else if (sectionPos - 1 >= 0 && isHovering(7, 110, 7, 11, mouseX, mouseY))
+            }
+            else if (sectionPos - 1 >= 0 && isHovering(7, 110, 7, 11, mouseX, mouseY))
             {
                 ingredientPos--;
                 playButtonSound();
@@ -568,7 +568,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
             craftButtonState = 1;
             playButtonSound();
         }
-
+        
         return super.mouseClicked(mouseX, mouseY, button);
     }
 

@@ -112,10 +112,10 @@ public class ChunkInkHandler
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event)
     {
-        ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(event.getPlayer().level, event.getPos());
+        ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(event.getPlayer().level(), event.getPos());
         if (inkBlock != null)
         {
-            InkBlockUtils.clearBlock(event.getPlayer().level, event.getPos(), true);
+            InkBlockUtils.clearBlock(event.getPlayer().level(), event.getPos(), true);
         }
     }
 
@@ -198,23 +198,27 @@ public class ChunkInkHandler
                             {
                                 InkBlockUtils.clearInk(level, clearPos, InkBlockUtils.getRandomInkedFace(level, clearPos), false);
                                 decayableInk.remove(pos);
-
                                 blockCount++;
-                            } else
+                            }
+                            else
                             {
                                 decayableInk.remove(pos);
                             }
                         }
                     }
-                } else if (event.level.isClientSide)
+                }
+                else if (event.level.isClientSide)
                 {
                     new ArrayList<>(INK_CACHE.keySet()).forEach(chunkPos ->
                     {
                         if (event.level.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.FULL, false) instanceof LevelChunk chunk)
+                        {
                             updateClientInkForChunk(event.level, chunk);
+                        }
                     });
                 }
-            } else if (event.phase == TickEvent.Phase.END && !event.level.isClientSide)
+            }
+            else if (event.phase == TickEvent.Phase.END && !event.level.isClientSide)
             {
                 if (sharedPacket.isEmpty())
                     return;
@@ -414,7 +418,8 @@ public class ChunkInkHandler
                         f3 = f6 * afloat[k] * r;
                         f4 = f7 * afloat[k] * g;
                         f5 = f8 * afloat[k] * b;
-                    } else
+                    }
+                    else
                     {
                         f3 = afloat[k] * r;
                         f4 = afloat[k] * g;
@@ -436,12 +441,14 @@ public class ChunkInkHandler
                     consumer.applyBakedNormals(vector3f, bytebuffer, pose.normal());
                     consumer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), f3, f4, f5, 1.0F, texU, texV, packedOverlay, l, vector3f.x(), vector3f.y(), vector3f.z());
                 }
-            } catch (Throwable throwable1)
+            }
+            catch (Throwable throwable1)
             {
                 try
                 {
                     memorystack.close();
-                } catch (Throwable throwable)
+                }
+                catch (Throwable throwable)
                 {
                     throwable1.addSuppressed(throwable);
                 }

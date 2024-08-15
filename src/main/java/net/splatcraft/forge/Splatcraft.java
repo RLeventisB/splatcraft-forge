@@ -19,7 +19,6 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.registries.*;
-import net.splatcraft.forge.worldgen.SplatcraftOreGen;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,70 +28,72 @@ import java.util.Objects;
 @Mod(Splatcraft.MODID)
 public class Splatcraft
 {
-	public static final String MODID = "splatcraft";
-	public static final String MODNAME = "Splatcraft";
-	public static String version;
-	public static final Logger LOGGER = LogManager.getLogger(MODNAME);
-	public Splatcraft()
-	{
-		for (IModInfo m : ModList.get().getMods())
-		{ // Forge is stupid
-			if (Objects.equals(m.getModId(), MODID) && m.getVersion() != null)
-			{
-				version = m.getVersion().toString();
-				break;
-			}
-		}
+    public static final String MODID = "splatcraft";
+    public static final String MODNAME = "Splatcraft";
+    public static String version;
+    public static final Logger LOGGER = LogManager.getLogger(MODNAME);
 
-		SplatcraftRegistries.register();
+    public Splatcraft()
+    {
+        for (IModInfo m : ModList.get().getMods())
+        { // Forge is stupid
+            if (Objects.equals(m.getModId(), MODID) && m.getVersion() != null)
+            {
+                version = m.getVersion().toString();
+                break;
+            }
+        }
 
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
-		SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
+        SplatcraftRegistries.register();
 
-		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
-		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
+        SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
 
-		MinecraftForge.EVENT_BUS.register(this);
-		MinecraftForge.EVENT_BUS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
 
-		//addBuiltinPack("classic_weapons", Component.literal("Splatcraft - Classic Weapons"));
-	}
+        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(FMLJavaModLoadingContext.get().getModEventBus());
 
-	private void commonSetup(final FMLCommonSetupEvent event)
-	{
-		SplatcraftPacketHandler.registerMessages();
+        //addBuiltinPack("classic_weapons", Component.literal("Splatcraft - Classic Weapons"));
+    }
 
-		SplatcraftGameRules.registerGamerules();
-		SplatcraftTags.register();
-		SplatcraftStats.register();
-		ScoreboardHandler.register();
-		SplatcraftCommands.registerArguments();
+    private void commonSetup(final FMLCommonSetupEvent event)
+    {
+        SplatcraftPacketHandler.registerMessages();
 
-        SplatcraftOreGen.registerOres();
-		SplatcraftItems.postRegister();
-	}
+        SplatcraftGameRules.registerGamerules();
+        SplatcraftTags.register();
+        SplatcraftStats.register();
+        ScoreboardHandler.register();
+        SplatcraftCommands.registerArguments();
 
-	private void clientSetup(final FMLClientSetupEvent event)
-	{
-		SplatcraftEntities.bindRenderers();
-		SplatcraftTileEntities.bindTESR();
+//        SplatcraftOreGen.registerOres();
+        SplatcraftItems.postRegister();
+    }
 
-		event.enqueueWork(() ->
-		{
-			SplatcraftItems.registerModelProperties();
-			ClientSetupHandler.bindScreenContainers();
-		});
-	}
+    private void clientSetup(final FMLClientSetupEvent event)
+    {
+        SplatcraftEntities.bindRenderers();
+        SplatcraftTileEntities.bindTESR();
 
-	@SubscribeEvent
-	public void registerCaps(RegisterCapabilitiesEvent event)
-	{
-		event.register(PlayerInfoCapability.class);
-	}
-	@SubscribeEvent
-	public void onServerStarted(ServerStartedEvent event)
-	{
-		SplatcraftGameRules.booleanRules.replaceAll((k, v) -> event.getServer().getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
-		SplatcraftGameRules.intRules.replaceAll((k, v) -> event.getServer().getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
-	}
+        event.enqueueWork(() ->
+        {
+            SplatcraftItems.registerModelProperties();
+            ClientSetupHandler.bindScreenContainers();
+        });
+    }
+
+    @SubscribeEvent
+    public void registerCaps(RegisterCapabilitiesEvent event)
+    {
+        event.register(PlayerInfoCapability.class);
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event)
+    {
+        SplatcraftGameRules.booleanRules.replaceAll((k, v) -> event.getServer().getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
+        SplatcraftGameRules.intRules.replaceAll((k, v) -> event.getServer().getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
+    }
 }

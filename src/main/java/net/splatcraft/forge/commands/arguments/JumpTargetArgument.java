@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +33,7 @@ public class JumpTargetArgument extends EntityArgument
         return new JumpTargetArgument();
     }
 
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> command, SuggestionsBuilder suggestionsBuilder)
+    public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> command, @NotNull SuggestionsBuilder suggestionsBuilder)
     {
         if (command.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider)
         {
@@ -43,7 +44,8 @@ public class JumpTargetArgument extends EntityArgument
             try
             {
                 entityselectorparser.parse();
-            } catch (CommandSyntaxException commandsyntaxexception)
+            }
+            catch (CommandSyntaxException commandsyntaxexception)
             {
             }
 
@@ -52,7 +54,7 @@ public class JumpTargetArgument extends EntityArgument
                 Entity source = ((CommandSourceStack) command.getSource()).getEntity();
                 List<Stage> validStages = SaveInfoCapability.get(source.getServer()).getStages().values().stream().filter(stage -> stage.getBounds().contains(source.position())).toList();
 
-                if (!SplatcraftGameRules.getLocalizedRule(source.level, source.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+                if (!SplatcraftGameRules.getLocalizedRule(source.level(), source.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
                     collection.removeIf((str) -> {
                         Player player = ((CommandSourceStack) command.getSource()).getServer().getPlayerList().getPlayerByName(str);
 
@@ -62,7 +64,8 @@ public class JumpTargetArgument extends EntityArgument
                 Iterable<String> iterable = Iterables.concat(collection, sharedsuggestionprovider.getSelectedEntities());
                 SharedSuggestionProvider.suggest(iterable, p_91457_);
             });
-        } else
+        }
+        else
         {
             return Suggestions.empty();
         }

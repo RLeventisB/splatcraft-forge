@@ -20,18 +20,21 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class InkedBlockTileEntity extends InkColorTileEntity {
+public class InkedBlockTileEntity extends InkColorTileEntity
+{
     private BlockState savedState = Blocks.AIR.defaultBlockState();
     private int savedColor = -1;
     private int permanentColor = -1;
     private InkBlockUtils.InkType permanentInkType = InkBlockUtils.InkType.NORMAL;
 
-    public InkedBlockTileEntity(BlockPos pos, BlockState state) {
+    public InkedBlockTileEntity(BlockPos pos, BlockState state)
+    {
         super(SplatcraftTileEntities.inkedTileEntity.get(), pos, state);
     }
 
     @Override
-    public void setLevel(@NotNull Level level) {
+    public void setLevel(@NotNull Level level)
+    {
         super.setLevel(level);
     }
 
@@ -41,12 +44,12 @@ public class InkedBlockTileEntity extends InkColorTileEntity {
     {
         if (!level.isClientSide() && te instanceof InkedBlockTileEntity inkedBlock)
         {
-            if(inkedBlock.hasSavedState())
+            if (inkedBlock.hasSavedState())
             {
                 level.setBlock(pos, inkedBlock.savedState, 2);
-                if (inkedBlock.hasPermanentColor()) {
-                    ChunkInkCapability.get(level, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos), inkedBlock.getPermanentColor(), inkedBlock.getPermanentInkType());
-                }
+                if (inkedBlock.hasPermanentColor())
+                    ChunkInkCapability.get(level, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos));
+
                 for (int i = 0; i < 6; i++)
                 {
                     InkBlockUtils.inkBlock(level, pos, inkedBlock.getColor(), i, getInkType(state), 0);
@@ -54,7 +57,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity {
 
                 if (inkedBlock.hasSavedColor() && inkedBlock.getSavedState().getBlock() instanceof IColoredBlock coloredBlock)
                 {
-                    if(inkedBlock.getSavedState().getBlock() instanceof EntityBlock)
+                    if (inkedBlock.getSavedState().getBlock() instanceof EntityBlock)
                         level.setBlockEntity(Objects.requireNonNull(((EntityBlock) inkedBlock.getSavedState().getBlock()).newBlockEntity(pos, inkedBlock.getSavedState())));
                     coloredBlock.setColor(level, pos, inkedBlock.getSavedColor());
                 }
@@ -63,7 +66,8 @@ public class InkedBlockTileEntity extends InkColorTileEntity {
     }
 
     @Deprecated //Only used for parity purposes
-    public static InkBlockUtils.InkType getInkType(BlockState state) {
+    public static InkBlockUtils.InkType getInkType(BlockState state)
+    {
         if (state.is(SplatcraftBlocks.clearInkedBlock.get()))
             return InkBlockUtils.InkType.CLEAR;
         if (state.is(SplatcraftBlocks.glowingInkedBlock.get()))
@@ -73,70 +77,84 @@ public class InkedBlockTileEntity extends InkColorTileEntity {
 
     //Read NBT
     @Override
-    public void load(@NotNull CompoundTag nbt) {
+    public void load(@NotNull CompoundTag nbt)
+    {
         super.load(nbt);
         savedState = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), nbt.getCompound("SavedState"));
         savedColor = nbt.getInt("SavedColor");
-
-        if (nbt.contains("PermanentColor")) {
+        if (nbt.contains("PermanentColor"))
+        {
             setPermanentColor(nbt.getInt("PermanentColor"));
             setPermanentInkType(InkBlockUtils.InkType.values.getOrDefault(new ResourceLocation(nbt.getString("PermanentInkType")), InkBlockUtils.InkType.NORMAL));
         }
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt) {
+    public void saveAdditional(CompoundTag nbt)
+    {
         nbt.put("SavedState", NbtUtils.writeBlockState(savedState));
         if (hasSavedColor())
             nbt.putInt("SavedColor", savedColor);
-        if (hasPermanentColor()) {
+        if (hasPermanentColor())
+        {
             nbt.putInt("PermanentColor", permanentColor);
             nbt.putString("PermanentInkType", permanentInkType.getSerializedName());
         }
         super.saveAdditional(nbt);
     }
 
-    public BlockState getSavedState() {
+    public BlockState getSavedState()
+    {
         return savedState;
     }
 
-    public void setSavedState(BlockState savedState) {
+    public void setSavedState(BlockState savedState)
+    {
         this.savedState = savedState;
     }
 
-    public boolean hasSavedState() {
+    public boolean hasSavedState()
+    {
         return savedState != null && savedState.getBlock() != Blocks.AIR;
     }
 
-    public int getSavedColor() {
+    public int getSavedColor()
+    {
         return savedColor;
     }
 
-    public void setSavedColor(int color) {
+    public void setSavedColor(int color)
+    {
         this.savedColor = color;
     }
 
-    public boolean hasSavedColor() {
+    public boolean hasSavedColor()
+    {
         return savedColor != -1;
     }
 
-    public int getPermanentColor() {
+    public int getPermanentColor()
+    {
         return permanentColor;
     }
 
-    public void setPermanentColor(int permanentColor) {
+    public void setPermanentColor(int permanentColor)
+    {
         this.permanentColor = permanentColor;
     }
 
-    public boolean hasPermanentColor() {
+    public boolean hasPermanentColor()
+    {
         return permanentColor != -1;
     }
 
-    public InkBlockUtils.InkType getPermanentInkType() {
+    public InkBlockUtils.InkType getPermanentInkType()
+    {
         return permanentInkType;
     }
 
-    public void setPermanentInkType(InkBlockUtils.InkType permanentInkType) {
+    public void setPermanentInkType(InkBlockUtils.InkType permanentInkType)
+    {
         this.permanentInkType = permanentInkType;
     }
 }

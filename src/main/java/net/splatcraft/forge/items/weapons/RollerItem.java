@@ -78,13 +78,13 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
     {
         return (stack, level, entity, seed) ->
         {
-            if (entity instanceof Player && PlayerCooldown.hasOverloadedPlayerCooldown((Player) entity))
+            if (entity instanceof Player player && PlayerCooldown.hasOverloadedPlayerCooldown(player))
             {
 
-                PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown((Player) entity);
-                if (cooldown.getTime() > (cooldown.isGrounded() ? -10 : 0))
+                PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
+                if (cooldown.getSlotIndex() > -1 && cooldown.getTime() > (cooldown.isGrounded() ? -10 : 0))
                 {
-                    ItemStack cooldownStack = cooldown.getHand() == (InteractionHand.MAIN_HAND) ? ((Player) entity).getInventory().items.get(cooldown.getSlotIndex())
+                    ItemStack cooldownStack = cooldown.getHand() == (InteractionHand.MAIN_HAND) ? (player).getInventory().items.get(cooldown.getSlotIndex())
                             : entity.getOffhandItem();
                     return stack.equals(cooldownStack) && (getSettings(stack).isBrush || cooldown.isGrounded()) ? 1 : 0;
                 }
@@ -269,7 +269,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 
                     side = -side;
                 }
-            } else
+            }
+            else
             {
                 for (int i = 0; i < settings.rollSize; i++)
                 {
@@ -312,7 +313,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
                 appliedMobility = settings.swingMobility;
             else
                 appliedMobility = Math.min(1, (float) useTime / (float) settings.dashTime) * (settings.dashMobility - settings.rollMobility) + settings.rollMobility;
-        } else
+        }
+        else
         {
             appliedMobility = 0.7;
         }

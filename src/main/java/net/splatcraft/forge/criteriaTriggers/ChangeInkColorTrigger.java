@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.registries.SplatcraftInkColors;
+import net.splatcraft.forge.data.InkColorAliases;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,6 @@ public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColor
 
     public ChangeInkColorTrigger.@NotNull TriggerInstance createInstance(JsonObject json, @NotNull ContextAwarePredicate composite, @NotNull DeserializationContext context)
     {
-
         int color = -1;
 
         if (json.has("color"))
@@ -33,20 +32,23 @@ public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColor
                 String str = GsonHelper.getAsString(json, "color");
                 if (str.indexOf('#') == 0)
                     color = Integer.parseInt(str.substring(1), 16);
-                else {
-                    InkColor colorObj = SplatcraftInkColors.REGISTRY.get().getValue(new ResourceLocation(str));
+                else
+                {
+                    InkColor colorObj = InkColor.getByHex(InkColorAliases.getColorByAlias(new ResourceLocation(str)));
                     if (colorObj != null)
                         color = colorObj.getColor();
                 }
-            } else color = Mth.clamp(GsonHelper.getAsInt(json, "color"), 0, 0xFFFFFF);
+            }
+            else
+                color = Mth.clamp(GsonHelper.getAsInt(json, "color"), 0, 0xFFFFFF);
         }
         return new ChangeInkColorTrigger.TriggerInstance(composite, color);
     }
 
-	public void trigger(ServerPlayer player)
+    public void trigger(ServerPlayer player)
     {
-		this.trigger(player, (instance) -> instance.matches(player));
-	}
+        this.trigger(player, (instance) -> instance.matches(player));
+    }
 
     public static class TriggerInstance extends AbstractCriterionTriggerInstance
     {
@@ -58,10 +60,10 @@ public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColor
             this.color = color;
         }
 
-		public boolean matches(ServerPlayer player)
-		{
-			return color == -1 || ColorUtils.getPlayerColor(player) == color;
-		}
+        public boolean matches(ServerPlayer player)
+        {
+            return color == -1 || ColorUtils.getPlayerColor(player) == color;
+        }
 
         public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
         {

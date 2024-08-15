@@ -111,23 +111,17 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         return name;
     }
 
-    public static class WeaponWorkbenchTabSerializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<WeaponWorkbenchTab>
+    public static class WeaponWorkbenchTabSerializer implements RecipeSerializer<WeaponWorkbenchTab>
     {
-
-        public WeaponWorkbenchTabSerializer(String name)
-        {
-            super();
-            setRegistryName(name);
-        }
-
         @Override
-        public WeaponWorkbenchTab fromJson(ResourceLocation recipeId, JsonObject json)
+        public @NotNull WeaponWorkbenchTab fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json)
         {
             Component displayComponent;
-
-            if(GsonHelper.isStringValue(json, "name"))
+            
+            if (GsonHelper.isStringValue(json, "name"))
                 displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
-            else displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : null;
+            else
+                displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : null;
             return new WeaponWorkbenchTab(recipeId, new ResourceLocation(GsonHelper.getAsString(json, "icon")), GsonHelper.getAsInt(json, "pos", Integer.MAX_VALUE), displayComponent, GsonHelper.getAsBoolean(json, "hidden", false));
         }
 

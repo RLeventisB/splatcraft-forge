@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBlock
 {
     public final boolean blocksColor;
+
     public ColoredBarrierBlock(boolean blocksColor)
     {
         super(false);
@@ -65,7 +66,7 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
     @Override
     public void setInverted(Level level, BlockPos pos, boolean inverted)
     {
-        if(level.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
+        if (level.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
             te.setInverted(inverted);
     }
 
@@ -76,9 +77,9 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter levelIn, BlockPos pos, CollisionContext context)
+    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
-        if(!(context instanceof EntityCollisionContext entityContext))
+        if (!(context instanceof EntityCollisionContext entityContext))
             return super.getCollisionShape(state, levelIn, pos, context);
 
         if (ColorUtils.getEntityColor(entityContext.getEntity()) > -1)
@@ -122,7 +123,8 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
     }
 
     @Override
-    public boolean remoteInkClear(Level level, BlockPos pos) {
+    public boolean remoteInkClear(Level level, BlockPos pos)
+    {
         return false;
     }
 }
