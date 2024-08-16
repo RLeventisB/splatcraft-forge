@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import net.splatcraft.forge.entities.ExtraSaveData;
@@ -163,18 +165,24 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                         SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(sloshTime.sloshDataIndex);
 
                         InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileSetting.projectile().size(), sloshData);
+                        proj.setSlosherStats(projectileSetting.projectile());
+
+                        float xRotation = Mth.lerp(partialTick, yRotOld, yRot);
                         proj.shootFromRotation(
                                 Mth.lerp(partialTick, xRotOld, xRot),
-                                Mth.lerp(partialTick, yRotOld, yRot) + projectileSetting.offsetAngle(),
+                                xRotation + projectileSetting.offsetAngle() - 3,
                                 shotSetting.pitchCompensation(),
                                 projectileSetting.projectile().speed() - projectileSetting.speedSubstract() * sloshTime.indexInSlosh,
                                 0,
                                 partialTick);
                         proj.setAttackId(attackId);
+
+                        proj.moveTo(proj.position().add(Entity.getInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
+
                         switch (slosherItem.slosherType)
                         {
                             case EXPLODING:
-                                Optional<BlasterWeaponSettings.DetonationRecord> detonationData = projectileSetting.projectile().detonationData();
+                                Optional<BlasterWeaponSettings.DetonationRecord> detonationData = projectileSetting.detonationData();
                                 if (detonationData.isPresent())
                                 {
                                     proj.explodes = true;
@@ -185,8 +193,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                             case CYCLONE:
                                 proj.canPierce = true;
                         }
-                        proj.addExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex));
-                        proj.setSlosherStats(projectileSetting.projectile());
+                        proj.addExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex, proj.getY()));
                         level.addFreshEntity(proj);
 
                         proj.tick(extraTime);

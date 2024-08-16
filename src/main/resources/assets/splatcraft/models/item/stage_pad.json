@@ -2,9 +2,9 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "splatcraft:items/stage_pad",
-		"1": "splatcraft:items/stage_pad_inkcolor",
-		"particle": "splatcraft:items/stage_pad"
+		"0": "splatcraft:item/stage_pad",
+		"1": "splatcraft:item/stage_pad_inkcolor",
+		"particle": "splatcraft:item/stage_pad"
 	},
 	"elements": [
 		{

@@ -1,8 +1,11 @@
 package net.splatcraft.forge.util;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -336,54 +339,65 @@ public class InkBlockUtils
         if (onEnemyInk(entity))
             return null;
 
-        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), entity.getYRot())), false, (bro, what) ->
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().expandTowards(Entity.getInputVector(new Vec3(Math.signum(strafeImpulse) * 0.01, 0, Math.signum(forwardImpulse) * 0.01), 0.1f, entity.getYRot())), false, (bro, what) ->
                 bro);
 
         while (collisions.hasNext())
         {
             BlockPos collidedBlock = collisions.next();
             Vec3 center = collidedBlock.getCenter();
-            Direction xDirection = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
-            if (isInked(entity.level(), collidedBlock, xDirection) &&
+            Direction direction;
+            if (Math.abs(center.x - entity.getX()) > Math.abs(center.z - entity.getZ()))
+            {
+                direction = center.x > entity.getX() ? Direction.EAST : Direction.WEST;
+            }
+            else
+            {
+                direction = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
+            }
+
+            if (isInked(entity.level(), collidedBlock, direction) &&
                     ColorUtils.colorEquals(entity.level(), collidedBlock,
                             ColorUtils.getEntityColor(entity),
-                            getInkBlock(entity.level(), collidedBlock).color(xDirection.get3DDataValue())))
-                return xDirection;
-            Direction zDirection = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
-            if (isInked(entity.level(), collidedBlock, zDirection) &&
-                    ColorUtils.colorEquals(entity.level(), collidedBlock,
-                            ColorUtils.getEntityColor(entity),
-                            getInkBlock(entity.level(), collidedBlock).color(zDirection.get3DDataValue())))
-                return zDirection;
+                            getInkBlock(entity.level(), collidedBlock).color(direction.get3DDataValue())))
+                return direction;
         }
         return null;
     }
 
     public static boolean isSquidStillClimbing(LivingEntity entity, Direction face)
     {
-        BlockPos collidedBlock = entity.blockPosition().relative(face);
         Direction blockFaceToCheck = face.getOpposite();
-        return isInked(entity.level(), collidedBlock, blockFaceToCheck) &&
-                ColorUtils.colorEquals(entity.level(), collidedBlock,
-                        ColorUtils.getEntityColor(entity),
-                        getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck.get3DDataValue()));
+        AABB aabb = entity.getBoundingBox().expandTowards(Vec3.atLowerCornerOf(blockFaceToCheck.getNormal()).scale(0.01));
+        if (entity instanceof ServerPlayer)
+            for (int x = 0; x < 2; x++)
+            {
+                for (int y = 0; y < 2; y++)
+                {
+                    for (int z = 0; z < 2; z++)
+                    {
 
-        /*
-                BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(Vec3.atLowerCornerOf(face.getNormal())), false, (bro, what) ->
+                        CommonUtils.spawnTestParticle(Minecraft.getInstance().level,
+                                ParticleTypes.BUBBLE, new Vec3(
+                                        x == 0 ? aabb.min(Direction.Axis.X) : aabb.max(Direction.Axis.X),
+                                        y == 0 ? aabb.min(Direction.Axis.Y) : aabb.max(Direction.Axis.Y),
+                                        z == 0 ? aabb.min(Direction.Axis.Z) : aabb.max(Direction.Axis.Z)));
+                    }
+                }
+            }
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, aabb, false, (bro, what) ->
                 bro);
 
         while (collisions.hasNext())
         {
             BlockPos pos = collisions.next();
-            if (isInked(entity.level(), pos, blockFaceToCheck) &&
+            if (isInked(entity.level(), pos, face) &&
                     ColorUtils.colorEquals(entity.level(), pos,
                             ColorUtils.getEntityColor(entity),
-                            getInkBlock(entity.level(), pos).color(blockFaceToCheck.get3DDataValue())))
+                            getInkBlock(entity.level(), pos).color(face.get3DDataValue())))
                 return true;
         }
         return false;
-
-         */
     }
 
     public static InkBlockUtils.InkType getInkType(LivingEntity entity)

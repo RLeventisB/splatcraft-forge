@@ -52,7 +52,7 @@ public class PlayerMovementHandler
 
             if (playerInfo.getClimbedDirection().isPresent())
             {
-                if (!InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
+                if (!InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()) || !playerInfo.isSquid())
                 {
                     playerInfo.setClimbedDirection(null);
                     SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerInfoPacket(player), player);
@@ -160,45 +160,7 @@ public class PlayerMovementHandler
 
         if (playerInfo.isSquid())
         {
-            if (playerInfo.getClimbedDirection().isPresent())
-            {
-//                if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
-                if (!player.onGround())
-                {
-                    AttributeInstance gravity = player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_GRAVITY.get());
-                    if (player.getDeltaMovement().y <= 0.0D)
-                    {
-                        if (!gravity.hasModifier(SLOW_FALLING))
-                            gravity.addTransientModifier(SLOW_FALLING);
-                        player.fallDistance = 0.0F;
-                    }
-                    else if (gravity.hasModifier(SLOW_FALLING))
-                        gravity.removeModifier(SLOW_FALLING);
-
-                    if (player.getDeltaMovement().y() < (input.jumping ? 0.46f : 0.4f))
-                        player.moveRelative(0.06f * (input.jumping ? 2f : 1.7f), new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());
-                    if (player.getDeltaMovement().y() <= 0 && !input.shiftKeyDown)
-                        player.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
-
-                    if (input.shiftKeyDown)
-                        player.setDeltaMovement(player.getDeltaMovement().x, Math.max(0, player.getDeltaMovement().y()), player.getDeltaMovement().z);
-                }
-                else
-                {
-                    playerInfo.setClimbedDirection(null);
-                }
-            }
-
-            if (playerInfo.getClimbedDirection().isEmpty())
-            {
-                Direction newDirection = InkBlockUtils.canSquidClimb(player, clonedInput.leftImpulse, clonedInput.forwardImpulse);
-                if (newDirection != null)
-                {
-                    player.setDeltaMovement(0, 0.01, 0);
-                    player.setOnGround(false);
-                    playerInfo.setClimbedDirection(newDirection);
-                }
-            }
+            handleSquidMovement(playerInfo, player, clonedInput);
         }
 
         if (player.isUsingItem())
@@ -209,9 +171,8 @@ public class PlayerMovementHandler
                 if (stack.getItem() instanceof WeaponBaseItem)
                 {
                     input.leftImpulse *= 5.0F;
-                    //input = player.movementInput;
                     input.forwardImpulse *= 5.0F;
-                    //input = player.movementInput;
+
                     if (stack.getItem() instanceof DualieItem && (input.leftImpulse != 0 || input.forwardImpulse != 0))
                     {
                         input.jumping = false;
@@ -240,6 +201,60 @@ public class PlayerMovementHandler
             if (cooldown.forceCrouch() && cooldown.getTime() >= 1)
             {
                 input.shiftKeyDown = !player.getAbilities().flying;
+            }
+        }
+    }
+
+    private static void handleSquidMovement(PlayerInfo playerInfo, LocalPlayer player, Input input)
+    {
+        if (playerInfo.getClimbedDirection().isPresent())
+        {
+            if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()) && playerInfo.isSquid())
+            {
+                AttributeInstance gravity = player.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
+                Vec3 deltaMovement = player.getDeltaMovement();
+                if (deltaMovement.y <= -0.3D)
+                {
+                    player.setDeltaMovement(deltaMovement.x, -0.3D, deltaMovement.z);
+                }
+
+                if (input.jumping)
+                {
+                    if (input.forwardImpulse == 0 && input.leftImpulse == 0)
+                    {
+                        player.setDeltaMovement(deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f)));
+
+                        playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
+                    }
+                    else
+                    {
+                        playerInfo.setSquidSurgeCharge(0f);
+                    }
+                }
+                if (deltaMovement.y() < 0.4f && (input.forwardImpulse != 0 || input.leftImpulse != 0))
+                    player.moveRelative(0.102f, new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());
+                if (deltaMovement.y() <= 0 && !input.shiftKeyDown)
+                    player.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
+
+                player.fallDistance = 0.0F;
+
+                if (input.shiftKeyDown)
+                    player.setDeltaMovement(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
+            }
+            else
+            {
+                playerInfo.setClimbedDirection(null);
+            }
+        }
+
+        if (playerInfo.getClimbedDirection().isEmpty())
+        {
+            Direction newDirection = InkBlockUtils.canSquidClimb(player, input.leftImpulse, input.forwardImpulse);
+            if (newDirection != null)
+            {
+                player.setDeltaMovement(0, 0.01, 0);
+                player.setOnGround(false);
+                playerInfo.setClimbedDirection(newDirection);
             }
         }
     }

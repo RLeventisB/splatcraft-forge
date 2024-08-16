@@ -144,20 +144,4 @@ public class ClientUtils
     {
         return PlayerMovementHandler.unmodifiedInput.getOrDefault(player, new Input());
     }
-
-    public static Vec3 getInputVector(Vec3 pRelative, float pFacing)
-    {
-        double d0 = pRelative.lengthSqr();
-        if (d0 < 1.0E-7)
-        {
-            return Vec3.ZERO;
-        }
-        else
-        {
-            Vec3 vec3 = (d0 > 1.0 ? pRelative.normalize() : pRelative).scale(0.1);
-            float f = Mth.sin(pFacing * 0.017453292F);
-            float f1 = Mth.cos(pFacing * 0.017453292F);
-            return new Vec3(vec3.x * (double) f1 - vec3.z * (double) f, vec3.y, vec3.z * (double) f1 + vec3.x * (double) f);
-        }
-    }
 }

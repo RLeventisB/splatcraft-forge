@@ -11,7 +11,7 @@
         "direct_damage": 12.4
     },
     "shot": {
-        "pitch_compensation": -5,
+        "pitch_compensation": -15,
         "endlag_ticks": 8,
         "ink_consumption": 6,
         "ink_recovery_cooldown": 12,

@@ -201,7 +201,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         if (ColorUtils.isColorLocked(stack))
         {
             tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
-        } else
+        }
+        else
         {
             tooltip.add(Component.literal(""));
         }
@@ -261,7 +262,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
                 ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
-        } else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
+        }
+        else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
                 && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
@@ -277,7 +279,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         try
         {
             return (int) (ClientUtils.getDurabilityForDisplay() * 13);
-        } catch (NoClassDefFoundError e)
+        }
+        catch (NoClassDefFoundError e)
         {
             return 13;
         }
@@ -295,7 +298,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         try
         {
             return ClientUtils.showDurabilityBar(stack);
-        } catch (NoClassDefFoundError e)
+        }
+        catch (NoClassDefFoundError e)
         {
             return false;
         }
