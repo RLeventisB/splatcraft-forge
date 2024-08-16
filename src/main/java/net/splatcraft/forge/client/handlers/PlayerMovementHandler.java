@@ -4,11 +4,9 @@ import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -23,6 +21,7 @@ import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
+import net.splatcraft.forge.network.c2s.SquidInputPacket;
 import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
 import net.splatcraft.forge.registries.SplatcraftAttributes;
 import net.splatcraft.forge.registries.SplatcraftItems;
@@ -62,7 +61,7 @@ public class PlayerMovementHandler
 
             if (playerInfo.getClimbedDirection().isEmpty())
             {
-                Direction newDirection = InkBlockUtils.canSquidClimb(player);
+                Direction newDirection = InkBlockUtils.canSquidClimb(player, player.xxa, player.zza);
                 if (newDirection != null)
                 {
                     playerInfo.setClimbedDirection(newDirection);
@@ -115,6 +114,8 @@ public class PlayerMovementHandler
 
             if (playerInfo.isSquid())
             {
+                SplatcraftPacketHandler.sendToServer(new SquidInputPacket(player));
+
                 if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.onGround())
                     speedAttribute.addTransientModifier(INK_SWIM_SPEED);
                 if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED))
@@ -134,24 +135,21 @@ public class PlayerMovementHandler
     public static void onInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event)
     {
         Input input = event.getInput();
-        Player player = event.getEntity();
+        LocalPlayer player = (LocalPlayer) event.getEntity();
         PlayerInfo playerInfo = PlayerInfoCapability.get(player);
         if (playerInfo == null)
             playerInfo = new PlayerInfo();
 
-        if (player.isLocalPlayer()) // idk if splitscreen exists but just in case
-        {
-            Input clonedInput = new Input();
-            clonedInput.leftImpulse = input.leftImpulse;
-            clonedInput.forwardImpulse = input.forwardImpulse;
-            clonedInput.up = input.up;
-            clonedInput.down = input.down;
-            clonedInput.left = input.left;
-            clonedInput.right = input.right;
-            clonedInput.jumping = input.jumping;
-            clonedInput.shiftKeyDown = input.shiftKeyDown;
-            unmodifiedInput.put((LocalPlayer) player, clonedInput);
-        }
+        Input clonedInput = new Input();
+        clonedInput.leftImpulse = input.leftImpulse;
+        clonedInput.forwardImpulse = input.forwardImpulse;
+        clonedInput.up = input.up;
+        clonedInput.down = input.down;
+        clonedInput.left = input.left;
+        clonedInput.right = input.right;
+        clonedInput.jumping = input.jumping;
+        clonedInput.shiftKeyDown = input.shiftKeyDown;
+        unmodifiedInput.put(player, clonedInput);
 
         float speedMod = !input.shiftKeyDown ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 30f : 2f : 1f;
 
@@ -164,10 +162,11 @@ public class PlayerMovementHandler
         {
             if (playerInfo.getClimbedDirection().isPresent())
             {
-                if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
+//                if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()))
+                if (!player.onGround())
                 {
                     AttributeInstance gravity = player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_GRAVITY.get());
-                    if (player.getDeltaMovement().y <= 0.0D && player.hasEffect(MobEffects.SLOW_FALLING))
+                    if (player.getDeltaMovement().y <= 0.0D)
                     {
                         if (!gravity.hasModifier(SLOW_FALLING))
                             gravity.addTransientModifier(SLOW_FALLING);
@@ -192,8 +191,13 @@ public class PlayerMovementHandler
 
             if (playerInfo.getClimbedDirection().isEmpty())
             {
-                Direction newDirection = InkBlockUtils.canSquidClimb(player);
-                playerInfo.setClimbedDirection(newDirection);
+                Direction newDirection = InkBlockUtils.canSquidClimb(player, clonedInput.leftImpulse, clonedInput.forwardImpulse);
+                if (newDirection != null)
+                {
+                    player.setDeltaMovement(0, 0.01, 0);
+                    player.setOnGround(false);
+                    playerInfo.setClimbedDirection(newDirection);
+                }
             }
         }
 
