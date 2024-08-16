@@ -129,7 +129,7 @@ public class ChunkInkHandler
                 if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(level, pos, Direction.from3DDataValue(i)))
                 {
                     ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
-                    inkBlock.clear(i);
+                    InkBlockUtils.clearInk(level, pos, i, false);
                 }
             }
         }
