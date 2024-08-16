@@ -322,7 +322,7 @@ public class InkBlockUtils
     {
         if (!entity.onGround())
             return false;
-        BlockPos pos = getBlockStandingOnPos(entity);
+        BlockPos pos = entity.getOnPos();
 
         if (isInked(entity.level(), pos, Direction.UP))
             return !canSquidSwim(entity);
@@ -331,12 +331,12 @@ public class InkBlockUtils
         else return false;
     }
 
-    public static Direction canSquidClimb(LivingEntity entity)
+    public static Direction canSquidClimb(LivingEntity entity, float strafeImpulse, float forwardImpulse)
     {
         if (onEnemyInk(entity))
             return null;
 
-        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(entity.xxa, 0, entity.zza), entity.getYRot())), false, (bro, what) ->
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(ClientUtils.getInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), entity.getYRot())), false, (bro, what) ->
                 bro);
 
         while (collisions.hasNext())
@@ -367,6 +367,23 @@ public class InkBlockUtils
                 ColorUtils.colorEquals(entity.level(), collidedBlock,
                         ColorUtils.getEntityColor(entity),
                         getInkBlock(entity.level(), collidedBlock).color(blockFaceToCheck.get3DDataValue()));
+
+        /*
+                BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().move(Vec3.atLowerCornerOf(face.getNormal())), false, (bro, what) ->
+                bro);
+
+        while (collisions.hasNext())
+        {
+            BlockPos pos = collisions.next();
+            if (isInked(entity.level(), pos, blockFaceToCheck) &&
+                    ColorUtils.colorEquals(entity.level(), pos,
+                            ColorUtils.getEntityColor(entity),
+                            getInkBlock(entity.level(), pos).color(blockFaceToCheck.get3DDataValue())))
+                return true;
+        }
+        return false;
+
+         */
     }
 
     public static InkBlockUtils.InkType getInkType(LivingEntity entity)
