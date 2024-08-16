@@ -1,7 +1,5 @@
 package net.splatcraft.forge.items.weapons;
 
-import java.util.HashMap;
-import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
@@ -34,15 +32,7 @@ import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.IColoredItem;
 import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.ChargerWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.ShooterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.SplatlingWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.forge.items.weapons.settings.*;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
@@ -209,7 +199,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         if (ColorUtils.isColorLocked(stack))
         {
             tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
-        } else
+        }
+        else
         {
             tooltip.add(Component.literal(""));
         }
@@ -219,7 +210,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected) {
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
         if (entity instanceof Player player)
@@ -260,7 +252,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
                 ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
-        } else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
+        }
+        else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
                 && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
@@ -276,7 +269,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         try
         {
             return (int) (ClientUtils.getDurabilityForDisplay() * 13);
-        } catch (NoClassDefFoundError e)
+        }
+        catch (NoClassDefFoundError e)
         {
             return 13;
         }
@@ -294,7 +288,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         try
         {
             return ClientUtils.showDurabilityBar(stack);
-        } catch (NoClassDefFoundError e)
+        }
+        catch (NoClassDefFoundError e)
         {
             return false;
         }

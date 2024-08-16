@@ -168,6 +168,11 @@ public class JumpLureItem extends Item implements IColoredItem
         if (!SplatcraftGameRules.getLocalizedRule(level, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
             spawnPadPos = null;
 
+        if (spawnPadPos == null && players.isEmpty())
+        {
+            player.displayClientMessage(Component.translatable("status.no_superjump_targets").withStyle(ChatFormatting.RED), true);
+            return super.use(level, player, hand);
+        }
         SplatcraftPacketHandler.sendToPlayer(new SendJumpLureDataPacket(color, spawnPadPos != null,
                 players, spawnPadPos), serverPlayer);
 

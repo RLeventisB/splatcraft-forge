@@ -591,6 +591,7 @@
     "status.change_color.success": "Successfully recolored %s blocks to %s",
     "status.stage_pad.set_corner.a": "Click on a block with the Stage Pad to set Corner 1",
     "status.stage_pad.set_corner.b": "Click on a block with the Stage Pad to set Corner 2",
+    "status.no_superjump_targets": "No valid targets to superjump!",
 
     "status.blueprint.invalid": "This Blueprint is empty.",
     "status.blueprint.already_unlocked.single": "You already have this Blueprint.",

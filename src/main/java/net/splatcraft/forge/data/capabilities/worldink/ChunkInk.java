@@ -197,7 +197,8 @@ public class ChunkInk
                     }
                 }
             }
-        } else
+        }
+        else
         {
             for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
             {
@@ -379,7 +380,8 @@ public class ChunkInk
                         int color = buffer.readInt();
                         InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
                         entry.paint(i, color, type);
-                    } else
+                    }
+                    else
                     {
                         entry.clear(i);
                     }
@@ -401,7 +403,8 @@ public class ChunkInk
                 if (isInked(i))
                 {
                     worldInk.ink(pos, i, color(i), type(i));
-                } else
+                }
+                else
                     worldInk.clearInk(pos, i);
             }
             if (inmutable) worldInk.markInmutable(pos);

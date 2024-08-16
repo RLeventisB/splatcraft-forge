@@ -163,21 +163,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return this;
     }
 
-    public InkProjectileEntity setSlosherStats(SlosherWeaponSettings.SlosherProjectileDataRecord settings)
+    public InkProjectileEntity setSlosherStats(CommonRecords.ProjectileDataRecord settings)
     {
-        dropImpactSize = settings.inkDropCoverage();
-        distanceBetweenDrops = settings.distanceBetweenInkDrops();
-        if (distanceBetweenDrops > 0)
-            accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
-        impactCoverage = settings.inkCoverageImpact();
-
-        setProjectileVisualSize(settings.visualSize());
-        setGravity(settings.gravity());
-        setStraightShotTime(settings.straightShotTicks());
-
-        entityData.set(HORIZONTAL_DRAG, settings.horizontalDrag());
-
-        setProjectileType(Types.SHOOTER);
+        setCommonProjectileStats(settings);
+        setProjectileType(Types.ROLLER);
         return this;
     }
 
@@ -448,7 +437,16 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         super.onHitEntity(result);
 
         Entity target = result.getEntity();
-        float dmg = damage.calculateDamage(this.tickCount - Math.max(0, straightShotTime), throwerAirborne, getExtraDatas()) * damageMultiplier;
+        float storedCrystalSoundIntensity = crystalSoundIntensity;
+
+        // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
+
+        Vec3 nextPosition = position().add(getDeltaMovement());
+        Vec3 ab = nextPosition.subtract(position());
+        Vec3 av = result.getLocation().subtract(position());
+        crystalSoundIntensity = (float) (av.dot(ab) / ab.dot(ab));
+        float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
+        crystalSoundIntensity = storedCrystalSoundIntensity;
 
         if (!level().isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
         {
@@ -733,6 +731,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public float getStraightShotTime()
     {
         return straightShotTime;
+    }
+
+    public float getTickCountForDamage()
+    {
+        return tickCount - Math.max(0, straightShotTime) - crystalSoundIntensity;
     }
 
     public float getMaxStraightShotTime()
