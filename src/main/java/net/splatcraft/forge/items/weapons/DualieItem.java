@@ -257,7 +257,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                     proj.setDualieStats(projectileData);
                     level.addFreshEntity(proj);
                 }
-                
+
                 level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             }
         }
@@ -387,7 +387,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         @Override
         public boolean forceCrouch()
         {
-            return getTime() > turretModeFrame;
+            return getTime() > turretModeFrame - 8;
         }
 
         @Override
