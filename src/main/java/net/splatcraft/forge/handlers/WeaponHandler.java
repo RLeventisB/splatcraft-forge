@@ -77,19 +77,17 @@ public class WeaponHandler
                 canUseWeapon = !cooldown.preventWeaponUse();
                 ItemStack stack = cooldown.storedStack;
 
-                if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
+                if (cooldown.getTime() == 1)
                 {
-                    if (cooldown.getTime() == 1)
-                    {
+                    if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
                         weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
-                        cooldown.onEnd(player);
-                        PlayerCooldown.setPlayerCooldown(player, null);
-                        hasCooldown = false;
-                    }
-                    else if (cooldown.getTime() > 1)
-                    {
-                        weapon.onPlayerCooldownTick(player.level(), player, stack, cooldown);
-                    }
+                    cooldown.onEnd(player);
+                    PlayerCooldown.setPlayerCooldown(player, null);
+                    hasCooldown = false;
+                }
+                else if (cooldown.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
+                {
+                    weapon.onPlayerCooldownTick(player.level(), player, stack, cooldown);
                 }
                 cooldown.setTime(cooldown.getTime() - 1);
             }
