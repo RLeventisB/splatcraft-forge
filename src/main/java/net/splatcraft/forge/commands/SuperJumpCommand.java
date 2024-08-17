@@ -10,6 +10,7 @@ import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,7 @@ import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
 import net.splatcraft.forge.registries.SplatcraftAttributes;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
@@ -188,6 +190,10 @@ public class SuperJumpCommand
             }
             else
             {
+                if (getTime() == getTravelTime())
+                {
+                    player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.superjumpStart, SoundSource.PLAYERS, 0.8F, 1);
+                }
                 float progress = getSuperJumpProgress(0);
                 float oldProgress = getSuperJumpProgress(1);
 
@@ -209,6 +215,7 @@ public class SuperJumpCommand
         {
             player.noPhysics = hadPhysics;
             player.getAbilities().flying = false;
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.superjumpLand, SoundSource.PLAYERS, 0.8F, 1);
         }
 
         @Override
