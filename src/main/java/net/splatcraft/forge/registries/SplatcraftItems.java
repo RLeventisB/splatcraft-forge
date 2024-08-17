@@ -70,6 +70,7 @@ public class SplatcraftItems
     public static final RegistryObject<ShooterItem> nzap85 = ShooterItem.create(REGISTRY, "n-zap", "n-zap85");
     public static final RegistryObject<ShooterItem> nzap89 = ShooterItem.create(REGISTRY, "n-zap", "n-zap89");
     public static final RegistryObject<ShooterItem> jet_squelcher = ShooterItem.create(REGISTRY, "jet_squelcher", "jet_squelcher");
+    public static final RegistryObject<ShooterItem> splash_o_matic = ShooterItem.create(REGISTRY, "splash_o_matic", "splash_o_matic");
 
     //Blasters
     public static final RegistryObject<BlasterItem> blaster = BlasterItem.createBlaster(REGISTRY, "blaster", "blaster");
@@ -270,6 +271,7 @@ public class SplatcraftItems
         {
             ItemProperties.register(dualie, isLeftProperty, dualie.getIsLeft());
         }
+        
         for (RollerItem roller : RollerItem.rollers)
         {
             ItemProperties.register(roller, unfoldedProperty, roller.getUnfolded());

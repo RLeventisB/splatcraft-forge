@@ -3,7 +3,7 @@
     "projectile": {
         "size": 0.2,
         "speed": 5.04,
-        "ink_coverage_on_impact": 1.056,
+        "ink_coverage_on_impact": 1.386,
         "ink_drop_coverage": 0.72,
         "distance_between_drops": 5,
         "straight_shot_ticks": 2.33,
