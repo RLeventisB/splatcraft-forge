@@ -107,7 +107,7 @@ public class SuperJumpCommand
         if (!global && !canSuperJumpTo(player, target))
             return false;
 
-        PlayerCooldown.setPlayerCooldown(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics));
+        PlayerCooldown.setPlayerCooldown(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics, player.getAbilities().invulnerable));
 
         PlayerInfo info = PlayerInfoCapability.get(player);
         if (!info.isSquid())
@@ -148,14 +148,15 @@ public class SuperJumpCommand
         final double height;
         final Vec3 target;
         Vec3 source;
-        boolean hadPhysics, canStart;
+        boolean hadPhysics, canStart, hadInvulnerability;
 
-        public SuperJump(Vec3 source, Vec3 target, int travelTime, int windupTime, double height, boolean hadPhysics)
+        public SuperJump(Vec3 source, Vec3 target, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability)
         {
             super(ItemStack.EMPTY, travelTime + windupTime, -1, InteractionHand.MAIN_HAND, false, false, false, false);
             this.target = target;
             this.source = source;
             this.hadPhysics = hadPhysics;
+            this.hadInvulnerability = hadInvulnerability;
             this.travelTime = travelTime;
             this.windupTime = windupTime;
             this.height = height;
@@ -166,7 +167,7 @@ public class SuperJumpCommand
             this(new Vec3(nbt.getDouble("SourceX"), nbt.getDouble("SourceY"), nbt.getDouble("SourceZ")),
                     new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")),
                     nbt.getInt("TravelTime"), nbt.getInt("WindupTime"),
-                    nbt.getDouble("Height"), nbt.getBoolean("CanClip"));
+                    nbt.getDouble("Height"), nbt.getBoolean("CanClip"), nbt.getBoolean("HadInvulnerability"));
             setTime(nbt.getInt("TimeLeft"));
         }
 
@@ -204,6 +205,7 @@ public class SuperJumpCommand
                 // just in case setDeltaMovement had some weird application or something
                 player.setDeltaMovement(nextPos.subtract(oldPos));
                 player.setPos(oldPos);
+                player.getAbilities().invulnerable = true;
             }
             player.getAbilities().flying = true;
             player.noPhysics = true;
@@ -213,7 +215,9 @@ public class SuperJumpCommand
         @Override
         public void onEnd(Player player)
         {
+            player.setPos(target);
             player.noPhysics = hadPhysics;
+            player.getAbilities().invulnerable = hadInvulnerability;
             player.getAbilities().flying = false;
             player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.superjumpLand, SoundSource.PLAYERS, 0.8F, 1);
         }
@@ -236,6 +240,7 @@ public class SuperJumpCommand
             nbt.putDouble("Height", height);
             nbt.putBoolean("SuperJump", true);
             nbt.putBoolean("CanClip", hadPhysics);
+            nbt.putBoolean("HadInvulnerability", hadInvulnerability);
             nbt.putInt("TimeLeft", getTime());
             nbt.putInt("WindupTime", getWindupTime());
             nbt.putInt("TravelTime", getTravelTime());
