@@ -211,7 +211,6 @@ public class PlayerMovementHandler
         {
             if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()) && playerInfo.isSquid())
             {
-                AttributeInstance gravity = player.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
                 Vec3 deltaMovement = player.getDeltaMovement();
                 if (deltaMovement.y <= -0.3D)
                 {
@@ -220,16 +219,13 @@ public class PlayerMovementHandler
 
                 if (input.jumping)
                 {
-                    if (input.forwardImpulse == 0 && input.leftImpulse == 0)
-                    {
-                        player.setDeltaMovement(deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f)));
+                    player.setDeltaMovement(deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f)));
 
-                        playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
-                    }
-                    else
-                    {
-                        playerInfo.setSquidSurgeCharge(0f);
-                    }
+                    playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
+                }
+                else
+                {
+                    playerInfo.setSquidSurgeCharge(0f);
                 }
                 if (deltaMovement.y() < 0.4f && (input.forwardImpulse != 0 || input.leftImpulse != 0))
                     player.moveRelative(0.102f, new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());

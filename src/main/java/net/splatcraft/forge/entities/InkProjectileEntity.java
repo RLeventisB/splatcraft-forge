@@ -441,10 +441,15 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
 
+        float value = 0f;
         Vec3 nextPosition = position().add(getDeltaMovement());
+        float averageValue = (float) ((
+                Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x) +
+                        Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x) +
+                        Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x)) / 3);
         Vec3 ab = nextPosition.subtract(position());
         Vec3 av = result.getLocation().subtract(position());
-        crystalSoundIntensity = (float) (av.dot(ab) / ab.dot(ab));
+        crystalSoundIntensity = averageValue;
         float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
         crystalSoundIntensity = storedCrystalSoundIntensity;
 
@@ -735,7 +740,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public float getTickCountForDamage()
     {
-        return tickCount - Math.max(0, straightShotTime) - crystalSoundIntensity;
+        return tickCount - Math.max(0, straightShotTime) + crystalSoundIntensity;
     }
 
     public float getMaxStraightShotTime()

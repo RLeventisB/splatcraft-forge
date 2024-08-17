@@ -48,7 +48,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
         if (entityIn.isInvisible())
             return;
 
-        if (this.entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.position()) >= 16D)
+        if (this.entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.getPosition(partialTicks)) >= 2D)
         {
             float visualSize = entityIn.getProjectileVisualSize();
             float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
@@ -82,7 +82,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 
             //0.30000001192092896D
             matrixStackIn.pushPose();
-            matrixStackIn.translate(0.0D, visualSize / 4 /*0.15000000596046448D*/, 0.0D);
+            matrixStackIn.translate(0.0D, visualSize / 4, 0.0D);
             matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
             matrixStackIn.mulPose(VectorUtils.rotationDegrees(VectorUtils.XP, Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
             matrixStackIn.scale(scale, scale, scale);

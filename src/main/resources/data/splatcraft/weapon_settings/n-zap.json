@@ -3,14 +3,14 @@
     "projectile": {
         "size": 0.2,
         "speed": 3.3,
-        "ink_coverage_on_impact": 1.33,
-        "ink_drop_coverage": 0.7,
+        "ink_coverage_on_impact": 1.26,
+        "ink_drop_coverage": 0.696,
         "distance_between_drops": 5.5,
         "straight_shot_ticks": 1.33,
         "base_damage": 6,
         "decayed_damage": 3,
-        "damage_decay_start_tick": 2.66,
-        "damage_decay_per_tick": 0.56
+        "damage_decay_start_tick": 2.66666,
+        "damage_decay_per_tick": 0.525
     },
     "shot": {
         "endlag_ticks": 2,
