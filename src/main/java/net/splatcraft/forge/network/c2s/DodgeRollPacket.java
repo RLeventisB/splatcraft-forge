@@ -15,7 +15,7 @@ public class DodgeRollPacket extends PlayC2SPacket
     ItemStack activeDualie;
     int maxRolls;
     Vec2 rollDirection;
-    private final InteractionHand hand;
+    InteractionHand hand;
 
     public DodgeRollPacket(UUID target, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollDirection)
     {
