@@ -479,7 +479,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, attackId);
+                InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
                 level().broadcastEntityEvent(this, (byte) 3);
                 level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             }
@@ -511,7 +511,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(explosionData.sparkDamagePenalty * damageMultiplier), inkType, sourceWeapon, attackId);
+                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(explosionData.sparkDamagePenalty * damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
                 level().broadcastEntityEvent(this, (byte) 3);
 //				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             }

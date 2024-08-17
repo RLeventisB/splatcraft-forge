@@ -92,24 +92,27 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
     public record DetonationRecord(
             DamageRangesRecord damageRadiuses,
             float sparkDamagePenalty,
-            float explosionPaint
+            float explosionPaint,
+            boolean newAttackId
     )
     {
         public static final Codec<DetonationRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
                         DamageRangesRecord.CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
                         Codec.FLOAT.optionalFieldOf("spark_damage_multiplier", 0.5f).forGetter(DetonationRecord::sparkDamagePenalty),
-                        Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint))
+                        Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint)),
+                        Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
                 ).apply(instance, DetonationRecord::create)
         );
 
         public static DetonationRecord create(DamageRangesRecord damageRadiuses,
                                               float sparkPenalty,
-                                              Optional<Float> explosionPaint)
+                                              Optional<Float> explosionPaint,
+                                              boolean newAttackId)
         {
-            return new DetonationRecord(damageRadiuses, sparkPenalty, explosionPaint.orElse(damageRadiuses.getMaxRegisteredDistance()));
+            return new DetonationRecord(damageRadiuses, sparkPenalty, explosionPaint.orElse(damageRadiuses.getMaxRegisteredDistance()), newAttackId);
         }
 
-        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, 0, 0);
+        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, 0, 0, false);
     }
 }

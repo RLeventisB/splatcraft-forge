@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
+import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 
@@ -140,12 +141,19 @@ public abstract class ExtraSaveData
         public final DamageRangesRecord damageCalculator;
         public final float sparkDamagePenalty;
         public final float explosionPaint;
+        public final boolean newAttackId;
 
-        public ExplosionExtraData(DamageRangesRecord damageCalculator, float sparkDamagePenalty, float explosionPaint)
+        public ExplosionExtraData(BlasterWeaponSettings.DetonationRecord detonationRecord)
+        {
+            this(detonationRecord.damageRadiuses(), detonationRecord.sparkDamagePenalty(), detonationRecord.explosionPaint(), detonationRecord.newAttackId());
+        }
+
+        public ExplosionExtraData(DamageRangesRecord damageCalculator, float sparkDamagePenalty, float explosionPaint, boolean newAttackId)
         {
             this.damageCalculator = damageCalculator;
             this.sparkDamagePenalty = sparkDamagePenalty;
             this.explosionPaint = explosionPaint;
+            this.newAttackId = newAttackId;
         }
 
         @Override
@@ -159,13 +167,13 @@ public abstract class ExtraSaveData
         @Override
         public ExplosionExtraData load(@NotNull FriendlyByteBuf buffer)
         {
-            return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readFloat());
+            return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readFloat(), buffer.readBoolean());
         }
 
         @Override
         public ExplosionExtraData copy()
         {
-            return new ExplosionExtraData(new DamageRangesRecord((TreeMap<Float, Float>) damageCalculator.damageValues().clone(), damageCalculator.lerpBetween()), sparkDamagePenalty, explosionPaint);
+            return new ExplosionExtraData(new DamageRangesRecord((TreeMap<Float, Float>) damageCalculator.damageValues().clone(), damageCalculator.lerpBetween()), sparkDamagePenalty, explosionPaint, newAttackId);
         }
     }
 

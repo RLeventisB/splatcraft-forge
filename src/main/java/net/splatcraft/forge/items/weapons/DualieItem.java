@@ -85,23 +85,25 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         return 0;
     }
 
-    public float performRoll(Player player, ItemStack activeDualie, int maxRolls, Vec2 rollDirection, boolean local)
+    public void performRoll(Player player, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollDirection, boolean local)
     {
         int rollCount = getRollCount(player);
 
-        boolean lastRoll = rollCount >= maxRolls - 1;
+        boolean lastRoll = rollCount == maxRolls - 1;
+        if (rollCount > maxRolls - 1)
+        {
+            return;
+        }
         DualieWeaponSettings activeSettings = getSettings(activeDualie);
 
         if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
         {
             int turretDuration = getRollTurretDuration(activeDualie, lastRoll);
-            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, player.getUsedItemHand(), rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
+            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
 
             PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
-            return activeDualie.getItem() instanceof DualieItem ? activeSettings.rollData.speed() : 0;
+            activeSettings.rollData.speed();
         }
-
-        return 0;
     }
 
     public static int getRollCount(Player player)
@@ -172,10 +174,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             {
                 nbt.putBoolean("IsPlural", true);
             }
-            if (entity instanceof LocalPlayer localPlayer && localPlayer.getItemInHand(hand) == stack && localPlayer.isUsingItem())
+            if (entity instanceof LocalPlayer localPlayer && localPlayer.getItemInHand(hand) == stack && localPlayer.getUsedItemHand() == hand)
             {
                 ItemStack offhandDualie = ItemStack.EMPTY;
-                if (localPlayer.getUsedItemHand().equals(InteractionHand.MAIN_HAND) && localPlayer.getMainHandItem().equals(stack) && localPlayer.getOffhandItem().getItem() instanceof DualieItem)
+                if (localPlayer.getUsedItemHand().equals(InteractionHand.OFF_HAND) && localPlayer.getOffhandItem().equals(stack) && localPlayer.getOffhandItem().getItem() instanceof DualieItem)
                 {
                     offhandDualie = localPlayer.getOffhandItem();
                 }
@@ -201,8 +203,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                     {
                         Vec2 rollDirection = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.speed());
 
-                        performRoll(localPlayer, stack, maxRolls, rollDirection, true);
-                        SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, maxRolls, rollDirection));
+                        performRoll(localPlayer, stack, hand, maxRolls, rollDirection, true);
+                        SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, hand, maxRolls, rollDirection));
                     }
                 }
             }

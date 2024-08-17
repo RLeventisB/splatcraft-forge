@@ -1,10 +1,7 @@
 package net.splatcraft.forge.util;
 
-import java.util.Objects;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,7 +12,6 @@ import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
@@ -28,161 +24,138 @@ import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class InkDamageUtils
 {
-	public static final ResourceKey<DamageType> SPLAT = register("splat");
-	public static final ResourceKey<DamageType> ROLL = register("roll");
-	public static final ResourceKey<DamageType> ENEMY_INK = register("enemy_ink");
-	public static final ResourceKey<DamageType> WATER = register("water");
-	public static final ResourceKey<DamageType> OUT_OF_STAGE = register("out_of_stage");
-	private static ResourceKey<DamageType> register(String name)
-	{
-		return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(Splatcraft.MODID, name));
-	}
+    public static final ResourceKey<DamageType> SPLAT = register("splat");
+    public static final ResourceKey<DamageType> ROLL = register("roll");
+    public static final ResourceKey<DamageType> ENEMY_INK = register("enemy_ink");
+    public static final ResourceKey<DamageType> WATER = register("water");
+    public static final ResourceKey<DamageType> OUT_OF_STAGE = register("out_of_stage");
 
-	public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
-	{
-		return doDamage(target, damage, source, source, sourceItem, SPLAT, false, attackId);
-	}
+    private static ResourceKey<DamageType> register(String name)
+    {
+        return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(Splatcraft.MODID, name));
+    }
 
-	public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
-	{
-		return doDamage(target, damage, source, owner, sourceItem, ROLL, true, AttackId.NONE);
-	}
+    public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
+    {
+        return doDamage(target, damage, source, source, sourceItem, SPLAT, false, attackId);
+    }
 
-	public static boolean canDamage(Entity target, Entity source)
-	{
-		return canDamage(target, ColorUtils.getEntityColor(source));
-	}
+    public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
+    {
+        return doDamage(target, damage, source, owner, sourceItem, ROLL, true, AttackId.NONE);
+    }
 
-	public static boolean canDamage(Entity target, int color)
-	{
-		boolean result = canDamageColor(target.level(), target.blockPosition(), ColorUtils.getEntityColor(target), color);
+    public static boolean canDamage(Entity target, Entity source)
+    {
+        return canDamage(target, ColorUtils.getEntityColor(source));
+    }
 
-		if (result)
-			for (SpawnShieldEntity shield : target.level().getEntitiesOfClass(SpawnShieldEntity.class, target.getBoundingBox()))
-				if (ColorUtils.colorEquals(target.level(), target.blockPosition(), ColorUtils.getEntityColor(shield), ColorUtils.getEntityColor(target)))
-					return false;
+    public static boolean canDamage(Entity target, int color)
+    {
+        boolean result = canDamageColor(target.level(), target.blockPosition(), ColorUtils.getEntityColor(target), color);
 
-		return result;
-	}
-	public static boolean canDamageColor(Level level, BlockPos pos, int targetColor, int sourceColor)
-	{
-		return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_FRIENDLY_FIRE) || !ColorUtils.colorEquals(level, pos, targetColor, sourceColor);
-	}
+        if (result)
+            for (SpawnShieldEntity shield : target.level().getEntitiesOfClass(SpawnShieldEntity.class, target.getBoundingBox()))
+                if (ColorUtils.colorEquals(target.level(), target.blockPosition(), ColorUtils.getEntityColor(shield), ColorUtils.getEntityColor(target)))
+                    return false;
 
-	public static boolean doDamage(LivingEntity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown, AttackId attackId)
-	{
+        return result;
+    }
+
+    public static boolean canDamageColor(Level level, BlockPos pos, int targetColor, int sourceColor)
+    {
+        return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_FRIENDLY_FIRE) || !ColorUtils.colorEquals(level, pos, targetColor, sourceColor);
+    }
+
+    public static boolean doDamage(LivingEntity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown, AttackId attackId)
+    {
         //Negate ink damage when super jumping
-        if(PlayerInfoCapability.hasCapability(target))
+        if (PlayerInfoCapability.hasCapability(target))
         {
             PlayerInfo info = PlayerInfoCapability.get(target);
-            if(info.hasPlayerCooldown() && info.getPlayerCooldown() instanceof SuperJumpCommand.SuperJump)
+            if (info.hasPlayerCooldown() && info.getPlayerCooldown() instanceof SuperJumpCommand.SuperJump)
                 return false;
         }
 
         Level targetLevel = target.level();
-		int color = ColorUtils.getEntityColor(projectile);
+        int color = ColorUtils.getEntityColor(projectile);
 //		InkDamageSource damageSource = new InkDamageSource(targetLevel.damageSources().source(damageType).type(), projectile, owner, sourceItem);
-		DamageSource damageSource = targetLevel.damageSources().source(damageType);
+        DamageSource damageSource = targetLevel.damageSources().source(damageType);
 
-		if ((attackId != null && !attackId.checkEntity(target)) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
-			return false;
+        if ((attackId != null && !attackId.checkEntity(target)) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
+            return false;
 
-		if (InkOverlayCapability.hasCapability(target) && InkOverlayCapability.get(target).isInkproof())
-			return false;
+        if (InkOverlayCapability.hasCapability(target) && InkOverlayCapability.get(target).isInkproof())
+            return false;
 
-		float mobDmgPctg = SplatcraftGameRules.getIntRuleValue(targetLevel, SplatcraftGameRules.INK_MOB_DAMAGE_PERCENTAGE) * 0.01f;
+        float mobDmgPctg = SplatcraftGameRules.getIntRuleValue(targetLevel, SplatcraftGameRules.INK_MOB_DAMAGE_PERCENTAGE) * 0.01f;
 
-		int targetColor = ColorUtils.getEntityColor(target);
-		boolean doDamage = target instanceof Player || mobDmgPctg > 0;
-		boolean canInk = canDamage(target, color);
+        int targetColor = ColorUtils.getEntityColor(target);
+        boolean doDamage = target instanceof Player || mobDmgPctg > 0;
+        boolean canInk = canDamage(target, color);
 
-		if (targetColor > -1)
-		{
-			doDamage = canInk;
-		}
+        if (targetColor > -1)
+        {
+            doDamage = canInk;
+        }
 
-		if (target instanceof IColoredEntity coloredEntity)
-		{
-			target.invulnerableTime = (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN)) ? 1 : 20;
-			doDamage = coloredEntity.onEntityInked(damageSource, damage, color);
-		}
-		else if (target instanceof Sheep)
-		{
-			if (!((Sheep) target).isSheared())
-			{
-				doDamage = false;
-				canInk = false;
-				targetColor = 1;
+        if (target instanceof IColoredEntity coloredEntity)
+        {
+            target.invulnerableTime = (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN)) ? 0 : 20;
+            doDamage = coloredEntity.onEntityInked(damageSource, damage, color);
+        }
+        else if (target instanceof Sheep)
+        {
+            if (!((Sheep) target).isSheared())
+            {
+                doDamage = false;
+                canInk = false;
+                targetColor = 1;
 
-				InkOverlayInfo info = InkOverlayCapability.get(target);
+                InkOverlayInfo info = InkOverlayCapability.get(target);
 
-				info.setWoolColor(color);
-				if (!targetLevel.isClientSide()) {
-					SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(target, info), target);
+                info.setWoolColor(color);
+                if (!targetLevel.isClientSide())
+                {
+                    SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(target, info), target);
                 }
-			}
-		}
+            }
+        }
 
-		if (!(target instanceof SquidBumperEntity) && doDamage)
-		{
+        if (!(target instanceof SquidBumperEntity) && doDamage)
+        {
 //			Vec3 deltaMovement = target.getDeltaMovement();
-			doDamage = target.hurt(damageSource, damage * (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg));
+            doDamage = target.hurt(damageSource, damage * (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg));
 //			target.setDeltaMovement(deltaMovement); // trying to prevent knockback... (this game is so dumb)  should be ignored now!!!!
-			target.hurtMarked = false;
-		}
+            target.hurtMarked = false;
+        }
 
-		if ((targetColor <= -1 || canInk) && !target.isInWater() && !(target instanceof IColoredEntity && !((IColoredEntity) target).handleInkOverlay()))
-		{
-			if (InkOverlayCapability.hasCapability(target))
-			{
-				InkOverlayInfo info = InkOverlayCapability.get(target);
-				if (info.getAmount() < target.getMaxHealth() * 1.5)
-					info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
-				info.setColor(color);
-				if (!targetLevel.isClientSide()) {
-					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(target, info), target);
+        if ((targetColor <= -1 || canInk) && !target.isInWater() && !(target instanceof IColoredEntity && !((IColoredEntity) target).handleInkOverlay()))
+        {
+            if (InkOverlayCapability.hasCapability(target))
+            {
+                InkOverlayInfo info = InkOverlayCapability.get(target);
+                if (info.getAmount() < target.getMaxHealth() * 1.5)
+                    info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
+                info.setColor(color);
+                if (!targetLevel.isClientSide())
+                {
+                    SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(target, info), target);
                 }
-			}
-		}
+            }
+        }
 
-		if (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
-			target.hurtTime = 1;
+        if (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
+            target.hurtTime = 0;
 
-		return doDamage;
-	}
-	public static boolean isSplatted(LivingEntity target)
-	{
-		return target instanceof SquidBumperEntity bumperEntity ? bumperEntity.getInkHealth() <= 0 : target.isDeadOrDying();
-	}
-	public static class InkDamageSource extends DamageSource
-	{
-		private final ItemStack weapon;
+        return doDamage;
+    }
 
-		public InkDamageSource(DamageType damageType, Entity source, @Nullable Entity owner, ItemStack weapon)
-		{
-			super(new Holder.Direct<>(damageType), source, owner);
-			this.weapon = weapon;
-		}
-
-		@Override
-		public @NotNull Component getLocalizedDeathMessage(@NotNull LivingEntity target)
-		{
-			String base = "death.attack." + this.getMsgId();
-
-			if (getEntity() == null && getDirectEntity() == null)
-			{
-				return weapon.isEmpty() ? Component.translatable(base, target.getDisplayName()) : Component.translatable(base + ".item", target.getDisplayName(), weapon.getDisplayName());
-			}
-			base += ".player";
-
-			Component itextcomponent = this.getEntity() == null ? Objects.requireNonNull(getDirectEntity()).getDisplayName() : this.getEntity().getDisplayName();
-
-			return weapon.isEmpty() ? Component.translatable(base, target.getDisplayName(), itextcomponent) : Component.translatable(base + ".item", target.getDisplayName(), itextcomponent, weapon.getDisplayName());
-		}
-	}
+    public static boolean isSplatted(LivingEntity target)
+    {
+        return target instanceof SquidBumperEntity bumperEntity ? bumperEntity.getInkHealth() <= 0 : target.isDeadOrDying();
+    }
 }
