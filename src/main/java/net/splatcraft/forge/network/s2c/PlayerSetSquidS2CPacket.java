@@ -13,7 +13,8 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
     UUID target;
     private final boolean squid;
 
-    public PlayerSetSquidS2CPacket(UUID player, boolean squid) {
+    public PlayerSetSquidS2CPacket(UUID player, boolean squid)
+    {
         this.squid = squid;
         this.target = player;
     }
@@ -31,9 +32,11 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
     }
 
     @Override
-    public void execute() {
+    public void execute()
+    {
         Player player = Minecraft.getInstance().level.getPlayerByUUID(this.target);
-        if (player == null) {
+        if (player == null)
+        {
             return;
         }
         PlayerInfo target = PlayerInfoCapability.get(player);
