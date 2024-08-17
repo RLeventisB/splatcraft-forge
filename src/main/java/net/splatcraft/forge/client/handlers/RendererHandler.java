@@ -3,6 +3,7 @@ package net.splatcraft.forge.client.handlers;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.PlayerModel;
@@ -48,7 +49,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.VectorUtils;
 import net.splatcraft.forge.client.layer.PlayerInkColoredSkinLayer;
 import net.splatcraft.forge.client.renderer.InkSquidRenderer;
 import net.splatcraft.forge.data.SplatcraftTags;
@@ -149,7 +149,7 @@ public class RendererHandler
                         yOff = -((time - event.getPartialTick()) / maxTime) + 0.5f;
                         break;
                     case BRUSH:
-                        event.getPoseStack().mulPose(VectorUtils.rotation(VectorUtils.YN, yOff * ((player.getMainArm() == HumanoidArm.RIGHT ? event.getHand().equals(InteractionHand.MAIN_HAND) : event.getHand().equals(InteractionHand.OFF_HAND)) ? 1 : -1)));
+                        event.getPoseStack().mulPose(Axis.YN.rotation(yOff * ((player.getMainArm() == HumanoidArm.RIGHT ? event.getHand().equals(InteractionHand.MAIN_HAND) : event.getHand().equals(InteractionHand.OFF_HAND)) ? 1 : -1)));
                         yOff = 0;
                         break;
                 }
@@ -194,11 +194,11 @@ public class RendererHandler
     {
         int i = p_228399_2_ == HumanoidArm.RIGHT ? 1 : -1;
         float f = Mth.sin(p_228399_3_ * p_228399_3_ * (float) Math.PI);
-        p_228399_1_.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, ((float) i * (45.0F + f * -20.0F))));
+        p_228399_1_.mulPose(Axis.YP.rotationDegrees(((float) i * (45.0F + f * -20.0F))));
         float f1 = Mth.sin(Mth.sqrt(p_228399_3_) * (float) Math.PI);
-        p_228399_1_.mulPose(VectorUtils.rotationDegrees(VectorUtils.ZP, (float) i * f1 * -20.0F));
-        p_228399_1_.mulPose(VectorUtils.rotationDegrees(VectorUtils.XP, (f1 * -80.0F)));
-        p_228399_1_.mulPose(VectorUtils.rotationDegrees(VectorUtils.YP, ((float) i * -45.0F)));
+        p_228399_1_.mulPose(Axis.ZP.rotationDegrees((float) i * f1 * -20.0F));
+        p_228399_1_.mulPose(Axis.XP.rotationDegrees((f1 * -80.0F)));
+        p_228399_1_.mulPose(Axis.YP.rotationDegrees(((float) i * -45.0F)));
     }
 
     public static void renderItem(ItemStack itemStackIn, ItemDisplayContext context, boolean leftHand, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn, BakedModel modelIn)
