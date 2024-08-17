@@ -349,7 +349,7 @@ public class InkBlockUtils
             Direction direction;
             if (Math.abs(center.x - entity.getX()) > Math.abs(center.z - entity.getZ()))
             {
-                direction = center.x > entity.getX() ? Direction.EAST : Direction.WEST;
+                direction = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
             }
             else
             {
