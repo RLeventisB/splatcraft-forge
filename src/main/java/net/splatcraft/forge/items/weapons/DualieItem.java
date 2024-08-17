@@ -174,7 +174,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             {
                 nbt.putBoolean("IsPlural", true);
             }
-            if (entity instanceof LocalPlayer localPlayer && localPlayer.getItemInHand(hand) == stack && localPlayer.getUsedItemHand() == hand)
+            if (entity instanceof LocalPlayer localPlayer && localPlayer.getItemInHand(hand) == stack && localPlayer.getUsedItemHand() == hand && localPlayer.isUsingItem())
             {
                 ItemStack offhandDualie = ItemStack.EMPTY;
                 if (localPlayer.getUsedItemHand().equals(InteractionHand.OFF_HAND) && localPlayer.getOffhandItem().equals(stack) && localPlayer.getOffhandItem().getItem() instanceof DualieItem)
