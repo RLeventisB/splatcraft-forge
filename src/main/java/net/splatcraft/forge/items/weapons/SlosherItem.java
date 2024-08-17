@@ -186,9 +186,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                                 if (detonationData.isPresent())
                                 {
                                     proj.explodes = true;
-                                    proj.setProjectileType(InkProjectileEntity.Types.BLASTER);
+//                                    proj.setProjectileType(InkProjectileEntity.Types.BLASTER);
                                     BlasterWeaponSettings.DetonationRecord detonationRecord = detonationData.get();
-                                    proj.addExtraData(new ExtraSaveData.ExplosionExtraData(detonationRecord.damageRadiuses(), detonationRecord.sparkDamagePenalty(), detonationRecord.explosionPaint()));
+                                    proj.addExtraData(new ExtraSaveData.ExplosionExtraData(detonationRecord));
                                 }
                             case CYCLONE:
                                 proj.canPierce = true;
