@@ -15,7 +15,6 @@ public class UpdatePlayerInfoPacket extends PlayS2CPacket
     UUID target;
     CompoundTag nbt;
 
-
     protected UpdatePlayerInfoPacket(UUID player, CompoundTag nbt)
     {
         this.target = player;
@@ -44,7 +43,8 @@ public class UpdatePlayerInfoPacket extends PlayS2CPacket
     {
         Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
 
-        if (target != null) {
+        if (target != null)
+        {
             PlayerInfoCapability.get(target).readNBT(nbt);
             ClientUtils.setClientPlayerColor(this.target, ColorUtils.getColorFromNbt(this.nbt));
         }

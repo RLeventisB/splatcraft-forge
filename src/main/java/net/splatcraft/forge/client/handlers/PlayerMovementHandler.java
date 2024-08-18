@@ -4,9 +4,12 @@ import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,7 +25,6 @@ import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.SquidInputPacket;
-import net.splatcraft.forge.network.s2c.UpdatePlayerInfoPacket;
 import net.splatcraft.forge.registries.SplatcraftAttributes;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -46,28 +48,6 @@ public class PlayerMovementHandler
     {
         if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
         {
-            PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-            if (playerInfo == null)
-                playerInfo = new PlayerInfo();
-
-            if (playerInfo.getClimbedDirection().isPresent())
-            {
-                if (!InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()) || !playerInfo.isSquid())
-                {
-                    playerInfo.setClimbedDirection(null);
-                    SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerInfoPacket(player), player);
-                }
-            }
-
-            if (playerInfo.getClimbedDirection().isEmpty())
-            {
-                Direction newDirection = InkBlockUtils.canSquidClimb(player, player.xxa, player.zza);
-                if (newDirection != null)
-                {
-                    playerInfo.setClimbedDirection(newDirection);
-                    SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerInfoPacket(player), player);
-                }
-            }
         }
         else if (event.phase == TickEvent.Phase.START && event.player instanceof LocalPlayer player)
         {
@@ -114,8 +94,6 @@ public class PlayerMovementHandler
 
             if (playerInfo.isSquid())
             {
-                SplatcraftPacketHandler.sendToServer(new SquidInputPacket(player));
-
                 if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.onGround())
                     speedAttribute.addTransientModifier(INK_SWIM_SPEED);
                 if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED))
@@ -160,7 +138,7 @@ public class PlayerMovementHandler
 
         if (playerInfo.isSquid())
         {
-            handleSquidMovement(playerInfo, player, clonedInput);
+            handleSquidMovement(playerInfo, player, input.leftImpulse, input.forwardImpulse, input.jumping, input.shiftKeyDown, input);
         }
 
         if (player.isUsingItem())
@@ -205,37 +183,77 @@ public class PlayerMovementHandler
         }
     }
 
-    private static void handleSquidMovement(PlayerInfo playerInfo, LocalPlayer player, Input input)
+    private static void handleSquidMovement(PlayerInfo playerInfo, Player player, float leftImpulse, float forwardImpulse, boolean jumping, boolean shiftKeyDown, Input input)
     {
         if (playerInfo.getClimbedDirection().isPresent())
         {
-            if (InkBlockUtils.isSquidStillClimbing(player, playerInfo.getClimbedDirection().get()) && playerInfo.isSquid())
+            Direction oldClimbedDirection = playerInfo.getClimbedDirection().get();
+            Direction climbedDirection = InkBlockUtils.getSquidClimbingDirection(player, leftImpulse, forwardImpulse, oldClimbedDirection);
+
+            if (climbedDirection != null && !player.onGround()) // if player is still swimming on a wall
             {
+                playerInfo.setClimbedDirection(climbedDirection);
                 Vec3 deltaMovement = player.getDeltaMovement();
-                if (deltaMovement.y <= -0.3D)
+                if (deltaMovement.y() < 0.4f && (forwardImpulse != 0 || leftImpulse != 0)) // handle input on wall
                 {
-                    player.setDeltaMovement(deltaMovement.x, -0.3D, deltaMovement.z);
+                    float yRot = player.getYHeadRot();
+                    Vec3 vec3 =
+                            Entity.getInputVector(new Vec3(0f, forwardImpulse, 0f), 0.12f, yRot).add(
+                                    Entity.getInputVector(new Vec3(leftImpulse, 0f, 0f), 0.02f, yRot)
+                            );
+
+                    deltaMovement = deltaMovement.add(vec3);
+                }
+                if (shiftKeyDown) // set minimum y velocity to 0 if shifting
+                    deltaMovement = new Vec3(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
+
+                if (climbedDirection.getAxis() != oldClimbedDirection.getAxis()) // if player swam to another wall, rotate velocity
+                {
+                    deltaMovement = deltaMovement.yRot(Mth.DEG_TO_RAD * (climbedDirection.toYRot() - oldClimbedDirection.toYRot()));
                 }
 
-                if (input.jumping)
+                if (climbedDirection.getAxis() == Direction.Axis.X) // set velocity perpendicular to the wall to 0 because YOU CANNOT ESCAPE THE WALL (unless you press back).
                 {
-                    player.setDeltaMovement(deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f)));
-
-                    playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
+                    double parallelMovement = deltaMovement.x;
+                    if (Math.abs(parallelMovement) < 0.6)
+                        deltaMovement = new Vec3(0, deltaMovement.y, deltaMovement.z);
                 }
                 else
                 {
+                    double parallelMovement = deltaMovement.z;
+                    if (Math.abs(parallelMovement) < 0.6)
+                        deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y, 0);
+                }
+
+                if (deltaMovement.y <= -0.3D) // limit gravity
+                {
+                    deltaMovement = new Vec3(deltaMovement.x, -0.3D, deltaMovement.z);
+                }
+
+                if (jumping) // squid surge
+                {
+                    deltaMovement = deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f));
+
+                    if (playerInfo.getSquidSurgeCharge() < 30)
+                        playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
+                }
+                else // stop squid surge
+                {
+                    if (playerInfo.getSquidSurgeCharge() >= 30) // do squid surge logic
+                    {
+                        deltaMovement = new Vec3(0, 10, 0);
+                    }
                     playerInfo.setSquidSurgeCharge(0f);
                 }
-                if (deltaMovement.y() < 0.4f && (input.forwardImpulse != 0 || input.leftImpulse != 0))
-                    player.moveRelative(0.102f, new Vec3(0.0f, player.zza, -Math.min(0, player.zza)).normalize());
-                if (deltaMovement.y() <= 0 && !input.shiftKeyDown)
-                    player.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
+
+                if (input != null) // set input as 0 because movement was handled!! i think i should've used the event thingy though
+                {
+                    input.forwardImpulse = 0;
+                    input.leftImpulse = 0;
+                }
 
                 player.fallDistance = 0.0F;
-
-                if (input.shiftKeyDown)
-                    player.setDeltaMovement(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
+                player.setDeltaMovement(deltaMovement);
             }
             else
             {
@@ -245,13 +263,17 @@ public class PlayerMovementHandler
 
         if (playerInfo.getClimbedDirection().isEmpty())
         {
-            Direction newDirection = InkBlockUtils.canSquidClimb(player, input.leftImpulse, input.forwardImpulse);
+            playerInfo.setSquidSurgeCharge(0f);
+            Direction newDirection = InkBlockUtils.canSquidClimb(player, leftImpulse, forwardImpulse, player.getYRot());
             if (newDirection != null)
             {
-                player.setDeltaMovement(0, 0.01, 0);
+                player.teleportRelative(0, 0.01, 0);
                 player.setOnGround(false);
                 playerInfo.setClimbedDirection(newDirection);
             }
         }
+        SplatcraftPacketHandler.sendToServer(new SquidInputPacket(
+                playerInfo.getClimbedDirection(),
+                playerInfo.getSquidSurgeCharge()));
     }
 }
