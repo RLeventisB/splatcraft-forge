@@ -106,7 +106,7 @@ public class SquidFormHandler
             }
         }
 
-        if (PlayerInfoCapability.isSquid(player))
+        if (info.isSquid())
         {
             if (!player.getAbilities().flying)
             {
@@ -137,6 +137,10 @@ public class SquidFormHandler
                 {
                     ColorUtils.addInkSplashParticle(player.level(), player, 1.1f);
                 }
+            }
+            if (info.getSquidSurgeCharge() > 0 && player.level().getRandom().nextFloat() <= info.getSquidSurgeCharge() / 30)
+            {
+                ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
             }
 
             BlockPos posBelow = InkBlockUtils.getBlockStandingOnPos(player);

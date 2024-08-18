@@ -1,47 +1,46 @@
 package net.splatcraft.forge.network.c2s;
 
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+
+import java.util.Optional;
 
 // this is basically ServerboundPlayerInputPacket but it ignores if youre riding a vehicle
 public class SquidInputPacket extends PlayC2SPacket
 {
-    public final float xxa;
-    public final float zza;
-    public final boolean isJumping;
+    private final Optional<Direction> climbedDirection;
+    private final float squidSurgeCharge;
 
-    public SquidInputPacket(LocalPlayer player)
+    public SquidInputPacket(Optional<Direction> climbedDirection, float squidSurgeCharge)
     {
-        this(player.xxa, player.zza, player.input.jumping);
-    }
-
-    public SquidInputPacket(float xxa, float zza, boolean jumping)
-    {
-        this.xxa = xxa;
-        this.zza = zza;
-        this.isJumping = jumping;
+        this.climbedDirection = climbedDirection;
+        this.squidSurgeCharge = squidSurgeCharge;
     }
 
     @Override
     public void execute(Player target)
     {
-        target.xxa = xxa;
-        target.zza = zza;
-
-        target.setJumping(isJumping);
+        PlayerInfo playerInfo = PlayerInfoCapability.get(target);
+        playerInfo.setClimbedDirection(climbedDirection.orElse(null));
+        playerInfo.setSquidSurgeCharge(squidSurgeCharge);
     }
 
     public static SquidInputPacket decode(FriendlyByteBuf buffer)
     {
-        return new SquidInputPacket(buffer.readFloat(), buffer.readFloat(), buffer.readByte() == 1);
+        byte index = buffer.readByte();
+        return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.from3DDataValue(index)), buffer.readFloat());
     }
 
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
-        buffer.writeFloat(this.xxa);
-        buffer.writeFloat(this.zza);
-        buffer.writeByte(this.isJumping ? 1 : 0);
+        if (climbedDirection.isPresent())
+            buffer.writeByte(this.climbedDirection.get().get3DDataValue());
+        else
+            buffer.writeByte(Byte.MAX_VALUE);
+        buffer.writeFloat(this.squidSurgeCharge);
     }
 }
