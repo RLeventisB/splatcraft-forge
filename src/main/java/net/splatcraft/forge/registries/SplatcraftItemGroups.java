@@ -127,6 +127,7 @@ public class SplatcraftItemGroups
             .withTabsBefore(GROUP_WEAPONS.getKey())
             .icon(() -> ColorUtils.setInkColor(inkwell.get().getDefaultInstance(), ColorUtils.ORANGE))
             .title(Component.translatable("itemGroup.splatcraft_colors"))
+            .hideTitle()
             .displayItems((parameters, output) ->
             {
                 for (Item item : colorTabItems)
@@ -137,7 +138,7 @@ public class SplatcraftItemGroups
                         output.accept(ColorUtils.setInverted(new ItemStack(item), true));
                 }
             })
-            .withSearchBar()
+            .withSearchBar(70)
             .build());
 
     @SubscribeEvent
