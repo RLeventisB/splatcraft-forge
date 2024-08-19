@@ -15,7 +15,6 @@ import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.SendScanTurfResultsPacket;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -39,7 +38,7 @@ public class TurfScannerItem extends RemoteItem
         BlockPos maxPos = new BlockPos(Math.max(blockpos.getX(), blockpos1.getX()), Math.max(blockpos1.getY(), blockpos.getY()), Math.max(blockpos.getZ(), blockpos1.getZ()));
 
         if (!level.isInWorldBounds(minPos) || !level.isInWorldBounds(maxPos))
-            return new TurfScanResult(false, Component.translatable("status.scan_turf.out_of_stage"));
+            return new TurfScanResult(false, Component.translatable("status.scan_turf.out_of_world"));
 
         if (level.isClientSide)
         {
@@ -78,7 +77,8 @@ public class TurfScannerItem extends RemoteItem
                                 facesTotal++;
                             }
                         }
-                    } else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
+                    }
+                    else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
                             level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
                     {
                         color = coloredBlock.getColor(level, checkPos);
@@ -89,7 +89,8 @@ public class TurfScannerItem extends RemoteItem
                     }
                 }
             }
-        } else if (mode == 1)
+        }
+        else if (mode == 1)
         {
             for (int x = minPos.getX(); x <= maxPos.getX(); x++)
             {
@@ -138,7 +139,8 @@ public class TurfScannerItem extends RemoteItem
                                     facesTotal++;
                                 }
                             }
-                        } else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
+                        }
+                        else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
                                 level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
                         {
                             color = coloredBlock.getColor(level, checkPos);
@@ -194,7 +196,8 @@ public class TurfScannerItem extends RemoteItem
         if (scores.isEmpty())
         {
             return new TurfScanResult(false, Component.translatable("status.scan_turf.no_ink"));
-        } else
+        }
+        else
         {
             SendScanTurfResultsPacket packet = new SendScanTurfResultsPacket(colors, colorScores);
             if (targets == ALL_TARGETS)
