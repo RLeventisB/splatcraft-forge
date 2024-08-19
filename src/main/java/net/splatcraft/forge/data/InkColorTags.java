@@ -28,7 +28,6 @@ public class InkColorTags
     public static final InkColorTags MIDNIGHT = getOrCreateTag(new ResourceLocation(Splatcraft.MODID, "midnight"));
     public static final InkColorTags ENCHANTED = getOrCreateTag(new ResourceLocation(Splatcraft.MODID, "enchanted"));
     public static final InkColorTags CREATIVE_TAB_COLORS = getOrCreateTag(new ResourceLocation(Splatcraft.MODID, "creative_tab_colors"));
-
     private final List<Integer> list;
 
     public InkColorTags(List<Integer> list)
@@ -62,6 +61,7 @@ public class InkColorTags
 
         private static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
         private static final String folder = "tags/ink_colors";
+        private static final List<Map.Entry<ResourceLocation, JsonElement>> entries = new ArrayList<>(), entriesThatReferenceAnotherTag = new ArrayList<>();
 
         public Listener()
         {
@@ -80,17 +80,10 @@ public class InkColorTags
         }
 
         @Override
-        protected @NotNull Map<ResourceLocation, JsonElement> prepare(@NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler)
+        protected void apply(@NotNull Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
         {
-            REGISTRY.clear();
-            return super.prepare(pResourceManager, pProfiler);
-        }
-
-        @Override
-        protected void apply(Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
-        {
-            List<Map.Entry<ResourceLocation, JsonElement>> entries = new ArrayList<>();
-            List<Map.Entry<ResourceLocation, JsonElement>> entriesWithReferenceToAnotherTag = new ArrayList<>();
+            entries.clear();
+            entriesThatReferenceAnotherTag.clear();
             for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
             {
                 ResourceLocation key = entry.getKey();
@@ -98,83 +91,76 @@ public class InkColorTags
                 JsonObject json = j.getAsJsonObject();
                 if (json.has("values"))
                 {
-                    if (hasReferenceToAnotherTag(json))
-                    {
-                        entriesWithReferenceToAnotherTag.add(entry);
-                    }
-                    else
-                    {
-                        entries.add(entry);
-                    }
+                    // this is cursed syntax
+                    (hasReferenceToAnotherTag(json) ? entriesThatReferenceAnotherTag : entries).add(entry);
                 }
                 else
                 {
                     resourceList.remove(key);
                 }
             }
+        }
+
+        public static void doLoad()
+        {
+            for (var entry : REGISTRY.entrySet())
+            {
+                entry.getValue().clear();
+            }
             for (Map.Entry<ResourceLocation, JsonElement> entry : entries)
             {
-                ResourceLocation key = entry.getKey();
-                JsonElement j = entry.getValue();
-                InkColorTags tag = getOrCreateTag(key);
-                JsonObject json = j.getAsJsonObject();
-                if (GsonHelper.getAsBoolean(json, "replace", false))
-                {
-                    tag.clear();
-                }
-                ArrayList<Integer> newColors = new ArrayList<>();
-                for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
-                {
-                    ResourceLocation loc = new ResourceLocation(jsonElement.getAsString());
-                    if (InkColorAliases.isValidAlias(loc))
-                    {
-                        newColors.add(InkColorAliases.getColorByAlias(loc));
-                    }
-                }
-                newColors.removeIf(i -> i < 0 || i > 0xFFFFFF);
-                tag.addAll(newColors);
+                loadTag(entry.getKey(), entry.getValue(), false);
             }
-            for (Map.Entry<ResourceLocation, JsonElement> entry : entriesWithReferenceToAnotherTag)
+            for (Map.Entry<ResourceLocation, JsonElement> entry : entriesThatReferenceAnotherTag)
             {
-                ResourceLocation key = entry.getKey();
-                JsonElement j = entry.getValue();
-                InkColorTags tag = getOrCreateTag(key);
-                JsonObject json = j.getAsJsonObject();
+                loadTag(entry.getKey(), entry.getValue(), true);
+            }
+        }
 
-                if (GsonHelper.getAsBoolean(json, "replace", false))
-                    tag.clear();
+        private static void loadTag(ResourceLocation key, JsonElement j, boolean hasReferenceToOtherTags)
+        {
+            InkColorTags tag = getOrCreateTag(key);
+            JsonObject json = j.getAsJsonObject();
 
-                ArrayList<Integer> newColors = new ArrayList<>();
+            if (GsonHelper.getAsBoolean(json, "replace", false))
+                tag.clear();
 
-                for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
+            ArrayList<Integer> newColors = new ArrayList<>();
+
+            for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
+            {
+                String str = jsonElement.getAsString();
+                if (hasReferenceToOtherTags && str.indexOf('#') == 0 && str.contains(":"))
                 {
-                    String str = jsonElement.getAsString();
-                    if (str.indexOf('#') == 0 && str.contains(":") && REGISTRY.containsKey(new ResourceLocation(str.substring(1))))
+                    ResourceLocation referencedKey = new ResourceLocation(str.substring(1));
+                    if (REGISTRY.containsKey(referencedKey))
                     {
-                        for (Integer color : REGISTRY.get(new ResourceLocation(str.substring(1))).getAll())
+                        for (Integer color : REGISTRY.get(referencedKey).getAll())
                         {
                             if (!newColors.contains(color))
                                 newColors.add(color);
                         }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            ResourceLocation loc = new ResourceLocation(str);
-                            if (InkColorAliases.isValidAlias(loc))
-                                newColors.add(InkColorAliases.getColorByAlias(loc));
-                        }
-                        catch (Exception ignored)
-                        {
-                            // WHAT HAVE YOU DONE :(
-                        }
+                        continue;
                     }
                 }
 
-                newColors.removeIf(i -> i < 0 || i > 0xFFFFFF);
-                tag.addAll(newColors);
+                try
+                {
+                    ResourceLocation loc = new ResourceLocation(str);
+                    if (InkColorAliases.isValidAlias(loc))
+                        newColors.add(InkColorAliases.getColorByAlias(loc));
+                }
+                catch (Exception ignored)
+                {
+                    // WHAT HAVE YOU DONE :(
+                }
             }
+
+            if (newColors.isEmpty())
+                return;
+
+            newColors.removeIf(i -> i < 0 || i > 0xFFFFFF);
+            tag.addAll(newColors);
         }
 
         public static boolean hasReferenceToAnotherTag(JsonObject json)

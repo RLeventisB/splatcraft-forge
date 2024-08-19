@@ -128,16 +128,17 @@ public class SplatcraftItemGroups
             .icon(() -> ColorUtils.setInkColor(inkwell.get().getDefaultInstance(), ColorUtils.ORANGE))
             .title(Component.translatable("itemGroup.splatcraft_colors"))
             .displayItems((parameters, output) ->
-                    {
-                        for (Item item : colorTabItems)
-                        {
-                            for (int color : InkColorTags.CREATIVE_TAB_COLORS.getAll().stream().sorted().toList())
-                                output.accept(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(item), color), true));
-                            if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
-                                output.accept(ColorUtils.setInverted(new ItemStack(item), true));
-                        }
-                    }
-            ).build());
+            {
+                for (Item item : colorTabItems)
+                {
+                    for (int color : InkColorTags.CREATIVE_TAB_COLORS.getAll().stream().toList())
+                        output.accept(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(item), color), true));
+                    if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
+                        output.accept(ColorUtils.setInverted(new ItemStack(item), true));
+                }
+            })
+            .withSearchBar()
+            .build());
 
     @SubscribeEvent
     public void addCreative(BuildCreativeModeTabContentsEvent event)
