@@ -127,6 +127,7 @@ public class InkColorAliases
                     }
                 }
             }
+            InkColorTags.Listener.doLoad();
         }
     }
 }
