@@ -240,10 +240,42 @@ public class InkBlockUtils
 
     public static boolean isUninkable(Level level, BlockPos pos, Direction direction)
     {
+        return isUninkable(level, pos, direction, false);
+    }
+
+    public static boolean isUninkable(Level level, BlockPos pos, Direction direction, boolean checkGamemode)
+    {
         if (InkedBlock.isTouchingLiquid(level, pos, direction))
             return true;
 
-        return isBlockUninkable(level, pos);
+        if (isBlockUninkable(level, pos))
+            return true;
+
+        if (!checkGamemode)
+            return false;
+
+        if (!SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
+            return false;
+        BlockState blockState = level.getBlockState(pos.relative(direction));
+        VoxelShape collisionShape = blockState.getCollisionShape(level, pos);
+        if (!blockState.canOcclude())
+            return false;
+        Direction.Axis inkAxis = direction.getAxis();
+        for (var axis : Direction.Axis.values())
+        {
+            if (inkAxis == axis)
+            {
+                if (direction.getAxisDirection() == Direction.AxisDirection.NEGATIVE ? collisionShape.max(axis) < 1 : collisionShape.min(axis) > 0)
+                    return false;
+            }
+            else
+            {
+                if (collisionShape.max(axis) < 1 || collisionShape.min(axis) > 0)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     public static boolean isBlockUninkable(Level level, BlockPos pos)
