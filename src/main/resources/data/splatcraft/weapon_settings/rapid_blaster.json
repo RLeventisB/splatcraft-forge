@@ -20,9 +20,14 @@
         "ink_recovery_cooldown": 17.0
     },
     "blaster_data": {
-        "max_indirect_damage": 7,
-        "min_indirect_damage": 7,
-        "explosion_radius": 1.65,
+        "damage_data": {
+            "points": [
+                {
+                    "max_range": 1.65,
+                    "damage": 7.0
+                }
+            ]
+        },
         "explosion_paint_size": 1.4
     },
     "full_damage_to_mobs": false,
