@@ -126,7 +126,7 @@ public class ChunkInkHandler
         {
             for (int i = 0; i < 6; i++)
             {
-                if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(level, pos, Direction.from3DDataValue(i)))
+                if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(level, pos, Direction.from3DDataValue(i), true))
                 {
                     ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
                     InkBlockUtils.clearInk(level, pos, i, false);
