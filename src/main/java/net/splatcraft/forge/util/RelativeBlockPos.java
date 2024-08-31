@@ -10,8 +10,10 @@ import net.minecraft.world.level.ChunkPos;
 /**
  * A block position whose X and Z are relative to a chunk position. Y is kept absolute.
  */
-public class RelativeBlockPos extends Vec3i {
-    private RelativeBlockPos(int x, int y, int z) {
+public class RelativeBlockPos extends Vec3i
+{
+    private RelativeBlockPos(byte x, int y, byte z)
+    {
         super(x, y, z);
     }
 
@@ -20,11 +22,12 @@ public class RelativeBlockPos extends Vec3i {
      *
      * @param pos The absolute block position to convert from
      */
-    public static RelativeBlockPos fromAbsolute(BlockPos pos) {
+    public static RelativeBlockPos fromAbsolute(BlockPos pos)
+    {
         return new RelativeBlockPos(
-                SectionPos.sectionRelative(pos.getX()),
+                (byte) SectionPos.sectionRelative(pos.getX()),
                 pos.getY(),
-                SectionPos.sectionRelative(pos.getZ())
+                (byte) SectionPos.sectionRelative(pos.getZ())
         );
     }
 
@@ -34,11 +37,12 @@ public class RelativeBlockPos extends Vec3i {
      * @param tag The compound tag to read from
      * @apiNote The tag must contain ints "X", "Y" and "Z" for construction to be successful.
      */
-    public static RelativeBlockPos readNBT(CompoundTag tag) {
+    public static RelativeBlockPos readNBT(CompoundTag tag)
+    {
         return new RelativeBlockPos(
-                tag.getInt("X"),
-                tag.getInt("Y"),
-                tag.getInt("Z")
+                tag.getByte("X"),
+                tag.getByte("Y"),
+                tag.getByte("Z")
         );
     }
 
@@ -48,11 +52,12 @@ public class RelativeBlockPos extends Vec3i {
      * @param buf The packet buffer to read from.
      * @apiNote The buffer must have three integers in a row for construction to be successful.
      */
-    public static RelativeBlockPos fromBuf(FriendlyByteBuf buf) {
+    public static RelativeBlockPos fromBuf(FriendlyByteBuf buf)
+    {
         return new RelativeBlockPos(
+                buf.readByte(),
                 buf.readInt(),
-                buf.readInt(),
-                buf.readInt()
+                buf.readByte()
         );
     }
 
@@ -62,7 +67,8 @@ public class RelativeBlockPos extends Vec3i {
      * @param pos The chunk position to use
      * @return The absolute block position
      */
-    public BlockPos toAbsolute(ChunkPos pos) {
+    public BlockPos toAbsolute(ChunkPos pos)
+    {
         return new BlockPos(this.offset(pos.x * 16, 0, pos.z * 16));
     }
 
@@ -72,10 +78,11 @@ public class RelativeBlockPos extends Vec3i {
      * @param tag The tag to write to
      * @return The modified tag
      */
-    public CompoundTag writeNBT(CompoundTag tag) {
-        tag.putInt("X", getX());
+    public CompoundTag writeNBT(CompoundTag tag)
+    {
+        tag.putByte("X", (byte) getX());
         tag.putInt("Y", getY());
-        tag.putInt("Z", getZ());
+        tag.putByte("Z", (byte) getZ());
 
         return tag;
     }
@@ -86,10 +93,11 @@ public class RelativeBlockPos extends Vec3i {
      * @param buf The packet buffer to write to
      * @return The modified buffer
      */
-    public FriendlyByteBuf writeBuf(FriendlyByteBuf buf) {
-        buf.writeInt(getX());
+    public FriendlyByteBuf writeBuf(FriendlyByteBuf buf)
+    {
+        buf.writeByte(getX());
         buf.writeInt(getY());
-        buf.writeInt(getZ());
+        buf.writeByte(getZ());
 
         return buf;
     }
