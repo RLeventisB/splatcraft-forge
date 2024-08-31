@@ -24,6 +24,7 @@ public class PlayerInfo
     private PlayerCharge playerCharge = null;
     private ItemStack inkBand = ItemStack.EMPTY;
     private float squidSurgeCharge = 0f;
+    private boolean isPlaying;
 
     public PlayerInfo(int defaultColor)
     {
@@ -145,6 +146,16 @@ public class PlayerInfo
         this.dodgeCount = dodgeCount;
     }
 
+    public void setPlaying(boolean playing)
+    {
+        isPlaying = playing;
+    }
+
+    public boolean isPlaying()
+    {
+        return isPlaying;
+    }
+
     public CompoundTag writeNBT(CompoundTag nbt)
     {
         nbt.putInt("DodgeCount", getDodgeCount());
@@ -171,6 +182,7 @@ public class PlayerInfo
             playerCooldown.writeNBT(cooldownNBT);
             nbt.put("PlayerCooldown", cooldownNBT);
         }
+        nbt.putBoolean("Playing", isPlaying);
 
         return nbt;
     }
@@ -199,6 +211,7 @@ public class PlayerInfo
             setPlayerCooldown(PlayerCooldown.readNBT(nbt.getCompound("PlayerCooldown")));
         }
 
+        isPlaying = nbt.getBoolean("Playing");
         climbedDirection = nbt.contains("ClimbedDirection") ? Optional.of(Direction.from3DDataValue(nbt.getInt("ClimbedDirection"))) : Optional.empty();
     }
 }

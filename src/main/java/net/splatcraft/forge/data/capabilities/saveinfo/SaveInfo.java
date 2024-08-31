@@ -1,9 +1,11 @@
 package net.splatcraft.forge.data.capabilities.saveinfo;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
+import net.splatcraft.forge.data.PlaySession;
 import net.splatcraft.forge.data.Stage;
 import net.splatcraft.forge.handlers.ScoreboardHandler;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
@@ -18,7 +20,7 @@ public class SaveInfo
 {
     private ArrayList<Integer> colorScores = new ArrayList<>();
     private final HashMap<String, Stage> stages = new HashMap<>();
-
+    public final HashMap<String, PlaySession> playSessions = new HashMap<>();
     boolean stagesLoaded = false;
 
     public Collection<Integer> getInitializedColorScores()
@@ -101,6 +103,13 @@ public class SaveInfo
 
         nbt.put("Stages", stageNbt);
 
+        CompoundTag playSessions = new CompoundTag();
+
+        for (Map.Entry<String, PlaySession> e : this.playSessions.entrySet())
+            playSessions.put(e.getKey(), e.getValue().saveTag());
+
+        nbt.put("PlaySessions", playSessions);
+
         return nbt;
     }
 
@@ -118,5 +127,9 @@ public class SaveInfo
         stages.clear();
         for (String key : nbt.getCompound("Stages").getAllKeys())
             stages.put(key, new Stage(nbt.getCompound("Stages").getCompound(key), key));
+
+        playSessions.clear();
+        for (String key : nbt.getCompound("PlaySessions").getAllKeys())
+            playSessions.put(key, PlaySession.fromTag(Minecraft.getInstance().getSingleplayerServer(), nbt.getCompound("PlaySessions").getCompound(key)));
     }
 }

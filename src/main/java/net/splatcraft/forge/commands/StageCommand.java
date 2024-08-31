@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -15,17 +16,18 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.Coordinates;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.server.command.EnumArgument;
 import net.splatcraft.forge.blocks.SpawnPadBlock;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.data.Stage;
+import net.splatcraft.forge.data.StageGameMode;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
@@ -35,10 +37,7 @@ import net.splatcraft.forge.util.ClientUtils;
 import net.splatcraft.forge.util.ColorUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 public class StageCommand
 {
@@ -47,6 +46,7 @@ public class StageCommand
     public static final DynamicCommandExceptionType TEAM_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageTeam.notFound", ((Object[]) p_208663_0_)[0], ((Object[]) p_208663_0_)[1]));
     public static final DynamicCommandExceptionType STAGE_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.notFound", p_208663_0_));
     public static final DynamicCommandExceptionType NOT_ENOUGH_TEAMS = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.notEnoughTeams", p_208663_0_));
+    public static final DynamicCommandExceptionType ALREADY_PLAYING = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.alreadyPlaying", p_208663_0_));
     public static final DynamicCommandExceptionType STAGE_ALREADY_EXISTS = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.alreadyExists", p_208663_0_));
     public static final DynamicCommandExceptionType SETTING_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageSetting.notFound", p_208663_0_));
 
@@ -58,8 +58,10 @@ public class StageCommand
                                 .then(Commands.argument("from", BlockPosArgument.blockPos())
                                         .then(Commands.argument("to", BlockPosArgument.blockPos()).executes(StageCommand::add)))))
                 .then(Commands.literal("remove")
-                        .then(stageId("stage").executes(StageCommand::remove)
-                        ))//.then(Commands.literal("list"))
+                        .then(stageId("stage")
+                                .executes(StageCommand::remove)))
+                .then(Commands.literal("list")
+                        .executes(StageCommand::list))
                 .then(Commands.literal("settings").then(stageId("stage")
                         .then(Commands.literal("cornerA").executes(context -> getStageCorner(context, true))
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> setStageCorner(context, true))))
@@ -85,31 +87,17 @@ public class StageCommand
                                         .then(Commands.literal("color").then(Commands.argument("color", InkColorArgument.inkColor()).executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn"), InkColorArgument.getInkColor(context, "color")))))
                                         .then(Commands.literal("team").then(stageTeam("team", "stage").executes(context -> warpToTeam(context, BoolArgumentType.getBool(context, "setSpawn"), StringArgumentType.getString(context, "team")))))
                                         .executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn")))))))
-                .then(Commands.literal("play").then(stageId("stage").executes(context ->
-                        {
-                            if (context.getSource().getEntity() instanceof ServerPlayer player)
-                                return playStage(context, StringArgumentType.getString(context, "stage"), Collections.singleton(player), true);
-                            else
-                                return 0;
-                        })
-                        .then(Commands.argument("players", EntityArgument.players()).executes(context -> playStage(context, StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), true))
-                                .then(Commands.argument("assignTeams", BoolArgumentType.bool()).executes(context -> playStage(context, StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), BoolArgumentType.getBool(context, "assignTeams")))))))
+                .then(Commands.literal("play")
+                        .then(stageId("stage")
+                                .executes(StageCommand::playRecon)
+                                .then(Commands.argument("players", EntityArgument.players())
+                                        .executes(StageCommand::playWithPlayers)
+                                        .then(Commands.argument("assignTeams", BoolArgumentType.bool())
+                                                .executes(StageCommand::playWithSetAssignedTeams))
+                                        .then(Commands.argument("gamemode", EnumArgument.enumArgument(StageGameMode.class))
+                                                .executes(StageCommand::play))
+                                )))
         );
-    }
-
-    public static int playStage(CommandContext<CommandSourceStack> context, String stageId, Collection<ServerPlayer> players, boolean assignTeams) throws CommandSyntaxException
-    {
-        HashMap<String, Stage> stages = SaveInfoCapability.get(context.getSource().getServer()).getStages();
-        if (!stages.containsKey(stageId))
-        {
-            throw STAGE_NOT_FOUND.create(stageId);
-        }
-        Stage stage = stages.get(stageId);
-        Collection<String> teamIds = stage.getTeamIds();
-        if (teamIds.size() <= 2)
-            throw NOT_ENOUGH_TEAMS.create(stageId);
-
-        return players.size();
     }
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> stageId(String argumentName)
@@ -150,6 +138,11 @@ public class StageCommand
     private static int remove(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
     {
         return remove(context.getSource(), StringArgumentType.getString(context, "stage"));
+    }
+
+    private static int list(CommandContext<CommandSourceStack> context)
+    {
+        return listStages(context.getSource());
     }
 
     private static int setSetting(CommandContext<CommandSourceStack> context, @Nullable Boolean value) throws CommandSyntaxException
@@ -222,6 +215,26 @@ public class StageCommand
         return warpPlayers(context.getSource(), StringArgumentType.getString(context, "stage"), Collections.singleton(context.getSource().getPlayerOrException()), false);
     }
 
+    private static int playRecon(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    {
+        return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), Collections.singletonList(context.getSource().getPlayerOrException()), true, StageGameMode.RECON);
+    }
+
+    private static int playWithPlayers(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    {
+        return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), true, StageGameMode.TURF_WAR);
+    }
+
+    private static int playWithSetAssignedTeams(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    {
+        return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), BoolArgumentType.getBool(context, "assignTeams"), StageGameMode.TURF_WAR);
+    }
+
+    private static int play(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    {
+        return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgument.getPlayers(context, "players"), BoolArgumentType.getBool(context, "assignTeams"), context.getArgument("gamemode", StageGameMode.class));
+    }
+
     private static int add(CommandSourceStack source, String stageId, BlockPos from, BlockPos to) throws CommandSyntaxException
     {
         if (!SaveInfoCapability.get(source.getServer()).createStage(source.getLevel(), stageId, from, to))
@@ -245,6 +258,20 @@ public class StageCommand
         SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 
         return 1;
+    }
+
+    private static int listStages(CommandSourceStack source)
+    {
+        HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
+        StringBuilder builder = new StringBuilder();
+        for (String key : stages.keySet())
+        {
+            builder.append('[');
+            builder.append(key);
+            builder.append(']');
+        }
+        source.sendSuccess(() -> Component.translatable("commands.stage.list.get", builder.toString()), true);
+        return stages.size();
     }
 
     private static int setSetting(CommandSourceStack source, String stageId, String setting, @Nullable Boolean value) throws CommandSyntaxException
@@ -299,7 +326,7 @@ public class StageCommand
             throw STAGE_NOT_FOUND.create(stageId);
 
         Stage stage = stages.get(stageId);
-        Level stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
+        Level stageLevel = stage.getStageLevel(source.getServer());
 
         BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
         BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
@@ -363,7 +390,7 @@ public class StageCommand
 
         int teamColor = stage.getTeamColor(teamId);
 
-        Level stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
+        Level stageLevel = stage.getStageLevel(source.getServer());
         BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
         BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
 
@@ -406,7 +433,7 @@ public class StageCommand
 
         Stage stage = stages.get(stageId);
         HashMap<Integer, ArrayList<SpawnPadTileEntity>> spawnPads = stage.getSpawnPads(source.getLevel());
-        ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
+        ServerLevel stageLevel = stage.getStageLevel(source.getServer());
 
         if (spawnPads.isEmpty())
             throw NO_SPAWN_PADS_FOUND.create(stageId);
@@ -456,8 +483,8 @@ public class StageCommand
             throw STAGE_NOT_FOUND.create(stageId);
 
         Stage stage = stages.get(stageId);
-        ServerLevel stageLevel = source.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
-        ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(source.getLevel()));
+        ServerLevel stageLevel = stage.getStageLevel(source.getServer());
+        ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(stageLevel));
 
         if (spawnPads.isEmpty())
             throw NO_SPAWN_PADS_FOUND.create(stageId);
@@ -473,6 +500,7 @@ public class StageCommand
                 player.connection.teleport(te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ() + .5, pitch, 0);
             else
                 player.teleportTo(stageLevel, te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ(), pitch, 0);
+
             if (setSpawn)
                 player.setRespawnPosition(player.level().dimension(), te.getBlockPos(), player.level().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
 
@@ -486,6 +514,44 @@ public class StageCommand
 
         source.sendSuccess(() -> Component.translatable("commands.stage.warp.success", result, stageId), true);
         return result;
+    }
+
+    public static int playStage(CommandSourceStack source, String stageId, Collection<ServerPlayer> players, boolean assignTeams, StageGameMode gameMode) throws CommandSyntaxException
+    {
+        HashMap<String, Stage> stages = SaveInfoCapability.get(source.getServer()).getStages();
+
+        if (!stages.containsKey(stageId))
+            throw STAGE_NOT_FOUND.create(stageId);
+
+        Stage stage = stages.get(stageId);
+        Level stageLevel = stage.getStageLevel(source.getServer());
+        Collection<String> teamIds = stage.getTeamIds();
+
+        if (teamIds.size() <= 2)
+            throw NOT_ENOUGH_TEAMS.create(stageId);
+
+        players = players.stream().filter(v -> !PlayerInfoCapability.get(v).isPlaying()).toList();
+
+        if (assignTeams)
+        {
+            List<String> availableTeams = new ArrayList<>(teamIds);
+            for (ServerPlayer player : players)
+            {
+                String teamId = Util.getRandom(availableTeams, stageLevel.getRandom());
+                ColorUtils.setPlayerColor(player, stage.getTeamColor(teamId), true);
+                availableTeams.remove(teamId);
+
+                if (availableTeams.isEmpty())
+                    availableTeams.addAll(teamIds);
+            }
+        }
+
+        int playersTeleported = warpPlayers(source, stageId, players, true);
+
+        if (!stage.play(stageLevel, players, gameMode))
+            throw ALREADY_PLAYING.create(stageId);
+
+        return playersTeleported;
     }
 
     private static int setStageCoords(CommandSourceStack source, String stageId, BlockPos pos, boolean isCornerA) throws CommandSyntaxException

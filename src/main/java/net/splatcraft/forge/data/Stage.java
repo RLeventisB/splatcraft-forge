@@ -9,13 +9,18 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.commands.SuperJumpCommand;
+import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
@@ -57,6 +62,7 @@ public class Stage implements Comparable<Stage>
         registerGameruleSetting(SplatcraftGameRules.INK_DESTROYS_FOLIAGE);
         registerGameruleSetting(SplatcraftGameRules.RECHARGEABLE_INK_TANK);
         registerGameruleSetting(SplatcraftGameRules.GLOBAL_SUPERJUMPING);
+        registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
     }
 
     public CompoundTag writeData()
@@ -327,6 +333,27 @@ public class Stage implements Comparable<Stage>
         BlockPos targetPos = spawnPads.get(playerColor).get(player.getRandom().nextInt(spawnPads.get(playerColor).size())).getBlockPos();
 
         return SuperJumpCommand.superJump(player, new Vec3(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.level()), targetPos.getZ() + 0.5));
+    }
+
+    @OnlyIn(Dist.DEDICATED_SERVER)
+    public boolean play(Level level, Collection<ServerPlayer> players, StageGameMode gameMode)
+    {
+        SaveInfo saveInfo = SaveInfoCapability.get(Objects.requireNonNull(level.getServer()));
+        if (saveInfo.playSessions.containsKey(id))
+            return false;
+
+        if (!gameMode.canDoOn(this))
+            return false;
+
+        PlaySession playSession = new PlaySession(level, players, this, gameMode);
+        saveInfo.playSessions.put(id, playSession);
+
+        return true;
+    }
+
+    public ServerLevel getStageLevel(MinecraftServer server)
+    {
+        return server.getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
     }
 
     @Override
