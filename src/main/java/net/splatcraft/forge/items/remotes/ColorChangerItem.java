@@ -25,7 +25,6 @@ import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.forge.items.IColoredItem;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.tileentities.IHasTeam;
 import net.splatcraft.forge.util.ClientUtils;
@@ -37,14 +36,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public class ColorChangerItem extends RemoteItem implements IColoredItem {
-    public ColorChangerItem() {
+public class ColorChangerItem extends RemoteItem implements IColoredItem
+{
+    public ColorChangerItem()
+    {
         super(new Properties().stacksTo(1).rarity(Rarity.UNCOMMON), 3);
-        SplatcraftItemGroups.addGeneralItem(this);
         SplatcraftItems.inkColoredItems.add(this);
     }
 
-    public static RemoteResult replaceColor(Level level, BlockPos from, BlockPos to, int color, int mode, int affectedColor, String stage, String affectedTeam) {
+    public static RemoteResult replaceColor(Level level, BlockPos from, BlockPos to, int color, int mode, int affectedColor, String stage, String affectedTeam)
+    {
         BlockPos blockpos2 = new BlockPos(Math.min(from.getX(), to.getX()), Math.min(to.getY(), from.getY()), Math.min(from.getZ(), to.getZ()));
         BlockPos blockpos3 = new BlockPos(Math.max(from.getX(), to.getX()), Math.max(to.getY(), from.getY()), Math.max(from.getZ(), to.getZ()));
 
@@ -53,17 +54,22 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem {
 
         int count = 0;
         int blockTotal = 0;
-        for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++) {
-            for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++) {
-                for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++) {
+        for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
+        {
+            for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
+            {
+                for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
+                {
                     BlockPos pos = new BlockPos(x, y, z);
                     Block block = level.getBlockState(pos).getBlock();
                     BlockEntity tileEntity = level.getBlockEntity(pos);
-                    if (block instanceof IColoredBlock) {
+                    if (block instanceof IColoredBlock)
+                    {
                         int teColor = ((IColoredBlock) block).getColor(level, pos);
                         if (((IColoredBlock) block).canRemoteColorChange(level, pos, teColor, color) && (mode == 0 || (mode == 1) == (affectedTeam.isEmpty() ? teColor == affectedColor :
                                 tileEntity instanceof IHasTeam && ((IHasTeam) tileEntity).getTeam().equals(affectedTeam)))
-                                && ((IColoredBlock) block).remoteColorChange(level, pos, color)) {
+                                && ((IColoredBlock) block).remoteColorChange(level, pos, color))
+                        {
                             count++;
                         }
                     }
@@ -72,7 +78,8 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem {
             }
         }
 
-        if (mode <= 1 && !affectedTeam.isEmpty() && !stage.isEmpty()) {
+        if (mode <= 1 && !affectedTeam.isEmpty() && !stage.isEmpty())
+        {
             HashMap<String, Stage> stages = (level.isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(level.getServer()).getStages());
             stages.get(stage).setTeamColor(affectedTeam, color);
             if (!level.isClientSide())
@@ -83,12 +90,14 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem {
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    {
         super.appendHoverText(stack, level, tooltip, flag);
 
         CompoundTag nbt = stack.getOrCreateTag();
 
-        if (nbt.contains("Team") && !nbt.getString("Team").isEmpty()) {
+        if (nbt.contains("Team") && !nbt.getString("Team").isEmpty())
+        {
             int color = -1;
 
             if (nbt.contains("Stage") && ClientUtils.clientStages.containsKey(nbt.getString("Stage")))
@@ -101,21 +110,26 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem {
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected) {
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
         if (entity instanceof Player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor((Player) entity)
-                && PlayerInfoCapability.hasCapability((LivingEntity) entity)) {
+                && PlayerInfoCapability.hasCapability((LivingEntity) entity))
+        {
             ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor((Player) entity));
         }
     }
 
     @Override
-    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity) {
+    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+    {
         BlockPos pos = entity.blockPosition().below();
 
-        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock) {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level, pos)) {
+        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
+        {
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level, pos))
+            {
                 ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level, pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
@@ -125,11 +139,13 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem {
     }
 
     @Override
-    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos from, BlockPos to, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets) {
+    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos from, BlockPos to, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
+    {
         String stage = "";
         String team = "";
 
-        if (stack.hasTag()) {
+        if (stack.hasTag())
+        {
             team = stack.getTag().getString("Team");
             stage = stack.getTag().getString("Stage");
         }

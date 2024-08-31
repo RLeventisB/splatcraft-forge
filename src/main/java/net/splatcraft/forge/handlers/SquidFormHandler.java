@@ -33,13 +33,13 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.forge.registries.SplatcraftDamageTypes;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.registries.SplatcraftStats;
 import net.splatcraft.forge.tileentities.InkColorTileEntity;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.InkDamageUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,7 +52,7 @@ public class SquidFormHandler
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event)
     {
-        if (event.getSource().is(InkDamageUtils.ENEMY_INK) && event.getEntity().getHealth() <= 4)
+        if (event.getSource().is(SplatcraftDamageTypes.ENEMY_INK) && event.getEntity().getHealth() <= 4)
             event.setCanceled(true);
     }
 
@@ -64,7 +64,7 @@ public class SquidFormHandler
         if (InkBlockUtils.onEnemyInk(player))
         {
             if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.level().getDifficulty() != Difficulty.PEACEFUL)
-                player.hurt(player.damageSources().source(InkDamageUtils.ENEMY_INK), Math.min(-4 + player.getHealth(), 2f));
+                player.hurt(player.damageSources().source(SplatcraftDamageTypes.ENEMY_INK), Math.min(-4 + player.getHealth(), 2f));
             if (player.level().getRandom().nextFloat() < 0.5f)
             {
                 ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
@@ -72,7 +72,7 @@ public class SquidFormHandler
         }
 
         if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isInWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
-            player.hurt(player.damageSources().source(InkDamageUtils.WATER), 8f);
+            player.hurt(player.damageSources().source(SplatcraftDamageTypes.WATER), 8f);
 
         if (!PlayerInfoCapability.hasCapability(player))
             return;

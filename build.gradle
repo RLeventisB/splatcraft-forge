@@ -20,7 +20,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'net.kyori.indra.git'
 
-group = mod_group_id
+group = mod_id
 
 def commitHash = !indraGit.isPresent() ? "unknown" : indraGit.commit().abbreviate(7).name()
 if (System.env.CI == "true") {

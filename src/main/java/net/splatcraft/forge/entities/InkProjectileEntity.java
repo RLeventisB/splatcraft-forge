@@ -31,6 +31,7 @@ import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.*;
+import net.splatcraft.forge.registries.SplatcraftDamageTypes;
 import net.splatcraft.forge.registries.SplatcraftEntities;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
@@ -463,7 +464,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         {
             if (InkDamageUtils.isSplatted(livingTarget)) return;
 
-            boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, InkDamageUtils.SPLAT, causesHurtCooldown, attackId);
+            boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
             if (!level().isClientSide && didDamage)
             {
                 ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);

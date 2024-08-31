@@ -1,17 +1,16 @@
 package net.splatcraft.forge.items;
 
 import net.minecraft.world.level.block.Block;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 
 public class BlockItem extends net.minecraft.world.item.BlockItem
 {
-	public BlockItem(Block block)
-	{
-		super(block, new Properties());
-		SplatcraftItemGroups.addGeneralItem(this);
-	}
-	public BlockItem(Block block, Properties properties)
-	{
-		super(block, properties);
-	}
+    public BlockItem(Block block)
+    {
+        super(block, new Properties());
+    }
+
+    public BlockItem(Block block, Properties properties)
+    {
+        super(block, properties);
+    }
 }

@@ -1,9 +1,9 @@
 package net.splatcraft.forge.util;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
@@ -12,7 +12,6 @@ import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
@@ -23,29 +22,23 @@ import net.splatcraft.forge.entities.SpawnShieldEntity;
 import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.s2c.UpdateInkOverlayPacket;
+import net.splatcraft.forge.registries.SplatcraftDamageTypes;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class InkDamageUtils
 {
-    public static final ResourceKey<DamageType> SPLAT = register("splat");
-    public static final ResourceKey<DamageType> ROLL = register("roll");
-    public static final ResourceKey<DamageType> ENEMY_INK = register("enemy_ink");
-    public static final ResourceKey<DamageType> WATER = register("water");
-    public static final ResourceKey<DamageType> OUT_OF_STAGE = register("out_of_stage");
-
-    private static ResourceKey<DamageType> register(String name)
-    {
-        return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(Splatcraft.MODID, name));
-    }
-
     public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
     {
-        return doDamage(target, damage, source, source, sourceItem, SPLAT, false, attackId);
+        return doDamage(target, damage, source, source, sourceItem, SplatcraftDamageTypes.INK_SPLAT, false, attackId);
     }
 
     public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
     {
-        return doDamage(target, damage, source, owner, sourceItem, ROLL, true, AttackId.NONE);
+        return doDamage(target, damage, source, owner, sourceItem, SplatcraftDamageTypes.ROLL_CRUSH, true, AttackId.NONE);
     }
 
     public static boolean canDamage(Entity target, Entity source)
@@ -82,10 +75,10 @@ public class InkDamageUtils
 
         Level targetLevel = target.level();
         int color = ColorUtils.getEntityColor(projectile);
-//		InkDamageSource damageSource = new InkDamageSource(targetLevel.damageSources().source(damageType).type(), projectile, owner, sourceItem);
-        DamageSource damageSource = targetLevel.damageSources().source(damageType);
+        InkDamageSource damageSource = new InkDamageSource(SplatcraftDamageTypes.get(targetLevel, damageType), owner, projectile, sourceItem);
 
-        if ((attackId != null && !attackId.checkEntity(target)) || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
+        boolean attackIdValid = attackId != null && !attackId.checkEntity(target);
+        if (attackIdValid || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
             return false;
 
         if (InkOverlayCapability.hasCapability(target) && InkOverlayCapability.get(target).isInkproof())
@@ -107,9 +100,9 @@ public class InkDamageUtils
             target.invulnerableTime = (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN)) ? 0 : 20;
             doDamage = coloredEntity.onEntityInked(damageSource, damage, color);
         }
-        else if (target instanceof Sheep)
+        else if (target instanceof Sheep sheep)
         {
-            if (!((Sheep) target).isSheared())
+            if (!sheep.isSheared())
             {
                 doDamage = false;
                 canInk = false;
@@ -127,9 +120,7 @@ public class InkDamageUtils
 
         if (!(target instanceof SquidBumperEntity) && doDamage)
         {
-//			Vec3 deltaMovement = target.getDeltaMovement();
             doDamage = target.hurt(damageSource, damage * (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg));
-//			target.setDeltaMovement(deltaMovement); // trying to prevent knockback... (this game is so dumb)  should be ignored now!!!!
             target.hurtMarked = false;
         }
 
@@ -157,5 +148,32 @@ public class InkDamageUtils
     public static boolean isSplatted(LivingEntity target)
     {
         return target instanceof SquidBumperEntity bumperEntity ? bumperEntity.getInkHealth() <= 0 : target.isDeadOrDying();
+    }
+
+    public static class InkDamageSource extends DamageSource
+    {
+        private final ItemStack weapon;
+
+        public InkDamageSource(Holder<DamageType> pType, @Nullable Entity pDirectEntity, @Nullable Entity pCausingEntity, ItemStack weapon)
+        {
+            super(pType, pDirectEntity, pCausingEntity);
+            this.weapon = weapon;
+        }
+
+        @Override
+        public @NotNull Component getLocalizedDeathMessage(@NotNull LivingEntity entityLivingBaseIn)
+        {
+            String base = "death.attack." + this.type().msgId();
+
+            if (getEntity() == null && getDirectEntity() == null)
+            {
+                return !weapon.isEmpty() ? Component.translatable(base + ".item", entityLivingBaseIn.getDisplayName(), weapon.getDisplayName()) : Component.translatable(base, entityLivingBaseIn.getDisplayName());
+            }
+            base += ".player";
+
+            Component itextcomponent = this.getEntity() == null ? Objects.requireNonNull(this.getDirectEntity()).getDisplayName() : this.getEntity().getDisplayName();
+
+            return !weapon.isEmpty() ? Component.translatable(base + ".item", entityLivingBaseIn.getDisplayName(), itextcomponent, weapon.getDisplayName()) : Component.translatable(base, entityLivingBaseIn.getDisplayName(), itextcomponent);
+        }
     }
 }

@@ -36,10 +36,10 @@ import net.splatcraft.forge.client.particles.InkExplosionParticleData;
 import net.splatcraft.forge.entities.IColoredEntity;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.forge.registries.SplatcraftDamageTypes;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.InkDamageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ import java.util.UUID;
 
 public abstract class AbstractSubWeaponEntity extends Entity implements IColoredEntity
 {
-    protected static final ResourceKey<DamageType> SPLASH_DAMAGE_TYPE = InkDamageUtils.SPLAT;
+    protected static final ResourceKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<ItemStack> DATA_ITEM_STACK = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.ITEM_STACK);
     public boolean isItem = false;
