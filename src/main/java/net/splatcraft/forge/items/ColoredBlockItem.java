@@ -43,34 +43,35 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
         InkwellBlock.inkCoatingRecipes.put(clearItem, this);
         this.clearItem = clearItem;
 
-        if (clearItem != null)
-            CauldronInteraction.WATER.put(this, ((state, level, pos, player, hand, stack) ->
+        if (clearItem == null)
+            return;
+
+        CauldronInteraction.WATER.put(this, ((state, level, pos, player, hand, stack) ->
+        {
+            if (equals(clearItem) && ColorUtils.getInkColor(stack) < 0)
+                return InteractionResult.PASS;
+
+            ItemStack itemstack1 = new ItemStack(clearItem, 1);
+
+            player.awardStat(Stats.USE_CAULDRON);
+
+            if (!player.isCreative())
             {
-                if (equals(clearItem) && ColorUtils.getInkColor(stack) < 0)
-                    return InteractionResult.PASS;
+                stack.shrink(1);
+                LayeredCauldronBlock.lowerFillLevel(state, level, pos);
+            }
 
-                ItemStack itemstack1 = new ItemStack(clearItem, 1);
+            if (stack.isEmpty())
+            {
+                player.setItemInHand(hand, itemstack1);
+            }
+            else if (!player.getInventory().add(itemstack1))
+            {
+                player.drop(itemstack1, false);
+            }
 
-                player.awardStat(Stats.USE_CAULDRON);
-
-                if (!player.isCreative())
-                {
-                    stack.shrink(1);
-                    LayeredCauldronBlock.lowerFillLevel(state, level, pos);
-                }
-
-                if (stack.isEmpty())
-                {
-                    player.setItemInHand(hand, itemstack1);
-                }
-                else if (!player.getInventory().add(itemstack1))
-                {
-                    player.drop(itemstack1, false);
-                }
-                //((ServerPlayer) player).refreshContainer(player.containerMenu);
-
-                return InteractionResult.SUCCESS;
-            }));
+            return InteractionResult.SUCCESS;
+        }));
     }
 
     public ColoredBlockItem(Block block, int stackSize, @Nullable Item clearItem)
@@ -140,23 +141,6 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
         return super.updateCustomBlockEntityTag(pos, levelIn, player, stack, state);
     }
 
-    /*
-        @Override
-        public void fillItemCategory(@NotNull CreativeModeTab group, @NotNull NonNullList<ItemStack> items)
-        {
-            if (allowdedIn(group))
-            {
-                items.add(ColorUtils.setInkColor(new ItemStack(this), -1));
-
-                if (addStartersToTab)
-                {
-                    items.add(ColorUtils.setInverted(ColorUtils.setColorLocked(new ItemStack(this), false), true));
-                    for (int color : ColorUtils.STARTER_COLORS)
-                        items.add(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(this), color), true));
-                }
-            }
-        }
-    */
     @Override
     public void inventoryTick(@NotNull ItemStack stack, @NotNull Level levelIn, @NotNull Entity entityIn, int itemSlot, boolean isSelected)
     {

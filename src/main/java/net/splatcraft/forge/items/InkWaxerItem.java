@@ -15,73 +15,78 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.registries.SplatcraftItemGroups;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.forge.util.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InkWaxerItem extends Item
 {
-	public InkWaxerItem()
-	{
-		super(new Properties().durability(256));
-		SplatcraftItemGroups.addGeneralItem(this);
-	}
-	// wait why does it work like this
-	public void onBlockStartBreak(BlockPos pos, Level level, @Nullable Direction face)
-	{
-		if (InkBlockUtils.isInkedAny(level, pos))
-		{
-			ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInkInFace(level, pos, face).color());
-			
-			SoundType soundType = SplatcraftSounds.SOUND_TYPE_INK;
-			level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundSource.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
-			
-			InkBlockUtils.clearInk(level, pos, face, true);
-			
-			// alternative behaviour where breaking an inked block only breaks the wax, making it not permanent
+    public InkWaxerItem()
+    {
+        super(new Properties().durability(256));
+    }
+
+    // wait why does it work like this
+    public void onBlockStartBreak(BlockPos pos, Level level, @Nullable Direction face)
+    {
+        if (InkBlockUtils.isInkedAny(level, pos))
+        {
+            ColorUtils.addInkDestroyParticle(level, pos, InkBlockUtils.getInkInFace(level, pos, face).color());
+
+            SoundType soundType = SplatcraftSounds.SOUND_TYPE_INK;
+            level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundSource.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
+
+            InkBlockUtils.clearInk(level, pos, face, true);
+
+            // alternative behaviour where breaking an inked block only breaks the wax, making it not permanent
 			/*
-			
+
 			ChunkInk.BlockEntry ink = worldInk.getInk(pos);
 			ink.permanent = true;
-			
+
 			context.getLevel().levelEvent(context.getPlayer(), 3004, context.getClickedPos(), 0);
-			
+
 			 */
-		}
-	}
-	@Override
-	public @NotNull InteractionResult useOn(UseOnContext context)
-	{
-		BlockPos clickedPos = context.getClickedPos();
-		ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), clickedPos);
-		ChunkInk.BlockEntry ink = worldInk.getInk(clickedPos);
-		if (ink != null && ink.inmutable)
-			return InteractionResult.FAIL;
-		worldInk.markInmutable(clickedPos);
-		
-		context.getLevel().levelEvent(context.getPlayer(), 3003, clickedPos, 0);
-		ChunkInkHandler.addInkToUpdate(context.getLevel(), clickedPos);
-		BlockState state = context.getLevel().getBlockState(clickedPos);
-		context.getLevel().sendBlockUpdated(clickedPos, state, state, 0);
-		
-		return InteractionResult.SUCCESS;
-	}
-	@Override
-	public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player)
-	{
-		return false;
-	}
-	@Override
-	public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state)
-	{
-		return 0;
-	}
-	@Override
-	public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair)
-	{
-		return repair.getItem().equals(Items.HONEYCOMB) || super.isValidRepairItem(toRepair, repair);
-	}
+        }
+    }
+
+    @Override
+    public @NotNull InteractionResult useOn(UseOnContext context)
+    {
+        BlockPos clickedPos = context.getClickedPos();
+        RelativeBlockPos relative = RelativeBlockPos.fromAbsolute(clickedPos);
+        ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), clickedPos);
+        ChunkInk.BlockEntry ink = worldInk.getInk(relative);
+        if (ink != null && ink.inmutable)
+            return InteractionResult.FAIL;
+        worldInk.markInmutable(relative);
+
+        context.getLevel().levelEvent(context.getPlayer(), 3003, clickedPos, 0);
+        ChunkInkHandler.addInkToUpdate(context.getLevel(), clickedPos);
+        BlockState state = context.getLevel().getBlockState(clickedPos);
+        context.getLevel().sendBlockUpdated(clickedPos, state, state, 0);
+
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public boolean canAttackBlock(@NotNull BlockState state, @NotNull Level levelIn, @NotNull BlockPos pos, @NotNull Player player)
+    {
+        return false;
+    }
+
+    @Override
+    public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state)
+    {
+        return 0;
+    }
+
+    @Override
+    public boolean isValidRepairItem(@NotNull ItemStack toRepair, ItemStack repair)
+    {
+        return repair.getItem().equals(Items.HONEYCOMB) || super.isValidRepairItem(toRepair, repair);
+    }
 }

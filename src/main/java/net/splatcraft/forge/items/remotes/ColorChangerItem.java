@@ -7,16 +7,13 @@ import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.splatcraft.forge.blocks.IColoredBlock;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.forge.blocks.InkwellBlock;
 import net.splatcraft.forge.commands.InkColorCommand;
 import net.splatcraft.forge.data.Stage;
@@ -35,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ColorChangerItem extends RemoteItem implements IColoredItem
 {
@@ -46,37 +44,24 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
 
     public static RemoteResult replaceColor(Level level, BlockPos from, BlockPos to, int color, int mode, int affectedColor, String stage, String affectedTeam)
     {
-        BlockPos blockpos2 = new BlockPos(Math.min(from.getX(), to.getX()), Math.min(to.getY(), from.getY()), Math.min(from.getZ(), to.getZ()));
-        BlockPos blockpos3 = new BlockPos(Math.max(from.getX(), to.getX()), Math.max(to.getY(), from.getY()), Math.max(from.getZ(), to.getZ()));
+        if (!level.isInWorldBounds(from) || !level.isInWorldBounds(to))
+            return createResult(false, Component.translatable("status.change_color.out_of_world"));
 
-        if (!level.isInWorldBounds(blockpos2) || !level.isInWorldBounds(blockpos3))
-            return createResult(false, Component.translatable("status.change_color.out_of_stage"));
+        AABB bounds = new AABB(from, to);
+        AtomicInteger count = new AtomicInteger();
+        int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
 
-        int count = 0;
-        int blockTotal = 0;
-        for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
+        ColorUtils.forEachColoredBlockInBounds(level, bounds, ((pos, coloredBlock, blockEntity) ->
         {
-            for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
+            int blockColor = coloredBlock.getColor(level, pos);
+
+            if (coloredBlock.canRemoteColorChange(level, pos, blockColor, color) && (mode == 0 || (mode == 1) == (affectedTeam.isEmpty() ? blockColor == affectedColor :
+                    blockEntity instanceof IHasTeam team && team.getTeam().equals(affectedTeam)))
+                    && coloredBlock.remoteColorChange(level, pos, color))
             {
-                for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
-                {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    Block block = level.getBlockState(pos).getBlock();
-                    BlockEntity tileEntity = level.getBlockEntity(pos);
-                    if (block instanceof IColoredBlock)
-                    {
-                        int teColor = ((IColoredBlock) block).getColor(level, pos);
-                        if (((IColoredBlock) block).canRemoteColorChange(level, pos, teColor, color) && (mode == 0 || (mode == 1) == (affectedTeam.isEmpty() ? teColor == affectedColor :
-                                tileEntity instanceof IHasTeam && ((IHasTeam) tileEntity).getTeam().equals(affectedTeam)))
-                                && ((IColoredBlock) block).remoteColorChange(level, pos, color))
-                        {
-                            count++;
-                        }
-                    }
-                    blockTotal++;
-                }
+                count.getAndIncrement();
             }
-        }
+        }));
 
         if (mode <= 1 && !affectedTeam.isEmpty() && !stage.isEmpty())
         {
@@ -86,7 +71,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
                 SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
         }
 
-        return createResult(true, Component.translatable("status.change_color.success", count, level.isClientSide ? ColorUtils.getFormatedColorName(color, false) : InkColorCommand.getColorName(color))).setIntResults(count, count * 15 / blockTotal);
+        return createResult(true, Component.translatable("status.change_color.success", count, level.isClientSide() ? ColorUtils.getFormatedColorName(color, false) : InkColorCommand.getColorName(color))).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
     }
 
     @Override
@@ -114,10 +99,10 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor((Player) entity)
-                && PlayerInfoCapability.hasCapability((LivingEntity) entity))
+        if (entity instanceof Player player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
+                && PlayerInfoCapability.hasCapability(player))
         {
-            ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor((Player) entity));
+            ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
         }
     }
 
@@ -128,9 +113,9 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
 
         if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level, pos))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level, pos));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }
