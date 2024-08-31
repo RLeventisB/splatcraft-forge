@@ -42,7 +42,7 @@ public class InkDisruptorItem extends RemoteItem
             }
         }
         */
-        AABB bounds = new AABB(from, to);
+        AABB bounds = new AABB(from, to).expandTowards(1, 1, 1);
         AtomicInteger count = new AtomicInteger();
         int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
 
