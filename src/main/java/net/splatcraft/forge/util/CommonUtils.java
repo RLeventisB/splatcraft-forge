@@ -1,5 +1,6 @@
 package net.splatcraft.forge.util;
 
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -36,7 +37,6 @@ public class CommonUtils
 {
     public static void spawnTestParticle(Vec3 pos)
     {
-
         spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
     }
 
@@ -247,5 +247,37 @@ public class CommonUtils
         }
 
         return Mth.lerp(0.2F, a, b);
+    }
+
+    public static <S, V> V getArgumentOrDefault(CommandContext<S> context, String name, Class<V> clazz, V defaultValue) // why do i have to do this though
+    {
+        try
+        {
+            return context.getArgument(name, clazz);
+        }
+        catch (IllegalArgumentException e)
+        {
+            if (e.getMessage().startsWith("No such argument '"))
+            {
+                return defaultValue;
+            }
+            throw e;
+        }
+    }
+
+    public static <S> boolean hasArgument(CommandContext<S> context, String name) // why do i have to do this though
+    {
+        try
+        {
+            context.getArgument(name, Object.class);
+        }
+        catch (IllegalArgumentException e)
+        {
+            if (e.getMessage().startsWith("No such argument '"))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }

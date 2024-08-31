@@ -613,6 +613,7 @@
 
     "commands.stage.add.success": "Successfully added stage [%s]",
     "commands.stage.remove.success": "Successfully removed stage [%s]",
+    "commands.stage.list.get": "The stages registered are:\n%s",
     "commands.stage.setting.success.default": "Reset %s for stage [%s]",
     "commands.stage.setting.success": "Set %s for stage [%s] to %s",
     "commands.stage.setting.get.default": "Setting %s for stage [%s] is currently set to: default",
@@ -623,6 +624,7 @@
     "commands.stage.teams.remove.success": "Successfully removed [%s] team on %s, affecting %s blocks",
     "commands.stage.teams.get.success": "[%s] team on %s is currently %s",
     "commands.stage.warp.success": "Successfully teleported %s player(s) to [%s]",
+    "commands.stage.play.success": "Successfully played stage %s with %s player(s)",
 
     "arg.colorCriterion.notFound": "No criteria were found by the color %s",
     "arg.inkColor.notFound": "Unknown color %s",
@@ -633,6 +635,7 @@
     "arg.stageTeam.notFound": "Unknown team %s for stage [%s]",
     "arg.stageSetting.notFound": "Setting %s does not exist",
     "arg.stage.notEnoughTeams": "There aren't more than 2 teams in this stage",
+    "arg.stage.alreadyPlaying": "This stage has an active playing session.",
 
     "stat.splatcraft.turf_wars_won": "Turf Wars Won",
     "stat.splatcraft.squid_time": "Time as Squid",
