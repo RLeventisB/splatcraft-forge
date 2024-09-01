@@ -634,7 +634,7 @@
     "arg.stage.alreadyExists": "Stage [%s] already exists",
     "arg.stageTeam.notFound": "Unknown team %s for stage [%s]",
     "arg.stageSetting.notFound": "Setting %s does not exist",
-    "arg.stage.notEnoughTeams": "There aren't more than 2 teams in this stage",
+    "arg.stage.notEnoughTeams": "There aren't more than 1 team in this stage",
     "arg.stage.alreadyPlaying": "This stage has an active playing session.",
 
     "stat.splatcraft.turf_wars_won": "Turf Wars Won",
