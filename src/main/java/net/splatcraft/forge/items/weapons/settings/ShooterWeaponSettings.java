@@ -20,8 +20,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
     @Override
     public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
     {
-        float e = projectile.getTickCountForDamage() - projectileData.damageDecayStartTick();
-        return Math.max(e > 0 ? projectileData.baseDamage() - (e * projectileData.damageDecayPerTick()) : projectileData.baseDamage(), projectileData.minDamage());
+        return projectile.calculateDamageDecay(projectileData.baseDamage(), projectileData.damageDecayStartTick(), projectileData.damageDecayPerTick(), projectileData.minDamage());
     }
 
     @Override

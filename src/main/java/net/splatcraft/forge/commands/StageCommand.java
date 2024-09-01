@@ -527,7 +527,7 @@ public class StageCommand
         Level stageLevel = stage.getStageLevel(source.getServer());
         Collection<String> teamIds = stage.getTeamIds();
 
-        if (teamIds.size() <= 2)
+        if (teamIds.size() < 2)
             throw NOT_ENOUGH_TEAMS.create(stageId);
 
         players = players.stream().filter(v -> !PlayerInfoCapability.get(v).isPlaying()).toList();

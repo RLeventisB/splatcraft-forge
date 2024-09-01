@@ -82,7 +82,7 @@ public class PlayerCooldown
         return this;
     }
 
-    public static PlayerCooldown getPlayerCooldown(Player player)
+    public static PlayerCooldown getPlayerCooldown(LivingEntity player)
     {
         PlayerInfo playerInfo = PlayerInfoCapability.get(player);
         if (playerInfo == null)

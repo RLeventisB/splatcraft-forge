@@ -2,6 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -27,12 +29,10 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
         ExtraSaveData.DualieExtraData dualieData = list.getFirstExtraData(ExtraSaveData.DualieExtraData.class);
         if (dualieData != null && dualieData.rollBullet)
         {
-            float e = projectile.getTickCountForDamage() - turretProjectileData.damageDecayStartTick();
-            return Math.max(e > 0 ? turretProjectileData.baseDamage() - e * turretProjectileData.damageDecayPerTick() : turretProjectileData.baseDamage(), turretProjectileData.minDamage());
+            return projectile.calculateDamageDecay(turretProjectileData.baseDamage(), turretProjectileData.damageDecayStartTick(), turretProjectileData.damageDecayPerTick(), turretProjectileData.minDamage());
         }
 
-        float e = projectile.getTickCountForDamage() - standardProjectileData.damageDecayStartTick();
-        return Math.max(e > 0 ? standardProjectileData.baseDamage() - e * standardProjectileData.damageDecayPerTick() : standardProjectileData.baseDamage(), standardProjectileData.minDamage());
+        return projectile.calculateDamageDecay(standardProjectileData.baseDamage(), standardProjectileData.damageDecayStartTick(), standardProjectileData.damageDecayPerTick(), standardProjectileData.minDamage());
     }
 
     @Override
@@ -50,6 +50,12 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
     public Codec<DataRecord> getCodec()
     {
         return DataRecord.CODEC;
+    }
+
+    @Override
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    {
+        return standardShotData.accuracyData();
     }
 
     @Override
@@ -145,8 +151,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                         localTurretShot.startupTicks().orElse(shot.startupTicks()),
                         localTurretShot.endlagTicks().orElse(shot.endlagTicks()),
                         localTurretShot.projectileCount().orElse(shot.projectileCount()),
-                        localTurretShot.groundInaccuracy().orElse(shot.groundInaccuracy()),
-                        localTurretShot.airborneInaccuracy().orElse(shot.airborneInaccuracy()),
+                        localTurretShot.accuracyData().orElse(shot.accuracyData()),
                         localTurretShot.pitchCompensation().orElse(shot.pitchCompensation()),
                         localTurretShot.inkConsumption().orElse(shot.inkConsumption()),
                         localTurretShot.inkRecoveryCooldown().orElse(shot.inkRecoveryCooldown())

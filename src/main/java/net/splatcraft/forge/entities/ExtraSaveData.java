@@ -12,6 +12,7 @@ import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
@@ -59,9 +60,10 @@ public abstract class ExtraSaveData
                 Class<? extends ExtraSaveData> saveData = REGISTRY.get().getValue(buf.readResourceLocation());
                 try
                 {
-                    saveDatas.add((saveData.newInstance()).load(buf));
+                    saveDatas.add((ExtraSaveData) saveData.getDeclaredMethod("load", FriendlyByteBuf.class).invoke(null, buf));
                 }
-                catch (InstantiationException | IllegalAccessException e)
+                catch (IllegalAccessException | NoSuchMethodException |
+                       InvocationTargetException e)
                 {
                     throw new RuntimeException(e);
                 }

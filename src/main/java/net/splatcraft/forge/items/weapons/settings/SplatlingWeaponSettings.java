@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
 
@@ -27,8 +28,12 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     @Override
     public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
     {
-        float e = projectile.getTickCountForDamage() - firstChargeLevelProjectile.damageDecayStartTick();
-        return Math.max(e > 0 ? firstChargeLevelProjectile.baseDamage() - (e * firstChargeLevelProjectile.damageDecayPerTick()) : firstChargeLevelProjectile.baseDamage(), firstChargeLevelProjectile.minDamage());
+        ExtraSaveData.ChargeExtraData data = list.getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
+        if (data == null) // oh no
+            return 0;
+        if (data.charge >= 1)
+            return projectile.calculateDamageDecay(secondChargeLevelProjectile.baseDamage(), secondChargeLevelProjectile.damageDecayStartTick(), secondChargeLevelProjectile.damageDecayPerTick(), secondChargeLevelProjectile.minDamage());
+        return projectile.calculateDamageDecay(firstChargeLevelProjectile.baseDamage(), firstChargeLevelProjectile.damageDecayStartTick(), firstChargeLevelProjectile.damageDecayPerTick(), firstChargeLevelProjectile.minDamage());
     }
 
     @Override

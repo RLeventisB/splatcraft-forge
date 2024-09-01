@@ -1,6 +1,8 @@
 package net.splatcraft.forge.entities;
 
 import com.google.common.reflect.TypeToken;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -21,7 +23,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.TheEndGatewayBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.*;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import net.splatcraft.forge.VectorUtils;
 import net.splatcraft.forge.blocks.ColoredBarrierBlock;
@@ -41,6 +49,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity
 {
@@ -183,6 +193,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         CommonRecords.ProjectileDataRecord projectileData = charge > 1 ? settings.secondChargeLevelProjectile : settings.firstChargeLevelProjectile;
 
         setCommonProjectileStats(projectileData);
+        addExtraData(new ExtraSaveData.ChargeExtraData(charge));
         setProjectileType(Types.SHOOTER);
         return this;
     }
@@ -272,10 +283,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public void tick(float timeDelta)
     {
         Vec3 lastPosition = position();
-        Vec3 velocity = getShootVelocity().scale(timeDelta);
+        Vec3 velocity = getShootVelocity();
         setDeltaMovement(velocity);
-        super.tick();
-        setDeltaMovement(velocity);
+        superTick(timeDelta);
 
         if (isInWater())
         {
@@ -328,6 +338,126 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         straightShotTime -= timeDelta;
     }
 
+    // we NEED the HitResult actual position or else my stupid obsession with partial frame damage falloff will make me perish
+    // yes this breaks like 40 fundamentals like encapsulation and mixins but uhhhhhhhhhhhhhhhhhhhhhhhhhhh
+    public void superTick(float timeDelta)
+    {
+        if (!hasBeenShot)
+        {
+            this.gameEvent(GameEvent.PROJECTILE_SHOOT, this.getOwner());
+            this.hasBeenShot = true;
+        }
+
+        if (!leftOwner)
+        {
+            leftOwner = checkLeftOwner();
+        }
+
+        baseTick();
+
+        HitResult hitresult = getHitResultOnMoveVector(timeDelta);
+        boolean teleported = false;
+        if (hitresult.getType() == HitResult.Type.BLOCK)
+        {
+            BlockPos blockpos = ((BlockHitResult) hitresult).getBlockPos();
+            BlockState blockstate = level().getBlockState(blockpos);
+            if (blockstate.is(Blocks.NETHER_PORTAL))
+            {
+                this.handleInsidePortal(blockpos);
+                teleported = true;
+            }
+            else if (blockstate.is(Blocks.END_GATEWAY))
+            {
+                BlockEntity blockentity = this.level().getBlockEntity(blockpos);
+                if (blockentity instanceof TheEndGatewayBlockEntity gatewayBlock && TheEndGatewayBlockEntity.canEntityTeleport(this))
+                {
+                    TheEndGatewayBlockEntity.teleportEntity(this.level(), blockpos, blockstate, this, gatewayBlock);
+                }
+
+                teleported = true;
+            }
+        }
+
+        if (hitresult.getType() != HitResult.Type.MISS && !teleported && !ForgeEventFactory.onProjectileImpact(this, hitresult))
+        {
+            this.onHit(hitresult);
+        }
+
+        this.checkInsideBlocks();
+        Vec3 deltaMovement = this.getDeltaMovement();
+        double newX = this.getX() + deltaMovement.x * timeDelta;
+        double newY = this.getY() + deltaMovement.y * timeDelta;
+        double newZ = this.getZ() + deltaMovement.z * timeDelta;
+
+        this.updateRotation();
+
+        float velocityModule = 1f;
+        if (this.isInWater())
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                this.level().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25, newY - deltaMovement.y * 0.25, newZ - deltaMovement.z * 0.25, deltaMovement.x, deltaMovement.y, deltaMovement.z);
+            }
+
+            velocityModule = 0.8F;
+        }
+
+        if (!this.isNoGravity())
+        {
+            deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y - this.getGravity(), deltaMovement.z);
+        }
+        this.setDeltaMovement(deltaMovement.scale(velocityModule));
+
+        this.setPos(newX, newY, newZ);
+    }
+
+    private @NotNull HitResult getHitResultOnMoveVector(float timeDelta)
+    {
+        Vec3 movement = getDeltaMovement().scale(timeDelta);
+        Level level = level();
+        Vec3 startPos = position();
+        Vec3 nextPos = startPos.add(movement);
+
+        HitResult hitresult = level.clip(new ClipContext(startPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (hitresult.getType() != HitResult.Type.MISS)
+        {
+            nextPos = hitresult.getLocation();
+        }
+
+        HitResult hitresult1 = getEntityHitResult(level, this, startPos, nextPos, getBoundingBox().expandTowards(movement).inflate(1.0), this::canHitEntity);
+        if (hitresult1 != null)
+        {
+            hitresult = hitresult1;
+        }
+
+        return hitresult;
+    }
+
+    private static EntityHitResult getEntityHitResult(Level pLevel, Entity projectile, Vec3 pStartVec, Vec3 pEndVec, AABB boundingBox, Predicate<Entity> filter)
+    {
+        double d0 = Double.MAX_VALUE;
+        Entity entity = null;
+        Vec3 hitPos = null;
+
+        for (Entity entity1 : pLevel.getEntities(projectile, boundingBox, filter))
+        {
+            AABB aabb = entity1.getBoundingBox().inflate(0.3f);
+            Optional<Vec3> optional = aabb.clip(pStartVec, pEndVec);
+            if (optional.isPresent())
+            {
+                double d1 = pStartVec.distanceToSqr(optional.get());
+                if (d1 < d0)
+                {
+                    entity = entity1;
+                    d0 = d1;
+                    hitPos = optional.get();
+                }
+            }
+        }
+
+        return entity == null ? null : new EntityHitResult(entity, hitPos);
+    }
+
     private void calculateDrops(Vec3 lastPosition)
     {
         Vec3 deltaMovement = getDeltaMovement();
@@ -345,8 +475,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         }
         if (dropsTravelled > 0)
         {
-//			CommonUtils.spawnTestBlockParticle(position(), Blocks.GREEN_WOOL.defaultBlockState());
-//			CommonUtils.spawnTestBlockParticle(getPosition(0), Blocks.RED_WOOL.defaultBlockState());
             accumulatedDrops += dropsTravelled;
             while (accumulatedDrops >= 1)
             {
@@ -442,14 +570,15 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
 
-        float value = 0f;
         Vec3 nextPosition = position().add(getDeltaMovement());
-        float averageValue = (float) ((
-                Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x) +
-                        Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x) +
-                        Mth.inverseLerp(result.getLocation().x, getX(), nextPosition.x)) / 3);
-        Vec3 ab = nextPosition.subtract(position());
-        Vec3 av = result.getLocation().subtract(position());
+        Vec3 impactPos = result.getLocation();
+        float averageValue = (float) (
+                (
+                        Mth.inverseLerp(impactPos.x, getX(), nextPosition.x) +
+                                Mth.inverseLerp(impactPos.y, getY(), nextPosition.y) +
+                                Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z)
+                ) / 3);
+
         crystalSoundIntensity = averageValue;
         float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
         crystalSoundIntensity = storedCrystalSoundIntensity;
@@ -468,7 +597,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if (!level().isClientSide && didDamage)
             {
                 ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-                if ((chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget)) ||
+                if ((Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20) ||
                         Objects.equals(getProjectileType(), Types.BLASTER))
                 {
                     level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
@@ -480,7 +609,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), result.getLocation(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
                 level().broadcastEntityEvent(this, (byte) 3);
                 level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             }
@@ -547,7 +676,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void shoot(double x, double y, double z, float velocity, float inaccuracy, float partialTicks)
     {
-        double usedInaccuracy = inaccuracy * 0.0075;
+        double usedInaccuracy = inaccuracy * 0.0085;
         Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy).normalize();
 
         entityData.set(SHOOT_DIRECTION, vec3);
@@ -739,9 +868,15 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return straightShotTime;
     }
 
-    public float getTickCountForDamage()
+    public float calculateDamageDecay(float baseDamage, float startTick, float decayPerTick, float minDamage)
     {
-        return tickCount - Math.max(0, straightShotTime) + crystalSoundIntensity;
+        // getMaxStraightShotTime() - straightShotTime is just tickCount but it counts the partial ticks too
+        float tickCount = getMaxStraightShotTime() - straightShotTime + crystalSoundIntensity;
+
+        float diff = tickCount - startTick;
+        if (diff < 0)
+            return baseDamage;
+        return Math.max(minDamage, baseDamage - decayPerTick * diff);
     }
 
     public float getMaxStraightShotTime()

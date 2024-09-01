@@ -65,39 +65,6 @@ public class Stage implements Comparable<Stage>
         registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
     }
 
-    public CompoundTag writeData()
-    {
-        CompoundTag nbt = new CompoundTag();
-
-        nbt.put("CornerA", NbtUtils.writeBlockPos(cornerA));
-        nbt.put("CornerB", NbtUtils.writeBlockPos(cornerB));
-        nbt.putString("Dimension", dimID.toString());
-
-        CompoundTag settingsNbt = new CompoundTag();
-        CompoundTag teamsNbt = new CompoundTag();
-
-        for (Map.Entry<String, Boolean> setting : settings.entrySet())
-            settingsNbt.putBoolean(setting.getKey(), setting.getValue());
-        nbt.put("Settings", settingsNbt);
-
-        for (Map.Entry<String, Integer> team : teams.entrySet())
-            teamsNbt.putInt(team.getKey(), team.getValue());
-        nbt.put("Teams", teamsNbt);
-
-        if (!needsSpawnPadUpdate)
-        {
-            ListTag list = new ListTag();
-            for (BlockPos spawnPadPos : spawnPadPositions)
-                list.add(NbtUtils.writeBlockPos(spawnPadPos));
-
-            nbt.put("SpawnPads", list);
-        }
-
-        nbt.putString("Name", Component.Serializer.toJson(name));
-
-        return nbt;
-    }
-
     public boolean hasSetting(String key)
     {
         return settings.containsKey(key);
@@ -210,6 +177,39 @@ public class Stage implements Comparable<Stage>
             spawnPadPositions.add(NbtUtils.readBlockPos((CompoundTag) tag));
 
         name = nbt.contains("Name") ? Component.Serializer.fromJson(nbt.getString("Name")) : Component.literal(id);
+    }
+
+    public CompoundTag writeData()
+    {
+        CompoundTag nbt = new CompoundTag();
+
+        nbt.put("CornerA", NbtUtils.writeBlockPos(cornerA));
+        nbt.put("CornerB", NbtUtils.writeBlockPos(cornerB));
+        nbt.putString("Dimension", dimID.toString());
+
+        CompoundTag settingsNbt = new CompoundTag();
+        CompoundTag teamsNbt = new CompoundTag();
+
+        for (Map.Entry<String, Boolean> setting : settings.entrySet())
+            settingsNbt.putBoolean(setting.getKey(), setting.getValue());
+        nbt.put("Settings", settingsNbt);
+
+        for (Map.Entry<String, Integer> team : teams.entrySet())
+            teamsNbt.putInt(team.getKey(), team.getValue());
+        nbt.put("Teams", teamsNbt);
+
+        if (!needsSpawnPadUpdate)
+        {
+            ListTag list = new ListTag();
+            for (BlockPos spawnPadPos : spawnPadPositions)
+                list.add(NbtUtils.writeBlockPos(spawnPadPos));
+
+            nbt.put("SpawnPads", list);
+        }
+
+        nbt.putString("Name", Component.Serializer.toJson(name));
+
+        return nbt;
     }
 
     public Stage(Level level, BlockPos posA, BlockPos posB, String id, Component name)

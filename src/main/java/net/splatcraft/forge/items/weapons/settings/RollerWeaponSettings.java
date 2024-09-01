@@ -58,11 +58,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     {
         if (projectile.throwerAirborne)
         {
-            float e = projectile.getTickCountForDamage() - flingDamageDecayStartTick;
-            return Math.max(e > 0 ? flingBaseDamage - (e * flingDamageDecayPerTick) : flingBaseDamage, flingMinDamage);
+            return projectile.calculateDamageDecay(flingBaseDamage, flingDamageDecayStartTick, flingDamageDecayPerTick, flingMinDamage);
         }
-        float e = projectile.getTickCountForDamage() - swingDamageDecayStartTick;
-        return Math.max(e > 0 ? swingBaseDamage - (e * swingDamageDecayPerTick) : swingBaseDamage, swingMinDamage);
+        return projectile.calculateDamageDecay(swingBaseDamage, swingDamageDecayStartTick, swingDamageDecayPerTick, swingMinDamage);
     }
 
     @Override
