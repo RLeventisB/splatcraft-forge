@@ -28,6 +28,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import java.awt.*;
@@ -279,5 +280,38 @@ public class CommonUtils
             }
         }
         return true;
+    }
+
+    public static @NotNull Result tickValue(float delay, float value, float decrease, float minValue, float timeDelta)
+    {
+        if (delay > 0)
+        {
+            delay -= timeDelta;
+            if (delay < 0)
+            {
+                if (Float.isInfinite(decrease) || Float.isNaN(decrease))
+                    value = 0;
+                else
+                    value -= decrease * -delay;
+                delay = 0;
+            }
+        }
+        else
+        {
+            if (decrease == 0)
+                value = 0;
+            else
+            {
+                if (value > minValue)
+                    value -= decrease * timeDelta;
+                if (value < minValue)
+                    value = minValue;
+            }
+        }
+        return new Result(delay, value);
+    }
+
+    public record Result(float delay, float value)
+    {
     }
 }

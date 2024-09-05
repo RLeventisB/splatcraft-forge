@@ -37,6 +37,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HalfTransparentBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -58,7 +59,12 @@ import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.items.weapons.IChargeableWeapon;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.forge.items.weapons.settings.CommonRecords;
+import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.util.*;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -359,8 +365,7 @@ public class RendererHandler
     {
         int width = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int height = Minecraft.getInstance().getWindow().getGuiScaledHeight();
-        GuiGraphics graphics = event.getGuiGraphics();
-        renderGuiInternal(null, graphics, event.getPartialTick(), width, height);
+        renderGuiInternal(null, event.getGuiGraphics(), event.getPartialTick(), width, height);
     }
 
     public static void renderGuiInternal(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height)
@@ -406,6 +411,72 @@ public class RendererHandler
             }
         }
 
+        float[] playerColor = ColorUtils.hexToRGB(info.getColor());
+        if (player.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
+        {
+            PoseStack matrixStack = graphics.pose();
+            matrixStack.pushPose();
+            RenderSystem.setShaderTexture(0, WIDGETS);
+            RenderSystem.enableBlend();
+
+            CommonRecords.ShotDeviationDataRecord data = weaponBaseItem.getSettings(player.getMainHandItem()).getShotDeviationData(player.getMainHandItem(), player);
+            ShotDeviationHelper.DeviationData deviationData = ShotDeviationHelper.getDeviationData(player.getMainHandItem());
+
+            CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), partialTicks);
+            CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, partialTicks);
+
+            Minecraft mc = Minecraft.getInstance();
+
+            Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
+                    mc.gameRenderer.getFov(
+                            mc.gameRenderer.getMainCamera(),
+                            partialTicks,
+                            true));
+
+//            float aspectRatio = Mth.lerp(1 / (1 + data.getMaximumDeviation() * 100), (float) height / width, 1f);
+            float aspectRatio = 0.5625f;
+
+            float currentAirInfluence = airInfluenceResult.value();
+            float currentDeviationChance = actualChanceResult.value();
+
+            float currentDeviation = Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f * 1.34f;
+
+            float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
+            float[] rgb = new float[]
+                    {
+                            Mth.lerp(value, 0.6f, playerColor[0]),
+                            Mth.lerp(value, 0.6f, playerColor[1]),
+                            Mth.lerp(value, 0.6f, playerColor[2])
+                    };
+            RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
+
+            Vec3 relativePos = new Vec3(0, 0, 1);
+            for (int x = -1; x <= 1; x += 2)
+            {
+                for (int y = -1; y <= 1; y += 2)
+                {
+                    Vec3 rotatedPos = relativePos.xRot(currentDeviation * x).yRot(currentDeviation * y);
+
+                    Vector3f camSpace = rotatedPos.toVector3f();
+
+                    Vector4f projectiveCamSpace = new Vector4f(camSpace, 1f);
+                    projectionMatrix.transform(projectiveCamSpace);
+                    float w = projectiveCamSpace.w();
+
+                    Vector4f screenPos = new Vector4f(projectiveCamSpace.x() / w * width, projectiveCamSpace.y() / w * height, w, (float) Math.sqrt(relativePos.dot(relativePos)));
+
+                    GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + screenPos.x - 3 * y, height / 2f - 3 + (screenPos.y * aspectRatio) - 3 * x, 6, 6, 64 - 7 * y, 8 - 7 * x, 4, 4, 256, 256);
+                }
+            }
+
+//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + currentDeviation, height / 2f - 3 - (currentDeviation * aspectRatio), 6, 6, 71, 1, 4, 4, 256, 256);
+//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + currentDeviation, height / 2f - 3 + (currentDeviation * aspectRatio), 6, 6, 71, 15, 4, 4, 256, 256);
+//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 - currentDeviation, height / 2f - 3 + (currentDeviation * aspectRatio), 6, 6, 57, 15, 4, 4, 256, 256);
+
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+            matrixStack.popPose();
+        }
+
         boolean showCrosshairInkIndicator = SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
         boolean isHoldingMatchItem = player.getMainHandItem().is(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffhandItem().is(SplatcraftTags.Items.MATCH_ITEMS);
         boolean showLowInkWarning = showCrosshairInkIndicator && SplatcraftConfig.Client.lowInkWarning.get() && (isHoldingMatchItem || info.isSquid()) && !enoughInk(player, null, 10f, 0, false);
@@ -431,7 +502,7 @@ public class RendererHandler
                     float speed = 0.15f;
                     int heightAnim = Math.min(14, (int) (squidTime * speed));
                     int glowAnim = Math.max(0, Math.min(18, (int) (squidTime * speed) - 16));
-                    float[] rgb = ColorUtils.hexToRGB(info.getColor());
+                    float[] rgb = playerColor;
 
                     PoseStack matrixStack = graphics.pose();
                     matrixStack.pushPose();

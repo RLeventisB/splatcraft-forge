@@ -13,6 +13,7 @@ import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
@@ -45,6 +46,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     {
         Player player = (Player) entity;
         ItemCooldowns cooldownTracker = player.getCooldowns();
+
         if (!cooldownTracker.isOnCooldown(this) && !PlayerCooldown.hasPlayerCooldown(player))
         {
             BlasterWeaponSettings settings = getSettings(stack);
@@ -62,10 +64,11 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         if (!level.isClientSide())
         {
             BlasterWeaponSettings settings = getSettings(stack);
+
             if (reduceInk(player, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
             {
                 InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
-                proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), player.onGround() ? settings.shotData.groundInaccuracy() : settings.shotData.airborneInaccuracy());
+                proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, player)));
                 proj.setBlasterStats(settings);
                 proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
                 level.addFreshEntity(proj);

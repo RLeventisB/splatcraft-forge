@@ -3,6 +3,7 @@ package net.splatcraft.forge.items.weapons;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -214,6 +215,22 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
+        if (entity instanceof LivingEntity livingEntity)
+        {
+            CommonRecords.ShotDeviationDataRecord deviationData = getSettings(stack).getShotDeviationData(stack, entity);
+            if (deviationData != CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT)
+            {
+                ShotDeviationHelper.tickDeviation(stack, deviationData, 1);
+
+                CompoundTag nbt = stack.getOrCreateTag();
+                boolean oldGroundState = nbt.getBoolean("Deviation_Jumping_State");
+                nbt.putBoolean("Deviation_Jumping_State", livingEntity.onGround());
+                if (oldGroundState && !livingEntity.onGround())
+                {
+                    ShotDeviationHelper.registerJumpForShotDeviation(stack, deviationData);
+                }
+            }
+        }
         if (entity instanceof Player player)
         {
             if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)

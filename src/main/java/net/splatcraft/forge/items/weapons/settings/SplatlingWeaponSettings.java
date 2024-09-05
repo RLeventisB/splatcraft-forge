@@ -2,6 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -53,6 +55,12 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     public Codec<DataRecord> getCodec()
     {
         return DataRecord.CODEC;
+    }
+
+    @Override
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    {
+        return stack.getOrCreateTag().getFloat("Charge") > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
     }
 
     @Override
@@ -170,8 +178,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
             int startupTicks,
             int firingSpeed,
             int projectileCount,
-            float groundInaccuracy,
-            float airborneInaccuracy,
+            CommonRecords.ShotDeviationDataRecord accuracyData,
             float pitchCompensation
     )
     {
@@ -180,16 +187,15 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
                         Codec.INT.optionalFieldOf("startup_ticks", 0).forGetter(ShotDataRecord::startupTicks),
                         Codec.INT.fieldOf("firing_speed").forGetter(ShotDataRecord::firingSpeed),
                         Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
-                        Codec.FLOAT.fieldOf("ground_inaccuracy").forGetter(ShotDataRecord::groundInaccuracy),
-                        Codec.FLOAT.optionalFieldOf("airborne_inaccuracy").forGetter(r -> Optional.of(r.airborneInaccuracy)),
+                        CommonRecords.ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
                         Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation)
                 ).apply(instance, ShotDataRecord::create)
         );
-        public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 0, 0, 0);
+        public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, CommonRecords.ShotDeviationDataRecord.DEFAULT, 0);
 
-        public static ShotDataRecord create(int startupTicks, int firingSpeed, int projectileCount, float groundInaccuracy, Optional<Float> airborneInaccuracy, float pitchCompensation)
+        public static ShotDataRecord create(int startupTicks, int firingSpeed, int projectileCount, CommonRecords.ShotDeviationDataRecord accuracyData, float pitchCompensation)
         {
-            return new ShotDataRecord(startupTicks, firingSpeed, projectileCount, groundInaccuracy, airborneInaccuracy.orElse(groundInaccuracy), pitchCompensation);
+            return new ShotDataRecord(startupTicks, firingSpeed, projectileCount, accuracyData, pitchCompensation);
         }
     }
 }

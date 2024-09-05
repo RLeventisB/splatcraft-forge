@@ -144,13 +144,23 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
             SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
             SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
 
-            xDelta = xDelta * 0.7f + (Mth.degreesDifference(xRot, player.getXRot())) * 0.12f;
-            yDelta = yDelta * 0.7f + (Mth.degreesDifference(yRot, player.getYRot())) * 0.12f;
-            xRotOld = xRot;
-            yRotOld = yRot;
+            if (shotSetting.allowFlicking())
+            {
+                xDelta = xDelta * 0.7f + (Mth.degreesDifference(xRot, player.getXRot())) * 0.12f;
+                yDelta = yDelta * 0.7f + (Mth.degreesDifference(yRot, player.getYRot())) * 0.12f;
+                xRotOld = xRot;
+                yRotOld = yRot;
 
-            xRot += xDelta * (didSound ? 1 : 0.4f);
-            yRot += yDelta * (didSound ? 1 : 0.4f);
+                xRot += xDelta * (didSound ? 1 : 0.4f);
+                yRot += yDelta * (didSound ? 1 : 0.4f);
+            }
+            else
+            {
+                xRotOld = xRot;
+                yRotOld = yRot;
+                xRot = player.getXRot();
+                yRot = player.getYRot();
+            }
 
             for (int i = 0; i < sloshes.size(); i++)
             {

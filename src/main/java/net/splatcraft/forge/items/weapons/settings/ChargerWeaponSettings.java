@@ -2,6 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -10,32 +12,11 @@ import java.util.Optional;
 
 public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponSettings, ChargerWeaponSettings.DataRecord>
 {
-    public float projectileSize;
-    public float projectileInkCoverage;
-    public float projectileInkTrailCoverage;
-    public int projectileInkTrailCooldown = 0;
-    public float projectileSpeed;
-    public int minProjectileLifeTicks;
-    public float minProjectileRange;
-    public int maxProjectileLifeTicks;
-    public float maxProjectileRange;
-    public int endLagTicks;
-    public float minInkConsumption;
-    public float maxInkConsumption;
-    public int inkRecoveryCooldown;
-    public float baseChargeDamage;
-    public float minChargeDamage;
-    public float chargedDamage;
-    public float piercesAtCharge = 2;
-    public int chargeTimeTicks;
-    public float chargeSpeed;
-    public int airborneChargeTimeTicks;
-    public float airborneChargeSpeed;
-    public int emptyTankChargeTimeTicks;
-    public float emptyTankChargeSpeed;
-    public int chargeStorageTicks;
-    public boolean bypassesMobDamage;
     public static final ChargerWeaponSettings DEFAULT = new ChargerWeaponSettings("default");
+    public ChargerProjectileDataRecord projectileData = ChargerProjectileDataRecord.DEFAULT;
+    public ShotDataRecord shotData = ShotDataRecord.DEFAULT;
+    public ChargeDataRecord chargeData = ChargeDataRecord.DEFAULT;
+    public boolean bypassesMobDamage = false;
 
     public ChargerWeaponSettings(String name)
     {
@@ -48,9 +29,9 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
         ExtraSaveData.ChargeExtraData chargeData = list.getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
         if (chargeData != null)
         {
-            return chargeData.charge >= 1.0f ? chargedDamage : minChargeDamage + (baseChargeDamage - minChargeDamage) * chargeData.charge;
+            return chargeData.charge >= 1.0f ? projectileData.fullyChargedDamage : projectileData.minChargeDamage + (projectileData.maxChargeDamage - projectileData.minChargeDamage) * chargeData.charge;
         }
-        return minChargeDamage;
+        return projectileData.minChargeDamage;
     }
 
     @Override
@@ -58,8 +39,8 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
     {
         return new WeaponTooltip[]
                 {
-                        new WeaponTooltip<ChargerWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> settings.maxProjectileRange, WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<ChargerWeaponSettings>("charge_speed", WeaponTooltip.Metrics.SECONDS, settings -> settings.chargeTimeTicks / 20f, WeaponTooltip.RANKER_DESCENDING),
+                        new WeaponTooltip<ChargerWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> settings.projectileData.fullyChargedRange, WeaponTooltip.RANKER_ASCENDING),
+                        new WeaponTooltip<ChargerWeaponSettings>("charge_speed", WeaponTooltip.Metrics.SECONDS, settings -> settings.chargeData.chargeTime() / 20f, WeaponTooltip.RANKER_DESCENDING),
                         new WeaponTooltip<ChargerWeaponSettings>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.moveSpeed, WeaponTooltip.RANKER_ASCENDING)
                 };
     }
@@ -71,182 +52,31 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
     }
 
     @Override
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    {
+        return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
+    }
+
+    @Override
     public void deserialize(DataRecord data)
     {
-        ProjectileDataRecord projectile = data.projectile;
+        projectileData = data.projectile;
+        shotData = data.shot;
+        chargeData = data.charge;
 
-        data.fullDamageToMobs.ifPresent(this::setBypassesMobDamage);
-        data.isSecret.ifPresent(this::setSecret);
-
-        setProjectileSize(projectile.size);
-        projectile.inkCoverageImpact.ifPresent(this::setProjectileInkCoverage);
-        setProjectileSpeed(projectile.speed);
-        setMinProjectileRange(projectile.minRange);
-        setMaxProjectileRange(projectile.maxRange);
-
-        projectile.inkTrailCoverage.ifPresent(this::setProjectileInkTrailCoverage);
-        projectile.inkTrailCooldown.ifPresent(this::setProjectileInkTrailCooldown);
-
-        setMinChargeDamage(projectile.minChargeDamage);
-        setBaseChargeDamage(projectile.baseChargeDamage);
-        projectile.fullyChargedDamage.ifPresent(this::setChargedDamage);
-        projectile.piercesAtCharge.ifPresent(this::setPiercesAtCharge);
-
-        ShotDataRecord shot = data.shot;
-
-        setEndLagTicks(shot.endlagTicks);
-        setMinInkConsumption(shot.minInkConsumption);
-        setMaxInkConsumption(shot.maxInkConsumption);
-        setInkRecoveryCooldown(shot.inkRecoveryCooldown);
-
-        ChargeDataRecord charge = data.charge;
-
-        setChargeTimeTicks(charge.chargeTime);
-        charge.airborneChargeTime.ifPresent(this::setAirborneChargeTimeTicks);
-        charge.emptyTankChargeTime.ifPresent(this::setEmptyTankChargeTimeTicks);
-        setChargeStorageTicks(charge.chargeStorageTime);
-        data.mobility.ifPresent(this::setChargingWalkSpeed);
+        setMoveSpeed(data.mobility);
+        setSecret(data.isSecret);
+        setBypassesMobDamage(data.fullDamageToMobs);
     }
 
     @Override
     public DataRecord serialize()
     {
-        return new DataRecord(new ProjectileDataRecord(projectileSize, Optional.of(projectileInkCoverage), minProjectileRange, maxProjectileRange, projectileSpeed,
-                Optional.of(projectileInkTrailCoverage), Optional.of(projectileInkTrailCooldown), minChargeDamage, baseChargeDamage, Optional.of(chargedDamage), Optional.of(piercesAtCharge)),
-                new ShotDataRecord(endLagTicks, minInkConsumption, maxInkConsumption, inkRecoveryCooldown),
-                new ChargeDataRecord(chargeTimeTicks, Optional.of(airborneChargeTimeTicks), Optional.of(emptyTankChargeTimeTicks), chargeStorageTicks), Optional.of(moveSpeed),
-                Optional.of(bypassesMobDamage), Optional.of(isSecret));
-    }
-
-    public ChargerWeaponSettings setProjectileSize(float projectileSize)
-    {
-        this.projectileSize = projectileSize;
-        projectileInkCoverage = projectileSize * .85f;
-        projectileInkTrailCoverage = projectileSize * 1.1f;
-        return this;
-    }
-
-    public ChargerWeaponSettings setProjectileSpeed(float projectileSpeed)
-    {
-        this.projectileSpeed = projectileSpeed;
-        return this;
-    }
-
-    public ChargerWeaponSettings setMaxInkConsumption(float maxInkConsumption)
-    {
-        this.maxInkConsumption = maxInkConsumption;
-        return this;
-    }
-
-    public ChargerWeaponSettings setMinInkConsumption(float minInkConsumption)
-    {
-        this.minInkConsumption = minInkConsumption;
-        return this;
-    }
-
-    public ChargerWeaponSettings setInkRecoveryCooldown(int inkRecoveryCooldown)
-    {
-        this.inkRecoveryCooldown = inkRecoveryCooldown;
-        return this;
-    }
-
-    public ChargerWeaponSettings setBaseChargeDamage(float baseChargeDamage)
-    {
-        this.baseChargeDamage = baseChargeDamage;
-        this.chargedDamage = baseChargeDamage;
-        return this;
-    }
-
-    public ChargerWeaponSettings setChargedDamage(float chargedDamage)
-    {
-        this.chargedDamage = chargedDamage;
-        return this;
-    }
-
-    public ChargerWeaponSettings setChargeStorageTicks(int chargeStorageTicks)
-    {
-        this.chargeStorageTicks = chargeStorageTicks;
-        return this;
-    }
-
-    public ChargerWeaponSettings setChargeTimeTicks(int chargeTimeTicks)
-    {
-        this.chargeTimeTicks = chargeTimeTicks;
-        chargeSpeed = 1f / chargeTimeTicks;
-        setAirborneChargeTimeTicks((int) (chargeTimeTicks / 0.33f));
-        setEmptyTankChargeTimeTicks((int) (chargeTimeTicks / 0.33f));
-
-        return this;
-    }
-
-    public ChargerWeaponSettings setAirborneChargeTimeTicks(int airborneChargeTimeTicks)
-    {
-        this.airborneChargeTimeTicks = airborneChargeTimeTicks;
-        airborneChargeSpeed = 1f / airborneChargeTimeTicks;
-        return this;
-    }
-
-    public ChargerWeaponSettings setEmptyTankChargeTimeTicks(int emptyTankChargeTimeTicks)
-    {
-        this.emptyTankChargeTimeTicks = emptyTankChargeTimeTicks;
-        emptyTankChargeSpeed = 1f / emptyTankChargeTimeTicks;
-        return this;
-    }
-
-    public ChargerWeaponSettings setChargingWalkSpeed(float chargingWalkSpeed)
-    {
-        this.moveSpeed = chargingWalkSpeed;
-        return this;
-    }
-
-    public ChargerWeaponSettings setEndLagTicks(int endLagTicks)
-    {
-        this.endLagTicks = endLagTicks;
-        return this;
-    }
-
-    public ChargerWeaponSettings setMinChargeDamage(float minChargeDamage)
-    {
-        this.minChargeDamage = minChargeDamage;
-        return this;
-    }
-
-    public ChargerWeaponSettings setPiercesAtCharge(float piercesAtCharge)
-    {
-        this.piercesAtCharge = piercesAtCharge;
-        return this;
-    }
-
-    public ChargerWeaponSettings setProjectileInkCoverage(float projectileInkCoverage)
-    {
-        this.projectileInkCoverage = projectileInkCoverage;
-        return this;
-    }
-
-    public ChargerWeaponSettings setMinProjectileRange(float blocks)
-    {
-        this.minProjectileLifeTicks = (int) (blocks / projectileSpeed);
-        this.minProjectileRange = minProjectileLifeTicks * projectileSpeed; //math so that weapon stat tooltips always yield accurate results
-        return this;
-    }
-
-    public ChargerWeaponSettings setMaxProjectileRange(float blocks)
-    {
-        this.maxProjectileLifeTicks = (int) (blocks / projectileSpeed);
-        this.maxProjectileRange = maxProjectileLifeTicks * projectileSpeed; //math so that weapon stat tooltips always yield accurate results
-        return this;
-    }
-
-    public ChargerWeaponSettings setProjectileInkTrailCooldown(int projectileInkTrailCooldown)
-    {
-        this.projectileInkTrailCooldown = projectileInkTrailCooldown;
-        return this;
-    }
-
-    public ChargerWeaponSettings setProjectileInkTrailCoverage(float projectileInkTrailCoverage)
-    {
-        this.projectileInkTrailCoverage = projectileInkTrailCoverage;
-        return this;
+        return new DataRecord(projectileData,
+                shotData,
+                chargeData,
+                moveSpeed,
+                bypassesMobDamage, isSecret);
     }
 
     public ChargerWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
@@ -256,79 +86,128 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
     }
 
     public record DataRecord(
-            ProjectileDataRecord projectile,
+            ChargerProjectileDataRecord projectile,
             ShotDataRecord shot,
             ChargeDataRecord charge,
-            Optional<Float> mobility,
-            Optional<Boolean> fullDamageToMobs,
-            Optional<Boolean> isSecret
+            float mobility,
+            boolean fullDamageToMobs,
+            boolean isSecret
     )
     {
         public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
+                        ChargerProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
                         ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
                         ChargeDataRecord.CODEC.fieldOf("charge").forGetter(DataRecord::charge),
-                        Codec.FLOAT.optionalFieldOf("mobility").forGetter(DataRecord::mobility),
-                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs").forGetter(DataRecord::fullDamageToMobs),
-                        Codec.BOOL.optionalFieldOf("is_secret").forGetter(DataRecord::isSecret)
+                        Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
+                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::fullDamageToMobs),
+                        Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
                 ).apply(instance, DataRecord::new)
         );
     }
 
-    record ProjectileDataRecord(
+    public record ChargerProjectileDataRecord(
             float size,
-            Optional<Float> inkCoverageImpact,
-            float minRange,
-            float maxRange,
+            float minChargeRange,
+            float maxChargeRange,
+            float fullyChargedRange,
             float speed,
-            Optional<Float> inkTrailCoverage,
-            Optional<Integer> inkTrailCooldown,
+            float inkCoverageImpact,
+            float inkDropCoverage,
+            float distanceBetweenInkDrops,
             float minChargeDamage,
-            float baseChargeDamage,
-            Optional<Float> fullyChargedDamage,
-            Optional<Float> piercesAtCharge
+            float maxChargeDamage,
+            float fullyChargedDamage,
+            float piercesAtCharge
     )
     {
-        public static final Codec<ProjectileDataRecord> CODEC = RecordCodecBuilder.create(
+        public static final Codec<ChargerProjectileDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
-                        Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(ProjectileDataRecord::inkCoverageImpact),
-                        Codec.FLOAT.fieldOf("min_charge_range").forGetter(ProjectileDataRecord::minRange),
-                        Codec.FLOAT.fieldOf("max_charge_range").forGetter(ProjectileDataRecord::maxRange),
-                        Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(ProjectileDataRecord::inkTrailCoverage),
-                        Codec.INT.optionalFieldOf("distance_between_drops").forGetter(ProjectileDataRecord::inkTrailCooldown),
-                        Codec.FLOAT.fieldOf("min_partial_charge_damage").forGetter(ProjectileDataRecord::minChargeDamage),
-                        Codec.FLOAT.fieldOf("max_partial_charge_damage").forGetter(ProjectileDataRecord::baseChargeDamage),
-                        Codec.FLOAT.optionalFieldOf("fully_charged_damage").forGetter(ProjectileDataRecord::fullyChargedDamage),
-                        Codec.FLOAT.optionalFieldOf("pierces_at_charge").forGetter(ProjectileDataRecord::piercesAtCharge)
-                ).apply(instance, ProjectileDataRecord::new)
+                        Codec.FLOAT.fieldOf("size").forGetter(ChargerProjectileDataRecord::size),
+                        Codec.FLOAT.fieldOf("min_charge_range").forGetter(ChargerProjectileDataRecord::minChargeRange),
+                        Codec.FLOAT.fieldOf("max_charge_range").forGetter(ChargerProjectileDataRecord::maxChargeRange),
+                        Codec.FLOAT.optionalFieldOf("fully_charge_range").forGetter(v -> Optional.of(v.maxChargeRange())),
+                        Codec.FLOAT.fieldOf("speed").forGetter(ChargerProjectileDataRecord::speed),
+                        Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(v -> Optional.of(v.inkDropCoverage)),
+                        Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(v -> Optional.of(v.inkCoverageImpact)),
+                        Codec.FLOAT.optionalFieldOf("distance_between_drops", 4f).forGetter(ChargerProjectileDataRecord::distanceBetweenInkDrops),
+                        Codec.FLOAT.fieldOf("min_partial_charge_damage").forGetter(ChargerProjectileDataRecord::minChargeDamage),
+                        Codec.FLOAT.fieldOf("max_partial_charge_damage").forGetter(ChargerProjectileDataRecord::maxChargeDamage),
+                        Codec.FLOAT.optionalFieldOf("fully_charged_damage").forGetter(v -> Optional.of(v.fullyChargedDamage)),
+                        Codec.FLOAT.optionalFieldOf("pierces_at_charge", 2f).forGetter(ChargerProjectileDataRecord::piercesAtCharge)
+                ).apply(instance, ChargerProjectileDataRecord::create)
         );
+        public static final ChargerProjectileDataRecord DEFAULT = new ChargerProjectileDataRecord(0, 10, 20, 20, 1, 1, 1, 1, 10, 15, 20, 2f);
+
+        public static ChargerProjectileDataRecord create(float size,
+                                                         float minRange,
+                                                         float maxRange,
+                                                         Optional<Float> fullyChargedRange,
+                                                         float speed,
+                                                         Optional<Float> inkCoverageImpact,
+                                                         Optional<Float> inkDropCoverage,
+                                                         float distanceBetweenInkDrops,
+                                                         float minChargeDamage,
+                                                         float baseChargeDamage,
+                                                         Optional<Float> fullyChargedDamage,
+                                                         float piercesAtCharge
+        )
+        {
+            return new ChargerProjectileDataRecord(
+                    size,
+                    minRange,
+                    maxRange,
+                    fullyChargedRange.orElse(maxRange),
+                    speed,
+                    inkCoverageImpact.orElse(size * 0.85f),
+                    inkDropCoverage.orElse(size * 1.1f),
+                    distanceBetweenInkDrops,
+                    minChargeDamage,
+                    baseChargeDamage,
+                    fullyChargedDamage.orElse(baseChargeDamage),
+                    piercesAtCharge
+            );
+        }
     }
 
     public record ChargeDataRecord(
             int chargeTime,
-            Optional<Integer> airborneChargeTime,
-            Optional<Integer> emptyTankChargeTime,
+            float airborneChargeRate,
+            float emptyTankChargeRate,
             int chargeStorageTime
     )
     {
         public static final Codec<ChargeDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.INT.fieldOf("charge_time_ticks").forGetter(ChargeDataRecord::chargeTime),
-                        Codec.INT.optionalFieldOf("airborne_charge_time_ticks").forGetter(ChargeDataRecord::airborneChargeTime),
-                        Codec.INT.optionalFieldOf("empty_tank_charge_time_ticks").forGetter(ChargeDataRecord::emptyTankChargeTime),
-                        Codec.INT.fieldOf("charge_storage_ticks").forGetter(ChargeDataRecord::chargeStorageTime)
-                ).apply(instance, ChargeDataRecord::new)
+                        Codec.intRange(1, Integer.MAX_VALUE).fieldOf("charge_time_ticks").forGetter(ChargeDataRecord::chargeTime),
+                        Codec.floatRange(0, 1).optionalFieldOf("airborne_charge_rate", 0.33f).forGetter(ChargeDataRecord::airborneChargeRate),
+                        Codec.floatRange(0, 1).optionalFieldOf("empty_tank_charge_rate", 0.33f).forGetter(ChargeDataRecord::emptyTankChargeRate),
+                        Codec.INT.optionalFieldOf("charge_storage_ticks", 25).forGetter(ChargeDataRecord::chargeStorageTime)
+                ).apply(instance, ChargeDataRecord::create)
         );
+
+        private static ChargeDataRecord create(int chargeTime,
+                                               float airborneChargeTime,
+                                               float emptyTankChargeTime,
+                                               int chargeStorageTime)
+        {
+            return new ChargeDataRecord(chargeTime, airborneChargeTime, emptyTankChargeTime, chargeStorageTime);
+        }
+
+        public float getChargePercentPerTick()
+        {
+            return 1f / chargeTime;
+        }
+
+        public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(10, 1f / 3, 1f / 3, 25);
     }
 
     public record ShotDataRecord(
             int endlagTicks,
             float minInkConsumption,
             float maxInkConsumption,
-            int inkRecoveryCooldown
+            int inkRecoveryCooldown,
+            int shotsCount
 
     )
     {
@@ -337,8 +216,10 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
                         Codec.INT.fieldOf("endlag_ticks").forGetter(ShotDataRecord::endlagTicks),
                         Codec.FLOAT.fieldOf("min_charge_ink_consumption").forGetter(ShotDataRecord::minInkConsumption),
                         Codec.FLOAT.fieldOf("full_charge_ink_consumption").forGetter(ShotDataRecord::maxInkConsumption),
-                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown)
+                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown),
+                        Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("shots_after_charge", 1).forGetter(ShotDataRecord::shotsCount)
                 ).apply(instance, ShotDataRecord::new)
         );
+        public static final ShotDataRecord DEFAULT = new ShotDataRecord(10, 2f, 14f, 25, 1);
     }
 }
