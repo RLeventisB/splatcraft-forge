@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.*;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -28,10 +27,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.splatcraft.forge.client.handlers.JumpLureHudHandler;
 import net.splatcraft.forge.registries.SplatcraftItems;
+import net.splatcraft.forge.util.GraphicsUtils;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.ArrayList;
@@ -87,7 +85,7 @@ public class SuperJumpSelectorScreen
             if (i == 1 && targets.canTargetSpawn && option instanceof ItemStackMenuItem)
             {
                 Vec3 spawnPos = Vec3.atCenterOf(targets.spawnPosition);
-                Vector4f screenPos = worldToScreenSpace(spawnPos, projectionMatrix);
+                Vector4f screenPos = GraphicsUtils.worldToScreenSpace(spawnPos, projectionMatrix);
                 if (screenPos.z > 0)
                     continue;
 
@@ -99,7 +97,7 @@ public class SuperJumpSelectorScreen
             else if (option instanceof PlayerMenuItem menuItem)
             {
                 Vec3 playerPos = mc.level.getPlayerByUUID(menuItem.profile.getId()).position();
-                Vector4f screenPos = worldToScreenSpace(playerPos, projectionMatrix);
+                Vector4f screenPos = GraphicsUtils.worldToScreenSpace(playerPos, projectionMatrix);
                 if (screenPos.z > 0)
                     continue;
 
@@ -167,25 +165,6 @@ public class SuperJumpSelectorScreen
         graphics.pose().scale(scale, scale, scale);
         option.renderIcon(graphics, ((screenWidth / 2f + x) / scale - 8), ((screenHeight / 2f + y) / scale - 8), z, 1, partialTicks);
         graphics.pose().popPose();
-    }
-
-    // omfg thank you random repo i didnt know about (sorry if this sounds rude)https://github.com/FiguraMC/Figura/blob/85a406acd607dc39d1d2c865af817a70941d1956/common/src/main/java/org/figuramc/figura/utils/MathUtils.java#L88
-    public static Vector4f worldToScreenSpace(Vec3 worldSpace, Matrix4f projMat)
-    {
-        Camera camera = mc.gameRenderer.getMainCamera();
-        Matrix3f transformMatrix = new Matrix3f().rotation(camera.rotation());
-        transformMatrix.invert();
-
-        Vec3 camPos = camera.getPosition();
-        Vec3 posDiff = worldSpace.subtract(camPos.x, camPos.y, camPos.z);
-        Vector3f camSpace = posDiff.toVector3f();
-        transformMatrix.transform(camSpace);
-
-        Vector4f projectiveCamSpace = new Vector4f(camSpace, 1f);
-        projMat.transform(projectiveCamSpace);
-        float w = projectiveCamSpace.w();
-
-        return new Vector4f(projectiveCamSpace.x() / w / 2f, projectiveCamSpace.y() / w / 2f, w, (float) Math.sqrt(posDiff.dot(posDiff)));
     }
 
     interface MenuItem
@@ -281,7 +260,7 @@ public class SuperJumpSelectorScreen
                 this.location = minecraft.getSkinManager().registerTexture(map.get(MinecraftProfileTexture.Type.SKIN), MinecraftProfileTexture.Type.SKIN);
             else
                 this.location = DefaultPlayerSkin.getDefaultSkin(UUIDUtil.getOrCreatePlayerUUID(profile));
-            
+
             this.name = Component.literal(profile.getName());
         }
 

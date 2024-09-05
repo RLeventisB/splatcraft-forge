@@ -14,10 +14,15 @@
     },
     "shot": {
         "endlag_ticks": 2,
-        "ground_inaccuracy": 5,
-        "airborne_inaccuracy": 12,
         "ink_consumption": 0.8,
-        "ink_recovery_cooldown": 7
+        "ink_recovery_cooldown": 7,
+        "accuracy_data": {
+            "ground_deviation_degrees": 5,
+            "airborne_deviation_degrees": 12,
+            "chance_increase_per_shot": 0.005,
+            "time_inactive_to_decrease": 1.66666666,
+            "chance_decrease_when_inactive": 0.005
+        }
     },
     "full_damage_to_mobs": false,
     "mobility": 0.84

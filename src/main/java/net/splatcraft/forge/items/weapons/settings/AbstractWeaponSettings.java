@@ -3,7 +3,9 @@ package net.splatcraft.forge.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.registries.SplatcraftItems;
@@ -63,6 +65,8 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     public abstract WeaponTooltip<SELF>[] tooltipsToRegister();
 
     public abstract Codec<CODEC> getCodec();
+
+    public abstract CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity);
 
     public void castAndDeserialize(Object o)
     {

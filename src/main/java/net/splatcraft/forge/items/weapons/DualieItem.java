@@ -24,6 +24,7 @@ import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
+import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.DodgeRollEndPacket;
 import net.splatcraft.forge.network.c2s.DodgeRollPacket;
@@ -254,7 +255,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 for (int i = 0; i < firingData.projectileCount(); i++)
                 {
                     InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
-                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), entity.onGround() ? firingData.groundInaccuracy() : firingData.airborneInaccuracy());
+
+                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData()));
                     proj.addExtraData(new ExtraSaveData.DualieExtraData(onRollCooldown));
                     proj.setDualieStats(projectileData);
                     level.addFreshEntity(proj);

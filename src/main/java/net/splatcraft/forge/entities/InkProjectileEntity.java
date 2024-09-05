@@ -151,17 +151,18 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         EntityDataSerializers.registerSerializer(EXTRA_DATA.getSerializer());
     }
 
-    public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings settings)
+    public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings.ChargerProjectileDataRecord settings)
     {
-        dropImpactSize = settings.projectileInkTrailCoverage;
-        distanceBetweenDrops = settings.projectileInkTrailCooldown;
+        dropImpactSize = settings.inkDropCoverage();
+        distanceBetweenDrops = settings.distanceBetweenInkDrops();
         if (distanceBetweenDrops > 0)
             dropSkipDistance = CommonUtils.nextFloat(random, 0, distanceBetweenDrops);
-        lifespan = (int) (settings.minProjectileLifeTicks + (settings.maxProjectileLifeTicks - settings.minProjectileLifeTicks) * charge);
-        impactCoverage = settings.projectileInkCoverage;
+        float range = charge == 1 ? settings.fullyChargedRange() : settings.minChargeRange() + (settings.maxChargeRange() - settings.minChargeRange()) * charge;
+        lifespan = range / settings.size();
+        impactCoverage = settings.inkCoverageImpact();
 
         setGravity(0);
-        this.canPierce = charge >= settings.piercesAtCharge;
+        this.canPierce = charge >= settings.piercesAtCharge();
         setProjectileType(Types.CHARGER);
         return this;
     }
@@ -285,6 +286,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         Vec3 lastPosition = position();
         Vec3 velocity = getShootVelocity();
         setDeltaMovement(velocity);
+
+        if (timeDelta > lifespan)
+            timeDelta = lifespan;
+
         superTick(timeDelta);
 
         if (isInWater())
@@ -480,7 +485,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             {
                 accumulatedDrops -= 1;
 
-                double progress = accumulatedDrops / (dropsTravelled);
+                double progress = accumulatedDrops / dropsTravelled;
                 Vec3 dropPos = VectorUtils.lerp(progress, position(), lastPosition);
 
                 createDrop(dropPos.x(), dropPos.y(), dropPos.z(), progress);
@@ -597,7 +602,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if (!level().isClientSide && didDamage)
             {
                 ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-                if ((Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20) ||
+                if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
                         Objects.equals(getProjectileType(), Types.BLASTER))
                 {
                     level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
@@ -662,9 +667,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void shootFromRotation(float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
     {
-        float f = -Mth.sin(yaw * (Mth.DEG_TO_RAD)) * Mth.cos(pitch * (Mth.DEG_TO_RAD));
-        float f1 = -Mth.sin((pitch + pitchOffset) * (Mth.DEG_TO_RAD));
-        float f2 = Mth.cos(yaw * (Mth.DEG_TO_RAD)) * Mth.cos(pitch * (Mth.DEG_TO_RAD));
+        float f = -Mth.sin(yaw * Mth.DEG_TO_RAD) * Mth.cos(pitch * Mth.DEG_TO_RAD);
+        float f1 = -Mth.sin((pitch + pitchOffset) * Mth.DEG_TO_RAD);
+        float f2 = Mth.cos(yaw * Mth.DEG_TO_RAD) * Mth.cos(pitch * Mth.DEG_TO_RAD);
         this.shoot(f, f1, f2, velocity, inaccuracy, partialTicks);
     }
 
@@ -676,8 +681,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void shoot(double x, double y, double z, float velocity, float inaccuracy, float partialTicks)
     {
-        double usedInaccuracy = inaccuracy * 0.0085;
-        Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy, this.random.nextGaussian() * usedInaccuracy).normalize();
+        // 1.34f is only to make the acurracy more aproppiate in minecraft since 5 degrees in splatoon isnt as impactful as 5 degrees in minecraft kinda
+        float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD * 1.34f;
+        Vec3 vec3 = new Vec3(x, y, z).normalize()
+                .yRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy)
+                .xRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
 
         entityData.set(SHOOT_DIRECTION, vec3);
         vec3 = vec3.scale(velocity);
@@ -736,7 +744,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (nbt.contains("StraightShotTime"))
             setStraightShotTime(nbt.getFloat("StraightShotTime"));
         if (nbt.contains("MaxStraightShotTime"))
-            straightShotTime = (nbt.getFloat("StraightShotTime"));
+            straightShotTime = nbt.getFloat("StraightShotTime");
 
         ListTag directionTag = nbt.getList("Direction", DoubleTag.TAG_DOUBLE);
         entityData.set(SHOOT_DIRECTION, new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));

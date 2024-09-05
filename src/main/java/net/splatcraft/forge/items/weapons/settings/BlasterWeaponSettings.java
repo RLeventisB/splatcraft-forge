@@ -2,6 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.DamageRangesRecord;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -42,6 +44,12 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
     public Codec<DataRecord> getCodec()
     {
         return DataRecord.CODEC;
+    }
+
+    @Override
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    {
+        return shotData.accuracyData();
     }
 
     @Override

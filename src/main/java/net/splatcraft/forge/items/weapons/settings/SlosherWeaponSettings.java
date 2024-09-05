@@ -2,6 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -49,6 +51,12 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
     public Codec<DataRecord> getCodec()
     {
         return DataRecord.CODEC;
+    }
+
+    @Override
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    {
+        return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
     }
 
     @Override
@@ -111,7 +119,8 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
             List<SingularSloshShotData> sloshes,
             float pitchCompensation,
             float inkConsumption,
-            int inkRecoveryCooldown
+            int inkRecoveryCooldown,
+            boolean allowFlicking
     )
     {
         public static final Codec<SlosherShotDataRecord> CODEC = RecordCodecBuilder.create(
@@ -120,10 +129,11 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                         SingularSloshShotData.CODEC.listOf().fieldOf("sloshes_data").forGetter(SlosherShotDataRecord::sloshes),
                         Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(SlosherShotDataRecord::pitchCompensation),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(SlosherShotDataRecord::inkConsumption),
-                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SlosherShotDataRecord::inkRecoveryCooldown)
+                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SlosherShotDataRecord::inkRecoveryCooldown),
+                        Codec.BOOL.optionalFieldOf("allow_flicking", true).forGetter(SlosherShotDataRecord::allowFlicking)
                 ).apply(instance, SlosherShotDataRecord::new)
         );
-        public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(0, new ArrayList<>(), 0, 0, 0);
+        public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(0, new ArrayList<>(), 0, 0, 0, true);
     }
 
     public record SingularSloshShotData(
