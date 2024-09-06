@@ -120,8 +120,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                     sloshes.add(new CalculatedSloshData(slosh.startupTicks() + j * slosh.delayBetweenProjectiles(), j, i));
                 }
             }
-            attackId = AttackId.registerAttack();
-            attackId.countProjectile(sloshes.size());
+            attackId = AttackId.registerAttack().countProjectile(sloshes.size());
         }
 
         public SloshCooldown(CompoundTag nbt)
