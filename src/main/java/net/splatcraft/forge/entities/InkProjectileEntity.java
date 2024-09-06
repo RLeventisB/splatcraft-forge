@@ -283,12 +283,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void tick(float timeDelta)
     {
-        Vec3 lastPosition = position();
-        Vec3 velocity = getShootVelocity();
-        setDeltaMovement(velocity);
-
         if (timeDelta > lifespan)
             timeDelta = lifespan;
+
+        Vec3 lastPosition = position();
+        Vec3 velocity = getShootVelocity(timeDelta);
+        setDeltaMovement(velocity);
 
         superTick(timeDelta);
 
@@ -394,8 +394,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         double newY = this.getY() + deltaMovement.y * timeDelta;
         double newZ = this.getZ() + deltaMovement.z * timeDelta;
 
-        this.updateRotation();
-
         float velocityModule = 1f;
         if (this.isInWater())
         {
@@ -411,6 +409,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         {
             deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y - this.getGravity(), deltaMovement.z);
         }
+        this.updateRotation();
         this.setDeltaMovement(deltaMovement.scale(velocityModule));
 
         this.setPos(newX, newY, newZ);
@@ -519,22 +518,45 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         level().addFreshEntity(proj);
     }
 
-    private Vec3 getShootVelocity()
+    private Vec3 getShootVelocity(float timeDelta)
     {
-        Vec3 speed = entityData.get(SHOOT_DIRECTION).scale(entityData.get(SPEED));
-        if (straightShotTime > 0)
-            return speed;
-        else
+        Vec3 unitSpeed = entityData.get(SHOOT_DIRECTION).scale(entityData.get(SPEED));
+        if (straightShotTime - timeDelta > 0) // not close to ending
         {
-            double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), -straightShotTime);
-            return speed.multiply(acumulatedHorizontalDrag, acumulatedHorizontalDrag, acumulatedHorizontalDrag).subtract(0, getGravity() * -straightShotTime * ((1 + acumulatedHorizontalDrag) / 2), 0);
+            return unitSpeed.scale(timeDelta);
         }
+        else if (straightShotTime < 0) // already ended
+        {
+            return calculateFallingSpeed(unitSpeed, -straightShotTime, timeDelta);
+        }
+        else // inbetween ending
+        {
+            float gravityTime = timeDelta - straightShotTime;
+            return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(unitSpeed, gravityTime, gravityTime));
+        }
+//        if (timeDelta > straightShotTime)
+//            return unitSpeed;
+//        else
+//        {
+//            double lowerSpeed = (unitSpeed.length()) / 1.5; // normalize only a little
+//            unitSpeed = new Vec3(unitSpeed.x / lowerSpeed, unitSpeed.y / lowerSpeed, unitSpeed.z / lowerSpeed);
+//            double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), -straightShotTime);
+//            return unitSpeed.multiply(acumulatedHorizontalDrag, acumulatedHorizontalDrag, acumulatedHorizontalDrag).subtract(0, getGravity() * -straightShotTime, 0);
+//        }
+    }
+
+    private Vec3 calculateFallingSpeed(Vec3 unitSpeed, float fallenTime, float timeDelta)
+    {
+        double lowerSpeed = Math.pow(1 / unitSpeed.length(), 1.0 / 1.5); // normalize only a little
+        double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), fallenTime);
+        Vec3 delayedSpeed = unitSpeed.scale(lowerSpeed * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
+        return delayedSpeed.scale(timeDelta);
     }
 
     @Override
     protected void updateRotation()
     {
-        Vec3 motion = getShootVelocity().add(getDeltaMovement());
+        Vec3 motion = getDeltaMovement();
 
         if (!Vec3.ZERO.equals(motion))
         {

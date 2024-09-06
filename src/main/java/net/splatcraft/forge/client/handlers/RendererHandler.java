@@ -434,12 +434,13 @@ public class RendererHandler
                             true));
 
 //            float aspectRatio = Mth.lerp(1 / (1 + data.getMaximumDeviation() * 100), (float) height / width, 1f);
-            float aspectRatio = 0.5625f;
 
             float currentAirInfluence = airInfluenceResult.value();
             float currentDeviationChance = actualChanceResult.value();
 
-            float currentDeviation = Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f * 1.34f;
+            float currentDeviation = Math.max(0.017453292f, Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f * 1.34f);
+
+            float aspectRatio = Mth.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
 
             float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
             float[] rgb = new float[]
@@ -455,7 +456,7 @@ public class RendererHandler
             {
                 for (int y = -1; y <= 1; y += 2)
                 {
-                    Vec3 rotatedPos = relativePos.xRot(currentDeviation * x).yRot(currentDeviation * y);
+                    Vec3 rotatedPos = relativePos.yRot(currentDeviation * x).xRot(currentDeviation * y);
 
                     Vector3f camSpace = rotatedPos.toVector3f();
 
@@ -465,13 +466,9 @@ public class RendererHandler
 
                     Vector4f screenPos = new Vector4f(projectiveCamSpace.x() / w * width, projectiveCamSpace.y() / w * height, w, (float) Math.sqrt(relativePos.dot(relativePos)));
 
-                    GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + screenPos.x - 3 * y, height / 2f - 3 + (screenPos.y * aspectRatio) - 3 * x, 6, 6, 64 - 7 * y, 8 - 7 * x, 4, 4, 256, 256);
+                    GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + screenPos.x, height / 2f - 3 + (screenPos.y * aspectRatio), 6, 6, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
                 }
             }
-
-//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + currentDeviation, height / 2f - 3 - (currentDeviation * aspectRatio), 6, 6, 71, 1, 4, 4, 256, 256);
-//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + currentDeviation, height / 2f - 3 + (currentDeviation * aspectRatio), 6, 6, 71, 15, 4, 4, 256, 256);
-//            GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 - currentDeviation, height / 2f - 3 + (currentDeviation * aspectRatio), 6, 6, 57, 15, 4, 4, 256, 256);
 
             RenderSystem.setShaderColor(1, 1, 1, 1);
             matrixStack.popPose();
@@ -502,7 +499,6 @@ public class RendererHandler
                     float speed = 0.15f;
                     int heightAnim = Math.min(14, (int) (squidTime * speed));
                     int glowAnim = Math.max(0, Math.min(18, (int) (squidTime * speed) - 16));
-                    float[] rgb = playerColor;
 
                     PoseStack matrixStack = graphics.pose();
                     matrixStack.pushPose();
@@ -514,7 +510,7 @@ public class RendererHandler
                         graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 2, 0, 131, 18, 2, 256, 256);
                         graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 0, 131, 18, 4 + heightAnim, 256, 256);
 
-                        RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 1);
+                        RenderSystem.setShaderColor(playerColor[0], playerColor[1], playerColor[2], 1);
 
                         graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 18, 131, 18, 4 + heightAnim, 256, 256);
                         graphics.blit(WIDGETS, width / 2 + 9 + 18 - glowAnim, height / 2 - 9, glowAnim, 18, 18 - glowAnim, 149, glowAnim, 18, 256, 256);
@@ -533,7 +529,7 @@ public class RendererHandler
                         float inkPctgLerp = lerp(prevInkPctg, inkPctg, 0.05f);
                         float inkSize = (1 - inkPctg) * 18;
 
-                        RenderSystem.setShaderColor(rgb[0] + inkFlash, rgb[1] + inkFlash, rgb[2] + inkFlash, 1);
+                        RenderSystem.setShaderColor(playerColor[0] + inkFlash, playerColor[1] + inkFlash, playerColor[2] + inkFlash, 1);
                         matrixStack.translate(0, inkSize - Math.floor(inkSize), 0);
                         graphics.blit(WIDGETS, width / 2 + 9, (int) (height / 2 - 9 + (14 - heightAnim) + (1 - inkPctgLerp) * 18), 18, (int) ((4 + heightAnim) * inkPctgLerp), 18, 95 + inkSize, 18, (int) ((4 + heightAnim) * inkPctg), 256, 256);
                         matrixStack.translate(0, -(inkSize - Math.floor(inkSize)), 0);
@@ -545,7 +541,7 @@ public class RendererHandler
                         }
                         else
                         {
-                            RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 1);
+                            RenderSystem.setShaderColor(playerColor[0], playerColor[1], playerColor[2], 1);
                         }
 
                         graphics.blit(WIDGETS, width / 2 + 9 + 18 - glowAnim, height / 2 - 9, glowAnim, 18, 18 - glowAnim, 113, glowAnim, 18, 256, 256);

@@ -91,16 +91,9 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 
     public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
     {
-        final float minSpeedToCalculate = 0.01f;
+//        final float minSpeedToCalculate = 0.01f;
         float drag = settings.horizontalDrag();
         float speed = settings.speed();
-        int exponent = (int) Math.round(Math.log10(minSpeedToCalculate / speed) / Math.log10(drag));
-        float dragDistance = 0, draggedSpeed = speed * drag;
-        for (int i = 0; i < exponent; i++)
-        {
-            dragDistance += draggedSpeed;
-            draggedSpeed *= drag;
-        }
-        return ((settings.straightShotTicks() + 1) * speed + dragDistance);
+        return settings.straightShotTicks() * speed + speed * drag / (1 - drag);
     }
 }
