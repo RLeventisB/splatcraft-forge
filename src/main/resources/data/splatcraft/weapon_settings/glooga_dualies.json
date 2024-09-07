@@ -3,11 +3,12 @@
     "full_damage_to_mobs": false,
     "mobility": 0.6,
     "projectile": {
-        "size": 0.25,
-        "speed": 4.275,
-        "ink_coverage_on_impact": 1.31,
-        "ink_drop_coverage": 0.78,
-        "distance_between_drops": 3.5,
+        "size": 0.33,
+        "speed": 5.7,
+        "delay_speed_mult": 1,
+        "ink_coverage_on_impact": 1.28,
+        "ink_drop_coverage": 0.88,
+        "distance_between_drops": 4.67,
         "straight_shot_ticks": 1,
         "base_damage": 7.3,
         "decayed_damage": 3.6,
@@ -15,8 +16,15 @@
         "damage_decay_per_tick": 0.11
     },
     "shot": {
-        "startup_ticks": 0,
         "endlag_ticks": 6,
+        "accuracy_data": {
+            "ground_deviation_degrees": 3,
+            "airborne_deviation_degrees": 8,
+            "chance_min": 0.03,
+            "chance_increase_per_shot": 0.03,
+            "time_inactive_to_decrease": 3,
+            "chance_decrease_when_inactive": 0.015
+        },
         "ground_inaccuracy": 3.2,
         "airborne_inaccuracy": 8,
         "pitch_compensation": 0,
@@ -34,7 +42,7 @@
         "final_roll_turret_duration": 24
     },
     "turret_projectile": {
-        "speed": 4.8,
+        "speed": 6.4,
         "straight_shot_ticks": 1,
         "base_damage": 10.6,
         "decayed_damage": 5.26,
@@ -42,7 +50,6 @@
         "damage_decay_per_tick": 0.474
     },
     "turret_shot": {
-        "endlag_ticks": 6,
         "ground_inaccuracy": 2
     }
 }

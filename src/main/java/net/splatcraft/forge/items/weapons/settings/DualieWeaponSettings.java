@@ -128,6 +128,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                         localTurretProjectile.visualSize().orElse(projectile.visualSize()),
                         localTurretProjectile.lifeTicks().orElse(projectile.lifeTicks()),
                         localTurretProjectile.speed().orElse(projectile.speed()),
+                        localTurretProjectile.delayStartSpeed().orElse(projectile.delaySpeedMult()),
                         localTurretProjectile.horizontalDrag().orElse(projectile.horizontalDrag()),
                         localTurretProjectile.straightShotTicks().orElse(projectile.straightShotTicks()),
                         localTurretProjectile.gravity().orElse(projectile.gravity()),

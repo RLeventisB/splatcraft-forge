@@ -59,6 +59,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<Float> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> GRAVITY_SPEED_MULT = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
     private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
 
@@ -172,12 +173,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (throwerAirborne)
         {
             setStraightShotTime(settings.flingStraightTicks);
-            entityData.set(HORIZONTAL_DRAG, settings.flingHorizontalDrag);
+            setHorizontalDrag(settings.flingHorizontalDrag);
         }
         else
         {
             setStraightShotTime(settings.swingStraightTicks);
-            entityData.set(HORIZONTAL_DRAG, settings.swingHorizontalDrag);
+            setHorizontalDrag(settings.swingHorizontalDrag);
         }
 
         return this;
@@ -196,8 +197,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setStraightShotTime(settings.straightShotTicks());
 
         lifespan = settings.lifeTicks();
-        entityData.set(SPEED, settings.speed());
-        entityData.set(HORIZONTAL_DRAG, settings.horizontalDrag());
+        setHorizontalDrag(settings.horizontalDrag());
+        setGravitySpeedMult(settings.delaySpeedMult());
 
         return this;
     }
@@ -212,6 +213,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.define(STRAIGHT_SHOT_TIME, 0F);
         entityData.define(SPEED, 0f);
         entityData.define(HORIZONTAL_DRAG, 1F);
+        entityData.define(GRAVITY_SPEED_MULT, 1F);
         entityData.define(SHOOT_DIRECTION, new Vec3(0, 0, 0));
         entityData.define(EXTRA_DATA, new ExtraDataList());
     }
@@ -487,13 +489,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         // inbetween ending
         float gravityTime = timeDelta - straightShotTime;
-        return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(shootDirection, gravityTime, gravityTime));
+        return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(unitSpeed, gravityTime, gravityTime));
     }
 
     private Vec3 calculateFallingSpeed(Vec3 unitSpeed, float fallenTime, float timeDelta)
     {
-        double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), fallenTime);
-        Vec3 delayedSpeed = unitSpeed.scale(1.23 * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
+        double acumulatedHorizontalDrag = Math.pow(getHorizontalDrag(), fallenTime - 1);
+        Vec3 delayedSpeed = unitSpeed.scale(getGravitySpeedMult() * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
         return delayedSpeed.scale(timeDelta);
     }
 
@@ -700,7 +702,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             setColor(ColorUtils.getColorFromNbt(nbt));
 
         entityData.set(SPEED, nbt.getFloat("Speed"));
-        entityData.set(HORIZONTAL_DRAG, nbt.getFloat("HorizontalDrag"));
+        setHorizontalDrag(nbt.getFloat("HorizontalDrag"));
+        setGravitySpeedMult(nbt.getFloat("GravitySpeedMult"));
 
         if (nbt.contains("Gravity"))
             setGravity(nbt.getFloat("Gravity"));
@@ -747,7 +750,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         nbt.putInt("Color", getColor());
 
         nbt.putFloat("Speed", entityData.get(SPEED));
-        nbt.putFloat("HorizontalDrag", entityData.get(HORIZONTAL_DRAG));
+        nbt.putFloat("HorizontalDrag", getHorizontalDrag());
+        nbt.putFloat("GravitySpeedMult", getGravitySpeedMult());
         nbt.putFloat("MaxStraightShotTime", getMaxStraightShotTime());
         nbt.putFloat("StraightShotTime", straightShotTime);
 
@@ -780,6 +784,26 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         nbt.remove("Item");
     }
 
+    private @NotNull Float getGravitySpeedMult()
+    {
+        return entityData.get(GRAVITY_SPEED_MULT);
+    }
+
+    private void setGravitySpeedMult(float gravitySpeedMult)
+    {
+        entityData.set(GRAVITY_SPEED_MULT, gravitySpeedMult);
+    }
+
+    private @NotNull Float getHorizontalDrag()
+    {
+        return entityData.get(HORIZONTAL_DRAG);
+    }
+
+    private void setHorizontalDrag(float horizontalDrag)
+    {
+        entityData.set(HORIZONTAL_DRAG, horizontalDrag);
+    }
+
     /**
      * @return a exposed list to the synched list that manages the extra data sent to the connection or smtinh
      * @apiNote this list if updated isnt going to be synched!!!!! for this use addExtraData instead, or sendExtraData
@@ -789,7 +813,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return entityData.get(EXTRA_DATA);
     }
 
-    public void sendExtraData(ExtraDataList list)
+    public void setExtraDataList(ExtraDataList list)
     {
         entityData.set(EXTRA_DATA, list);
     }

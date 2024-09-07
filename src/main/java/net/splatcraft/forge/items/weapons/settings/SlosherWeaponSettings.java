@@ -151,6 +151,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                         Codec.FLOAT.fieldOf("size").forGetter(CommonRecords.ProjectileDataRecord::size),
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize())),
                         Codec.FLOAT.fieldOf("speed").forGetter(CommonRecords.ProjectileDataRecord::speed),
+                        Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(t -> Optional.of(t.delaySpeedMult())),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(CommonRecords.ProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(CommonRecords.ProjectileDataRecord::straightShotTicks),
                         Codec.FLOAT.optionalFieldOf("gravity", 0.175F).forGetter(CommonRecords.ProjectileDataRecord::gravity),
@@ -176,12 +177,12 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                 ).apply(instance, SingularSloshShotData::new)
         );
 
-        public static CommonRecords.ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, float speed, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
+        public static CommonRecords.ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, float speed, Optional<Float> delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
         {
-            return CommonRecords.ProjectileDataRecord.create(size, visualSize, 600, speed, horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, inkDropCoverage, distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
+            return CommonRecords.ProjectileDataRecord.create(size, visualSize, 600, speed, Optional.of(delaySpeedMult.orElse(1f)), horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, inkDropCoverage, distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
         }
 
-        public static final CommonRecords.ProjectileDataRecord SLOSHER_PROJECTILE_DEFAULT = new CommonRecords.ProjectileDataRecord(0, 0, 600, 0, 0.262144F, 0, 0.175F, 0, 0, 4, 0, 0, 0, 0);
+        public static final CommonRecords.ProjectileDataRecord SLOSHER_PROJECTILE_DEFAULT = new CommonRecords.ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.262144F, 0, 0.175F, 0, 0, 4, 0, 0, 0, 0);
 
         public static final SingularSloshShotData DEFAULT = new SingularSloshShotData(0, 1, 1f, 0, 0, SLOSHER_PROJECTILE_DEFAULT, Optional.empty());
     }
