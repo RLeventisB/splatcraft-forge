@@ -6,11 +6,9 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
@@ -56,54 +54,14 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 {
     private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Vec2> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<>()
-    {
-        @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec2 vec2)
-        {
-            buf.writeFloat(vec2.x);
-            buf.writeFloat(vec2.y);
-        }
-
-        @Override
-        public @NotNull Vec2 read(@NotNull FriendlyByteBuf buf)
-        {
-            return new Vec2(buf.readFloat(), buf.readFloat());
-        }
-
-        @Override
-        public @NotNull Vec2 copy(@NotNull Vec2 vec2)
-        {
-            return new Vec2(vec2.x, vec2.y);
-        }
-    });
+    private static final EntityDataAccessor<Vec2> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC2SERIALIZER);
     private static final EntityDataAccessor<Float> GRAVITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
-    private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, new EntityDataSerializer<>()
-    {
-        @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3 vec3)
-        {
-            buf.writeDouble(vec3.x);
-            buf.writeDouble(vec3.y);
-            buf.writeDouble(vec3.z);
-        }
+    private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
 
-        @Override
-        public @NotNull Vec3 read(@NotNull FriendlyByteBuf buf)
-        {
-            return new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        }
-
-        @Override
-        public @NotNull Vec3 copy(@NotNull Vec3 vec3)
-        {
-            return new Vec3(vec3.x, vec3.y, vec3.z);
-        }
-    });
     protected float straightShotTime = -1;
     public float lifespan = 600;
     public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
@@ -520,36 +478,22 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     private Vec3 getShootVelocity(float timeDelta)
     {
-        Vec3 unitSpeed = entityData.get(SHOOT_DIRECTION).scale(entityData.get(SPEED));
-        if (straightShotTime - timeDelta > 0) // not close to ending
-        {
+        Vec3 shootDirection = entityData.get(SHOOT_DIRECTION);
+        Vec3 unitSpeed = shootDirection.scale(entityData.get(SPEED));
+        if (straightShotTime - timeDelta >= 0) // not close to ending
             return unitSpeed.scale(timeDelta);
-        }
         else if (straightShotTime < 0) // already ended
-        {
-            return calculateFallingSpeed(unitSpeed, -straightShotTime, timeDelta);
-        }
-        else // inbetween ending
-        {
-            float gravityTime = timeDelta - straightShotTime;
-            return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(unitSpeed, gravityTime, gravityTime));
-        }
-//        if (timeDelta > straightShotTime)
-//            return unitSpeed;
-//        else
-//        {
-//            double lowerSpeed = (unitSpeed.length()) / 1.5; // normalize only a little
-//            unitSpeed = new Vec3(unitSpeed.x / lowerSpeed, unitSpeed.y / lowerSpeed, unitSpeed.z / lowerSpeed);
-//            double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), -straightShotTime);
-//            return unitSpeed.multiply(acumulatedHorizontalDrag, acumulatedHorizontalDrag, acumulatedHorizontalDrag).subtract(0, getGravity() * -straightShotTime, 0);
-//        }
+            return calculateFallingSpeed(shootDirection, -straightShotTime, timeDelta);
+
+        // inbetween ending
+        float gravityTime = timeDelta - straightShotTime;
+        return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(shootDirection, gravityTime, gravityTime));
     }
 
     private Vec3 calculateFallingSpeed(Vec3 unitSpeed, float fallenTime, float timeDelta)
     {
-        double lowerSpeed = Math.pow(1 / unitSpeed.length(), 1.0 / 1.5); // normalize only a little
         double acumulatedHorizontalDrag = Math.pow(entityData.get(HORIZONTAL_DRAG), fallenTime);
-        Vec3 delayedSpeed = unitSpeed.scale(lowerSpeed * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
+        Vec3 delayedSpeed = unitSpeed.scale(1.23 * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
         return delayedSpeed.scale(timeDelta);
     }
 
@@ -599,14 +543,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         Vec3 nextPosition = position().add(getDeltaMovement());
         Vec3 impactPos = result.getLocation();
-        float averageValue = (float) (
+
+        crystalSoundIntensity = (float) (
                 (
                         Mth.inverseLerp(impactPos.x, getX(), nextPosition.x) +
                                 Mth.inverseLerp(impactPos.y, getY(), nextPosition.y) +
                                 Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z)
                 ) / 3);
-
-        crystalSoundIntensity = averageValue;
         float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
         crystalSoundIntensity = storedCrystalSoundIntensity;
 

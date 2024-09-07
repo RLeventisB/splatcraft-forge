@@ -1,13 +1,13 @@
 {
     "type": "splatcraft:blaster",
     "projectile": {
-        "size": 0.2,
+        "size": 0.267,
         "visual_size": 1,
-        "straight_shot_ticks": 4,
-        "speed": 1.62,
-        "ink_coverage_on_impact": 1.27,
-        "ink_drop_coverage": 0.78,
-        "distance_between_drops": 0.95,
+        "straight_shot_ticks": 3.6666666,
+        "speed": 2.16,
+        "ink_coverage_on_impact": 1.46,
+        "ink_drop_coverage": 1.04,
+        "distance_between_drops": 1.27,
         "base_damage": 25.0,
         "lifespan": 5
     },
@@ -19,9 +19,7 @@
             "airborne_deviation_degrees": 8,
             "chance_min": 0,
             "chance_max": 0.5,
-            "chance_set_airborne": 0.5,
-            "time_inactive_to_decrease": 2,
-            "chance_decrease_when_inactive": 0.015
+            "chance_set_airborne": 0.5
         },
         "ground_inaccuracy": 0.0,
         "airborne_inaccuracy": 8.0,
@@ -32,16 +30,16 @@
         "damage_data": {
             "points": [
                 {
-                    "max_range": 0.5,
+                    "max_range": 0.63,
                     "damage": 14.0
                 },
                 {
-                    "max_range": 1.65,
+                    "max_range": 2.2,
                     "damage": 10.0
                 }
             ]
         },
-        "explosion_paint_size": 1.57
+        "explosion_paint_size": 2.01
     },
     "full_damage_to_mobs": false,
     "mobility": 0.4

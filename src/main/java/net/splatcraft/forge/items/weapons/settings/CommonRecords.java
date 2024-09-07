@@ -16,11 +16,23 @@ public class CommonRecords
     // height and width is something like 1,65217, in minecraft it's 3!!!! so i converted both units to blocks (19 DU = 1,8 blocks, and
     // 11,5 DU = 0,6 blocks) and took the average of them both, which is 14,957264957264957264957264957266, also known simply as 15 DU
     // so, 15 DU = 1 block, and 1.5 IU (internal unit, which is the internal value in splatoon 3) = 1 block, since 10 DU = 1 IU
-    // but guess what!!!! this teorically correct scale looks wrong, (range blaster gets like 15 blocks of range),
-    // so i made yet another scale of 20 DU = 1 blocks bc i like it more :)
+    // no there wasnt a scale of 20 DU = 1 block what are you talking about
     // NOTE: obviously not all values will be 1:1 to this equation, there will be roundings, and in some cases adjustments,
     // like in the case that a weapon paints much less because of minecraft's cubic nature and the magic of rounding
     // also most of the data (in internal units) is taken from https://leanny.github.io/splat3/parameters.html or https://splatoonwiki.org/wiki/
+    // also!!!!! most of the paint data is pretty complex (one value for close droplet paint radius, one value for far away droplet paint radius,
+    // and one for any other type of droplet paint radius, and every single one of these is multiplied by 1.4, or 1.2, or 1 depending on the drop's
+    // fall height, so screw all that,
+    // ink_drop_coverage = the units in "All other ink droplets have a radius of x"
+    //      * in case of blasters, its the units in "Ink droplets have a radius of x" * 1.2
+    // ink_coverage_on_impact = the units in "Droplets that occur when they travel past y units of the player have a radius of x" * 1.2
+    // also³ here are some other conversions from values in splatoon (x) to minecraft (y), divisor means the current scale of DU per block, currently its 15
+    // speed ->             y = x / divisor * 3
+    // time ->              y = x / 3
+    // damage ->            y = x / 5
+    // damage over-time ->  y = x / 5 * 3
+    // distance ->          y = x / divisor
+    // drag ->              y = x ^ 3
     public record ProjectileDataRecord(
             float size,
             float visualSize,

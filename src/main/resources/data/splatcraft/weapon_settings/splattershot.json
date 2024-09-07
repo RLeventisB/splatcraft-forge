@@ -1,11 +1,11 @@
 {
     "type": "splatcraft:shooter",
     "projectile": {
-        "size": 0.2,
-        "speed": 3.3,
-        "ink_coverage_on_impact": 1.26,
-        "ink_drop_coverage": 0.768,
-        "distance_between_drops": 4.6,
+        "size": 0.267,
+        "speed": 4.4,
+        "ink_coverage_on_impact": 1.28,
+        "ink_drop_coverage": 0.85,
+        "distance_between_drops": 6.13,
         "straight_shot_ticks": 1.3333333,
         "base_damage": 7.2,
         "decayed_damage": 3.6,

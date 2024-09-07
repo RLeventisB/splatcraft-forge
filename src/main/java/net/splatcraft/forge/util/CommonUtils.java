@@ -10,7 +10,9 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
@@ -36,6 +39,50 @@ import java.util.function.Predicate;
 
 public class CommonUtils
 {
+    public static final EntityDataSerializer<Vec3> VEC3SERIALIZER = new EntityDataSerializer<>()
+    {
+        @Override
+        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3 vec3)
+        {
+            buf.writeDouble(vec3.x);
+            buf.writeDouble(vec3.y);
+            buf.writeDouble(vec3.z);
+        }
+
+        @Override
+        public @NotNull Vec3 read(@NotNull FriendlyByteBuf buf)
+        {
+            return new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        }
+
+        @Override
+        public @NotNull Vec3 copy(@NotNull Vec3 vec3)
+        {
+            return new Vec3(vec3.x, vec3.y, vec3.z);
+        }
+    };
+    public static final EntityDataSerializer<Vec2> VEC2SERIALIZER = new EntityDataSerializer<>()
+    {
+        @Override
+        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec2 vec2)
+        {
+            buf.writeFloat(vec2.x);
+            buf.writeFloat(vec2.y);
+        }
+
+        @Override
+        public @NotNull Vec2 read(@NotNull FriendlyByteBuf buf)
+        {
+            return new Vec2(buf.readFloat(), buf.readFloat());
+        }
+
+        @Override
+        public @NotNull Vec2 copy(@NotNull Vec2 vec2)
+        {
+            return new Vec2(vec2.x, vec2.y);
+        }
+    };
+
     public static void spawnTestParticle(Vec3 pos)
     {
         spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
