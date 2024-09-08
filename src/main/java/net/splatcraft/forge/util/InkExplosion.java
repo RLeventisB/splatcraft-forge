@@ -151,18 +151,24 @@ public class InkExplosion
                     BlockPos pos = CommonUtils.createBlockPos(position.x() + x, position.y() + y, position.z() + z);
                     if (InkBlockUtils.isBlockUninkable(level, pos))
                         continue;
+
+                    VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos);
+                    Vec3 relativePos = position.subtract(pos.getCenter());
+                    Vec3[] data = closestPointTo(shape, relativePos);
+                    if (data.length == 0)
+                        continue;
+
                     double blockCenterX = pos.getX() + 0.5;
                     double blockCenterY = pos.getY() + 0.5;
                     double blockCenterZ = pos.getZ() + 0.5;
 
-                    double dX = blockCenterX - position.x();
-                    double dY = blockCenterY - position.y();
-                    double dZ = blockCenterZ - position.z();
-                    double dist = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-                    if (dist <= paintRadius + noiseRange + 0.5f * Math.sqrt(2))
+                    double dist = relativePos.distanceTo(data[0]);
+                    if (dist <= paintRadius + noiseRange)
                     {
-                        List<Tuple<Vec3, Direction>> points = new ArrayList<>(6);
+                        List<Tuple<Vec3, Direction>> points = new ArrayList<>(3);
 
+//                        Vec3 worldClosestPos = data[0].add(pos.getCenter());
+//                        points.add(new Tuple<>(worldClosestPos, Direction.getNearest(position.x - worldClosestPos.x, position.y - worldClosestPos.y, position.z - worldClosestPos.z)));
                         if (position.y > blockCenterY)
                             points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY + 0.5, blockCenterZ), Direction.UP));
                         if (position.y < blockCenterY)
@@ -179,13 +185,9 @@ public class InkExplosion
 
                         for (Tuple<Vec3, Direction> point : points)
                         {
-                            if (raycastAndGetDirection(position, point.getA(), level, pos, point.getB()) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
+                            if (raycastAndGetDirection(relativePos, point.getA(), level, pos, point.getB()) && InkBlockUtils.canInkFromFace(level, pos, point.getB()))
                             {
-                                dX = point.getA().x - position.x;
-                                dY = point.getA().y - position.y;
-                                dZ = point.getA().z - position.z;
-                                dist = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
-//								CommonUtils.spawnTestText(level, point.getA(), Double.toString(dist));
+                                dist = point.getA().distanceTo(position);
 
                                 boolean inRadius = dist <= paintRadius - noiseRange;
                                 if (!inRadius && dist <= paintRadius + noiseRange)
@@ -196,11 +198,37 @@ public class InkExplosion
                                 if (inRadius)
                                 {
                                     set.add(new BlockFace(pos, point.getB()));
+                                    break;
                                 }
                             }
                         }
                     }
                 }
+    }
+
+    private Vec3[] closestPointTo(VoxelShape shape, final Vec3 point)
+    {
+        if (shape.isEmpty())
+        {
+            return new Vec3[]{};
+        }
+        else
+        {
+            Vec3[] data = new Vec3[3];
+            shape.forAllBoxes((xmin, ymin, zmin, xmax, ymax, zmax) ->
+            {
+                double x = Mth.clamp(point.x(), xmin, xmax);
+                double y = Mth.clamp(point.y(), ymin, ymax);
+                double z = Mth.clamp(point.z(), zmin, zmax);
+                if (data[0] == null || point.distanceToSqr(x, y, z) < point.distanceToSqr(data[0]))
+                {
+                    data[0] = new Vec3(x, y, z);
+                    data[1] = new Vec3(xmin, ymin, zmin);
+                    data[2] = new Vec3(xmax, ymax, zmax);
+                }
+            });
+            return data;
+        }
     }
 
     private boolean raycastAndGetDirection(Vec3 startPos, Vec3 endPos, ServerLevel level, BlockPos expectedPos, Direction expectedFace)
