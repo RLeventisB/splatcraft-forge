@@ -3,7 +3,7 @@ package net.splatcraft.forge.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -66,7 +66,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 
     public abstract Codec<CODEC> getCodec();
 
-    public abstract CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity);
+    public abstract CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity);
 
     public void castAndDeserialize(Object o)
     {
@@ -86,7 +86,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     public void serializeToBuffer(FriendlyByteBuf buffer)
     {
         buffer.writeJsonWithCodec(getCodec(), serialize());
-//		buffer.writeJsonWithCodec(getCodec(), serialize());
     }
 
     public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)

@@ -2,7 +2,8 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
@@ -31,9 +32,24 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
         ExtraSaveData.SloshExtraData sloshData = list.getFirstExtraData(ExtraSaveData.SloshExtraData.class);
         if (sloshData != null)
         {
-            return shotData.sloshes.get(sloshData.sloshDataIndex).projectile.baseDamage();
+            SingularSloshShotData sloshShotData = shotData.sloshes.get(sloshData.sloshDataIndex);
+            double relativeY = projectile.getY() - sloshData.spawnHeight;
+            return getDamage(sloshShotData.projectile, (float) relativeY);
         }
         return sampleProjectile.baseDamage();
+    }
+
+    private static float getDamage(CommonRecords.ProjectileDataRecord projectileData, float relativeY)
+    {
+        float minDamageHeight = projectileData.damageDecayPerTick();
+        float damageDecayStartHeight = projectileData.damageDecayStartTick();
+
+        float damage = projectileData.baseDamage();
+        if (relativeY < -minDamageHeight)
+            damage = projectileData.minDamage();
+        else if (relativeY < -damageDecayStartHeight)
+            damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
+        return damage;
     }
 
     @Override
@@ -54,7 +70,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
     }
 
     @Override
-    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
     {
         return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
     }

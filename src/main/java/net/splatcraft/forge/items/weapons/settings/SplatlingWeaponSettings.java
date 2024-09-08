@@ -2,7 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
@@ -58,7 +58,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     }
 
     @Override
-    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
     {
         return stack.getOrCreateTag().getFloat("Charge") > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
     }

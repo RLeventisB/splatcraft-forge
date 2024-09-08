@@ -217,7 +217,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
         if (entity instanceof LivingEntity livingEntity)
         {
-            CommonRecords.ShotDeviationDataRecord deviationData = getSettings(stack).getShotDeviationData(stack, entity);
+            CommonRecords.ShotDeviationDataRecord deviationData = getSettings(stack).getShotDeviationData(stack, livingEntity);
             if (deviationData != CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT)
             {
                 ShotDeviationHelper.tickDeviation(stack, deviationData, 1);

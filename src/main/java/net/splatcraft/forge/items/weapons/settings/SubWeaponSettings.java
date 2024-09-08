@@ -2,7 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
@@ -56,7 +56,7 @@ public class SubWeaponSettings extends AbstractWeaponSettings<SubWeaponSettings,
     }
 
     @Override
-    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, Entity entity)
+    public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
     {
         return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
     }
