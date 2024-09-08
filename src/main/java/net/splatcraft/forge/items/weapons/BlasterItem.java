@@ -1,6 +1,8 @@
 package net.splatcraft.forge.items.weapons;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -51,37 +53,63 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         if (!cooldownTracker.isOnCooldown(this) && !PlayerCooldown.hasPlayerCooldown(player))
         {
             BlasterWeaponSettings settings = getSettings(stack);
-            PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.startupTicks(), player.getInventory().selected, entity.getUsedItemHand(), true, false, true, player.onGround()));
+            PlayerCooldown.setPlayerCooldown(player, new BlasterCooldown(stack, settings.shotData.startupTicks(), settings.shotData.getFiringSpeed(), player.getInventory().selected, entity.getUsedItemHand(), player.onGround()));
             if (!level.isClientSide())
             {
-                cooldownTracker.addCooldown(this, settings.shotData.startupTicks() + settings.shotData.endlagTicks());
+                cooldownTracker.addCooldown(this, settings.shotData.getFiringSpeed());
             }
         }
     }
-
-    @Override
-    public void onPlayerCooldownEnd(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
-    {
-        if (!level.isClientSide())
-        {
-            BlasterWeaponSettings settings = getSettings(stack);
-
-            if (reduceInk(player, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
-            {
-                InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
-                proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, player)));
-                proj.setBlasterStats(settings);
-                proj.setAttackId(AttackId.registerAttack().countProjectile());
-                proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
-                level.addFreshEntity(proj);
-                level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            }
-        }
-    }
-
+    
     @Override
     public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.FIRE;
+    }
+
+    public static class BlasterCooldown extends PlayerCooldown
+    {
+        private final int startupFrames;
+
+        public BlasterCooldown(ItemStack stack, int startupFrames, int time, int slotIndex, InteractionHand hand, boolean isGrounded)
+        {
+            super(stack, time, slotIndex, hand, true, false, true, isGrounded);
+            this.startupFrames = time - startupFrames;
+        }
+
+        public BlasterCooldown(CompoundTag nbt)
+        {
+            super(nbt);
+            startupFrames = nbt.getInt("StartupFrames");
+        }
+
+        @Override
+        public void tick(Player player)
+        {
+            Level level = player.level();
+            if (getTime() == startupFrames && !level.isClientSide())
+            {
+                BlasterItem item = (BlasterItem) storedStack.getItem();
+                BlasterWeaponSettings settings = item.getSettings(storedStack);
+
+                if (reduceInk(player, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
+                {
+                    InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
+                    proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(storedStack, level.getRandom(), settings.getShotDeviationData(storedStack, player)));
+                    proj.setBlasterStats(settings);
+                    proj.setAttackId(AttackId.registerAttack().countProjectile());
+                    proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
+                    level.addFreshEntity(proj);
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                }
+            }
+        }
+
+        @Override
+        public CompoundTag writeNBT(CompoundTag nbt)
+        {
+            nbt.putInt("StartupFrames", startupFrames);
+            return super.writeNBT(nbt);
+        }
     }
 }

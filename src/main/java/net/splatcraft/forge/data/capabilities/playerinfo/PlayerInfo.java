@@ -3,6 +3,7 @@ package net.splatcraft.forge.data.capabilities.playerinfo;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.util.ColorUtils;
@@ -180,6 +181,16 @@ public class PlayerInfo
         {
             CompoundTag cooldownNBT = new CompoundTag();
             playerCooldown.writeNBT(cooldownNBT);
+
+            if (playerCooldown.getClass() != PlayerCooldown.class)
+            {
+                ResourceLocation key = PlayerCooldown.REGISTRY.get().getKey(playerCooldown.getClass());
+                if (key != null)
+                {
+                    cooldownNBT.putString("CooldownClass", key.toString());
+                }
+            }
+
             nbt.put("PlayerCooldown", cooldownNBT);
         }
         nbt.putBoolean("Playing", isPlaying);

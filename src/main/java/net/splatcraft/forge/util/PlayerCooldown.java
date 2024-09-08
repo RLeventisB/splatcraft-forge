@@ -1,19 +1,49 @@
 package net.splatcraft.forge.util;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.NewRegistryEvent;
+import net.minecraftforge.registries.RegistryBuilder;
+import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.commands.SuperJumpCommand;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.items.weapons.BlasterItem;
 import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.SlosherItem;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
+
+import static net.splatcraft.forge.Splatcraft.MODID;
+
+@Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PlayerCooldown
 {
+    public static Supplier<IForgeRegistry<Class<? extends PlayerCooldown>>> REGISTRY;
+
+    @SubscribeEvent
+    public static void registerRegistry(final NewRegistryEvent event)
+    {
+        RegistryBuilder<Class<? extends PlayerCooldown>> registryBuilder = new RegistryBuilder<>();
+        registryBuilder.setName(new ResourceLocation(MODID, "player_cooldowns"));
+        REGISTRY = event.create(registryBuilder, (registry) ->
+        {
+            registry.register(new ResourceLocation(MODID, "superjump"), SuperJumpCommand.SuperJump.class);
+            registry.register(new ResourceLocation(MODID, "sloshcooldown"), SlosherItem.SloshCooldown.class);
+            registry.register(new ResourceLocation(MODID, "dodgerollcooldown"), DualieItem.DodgeRollCooldown.class);
+            registry.register(new ResourceLocation(MODID, "blastercooldown"), BlasterItem.BlasterCooldown.class);
+        });
+    }
+
     int maxTime;
     int slotIndex;
     InteractionHand hand;
@@ -66,14 +96,22 @@ public class PlayerCooldown
 
     public static PlayerCooldown readNBT(CompoundTag nbt)
     {
-        if (nbt.getBoolean("SuperJump"))
-            return new SuperJumpCommand.SuperJump(nbt);
-        if (nbt.getBoolean("SloshCooldown"))
-            return new SlosherItem.SloshCooldown(nbt);
-        if (nbt.getBoolean("DodgeRollCooldown")) // need an system for this but im lazy
-            return new DualieItem.DodgeRollCooldown(nbt);
-        else
-            return new PlayerCooldown(nbt);
+        if (nbt.contains("CooldownClass"))
+        {
+            Class<? extends PlayerCooldown> clazz = REGISTRY.get().getValue(new ResourceLocation(nbt.getString("CooldownClass")));
+            try
+            {
+                assert clazz != null;
+                return clazz.getConstructor(CompoundTag.class).newInstance(nbt);
+            }
+            catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                   NoSuchMethodException e)
+            {
+                Splatcraft.LOGGER.error(new RuntimeException(e));
+            }
+        }
+
+        return new PlayerCooldown(nbt);
     }
 
     public PlayerCooldown setCancellable()
@@ -109,14 +147,6 @@ public class PlayerCooldown
         }
 
         return capability.getPlayerCooldown();
-    }
-
-    public static PlayerCooldown shrinkCooldownTime(Player player, int time)
-    {
-        if (!hasOverloadedPlayerCooldown(player))
-            return null;
-        PlayerCooldown cooldown = setCooldownTime(player, Math.max(OVERLOAD_LIMIT, PlayerInfoCapability.get(player).getPlayerCooldown().getTime() - time));
-        return hasPlayerCooldown(player) ? cooldown : null;
     }
 
     public static boolean hasPlayerCooldown(LivingEntity player)
