@@ -414,6 +414,7 @@ public class RendererHandler
         float[] playerColor = ColorUtils.hexToRGB(info.getColor());
         if (player.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
         {
+            float scale = width * height / 518400.0f;
             PoseStack matrixStack = graphics.pose();
             matrixStack.pushPose();
             RenderSystem.setShaderTexture(0, WIDGETS);
@@ -466,7 +467,10 @@ public class RendererHandler
 
                     Vector4f screenPos = new Vector4f(projectiveCamSpace.x() / w * width, projectiveCamSpace.y() / w * height, w, (float) Math.sqrt(relativePos.dot(relativePos)));
 
-                    GraphicsUtils.blit(graphics, WIDGETS, width / 2f - 3 + screenPos.x, height / 2f - 3 + (screenPos.y * aspectRatio), 6, 6, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
+                    GraphicsUtils.blit(graphics, WIDGETS,
+                            width / 2f - 3 * scale + screenPos.x,
+                            height / 2f - 3 * scale + (screenPos.y * aspectRatio),
+                            8 * (scale + 1) / 2, 8 * (scale + 1) / 2, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
                 }
             }
 
