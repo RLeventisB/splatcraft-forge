@@ -598,8 +598,14 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult result)
+    protected void onHitBlock(@NotNull BlockHitResult result)
     {
+        if (level().isClientSide())
+        {
+            super.onHitBlock(result);
+            return;
+        }
+
         if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
             return;
 
