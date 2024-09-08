@@ -545,6 +545,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         Vec3 nextPosition = position().add(getDeltaMovement());
         Vec3 impactPos = result.getLocation();
+        Vec3 oldPos = position();
 
         crystalSoundIntensity = (float) (
                 (
@@ -552,7 +553,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                                 Mth.inverseLerp(impactPos.y, getY(), nextPosition.y) +
                                 Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z)
                 ) / 3);
+        setPos(impactPos);
         float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
+        if (canPierce)
+            setPos(oldPos);
         crystalSoundIntensity = storedCrystalSoundIntensity;
 
         if (!level().isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
