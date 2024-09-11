@@ -3,6 +3,7 @@
     "projectile": {
         "size": 0.267,
         "speed": 4.4,
+        "delay_speed_mult": 0.65,
         "ink_coverage_on_impact": 1.28,
         "ink_drop_coverage": 0.85,
         "distance_between_drops": 6.13,

@@ -109,8 +109,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                 instance -> instance.group(
                         CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
                         CommonRecords.ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
-                        CommonRecords.OptionalProjectileDataRecord.CODEC.optionalFieldOf("turret_projectile").forGetter((DataRecord v) -> CommonRecords.OptionalProjectileDataRecord.convert(v.turretProjectile)),
-                        CommonRecords.OptionalShotDataRecord.CODEC.optionalFieldOf("turret_shot").forGetter((DataRecord v) -> CommonRecords.OptionalShotDataRecord.convert(v.turretShot)),
+                        CommonRecords.OptionalProjectileDataRecord.CODEC.optionalFieldOf("turret_projectile").forGetter((DataRecord v) -> CommonRecords.OptionalProjectileDataRecord.from(v.turretProjectile)),
+                        CommonRecords.OptionalShotDataRecord.CODEC.optionalFieldOf("turret_shot").forGetter((DataRecord v) -> CommonRecords.OptionalShotDataRecord.from(v.turretShot)),
                         RollDataRecord.CODEC.fieldOf("dodge_roll").forGetter(DataRecord::roll),
                         Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::moveSpeed),
                         Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
@@ -120,51 +120,10 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
         public static DataRecord create(CommonRecords.ProjectileDataRecord projectile, CommonRecords.ShotDataRecord shot, Optional<CommonRecords.OptionalProjectileDataRecord> turretProjectile, Optional<CommonRecords.OptionalShotDataRecord> turretShot, RollDataRecord roll, float mobility, boolean bypassesMobDamage, boolean isSecret)
         {
-            CommonRecords.ProjectileDataRecord parsedTurretProjectile;
-            CommonRecords.ShotDataRecord parsedTurretShot;
-            if (turretProjectile.isPresent())
-            {
-                CommonRecords.OptionalProjectileDataRecord localTurretProjectile = turretProjectile.get(); // ok so i just moved the boilerplate code to another place, great!!!!
-                parsedTurretProjectile = new CommonRecords.ProjectileDataRecord(
-                        localTurretProjectile.size().orElse(projectile.size()),
-                        localTurretProjectile.visualSize().orElse(projectile.visualSize()),
-                        localTurretProjectile.lifeTicks().orElse(projectile.lifeTicks()),
-                        localTurretProjectile.speed().orElse(projectile.speed()),
-                        localTurretProjectile.delayStartSpeed().orElse(projectile.delaySpeedMult()),
-                        localTurretProjectile.horizontalDrag().orElse(projectile.horizontalDrag()),
-                        localTurretProjectile.straightShotTicks().orElse(projectile.straightShotTicks()),
-                        localTurretProjectile.gravity().orElse(projectile.gravity()),
-                        localTurretProjectile.inkCoverageImpact().orElse(projectile.inkCoverageImpact()),
-                        localTurretProjectile.inkDropCoverage().orElse(projectile.inkDropCoverage()),
-                        localTurretProjectile.distanceBetweenInkDrops().orElse(projectile.distanceBetweenInkDrops()),
-                        localTurretProjectile.baseDamage().orElse(projectile.baseDamage()),
-                        localTurretProjectile.minDamage().orElse(projectile.minDamage()),
-                        localTurretProjectile.damageDecayStartTick().orElse(projectile.damageDecayStartTick()),
-                        localTurretProjectile.damageDecayPerTick().orElse(projectile.damageDecayPerTick())
-                );
-            }
-            else
-            {
-                parsedTurretProjectile = projectile;
-            }
-            if (turretShot.isPresent())
-            {
-                CommonRecords.OptionalShotDataRecord localTurretShot = turretShot.get(); // ok so i just moved the boilerplate code to another place, great!!!!
-                parsedTurretShot = new CommonRecords.ShotDataRecord(
-                        localTurretShot.startupTicks().orElse(shot.startupTicks()),
-                        localTurretShot.endlagTicks().orElse(shot.endlagTicks()),
-                        localTurretShot.projectileCount().orElse(shot.projectileCount()),
-                        localTurretShot.accuracyData().orElse(shot.accuracyData()),
-                        localTurretShot.pitchCompensation().orElse(shot.pitchCompensation()),
-                        localTurretShot.inkConsumption().orElse(shot.inkConsumption()),
-                        localTurretShot.inkRecoveryCooldown().orElse(shot.inkRecoveryCooldown())
-                );
-            }
-            else
-            {
-                parsedTurretShot = shot;
-            }
-            return new DataRecord(projectile, shot, parsedTurretProjectile, parsedTurretShot, roll, mobility, bypassesMobDamage, isSecret);
+            return new DataRecord(projectile, shot,
+                    CommonRecords.OptionalProjectileDataRecord.mergeWithBase(turretProjectile, projectile),
+                    CommonRecords.OptionalShotDataRecord.mergeWithBase(turretShot, shot),
+                    roll, mobility, bypassesMobDamage, isSecret);
         }
     }
 

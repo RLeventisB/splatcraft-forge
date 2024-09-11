@@ -365,12 +365,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             velocityModule = 0.8F;
         }
 
-        if (!this.isNoGravity())
-        {
-            deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y - this.getGravity(), deltaMovement.z);
-        }
-        this.updateRotation();
         this.setDeltaMovement(deltaMovement.scale(velocityModule));
+        this.updateRotation();
 
         this.setPos(newX, newY, newZ);
     }
@@ -460,7 +456,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize)
     {
         InkDropEntity proj = new InkDropEntity(level(), this, getColor(), inkType, dropImpactSize, sourceWeapon);
-        Vec3 velocity = new Vec3(getDeltaMovement().x * 0.7, getDeltaMovement().y - 3.5, getDeltaMovement().z * 0.7);
+        Vec3 velocity = new Vec3(0, 0, 0);
         velocity = velocity.scale(Math.pow(0.99, extraFrame)).subtract(0, 0.275 * extraFrame, 0).multiply(Math.pow(0.9, extraFrame), 1, Math.pow(0.9, extraFrame));
         Vec3 nextAproximatePos = new Vec3(dropX, dropY, dropZ).add(velocity);
         HitResult hitresult = this.level().clip(new ClipContext(new Vec3(dropX, dropY, dropZ), nextAproximatePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
@@ -481,22 +477,32 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private Vec3 getShootVelocity(float timeDelta)
     {
         Vec3 shootDirection = entityData.get(SHOOT_DIRECTION);
-        Vec3 unitSpeed = shootDirection.scale(entityData.get(SPEED));
-        if (straightShotTime - timeDelta >= 0) // not close to ending
-            return unitSpeed.scale(timeDelta);
-        else if (straightShotTime < 0) // already ended
-            return calculateFallingSpeed(shootDirection, -straightShotTime, timeDelta);
-
-        // inbetween ending
-        float gravityTime = timeDelta - straightShotTime;
-        return unitSpeed.scale(straightShotTime).add(calculateFallingSpeed(unitSpeed, gravityTime, gravityTime));
+        float frame = getMaxStraightShotTime() - straightShotTime;
+        float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
+        Vec3 velocity = shootDirection.scale(speedData[0]);
+        if (isNoGravity() || speedData[1] == 0)
+            return velocity;
+        return velocity.subtract(0, getGravity() * speedData[1], 0).scale(timeDelta);
     }
 
-    private Vec3 calculateFallingSpeed(Vec3 unitSpeed, float fallenTime, float timeDelta)
+    public float[] getSpeed(float frame, float straightShotFrame, float timeDelta)
     {
-        double acumulatedHorizontalDrag = Math.pow(getHorizontalDrag(), fallenTime - 1);
-        Vec3 delayedSpeed = unitSpeed.scale(getGravitySpeedMult() * acumulatedHorizontalDrag).subtract(0, getGravity() * fallenTime, 0);
-        return delayedSpeed.scale(timeDelta);
+        float speed = entityData.get(SPEED);
+        float fallenFrames = Math.max(0, frame - straightShotFrame);
+
+        if (frame + timeDelta <= straightShotFrame)// not close to ending
+        {
+            return new float[]{speed, fallenFrames};
+        }
+        else if (frame >= straightShotFrame) // already ended
+        {
+            speed *= getGravitySpeedMult();
+            speed *= (float) Math.pow(getHorizontalDrag(), 1 + fallenFrames);
+            return new float[]{speed, fallenFrames};
+        }
+        float straightFraction = straightShotFrame - frame;
+        float fallFraction = timeDelta - straightFraction;
+        return new float[]{(speed * straightFraction + speed * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallFraction) * fallFraction), fallenFrames};
     }
 
     @Override

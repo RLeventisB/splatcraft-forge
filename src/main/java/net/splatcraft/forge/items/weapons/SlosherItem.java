@@ -19,6 +19,7 @@ import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.AttackId;
@@ -163,25 +164,26 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
             for (int i = 0; i < sloshes.size(); i++)
             {
-                CalculatedSloshData sloshTime = sloshes.get(i);
-                if (sloshTime.time <= frame)
+                CalculatedSloshData calculatedSloshData = sloshes.get(i);
+                if (calculatedSloshData.time <= frame)
                 {
-                    float extraTime = frame - sloshTime.time;
+                    float extraTime = frame - calculatedSloshData.time;
                     float partialTick = 1 - extraTime;
 
                     if (didSound || reduceInk(player, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true))
                     {
-                        SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(sloshTime.sloshDataIndex);
+                        SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(calculatedSloshData.sloshDataIndex);
+                        CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
 
-                        InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileSetting.projectile().size(), sloshData);
-                        proj.setSlosherStats(projectileSetting.projectile());
+                        InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileData.size(), sloshData);
+                        proj.setSlosherStats(projectileData);
 
                         float xRotation = Mth.lerp(partialTick, yRotOld, yRot);
                         proj.shootFromRotation(
                                 Mth.lerp(partialTick, xRotOld, xRot),
                                 xRotation + projectileSetting.offsetAngle() - 3,
                                 shotSetting.pitchCompensation(),
-                                projectileSetting.projectile().speed() - projectileSetting.speedSubstract() * sloshTime.indexInSlosh,
+                                projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
                                 0,
                                 partialTick);
                         proj.setAttackId(attackId);
@@ -202,7 +204,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                             case CYCLONE:
                                 proj.canPierce = true;
                         }
-                        proj.addExtraData(new ExtraSaveData.SloshExtraData(sloshTime.sloshDataIndex, proj.getY()));
+                        proj.addExtraData(new ExtraSaveData.SloshExtraData(calculatedSloshData.sloshDataIndex, proj.getY()));
                         level.addFreshEntity(proj);
 
                         proj.tick(extraTime);

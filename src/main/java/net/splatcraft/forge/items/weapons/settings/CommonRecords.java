@@ -78,12 +78,32 @@ public class CommonRecords
         }
     }
 
+    public record ProjectileSizeRecord(
+            float hitboxSize,
+            float visualScale,
+            float worldHitboxSize
+    )
+    {
+        public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
+                instance -> instance.group(
+                        Codec.FLOAT.optionalFieldOf("hitbox_size", 0.1f).forGetter(ProjectileSizeRecord::hitboxSize),
+                        Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualScale())),
+                        Codec.FLOAT.optionalFieldOf("world_hitbox_size").forGetter(t -> Optional.of(t.worldHitboxSize()))
+                ).apply(instance, ProjectileSizeRecord::create)
+        );
+
+        private static ProjectileSizeRecord create(float hitboxSize, Optional<Float> visualSize, Optional<Float> worldHitboxSize)
+        {
+            return new ProjectileSizeRecord(hitboxSize, visualSize.orElse(hitboxSize * 3), worldHitboxSize.orElse(hitboxSize));
+        }
+    }
+
     public record OptionalProjectileDataRecord(
             Optional<Float> size,
             Optional<Float> visualSize,
             Optional<Integer> lifeTicks,
             Optional<Float> speed,
-            Optional<Float> delayStartSpeed,
+            Optional<Float> delaySpeedMult,
             Optional<Float> horizontalDrag,
             Optional<Float> straightShotTicks,
             Optional<Float> gravity,
@@ -102,7 +122,7 @@ public class CommonRecords
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileDataRecord::visualSize),
                         Codec.INT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delayStartSpeed),
+                        Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delaySpeedMult),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.optionalFieldOf("straight_shot_ticks").forGetter(OptionalProjectileDataRecord::straightShotTicks),
                         Codec.FLOAT.optionalFieldOf("gravity").forGetter(OptionalProjectileDataRecord::gravity),
@@ -116,7 +136,25 @@ public class CommonRecords
                 ).apply(instance, OptionalProjectileDataRecord::new)
         );
 
-        public static Optional<OptionalProjectileDataRecord> convert(ProjectileDataRecord projectile) // this is horrible
+        public static final OptionalProjectileDataRecord DEFAULT = new OptionalProjectileDataRecord(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty()
+        );
+
+        public static Optional<OptionalProjectileDataRecord> from(ProjectileDataRecord projectile) // this is horrible
         {
             return Optional.of(new OptionalProjectileDataRecord(
                     Optional.of(projectile.size),
@@ -133,27 +171,33 @@ public class CommonRecords
                     Optional.of(projectile.baseDamage),
                     Optional.of(projectile.minDamage),
                     Optional.of(projectile.damageDecayStartTick),
-                    Optional.of(projectile.damageDecayPerTick)));
+                    Optional.of(projectile.damageDecayPerTick)
+            ));
         }
-    }
 
-    public record ProjectileSizeRecord(
-            float hitboxSize,
-            float visualScale,
-            float worldHitboxSize
-    )
-    {
-        public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        Codec.FLOAT.optionalFieldOf("hitbox_size", 0.1f).forGetter(ProjectileSizeRecord::hitboxSize),
-                        Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualScale())),
-                        Codec.FLOAT.optionalFieldOf("world_hitbox_size").forGetter(t -> Optional.of(t.worldHitboxSize()))
-                ).apply(instance, ProjectileSizeRecord::create)
-        );
-
-        private static ProjectileSizeRecord create(float hitboxSize, Optional<Float> visualSize, Optional<Float> worldHitboxSize)
+        public static ProjectileDataRecord mergeWithBase(Optional<OptionalProjectileDataRecord> modified, ProjectileDataRecord base)
         {
-            return new ProjectileSizeRecord(hitboxSize, visualSize.orElse(hitboxSize * 3), worldHitboxSize.orElse(hitboxSize));
+            if (modified.isEmpty())
+                return base;
+
+            OptionalProjectileDataRecord modifiedGet = modified.get();
+            return new ProjectileDataRecord(
+                    modifiedGet.size().orElse(base.size()),
+                    modifiedGet.visualSize().orElse(base.visualSize()),
+                    modifiedGet.lifeTicks().orElse(base.lifeTicks()),
+                    modifiedGet.speed().orElse(base.speed()),
+                    modifiedGet.delaySpeedMult().orElse(base.delaySpeedMult()),
+                    modifiedGet.horizontalDrag().orElse(base.horizontalDrag()),
+                    modifiedGet.straightShotTicks().orElse(base.straightShotTicks()),
+                    modifiedGet.gravity().orElse(base.gravity()),
+                    modifiedGet.inkCoverageImpact().orElse(base.inkCoverageImpact()),
+                    modifiedGet.inkDropCoverage().orElse(base.inkDropCoverage()),
+                    modifiedGet.distanceBetweenInkDrops().orElse(base.distanceBetweenInkDrops()),
+                    modifiedGet.baseDamage().orElse(base.baseDamage()),
+                    modifiedGet.minDamage().orElse(base.minDamage()),
+                    modifiedGet.damageDecayStartTick().orElse(base.damageDecayStartTick()),
+                    modifiedGet.damageDecayPerTick().orElse(base.damageDecayPerTick())
+            );
         }
     }
 
@@ -213,7 +257,17 @@ public class CommonRecords
                 ).apply(instance, OptionalShotDataRecord::new)
         );
 
-        public static Optional<OptionalShotDataRecord> convert(ShotDataRecord shot)
+        public static final OptionalShotDataRecord DEFAULT = new OptionalShotDataRecord(
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty()
+        );
+
+        public static Optional<OptionalShotDataRecord> from(ShotDataRecord shot)
         {
             return Optional.of(new OptionalShotDataRecord(
                     Optional.of(shot.startupTicks),
@@ -224,6 +278,23 @@ public class CommonRecords
                     Optional.of(shot.inkConsumption),
                     Optional.of(shot.inkRecoveryCooldown)
             ));
+        }
+
+        public static ShotDataRecord mergeWithBase(Optional<OptionalShotDataRecord> modified, ShotDataRecord base)
+        {
+            if (modified.isEmpty())
+                return base;
+
+            OptionalShotDataRecord modifiedGet = modified.get();
+            return new ShotDataRecord(
+                    modifiedGet.startupTicks().orElse(base.startupTicks()),
+                    modifiedGet.endlagTicks().orElse(base.endlagTicks()),
+                    modifiedGet.projectileCount().orElse(base.projectileCount()),
+                    modifiedGet.accuracyData().orElse(base.accuracyData()),
+                    modifiedGet.pitchCompensation().orElse(base.pitchCompensation()),
+                    modifiedGet.inkConsumption().orElse(base.inkConsumption()),
+                    modifiedGet.inkRecoveryCooldown().orElse(base.inkRecoveryCooldown())
+            );
         }
     }
 
