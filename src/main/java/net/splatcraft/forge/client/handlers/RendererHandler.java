@@ -468,8 +468,8 @@ public class RendererHandler
                     Vector4f screenPos = new Vector4f(projectiveCamSpace.x() / w * width, projectiveCamSpace.y() / w * height, w, (float) Math.sqrt(relativePos.dot(relativePos)));
 
                     GraphicsUtils.blit(graphics, WIDGETS,
-                            width / 2f - 3 * scale + screenPos.x,
-                            height / 2f - 3 * scale + (screenPos.y * aspectRatio),
+                            width / 2f - 4 * scale + screenPos.x,
+                            height / 2f - 4 * scale + (screenPos.y * aspectRatio),
                             8 * (scale + 1) / 2, 8 * (scale + 1) / 2, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
                 }
             }
