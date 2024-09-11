@@ -25,9 +25,6 @@
             "time_inactive_to_decrease": 3,
             "chance_decrease_when_inactive": 0.015
         },
-        "ground_inaccuracy": 3.2,
-        "airborne_inaccuracy": 8,
-        "pitch_compensation": 0,
         "ink_consumption": 1.4,
         "ink_recovery_cooldown": 7
     },
@@ -50,6 +47,13 @@
         "damage_decay_per_tick": 0.474
     },
     "turret_shot": {
-        "ground_inaccuracy": 2
+        "accuracy_data": {
+            "ground_deviation_degrees": 3,
+            "airborne_deviation_degrees": 3,
+            "chance_min": 0.03,
+            "chance_increase_per_shot": 0.03,
+            "time_inactive_to_decrease": 3,
+            "chance_decrease_when_inactive": 0.015
+        }
     }
 }
