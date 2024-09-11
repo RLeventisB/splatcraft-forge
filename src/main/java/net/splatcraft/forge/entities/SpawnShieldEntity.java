@@ -77,7 +77,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 
         for (Entity entity : level().getEntitiesOfClass(Entity.class, getBoundingBox()))
         {
-            if (!(entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor())))
+            if (entity != this && !(entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor())))
             {
                 setActiveTime(MAX_ACTIVE_TIME);
 
