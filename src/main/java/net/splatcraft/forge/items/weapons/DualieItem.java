@@ -252,11 +252,23 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         {
             if (reduceInk(entity, this, firingData.inkConsumption(), firingData.inkRecoveryCooldown(), true))
             {
+                float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData());
+                ShotDeviationHelper.DeviationData data = ShotDeviationHelper.getDeviationData(stack);
+                ItemStack mainHandItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
+                ItemStack offHandItem = entity.getItemInHand(InteractionHand.OFF_HAND);
+                if (!mainHandItem.isEmpty() && mainHandItem.getItem() instanceof DualieItem dualieItem && dualieItem.getSettingsClass().equals(getSettingsClass()))
+                {
+                    data.cloneTo(ShotDeviationHelper.getDeviationData(mainHandItem));
+                }
+                if (!offHandItem.isEmpty() && offHandItem.getItem() instanceof DualieItem dualieItem && dualieItem.getSettingsClass().equals(getSettingsClass()))
+                {
+                    data.cloneTo(ShotDeviationHelper.getDeviationData(offHandItem));
+                }
                 for (int i = 0; i < firingData.projectileCount(); i++)
                 {
                     InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
 
-                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData()));
+                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), inaccuracy);
                     proj.addExtraData(new ExtraSaveData.DualieExtraData(onRollCooldown));
                     proj.setDualieStats(projectileData);
                     level.addFreshEntity(proj);

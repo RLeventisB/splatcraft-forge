@@ -105,6 +105,14 @@ public class ShotDeviationHelper
             return "DeviationData[" +
                     "nbt=" + nbt + ']';
         }
+
+        public void cloneTo(DeviationData data)
+        {
+            data.setChanceDecreaseDelay(chanceDecreaseDelay());
+            data.setChance(chance());
+            data.setAirborneDecreaseDelay(airborneDecreaseDelay());
+            data.setAirborneInfluence(airborneInfluence());
+        }
     }
 
     public static float updateShotDeviation(ItemStack stack, RandomSource random, CommonRecords.ShotDeviationDataRecord shotDeviationData)

@@ -169,11 +169,12 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 
         if (firingSpeed > 0 && (cooldown.getTime() - 1) % firingSpeed == 0)
         {
+            float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData());
             for (int i = 0; i < firingData.projectileCount(); i++)
             {
                 InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), projectileData.size(), settings);
                 proj.shootFromRotation(player, player.getXRot(), player.getYRot(), firingData.pitchCompensation(), getScaledProjectileSettingFloat(settings, charge, CommonRecords.ProjectileDataRecord::speed),
-                        ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData()));
+                        inaccuracy);
                 proj.setSplatlingStats(settings, charge);
                 level.addFreshEntity(proj);
             }
