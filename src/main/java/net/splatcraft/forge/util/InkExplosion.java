@@ -114,9 +114,10 @@ public class InkExplosion
         for (LivingEntity entity : list)
         {
             AABB boundingBox = entity.getBoundingBox();
+            Vec3 closestPos = new Vec3(Mth.clamp(explosionPos.x, boundingBox.minX, boundingBox.maxX), Mth.clamp(explosionPos.y, boundingBox.minY, boundingBox.maxY), Mth.clamp(explosionPos.z, boundingBox.minZ, boundingBox.maxZ));
 
-            float distance = (float) explosionPos.distanceToSqr(boundingBox.getCenter());
-            if (distance > radiusSquared)
+            float distance = (float) explosionPos.distanceToSqr(closestPos);
+            if (distance > radiusSquared) // still collides even in the center isn't in radius
                 continue;
             int targetColor = ColorUtils.getEntityColor(entity);
             if (targetColor == -1 || (color != targetColor && targetColor > -1))

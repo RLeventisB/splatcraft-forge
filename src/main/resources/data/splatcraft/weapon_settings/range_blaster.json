@@ -21,8 +21,6 @@
             "chance_max": 0.5,
             "chance_set_airborne": 0.5
         },
-        "ground_inaccuracy": 0.0,
-        "airborne_inaccuracy": 8.0,
         "ink_consumption": 10.0,
         "ink_recovery_cooldown": 23.0
     },

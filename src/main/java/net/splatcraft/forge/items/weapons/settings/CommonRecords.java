@@ -36,7 +36,7 @@ public class CommonRecords
     public record ProjectileDataRecord(
             float size,
             float visualSize,
-            int lifeTicks,
+            float lifeTicks,
             float speed,
             float delaySpeedMult,
             float horizontalDrag,
@@ -55,7 +55,7 @@ public class CommonRecords
                 instance -> instance.group(
                         Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
-                        Codec.INT.optionalFieldOf("lifespan", 600).forGetter(ProjectileDataRecord::lifeTicks),
+                        Codec.FLOAT.optionalFieldOf("lifespan", 600f).forGetter(ProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
                         Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(v -> Optional.of(v.delaySpeedMult())),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(ProjectileDataRecord::horizontalDrag),
@@ -72,7 +72,7 @@ public class CommonRecords
         );
         public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.262144F, 0, 0.075F, 0, 0, 4, 0, 0, 0, 0);
 
-        public static ProjectileDataRecord create(float size, Optional<Float> visualSize, int lifeTicks, float speed, Optional<Float> delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
+        public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, Optional<Float> delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
         {
             return new ProjectileDataRecord(size, visualSize.orElse(size * 3), lifeTicks, speed, delaySpeedMult.orElse(0.5f), horizontalDrag, straightShotTicks, gravity, inkCoverageImpact.orElse(size * 0.85f), inkDropCoverage.orElse(size * 0.75f), distanceBetweenInkDrops, baseDamage, decayedDamage.orElse(baseDamage), damageDecayStartTick, damageDecayPerTick);
         }
@@ -101,7 +101,7 @@ public class CommonRecords
     public record OptionalProjectileDataRecord(
             Optional<Float> size,
             Optional<Float> visualSize,
-            Optional<Integer> lifeTicks,
+            Optional<Float> lifeTicks,
             Optional<Float> speed,
             Optional<Float> delaySpeedMult,
             Optional<Float> horizontalDrag,
@@ -120,7 +120,7 @@ public class CommonRecords
                 instance -> instance.group(
                         Codec.FLOAT.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileDataRecord::visualSize),
-                        Codec.INT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
+                        Codec.FLOAT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalProjectileDataRecord::speed),
                         Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delaySpeedMult),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),

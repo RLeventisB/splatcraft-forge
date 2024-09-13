@@ -95,6 +95,9 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 
     public static float calculateAproximateRange(float straightShotTicks, float drag, float speed, float delaySpeedMult, float maxLifespan)
     {
-        return straightShotTicks * speed + speed * delaySpeedMult * drag / (1 - drag);
+        float dragOnEnd = (float) Math.pow(drag, maxLifespan - straightShotTicks);
+        if (dragOnEnd < 0.01)
+            return straightShotTicks * speed + speed * delaySpeedMult * drag / (1 - drag);
+        return straightShotTicks * speed + speed * delaySpeedMult * dragOnEnd;
     }
 }

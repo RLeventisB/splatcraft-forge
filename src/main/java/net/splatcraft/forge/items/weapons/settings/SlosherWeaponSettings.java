@@ -202,7 +202,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                 instance -> instance.group(
                         Codec.FLOAT.optionalFieldOf("size").forGetter(CommonRecords.OptionalProjectileDataRecord::size),
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(CommonRecords.OptionalProjectileDataRecord::visualSize),
-                        Codec.INT.optionalFieldOf("lifespan").forGetter(CommonRecords.OptionalProjectileDataRecord::lifeTicks),
+                        Codec.FLOAT.optionalFieldOf("lifespan").forGetter(CommonRecords.OptionalProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.optionalFieldOf("speed").forGetter(CommonRecords.OptionalProjectileDataRecord::speed),
                         Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(CommonRecords.OptionalProjectileDataRecord::delaySpeedMult),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(CommonRecords.OptionalProjectileDataRecord::horizontalDrag),
