@@ -1,27 +1,30 @@
 {
     "type": "splatcraft:shooter",
     "projectile": {
-        "size": 1.2,
-        "speed": 2.1,
-        "decayed_speed": 0.65,
-        "count": 1,
-        "ink_coverage_on_impact": 1.02,
+        "size": 0.267,
+        "speed": 4.9,
+        "delay_speed_mult": 0.9,
+        "ink_coverage_on_impact": 1.68,
         "ink_drop_coverage": 0.9,
-        "distance_between_drops": 2,
-        "straight_shot_ticks": 10,
-        "gravity": 0.075,
+        "distance_between_drops": 4,
+        "straight_shot_ticks": 1.666666666666,
         "base_damage": 12.4,
         "decayed_damage": 7,
         "damage_decay_start_tick": 3,
-        "damage_decay_per_tick": 1
+        "damage_decay_per_tick": 1.01
     },
     "shot": {
-        "startup_ticks": 0,
-        "endlag_ticks": 5,
-        "ground_inaccuracy": 4,
-        "airborne_inaccuracy": 11,
-        "pitch_compensation": 0,
-        "ink_consumption": 2.5,
+        "endlag_ticks": 4,
+        "accuracy_data": {
+            "ground_deviation_degrees": 4,
+            "airborne_deviation_degrees": 11,
+            "chance_min": 0.04,
+            "chance_max": 0.3,
+            "chance_increase_per_shot": 0.03,
+            "time_inactive_to_decrease": 4,
+            "chance_decrease_when_inactive": 0.06
+        },
+        "ink_consumption": 2.3,
         "ink_recovery_cooldown": 7
     },
     "full_damage_to_mobs": false,
