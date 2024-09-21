@@ -16,7 +16,7 @@ public class CommonRecords
     // height and width is something like 1,65217, in minecraft it's 3!!!! so i converted both units to blocks (19 DU = 1,8 blocks, and
     // 11,5 DU = 0,6 blocks) and took the average of them both, which is 14,957264957264957264957264957266, also known simply as 15 DU
     // so, 15 DU = 1 block, and 1.5 IU (internal unit, which is the internal value in splatoon 3) = 1 block, since 10 DU = 1 IU
-    // no there wasnt a scale of 20 DU = 1 block what are you talking about
+    // this is the third time but it seems that 12 DU = 1 block seems ok (i should put the raw values instead but im stupdi)
     // NOTE: obviously not all values will be 1:1 to this equation, there will be roundings, and in some cases adjustments,
     // like in the case that a weapon paints much less because of minecraft's cubic nature and the magic of rounding
     // also most of the data (in internal units) is taken from https://leanny.github.io/splat3/parameters.html or https://splatoonwiki.org/wiki/
@@ -25,7 +25,9 @@ public class CommonRecords
     // fall height, so screw all that,
     // ink_drop_coverage = the units in "All other ink droplets have a radius of x"
     //      * in case of blasters, its the units in "Ink droplets have a radius of x" * 1.2
+    //      * in the case of rollers, it uses the first unit's PaintRadiusShock on both attacks
     // ink_coverage_on_impact = the units in "Droplets that occur when they travel past y units of the player have a radius of x" * 1.2
+    //      * in the case of rollers, it uses the first unit's PaintRadiusShock on both attacks
     // also³ here are some other conversions from values in splatoon (x) to minecraft (y), divisor means the current scale of DU per block, currently its 15
     // speed ->             y = x / divisor * 3
     // time ->              y = x / 3
@@ -57,10 +59,10 @@ public class CommonRecords
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
                         Codec.FLOAT.optionalFieldOf("lifespan", 600f).forGetter(ProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
-                        Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(v -> Optional.of(v.delaySpeedMult())),
+                        Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.5f).forGetter(ProjectileDataRecord::delaySpeedMult),
                         Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(ProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(ProjectileDataRecord::straightShotTicks),
-                        Codec.FLOAT.optionalFieldOf("gravity", 0.075F).forGetter(ProjectileDataRecord::gravity),
+                        Codec.FLOAT.optionalFieldOf("gravity", 0.175F).forGetter(ProjectileDataRecord::gravity),
                         Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact)),
                         Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(r -> Optional.of(r.inkDropCoverage)),
                         Codec.FLOAT.optionalFieldOf("distance_between_drops", 4F).forGetter(ProjectileDataRecord::distanceBetweenInkDrops),
@@ -70,11 +72,25 @@ public class CommonRecords
                         Codec.FLOAT.optionalFieldOf("damage_decay_per_tick", 0F).forGetter(ProjectileDataRecord::damageDecayPerTick)
                 ).apply(instance, ProjectileDataRecord::create)
         );
-        public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.262144F, 0, 0.075F, 0, 0, 4, 0, 0, 0, 0);
+        public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.262144F, 0, 0.175F, 0, 0, 4, 0, 0, 0, 0);
 
-        public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, Optional<Float> delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
+        public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
         {
-            return new ProjectileDataRecord(size, visualSize.orElse(size * 3), lifeTicks, speed, delaySpeedMult.orElse(0.5f), horizontalDrag, straightShotTicks, gravity, inkCoverageImpact.orElse(size * 0.85f), inkDropCoverage.orElse(size * 0.75f), distanceBetweenInkDrops, baseDamage, decayedDamage.orElse(baseDamage), damageDecayStartTick, damageDecayPerTick);
+            return new ProjectileDataRecord(size,
+                    visualSize.orElse(size * 3),
+                    lifeTicks,
+                    speed,
+                    delaySpeedMult,
+                    horizontalDrag,
+                    straightShotTicks,
+                    gravity,
+                    inkCoverageImpact.orElse(size * 0.85f),
+                    inkDropCoverage.orElse(size * 0.75f),
+                    distanceBetweenInkDrops,
+                    baseDamage,
+                    decayedDamage.orElse(baseDamage),
+                    damageDecayStartTick,
+                    damageDecayPerTick);
         }
     }
 

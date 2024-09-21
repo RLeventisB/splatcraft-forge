@@ -1,17 +1,17 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 1.13,
+        "size": 1.41667,
         "delay_speed_mult": 0.8,
         "visual_size": 0.8,
-        "speed": 3.5218,
-        "ink_coverage_on_impact": 1.1,
+        "speed": 4.40225,
+        "ink_coverage_on_impact": 1.083,
         "straight_shot_ticks": 0.66666666666666,
         "ink_drop_coverage": 0,
         "direct_damage": 14,
         "minimum_damage": 10,
-        "fall_damage_start": 1,
-        "fall_damage_end": 5.08
+        "fall_damage_start": 1.25,
+        "fall_damage_end": 6.354167
     },
     "shot": {
         "pitch_compensation": -15,
@@ -24,28 +24,28 @@
                 "slosh_count": 1,
                 "slosh_projectile_modifications": {
                     "visual_size": 1.4,
-                    "ink_coverage_on_impact": 2.13
+                    "ink_coverage_on_impact": 2.667
                 }
             },
             {
                 "startup_ticks": 4.33333333333,
                 "slosh_count": 3,
                 "delay_between_projectiles": 0.33333333333,
-                "speed_substract_per_projectile": 0.32,
+                "speed_substract_per_projectile": 0.4,
                 "slosh_projectile_modifications": {
-                    "speed": 3.2018
+                    "speed": 4.00225
                 }
             },
             {
                 "startup_ticks": 5.33333333333333,
                 "slosh_count": 5,
                 "delay_between_projectiles": 0.66666666666666,
-                "speed_substract_per_projectile": 0.4,
+                "speed_substract_per_projectile": 0.5,
                 "slosh_projectile_modifications": {
-                    "size": 0.6,
+                    "size": 0.75,
                     "visual_size": 0.4,
-                    "speed": 2.2,
-                    "ink_coverage_on_impact": 0.9,
+                    "speed": 2.75,
+                    "ink_coverage_on_impact": 0.833,
                     "direct_damage": 10,
                     "minimum_damage": 10
                 }

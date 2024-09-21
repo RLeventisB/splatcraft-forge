@@ -171,10 +171,8 @@ public class PlayerMovementHandler
             }
             else if (cooldown.storedStack.getItem() instanceof RollerItem rollerItem)
             {
-                if (!rollerItem.getSettings(cooldown.storedStack).allowJumpingOnCharge)
-                    input.jumping = false;
-                input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(cooldown.storedStack).swingMobility;
-                input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(cooldown.storedStack).swingMobility;
+                input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
+                input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
             }
             if (cooldown.forceCrouch() && cooldown.getTime() >= 1)
             {

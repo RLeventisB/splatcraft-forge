@@ -32,7 +32,12 @@ if (System.env.CI == "true") {
     version = "${mod_version}-${minecraft_version}".replace("-SNAPSHOT", "-${commitHash}")
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17) // Mojang ships Java 17 to end users, so your mod should target Java 17.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+        vendor = JvmVendorSpec.JETBRAINS // this is because of AllowEnhancedClassRedefinition!!!
+    }
+}
 
 repositories {
     maven {
@@ -148,14 +153,14 @@ tasks.named('build').configure { dependsOn('jarJar') }
 jar {
     manifest {
         attributes([
-                "MixinConfigs"            : "splatcraft.mixins.json",
-                "Specification-Title"     : mod_id,
-                "Specification-Vendor"    : mod_authors,
-                "Specification-Version"   : "${version}",
-                "Implementation-Title"    : mod_name,
-                "Implementation-Version"  : "${version}",
-                "Implementation-Vendor"   : mod_authors,
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+            "MixinConfigs"            : "splatcraft.mixins.json",
+            "Specification-Title"     : mod_id,
+            "Specification-Vendor"    : mod_authors,
+            "Specification-Version"   : "${version}",
+            "Implementation-Title"    : mod_name,
+            "Implementation-Version"  : "${version}",
+            "Implementation-Vendor"   : mod_authors,
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }

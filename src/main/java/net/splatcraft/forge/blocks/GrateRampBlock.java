@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("deprecation")
 public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
 {
-
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final VoxelShape START = box(0, 0, 0, 3, 3, 16);
@@ -58,16 +57,13 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
     {
         AABB bb = shape.bounds();
 
-        switch (facing)
+        return switch (facing)
         {
-            case SOUTH:
-                return Shapes.create(new AABB(1 - bb.maxZ, bb.minY, bb.minX, 1 - bb.minZ, bb.maxY, bb.maxX));
-            case EAST:
-                return Shapes.create(new AABB(1 - bb.maxX, bb.minY, 1 - bb.maxZ, 1 - bb.minX, bb.maxY, 1 - bb.minZ));
-            case WEST:
-                return Shapes.create(new AABB(bb.minZ, bb.minY, 1 - bb.maxX, bb.maxZ, bb.maxY, 1 - bb.minX));
-        }
-        return shape;
+            case SOUTH -> Shapes.create(new AABB(1 - bb.maxZ, bb.minY, bb.minX, 1 - bb.minZ, bb.maxY, bb.maxX));
+            case EAST -> Shapes.create(new AABB(1 - bb.maxX, bb.minY, 1 - bb.maxZ, 1 - bb.minX, bb.maxY, 1 - bb.minZ));
+            case WEST -> Shapes.create(new AABB(bb.minZ, bb.minY, 1 - bb.maxX, bb.maxZ, bb.maxY, 1 - bb.minX));
+            default -> shape;
+        };
     }
 
     protected static VoxelShape[] createVoxelShapes(VoxelShape... shapes)
@@ -81,7 +77,6 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
             {
                 result[i] = Shapes.or(result[i], modifyShapeForDirection(Direction.from2DDataValue(i), shape));
             }
-
         }
 
         return result;
@@ -117,7 +112,8 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
     }
 
     @Override
-    public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull PathComputationType type) {
+    public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull PathComputationType type)
+    {
         return false;
     }
 }
