@@ -2,7 +2,6 @@ package net.splatcraft.forge.entities;
 
 import com.google.common.reflect.TypeToken;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -16,6 +15,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -37,17 +37,11 @@ import net.splatcraft.forge.client.particles.InkSplashParticleData;
 import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.*;
-import net.splatcraft.forge.registries.SplatcraftDamageTypes;
-import net.splatcraft.forge.registries.SplatcraftEntities;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.forge.registries.*;
 import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity
@@ -63,12 +57,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
     private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
 
-    protected float straightShotTime = -1;
+    protected double straightShotTime = -1;
     public float lifespan = 600;
     public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
     public ItemStack sourceWeapon = ItemStack.EMPTY;
     public float impactCoverage, dropImpactSize, distanceBetweenDrops;
-    public float dropSkipDistance;
     public float damageMultiplier = 1;
     public boolean causesHurtCooldown, throwerAirborne;
     public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
@@ -115,7 +108,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         dropImpactSize = settings.inkDropCoverage();
         distanceBetweenDrops = settings.distanceBetweenInkDrops();
         if (distanceBetweenDrops > 0)
-            dropSkipDistance = CommonUtils.nextFloat(random, 0, distanceBetweenDrops);
+            accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
         float range = charge == 1 ? settings.fullyChargedRange() : settings.minChargeRange() + (settings.maxChargeRange() - settings.minChargeRange()) * charge;
         lifespan = range / settings.size();
         impactCoverage = settings.inkCoverageImpact();
@@ -165,23 +158,16 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return this;
     }
 
-    public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, float progress)
+    public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings)
     {
         setProjectileType(Types.ROLLER);
 
-        setGravity(0.15f);
         if (throwerAirborne)
         {
-            setStraightShotTime(settings.flingStraightTicks);
-            setHorizontalDrag(settings.flingHorizontalDrag);
+            accumulatedDrops = 1;
+            return setRollerProjectileStats(settings.flingData.projectileData());
         }
-        else
-        {
-            setStraightShotTime(settings.swingStraightTicks);
-            setHorizontalDrag(settings.swingHorizontalDrag);
-        }
-
-        return this;
+        return setRollerProjectileStats(settings.swingData.projectileData());
     }
 
     public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
@@ -203,13 +189,32 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return this;
     }
 
+    public InkProjectileEntity setRollerProjectileStats(RollerWeaponSettings.RollerProjectileDataRecord settings)
+    {
+        dropImpactSize = settings.inkDropCoverage();
+        distanceBetweenDrops = settings.distanceBetweenInkDrops();
+        impactCoverage = settings.inkCoverageImpact();
+
+        setProjectileVisualSize(settings.visualSize());
+        setGravity(settings.gravity());
+        setStraightShotTime(settings.straightShotTicks());
+
+        lifespan = 600;
+        setHorizontalDrag(settings.horizontalDrag());
+        setGravitySpeedMult(settings.delaySpeedMult());
+
+        addExtraData(new ExtraSaveData.RollerDistanceExtraData(position().toVector3f()));
+
+        return this;
+    }
+
     @Override
     protected void defineSynchedData()
     {
         entityData.define(PROJ_TYPE, Types.SHOOTER);
         entityData.define(COLOR, ColorUtils.DEFAULT);
         entityData.define(PROJ_SIZE, new Vec2(0.2F, 0.6F));
-        entityData.define(GRAVITY, 0.075F);
+        entityData.define(GRAVITY, 0.175F);
         entityData.define(STRAIGHT_SHOT_TIME, 0F);
         entityData.define(SPEED, 0f);
         entityData.define(HORIZONTAL_DRAG, 1F);
@@ -238,7 +243,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     public void tick()
     {
-        tick(1);
+        tick(SplatcraftGameRules.getIntRuleValue(level(), SplatcraftGameRules.INK_PROJECTILE_FREQUENCY) / 100f);
     }
 
     public void tick(float timeDelta)
@@ -249,8 +254,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         Vec3 lastPosition = position();
         Vec3 velocity = getShootVelocity(timeDelta);
         setDeltaMovement(velocity);
+        straightShotTime -= timeDelta;
 
-        superTick(timeDelta);
+        superTick(this, 1);
 
         if (isInWater())
         {
@@ -259,7 +265,18 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         }
 
         if (isRemoved())
+        {
+            Vec3 nextPosition = lastPosition.add(velocity);
+            double frame = (
+                    (
+                            Mth.inverseLerp(getX(), lastPosition.x, nextPosition.x) +
+                                    Mth.inverseLerp(getY(), lastPosition.y, nextPosition.y) +
+                                    Mth.inverseLerp(getZ(), lastPosition.z, nextPosition.z)
+                    ) / 3);
+            setDeltaMovement(getDeltaMovement().scale(frame));
+            calculateDrops(lastPosition, (float) frame);
             return;
+        }
 
         if (!level().isClientSide() && !persistent && (lifespan -= timeDelta) <= 0)
         {
@@ -267,7 +284,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
             {
                 InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
-                createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
+                createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
                 level().broadcastEntityEvent(this, (byte) 3);
                 level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
             }
@@ -275,14 +292,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             {
                 InkExplosion.createInkExplosion(getOwner(), position(), impactCoverage, 0, 0, inkType, sourceWeapon);
             }
-            if (distanceBetweenDrops == 0)
-            {
-                createDrop(getX(), getY(), getZ(), 0);
-            }
-            else
-            {
-                calculateDrops(lastPosition);
-            }
+            calculateDrops(lastPosition, timeDelta);
             discard();
         }
         else if (dropImpactSize > 0)
@@ -291,100 +301,79 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             {
                 level().broadcastEntityEvent(this, (byte) 1);
             }
-            if (distanceBetweenDrops == 0)
-            {
-                createDrop(getX(), getY(), getZ(), 0);
-            }
-            else
-            {
-                calculateDrops(lastPosition);
-            }
+            calculateDrops(lastPosition, timeDelta);
         }
-        straightShotTime -= timeDelta;
     }
 
     // we NEED the HitResult actual position or else my stupid obsession with partial frame damage falloff will make me perish
     // yes this breaks like 40 fundamentals like encapsulation and mixins but uhhhhhhhhhhhhhhhhhhhhhhhhhhh
-    public void superTick(float timeDelta)
+    public static void superTick(Projectile entity, float timeDelta)
     {
-        if (!hasBeenShot)
+        if (!entity.hasBeenShot)
         {
-            this.gameEvent(GameEvent.PROJECTILE_SHOOT, this.getOwner());
-            this.hasBeenShot = true;
+            entity.gameEvent(GameEvent.PROJECTILE_SHOOT, entity.getOwner());
+            entity.hasBeenShot = true;
         }
 
-        if (!leftOwner)
+        if (!entity.leftOwner)
         {
-            leftOwner = checkLeftOwner();
+            entity.leftOwner = entity.checkLeftOwner();
         }
 
-        baseTick();
+        entity.baseTick();
 
-        HitResult hitresult = getHitResultOnMoveVector(timeDelta);
+        HitResult hitresult = getHitResultOnMoveVector(entity);
         boolean teleported = false;
         if (hitresult.getType() == HitResult.Type.BLOCK)
         {
             BlockPos blockpos = ((BlockHitResult) hitresult).getBlockPos();
-            BlockState blockstate = level().getBlockState(blockpos);
+            BlockState blockstate = entity.level().getBlockState(blockpos);
             if (blockstate.is(Blocks.NETHER_PORTAL))
             {
-                this.handleInsidePortal(blockpos);
+                entity.handleInsidePortal(blockpos);
                 teleported = true;
             }
             else if (blockstate.is(Blocks.END_GATEWAY))
             {
-                BlockEntity blockentity = this.level().getBlockEntity(blockpos);
-                if (blockentity instanceof TheEndGatewayBlockEntity gatewayBlock && TheEndGatewayBlockEntity.canEntityTeleport(this))
+                BlockEntity blockentity = entity.level().getBlockEntity(blockpos);
+                if (blockentity instanceof TheEndGatewayBlockEntity gatewayBlock && TheEndGatewayBlockEntity.canEntityTeleport(entity))
                 {
-                    TheEndGatewayBlockEntity.teleportEntity(this.level(), blockpos, blockstate, this, gatewayBlock);
+                    TheEndGatewayBlockEntity.teleportEntity(entity.level(), blockpos, blockstate, entity, gatewayBlock);
                 }
 
                 teleported = true;
             }
         }
 
-        if (hitresult.getType() != HitResult.Type.MISS && !teleported && !ForgeEventFactory.onProjectileImpact(this, hitresult))
+        if (hitresult.getType() != HitResult.Type.MISS && !teleported && !ForgeEventFactory.onProjectileImpact(entity, hitresult) && !entity.level().isClientSide())
         {
-            this.onHit(hitresult);
+            entity.onHit(hitresult);
         }
 
-        this.checkInsideBlocks();
-        Vec3 deltaMovement = this.getDeltaMovement();
-        double newX = this.getX() + deltaMovement.x * timeDelta;
-        double newY = this.getY() + deltaMovement.y * timeDelta;
-        double newZ = this.getZ() + deltaMovement.z * timeDelta;
+        entity.checkInsideBlocks();
+        Vec3 deltaMovement = entity.getDeltaMovement();
+        double newX = entity.getX() + deltaMovement.x * timeDelta;
+        double newY = entity.getY() + deltaMovement.y * timeDelta;
+        double newZ = entity.getZ() + deltaMovement.z * timeDelta;
 
-        float velocityModule = 1f;
-        if (this.isInWater())
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                this.level().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25, newY - deltaMovement.y * 0.25, newZ - deltaMovement.z * 0.25, deltaMovement.x, deltaMovement.y, deltaMovement.z);
-            }
-
-            velocityModule = 0.8F;
-        }
-
-        this.setDeltaMovement(deltaMovement.scale(velocityModule));
-        this.updateRotation();
-
-        this.setPos(newX, newY, newZ);
+        entity.updateRotation();
+        entity.setPos(newX, newY, newZ);
     }
 
-    private @NotNull HitResult getHitResultOnMoveVector(float timeDelta)
+    private static @NotNull HitResult getHitResultOnMoveVector(Projectile entity)
     {
-        Vec3 movement = getDeltaMovement().scale(timeDelta);
-        Level level = level();
-        Vec3 startPos = position();
+        Vec3 movement = entity.getDeltaMovement();
+        Level level = entity.level();
+        Vec3 startPos = entity.position();
         Vec3 nextPos = startPos.add(movement);
 
-        HitResult hitresult = level.clip(new ClipContext(startPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        HitResult hitresult = level.clip(new ClipContext(startPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
         if (hitresult.getType() != HitResult.Type.MISS)
         {
             nextPos = hitresult.getLocation();
         }
 
-        HitResult hitresult1 = getEntityHitResult(level, this, startPos, nextPos, getBoundingBox().expandTowards(movement).inflate(1.0), this::canHitEntity);
+        HitResult hitresult1 = getEntityHitResult(level, entity, startPos, nextPos, entity.getBoundingBox().expandTowards(movement).inflate(1.0), entity::canHitEntity);
         if (hitresult1 != null)
         {
             hitresult = hitresult1;
@@ -418,21 +407,15 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return entity == null ? null : new EntityHitResult(entity, hitPos);
     }
 
-    private void calculateDrops(Vec3 lastPosition)
+    private void calculateDrops(Vec3 lastPosition, float timeDelta)
     {
+        if (distanceBetweenDrops == 0)
+        {
+            createDrop(getX(), getY(), getZ(), 0, timeDelta);
+            return;
+        }
         Vec3 deltaMovement = getDeltaMovement();
         float dropsTravelled = (float) deltaMovement.length() / distanceBetweenDrops;
-        if (dropSkipDistance > 0)
-        {
-            if ((dropSkipDistance -= dropsTravelled) > 0)
-            {
-                dropsTravelled = 0;
-            }
-            else
-            {
-                dropsTravelled = -dropSkipDistance;
-            }
-        }
         if (dropsTravelled > 0)
         {
             accumulatedDrops += dropsTravelled;
@@ -443,70 +426,56 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                 double progress = accumulatedDrops / dropsTravelled;
                 Vec3 dropPos = VectorUtils.lerp(progress, position(), lastPosition);
 
-                createDrop(dropPos.x(), dropPos.y(), dropPos.z(), progress);
+                createDrop(dropPos.x(), dropPos.y(), dropPos.z(), progress, timeDelta);
             }
         }
     }
 
-    public void createDrop(double dropX, double dropY, double dropZ, double extraFrame)
+    public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float timeDelta)
     {
-        createDrop(dropX, dropY, dropZ, extraFrame, dropImpactSize);
+        createDrop(dropX, dropY, dropZ, extraFrame, dropImpactSize, timeDelta);
     }
 
-    public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize)
+    public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize, float timeDelta)
     {
         InkDropEntity proj = new InkDropEntity(level(), this, getColor(), inkType, dropImpactSize, sourceWeapon);
-        Vec3 velocity = new Vec3(0, 0, 0);
-        velocity = velocity.scale(Math.pow(0.99, extraFrame)).subtract(0, 0.275 * extraFrame, 0).multiply(Math.pow(0.9, extraFrame), 1, Math.pow(0.9, extraFrame));
-        Vec3 nextAproximatePos = new Vec3(dropX, dropY, dropZ).add(velocity);
-        HitResult hitresult = this.level().clip(new ClipContext(new Vec3(dropX, dropY, dropZ), nextAproximatePos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, null));
-        if (hitresult.getType() != HitResult.Type.MISS)
-        {
-            proj.onHit(hitresult);
-            proj.discard();
-            return;
-        }
-
-        if (proj.isRemoved())
-            return;
-        proj.moveTo(nextAproximatePos);
-        proj.shoot(velocity.x, velocity.y, velocity.z, (float) proj.getDeltaMovement().length(), 0.02f);
+        proj.moveTo(dropX, dropY, dropZ);
         level().addFreshEntity(proj);
+        proj.tick((float) (extraFrame + timeDelta));
     }
 
     private Vec3 getShootVelocity(float timeDelta)
     {
         Vec3 shootDirection = entityData.get(SHOOT_DIRECTION);
-        float frame = getMaxStraightShotTime() - straightShotTime;
-        float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
+        double frame = getMaxStraightShotTime() - straightShotTime;
+        double[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
         Vec3 velocity = shootDirection.scale(speedData[0]);
-        if (isNoGravity() || speedData[1] == 0)
+        if (speedData[1] <= 0)
             return velocity;
-        return velocity.subtract(0, getGravity() * speedData[1], 0).scale(timeDelta);
+        return velocity.subtract(0, getGravity() * speedData[1] * timeDelta, 0);
     }
 
-    public float[] getSpeed(float frame, float straightShotFrame, float timeDelta)
+    public double[] getSpeed(double frame, float straightShotFrame, float timeDelta)
     {
-        float speed = entityData.get(SPEED);
-        float fallenFrames = Math.max(0, frame - straightShotFrame);
+        double speed = entityData.get(SPEED);
+        double fallenFrames = frame - straightShotFrame;
+        double fallenFramesNext = fallenFrames + timeDelta;
 
-        if (frame + timeDelta <= straightShotFrame)// not close to ending
+        if (fallenFramesNext < 0) // not close to falling
         {
-            return new float[]{speed, fallenFrames};
+            return new double[]{speed * timeDelta, fallenFramesNext};
         }
-        else if (frame >= straightShotFrame) // already ended
+        else if (fallenFramesNext >= timeDelta) // already falling
         {
-            speed *= getGravitySpeedMult();
-            speed *= (float) Math.pow(getHorizontalDrag(), 1 + fallenFrames);
-            return new float[]{speed, fallenFrames};
+            speed *= getHorizontalDrag() * getGravitySpeedMult() * Math.pow(getHorizontalDrag(), fallenFrames);
+            return new double[]{speed * timeDelta, fallenFramesNext};
         }
-        float straightFraction = straightShotFrame - frame;
-        float fallFraction = timeDelta - straightFraction;
-        return new float[]{(speed * straightFraction + speed * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallFraction) * fallFraction), fallenFrames};
+        double straightFraction = timeDelta - fallenFramesNext;
+        return new double[]{(speed * straightFraction + speed * getHorizontalDrag() * getGravitySpeedMult() * Math.pow(getHorizontalDrag(), fallenFrames) * fallenFramesNext), fallenFramesNext};
     }
 
     @Override
-    protected void updateRotation()
+    public void updateRotation()
     {
         Vec3 motion = getDeltaMovement();
 
@@ -548,17 +517,18 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         float storedCrystalSoundIntensity = crystalSoundIntensity;
 
         // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
+        // lol i didnt even use it
 
         Vec3 nextPosition = position().add(getDeltaMovement());
         Vec3 impactPos = result.getLocation();
         Vec3 oldPos = position();
 
-        crystalSoundIntensity = (float) (
-                (
-                        Mth.inverseLerp(impactPos.x, getX(), nextPosition.x) +
-                                Mth.inverseLerp(impactPos.y, getY(), nextPosition.y) +
-                                Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z)
-                ) / 3);
+        List<Double> values = new ArrayList<>();
+        values.add(Mth.inverseLerp(impactPos.x, getX(), nextPosition.x));
+        values.add(Mth.inverseLerp(impactPos.y, getY(), nextPosition.y));
+        values.add(Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z));
+        values.removeIf(d -> !Double.isFinite(d));
+        crystalSoundIntensity = (float) values.stream().mapToDouble(v -> v).average().orElse(0.5);
         setPos(impactPos);
         float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
         if (canPierce)
@@ -620,6 +590,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             return;
 
         super.onHitBlock(result);
+        setPos(result.getLocation());
         if (level().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
             level().broadcastEntityEvent(this, (byte) -1);
         else
@@ -683,7 +654,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     }
 
     @Override
-    protected void onHit(HitResult result)
+    public void onHit(HitResult result)
     {
         HitResult.Type rayType = result.getType();
         if (rayType == HitResult.Type.ENTITY)
@@ -725,10 +696,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             setGravity(nbt.getFloat("Gravity"));
         if (nbt.contains("Lifespan"))
             lifespan = nbt.getInt("Lifespan");
-        if (nbt.contains("StraightShotTime"))
-            setStraightShotTime(nbt.getFloat("StraightShotTime"));
         if (nbt.contains("MaxStraightShotTime"))
-            straightShotTime = nbt.getFloat("StraightShotTime");
+            setStraightShotTime(nbt.getFloat("StraightShotTime"));
+        if (nbt.contains("StraightShotTime"))
+            straightShotTime = nbt.getDouble("StraightShotTime");
 
         ListTag directionTag = nbt.getList("Direction", DoubleTag.TAG_DOUBLE);
         entityData.set(SHOOT_DIRECTION, new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
@@ -769,7 +740,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         nbt.putFloat("HorizontalDrag", getHorizontalDrag());
         nbt.putFloat("GravitySpeedMult", getGravitySpeedMult());
         nbt.putFloat("MaxStraightShotTime", getMaxStraightShotTime());
-        nbt.putFloat("StraightShotTime", straightShotTime);
+        nbt.putDouble("StraightShotTime", straightShotTime);
 
         ListTag directionTag = new ListTag();
         Vec3 direction = getShotDirection();
@@ -876,20 +847,20 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.set(GRAVITY, gravity);
     }
 
-    public float getStraightShotTime()
+    public double getStraightShotTime()
     {
         return straightShotTime;
     }
 
     public float calculateDamageDecay(float baseDamage, float startTick, float decayPerTick, float minDamage)
     {
-        // getMaxStraightShotTime() - straightShotTime is just tickCount but it counts the partial ticks too
-        float tickCount = getMaxStraightShotTime() - straightShotTime + crystalSoundIntensity;
+        // getMaxStraightShotTime() - straightShotTime is just tickCount but it counts the partial ticks too (and time delta!!! yay i hate myself)
+        double tickCount = getMaxStraightShotTime() - straightShotTime + crystalSoundIntensity;
 
-        float diff = tickCount - startTick;
+        double diff = tickCount - startTick;
         if (diff < 0)
             return baseDamage;
-        return Math.max(minDamage, baseDamage - decayPerTick * diff);
+        return (float) Math.max(minDamage, baseDamage - decayPerTick * diff);
     }
 
     public float getMaxStraightShotTime()
@@ -1016,6 +987,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                     return (T) extraData;
             }
             return null;
+        }
+
+        public ExtraDataList cloneList()
+        {
+            ExtraSaveData[] array = toArray(new ExtraSaveData[size()]);
+            return new ExtraDataList(Arrays.stream(array).toList());
         }
     }
 }

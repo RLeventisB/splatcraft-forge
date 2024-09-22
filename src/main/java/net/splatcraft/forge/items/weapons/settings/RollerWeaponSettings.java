@@ -4,8 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
+import net.splatcraft.forge.util.DamageRangesRecord;
 import net.splatcraft.forge.util.WeaponTooltip;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -14,42 +17,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public static final RollerWeaponSettings DEFAULT = new RollerWeaponSettings("default");
     public String name;
     public boolean isBrush;
-    public int rollSize;
-    public int rollHitboxSize;
-    public float rollConsumption;
-    public int rollInkRecoveryCooldown;
-    public float rollDamage;
-    public float rollMobility;
-    public float dashMobility;
-    public float dashConsumption;
-    public int dashTime = 1;
-    public int swingProjectileCount;
-    public float swingAttackAngle;
-    public boolean allowJumpingOnCharge;
-    public float swingMobility;
-    public float swingConsumption;
-    public int swingInkRecoveryCooldown;
-    public float swingBaseDamage;
-    public float swingLetalAngle;
-    public float swingOffAnglePenalty = 0.5f;
-    public int swingDamageDecayStartTick;
-    public float swingDamageDecayPerTick;
-    public float swingMinDamage;
-    public float swingProjectileSpeed;
-    public int swingTime;
-    public int swingStraightTicks;
-    public float swingHorizontalDrag = 1.0f;
-    public float flingConsumption;
-    public int flingInkRecoveryCooldown;
-    public float flingBaseDamage;
-    public int flingDamageDecayStartTick;
-    public float flingDamageDecayPerTick;
-    public float flingMinDamage;
-    public float flingProjectileSpeed;
-    public int flingTime;
-    public int flingStraightTicks;
-    public float flingHorizontalDrag = 1.0f;
+    public RollDataRecord rollData = RollDataRecord.DEFAULT;
     public boolean bypassesMobDamage = false;
+    public SwingDataRecord swingData = SwingDataRecord.DEFAULT;
+    public FlingDataRecord flingData = FlingDataRecord.DEFAULT;
 
     public RollerWeaponSettings(String name)
     {
@@ -58,11 +29,12 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 
     public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
     {
-        if (projectile.throwerAirborne)
-        {
-            return projectile.calculateDamageDecay(flingBaseDamage, flingDamageDecayStartTick, flingDamageDecayPerTick, flingMinDamage);
-        }
-        return projectile.calculateDamageDecay(swingBaseDamage, swingDamageDecayStartTick, swingDamageDecayPerTick, swingMinDamage);
+        ExtraSaveData.RollerDistanceExtraData data = list.getFirstExtraData(ExtraSaveData.RollerDistanceExtraData.class);
+        float distance = data == null ? 0 : data.spawnPos.distance(projectile.position().toVector3f());
+
+        RollerProjectileDataRecord projectileData = projectile.throwerAirborne ? flingData.projectileData : swingData.projectileData;
+        float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
+        return projectileData.damageRanges.getDamage(distance) * timeDamagePercent;
     }
 
     @Override
@@ -70,9 +42,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     {
         return new WeaponTooltip[]
                 {
-                        new WeaponTooltip<RollerWeaponSettings>("speed", WeaponTooltip.Metrics.BPT, settings -> settings.swingProjectileSpeed, WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<RollerWeaponSettings>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.dashMobility, WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<RollerWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.rollDamage, WeaponTooltip.RANKER_ASCENDING)
+                        new WeaponTooltip<RollerWeaponSettings>("speed", WeaponTooltip.Metrics.BPT, settings -> settings.swingData.attackData.maxSpeed, WeaponTooltip.RANKER_ASCENDING),
+                        new WeaponTooltip<RollerWeaponSettings>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.rollData.dashMobility(), WeaponTooltip.RANKER_ASCENDING),
+                        new WeaponTooltip<RollerWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.rollData.damage, WeaponTooltip.RANKER_ASCENDING)
                 };
     }
 
@@ -91,67 +63,20 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     @Override
     public void deserialize(DataRecord data)
     {
-        setBrush(data.isBrush.orElse(false));
+        isBrush = data.isBrush;
 
-        data.fullDamageToMobs.ifPresent(b -> bypassesMobDamage = b);
-        data.isSecret.ifPresent(this::setSecret);
+        bypassesMobDamage = data.fullDamageToMobs;
+        isSecret = data.isSecret;
 
-        RollDataRecord roll = data.roll;
-
-        setRollSize(roll.inkSize);
-        roll.hitboxSize.ifPresent(this::setRollHitboxSize);
-        setRollConsumption(roll.inkConsumption);
-        setRollInkRecoveryCooldown(roll.inkRecoveryCooldown);
-        setRollDamage(roll.damage);
-        setRollMobility(roll.mobility);
-
-        roll.dashMobility.ifPresent(this::setDashMobility);
-        roll.dashConsumption.ifPresent(this::setDashConsumption);
-        roll.dashTime.ifPresent(this::setDashTime);
-
-        SwingDataRecord swing = data.swing;
-
-        setSwingProjectileCount(swing.projectileCount);
-        setSwingAttackAngle(swing.attackAngle);
-        setSwingLetalAngle(swing.letalAngle.orElse(16.0f));
-        swing.offAnglePenalty.ifPresent(this::setSwingOffAnglePenalty);
-
-        swing.allowJumpingOnCharge.ifPresent(this::setAllowJumpingOnCharge);
-        setSwingMobility(swing.mobility);
-        setSwingConsumption(swing.inkConsumption);
-        setSwingInkRecoveryCooldown(swing.inkRecoveryCooldown);
-        setSwingProjectileSpeed(swing.projectileSpeed);
-        setSwingTime(swing.startupTime);
-        setSwingBaseDamage(swing.baseDamage);
-        swing.minDamage.ifPresent(this::setSwingMinDamage);
-        setSwingDamageDecayStartTick(swing.damageDecayStartTick.orElse(0));
-        setSwingDamageDecayPerTick(swing.damageDecayPerTick.orElse(0f));
-        setSwingStraightTicks(swing.straightTicks.orElse(0));
-        swing.horizontalDrag.ifPresent(this::setSwingHorizontalDrag);
-
-        if (data.fling.isPresent())
-        {
-            FlingDataRecord fling = data.fling.get();
-            setFlingConsumption(fling.inkConsumption);
-            setFlingInkRecoveryCooldown(fling.inkRecoveryCooldown);
-            setFlingProjectileSpeed(fling.projectileSpeed);
-            setFlingTime(fling.startupTime);
-            setFlingBaseDamage(fling.baseDamage);
-            fling.minDamage.ifPresent(this::setFlingMinDamage);
-            setFlingDamageDecayStartTick(fling.damageDecayStartTick.orElse(0));
-            setFlingDamageDecayPerTick(fling.damageDecayPerTick.orElse(0f));
-            setFlingStraightTicks(fling.straightTicks.orElse(0));
-            fling.horizontalDrag.ifPresent(this::setFlingHorizontalDrag);
-        }
+        rollData = data.roll;
+        swingData = data.swing;
+        flingData = data.fling;
     }
 
     @Override
     public DataRecord serialize()
     {
-        return new DataRecord(Optional.of(isBrush), new RollDataRecord(rollSize, Optional.of(rollHitboxSize), rollConsumption, rollInkRecoveryCooldown, rollDamage, rollMobility, Optional.of(dashMobility), Optional.of(dashConsumption), Optional.of(dashTime)),
-                new SwingDataRecord(swingProjectileCount, swingAttackAngle, Optional.of(allowJumpingOnCharge), swingMobility, swingConsumption, swingInkRecoveryCooldown, swingProjectileSpeed, swingTime, swingBaseDamage, Optional.of(swingLetalAngle), Optional.of(swingOffAnglePenalty), Optional.of(swingMinDamage), Optional.of(swingDamageDecayStartTick), Optional.of(swingDamageDecayPerTick), Optional.of(swingStraightTicks), Optional.of(swingHorizontalDrag)),
-                Optional.of(new FlingDataRecord(flingConsumption, flingInkRecoveryCooldown, flingProjectileSpeed, flingTime, flingBaseDamage, Optional.of(flingMinDamage), Optional.of(flingDamageDecayStartTick), Optional.of(flingDamageDecayPerTick), Optional.of(flingStraightTicks), Optional.of(flingHorizontalDrag))),
-                Optional.of(bypassesMobDamage), Optional.of(isSecret));
+        return new DataRecord(isBrush, rollData, swingData, flingData, bypassesMobDamage, isSecret);
     }
 
     public RollerWeaponSettings setName(String name)
@@ -166,345 +91,194 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
         return this;
     }
 
-    public RollerWeaponSettings setRollSize(int rollSize)
-    {
-        this.rollSize = rollSize;
-        this.rollHitboxSize = rollSize;
-        return this;
-    }
-
-    public RollerWeaponSettings setRollHitboxSize(int rollHitboxSize)
-    {
-        this.rollHitboxSize = rollHitboxSize;
-        return this;
-    }
-
-    public RollerWeaponSettings setRollConsumption(float rollConsumption)
-    {
-        this.rollConsumption = rollConsumption;
-        this.dashConsumption = rollConsumption;
-        return this;
-    }
-
-    public RollerWeaponSettings setRollInkRecoveryCooldown(int rollInkRecoveryCooldown)
-    {
-        this.rollInkRecoveryCooldown = rollInkRecoveryCooldown;
-        return this;
-    }
-
-    public RollerWeaponSettings setRollDamage(float rollDamage)
-    {
-        this.rollDamage = rollDamage;
-        return this;
-    }
-
-    public RollerWeaponSettings setRollMobility(float rollMobility)
-    {
-        this.rollMobility = rollMobility;
-        this.dashMobility = rollMobility;
-        return this;
-    }
-
-    public RollerWeaponSettings setDashMobility(float dashMobility)
-    {
-        this.dashMobility = dashMobility;
-        return this;
-    }
-
-    public RollerWeaponSettings setDashConsumption(float dashConsumption)
-    {
-        this.dashConsumption = dashConsumption;
-        return this;
-    }
-
-    public RollerWeaponSettings setDashTime(int dashTime)
-    {
-        this.dashTime = dashTime;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingMobility(float swingMobility)
-    {
-        this.swingMobility = swingMobility;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingConsumption(float swingConsumption)
-    {
-        this.swingConsumption = swingConsumption;
-        this.flingConsumption = swingConsumption;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingInkRecoveryCooldown(int swingInkRecoveryCooldown)
-    {
-        this.swingInkRecoveryCooldown = swingInkRecoveryCooldown;
-        this.flingInkRecoveryCooldown = swingInkRecoveryCooldown;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingBaseDamage(float swingBaseDamage)
-    {
-        this.swingBaseDamage = swingBaseDamage;
-        this.swingMinDamage = swingBaseDamage;
-        this.flingBaseDamage = swingBaseDamage;
-        this.flingMinDamage = swingBaseDamage;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingDamageDecayStartTick(int swingDamageDecayStartTick)
-    {
-        this.swingDamageDecayStartTick = swingDamageDecayStartTick;
-        this.flingDamageDecayStartTick = swingDamageDecayStartTick;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingDamageDecayPerTick(float swingDamageDecayPerTick)
-    {
-        this.swingDamageDecayPerTick = swingDamageDecayPerTick;
-        this.flingDamageDecayPerTick = swingDamageDecayPerTick;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingMinDamage(float swingMinDamage)
-    {
-        this.swingMinDamage = swingMinDamage;
-        this.flingMinDamage = swingMinDamage;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingProjectileSpeed(float swingProjectileSpeed)
-    {
-        this.swingProjectileSpeed = swingProjectileSpeed;
-        this.flingProjectileSpeed = swingProjectileSpeed * (isBrush ? 1 : 1.3f);
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingTime(int swingTime)
-    {
-        this.swingTime = swingTime;
-        this.flingTime = swingTime;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingAttackAngle(float swingAttackAngle)
-    {
-        this.swingAttackAngle = swingAttackAngle;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingConsumption(float flingConsumption)
-    {
-        this.flingConsumption = flingConsumption;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingInkRecoveryCooldown(int flingInkRecoveryCooldown)
-    {
-        this.flingInkRecoveryCooldown = flingInkRecoveryCooldown;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingBaseDamage(float flingBaseDamage)
-    {
-        this.flingBaseDamage = flingBaseDamage;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingDamageDecayStartTick(int flingDamageDecayStartTick)
-    {
-        this.flingDamageDecayStartTick = flingDamageDecayStartTick;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingDamageDecayPerTick(float flingDamageDecayPerTick)
-    {
-        this.flingDamageDecayPerTick = flingDamageDecayPerTick;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingMinDamage(float flingMinDamage)
-    {
-        this.flingMinDamage = flingMinDamage;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingProjectileSpeed(float flingProjectileSpeed)
-    {
-        this.flingProjectileSpeed = flingProjectileSpeed;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingTime(int flingTime)
-    {
-        this.flingTime = flingTime;
-        return this;
-    }
-
-    public RollerWeaponSettings setAllowJumpingOnCharge(boolean allowJumpingOnCharge)
-    {
-        this.allowJumpingOnCharge = allowJumpingOnCharge;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingProjectileCount(int swingProjectileCount)
-    {
-        this.swingProjectileCount = swingProjectileCount;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingLetalAngle(float swingLetalAngle)
-    {
-        this.swingLetalAngle = swingLetalAngle;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingOffAnglePenalty(float swingOffAnglePenalty)
-    {
-        this.swingOffAnglePenalty = swingOffAnglePenalty;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingStraightTicks(int swingStraightTicks)
-    {
-        this.swingStraightTicks = swingStraightTicks;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingStraightTicks(int flingStraightTicks)
-    {
-        this.flingStraightTicks = flingStraightTicks;
-        return this;
-    }
-
-    public RollerWeaponSettings setSwingHorizontalDrag(float swingHorizontalDrag)
-    {
-        this.swingHorizontalDrag = swingHorizontalDrag;
-        return this;
-    }
-
-    public RollerWeaponSettings setFlingHorizontalDrag(float flingHorizontalDrag)
-    {
-        this.flingHorizontalDrag = flingHorizontalDrag;
-        return this;
-    }
-
     public record DataRecord(
-            Optional<Boolean> isBrush,
+            boolean isBrush,
             RollDataRecord roll,
             SwingDataRecord swing,
-            Optional<FlingDataRecord> fling,
-            Optional<Boolean> fullDamageToMobs,
-            Optional<Boolean> isSecret
+            FlingDataRecord fling,
+            boolean fullDamageToMobs,
+            boolean isSecret
     )
     {
         public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.BOOL.optionalFieldOf("is_brush").forGetter(DataRecord::isBrush),
+                        Codec.BOOL.optionalFieldOf("is_brush", false).forGetter(DataRecord::isBrush),
                         RollDataRecord.CODEC.fieldOf("roll").forGetter(DataRecord::roll),
                         SwingDataRecord.CODEC.fieldOf("swing").forGetter(DataRecord::swing),
-                        FlingDataRecord.CODEC.optionalFieldOf("fling").forGetter(DataRecord::fling),
-                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs").forGetter(DataRecord::fullDamageToMobs),
-                        Codec.BOOL.optionalFieldOf("is_secret").forGetter(DataRecord::isSecret)
+                        FlingDataRecord.CODEC.fieldOf("fling").forGetter(DataRecord::fling),
+                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::fullDamageToMobs),
+                        Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
                 ).apply(instance, DataRecord::new)
         );
     }
 
-    record RollDataRecord(
+    public record RollerProjectileDataRecord(
+            float size,
+            float visualSize,
+            float delaySpeedMult,
+            float horizontalDrag,
+            float straightShotTicks,
+            float gravity,
+            float inkCoverageImpact,
+            float inkDropCoverage,
+            float distanceBetweenInkDrops,
+            float damageFalloffStartTick,
+            float damageFalloffEndTick,
+            float maxDamageFalloffPercent,
+            DamageRangesRecord damageRanges,
+            Optional<DamageRangesRecord> weakDamageRanges
+    )
+    {
+        public static final Codec<RollerProjectileDataRecord> CODEC = RecordCodecBuilder.create(
+                instance -> instance.group(
+                        Codec.FLOAT.fieldOf("size").forGetter(RollerProjectileDataRecord::size),
+                        Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
+                        Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(RollerProjectileDataRecord::delaySpeedMult),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(RollerProjectileDataRecord::horizontalDrag),
+                        Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(RollerProjectileDataRecord::straightShotTicks),
+                        Codec.FLOAT.optionalFieldOf("gravity", 0.175F).forGetter(RollerProjectileDataRecord::gravity),
+                        Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact)),
+                        Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(r -> Optional.of(r.inkDropCoverage)),
+                        Codec.FLOAT.optionalFieldOf("distance_between_drops", 4F).forGetter(RollerProjectileDataRecord::distanceBetweenInkDrops),
+                        Codec.FLOAT.optionalFieldOf("damage_falloff_start_tick", 8.333333f).forGetter(RollerProjectileDataRecord::damageFalloffStartTick),
+                        Codec.FLOAT.optionalFieldOf("damage_falloff_end_tick", 15f).forGetter(RollerProjectileDataRecord::damageFalloffEndTick),
+                        Codec.FLOAT.optionalFieldOf("damage_falloff_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
+                        DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
+                        DamageRangesRecord.CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
+
+                ).apply(instance, RollerProjectileDataRecord::create)
+        );
+        public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.729f, 0f, 0.16f, 1f, 0.5f, 1f, 8.3333f, 15f, 0.5f, DamageRangesRecord.DEFAULT, Optional.empty());
+
+        public static RollerProjectileDataRecord create(float size,
+                                                        Optional<Float> visualSize,
+                                                        float delaySpeedMult,
+                                                        float horizontalDrag,
+                                                        float straightShotTicks,
+                                                        float gravity,
+                                                        Optional<Float> inkCoverageImpact,
+                                                        Optional<Float> inkDropCoverage,
+                                                        float distanceBetweenInkDrops,
+                                                        float damageFalloffStartTick,
+                                                        float damageFalloffEndTick,
+                                                        float maxDamageFalloffPercent,
+                                                        DamageRangesRecord damageRanges,
+                                                        Optional<DamageRangesRecord> weakDamageRanges)
+        {
+            return new RollerProjectileDataRecord(size,
+                    visualSize.orElse(size * 3),
+                    delaySpeedMult,
+                    horizontalDrag,
+                    straightShotTicks,
+                    gravity,
+                    inkCoverageImpact.orElse(size * 0.85f),
+                    inkDropCoverage.orElse(size * 0.75f),
+                    distanceBetweenInkDrops,
+                    damageFalloffStartTick,
+                    damageFalloffEndTick,
+                    maxDamageFalloffPercent,
+                    damageRanges,
+                    weakDamageRanges);
+        }
+    }
+
+    public record RollDataRecord(
             int inkSize,
-            Optional<Integer> hitboxSize,
+            int hitboxSize,
             float inkConsumption,
             int inkRecoveryCooldown,
             float damage,
             float mobility,
-            Optional<Float> dashMobility,
-            Optional<Float> dashConsumption,
-            Optional<Integer> dashTime
+            float dashMobility,
+            float dashConsumption,
+            float dashTime
     )
     {
         public static final Codec<RollDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
                         Codec.INT.fieldOf("ink_size").forGetter(RollDataRecord::inkSize),
-                        Codec.INT.optionalFieldOf("hitbox_size").forGetter(RollDataRecord::hitboxSize),
+                        Codec.INT.optionalFieldOf("hitbox_size").forGetter(v -> Optional.of(v.hitboxSize())),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollDataRecord::inkConsumption),
                         Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollDataRecord::inkRecoveryCooldown),
                         Codec.FLOAT.fieldOf("damage").forGetter(RollDataRecord::damage),
                         Codec.FLOAT.fieldOf("mobility").forGetter(RollDataRecord::mobility),
-                        Codec.FLOAT.optionalFieldOf("dash_mobility").forGetter(RollDataRecord::dashMobility),
-                        Codec.FLOAT.optionalFieldOf("dash_consumption").forGetter(RollDataRecord::dashConsumption),
-                        Codec.INT.optionalFieldOf("dash_time").forGetter(RollDataRecord::dashTime)
-                ).apply(instance, RollDataRecord::new)
+                        Codec.FLOAT.optionalFieldOf("dash_mobility").forGetter(v -> Optional.of(v.dashMobility())),
+                        Codec.FLOAT.optionalFieldOf("dash_consumption").forGetter(v -> Optional.of(v.dashConsumption())),
+                        Codec.FLOAT.optionalFieldOf("dash_time", 1f).forGetter(RollDataRecord::dashTime)
+                ).apply(instance, RollDataRecord::create)
         );
+        public static final RollDataRecord DEFAULT = new RollDataRecord(3, 3, 1, 10, 20, 1, 2, 2, 10);
+
+        private static @NotNull RollDataRecord create(Integer inkSize, Optional<Integer> hitboxSize, Float inkConsumption, Integer inkRecoveryCooldown, Float damage, Float mobility, Optional<Float> dashMobility, Optional<Float> dashConsumption, float dashTime)
+        {
+            return new RollDataRecord(inkSize, hitboxSize.orElse(inkSize), inkConsumption, inkRecoveryCooldown, damage, mobility, dashMobility.orElse(mobility), dashConsumption.orElse(inkConsumption), dashTime);
+        }
     }
 
-    record SwingDataRecord(
-            int projectileCount,
-            float attackAngle,
-            Optional<Boolean> allowJumpingOnCharge,
+    public record SwingDataRecord(
+            RollerProjectileDataRecord projectileData,
+            RollerAttackDataRecord attackData,
+            boolean allowJumpingOnCharge,
             float mobility,
-            float inkConsumption,
-            int inkRecoveryCooldown,
-            float projectileSpeed,
-            int startupTime,
-            float baseDamage,
-            Optional<Float> letalAngle,
-            Optional<Float> offAnglePenalty,
-            Optional<Float> minDamage,
-            Optional<Integer> damageDecayStartTick,
-            Optional<Float> damageDecayPerTick,
-            Optional<Integer> straightTicks,
-            Optional<Float> horizontalDrag
+            float attackAngle,
+            float letalAngle,
+            float offAnglePenalty
     )
     {
         public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.INT.fieldOf("swing_blob_count").forGetter(SwingDataRecord::projectileCount),
-                        Codec.FLOAT.fieldOf("swing_attack_angle").forGetter(SwingDataRecord::attackAngle),
-                        Codec.BOOL.optionalFieldOf("allow_jumping_on_charge").forGetter(SwingDataRecord::allowJumpingOnCharge),
+                        RollerProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(SwingDataRecord::projectileData),
+                        RollerAttackDataRecord.CODEC.fieldOf("attack_data").forGetter(SwingDataRecord::attackData),
+                        Codec.BOOL.optionalFieldOf("allow_jumping_on_charge", false).forGetter(SwingDataRecord::allowJumpingOnCharge),
                         Codec.FLOAT.fieldOf("mobility").forGetter(SwingDataRecord::mobility),
-                        Codec.FLOAT.fieldOf("ink_consumption").forGetter(SwingDataRecord::inkConsumption),
-                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SwingDataRecord::inkRecoveryCooldown),
-                        Codec.FLOAT.fieldOf("projectile_speed").forGetter(SwingDataRecord::projectileSpeed),
-                        Codec.INT.fieldOf("startup_time").forGetter(SwingDataRecord::startupTime),
-                        Codec.FLOAT.fieldOf("base_damage").forGetter(SwingDataRecord::baseDamage),
-                        Codec.FLOAT.optionalFieldOf("letal_angle").forGetter(SwingDataRecord::letalAngle),
-                        Codec.FLOAT.optionalFieldOf("offangle_penalty").forGetter(SwingDataRecord::offAnglePenalty),
-                        Codec.FLOAT.optionalFieldOf("min_damage").forGetter(SwingDataRecord::minDamage),
-                        Codec.INT.optionalFieldOf("damage_decay_start_tick").forGetter(SwingDataRecord::damageDecayStartTick),
-                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(SwingDataRecord::damageDecayPerTick),
-                        Codec.INT.optionalFieldOf("straight_ticks").forGetter(SwingDataRecord::straightTicks),
-                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(SwingDataRecord::horizontalDrag)
-
+                        Codec.FLOAT.fieldOf("swing_angle").forGetter(SwingDataRecord::attackAngle),
+                        Codec.FLOAT.optionalFieldOf("letal_angle", 16f).forGetter(SwingDataRecord::letalAngle),
+                        Codec.FLOAT.optionalFieldOf("offangle_penalty", 0.5f).forGetter(SwingDataRecord::offAnglePenalty)
                 ).apply(instance, SwingDataRecord::new)
         );
+        public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f, 0.5f);
     }
 
-    record FlingDataRecord(
-            float inkConsumption,
-            int inkRecoveryCooldown,
-            float projectileSpeed,
-            int startupTime,
-            float baseDamage,
-            Optional<Float> minDamage,
-            Optional<Integer> damageDecayStartTick,
-            Optional<Float> damageDecayPerTick,
-            Optional<Integer> straightTicks,
-            Optional<Float> horizontalDrag
+    public record FlingDataRecord(
+            RollerProjectileDataRecord projectileData,
+            RollerAttackDataRecord attackData,
+            float startPitchCompensation,
+            float endPitchCompensation
     )
     {
         public static final Codec<FlingDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.FLOAT.fieldOf("ink_consumption").forGetter(FlingDataRecord::inkConsumption),
-                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(FlingDataRecord::inkRecoveryCooldown),
-                        Codec.FLOAT.fieldOf("projectile_speed").forGetter(FlingDataRecord::projectileSpeed),
-                        Codec.INT.fieldOf("startup_time").forGetter(FlingDataRecord::startupTime),
-                        Codec.FLOAT.fieldOf("base_damage").forGetter(FlingDataRecord::baseDamage),
-                        Codec.FLOAT.optionalFieldOf("min_damage").forGetter(FlingDataRecord::minDamage),
-                        Codec.INT.optionalFieldOf("damage_decay_start_tick").forGetter(FlingDataRecord::damageDecayStartTick),
-                        Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(FlingDataRecord::damageDecayPerTick),
-                        Codec.INT.optionalFieldOf("straight_ticks").forGetter(FlingDataRecord::straightTicks),
-                        Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(FlingDataRecord::horizontalDrag)
+                        RollerProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(FlingDataRecord::projectileData),
+                        RollerAttackDataRecord.CODEC.fieldOf("attack_data").forGetter(FlingDataRecord::attackData),
+                        Codec.FLOAT.optionalFieldOf("start_pitch_compensation", -7.5f).forGetter(FlingDataRecord::startPitchCompensation),
+                        Codec.FLOAT.optionalFieldOf("end_pitch_compensation", 0f).forGetter(FlingDataRecord::endPitchCompensation)
                 ).apply(instance, FlingDataRecord::new)
         );
+        public static final FlingDataRecord DEFAULT = new FlingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, -7.5f, 0f);
+
+        public int calculateProjectileCount()
+        {
+            return (int) ((attackData.maxSpeed() - attackData.minSpeed()) / (projectileData.size / 3.3));
+        }
+    }
+
+    public record RollerAttackDataRecord(
+            float inkConsumption,
+            int inkRecoveryCooldown,
+            int startupTime,
+            float minSpeed,
+            float maxSpeed
+    )
+    {
+        public static final Codec<RollerAttackDataRecord> CODEC = RecordCodecBuilder.create(
+                instance -> instance.group(
+                        Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollerAttackDataRecord::inkConsumption),
+                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollerAttackDataRecord::inkRecoveryCooldown),
+                        Codec.INT.fieldOf("startup_time").forGetter(RollerAttackDataRecord::startupTime),
+                        Codec.FLOAT.fieldOf("min_speed").forGetter(RollerAttackDataRecord::minSpeed),
+                        Codec.FLOAT.fieldOf("max_speed").forGetter(RollerAttackDataRecord::maxSpeed)
+                ).apply(instance, RollerAttackDataRecord::new)
+        );
+        public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 1, 4);
     }
 }

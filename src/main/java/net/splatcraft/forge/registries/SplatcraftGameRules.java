@@ -36,6 +36,7 @@ public class SplatcraftGameRules
     public static GameRules.Key<GameRules.BooleanValue> GLOBAL_SUPERJUMPING;
     public static GameRules.Key<GameRules.BooleanValue> BLOCK_DESTROY_INK;
     public static GameRules.Key<GameRules.IntegerValue> SUPERJUMP_DISTANCE_LIMIT;
+    public static GameRules.Key<GameRules.IntegerValue> INK_PROJECTILE_FREQUENCY;
 
     public static void registerGamerules()
     {
@@ -58,6 +59,7 @@ public class SplatcraftGameRules
         INK_DESTROYS_FOLIAGE = createBooleanRule("inkDestroysFoliage", GameRules.Category.MISC, true);
         RECHARGEABLE_INK_TANK = createBooleanRule("rechargeableInkTank", GameRules.Category.PLAYER, true);
         BLOCK_DESTROY_INK = createBooleanRule("blockDestroysInk", GameRules.Category.PLAYER, false);
+        INK_PROJECTILE_FREQUENCY = createIntRule("projectileTickFrequencyPercent", GameRules.Category.UPDATES, 100);
     }
 
     public static boolean getLocalizedRule(Level level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule)

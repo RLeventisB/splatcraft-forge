@@ -97,7 +97,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     {
         float dragOnEnd = (float) Math.pow(drag, maxLifespan - straightShotTicks);
         if (dragOnEnd < 0.01)
-            return straightShotTicks * speed + speed * delaySpeedMult * drag / (1 - drag);
-        return straightShotTicks * speed + speed * delaySpeedMult * dragOnEnd;
+            return speed * (straightShotTicks + delaySpeedMult * drag / (1 - drag));
+        return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
     }
 }

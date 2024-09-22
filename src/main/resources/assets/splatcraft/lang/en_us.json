@@ -573,6 +573,8 @@
     "gamerule.splatcraft.rechargeableInkTank.description": "Allows Ink Tanks to passively recover ink, recharge rate increases when submerged in ink",
     "gamerule.splatcraft.blockDestroysInk": "New Block Destroys Ink",
     "gamerule.splatcraft.blockDestroysInk.description": "When placing blocks in an inked block face, destroys the ink",
+    "gamerule.splatcraft.projectileTickFrequencyPercent": "Projectiles Update Frequency Percentage",
+    "gamerule.splatcraft.projectileTickFrequencyPercent.description": "Specifies how slow or fast, in percentages, Splatcraft's projectiles update.",
     "gamerule.splatcraft.globalSuperJumping": "Global Super Jumping",
     "gamerule.splatcraft.globalSuperJumping.description": "Allows players to Super Jump outside of Stages",
     "gamerule.splatcraft.superJumpDistanceLimit": "Super Jump Distance Limit",

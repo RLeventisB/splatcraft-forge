@@ -11,6 +11,7 @@ import net.minecraftforge.registries.RegistryBuilder;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
@@ -204,6 +205,34 @@ public abstract class ExtraSaveData
         public DualieExtraData copy()
         {
             return new DualieExtraData(rollBullet);
+        }
+    }
+
+    public static final class RollerDistanceExtraData extends ExtraSaveData
+    {
+        public Vector3f spawnPos;
+
+        public RollerDistanceExtraData(Vector3f position)
+        {
+            this.spawnPos = position;
+        }
+
+        @Override
+        public void save(@NotNull FriendlyByteBuf buffer)
+        {
+            buffer.writeVector3f(spawnPos);
+        }
+
+        @Override
+        public RollerDistanceExtraData load(@NotNull FriendlyByteBuf buffer)
+        {
+            return new RollerDistanceExtraData(buffer.readVector3f());
+        }
+
+        @Override
+        public RollerDistanceExtraData copy()
+        {
+            return new RollerDistanceExtraData(spawnPos);
         }
     }
 

@@ -16,6 +16,7 @@ import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.SlosherItem;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.forge.util.PlayerCooldown;
 
 @Mod.EventBusSubscriber
@@ -117,9 +118,12 @@ public class PlayerPosingHandler
                     if (PlayerCooldown.hasPlayerCooldown(player))
                     {
                         cooldown = PlayerCooldown.getPlayerCooldown(player);
-                        animTime = cooldown.isGrounded() ? ((RollerItem) mainStack.getItem()).getSettings(mainStack).swingTime : ((RollerItem) mainStack.getItem()).getSettings(mainStack).flingTime;
-                        angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
-                        mainHand.xRot = Mth.cos(angle) + (0.1F * 0.5F - ((float) Math.PI / 10F));//+ 0.36f;
+                        RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
+                        RollerWeaponSettings.RollerAttackDataRecord attackData = cooldown.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+
+                        animTime = attackData.startupTime();
+                        angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Mth.HALF_PI) + ((float) Math.PI) / 1.8f;
+                        mainHand.xRot = Mth.cos(angle) * 2.4f + (0.05f - 0.31415927f);
                     }
                     else
                     {
@@ -132,7 +136,9 @@ public class PlayerPosingHandler
                     if (PlayerCooldown.hasPlayerCooldown(player))
                     {
                         cooldown = PlayerCooldown.getPlayerCooldown(player);
-                        animTime = cooldown.isGrounded() ? ((RollerItem) mainStack.getItem()).getSettings(mainStack).swingTime : ((RollerItem) mainStack.getItem()).getSettings(mainStack).flingTime;
+                        RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
+                        RollerWeaponSettings.RollerAttackDataRecord attackData = cooldown.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+                        animTime = attackData.startupTime();
                         angle = (float) -((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 
                         mainHand.yRot = model.getHead().yRot + Mth.cos(angle);
