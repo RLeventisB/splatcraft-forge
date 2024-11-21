@@ -124,7 +124,7 @@ public class InkDamageUtils
             target.hurtMarked = false;
         }
 
-        if ((targetColor <= -1 || canInk) && !target.isInWater() && !(target instanceof IColoredEntity && !((IColoredEntity) target).handleInkOverlay()))
+        if ((targetColor <= -1 || canInk) && !target.isInWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
         {
             if (InkOverlayCapability.hasCapability(target))
             {

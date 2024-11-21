@@ -74,17 +74,17 @@ public class ColorUtils
 
     public static int getEntityColor(Entity entity)
     {
-        if (entity instanceof LivingEntity livingEntity)
-            return getPlayerColor(livingEntity);
+        if (entity instanceof Player player)
+            return getPlayerColor(player);
         else if (entity instanceof IColoredEntity coloredEntity)
             return coloredEntity.getColor();
         else return -1;
     }
 
-    public static int getPlayerColor(LivingEntity player)
+    public static int getPlayerColor(Player player)
     {
-        if (player.level().isClientSide() && player instanceof Player p)
-            return ClientUtils.getClientPlayerColor(p.getGameProfile().getId());
+        if (player.level().isClientSide())
+            return ClientUtils.getClientPlayerColor(player.getGameProfile().getId());
         if (PlayerInfoCapability.hasCapability(player))
             return PlayerInfoCapability.get(player).getColor();
         return 0;
