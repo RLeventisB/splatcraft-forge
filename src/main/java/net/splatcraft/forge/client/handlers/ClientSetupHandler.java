@@ -24,7 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterTextureAtlasSpriteLoadersEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -53,18 +52,6 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetupHandler
 {
-    @SubscribeEvent
-    public static void registerModels(ModelEvent.BakingCompleted event)
-    {
-        for (var pair : event.getModels().entrySet())
-        {
-            if (pair.getKey().getNamespace().equals(Splatcraft.MODID))
-            {
-                "".length();
-            }
-        }
-    }
-
     @SubscribeEvent
     public static void onTextureStitch(TextureStitchEvent.Post event)
     {
@@ -137,9 +124,9 @@ public class ClientSetupHandler
 
             boolean isDefault = ColorUtils.getInkColor(stack) == -1 && !ColorUtils.isColorLocked(stack);
             int color = (stack.is(SplatcraftTags.Items.INK_BANDS) || !stack.is(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && PlayerInfoCapability.hasCapability(Minecraft.getInstance().player)
-                    ? ColorUtils.getEntityColor(Minecraft.getInstance().player) : ColorUtils.getInkColor(stack);
+                ? ColorUtils.getEntityColor(Minecraft.getInstance().player) : ColorUtils.getInkColor(stack);
 
-            if (SplatcraftConfig.Client.getColorLock())
+            if (SplatcraftConfig.Client.colorLock.get())
                 color = ColorUtils.getLockedColor(color);
             else if (ColorUtils.isInverted(stack))
                 color = 0xFFFFFF - color;
@@ -148,7 +135,7 @@ public class ClientSetupHandler
         }
     }
 
-    protected static class InkBlockColor implements BlockColor
+    public static class InkBlockColor implements BlockColor
     {
         @Override
         public int getColor(@NotNull BlockState blockState, @Nullable BlockAndTintGetter iBlockDisplayReader, @Nullable BlockPos blockPos, int i)
@@ -162,7 +149,7 @@ public class ClientSetupHandler
                 return -1;
 
             int color = ColorUtils.getInkColor(te);
-            if (SplatcraftConfig.Client.getColorLock())
+            if (SplatcraftConfig.Client.colorLock.get())
                 color = ColorUtils.getLockedColor(color);
             else if (ColorUtils.isInverted(te.getLevel(), blockPos))
                 color = 0xFFFFFF - color;

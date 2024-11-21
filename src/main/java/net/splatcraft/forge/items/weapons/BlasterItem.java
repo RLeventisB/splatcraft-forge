@@ -1,6 +1,5 @@
 package net.splatcraft.forge.items.weapons;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +17,7 @@ import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.AttackId;
+import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
 
@@ -53,43 +53,44 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         if (!cooldownTracker.isOnCooldown(this) && !PlayerCooldown.hasPlayerCooldown(player))
         {
             BlasterWeaponSettings settings = getSettings(stack);
-            PlayerCooldown.setPlayerCooldown(player, new BlasterCooldown(stack, settings.shotData.startupTicks(), settings.shotData.getFiringSpeed(), player.getInventory().selected, entity.getUsedItemHand(), player.onGround()));
-            if (!level.isClientSide())
-            {
-                cooldownTracker.addCooldown(this, settings.shotData.getFiringSpeed());
-            }
+            PlayerCooldown.setPlayerCooldown(player, new BlasterCooldown(stack, CommonUtils.startupSquidSwitch(player, settings.shotData), settings.shotData.startupTicks(), settings.shotData.endlagTicks(), player.getInventory().selected, entity.getUsedItemHand(), player.onGround()));
         }
     }
-    
+
     @Override
     public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.FIRE;
     }
 
-    public static class BlasterCooldown extends PlayerCooldown
+    public static class BlasterCooldown extends WeaponFireCooldown<BlasterItem>
     {
-        private final int startupFrames;
-
-        public BlasterCooldown(ItemStack stack, int startupFrames, int time, int slotIndex, InteractionHand hand, boolean isGrounded)
+        public BlasterCooldown(ItemStack stack, float initialTimer, float startupFrames, float endlagFrames, int slotIndex, InteractionHand hand, boolean isGrounded)
         {
-            super(stack, time, slotIndex, hand, true, false, true, isGrounded);
-            this.startupFrames = time - startupFrames;
-        }
-
-        public BlasterCooldown(CompoundTag nbt)
-        {
-            super(nbt);
-            startupFrames = nbt.getInt("StartupFrames");
+            super(stack, initialTimer, startupFrames, endlagFrames, slotIndex, hand, isGrounded);
         }
 
         @Override
-        public void tick(Player player)
+        public void onEndlagEnd(Player player, float accumulatedTime, boolean stoppedUsing)
+        {
+            if (stoppedUsing)
+                return;
+
+            ItemCooldowns cooldownTracker = player.getCooldowns();
+
+            if (!player.isLocalPlayer())
+            {
+                cooldownTracker.addCooldown(storedStack.getItem(), (int) (startupFrames + endlagFrames - accumulatedTime));
+            }
+        }
+
+        @Override
+        public void onFire(Player player, float time)
         {
             Level level = player.level();
-            if (getTime() == startupFrames && !level.isClientSide())
+            if (!level.isClientSide())
             {
-                BlasterItem item = (BlasterItem) storedStack.getItem();
+                BlasterItem item = getItem();
                 BlasterWeaponSettings settings = item.getSettings(storedStack);
 
                 if (reduceInk(player, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
@@ -101,15 +102,9 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
                     proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
                     level.addFreshEntity(proj);
                     level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                    proj.tick(time);
                 }
             }
-        }
-
-        @Override
-        public CompoundTag writeNBT(CompoundTag nbt)
-        {
-            nbt.putInt("StartupFrames", startupFrames);
-            return super.writeNBT(nbt);
         }
     }
 }

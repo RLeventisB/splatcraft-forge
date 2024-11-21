@@ -16,7 +16,7 @@ public class CommonRecords
     // height and width is something like 1,65217, in minecraft it's 3!!!! so i converted both units to blocks (19 DU = 1,8 blocks, and
     // 11,5 DU = 0,6 blocks) and took the average of them both, which is 14,957264957264957264957264957266, also known simply as 15 DU
     // so, 15 DU = 1 block, and 1.5 IU (internal unit, which is the internal value in splatoon 3) = 1 block, since 10 DU = 1 IU
-    // this is the third time but it seems that 12 DU = 1 block seems ok (i should put the raw values instead but im stupdi)
+    // this is the third time but it seems that 12 DU = 1 block seems ok (i should put the raw values instead but im stupdi -> i actually did this!!!)
     // NOTE: obviously not all values will be 1:1 to this equation, there will be roundings, and in some cases adjustments,
     // like in the case that a weapon paints much less because of minecraft's cubic nature and the magic of rounding
     // also most of the data (in internal units) is taken from https://leanny.github.io/splat3/parameters.html or https://splatoonwiki.org/wiki/
@@ -24,9 +24,10 @@ public class CommonRecords
     // and one for any other type of droplet paint radius, and every single one of these is multiplied by 1.4, or 1.2, or 1 depending on the drop's
     // fall height, so screw all that,
     // ink_drop_coverage = the units in "All other ink droplets have a radius of x"
-    //      * in case of blasters, its the units in "Ink droplets have a radius of x" * 1.2
+    //      * in case of blasters, its the units in "Ink droplets have a radius of x"
     //      * in the case of rollers, it uses the first unit's PaintRadiusShock on both attacks
     // ink_coverage_on_impact = the units in "Droplets that occur when they travel past y units of the player have a radius of x" * 1.2
+    //      * in case of blasters, its the units in "The wall impact painting radius is x units"
     //      * in the case of rollers, it uses the first unit's PaintRadiusShock on both attacks
     // also³ here are some other conversions from values in splatoon (x) to minecraft (y), divisor means the current scale of DU per block, currently its 15
     // speed ->             y = x / divisor * 3
@@ -60,19 +61,19 @@ public class CommonRecords
                         Codec.FLOAT.optionalFieldOf("lifespan", 600f).forGetter(ProjectileDataRecord::lifeTicks),
                         Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
                         Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.5f).forGetter(ProjectileDataRecord::delaySpeedMult),
-                        Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(ProjectileDataRecord::horizontalDrag),
+                        Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(ProjectileDataRecord::horizontalDrag),
                         Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(ProjectileDataRecord::straightShotTicks),
-                        Codec.FLOAT.optionalFieldOf("gravity", 0.175F).forGetter(ProjectileDataRecord::gravity),
+                        Codec.FLOAT.optionalFieldOf("gravity", 0.7F).forGetter(ProjectileDataRecord::gravity),
                         Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact)),
                         Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(r -> Optional.of(r.inkDropCoverage)),
-                        Codec.FLOAT.optionalFieldOf("distance_between_drops", 4F).forGetter(ProjectileDataRecord::distanceBetweenInkDrops),
+                        Codec.FLOAT.optionalFieldOf("distance_between_drops", 48F).forGetter(ProjectileDataRecord::distanceBetweenInkDrops),
                         Codec.FLOAT.fieldOf("base_damage").forGetter(ProjectileDataRecord::baseDamage),
                         Codec.FLOAT.optionalFieldOf("decayed_damage").forGetter(r -> Optional.of(r.minDamage)),
                         Codec.FLOAT.optionalFieldOf("damage_decay_start_tick", 0F).forGetter(ProjectileDataRecord::damageDecayStartTick),
                         Codec.FLOAT.optionalFieldOf("damage_decay_per_tick", 0F).forGetter(ProjectileDataRecord::damageDecayPerTick)
                 ).apply(instance, ProjectileDataRecord::create)
         );
-        public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.262144F, 0, 0.175F, 0, 0, 4, 0, 0, 0, 0);
+        public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
 
         public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
         {
@@ -102,7 +103,7 @@ public class CommonRecords
     {
         public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.FLOAT.optionalFieldOf("hitbox_size", 0.1f).forGetter(ProjectileSizeRecord::hitboxSize),
+                        Codec.FLOAT.optionalFieldOf("hitbox_size", 2f).forGetter(ProjectileSizeRecord::hitboxSize),
                         Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualScale())),
                         Codec.FLOAT.optionalFieldOf("world_hitbox_size").forGetter(t -> Optional.of(t.worldHitboxSize()))
                 ).apply(instance, ProjectileSizeRecord::create)
@@ -218,62 +219,67 @@ public class CommonRecords
     }
 
     public record ShotDataRecord(
-            int startupTicks,
-            int endlagTicks,
+            float startupTicks,
+            float squidStartupTicks,
+            float endlagTicks,
             int projectileCount,
             ShotDeviationDataRecord accuracyData,
             float pitchCompensation,
             float inkConsumption,
-            int inkRecoveryCooldown
+            float inkRecoveryCooldown
     )
     {
         public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.INT.optionalFieldOf("startup_ticks", 0).forGetter(ShotDataRecord::startupTicks),
-                        Codec.INT.optionalFieldOf("endlag_ticks", 1).forGetter(ShotDataRecord::endlagTicks),
+                        Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(ShotDataRecord::startupTicks),
+                        Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(t -> Optional.of(t.squidStartupTicks)),
+                        Codec.FLOAT.optionalFieldOf("endlag_ticks", 1f).forGetter(ShotDataRecord::endlagTicks),
                         Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
                         ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
                         Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(ShotDataRecord::inkConsumption),
-                        Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown)
+                        Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown)
                 ).apply(instance, ShotDataRecord::create)
         );
-        public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 1, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
+        public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
 
-        public static ShotDataRecord create(int startupTicks, int endlagTicks, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, int inkRecoveryCooldown)
+        public static ShotDataRecord create(float startupTicks, Optional<Float> squidStartupTicks, float endlagTicks, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, float inkRecoveryCooldown)
         {
-            return new ShotDataRecord(startupTicks, endlagTicks, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
+            return new ShotDataRecord(startupTicks, squidStartupTicks.orElse(startupTicks), endlagTicks, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
         }
 
-        public int getFiringSpeed()
+        public float getFiringSpeed()
         {
             return startupTicks + endlagTicks;
         }
     }
 
     public record OptionalShotDataRecord(
-            Optional<Integer> startupTicks,
-            Optional<Integer> endlagTicks,
+            Optional<Float> startupTicks,
+            Optional<Float> squidStartupTicks,
+            Optional<Float> endlagTicks,
             Optional<Integer> projectileCount,
             Optional<ShotDeviationDataRecord> accuracyData,
             Optional<Float> pitchCompensation,
             Optional<Float> inkConsumption,
-            Optional<Integer> inkRecoveryCooldown
+            Optional<Float> inkRecoveryCooldown
     )
     {
         public static final Codec<OptionalShotDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.INT.optionalFieldOf("startup_ticks").forGetter(OptionalShotDataRecord::startupTicks),
-                        Codec.INT.optionalFieldOf("endlag_ticks").forGetter(OptionalShotDataRecord::endlagTicks),
+                        Codec.FLOAT.optionalFieldOf("startup_ticks").forGetter(OptionalShotDataRecord::startupTicks),
+                        Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(OptionalShotDataRecord::startupTicks),
+                        Codec.FLOAT.optionalFieldOf("endlag_ticks").forGetter(OptionalShotDataRecord::endlagTicks),
                         Codec.INT.optionalFieldOf("shot_count").forGetter(OptionalShotDataRecord::projectileCount),
                         ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data").forGetter(OptionalShotDataRecord::accuracyData),
                         Codec.FLOAT.optionalFieldOf("pitch_compensation").forGetter(OptionalShotDataRecord::pitchCompensation),
                         Codec.FLOAT.optionalFieldOf("ink_consumption").forGetter(OptionalShotDataRecord::inkConsumption),
-                        Codec.INT.optionalFieldOf("ink_recovery_cooldown").forGetter(OptionalShotDataRecord::inkRecoveryCooldown)
+                        Codec.FLOAT.optionalFieldOf("ink_recovery_cooldown").forGetter(OptionalShotDataRecord::inkRecoveryCooldown)
                 ).apply(instance, OptionalShotDataRecord::new)
         );
 
         public static final OptionalShotDataRecord DEFAULT = new OptionalShotDataRecord(
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
                 Optional.empty(),
@@ -287,6 +293,7 @@ public class CommonRecords
         {
             return Optional.of(new OptionalShotDataRecord(
                     Optional.of(shot.startupTicks),
+                    Optional.of(shot.squidStartupTicks),
                     Optional.of(shot.endlagTicks),
                     Optional.of(shot.projectileCount),
                     Optional.of(shot.accuracyData),
@@ -304,6 +311,7 @@ public class CommonRecords
             OptionalShotDataRecord modifiedGet = modified.get();
             return new ShotDataRecord(
                     modifiedGet.startupTicks().orElse(base.startupTicks()),
+                    modifiedGet.squidStartupTicks().orElse(base.squidStartupTicks()),
                     modifiedGet.endlagTicks().orElse(base.endlagTicks()),
                     modifiedGet.projectileCount().orElse(base.projectileCount()),
                     modifiedGet.accuracyData().orElse(base.accuracyData()),
@@ -340,11 +348,11 @@ public class CommonRecords
                         Codec.floatRange(0, 1).optionalFieldOf("chance_set_airborne", 0.4f).forGetter(ShotDeviationDataRecord::deviationChanceWhenAirborne),
                         Codec.floatRange(0, 1).optionalFieldOf("chance_increase_per_shot", 0.01f).forGetter(ShotDeviationDataRecord::chanceIncreasePerShot),
 
-                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_inactive_to_decrease", 2f).forGetter(ShotDeviationDataRecord::chanceDecreaseDelay),
-                        Codec.FLOAT.optionalFieldOf("chance_decrease_when_inactive", 0.045f).forGetter(ShotDeviationDataRecord::chanceDecreasePerTick),
+                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_inactive_to_decrease", 6.0f).forGetter(ShotDeviationDataRecord::chanceDecreaseDelay),
+                        Codec.FLOAT.optionalFieldOf("chance_decrease_when_inactive", 0.015f).forGetter(ShotDeviationDataRecord::chanceDecreasePerTick),
 
-                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("delay_to_decrease_airborne_deviation", 8.333333f).forGetter(ShotDeviationDataRecord::airborneContractDelay),
-                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_to_decrease_airborne_deviation", 23.333334f).forGetter(ShotDeviationDataRecord::airborneContractTimeToDecrease)
+                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("delay_to_decrease_airborne_deviation", 25.0f).forGetter(ShotDeviationDataRecord::airborneContractDelay),
+                        Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_to_decrease_airborne_deviation", 70.0f).forGetter(ShotDeviationDataRecord::airborneContractTimeToDecrease)
                 ).apply(instance, ShotDeviationDataRecord::new)
         );
 
@@ -353,7 +361,7 @@ public class CommonRecords
             return Math.max(Math.max(minDeviateChance, maxDeviateChance), deviationChanceWhenAirborne);
         }
 
-        public static final ShotDeviationDataRecord DEFAULT = new ShotDeviationDataRecord(5, 12, 0.01f, 0.25f, 0.4f, 0.01f, 2f, 0.045f, 8.333333f, 23.333334f);
+        public static final ShotDeviationDataRecord DEFAULT = new ShotDeviationDataRecord(5, 12, 0.01f, 0.25f, 0.4f, 0.01f, 6f, 0.015f, 25f, 70f);
         public static final ShotDeviationDataRecord PERFECT_DEFAULT = new ShotDeviationDataRecord(0, 0, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
     }
 }

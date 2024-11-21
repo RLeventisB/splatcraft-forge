@@ -85,21 +85,34 @@ public class InkTankItem extends ColoredArmorItem
 
     public static boolean canRecharge(ItemStack stack, boolean fromTick)
     {
-        CompoundTag tag = stack.getOrCreateTag();
-        boolean cannotRecharge = tag.contains("CannotRecharge");
-        if (!tag.contains("RecoveryCooldown"))
-            tag.putInt("RecoveryCooldown", 0);
-
-        int cooldown = tag.getInt("RecoveryCooldown");
-        if (cooldown == 0 || !fromTick) return !cannotRecharge;
-        tag.putInt("RecoveryCooldown", --cooldown);
-        return false;
+        return rechargeMult(stack, fromTick) != 0;
     }
 
-    public static void setRecoveryCooldown(ItemStack stack, int recoveryCooldown)
+    public static float rechargeMult(ItemStack stack, boolean fromTick)
     {
         CompoundTag tag = stack.getOrCreateTag();
-        tag.putInt("RecoveryCooldown", Math.max(tag.getInt("RecoveryCooldown"), recoveryCooldown));
+        // boolean cannotRecharge = tag.contains("CannotRecharge"); // is this used????
+        if (!tag.contains("RecoveryCooldown"))
+        {
+            tag.putFloat("RecoveryCooldown", 0);
+            return 1f;
+        }
+
+        float cooldown = tag.getFloat("RecoveryCooldown");
+        if ((cooldown < 1 || !fromTick))
+        {
+            float remainder = 1f - cooldown;
+            tag.putFloat("RecoveryCooldown", 0);
+            return remainder;
+        }
+        tag.putFloat("RecoveryCooldown", Math.max(0, cooldown - 1));
+        return 0f;
+    }
+
+    public static void setRecoveryCooldown(ItemStack stack, float recoveryCooldown)
+    {
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.putFloat("RecoveryCooldown", Math.max(tag.getFloat("RecoveryCooldown"), recoveryCooldown));
     }
 
     @Override
@@ -111,15 +124,16 @@ public class InkTankItem extends ColoredArmorItem
         {
             float ink = getInkAmount(stack);
             Item using = player.getUseItem().getItem();
+            float rechargeMult = rechargeMult(stack, true);
 
-            if (canRecharge(stack, true) && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
+            if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
                     && (!PlayerCooldown.hasPlayerCooldown(player))
                     && !PlayerCharge.hasCharge(player)
                     && (!(using instanceof WeaponBaseItem)
                     || (using instanceof RollerItem r && !r.isMoving))
             )
             {
-                setInkAmount(stack, ink + (100f / 20f / ((InkBlockUtils.canSquidHide(player) && PlayerInfoCapability.isSquid(player)) ? 3f : 10f)));
+                setInkAmount(stack, ink + (5.0f / ((InkBlockUtils.canSquidHide(player) && PlayerInfoCapability.isSquid(player)) ? 3f : 10f)) * rechargeMult);
             }
         }
     }

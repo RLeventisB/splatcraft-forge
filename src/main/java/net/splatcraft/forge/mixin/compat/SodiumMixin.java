@@ -2,134 +2,213 @@ package net.splatcraft.forge.mixin.compat;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
-import me.jellysquid.mods.sodium.client.model.light.data.QuadLightData;
-import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
-import me.jellysquid.mods.sodium.client.model.quad.blender.ColorSampler;
-import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadOrientation;
-import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadWinding;
+import me.jellysquid.mods.sodium.client.model.color.ColorProvider;
+import me.jellysquid.mods.sodium.client.model.light.LightMode;
+import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildOutput;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
-import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
-import me.jellysquid.mods.sodium.client.render.chunk.tasks.ChunkRenderRebuildTask;
-import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
-import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask;
+import me.jellysquid.mods.sodium.client.render.chunk.data.BuiltSectionInfo;
+import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
+import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.chunk.VisGraph;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.data.SplatcraftTags;
+import net.minecraftforge.client.ChunkRenderTypeSet;
+import net.minecraftforge.client.model.data.ModelData;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SodiumMixin
 {
-	@Mixin(BlockRenderer.class)
-	public static class BlockRendererMixin
-	{
-		@WrapOperation(method = "renderQuadList", remap = false, at = @At(value = "INVOKE",
-			target = "Lme/jellysquid/mods/sodium/client/render/pipeline/BlockRenderer;renderQuad(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lme/jellysquid/mods/sodium/client/render/chunk/format/ModelVertexSink;Lme/jellysquid/mods/sodium/client/model/IndexBufferBuilder;Lnet/minecraft/world/phys/Vec3;Lme/jellysquid/mods/sodium/client/model/quad/blender/ColorSampler;Lnet/minecraft/client/renderer/block/model/BakedQuad;Lme/jellysquid/mods/sodium/client/model/light/data/QuadLightData;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;)V"))
-		public void wrapRenderQuadList(BlockRenderer instance, BlockAndTintGetter world, BlockState state, BlockPos
-			pos, BlockPos origin, ModelVertexSink vertices, IndexBufferBuilder indices, Vec3
-			                               blockOffset, ColorSampler<BlockState> colorSampler, BakedQuad bakedQuad, QuadLightData
-			                               light, ChunkModelBuilder model, Operation<Void> original)
-		{
-            if (world instanceof WorldSlice worldSlice)
+    @Mixin(BlockRenderer.class)
+    public abstract static class BlockRendererMixin
+    {
+        @Unique
+        public boolean splatcraft$hasInkEntry;
+        @Unique
+        public boolean splatcraft$isFaceInked;
+        @Unique
+        public ChunkInk.BlockEntry splatcraft$inkEntry;
+        @Unique
+        public ChunkInk.InkEntry splatcraft$faceEntry;
+
+        //        @Inject(method = "renderModel", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;getGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Ljava/util/List;"))
+        @Inject(method = "renderModel", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;getGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Ljava/util/List;", ordinal = 0))
+        public void splatcraft$getInkData(BlockRenderContext ctx, ChunkBuildBuffers buffers, CallbackInfo ci, Material material, ChunkModelBuilder meshBuilder, ColorProvider colorizer, LightMode mode, LightPipeline lighter, Vec3 renderOffset, Direction[] var9, int var10, int var11, Direction face)
+        {
+            ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(ctx.world().world, ctx.pos());
+            ChunkInk.InkEntry faceEntry = ink != null ? ink.get(face.get3DDataValue()) : null;
+            splatcraft$inkEntry = ink;
+            splatcraft$hasInkEntry = ink != null;
+            splatcraft$faceEntry = faceEntry;
+            splatcraft$isFaceInked = faceEntry != null;
+        }
+
+        @WrapOperation(method = "getGeometry", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/BakedModel;getQuads(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)Ljava/util/List;"))
+        public List<BakedQuad> splatcraft$modifyQuadList(BakedModel instance, BlockState blockState, Direction face, RandomSource random, ModelData modelData, RenderType renderType, Operation<List<BakedQuad>> original)
+        {
+            List<BakedQuad> quads = new ArrayList<>();
+            if (splatcraft$isFaceInked && splatcraft$faceEntry.type() != InkBlockUtils.InkType.CLEAR)
             {
-                ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(((WorldSliceAccessor) worldSlice).getWorld(), pos);
-                if (ink != null)
+                quads.addAll(ChunkInkHandler.Render.getInkedBlockQuad(face, random, renderType));
+                if (splatcraft$faceEntry.type() == InkBlockUtils.InkType.GLOWING)
                 {
-                    int index = bakedQuad.getDirection().get3DDataValue();
-                    if (ink.isInkedAny())
+                    quads.add(ChunkInkHandler.Render.getGlitterQuad()[face.get3DDataValue()]);
+                }
+            }
+            else
+            {
+                quads.addAll(original.call(instance, blockState, face, random, modelData, renderType));
+            }
+            if (splatcraft$hasInkEntry && splatcraft$inkEntry.inmutable)
+            {
+                quads.add(ChunkInkHandler.Render.getPermaInkQuads()[face == null ? 0 : face.get3DDataValue()]);
+            }
+            return quads;
+        }
+
+        @WrapOperation(method = "renderModel", remap = false, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderQuadList(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/terrain/material/Material;Lme/jellysquid/mods/sodium/client/model/light/LightPipeline;Lme/jellysquid/mods/sodium/client/model/color/ColorProvider;Lnet/minecraft/world/phys/Vec3;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;Ljava/util/List;Lnet/minecraft/core/Direction;)V"))
+        public void splatcraft$modifyColorProvider(BlockRenderer instance, BlockRenderContext context, Material quad, LightPipeline lightData, ColorProvider<BlockState> vertexColors, Vec3 sprite, ChunkModelBuilder i, List<BakedQuad> quadsSize, Direction direction, Operation<Void> original)
+        {
+            if (splatcraft$isFaceInked)
+            {
+                original.call(instance, context, quad, lightData, ChunkInkHandler.Render.getSplatcraftColorProvider(), sprite, i, quadsSize, direction);
+                return;
+            }
+            original.call(instance, context, quad, lightData, vertexColors, sprite, i, quadsSize, direction);
+        }
+
+        /*@Inject(method = "renderQuadList", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;writeGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;Lnet/minecraft/world/phys/Vec3;Lme/jellysquid/mods/sodium/client/render/chunk/terrain/material/Material;Lme/jellysquid/mods/sodium/client/model/quad/BakedQuadView;[ILme/jellysquid/mods/sodium/client/model/light/data/QuadLightData;)V"))
+        public void splatcraft$getInkData(BlockRenderContext context, Material material, LightPipeline lighter, ColorProvider<BlockState> colorizer, Vec3 offset, ChunkModelBuilder builder, List<BakedQuad> quads, Direction cullFace, CallbackInfo ci, int index, int quadCount, BakedQuadView quad, QuadLightData light, int[] colors)
+        {
+            ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(context.world().world, context.pos());
+            ModelQuadOrientation orientation = this.useReorienting ? ModelQuadOrientation.orientByBrightness(light.br, light.lm) : ModelQuadOrientation.NORMAL;
+
+            if(ink.isInkedAny())
+                MixinCode.splacraft$drawInkedFace(builder, material, quad, colors, light, orientation, vertices.clone(), vertexBuffer, ink);
+        }*/
+
+        /*@WrapOperation(method = "renderQuadList", at = @At(value = "INVOKE", target =
+        "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;writeGeometry(Lme/jellysquid/mods
+        /sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/compile
+        /buffers/ChunkModelBuilder;Lnet/minecraft/world/phys/Vec3;Lme/jellysquid/mods/sodium/client/render/chunk/terrain/material
+        /Material;Lme/jellysquid/mods/sodium/client/model/quad/BakedQuadView;[ILme/jellysquid/mods/sodium/client/model/light/data
+        /QuadLightData;)V"))
+
+        holy siht this is a long method name
+        public void splatcraft$wrapRenderQuadList(BlockRenderer instance,
+                                                  BlockRenderContext context,
+                                                  ChunkModelBuilder builder,
+                                                  Vec3 offset,
+                                                  Material material,
+                                                  BakedQuadView quad,
+                                                  int[] vertexColors,
+                                                  QuadLightData lightData,
+                                                  Operation<Void> original)
+        {
+            ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(context.world().world, context.pos());
+            if (ink != null)
+            {
+                int index = quad.getLightFace().get3DDataValue();
+                if (ink.isInkedAny())
+                {
+                    if (ink.isInked(quad.getLightFace().get3DDataValue()))
                     {
-                        if (ink.isInked(bakedQuad.getDirection().get3DDataValue()))
-                        {
-                            float[] rgb = ColorUtils.hexToRGB(ink.color(index));
-                            int color = ColorABGR.pack(rgb[0], rgb[1], rgb[2]);
+                        float[] rgbs = ColorUtils.hexToRGB(ink.color(index));
+                        int color = ColorABGR.pack(rgbs[0], rgbs[1], rgbs[2]);
 
-                            splatcraft$renderInkQuad(color, ink.type(index) == InkBlockUtils.InkType.CLEAR ? null : ChunkInkHandler.Render.getInkedBlockSprite(), ink.type(index) == InkBlockUtils.InkType.GLOWING,
-                                    origin, vertices, indices, blockOffset, bakedQuad, light, model);
+                        splatcraft$renderInkQuad(instance, color, ink.type(index) == InkBlockUtils.InkType.CLEAR ? null : ChunkInkHandler.Render.getInkedBlockSprite(), ink.type(index) == InkBlockUtils.InkType.GLOWING,
+                                context, builder, offset, material, quad, vertexColors, lightData);
 
-                            if (ink.type(index) == InkBlockUtils.InkType.GLOWING)
-                                splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getGlitterSprite(), true,
-                                        origin, vertices, indices, blockOffset, bakedQuad, light, model);
+                        if (ink.type(index) == InkBlockUtils.InkType.GLOWING)
+                            splatcraft$renderInkQuad(instance, 0xFFFFFFFF, ChunkInkHandler.Render.getGlitterSprite(), true,
+                                    context, builder, offset, material, quad, vertexColors, lightData);
 
-                            if (ink.inmutable)
-                                splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getPermanentInkSprite(), false,
-                                        origin, vertices, indices, blockOffset, bakedQuad, light, model);
+                        if (ink.inmutable)
+                            splatcraft$renderInkQuad(instance, 0xFFFFFFFF, ChunkInkHandler.Render.getPermanentInkSprite(), false,
+                                    context, builder, offset, material, quad, vertexColors, lightData);
 
-                            return;
-                        }
+                        return;
                     }
-					else
-					{
-						if (ink.inmutable)
-							splatcraft$renderInkQuad(ColorABGR.pack(1f, 1f, 1f), ChunkInkHandler.Render.getPermanentInkSprite(), false,
-								origin, vertices, indices, blockOffset, bakedQuad, light, model);
-					}
-				}
-			}
+                }
+                else
+                {
+                    if (ink.inmutable)
+                        splatcraft$renderInkQuad(instance, 0xFFFFFFFF, ChunkInkHandler.Render.getPermanentInkSprite(), false,
+                                context, builder, offset, material, quad, vertexColors, lightData);
+                }
+            }
 
-            original.call(instance, world, state, pos, origin, vertices, indices, blockOffset, colorSampler, bakedQuad, light, model);
+            original.call(instance, context, builder, offset, material, quad, vertexColors, lightData);
         }
 
         @Unique
-        private void splatcraft$renderInkQuad(int packedColor, TextureAtlasSprite sprite, boolean emissive, BlockPos
-                origin, ModelVertexSink vertices, IndexBufferBuilder indices, Vec3 blockOffset, BakedQuad
-                                                      bakedQuad, QuadLightData light, ChunkModelBuilder model)
+        private void splatcraft$renderInkQuad(BlockRenderer instance, int packedColor, TextureAtlasSprite sprite, boolean emissive, BlockRenderContext ctx, ChunkModelBuilder builder, Vec3 offset, Material material, BakedQuadView quad, int[] colors, QuadLightData light)
         {
-            ModelQuadView src = (ModelQuadView) bakedQuad;
-            ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(light.br);
+            ModelQuadOrientation orientation = ModelQuadOrientation.orientByBrightness(light.br, light.lm);
+            ChunkVertexEncoder.Vertex[] vertices = ((VerticesAccessor) instance).getVertices();
+            ModelQuadFacing normalFace = quad.getNormalFace();
 
-            int vertexStart = vertices.getVertexCount();
-
-            for (int i = 0; i < 4; ++i)
+            for (int dstIndex = 0; dstIndex < 4; ++dstIndex)
             {
-                int j = orientation.getVertexIndex(i);
-                float x = src.getX(j) + (float) blockOffset.x();
-                float y = src.getY(j) + (float) blockOffset.y();
-                float z = src.getZ(j) + (float) blockOffset.z();
-                int color = ColorABGR.mul(packedColor, Math.max(light.br[j], Math.min(1, light.br[j] + (emissive ? 0.5f : 0))));
-                float u = src.getTexU(j);
-                float v = src.getTexV(j);
-
+                int srcIndex = orientation.getVertexIndex(dstIndex);
+                ChunkVertexEncoder.Vertex out = vertices[dstIndex];
+                out.x = ctx.origin().x() + quad.getX(srcIndex) + (float) offset.x();
+                out.y = ctx.origin().y() + quad.getY(srcIndex) + (float) offset.y();
+                out.z = ctx.origin().z() + quad.getZ(srcIndex) + (float) offset.z();
+                int rgb = colors != null ? colors[srcIndex] : quad.getColor(srcIndex);
+                rgb = ColorMixer.mul(rgb, packedColor);
+                out.color = ColorABGR.withAlpha(rgb, light.br[srcIndex] + (emissive ? 0.5f : 0));
                 if (sprite != null)
                 {
-                    Direction.Axis axis = bakedQuad.getDirection().getAxis();
-                    u = sprite.getU0() + (axis.equals(Direction.Axis.X) ? z : x) * (sprite.getU1() - sprite.getU0());
-                    v = sprite.getV0() + (axis.equals(Direction.Axis.Y) ? z : y) * (sprite.getV1() - sprite.getV0());
+                    Direction.Axis axis = quad.getLightFace().getAxis();
+                    out.u = sprite.getU0() + (axis.equals(Direction.Axis.X) ? out.z : out.x) * (sprite.getU1() - sprite.getU0());
+                    out.v = sprite.getV0() + (axis.equals(Direction.Axis.Y) ? out.z : out.y) * (sprite.getV1() - sprite.getV0());
                 }
-
-                int lm = emissive ? LightTexture.pack(15, 15) : light.lm[j];
-                vertices.writeVertex(origin, x, y, z, color, u, v, lm, model.getChunkId());
+                else
+                {
+                    out.u = quad.getTexU(srcIndex);
+                    out.v = quad.getTexV(srcIndex);
+                }
+                if (quad instanceof BakedQuad bakedQuad)
+                {
+                    SpriteAccessor mixin = (SpriteAccessor) bakedQuad;
+                    mixin.setSprite(sprite);
+                }
+                out.light = emissive ? LightTexture.pack(15, 15) : light.lm[srcIndex];
             }
 
-            indices.add(vertexStart, ModelQuadWinding.CLOCKWISE);
-            if (sprite == null)
-                sprite = src.getSprite();
-            if (sprite != null)
-            {
-                model.addSprite(sprite);
-            }
-        }
+            ChunkMeshBufferBuilder vertexBuffer = builder.getVertexBuffer(normalFace);
+            vertexBuffer.push(vertices, material);
+        }*/
     }
 
-    @Mixin(ChunkRenderRebuildTask.class)
+    @Mixin(ChunkBuilderMeshingTask.class)
     public static class ChunkRebuildMixin
     {
         @Unique
@@ -137,36 +216,37 @@ public class SodiumMixin
         @Unique
         private Level splatcraft$level;
 
-        @WrapOperation(method = "performBuild", remap = false, at = @At(value = "INVOKE",
-                target = "Lme/jellysquid/mods/sodium/client/world/WorldSlice;getBlockState(III)Lnet/minecraft/world/level/block/state/BlockState;"))
-        public BlockState getBlockState(WorldSlice instance, int x, int y, int z, Operation<BlockState> original)
+        @Inject(method = "execute(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/resources/model/BakedModel;getModelData(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/model/data/ModelData;"))
+        public void getBlockState(ChunkBuildContext buildContext, CancellationToken cancellationToken, CallbackInfoReturnable<ChunkBuildOutput> cir, BuiltSectionInfo.Builder renderData, VisGraph occluder, ChunkBuildBuffers buffers, BlockRenderCache cache, WorldSlice slice, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockPos.MutableBlockPos blockPos, BlockPos.MutableBlockPos modelOffset, BlockRenderContext context, int y, int z, int x, BlockState blockState, BakedModel model)
         {
-            splatcraft$level = ((WorldSliceAccessor) instance).getWorld();
-            splatcraft$blockPos = new BlockPos(x, y, z);
-            return InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos) && splatcraft$level.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE) ?
-                    SplatcraftBlocks.inkedBlock.get().defaultBlockState() : original.call(instance, x, y, z);
+            splatcraft$level = slice.world;
+            splatcraft$blockPos = blockPos;
         }
 
-        @WrapOperation(method = "performBuild", remap = false, at = @At(value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;canRenderInLayer(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/client/renderer/RenderType;)Z"))
-        public boolean canRenderInLayer(BlockState state, RenderType type, Operation<Boolean> original)
+        @WrapOperation(method = "execute(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;", remap = false, at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/ChunkRenderTypeSet;"))
+        public ChunkRenderTypeSet canRenderInLayer(BakedModel instance, BlockState state, RandomSource randomSource, ModelData modelData, Operation<ChunkRenderTypeSet> original)
         {
-            if (InkBlockUtils.isInkedAny(splatcraft$level, splatcraft$blockPos))
-            {
-                ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(splatcraft$level, splatcraft$blockPos);
+            ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(splatcraft$level, splatcraft$blockPos);
 
-                if (Arrays.stream(ink.entries).anyMatch(v -> v.type() == InkBlockUtils.InkType.GLOWING || v.type() == InkBlockUtils.InkType.CLEAR))
-                    return type == RenderType.translucent();
-                return type == RenderType.solid();
-            }
-            return original.call(state, type);
+            if (ink != null && ink.isInkedAny())
+                return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
+            return original.call(instance, state, randomSource, modelData);
         }
     }
 
-    @Mixin(WorldSlice.class)
-    public interface WorldSliceAccessor
+   /* @Mixin(BakedQuad.class)
+    public interface SpriteAccessor
     {
-        @Accessor("world")
-        Level getWorld();
-    }
+        @Mutable
+        @Final
+        @Accessor("sprite")
+        void setSprite(TextureAtlasSprite sprite);
+
+        @Mutable
+        @Final
+        @Accessor("vertices")
+        void setVertices(int[] vertices);
+    }*/
 }

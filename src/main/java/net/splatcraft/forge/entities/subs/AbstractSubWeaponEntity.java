@@ -72,7 +72,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
     public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, Level level, LivingEntity thrower, int color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
     {
-        A result = create(type, level, thrower.getX(), thrower.getEyeY() - (double) 0.1F, thrower.getZ(), color, inkType, sourceWeapon);
+        A result = create(type, level, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
         result.setOwner(thrower);
 
         return result;
@@ -139,36 +139,32 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
             }
         }
 
-        if (raytraceresult.getType() != HitResult.Type.MISS && !flag /*!net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, raytraceresult)*/)
+        if (raytraceresult.getType() != HitResult.Type.MISS && !flag)
         {
             this.onHit(raytraceresult);
         }
 
         this.checkInsideBlocks();
-        Vec3 vector3d = this.getDeltaMovement();
+        Vec3 deltaMovement = this.getDeltaMovement();
 
         Vec3 newPos = new Vec3(getX() + getDeltaMovement().x, getY() + getDeltaMovement().y, getZ() + getDeltaMovement().z);
 
-        double d2 = this.getX() + vector3d.x;
-        double d0 = this.getY() + vector3d.y;
-        double d1 = this.getZ() + vector3d.z;
+        double newX = this.getX() + deltaMovement.x;
+        double newY = this.getY() + deltaMovement.y;
+        double newZ = this.getZ() + deltaMovement.z;
         this.updateRotation();
-        float f;
+        float f = 0.941192F;
         if (this.isInWater())
         {
             for (int i = 0; i < 4; ++i)
             {
-                this.level().addParticle(ParticleTypes.BUBBLE, d2 - vector3d.x * 0.25D, d0 - vector3d.y * 0.25D, d1 - vector3d.z * 0.25D, vector3d.x, vector3d.y, vector3d.z);
+                this.level().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25D, newY - deltaMovement.y * 0.25D, newZ - deltaMovement.z * 0.25D, deltaMovement.x, deltaMovement.y, deltaMovement.z);
             }
 
             f = 0.8F;
         }
-        else
-        {
-            f = 0.99F;
-        }
 
-        this.setDeltaMovement(vector3d.scale(f));
+        this.setDeltaMovement(deltaMovement.scale(f));
         if (!this.isNoGravity())
         {
             Vec3 vector3d1 = this.getDeltaMovement();
@@ -426,7 +422,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         }
     }
 
-    protected void updateRotation()
+    public void updateRotation()
     {
         Vec3 vec3 = this.getDeltaMovement();
         double d0 = vec3.horizontalDistance();

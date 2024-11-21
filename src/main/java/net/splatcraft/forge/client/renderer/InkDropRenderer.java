@@ -35,12 +35,12 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
         if (entityIn.isInvisible())
             return;
 
-        if (entityIn.tickCount >= 3 || this.entityRenderDispatcher.camera.getEntity().distanceToSqr(entityIn) >= 12.25D)
+        if (this.entityRenderDispatcher.camera.getEntity().distanceToSqr(entityIn.getPosition(partialTicks)) >= 12.25D)
         {
             float scale = entityIn.getProjectileSize();
             int color = entityIn.getColor();
 
-            if (SplatcraftConfig.Client.getColorLock())
+            if (SplatcraftConfig.Client.colorLock.get())
                 color = ColorUtils.getLockedColor(color);
 
             float r = (float) (Math.floor((float) color / (256 * 256)) / 255f);
@@ -52,7 +52,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
             matrixStackIn.translate(0.0D, scale, 0.0D);
             matrixStackIn.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
             matrixStackIn.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-            matrixStackIn.scale(scale, scale, scale);
+            matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getDeltaMovement().length()));
 
             InkDropModel model = MODEL;
 

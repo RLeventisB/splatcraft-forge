@@ -101,13 +101,13 @@ public class InkExplosion
         this.affectedBlockPositions.addAll(set);
         if (dmgCalculator.isInsignificant())
             return;
-        float radiusSquared = dmgCalculator.getMaxRegisteredDistance() * dmgCalculator.getMaxRegisteredDistance();
-        int k1 = Mth.floor(this.x - dmgCalculator.getMaxRegisteredDistance() - 1F);
-        int l1 = Mth.floor(this.x + dmgCalculator.getMaxRegisteredDistance() + 1F);
-        int i2 = Mth.floor(this.y - dmgCalculator.getMaxRegisteredDistance() - 1F);
-        int i1 = Mth.floor(this.y + dmgCalculator.getMaxRegisteredDistance() + 1F);
-        int j2 = Mth.floor(this.z - dmgCalculator.getMaxRegisteredDistance() - 1F);
-        int j1 = Mth.floor(this.z + dmgCalculator.getMaxRegisteredDistance() + 1F);
+        float radiusSquared = dmgCalculator.getMaxDistance() * dmgCalculator.getMaxDistance();
+        int k1 = Mth.floor(this.x - dmgCalculator.getMaxDistance() - 1F);
+        int l1 = Mth.floor(this.x + dmgCalculator.getMaxDistance() + 1F);
+        int i2 = Mth.floor(this.y - dmgCalculator.getMaxDistance() - 1F);
+        int i1 = Mth.floor(this.y + dmgCalculator.getMaxDistance() + 1F);
+        int j2 = Mth.floor(this.z - dmgCalculator.getMaxDistance() - 1F);
+        int j1 = Mth.floor(this.z + dmgCalculator.getMaxDistance() + 1F);
         List<LivingEntity> list = level.getEntitiesOfClass(LivingEntity.class, new AABB(k1, i2, j2, l1, i1, j1));
 
         int color = ColorUtils.getEntityColor(exploder);

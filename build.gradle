@@ -41,16 +41,19 @@ java {
 
 repositories {
     maven {
-        name "KosmX's maven"
-        url 'https://maven.kosmx.dev/'
-    }
-    maven { url = 'https://maven.minecraftforge.net' }
-    maven {
         url "https://cursemaven.com"
         content {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        url "https://maven.blamejared.com"
+    }
+    maven {
+        name "KosmX's maven"
+        url 'https://maven.kosmx.dev/'
+    }
+    maven { url = 'https://maven.minecraftforge.net' }
     mavenCentral()
 }
 
@@ -141,10 +144,8 @@ dependencies {
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
     implementation 'org.jetbrains:annotations:23.0.0'
 
-    //implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${project.geckolib_version}")
-    //implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${project.player_anim_version}")
-    compileOnly fg.deobf("curse.maven:rubidium-574856:4494903")
-    //implementation fg.deobf("curse.maven:rubidium-574856:4494903")
+    implementation fg.deobf("org.embeddedt:embeddium-1.20.1:0.3.9-git.f603a93+mc1.20.1")
+    implementation fg.deobf("curse.maven:config-menus-forge-544048:4672356")
 }
 
 tasks.named('build').configure { dependsOn('jarJar') }

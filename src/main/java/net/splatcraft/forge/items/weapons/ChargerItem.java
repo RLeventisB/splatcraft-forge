@@ -107,7 +107,9 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 
             if (!enoughInk(entity, this, getInkConsumption(stack, prevCharge + chargeThisFrame), 0, timeLeft % 4 == 0))
             {
-                if (!hasInkInTank(player, this) || !InkTankItem.canRecharge(player.getItemBySlot(EquipmentSlot.CHEST), true))
+                float rechargeMult = InkTankItem.rechargeMult(player.getItemBySlot(EquipmentSlot.CHEST), true);
+
+                if (!hasInkInTank(player, this) || rechargeMult == 0)
                     return;
                 chargeThisFrame *= settings.chargeData.emptyTankChargeRate();
             }

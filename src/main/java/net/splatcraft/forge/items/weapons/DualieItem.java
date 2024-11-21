@@ -100,10 +100,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
         {
             int turretDuration = getRollTurretDuration(activeDualie, lastRoll);
-            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
+            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
 
             PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
-            activeSettings.rollData.speed();
         }
     }
 
@@ -202,7 +201,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
                     if (reduceInk(localPlayer, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
                     {
-                        Vec2 rollDirection = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.speed());
+                        Vec2 rollDirection = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.rollDistance());
 
                         performRoll(localPlayer, stack, hand, maxRolls, rollDirection, true);
                         SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, hand, maxRolls, rollDirection));
@@ -243,7 +242,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         }
     }
 
-    protected void fireDualie(Level level, LivingEntity entity, ItemStack stack, int timeLeft, boolean onRollCooldown)
+    protected void fireDualie(Level level, LivingEntity entity, ItemStack stack, float timeLeft, boolean onRollCooldown)
     {
         DualieWeaponSettings settings = getSettings(stack);
         CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
@@ -287,35 +286,36 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
     public static class DodgeRollCooldown extends PlayerCooldown
     {
-        final byte rollFrame, rollEndFrame, turretModeFrame;
-        static final byte ROLL_DURATION = 4;
+        final byte rollFrame, rollEndFrame, turretModeFrame, rollDuration;
         final boolean lastRoll;
         final Vec2 rollDirection;
         boolean canSlide;
 
-        public DodgeRollCooldown(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean lastRoll)
+        public DodgeRollCooldown(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean lastRoll)
         {
-            super(stack, startupFrames + ROLL_DURATION + endlagFrames + turretModeFrames, slotIndex, hand, false, false, true, false);
+            super(stack, startupFrames + rollDuration + endlagFrames + turretModeFrames, slotIndex, hand, false, false, true, false);
             this.rollDirection = rollDirection;
-            this.rollFrame = (byte) (ROLL_DURATION + turretModeFrames + endlagFrames);
+            this.rollFrame = (byte) (rollDuration + turretModeFrames + endlagFrames);
             this.rollEndFrame = (byte) (turretModeFrames + endlagFrames);
             this.turretModeFrame = turretModeFrames;
             this.lastRoll = lastRoll;
             this.canSlide = canSlide;
+            this.rollDuration = rollDuration;
         }
 
         public DodgeRollCooldown(CompoundTag nbt)
         {
             this(ItemStack.of(nbt.getCompound("StoredStack")),
-                    nbt.getInt("SlotIndex"),
-                    nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND,
-                    new Vec2(nbt.getFloat("RollDirectionX"), nbt.getFloat("RollDirectionZ")),
-                    nbt.getByte("StartupFrames"),
-                    nbt.getByte("EndlagFrames"),
-                    nbt.getByte("TurretModeFrames"),
-                    nbt.getBoolean("CanSlide"),
-                    nbt.getBoolean("LastRoll"));
-            setTime(nbt.getInt("Time"));
+                nbt.getInt("SlotIndex"),
+                nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND,
+                new Vec2(nbt.getFloat("RollDirectionX"), nbt.getFloat("RollDirectionZ")),
+                nbt.getByte("StartupFrames"),
+                nbt.getByte("RollDuration"),
+                nbt.getByte("EndlagFrames"),
+                nbt.getByte("TurretModeFrames"),
+                nbt.getBoolean("CanSlide"),
+                nbt.getBoolean("LastRoll"));
+            setTime(nbt.getFloat("Time"));
         }
 
         @Override
@@ -373,14 +373,15 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             nbt.put("StoredStack", storedStack.serializeNBT());
             nbt.putInt("SlotIndex", getSlotIndex());
             nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
-            nbt.putByte("StartupFrames", (byte) (getMaxTime() - ROLL_DURATION - endlagFrames - turretModeFrame));
+            nbt.putByte("StartupFrames", (byte) (getMaxTime() - rollDuration - endlagFrames - turretModeFrame));
+            nbt.putByte("RollDuration", (byte) (getMaxTime() - rollDuration - endlagFrames - turretModeFrame));
             nbt.putByte("EndlagFrames", (byte) (endlagFrames));
             nbt.putByte("TurretModeFrames", turretModeFrame);
             nbt.putBoolean("CanSlide", canSlide);
             nbt.putBoolean("LastRoll", isLastRoll());
             nbt.putFloat("RollDirectionX", rollDirection.x);
             nbt.putFloat("RollDirectionZ", rollDirection.y);
-            nbt.putInt("Time", getTime());
+            nbt.putFloat("Time", getTime());
             return nbt;
         }
 

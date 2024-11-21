@@ -30,7 +30,7 @@
     },
     "dodge_roll": {
         "count": 1,
-        "movement_impulse": 0.625,
+        "movement_impulse": 0.695,
         "ink_consumption": 7,
         "ink_recovery_cooldown": 23,
         "roll_startup": 1,

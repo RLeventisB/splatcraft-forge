@@ -1,10 +1,23 @@
 {
-	"type": "splatcraft:sub_weapon",
-	"direct_damage": 12.0,
-	"indirect_damage": 6.0,
-	"prop_damage": 16.0,
-	"explosion_size": 2,
-	"ink_consumption": 40.0,
-	"ink_recovery_cooldown": 17,
-	"mobility": 1
+    "type": "splatcraft:sub_weapon",
+    "direct_damage": 25.0,
+    "damage_values": {
+        "points": [
+            {
+                "max_range": 28,
+                "damage": 35
+            },
+            {
+                "max_range": 40,
+                "damage": 25
+            }
+        ],
+        "lerp_between": false
+    },
+    "throw_velocity": 5.6,
+    "ink_splash_radius": 35,
+    "indirect_damage": 6.0,
+    "ink_consumption": 45.0,
+    "ink_recovery_cooldown": 60,
+    "mobility": 1
 }

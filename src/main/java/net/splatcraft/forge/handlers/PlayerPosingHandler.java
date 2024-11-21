@@ -71,7 +71,7 @@ public class PlayerPosingHandler
                     mainHand.xRot = -((float) Math.PI / 2) + model.getHead().xRot;
                     break;
                 case SUB_HOLD:
-                    if (!(mainStack.getItem() instanceof SubWeaponItem) || useTime < ((SubWeaponItem) mainStack.getItem()).getSettings(mainStack).holdTime)
+                    if (!(mainStack.getItem() instanceof SubWeaponItem) || useTime < ((SubWeaponItem) mainStack.getItem()).getSettings(mainStack).subDataRecord.holdTime())
                     {
                         mainHand.yRot = -0.1F + model.getHead().yRot;
                         mainHand.xRot = ((float) Math.PI / 8F);

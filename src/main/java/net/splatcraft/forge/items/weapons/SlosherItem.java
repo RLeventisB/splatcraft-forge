@@ -126,8 +126,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
         public SloshCooldown(CompoundTag nbt)
         {
-            super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getInt("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true, false, true, false);
-            setTime(nbt.getInt("Time"));
+            super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true, false, true, false);
+            setTime(nbt.getFloat("Time"));
             didSound = nbt.getBoolean("DidSound");
             fromNbt(nbt);
         }
@@ -180,6 +180,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
                         float xRotation = Mth.lerp(partialTick, yRotOld, yRot);
                         proj.shootFromRotation(
+                                null,
                                 Mth.lerp(partialTick, xRotOld, xRot),
                                 xRotation + projectileSetting.offsetAngle() - 3,
                                 shotSetting.pitchCompensation(),
@@ -230,8 +231,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         @Override
         public CompoundTag writeNBT(CompoundTag nbt)
         {
-            nbt.putInt("Time", getTime());
-            nbt.putInt("MaxTime", getMaxTime());
+            nbt.putFloat("Time", getTime());
+            nbt.putFloat("MaxTime", getMaxTime());
             nbt.putInt("SlotIndex", getSlotIndex());
             nbt.putBoolean("DidSound", didSound);
             nbt.putBoolean("MainHand", getHand().equals(InteractionHand.MAIN_HAND));

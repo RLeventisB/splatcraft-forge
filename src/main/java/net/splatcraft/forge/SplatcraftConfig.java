@@ -12,12 +12,18 @@ import java.io.File;
 public class SplatcraftConfig
 {
     public static final ForgeConfigSpec clientConfig;
-    private static final ForgeConfigSpec.Builder clientBuilder = new ForgeConfigSpec.Builder();
+    public static final ForgeConfigSpec serverConfig;
 
     static
     {
-        Client.init(clientBuilder);
-        clientConfig = clientBuilder.build();
+        ForgeConfigSpec.Builder configBuilder = new ForgeConfigSpec.Builder();
+
+        Client.init(configBuilder);
+        clientConfig = configBuilder.build();
+
+        configBuilder = new ForgeConfigSpec.Builder();
+        Server.init(configBuilder);
+        serverConfig = configBuilder.build();
     }
 
     public static void loadConfig(ForgeConfigSpec config, String path)
@@ -28,17 +34,30 @@ public class SplatcraftConfig
         config.setConfig(file);
     }
 
-    public enum InkIndicator {
+    public enum InkIndicator
+    {
         CROSSHAIR,
         DURABILITY,
         BOTH,
         NONE
     }
 
-    public enum PreventBobView {
+    public enum PreventBobView
+    {
         SUBMERGED,
         ALWAYS,
         OFF
+    }
+
+    public static class Server
+    {
+        public static ForgeConfigSpec.BooleanValue uhhhhh;
+
+        public static void init(ForgeConfigSpec.Builder client)
+        {
+            client.comment("Server Settings");
+            uhhhhh = client.comment("No there isnt a config for the server for now").define("splatcraft.squidKeyMode", false);
+        }
     }
 
     public static class Client
@@ -48,7 +67,8 @@ public class SplatcraftConfig
         public static ForgeConfigSpec.BooleanValue vanillaInkDurability;
         public static ForgeConfigSpec.BooleanValue holdBarrierToRender;
         public static ForgeConfigSpec.IntValue barrierRenderDistance;
-        //public static ForgeConfigSpec.BooleanValue colorLock; TODO
+        public static ForgeConfigSpec.BooleanValue colorLock;
+        public static ForgeConfigSpec.BooleanValue makeShinier;
         public static ForgeConfigSpec.EnumValue<PreventBobView> preventBobView;
         public static ForgeConfigSpec.BooleanValue lowInkWarning;
         public static ForgeConfigSpec.BooleanValue coloredPlayerNames;
@@ -62,25 +82,19 @@ public class SplatcraftConfig
             client.comment("Accessibility Settings");
             squidKeyMode = client.comment("Squid Key Mode").defineEnum("splatcraft.squidKeyMode", SplatcraftKeyHandler.KeyMode.TOGGLE);
             inkIndicator = client.comment("Determines how the amount of ink left in your tank is visualized.").defineEnum("splatcraft.inkIndicator", InkIndicator.BOTH);
-            vanillaInkDurability = client.comment("Determines whether the any indicator that determines how much ink you have left matches vanilla durability colors instead of your ink color.")
-                    .define("splatcraft.vanillaInkDurabilityColor", false);
+            vanillaInkDurability = client.comment("Determines whether the indicator that determines how much ink you have left matches vanilla durability colors instead of your ink color.")
+                .define("splatcraft.vanillaInkDurabilityColor", false);
             holdBarrierToRender = client.comment("Prevents Stage Barriers from rendering in creative mode unless the player is holding one in their hand.")
-                    .define("splatcraft.holdBarrierToRender", false);
+                .define("splatcraft.holdBarrierToRender", true);
             barrierRenderDistance = client.comment("How far away stage barriers or voids will render away from you.")
-                    .defineInRange("splatcraft.barrierRenderDistance", 40, 4, 80);
-            //colorLock = client.comment("Color Lock Mode").define("splatcraft.colorLock", false);
+                .defineInRange("splatcraft.barrierRenderDistance", 40, 4, 80);
+            colorLock = client.comment("Sets a static color for friendly and hostile colors").define("splatcraft.colorLock", false);
+            makeShinier = client.comment("Makes projectiles colors more palid and more \"resistant\" to lightning changes").define("splatcraft.shinierConfig", false);
             preventBobView = client.comment("Prevents changing FOV when in Squid Mode").defineEnum("splatcraft.preventBobView", PreventBobView.OFF);
             lowInkWarning = client.comment("Determines whether the ink indicator near your crosshair warns you if your ink is low.")
-                    .define("splatcraft.lowInkWarning", true);
+                .define("splatcraft.lowInkWarning", true);
             coloredPlayerNames = client.comment("Determines whether instances of player names share the same color as their ink.")
-                    .define("splatcraft.coloredPlayerNames", true);
-
-        }
-
-        public static boolean getColorLock()
-        {
-            return false;
+                .define("splatcraft.coloredPlayerNames", true);
         }
     }
-
 }

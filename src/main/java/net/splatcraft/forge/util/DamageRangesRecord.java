@@ -28,8 +28,8 @@ public record DamageRangesRecord(
     {
         public static final Codec<DamageRangeRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
-                        Codec.FLOAT.fieldOf("damage").forGetter(v -> v.damage),
-                        Codec.FLOAT.fieldOf("max_range").forGetter(v -> v.maxRange)
+                        Codec.FLOAT.fieldOf("max_range").forGetter(v -> v.maxRange),
+                        Codec.FLOAT.fieldOf("damage").forGetter(v -> v.damage)
                 ).apply(instance, DamageRangeRecord::new)
         );
     }
@@ -52,7 +52,7 @@ public record DamageRangesRecord(
     {
         if (!lerpBetween)
         {
-            Map.Entry<Float, Float> floor = damageValues.floorEntry(distance);
+            Map.Entry<Float, Float> floor = damageValues.ceilingEntry(distance);
             return floor == null ? 0 : floor.getValue();
         }
         Map.Entry<Float, Float> floor = damageValues.floorEntry(distance);
@@ -74,9 +74,14 @@ public record DamageRangesRecord(
         return Mth.lerp(Mth.inverseLerp(distance, floorDistance, ceiling.getKey()), floorDamage, ceiling.getValue());
     }
 
-    public float getMaxRegisteredDistance()
+    public float getMaxDistance()
     {
-        return damageValues.isEmpty() ? 0 : damageValues.lastEntry().getKey();
+        return damageValues.isEmpty() ? 0 : damageValues.lastKey();
+    }
+
+    public float getMaxRegisteredDamage()
+    {
+        return damageValues.isEmpty() ? 0 : damageValues.firstEntry().getValue();
     }
 
     public static DamageRangesRecord createSimpleLerped(float closeDamage, float farDamage, float maxRange)
@@ -108,15 +113,17 @@ public record DamageRangesRecord(
 
     public boolean isInsignificant()
     {
-        return this.damageValues.isEmpty() || getMaxRegisteredDistance() == 0;
+        return this.damageValues.isEmpty() || getMaxDistance() == 0;
     }
 
-    public DamageRangesRecord cloneWithMultiplier(float damageMultiplier)
+    public DamageRangesRecord cloneWithMultiplier(float rangeMultiplier, float damageMultiplier)
     {
+        if (rangeMultiplier == 1 && damageMultiplier == 1)
+            return new DamageRangesRecord(damageValues, lerpBetween);
         TreeMap<Float, Float> map = new TreeMap<>();
-        for (var pair : damageValues.entrySet().stream().toList())
+        for (var pair : damageValues.entrySet())
         {
-            map.put(pair.getKey(), pair.getValue() * damageMultiplier);
+            map.put(pair.getKey() * rangeMultiplier, pair.getValue() * damageMultiplier);
         }
         return new DamageRangesRecord(map, lerpBetween);
     }

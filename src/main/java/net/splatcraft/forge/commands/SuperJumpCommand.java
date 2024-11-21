@@ -168,7 +168,7 @@ public class SuperJumpCommand
                     new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")),
                     nbt.getInt("TravelTime"), nbt.getInt("WindupTime"),
                     nbt.getDouble("Height"), nbt.getBoolean("CanClip"), nbt.getBoolean("HadInvulnerability"));
-            setTime(nbt.getInt("TimeLeft"));
+            setTime(nbt.getFloat("TimeLeft"));
         }
 
         @Override
@@ -241,7 +241,7 @@ public class SuperJumpCommand
             nbt.putBoolean("SuperJump", true);
             nbt.putBoolean("CanClip", hadPhysics);
             nbt.putBoolean("HadInvulnerability", hadInvulnerability);
-            nbt.putInt("TimeLeft", getTime());
+            nbt.putFloat("TimeLeft", getTime());
             nbt.putInt("WindupTime", getWindupTime());
             nbt.putInt("TravelTime", getTravelTime());
             return nbt;

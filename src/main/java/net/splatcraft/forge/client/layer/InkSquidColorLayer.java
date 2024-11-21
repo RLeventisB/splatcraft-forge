@@ -29,7 +29,7 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
     public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
     {
         int color = ColorUtils.getEntityColor(entity);
-        if (SplatcraftConfig.Client.getColorLock())
+        if (SplatcraftConfig.Client.colorLock.get())
         {
             color = ColorUtils.getLockedColor(color);
         }
@@ -40,11 +40,12 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
         coloredCutoutModelCopyLayerRender(getParentModel(), model, TEXTURE, poseStack, bufferSource, packedLight, entity, limbSwing, limbSwingAmount, packedLight, ageInTicks, netHeadYaw, headPitch, r, g, b);
     }
 
-    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(@NotNull EntityModel<T> parentModel, @NotNull EntityModel<T> model, @NotNull ResourceLocation textureLoc, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue) {
-        if (!entity.isInvisible()) {
+    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(@NotNull EntityModel<T> parentModel, @NotNull EntityModel<T> model, @NotNull ResourceLocation textureLoc, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue)
+    {
+        if (!entity.isInvisible())
+        {
             parentModel.copyPropertiesTo(model);
             renderColoredCutoutModel(model, textureLoc, poseStack, bufferSource, packedLight, entity, red, green, blue);
         }
-
     }
 }

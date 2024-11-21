@@ -10,6 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.commands.arguments.InkColorArgument;
 import net.splatcraft.forge.registries.SplatcraftParticleTypes;
 import net.splatcraft.forge.util.ColorUtils;
@@ -38,12 +39,12 @@ public class InkSplashParticleData implements ParticleOptions
         }
     };
     public static final Codec<InkSplashParticleData> CODEC = RecordCodecBuilder.create(
-            p_239803_0_ -> p_239803_0_.group(
-                    Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
-                    Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
-                    Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue),
-                    Codec.FLOAT.fieldOf("scale").forGetter(p_239804_0_ -> p_239804_0_.scale)
-            ).apply(p_239803_0_, InkSplashParticleData::new)
+        p_239803_0_ -> p_239803_0_.group(
+            Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
+            Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
+            Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue),
+            Codec.FLOAT.fieldOf("scale").forGetter(p_239804_0_ -> p_239804_0_.scale)
+        ).apply(p_239803_0_, InkSplashParticleData::new)
     );
     protected final float red;
     protected final float green;
@@ -62,6 +63,14 @@ public class InkSplashParticleData implements ParticleOptions
 
     public InkSplashParticleData(float red, float green, float blue, float scale)
     {
+        if (SplatcraftConfig.Client.colorLock.get())
+        {
+            float[] rgb = ColorUtils.hexToRGB(ColorUtils.getLockedColor(ColorUtils.RGBtoHex(new float[]{red, green, blue})));
+            red = rgb[0];
+            green = rgb[1];
+            blue = rgb[2];
+        }
+
         this.red = red;
         this.green = green;
         this.blue = blue;

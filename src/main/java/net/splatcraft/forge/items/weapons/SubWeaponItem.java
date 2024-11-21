@@ -88,7 +88,8 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand)
     {
-        if (!(player.isSwimming() && !player.isInWater()) && (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).inkConsumption, 0, true, true)))
+        // this !(bool && bool) confuses me
+        if (!(player.isSwimming() && !player.isInWater()) && (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).subDataRecord.inkConsumption(), 0, true, true)))
             player.startUsingItem(hand);
         return useSuper(level, player, hand);
     }
@@ -111,9 +112,9 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         SubWeaponSettings settings = getSettings(itemStack);
 
         int useTime = getUseDuration(itemStack) - timeLeft;
-        if (useTime == settings.holdTime)
+        if (useTime == settings.subDataRecord.holdTime())
             throwSub(itemStack, level, entity);
-        else if (useTime < settings.holdTime)
+        else if (useTime < settings.subDataRecord.holdTime())
             useTick.onUseTick(level, entity, itemStack, timeLeft);
     }
 
@@ -121,7 +122,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity, int timeLeft)
     {
         super.releaseUsing(stack, level, entity, timeLeft);
-        if (getUseDuration(stack) - timeLeft < getSettings(stack).holdTime)
+        if (getUseDuration(stack) - timeLeft < getSettings(stack).subDataRecord.holdTime())
             throwSub(stack, level, entity);
     }
 
@@ -129,15 +130,15 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     {
         entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
 
+        SubWeaponSettings settings = getSettings(stack);
         if (!level.isClientSide())
         {
             AbstractSubWeaponEntity proj = AbstractSubWeaponEntity.create(entityType.get(), level, entity, stack.copy());
-            SubWeaponSettings settings = getSettings(stack);
 
             stack.getOrCreateTag().remove("EntityData");
 
             proj.setItem(stack.copy());
-            proj.shoot(entity, entity.getXRot(), entity.getYRot(), settings.throwAngle, settings.throwVelocity, 0);
+            proj.shoot(entity, entity.getXRot(), entity.getYRot(), settings.subDataRecord.throwAngle(), settings.subDataRecord.throwVelocity(), 0);
             proj.setDeltaMovement(proj.getDeltaMovement().add(entity.getDeltaMovement().multiply(1, 0, 1)));
             level.addFreshEntity(proj);
         }
@@ -146,8 +147,9 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         {
             if (entity instanceof Player && !((Player) entity).isCreative())
                 stack.shrink(1);
-        } else
-            reduceInk(entity, this, getSettings(stack).inkConsumption, getSettings(stack).inkRecoveryCooldown, false);
+        }
+        else
+            reduceInk(entity, this, settings.subDataRecord.inkConsumption(), settings.subDataRecord.inkRecoveryCooldown(), false);
     }
 
     @Override

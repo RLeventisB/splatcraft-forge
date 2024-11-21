@@ -74,8 +74,8 @@ public class ColorUtils
 
     public static int getEntityColor(Entity entity)
     {
-        if (entity instanceof Player)
-            return getPlayerColor((LivingEntity) entity);
+        if (entity instanceof LivingEntity livingEntity)
+            return getPlayerColor(livingEntity);
         else if (entity instanceof IColoredEntity coloredEntity)
             return coloredEntity.getColor();
         else return -1;
@@ -209,10 +209,10 @@ public class ColorUtils
     public static int getLockedColor(int color)
     {
         return Minecraft.getInstance().player != null
-                ? ColorUtils.getPlayerColor(Minecraft.getInstance().player) == color
-                ? COLOR_LOCK_FRIENDLY
-                : COLOR_LOCK_HOSTILE
-                : -1;
+            ? ColorUtils.getPlayerColor(Minecraft.getInstance().player) == color
+            ? COLOR_LOCK_FRIENDLY
+            : COLOR_LOCK_HOSTILE
+            : -1;
     }
 
     public static void forEachColoredBlockInBounds(Level level, AABB bounds, ColoredBlockConsumer action)
@@ -222,7 +222,7 @@ public class ColorUtils
              chunkPos.getX() <= bounds.maxX && chunkPos.getY() <= bounds.maxY && chunkPos.getZ() <= bounds.maxZ; chunkPos.move(16, 16, 16))
         {
             level.getChunkAt(chunkPos).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getBlockState().getBlock() instanceof IColoredBlock && expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
-                    .forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getBlockState().getBlock(), entry.getValue()));
+                .forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getBlockState().getBlock(), entry.getValue()));
         }
     }
 
@@ -275,8 +275,8 @@ public class ColorUtils
     public static MutableComponent getFormatedColorName(int color, boolean colorless)
     {
         return color == ColorUtils.DEFAULT
-                ? Component.literal((colorless ? ChatFormatting.GRAY : "") + getColorName(color).getString())
-                : getColorName(color).withStyle(getColorName(color).getStyle().withColor(TextColor.fromRgb(color)));
+            ? Component.literal((colorless ? ChatFormatting.GRAY : "") + getColorName(color).getString())
+            : getColorName(color).withStyle(getColorName(color).getStyle().withColor(TextColor.fromRgb(color)));
     }
 
     public static boolean colorEquals(Level level, BlockPos pos, int colorA, int colorB)
@@ -334,6 +334,11 @@ public class ColorUtils
         float b = (color & 0x000000FF) / 255.0f;
 
         return new float[]{r, g, b};
+    }
+
+    public static int RGBtoHex(float[] color)
+    {
+        return (((int) (color[0] * 255f)) << 16) | (((int) (color[1] * 255f)) << 8) | (((int) (color[2] * 255f)));
     }
 
     // actual heresy but i am a c# dev so public static!!!!!

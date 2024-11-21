@@ -31,13 +31,13 @@ public class SquidBumperColorLayer extends RenderLayer<SquidBumperEntity, SquidB
     public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
     {
         int color = ColorUtils.getEntityColor(entity);
-        if (SplatcraftConfig.Client.getColorLock())
+        if (SplatcraftConfig.Client.colorLock.get())
         {
             color = ColorUtils.getLockedColor(color);
         }
-        float r = ((color & 16711680) >> 16) / 255.0f;
-        float g = ((color & '\uff00') >> 8) / 255.0f;
-        float b = (color & 255) / 255.0f;
+        float r = ((color & 0xFF0000) >> 16) / 255.0f;
+        float g = ((color & 0x00FF00) >> 8) / 255.0f;
+        float b = (color & 0x0000FF) / 255.0f;
 
         getParentModel().copyPropertiesTo(model);
         model.prepareMobModel(entity, limbSwing, limbSwingAmount, headPitch);

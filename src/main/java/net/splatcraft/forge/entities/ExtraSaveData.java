@@ -142,19 +142,19 @@ public abstract class ExtraSaveData
     public static class ExplosionExtraData extends ExtraSaveData
     {
         public final DamageRangesRecord damageCalculator;
-        public final float sparkDamagePenalty;
+        public final DamageRangesRecord sparkDamageCalculator;
         public final float explosionPaint;
         public final boolean newAttackId;
 
         public ExplosionExtraData(BlasterWeaponSettings.DetonationRecord detonationRecord)
         {
-            this(detonationRecord.damageRadiuses(), detonationRecord.sparkDamagePenalty(), detonationRecord.explosionPaint(), detonationRecord.newAttackId());
+            this(detonationRecord.damageRadiuses(), detonationRecord.sparkDamageRadiuses(), detonationRecord.explosionPaint(), detonationRecord.newAttackId());
         }
 
-        public ExplosionExtraData(DamageRangesRecord damageCalculator, float sparkDamagePenalty, float explosionPaint, boolean newAttackId)
+        public ExplosionExtraData(DamageRangesRecord damageCalculator, DamageRangesRecord sparkDamageCalculator, float explosionPaint, boolean newAttackId)
         {
             this.damageCalculator = damageCalculator;
-            this.sparkDamagePenalty = sparkDamagePenalty;
+            this.sparkDamageCalculator = sparkDamageCalculator;
             this.explosionPaint = explosionPaint;
             this.newAttackId = newAttackId;
         }
@@ -163,20 +163,29 @@ public abstract class ExtraSaveData
         public void save(@NotNull FriendlyByteBuf buffer)
         {
             damageCalculator.writeToBuffer(buffer);
-            buffer.writeFloat(sparkDamagePenalty);
+            sparkDamageCalculator.writeToBuffer(buffer);
             buffer.writeFloat(explosionPaint);
+            buffer.writeBoolean(newAttackId);
+        }
+
+        public DamageRangesRecord getRadiuses(boolean spark, float multiplier)
+        {
+            return (spark ? sparkDamageCalculator : damageCalculator).cloneWithMultiplier(1, multiplier);
         }
 
         @Override
         public ExplosionExtraData load(@NotNull FriendlyByteBuf buffer)
         {
-            return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readFloat(), buffer.readBoolean());
+            return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readBoolean());
         }
 
         @Override
         public ExplosionExtraData copy()
         {
-            return new ExplosionExtraData(new DamageRangesRecord((TreeMap<Float, Float>) damageCalculator.damageValues().clone(), damageCalculator.lerpBetween()), sparkDamagePenalty, explosionPaint, newAttackId);
+            return new ExplosionExtraData(
+                    new DamageRangesRecord(new TreeMap<>(damageCalculator.damageValues()), damageCalculator.lerpBetween()),
+                    new DamageRangesRecord(new TreeMap<>(sparkDamageCalculator.damageValues()), sparkDamageCalculator.lerpBetween()),
+                    explosionPaint, newAttackId);
         }
     }
 

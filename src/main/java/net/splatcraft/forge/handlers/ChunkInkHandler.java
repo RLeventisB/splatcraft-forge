@@ -4,17 +4,26 @@ import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Transformation;
+import me.jellysquid.mods.sodium.client.model.color.ColorProvider;
+import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockElementFace;
+import net.minecraft.client.renderer.block.model.BlockFaceUV;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -25,6 +34,9 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.model.ForgeFaceData;
+import net.minecraftforge.client.model.SimpleModelState;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -34,6 +46,7 @@ import net.minecraftforge.event.level.PistonEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.mixin.BlockRenderMixin;
@@ -42,6 +55,7 @@ import net.splatcraft.forge.network.s2c.DeleteInkPacket;
 import net.splatcraft.forge.network.s2c.IncrementalChunkBasedPacket;
 import net.splatcraft.forge.network.s2c.UpdateInkPacket;
 import net.splatcraft.forge.network.s2c.WatchInkPacket;
+import net.splatcraft.forge.registries.SplatcraftBlocks;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.util.ColorUtils;
 import net.splatcraft.forge.util.CommonUtils;
@@ -140,8 +154,8 @@ public class ChunkInkHandler
     {
         Direction direction = event.getFace() == null ? Direction.UP : event.getFace();
         if (SplatcraftGameRules.getLocalizedRule(event.getLevel(), event.getPos(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
-                InkBlockUtils.isInked(event.getLevel(), event.getPos().relative(direction).below(), direction) &&
-                event.getItemStack().getItem() instanceof BlockItem blockItem)
+            InkBlockUtils.isInked(event.getLevel(), event.getPos().relative(direction).below(), direction) &&
+            event.getItemStack().getItem() instanceof BlockItem blockItem)
         {
             BlockPlaceContext context = blockItem.updatePlacementContext(new BlockPlaceContext(event.getLevel(), event.getEntity(), event.getHand(), event.getItemStack(), event.getHitVec()));
             if (context != null)
@@ -166,7 +180,7 @@ public class ChunkInkHandler
                 if (event.level instanceof ServerLevel level)
                 {
                     List<LevelChunk> chunks = StreamSupport.stream(level.getChunkSource().chunkMap.getChunks().spliterator(), false).map(ChunkHolder::getTickingChunk)
-                            .filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.get(chunk).getInkInChunk().isEmpty()).toList();
+                        .filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.get(chunk).getInkInChunk().isEmpty()).toList();
                     int maxChunkCheck = Math.min(level.random.nextInt(MAX_DECAYABLE_CHUNKS), chunks.size());
 
                     for (int i = 0; i < maxChunkCheck; i++)
@@ -182,8 +196,8 @@ public class ChunkInkHandler
                             BlockPos clearPos = pos.toAbsolute(chunk.getPos());
 
                             if (!SplatcraftGameRules.getLocalizedRule(level, clearPos, SplatcraftGameRules.INK_DECAY) ||
-                                    level.random.nextFloat() >= SplatcraftGameRules.getIntRuleValue(level, SplatcraftGameRules.INK_DECAY_RATE) * 0.001f || //TODO make localized int rules
-                                    decayableInk.get(pos).inmutable)
+                                level.random.nextFloat() >= SplatcraftGameRules.getIntRuleValue(level, SplatcraftGameRules.INK_DECAY_RATE) * 0.001f || //TODO make localized int rules
+                                decayableInk.get(pos).inmutable)
                             {
                                 decayableInk.remove(pos);
                                 continue;
@@ -327,9 +341,57 @@ public class ChunkInkHandler
     @OnlyIn(Dist.CLIENT)
     public static class Render
     {
+        public static final ResourceLocation INKED_BLOCK_LOCATION = new ResourceLocation(Splatcraft.MODID, "block/inked_block");
+        private static ColorProvider<BlockState> splatcraftColorProvider, inkedBlockColorProvider;
+        private static TextureAtlasSprite inkedBlockSprite;
+        private static BakedModel model;
+        private static BakedQuad[] glitterQuads;
+        private static BakedQuad[] permaInkQuads;
+
+        public static ColorProvider<BlockState> getSplatcraftColorProvider()
+        {
+            if (splatcraftColorProvider == null)
+            {
+                splatcraftColorProvider = (view, pos, state, quad, output) ->
+                {
+                    switch (quad.getColorIndex())
+                    {
+                        case 0: // the actual ink
+                            ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(view.world, pos);
+                            int index = quad.getLightFace().get3DDataValue();
+                            int color = -1;
+                            if (ink != null && ink.isInked(index))
+                                color = ink.color(index);
+                            if (SplatcraftConfig.Client.colorLock.get())
+                                color = ColorUtils.getLockedColor(color);
+                            Arrays.fill(output, ColorARGB.toABGR(color, 255));
+                            break;
+                        case 1: // glitter
+                            Arrays.fill(output, 0xAAFFFFFF);
+                            break;
+                        case 2: // permanent ink overlay
+                            Arrays.fill(output, 0xFFFFFFFF);
+                            break;
+                    }
+                };
+            }
+            return splatcraftColorProvider;
+        }
+
+        public static List<BakedQuad> getInkedBlockQuad(Direction direction, RandomSource rnd, RenderType renderType)
+        {
+            if (model == null)
+            {
+                model = Minecraft.getInstance().getModelManager().getBlockModelShaper().getBlockModel(SplatcraftBlocks.inkedBlock.get().defaultBlockState());
+            }
+            return model.getQuads(SplatcraftBlocks.inkedBlock.get().defaultBlockState(), direction, rnd, ModelData.EMPTY, renderType);
+        }
+
         public static TextureAtlasSprite getInkedBlockSprite()
         {
-            return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(new ResourceLocation(Splatcraft.MODID, "block/inked_block"));
+            if (inkedBlockSprite == null)
+                inkedBlockSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(INKED_BLOCK_LOCATION);
+            return inkedBlockSprite;
         }
 
         public static TextureAtlasSprite getGlitterSprite()
@@ -343,7 +405,7 @@ public class ChunkInkHandler
         }
 
         public static boolean splatcraft$renderInkedBlock(RenderChunkRegion region, BlockPos pos, VertexConsumer
-                consumer, PoseStack.Pose pose, BakedQuad quad, float[] brightness, int[] lightmap, int f2, boolean f3)
+            consumer, PoseStack.Pose pose, BakedQuad quad, float[] brightness, int[] lightmap, int f2, boolean f3)
         {
             ChunkInk worldInk = ChunkInkCapability.get(((BlockRenderMixin.ChunkRegionAccessor) region).getLevel(), pos);
 
@@ -457,6 +519,56 @@ public class ChunkInkHandler
             }
 
             memorystack.close();
+        }
+
+        public static BakedQuad[] getGlitterQuad()
+        {
+            if (glitterQuads == null)
+            {
+                BlockFaceUV uv = new BlockFaceUV(new float[]{0, 0, 16, 16}, 0);
+                ArrayList<BakedQuad> quads = new ArrayList<>(6);
+                for (int i = 0; i < 6; i++)
+                {
+                    Direction direction = Direction.from3DDataValue(i);
+                    quads.add(BlockModel.FACE_BAKERY.bakeQuad(
+                        new Vector3f(0),
+                        new Vector3f(16),
+                        new BlockElementFace(direction, 1, "splatcraft:block/glitter", uv, new ForgeFaceData(-1, 15, 15, false)),
+                        getGlitterSprite(),
+                        direction,
+                        new SimpleModelState(Transformation.identity(), true),
+                        null,
+                        false,
+                        new ResourceLocation(Splatcraft.MODID, "glitter_model")));
+                }
+                glitterQuads = quads.toArray(new BakedQuad[6]);
+            }
+            return glitterQuads;
+        }
+
+        public static BakedQuad[] getPermaInkQuads()
+        {
+            if (permaInkQuads == null)
+            {
+                BlockFaceUV uv = new BlockFaceUV(new float[]{0, 0, 16, 16}, 0);
+                ArrayList<BakedQuad> quads = new ArrayList<>(6);
+                for (int i = 0; i < 6; i++)
+                {
+                    Direction direction = Direction.from3DDataValue(i);
+                    quads.add(BlockModel.FACE_BAKERY.bakeQuad(
+                        new Vector3f(0),
+                        new Vector3f(16),
+                        new BlockElementFace(direction, 2, "splatcraft:block/permanent_ink_overlay", uv),
+                        getPermanentInkSprite(),
+                        direction,
+                        new SimpleModelState(Transformation.identity(), true),
+                        null,
+                        false,
+                        new ResourceLocation(Splatcraft.MODID, "permanent_ink_overlay")));
+                }
+                permaInkQuads = quads.toArray(new BakedQuad[6]);
+            }
+            return permaInkQuads;
         }
     }
 }

@@ -3,12 +3,14 @@ package net.splatcraft.forge.handlers;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.client.particles.SquidSoulParticleData;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.util.ColorUtils;
@@ -16,9 +18,14 @@ import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.PlayerCharge;
 import net.splatcraft.forge.util.PlayerCooldown;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class WeaponHandler
 {
+    private static final Map<Player, Vec3> prevPosMap = new LinkedHashMap<>();
+
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event)
     {
@@ -53,7 +60,14 @@ public class WeaponHandler
         }
 
         if (event.phase != TickEvent.Phase.START)
+        {
+            if (PlayerInfoCapability.hasCapability(player))
+            {
+                PlayerInfo playerInfo = PlayerInfoCapability.get(player);
+                playerInfo.removeSquidCancelFlag();
+            }
             return;
+        }
 
         boolean canUseWeapon = true;
 
@@ -77,7 +91,7 @@ public class WeaponHandler
                 canUseWeapon = !cooldown.preventWeaponUse();
                 ItemStack stack = cooldown.storedStack;
 
-                if (cooldown.getTime() == 1)
+                if (cooldown.getTime() <= 1)
                 {
                     if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
                         weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
@@ -105,5 +119,11 @@ public class WeaponHandler
         {
             PlayerCharge.dischargeWeapon(player);
         }
+        prevPosMap.put(player, player.position());
+    }
+
+    public static Vec3 getPlayerPrevPos(Player player)
+    {
+        return prevPosMap.containsKey(player) ? prevPosMap.get(player) : player.position();
     }
 }

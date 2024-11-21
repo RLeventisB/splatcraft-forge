@@ -1,40 +1,37 @@
 {
-  "required": true,
-  "package": "net.splatcraft.forge.mixin",
-  "compatibilityLevel": "JAVA_17",
-  "refmap": "splatcraft.refmap.json",
-  "mixins": [
-    "BlockEffectsMixin$EntityMixin",
-    "BlockEffectsMixin$LivingEntityMixin",
-    "EntityMixin",
-    "PlayerListMixin",
-    "PlayerMixin",
-    "ServerGamePacketMixin",
-    "SheepMixin",
-    "SquidPassthroughMixin"
-  ],
-  "minVersion": "0.8",
-  "injectors": {
-    "defaultRequire": 1
-  },
-  "client": [
-    "AbstractContainerAccessor",
-    "AddLayersAccessor",
-    "BlockRenderMixin$ChunkRegionAccessor",
-    "BlockRenderMixin$ChunkRenderDispatcherMixin",
-    "BlockRenderMixin$Renderer",
-    "CreativeTabMixin",
-    "GameRendererMixin",
-    "ItemRendererMixin",
-    "MinecraftClientAccessor",
-    "PlayerModelMixin",
-    "PlayerTabOverlayMixin",
-    "RecipeCategoryMixin",
-    "SheepWoolLayerMixin",
-    "WeaponHotkeyMixin$MinecraftInstance",
-    "WeaponHotkeyMixin$PlayerControllerMix",
-    "compat.SodiumMixin$BlockRendererMixin",
-    "compat.SodiumMixin$ChunkRebuildMixin",
-    "compat.SodiumMixin$WorldSliceAccessor"
-  ]
+    "required": true,
+    "package": "net.splatcraft.forge.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "refmap": "splatcraft.refmap.json",
+    "mixins": [
+        "BlockEffectsMixin$EntityMixin",
+        "BlockEffectsMixin$LivingEntityMixin",
+        "EntityMixin",
+        "PlayerListMixin",
+        "PlayerMixin",
+        "ServerGamePacketMixin",
+        "SheepMixin",
+        "SquidPassthroughMixin",
+        "compat.SodiumMixin$ChunkRebuildMixin"
+    ],
+    "minVersion": "0.8",
+    "injectors": {
+        "defaultRequire": 1
+    },
+    "client": [
+        "AddLayersAccessor",
+        "BlockRenderMixin$ChunkRegionAccessor",
+        "BlockRenderMixin$ChunkRenderDispatcherMixin",
+        "BlockRenderMixin$Renderer",
+        "GameRendererMixin",
+        "ItemRendererMixin",
+        "MinecraftClientAccessor",
+        "PlayerModelMixin",
+        "PlayerTabOverlayMixin",
+        "RecipeCategoryMixin",
+        "SheepWoolLayerMixin",
+        "WeaponHotkeyMixin$MinecraftInstance",
+        "WeaponHotkeyMixin$PlayerControllerMix",
+        "compat.SodiumMixin$BlockRendererMixin"
+    ]
 }

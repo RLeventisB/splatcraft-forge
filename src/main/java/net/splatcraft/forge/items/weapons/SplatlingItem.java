@@ -105,15 +105,15 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 
         if (level.isClientSide)
         {
-
             float prevCharge = PlayerCharge.getChargeValue(player, stack);
             float newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.secondChargeTime() : settings.chargeData.firstChargeTime());
 
             if (!enoughInk(entity, this, Mth.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, timeLeft % 4 == 0))
             {
-                if (!hasInkInTank(player, this) || !InkTankItem.canRecharge(player.getItemBySlot(EquipmentSlot.CHEST), true))
+                float rechargeMult = InkTankItem.rechargeMult(player.getItemBySlot(EquipmentSlot.CHEST), true);
+                if (!hasInkInTank(player, this) || rechargeMult == 0)
                     return;
-                newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.emptyTankSecondChargeTime() : settings.chargeData.emptyTankFirstChargeTime());
+                newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.emptyTankSecondChargeTime() : settings.chargeData.emptyTankFirstChargeTime()) * rechargeMult;
             }
 
             playChargingSound(player, stack);
@@ -137,7 +137,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
                 SplatlingWeaponSettings settings = getSettings(stack);
 
                 float chargeLevel = cooldown.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
-                float cooldownLeft = cooldown.getTime() / (float) cooldown.getMaxTime();
+                float cooldownLeft = cooldown.getTime() / cooldown.getMaxTime();
                 float inkConsumed = Mth.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
                 float inkRefunded = inkConsumed * cooldownLeft;
 
@@ -174,7 +174,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
             {
                 InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), projectileData.size(), settings);
                 proj.shootFromRotation(player, player.getXRot(), player.getYRot(), firingData.pitchCompensation(), getScaledProjectileSettingFloat(settings, charge, CommonRecords.ProjectileDataRecord::speed),
-                        inaccuracy);
+                    inaccuracy);
                 proj.setSplatlingStats(settings, charge);
                 level.addFreshEntity(proj);
             }

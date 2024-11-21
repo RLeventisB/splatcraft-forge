@@ -105,7 +105,7 @@ public class PlayerCharge
         }
 
         PlayerCharge charge = getCharge(player);
-        if ((/*charge.prevCharge > charge.charge || */charge.charge <= 0.0f) && value > 0.0f && player.equals(Minecraft.getInstance().player))
+        if (charge.charge <= 0.0f && value > 0.0f && player.equals(Minecraft.getInstance().player))
         {
             SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(true));
         }

@@ -11,24 +11,32 @@ import java.util.UUID;
 public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 {
     UUID target;
-    private final boolean squid;
+    private final boolean squid, isCancel;
 
     public PlayerSetSquidS2CPacket(UUID player, boolean squid)
     {
+        this(player, squid, false);
+    }
+
+    public PlayerSetSquidS2CPacket(UUID player, boolean squid, boolean isSquidCancel)
+    {
         this.squid = squid;
         this.target = player;
+        isCancel = isSquidCancel;
     }
 
     public static PlayerSetSquidS2CPacket decode(FriendlyByteBuf buffer)
     {
-        return new PlayerSetSquidS2CPacket(buffer.readUUID(), buffer.readBoolean());
+        UUID player = buffer.readUUID();
+        byte state = buffer.readByte();
+        return new PlayerSetSquidS2CPacket(player, (state & 1) == 1, (state & 2) == 2);
     }
 
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
         buffer.writeUUID(target);
-        buffer.writeBoolean(squid);
+        buffer.writeByte((squid ? 1 : 0) | (isCancel ? 2 : 0));
     }
 
     @Override
@@ -41,5 +49,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
         }
         PlayerInfo target = PlayerInfoCapability.get(player);
         target.setIsSquid(squid);
+        if (isCancel)
+            target.flagSquidCancel();
     }
 }

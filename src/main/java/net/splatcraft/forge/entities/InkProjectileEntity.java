@@ -283,10 +283,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
+                InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
                 createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
                 level().broadcastEntityEvent(this, (byte) 3);
-                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
             }
             else
             {
@@ -561,9 +561,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
                 level().broadcastEntityEvent(this, (byte) 3);
-                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
             }
             else
                 level().broadcastEntityEvent(this, (byte) 2);
@@ -600,9 +600,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
-                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.damageCalculator.cloneWithMultiplier(explosionData.sparkDamagePenalty * damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(true, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
                 level().broadcastEntityEvent(this, (byte) 3);
-//				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, ((level().getRandom().nextFloat() - level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+//				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
             }
             else
             {
@@ -616,14 +616,30 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     public void shootFromRotation(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
     {
-        shootFromRotation(pitch, yaw, pitchOffset, velocity, inaccuracy, 0);
+        shootFromRotation(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy, 0);
     }
 
-    public void shootFromRotation(float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
+    public void shootFromRotation(Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
     {
-        float f = -Mth.sin(yaw * Mth.DEG_TO_RAD) * Mth.cos(pitch * Mth.DEG_TO_RAD);
-        float f1 = -Mth.sin((pitch + pitchOffset) * Mth.DEG_TO_RAD);
-        float f2 = Mth.cos(yaw * Mth.DEG_TO_RAD) * Mth.cos(pitch * Mth.DEG_TO_RAD);
+        double f = -Math.sin(yaw * Mth.DEG_TO_RAD) * Math.cos(pitch * Mth.DEG_TO_RAD);
+        double f1 = -Math.sin((pitch + pitchOffset) * Mth.DEG_TO_RAD);
+        double f2 = Math.cos(yaw * Mth.DEG_TO_RAD) * Math.cos(pitch * Mth.DEG_TO_RAD);
+        Vec3 posDiff = new Vec3(0, 0, 0);
+
+        try
+        {
+            posDiff = thrower.position().subtract(CommonUtils.getOldPosition(thrower));
+            if (thrower.onGround())
+                posDiff.multiply(1, 0, 1);
+            posDiff = posDiff.scale(0.8);
+        }
+        catch (NullPointerException ignored)
+        {
+        }
+
+        f += posDiff.x;
+        f1 += posDiff.y;
+        f2 += posDiff.z;
         this.shoot(f, f1, f2, velocity, inaccuracy, partialTicks);
     }
 
@@ -637,7 +653,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     {
         // 1.34f is only to make the acurracy more aproppiate in minecraft since 5 degrees in splatoon isnt as impactful as 5 degrees in minecraft kinda
         float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD * 1.34f;
-        Vec3 vec3 = new Vec3(x, y, z).normalize()
+        Vec3 vec3 = new Vec3(x, y, z)
                 .yRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy)
                 .xRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
 
@@ -649,6 +665,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         this.setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
         this.yRotO = this.getViewYRot(partialTicks);
         this.xRotO = this.getViewXRot(partialTicks);
+        setDeltaMovement(vec3);
 
         entityData.set(SPEED, velocity);
     }

@@ -21,6 +21,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
@@ -35,6 +36,7 @@ import net.splatcraft.forge.items.IColoredItem;
 import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.items.weapons.settings.*;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
+import net.splatcraft.forge.network.c2s.WeaponUseEndPacket;
 import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.forge.registries.SplatcraftGameRules;
 import net.splatcraft.forge.registries.SplatcraftItems;
@@ -112,12 +114,12 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         return (T) this;
     }
 
-    public static boolean reduceInk(LivingEntity player, Item item, float amount, int recoveryCooldown, boolean sendMessage)
+    public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage)
     {
         return reduceInk(player, item, amount, recoveryCooldown, sendMessage, false);
     }
 
-    public static boolean reduceInk(LivingEntity player, Item item, float amount, int recoveryCooldown, boolean sendMessage, boolean force)
+    public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage, boolean force)
     {
         if (!force && !enoughInk(player, item, amount, recoveryCooldown, sendMessage, false)) return false;
         ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
@@ -134,24 +136,24 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         return true;
     }
 
-    public static boolean enoughInk(LivingEntity player, Item item, float consumption, int recoveryCooldown, boolean sendMessage)
+    public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage)
     {
         return enoughInk(player, item, consumption, recoveryCooldown, sendMessage, false);
     }
 
-    public static boolean enoughInk(LivingEntity player, Item item, float consumption, int recoveryCooldown, boolean sendMessage, boolean sub)
+    public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage, boolean sub)
     {
         ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
         if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-                || player instanceof Player && ((Player) player).isCreative()
-                && SplatcraftGameRules.getBooleanRuleValue(player.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+            || player instanceof Player plr && plr.isCreative()
+            && SplatcraftGameRules.getBooleanRuleValue(player.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
         }
-        if (tank.getItem() instanceof InkTankItem)
+        if (tank.getItem() instanceof InkTankItem tankItem)
         {
             boolean enoughInk = InkTankItem.getInkAmount(tank) - consumption >= 0
-                    && (item == null || ((InkTankItem) tank.getItem()).canUse(item));
+                && (item == null || tankItem.canUse(item));
             if (!sub || enoughInk)
                 InkTankItem.setRecoveryCooldown(tank, recoveryCooldown);
             if (!enoughInk && sendMessage)
@@ -167,8 +169,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     {
         ItemStack tank = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
         if (!SplatcraftGameRules.getLocalizedRule(livingEntity.level(), livingEntity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-                || livingEntity instanceof Player player && player.isCreative()
-                && SplatcraftGameRules.getBooleanRuleValue(livingEntity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+            || livingEntity instanceof Player player && player.isCreative()
+            && SplatcraftGameRules.getBooleanRuleValue(livingEntity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
         }
@@ -189,7 +191,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     public static void playNoInkSound(LivingEntity entity, SoundEvent sound)
     {
         entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
-                ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+            ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
     }
 
     @Override
@@ -234,7 +236,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         if (entity instanceof Player player)
         {
             if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                    && PlayerInfoCapability.hasCapability(player))
+                && PlayerInfoCapability.hasCapability(player))
                 ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
 
             if (player.getCooldowns().isOnCooldown(stack.getItem()))
@@ -271,7 +273,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             }
         }
         else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-                && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+            && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);
@@ -366,5 +368,93 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.NONE;
+    }
+
+    public static class WeaponFireCooldown<T extends WeaponBaseItem<?>> extends PlayerCooldown
+    {
+        public final float startupFrames, endlagFrames;
+        public float timer;
+        public boolean isDoingEndlag = false;
+
+        public T getItem()
+        {
+            return (T) storedStack.getItem();
+        }
+
+        public WeaponFireCooldown(ItemStack stack, float initialTimer, float startupFrames, float endlagFrames, int slotIndex, InteractionHand hand, boolean isGrounded)
+        {
+            super(stack, 100, slotIndex, hand, true, false, true, isGrounded);
+            this.timer = initialTimer;
+            this.startupFrames = startupFrames;
+            this.endlagFrames = endlagFrames;
+        }
+
+        public WeaponFireCooldown(CompoundTag nbt)
+        {
+            super(nbt);
+            startupFrames = nbt.getFloat("StartupFrames");
+            endlagFrames = nbt.getFloat("EndlagFrames");
+            timer = nbt.getFloat("Timer");
+            isDoingEndlag = nbt.getBoolean("DoingEndlag");
+        }
+
+        @Override
+        public void onStart(Player player)
+        {
+            onEndlagEnd(player, 0, false);
+        }
+
+        @Override
+        public void tick(Player player)
+        {
+            setTime(100);
+
+            boolean stoppedUsing = !player.isUsingItem() || !player.getUseItem().is(Items.AIR);
+            timer--;
+
+            while (timer <= 0)
+            {
+                if (isDoingEndlag)
+                {
+                    onEndlagEnd(player, -timer, stoppedUsing);
+                    if (!stoppedUsing)
+                    {
+                        timer += startupFrames;
+                    }
+                    else
+                    {
+                        setTime(0);
+                        SplatcraftPacketHandler.sendToServer(new WeaponUseEndPacket(player.getUUID()));
+                        break;
+                    }
+                }
+                else
+                {
+                    onFire(player, -timer);
+                    timer += endlagFrames;
+                }
+                isDoingEndlag = !isDoingEndlag;
+            }
+        }
+
+        public void onEndlagEnd(Player player, float accumulatedTime, boolean stoppedUsing)
+        {
+
+        }
+
+        public void onFire(Player player, float accumulatedTime)
+        {
+
+        }
+
+        @Override
+        public CompoundTag writeNBT(CompoundTag nbt)
+        {
+            nbt.putFloat("StartupFrames", startupFrames);
+            nbt.putFloat("EndlagFrames", endlagFrames);
+            nbt.putFloat("Timer", timer);
+            nbt.putBoolean("DoingEndlag", isDoingEndlag);
+            return super.writeNBT(nbt);
+        }
     }
 }

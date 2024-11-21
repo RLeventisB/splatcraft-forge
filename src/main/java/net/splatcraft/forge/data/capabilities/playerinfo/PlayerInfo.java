@@ -26,6 +26,7 @@ public class PlayerInfo
     private ItemStack inkBand = ItemStack.EMPTY;
     private float squidSurgeCharge = 0f;
     private boolean isPlaying;
+    private boolean didSquidCancelThisTick;
 
     public PlayerInfo(int defaultColor)
     {
@@ -162,6 +163,7 @@ public class PlayerInfo
         nbt.putInt("DodgeCount", getDodgeCount());
         nbt.putInt("Color", getColor());
         nbt.putBoolean("IsSquid", isSquid());
+        nbt.putBoolean("SquidCancel", didSquidCancelThisTick);
         nbt.putString("InkType", getInkType().getSerializedName());
         nbt.putBoolean("Initialized", initialized);
         nbt.putFloat("SquidSurgeCharge", getSquidSurgeCharge());
@@ -203,6 +205,7 @@ public class PlayerInfo
         setDodgeCount(nbt.getInt("DodgeCount"));
         setColor(ColorUtils.getColorFromNbt(nbt));
         setIsSquid(nbt.getBoolean("IsSquid"));
+        didSquidCancelThisTick = nbt.getBoolean("SquidCancel");
         setInitialized(nbt.getBoolean("Initialized"));
         setSquidSurgeCharge(nbt.getFloat("SquidSurgeCharge"));
 
@@ -224,5 +227,20 @@ public class PlayerInfo
 
         isPlaying = nbt.getBoolean("Playing");
         climbedDirection = nbt.contains("ClimbedDirection") ? Optional.of(Direction.from3DDataValue(nbt.getInt("ClimbedDirection"))) : Optional.empty();
+    }
+
+    public void flagSquidCancel()
+    {
+        didSquidCancelThisTick = true;
+    }
+
+    public boolean didSquidCancelThisTick()
+    {
+        return didSquidCancelThisTick;
+    }
+
+    public void removeSquidCancelFlag()
+    {
+        didSquidCancelThisTick = false;
     }
 }

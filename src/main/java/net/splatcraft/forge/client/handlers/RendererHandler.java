@@ -40,7 +40,6 @@ import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
@@ -121,7 +120,7 @@ public class RendererHandler
 
         PlayerModel<AbstractClientPlayer> playerModel = playerrenderer.getModel();
         PlayerInkColoredSkinLayer.renderHand(playerModel, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPlayer(),
-                event.getArm().equals(HumanoidArm.LEFT) ? playerModel.leftArm : playerModel.rightArm, event.getArm().equals(HumanoidArm.LEFT) ? playerModel.leftSleeve : playerModel.rightSleeve);
+            event.getArm().equals(HumanoidArm.LEFT) ? playerModel.leftArm : playerModel.rightArm, event.getArm().equals(HumanoidArm.LEFT) ? playerModel.leftSleeve : playerModel.rightSleeve);
     }
 
     @SubscribeEvent
@@ -137,8 +136,8 @@ public class RendererHandler
         if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getHand().equals(event.getHand()))
         {
             PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-            float time = (float) cooldown.getTime();
-            float maxTime = (float) cooldown.getMaxTime();
+            float time = cooldown.getTime();
+            float maxTime = cooldown.getMaxTime();
             if (time != oldCooldown)
             {
                 oldCooldown = time;
@@ -186,25 +185,6 @@ public class RendererHandler
             return true;
         }
         return false;
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private static void applyItemArmTransform(PoseStack p_228406_1_, HumanoidArm p_228406_2_, float p_228406_3_)
-    {
-        int i = p_228406_2_ == HumanoidArm.RIGHT ? 1 : -1;
-        p_228406_1_.translate((float) i * 0.56F, -0.52F + p_228406_3_ * -0.6F, -0.72F);
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private static void applyItemArmAttackTransform(PoseStack p_228399_1_, HumanoidArm p_228399_2_, float p_228399_3_)
-    {
-        int i = p_228399_2_ == HumanoidArm.RIGHT ? 1 : -1;
-        float f = Mth.sin(p_228399_3_ * p_228399_3_ * (float) Math.PI);
-        p_228399_1_.mulPose(Axis.YP.rotationDegrees(((float) i * (45.0F + f * -20.0F))));
-        float f1 = Mth.sin(Mth.sqrt(p_228399_3_) * (float) Math.PI);
-        p_228399_1_.mulPose(Axis.ZP.rotationDegrees((float) i * f1 * -20.0F));
-        p_228399_1_.mulPose(Axis.XP.rotationDegrees((f1 * -80.0F)));
-        p_228399_1_.mulPose(Axis.YP.rotationDegrees(((float) i * -45.0F)));
     }
 
     public static void renderItem(ItemStack itemStackIn, ItemDisplayContext context, boolean leftHand, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn, BakedModel modelIn)
@@ -339,7 +319,7 @@ public class RendererHandler
         if (SplatcraftConfig.Client.coloredPlayerNames.get() && event.getEntity() instanceof LivingEntity)
         {
             int color = ColorUtils.getEntityColor(event.getEntity());
-            if (SplatcraftConfig.Client.getColorLock())
+            if (SplatcraftConfig.Client.colorLock.get())
             {
                 color = ColorUtils.getLockedColor(color);
             }
@@ -372,7 +352,7 @@ public class RendererHandler
     {
         Player player = Minecraft.getInstance().player;
         boolean hasCapability = PlayerInfoCapability.hasCapability(player);
-        if (player == null || player.isSpectator() || !hasCapability)
+        if (player.isSpectator() || !hasCapability)
         {
             return;
         }
@@ -411,7 +391,12 @@ public class RendererHandler
             }
         }
 
-        float[] playerColor = ColorUtils.hexToRGB(info.getColor());
+        int color = info.getColor();
+        if (SplatcraftConfig.Client.colorLock.get())
+        {
+            color = ColorUtils.getLockedColor(color);
+        }
+        float[] playerColor = ColorUtils.hexToRGB(color);
         if (player.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
         {
             float scale = width * height / 518400.0f;
@@ -429,10 +414,10 @@ public class RendererHandler
             Minecraft mc = Minecraft.getInstance();
 
             Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
-                    mc.gameRenderer.getFov(
-                            mc.gameRenderer.getMainCamera(),
-                            partialTicks,
-                            true));
+                mc.gameRenderer.getFov(
+                    mc.gameRenderer.getMainCamera(),
+                    partialTicks,
+                    true));
 
 //            float aspectRatio = Mth.lerp(1 / (1 + data.getMaximumDeviation() * 100), (float) height / width, 1f);
 
@@ -445,14 +430,16 @@ public class RendererHandler
 
             float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
             float[] rgb = new float[]
-                    {
-                            Mth.lerp(value, 0.6f, playerColor[0]),
-                            Mth.lerp(value, 0.6f, playerColor[1]),
-                            Mth.lerp(value, 0.6f, playerColor[2])
-                    };
+                {
+                    Mth.lerp(value, 0.6f, playerColor[0]),
+                    Mth.lerp(value, 0.6f, playerColor[1]),
+                    Mth.lerp(value, 0.6f, playerColor[2])
+                };
             RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
 
             Vec3 relativePos = new Vec3(0, 0, 1);
+            float textureSize = 4 * (scale + 1);
+
             for (int x = -1; x <= 1; x += 2)
             {
                 for (int y = -1; y <= 1; y += 2)
@@ -469,9 +456,9 @@ public class RendererHandler
 
                     // TODO: center this properly soon
                     GraphicsUtils.blit(graphics, WIDGETS,
-                            width / 2f - 2 + screenPos.x,
-                            height / 2f - 2 + (screenPos.y * aspectRatio),
-                            8 * (scale + 1) / 2, 8 * (scale + 1) / 2, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
+                        width / 2f - textureSize / 2 + screenPos.x,
+                        height / 2f - textureSize / 2 + (screenPos.y * aspectRatio),
+                        textureSize, textureSize, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
                 }
             }
 

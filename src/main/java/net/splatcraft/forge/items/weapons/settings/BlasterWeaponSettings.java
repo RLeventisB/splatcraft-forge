@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.splatcraft.forge.data.SplatcraftConvertors;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.DamageRangesRecord;
 import net.splatcraft.forge.util.WeaponTooltip;
@@ -55,9 +56,9 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
     @Override
     public void deserialize(DataRecord data)
     {
-        projectileData = data.projectile;
-        shotData = data.shot;
-        blasterData = data.blast;
+        projectileData = SplatcraftConvertors.convert(data.projectile);
+        shotData = SplatcraftConvertors.convert(data.shot);
+        blasterData = SplatcraftConvertors.convert(data.blast);
 
         setMoveSpeed(data.mobility);
         setSecret(data.isSecret);
@@ -99,7 +100,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 
     public record DetonationRecord(
             DamageRangesRecord damageRadiuses,
-            float sparkDamagePenalty,
+            DamageRangesRecord sparkDamageRadiuses,
             float explosionPaint,
             boolean newAttackId
     )
@@ -107,20 +108,20 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
         public static final Codec<DetonationRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
                         DamageRangesRecord.CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
-                        Codec.FLOAT.optionalFieldOf("spark_damage_multiplier", 0.5f).forGetter(DetonationRecord::sparkDamagePenalty),
+                        DamageRangesRecord.CODEC.optionalFieldOf("spark_damage_data").forGetter(t -> Optional.ofNullable(t.sparkDamageRadiuses())),
                         Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint)),
                         Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
                 ).apply(instance, DetonationRecord::create)
         );
 
         public static DetonationRecord create(DamageRangesRecord damageRadiuses,
-                                              float sparkPenalty,
+                                              Optional<DamageRangesRecord> sparkDamageRadiuses,
                                               Optional<Float> explosionPaint,
                                               boolean newAttackId)
         {
-            return new DetonationRecord(damageRadiuses, sparkPenalty, explosionPaint.orElse(damageRadiuses.getMaxRegisteredDistance()), newAttackId);
+            return new DetonationRecord(damageRadiuses, sparkDamageRadiuses.orElse(damageRadiuses.cloneWithMultiplier(0.5f, 0.5f)), explosionPaint.orElse(damageRadiuses.getMaxDistance()), newAttackId);
         }
 
-        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, 0, 0, false);
+        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, DamageRangesRecord.DEFAULT, 0, false);
     }
 }

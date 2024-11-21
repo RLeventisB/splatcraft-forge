@@ -54,15 +54,15 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
             float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
             int color = entityIn.getColor();
 
-            if (SplatcraftConfig.Client.getColorLock())
+            if (SplatcraftConfig.Client.colorLock.get())
                 color = ColorUtils.getLockedColor(color);
 
             int rInt = (color & 0x00FF0000) >> 16;
             int gInt = (color & 0x0000FF00) >> 8;
             int bInt = color & 0x000000FF;
-            final boolean makeShinier = true; // TODO create a configuration for this, because you can't really see the projectiles well when gaming
 
-            if (makeShinier)
+            boolean shinier = SplatcraftConfig.Client.makeShinier.get();
+            if (shinier)
             {
                 float[] values = new float[3];
                 Color.RGBtoHSB(rInt, gInt, bInt, values);
@@ -90,7 +90,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
             InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
 
             model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
-            model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), makeShinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
+            model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), shinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
             matrixStackIn.popPose();
 
             super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);

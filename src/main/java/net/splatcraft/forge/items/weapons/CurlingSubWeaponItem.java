@@ -13,38 +13,43 @@ import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import org.jetbrains.annotations.NotNull;
 
-public class CurlingSubWeaponItem extends SubWeaponItem {
+public class CurlingSubWeaponItem extends SubWeaponItem
+{
     public static final float MAX_INK_RECOVERY_COOLDOWN = 70f / 3f;
     public static final float INK_RECOVERY_COOLDOWN_MULTIPLIER = 40f / 3f;
 
-    public CurlingSubWeaponItem(RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings, SubWeaponAction useTick) {
+    public CurlingSubWeaponItem(RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings, SubWeaponAction useTick)
+    {
         super(entityType, settings, useTick);
     }
 
-
-
     @Override
-    protected void throwSub(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity) {
+    protected void throwSub(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity)
+    {
         entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
 
-        if (!level.isClientSide()) {
+        SubWeaponSettings settings = getSettings(stack);
+        if (!level.isClientSide())
+        {
             AbstractSubWeaponEntity proj = AbstractSubWeaponEntity.create(entityType.get(), level, entity, stack.copy());
-            SubWeaponSettings settings = getSettings(stack);
 
             stack.getOrCreateTag().remove("EntityData");
 
             proj.setItem(stack);
-            proj.shoot(entity, entity.getXRot(), entity.getYRot(), settings.throwAngle, settings.throwVelocity, 0);
+            proj.shoot(entity, entity.getXRot(), entity.getYRot(), settings.subDataRecord.throwAngle(), settings.subDataRecord.throwVelocity(), 0);
             proj.setDeltaMovement(proj.getDeltaMovement().add(entity.getDeltaMovement().multiply(1, 0, 1)));
             level.addFreshEntity(proj);
         }
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
-        if (SubWeaponItem.singleUse(stack)) {
+        if (SubWeaponItem.singleUse(stack))
+        {
             if (entity instanceof Player && !((Player) entity).isCreative())
                 stack.shrink(1);
-        } else {
+        }
+        else
+        {
             int cookTime = stack.getTag().getCompound("EntityData").getInt("CookTime");
-            reduceInk(entity, this, getSettings(stack).inkConsumption, (int) (MAX_INK_RECOVERY_COOLDOWN - cookTime / Math.max(getSettings(stack).cookTime, 1) * INK_RECOVERY_COOLDOWN_MULTIPLIER), false);
+            reduceInk(entity, this, settings.subDataRecord.inkConsumption(), (int) (MAX_INK_RECOVERY_COOLDOWN - (float) cookTime / Math.max(settings.subDataRecord.curlingData().cookTime(), 1) * INK_RECOVERY_COOLDOWN_MULTIPLIER), false);
         }
     }
 }

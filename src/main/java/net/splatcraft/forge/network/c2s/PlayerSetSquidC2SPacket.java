@@ -11,22 +11,24 @@ import net.splatcraft.forge.registries.SplatcraftSounds;
 
 public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 {
-    private final boolean squid;
+    private final boolean squid, isCancel;
 
-    public PlayerSetSquidC2SPacket(boolean squid)
+    public PlayerSetSquidC2SPacket(boolean squid, boolean sendSquidCancel)
     {
         this.squid = squid;
+        isCancel = sendSquidCancel;
     }
 
     public static PlayerSetSquidC2SPacket decode(FriendlyByteBuf buffer)
     {
-        return new PlayerSetSquidC2SPacket(buffer.readBoolean());
+        byte state = buffer.readByte();
+        return new PlayerSetSquidC2SPacket((state & 1) == 1, (state & 2) == 2);
     }
 
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
-        buffer.writeBoolean(squid);
+        buffer.writeByte((squid ? 1 : 0) | (isCancel ? 2 : 0));
     }
 
     @Override
@@ -39,8 +41,10 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
         }
 
         target.setIsSquid(squid);
+        if (isCancel)
+            target.flagSquidCancel();
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(), squid ? SplatcraftSounds.squidTransform : SplatcraftSounds.squidRevert, SoundSource.PLAYERS, 0.75F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 
-        SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), squid), player);
+        SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), squid, isCancel), player);
     }
 }

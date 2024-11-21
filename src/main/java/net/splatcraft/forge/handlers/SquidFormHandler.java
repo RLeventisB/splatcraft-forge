@@ -47,7 +47,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber
 public class SquidFormHandler
 {
-    private static final Map<Player, Integer> squidSubmergeMode = new LinkedHashMap<>();
+    private static final Map<Player, SquidState> squidSubmergeMode = new LinkedHashMap<>();
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event)
@@ -64,7 +64,7 @@ public class SquidFormHandler
         if (InkBlockUtils.onEnemyInk(player))
         {
             if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.level().getDifficulty() != Difficulty.PEACEFUL)
-                player.hurt(player.damageSources().source(SplatcraftDamageTypes.ENEMY_INK), Math.min(-4 + player.getHealth(), 2f));
+                player.hurt(player.damageSources().source(SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
             if (player.level().getRandom().nextFloat() < 0.5f)
             {
                 ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
@@ -80,17 +80,27 @@ public class SquidFormHandler
         PlayerInfo info = PlayerInfoCapability.get(player);
         if (event.phase == TickEvent.Phase.START)
         {
-            if (!squidSubmergeMode.containsKey(player))
-                squidSubmergeMode.put(player, -2);
+            SquidState state = SquidState.SURFACED; // this is more readable with enums though :(
+
+            if (squidSubmergeMode.containsKey(player))
+                state = squidSubmergeMode.get(player);
 
             if (InkBlockUtils.canSquidHide(player) && info.isSquid())
             {
-                squidSubmergeMode.put(player, Math.min(2, Math.max(squidSubmergeMode.get(player) + 1, 1)));
+                if (state == SquidState.SUBMERGING)
+                    state = SquidState.SUBMERGED;
+                else if (state != SquidState.SUBMERGED)
+                    state = SquidState.SUBMERGING;
             }
             else
-                squidSubmergeMode.put(player, Math.max(-2, Math.min(squidSubmergeMode.get(player) - 1, -1)));
+            {
+                if (state == SquidState.SURFACING)
+                    state = SquidState.SURFACED;
+                else if (state != SquidState.SURFACED)
+                    state = SquidState.SURFACING;
+            }
 
-            if (squidSubmergeMode.get(player) == 1)
+            if (state == SquidState.SUBMERGING)
             {
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 
@@ -100,10 +110,12 @@ public class SquidFormHandler
                         ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
                 }
             }
-            else if (squidSubmergeMode.get(player) == -1)
+            else if (state == SquidState.SURFACING)
             {
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
             }
+
+            squidSubmergeMode.put(player, state);
         }
 
         if (info.isSquid())
@@ -250,7 +262,7 @@ public class SquidFormHandler
             InkOverlayInfo info = InkOverlayCapability.get(living);
             Vec3 prev = living.getPosition(0);
 
-            info.setSquidRot(Math.abs(living.getY() - prev.y()) * new Vec3((living.getX() - prev.x), (living.getY() - prev.y), (living.getZ() - prev.z)).normalize().y);
+            info.setSquidRot(Math.abs(living.getY() - prev.y()) * living.position().subtract(prev).normalize().y);
         }
     }
 
@@ -265,6 +277,20 @@ public class SquidFormHandler
         if (PlayerInfoCapability.get(player).isSquid() && InkBlockUtils.canSquidSwim(player))
         {
             player.setDeltaMovement(player.getDeltaMovement().x(), player.getDeltaMovement().y() * 1.1, player.getDeltaMovement().z());
+        }
+    }
+
+    public enum SquidState
+    {
+        SUBMERGED(0),
+        SUBMERGING(1),
+        SURFACING(2),
+        SURFACED(3);
+        public final byte state;
+
+        SquidState(int state)
+        {
+            this.state = (byte) state;
         }
     }
 }

@@ -70,7 +70,7 @@ public class BlockRenderMixin
 
         @Inject(method = "compile", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE",
                 target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
-        public void getBlockData(float pX, float pY, float pZ, ChunkBufferBuilderPack pChunkBufferBuilderPack, CallbackInfoReturnable<ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults> cir, ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults chunkrenderdispatcher$renderchunk$rebuildtask$compileresults, int i, BlockPos blockpos, BlockPos blockpos1, VisGraph visgraph, RenderChunkRegion renderchunkregion, PoseStack posestack, Set<?> set, RandomSource randomsource, BlockRenderDispatcher blockrenderdispatcher, Iterator<?> var15, BlockPos blockpos2)
+        public void splatcraft$getBlockData(float pX, float pY, float pZ, ChunkBufferBuilderPack pChunkBufferBuilderPack, CallbackInfoReturnable<ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults> cir, ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults chunkrenderdispatcher$renderchunk$rebuildtask$compileresults, int i, BlockPos blockpos, BlockPos blockpos1, VisGraph visgraph, RenderChunkRegion renderchunkregion, PoseStack posestack, Set<?> set, RandomSource randomsource, BlockRenderDispatcher blockrenderdispatcher, Iterator<?> var15, BlockPos blockpos2)
         {
             splatcraft$level = ((ChunkRegionAccessor) renderchunkregion).getLevel();
             splatcraft$blockPos = blockpos2;

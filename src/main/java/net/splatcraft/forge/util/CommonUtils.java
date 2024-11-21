@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +31,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -356,6 +360,33 @@ public class CommonUtils
             }
         }
         return new Result(delay, value);
+    }
+
+    public static Vec3 getOldPosition(Entity entity)
+    {
+        if (entity instanceof Player player)
+            return WeaponHandler.getPlayerPrevPos(player);
+        return new Vec3(entity.xo, entity.yo, entity.zo);
+    }
+
+    public static <T> T returnValueDependantOnSquidCancel(Player player, T withCancel, T withoutCancel)
+    {
+        boolean didCancel = false;
+        if (PlayerInfoCapability.hasCapability(player))
+        {
+            didCancel = PlayerInfoCapability.get(player).didSquidCancelThisTick();
+        }
+        return didCancel ? withCancel : withoutCancel;
+    }
+
+    public static float startupSquidSwitch(Player player, CommonRecords.ShotDataRecord shotData)
+    {
+        return returnValueDependantOnSquidCancel(player, shotData.squidStartupTicks(), shotData.startupTicks());
+    }
+
+    public static float triangle(RandomSource random, float min, float max)
+    {
+        return min + max * (random.nextFloat() - random.nextFloat());
     }
 
     public record Result(float delay, float value)

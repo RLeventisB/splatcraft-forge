@@ -132,12 +132,18 @@ public class ClientUtils
 
     public static void setSquid(PlayerInfo cap, boolean newSquid)
     {
+        setSquid(cap, newSquid, false);
+    }
+
+    public static void setSquid(PlayerInfo cap, boolean newSquid, boolean sendSquidCancel)
+    {
         if (cap.isSquid() == newSquid)
         {
             return;
         }
         cap.setIsSquid(newSquid);
-        SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
+        cap.flagSquidCancel();
+        SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid, sendSquidCancel));
     }
 
     public static Input getUnmodifiedInput(LocalPlayer player)

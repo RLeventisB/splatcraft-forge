@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.splatcraft.forge.data.SplatcraftConvertors;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.items.weapons.DualieItem;
@@ -44,7 +45,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                 {
                         new WeaponTooltip<DualieWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.standardProjectileData), WeaponTooltip.RANKER_ASCENDING),
                         new WeaponTooltip<DualieWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.standardProjectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<DualieWeaponSettings>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.speed * 6, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
+                        new WeaponTooltip<DualieWeaponSettings>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.rollDistance * 6, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
                 };
     }
 
@@ -63,11 +64,11 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
     @Override
     public void deserialize(DataRecord data)
     {
-        standardProjectileData = data.projectile;
-        turretProjectileData = data.turretProjectile;
-        standardShotData = data.shot;
-        turretShotData = data.turretShot;
-        rollData = data.roll;
+        standardProjectileData = SplatcraftConvertors.convert(data.projectile);
+        turretProjectileData = SplatcraftConvertors.convert(data.turretProjectile);
+        standardShotData = SplatcraftConvertors.convert(data.shot);
+        turretShotData = SplatcraftConvertors.convert(data.turretShot);
+        rollData = SplatcraftConvertors.convert(data.roll);
 
         setMoveSpeed(data.moveSpeed);
         setSecret(data.isSecret);
@@ -129,10 +130,11 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 
     public record RollDataRecord(
             float count,
-            float speed,
+            float rollDistance,
             float inkConsumption,
             int inkRecoveryCooldown,
             byte rollStartup,
+            byte rollDuration,
             byte rollEndlag,
             int turretDuration,
             int lastRollTurretDuration,
@@ -142,16 +144,29 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
         public static final Codec<RollDataRecord> CODEC = RecordCodecBuilder.create(
                 instance -> instance.group(
                         Codec.FLOAT.fieldOf("count").forGetter(RollDataRecord::count),
-                        Codec.FLOAT.fieldOf("movement_impulse").forGetter(RollDataRecord::speed),
+                        Codec.FLOAT.fieldOf("distance_covered_by_roll").forGetter(RollDataRecord::rollDistance),
                         Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollDataRecord::inkConsumption),
                         Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollDataRecord::inkRecoveryCooldown),
-                        Codec.BYTE.optionalFieldOf("roll_startup", (byte) 2).forGetter(RollDataRecord::rollStartup),
-                        Codec.BYTE.optionalFieldOf("roll_endlag", (byte) 2).forGetter(RollDataRecord::rollEndlag),
+                        Codec.BYTE.optionalFieldOf("roll_startup", (byte) 6).forGetter(RollDataRecord::rollStartup),
+                        Codec.BYTE.optionalFieldOf("roll_duration", (byte) 12).forGetter(RollDataRecord::rollStartup),
+                        Codec.BYTE.optionalFieldOf("roll_endlag", (byte) 6).forGetter(RollDataRecord::rollEndlag),
                         Codec.INT.fieldOf("turret_duration").forGetter(RollDataRecord::turretDuration),
                         Codec.INT.fieldOf("final_roll_turret_duration").forGetter(RollDataRecord::lastRollTurretDuration),
                         Codec.BOOL.optionalFieldOf("allows_movement", false).forGetter(RollDataRecord::canMove)
                 ).apply(instance, RollDataRecord::new)
         );
-        public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 2, 0, 0, false);
+
+        public double getRollImpulse()
+        {
+            // x is speed, this should be the value that should be found
+            // x * 0.4 ^ y = 0.001
+            // y = log(0.4, 0.001)
+            // rollDistance = x * roll_duration + x * 0.4 ^ log(0.4, 0.001)
+            // rollDistance = x * (roll_duration + 0.4 ^ log(0.4, 0.001))
+            // rollDistance / (roll_duration + 0.4 ^ log(0.4, 0.001)) = x
+            return rollDistance / (rollDuration + Math.pow(0.4, Math.log10(0.001) / Math.log10(0.4)));
+        }
+
+        public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false);
     }
 }
