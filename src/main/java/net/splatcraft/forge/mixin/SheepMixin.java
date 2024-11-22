@@ -18,7 +18,7 @@ import java.util.List;
 @Mixin(Sheep.class)
 public class SheepMixin
 {
-    @WrapOperation(method = "onSheared", at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"), remap = false)
+    @WrapOperation(method = "onSheared", remap = false, at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
     public boolean getWool(List<ItemStack> list, Object stack, Operation<Boolean> original)
     {
         Sheep that = (Sheep) (Object) this;
@@ -32,7 +32,6 @@ public class SheepMixin
         }
         return original.call(list, stack);
     }
-
 
     @WrapOperation(method = "shear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Sheep;spawnAtLocation(Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/world/entity/item/ItemEntity;"))
     public ItemEntity spawnAtLocation(Sheep instance, ItemLike iItemProvider, int i, Operation<ItemEntity> original)

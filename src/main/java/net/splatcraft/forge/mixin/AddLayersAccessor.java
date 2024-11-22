@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
-@Mixin(value = EntityRenderersEvent.AddLayers.class, remap = false)
-public interface AddLayersAccessor {
+@Mixin(value = EntityRenderersEvent.AddLayers.class)
+public interface AddLayersAccessor
+{
     @Accessor
     Map<EntityType<?>, EntityRenderer<?>> getRenderers();
 }

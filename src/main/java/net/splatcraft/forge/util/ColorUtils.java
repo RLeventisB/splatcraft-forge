@@ -84,7 +84,7 @@ public class ColorUtils
     public static int getPlayerColor(Player player)
     {
         if (player.level().isClientSide())
-            return ClientUtils.getClientPlayerColor(player.getGameProfile().getId());
+            return ClientUtils.getClientPlayerColor(player.getUUID());
         if (PlayerInfoCapability.hasCapability(player))
             return PlayerInfoCapability.get(player).getColor();
         return 0;

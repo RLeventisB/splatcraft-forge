@@ -94,7 +94,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     public void tick(float timeDelta)
     {
         Vec3 vel = getDeltaMovement();
-        InkProjectileEntity.superTick(this, timeDelta);
+        super.tick();
 
         if (isInWater() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
         {
@@ -132,9 +132,9 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
         switch (id)
         {
             case -1 ->
-                    level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
             case 1 ->
-                    level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
     }
 
@@ -145,7 +145,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
             return;
 
         if (level().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
-                coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
+            coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
             return;
 
         super.onHitBlock(result);

@@ -88,8 +88,8 @@ public class SplatcraftCommonHandler
 
         BlockState savedState = te.getSavedState();
         if (event.getState().getBlock() instanceof IColoredBlock block && (event.isCanceled() ||
-                (event.getEntity() instanceof EnderDragon && savedState.is(BlockTags.DRAGON_IMMUNE)) ||
-                (event.getEntity() instanceof WitherBoss && savedState.is(BlockTags.WITHER_IMMUNE))))
+            (event.getEntity() instanceof EnderDragon && savedState.is(BlockTags.DRAGON_IMMUNE)) ||
+            (event.getEntity() instanceof WitherBoss && savedState.is(BlockTags.WITHER_IMMUNE))))
         {
             block.remoteInkClear(event.getEntity().level(), event.getPos());
             event.setCanceled(true);
@@ -257,11 +257,11 @@ public class SplatcraftCommonHandler
         {
             if (PlayerInfoCapability.hasCapability(p))
             {
-                playerColors.put(p.getGameProfile().getId(), PlayerInfoCapability.get(p).getColor());
+                playerColors.put(p.getUUID(), PlayerInfoCapability.get(p).getColor());
             }
         }
 
-        SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(event.getEntity().getGameProfile().getId(), PlayerInfoCapability.get(event.getEntity()).getColor()));
+        SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(event.getEntity().getUUID(), PlayerInfoCapability.get(event.getEntity()).getColor()));
         SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
         SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, criteriaColors), player);
         SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get(event.getEntity().level().getServer()).getStages()), player);

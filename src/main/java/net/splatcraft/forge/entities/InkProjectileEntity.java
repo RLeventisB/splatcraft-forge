@@ -1,7 +1,6 @@
 package net.splatcraft.forge.entities;
 
 import com.google.common.reflect.TypeToken;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
@@ -15,19 +14,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.TheEndGatewayBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.*;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import net.splatcraft.forge.VectorUtils;
 import net.splatcraft.forge.blocks.ColoredBarrierBlock;
@@ -42,7 +33,6 @@ import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity
 {
@@ -256,7 +246,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setDeltaMovement(velocity);
         straightShotTime -= timeDelta;
 
-        superTick(this, 1);
+        super.tick();
 
         if (isInWater())
         {
@@ -268,11 +258,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         {
             Vec3 nextPosition = lastPosition.add(velocity);
             double frame = (
-                    (
-                            Mth.inverseLerp(getX(), lastPosition.x, nextPosition.x) +
-                                    Mth.inverseLerp(getY(), lastPosition.y, nextPosition.y) +
-                                    Mth.inverseLerp(getZ(), lastPosition.z, nextPosition.z)
-                    ) / 3);
+                (
+                    Mth.inverseLerp(getX(), lastPosition.x, nextPosition.x) +
+                        Mth.inverseLerp(getY(), lastPosition.y, nextPosition.y) +
+                        Mth.inverseLerp(getZ(), lastPosition.z, nextPosition.z)
+                ) / 3);
             setDeltaMovement(getDeltaMovement().scale(frame));
             calculateDrops(lastPosition, (float) frame);
             return;
@@ -307,7 +297,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     // we NEED the HitResult actual position or else my stupid obsession with partial frame damage falloff will make me perish
     // yes this breaks like 40 fundamentals like encapsulation and mixins but uhhhhhhhhhhhhhhhhhhhhhhhhhhh
-    public static void superTick(Projectile entity, float timeDelta)
+    // wait! this can be done with mixins god i am so fucking dumb
+    /*public static void superTick(Projectile entity, float timeDelta)
     {
         if (!entity.hasBeenShot)
         {
@@ -360,7 +351,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entity.setPos(newX, newY, newZ);
     }
 
-    private static @NotNull HitResult getHitResultOnMoveVector(Projectile entity)
+    public static @NotNull HitResult getHitResultOnMoveVector(Projectile entity)
     {
         Vec3 movement = entity.getDeltaMovement();
         Level level = entity.level();
@@ -405,7 +396,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         }
 
         return entity == null ? null : new EntityHitResult(entity, hitPos);
-    }
+    }*/
 
     private void calculateDrops(Vec3 lastPosition, float timeDelta)
     {
@@ -493,7 +484,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         switch (id)
         {
             case -1 ->
-                    level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
             case 1 ->
             {
                 if (getProjectileType().equals(Types.CHARGER))
@@ -502,9 +493,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                     level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), this.getX() - this.getDeltaMovement().x() * 0.25D, this.getY() + getBbHeight() * 0.5f - this.getDeltaMovement().y() * 0.25D, this.getZ() - this.getDeltaMovement().z() * 0.25D, this.getDeltaMovement().x(), this.getDeltaMovement().y(), this.getDeltaMovement().z());
             }
             case 2 ->
-                    level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
             case 3 ->
-                    level().addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+                level().addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
         }
     }
 
@@ -550,7 +541,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             {
                 ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
                 if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
-                        Objects.equals(getProjectileType(), Types.BLASTER))
+                    Objects.equals(getProjectileType(), Types.BLASTER))
                 {
                     level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
                 }
@@ -586,7 +577,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             return;
 
         if (level().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
-                coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
+            coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
             return;
 
         super.onHitBlock(result);
@@ -654,8 +645,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         // 1.34f is only to make the acurracy more aproppiate in minecraft since 5 degrees in splatoon isnt as impactful as 5 degrees in minecraft kinda
         float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD * 1.34f;
         Vec3 vec3 = new Vec3(x, y, z)
-                .yRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy)
-                .xRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
+            .yRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy)
+            .xRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
 
         entityData.set(SHOOT_DIRECTION, vec3);
         vec3 = vec3.scale(velocity);

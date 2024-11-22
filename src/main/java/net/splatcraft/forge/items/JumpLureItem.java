@@ -97,7 +97,7 @@ public class JumpLureItem extends Item implements IColoredItem
             Player targetPlayer = player.level().getPlayerByUUID(targetUUID);
 
             if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
-                    && !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())))
+                && !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())))
             {
                 player.sendSystemMessage(Component.literal("A communication error has occurred.")); //TODO better feedback
                 return;
@@ -112,7 +112,7 @@ public class JumpLureItem extends Item implements IColoredItem
     {
         for (int i = 0; i < targetPlayer.getInventory().getContainerSize(); i++)
             if (targetPlayer.getInventory().getItem(i).getItem() instanceof JumpLureItem &&
-                    ColorUtils.colorEquals(targetPlayer.level(), targetPlayer.blockPosition(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getItem(i))))
+                ColorUtils.colorEquals(targetPlayer.level(), targetPlayer.blockPosition(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getItem(i))))
                 return true;
         return false;
     }
@@ -144,8 +144,8 @@ public class JumpLureItem extends Item implements IColoredItem
                 players.addAll(player.level().getEntitiesOfClass(Player.class, stage.getBounds()));
         }
         players.removeIf(target ->
-                player.equals(target) || !hasMatchingLure(target, color)
-                        && !SuperJumpCommand.canSuperJumpTo(player, target.position()));
+            player.equals(target) || !hasMatchingLure(target, color)
+                && !SuperJumpCommand.canSuperJumpTo(player, target.position()));
         return players;
     }
 
@@ -159,7 +159,7 @@ public class JumpLureItem extends Item implements IColoredItem
         }
 
         int color = ColorUtils.getInkColorOrInverted(player.getItemInHand(hand));
-        ArrayList<UUID> players = new ArrayList<>(getAvailableCandidates(player, color).stream().map(player1 -> player1.getGameProfile().getId()).toList());
+        ArrayList<UUID> players = new ArrayList<>(getAvailableCandidates(player, color).stream().map(Entity::getUUID).toList());
 
         ServerPlayer serverPlayer = (ServerPlayer) player;
 
@@ -174,7 +174,7 @@ public class JumpLureItem extends Item implements IColoredItem
             return super.use(level, player, hand);
         }
         SplatcraftPacketHandler.sendToPlayer(new SendJumpLureDataPacket(color, spawnPadPos != null,
-                players, spawnPadPos), serverPlayer);
+            players, spawnPadPos), serverPlayer);
 
         player.startUsingItem(hand);
         return super.use(level, player, hand);
@@ -196,7 +196,7 @@ public class JumpLureItem extends Item implements IColoredItem
         if (entity instanceof Player player)
         {
             if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                    && PlayerInfoCapability.hasCapability(player))
+                && PlayerInfoCapability.hasCapability(player))
                 ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
         }
     }
@@ -215,7 +215,7 @@ public class JumpLureItem extends Item implements IColoredItem
             }
         }
         else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-                && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+            && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);
