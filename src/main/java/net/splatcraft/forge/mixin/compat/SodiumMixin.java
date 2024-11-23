@@ -3,7 +3,6 @@ package net.splatcraft.forge.mixin.compat;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.jellysquid.mods.sodium.client.model.color.ColorProvider;
-import me.jellysquid.mods.sodium.client.model.light.LightMode;
 import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
@@ -57,20 +56,21 @@ public class SodiumMixin
         @Unique
         public ChunkInk.InkEntry splatcraft$faceEntry;
 
-        @Inject(method = "renderModel", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;getGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Ljava/util/List;", ordinal = 0))
-        public void splatcraft$getInkData(BlockRenderContext ctx, ChunkBuildBuffers buffers, CallbackInfo ci, Material material, ChunkModelBuilder meshBuilder, ColorProvider colorizer, LightMode mode, LightPipeline lighter, Vec3 renderOffset, Direction[] var9, int var10, int var11, Direction face)
+        @Inject(method = "renderModel", remap = false, locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "HEAD", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;getGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Ljava/util/List;", ordinal = 0))
+        public void splatcraft$getInkData(BlockRenderContext ctx, ChunkBuildBuffers buffers, CallbackInfo ci)
         {
             ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(ctx.world().world, ctx.pos());
-            ChunkInk.InkEntry faceEntry = ink != null ? ink.get(face.get3DDataValue()) : null;
             splatcraft$inkEntry = ink;
             splatcraft$hasInkEntry = ink != null;
-            splatcraft$faceEntry = faceEntry;
-            splatcraft$isFaceInked = faceEntry != null;
         }
 
         @WrapOperation(method = "getGeometry", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/BakedModel;getQuads(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)Ljava/util/List;"))
         public List<BakedQuad> splatcraft$modifyQuadList(BakedModel instance, BlockState blockState, Direction face, RandomSource random, ModelData modelData, RenderType renderType, Operation<List<BakedQuad>> original)
         {
+            ChunkInk.InkEntry faceEntry = splatcraft$inkEntry != null && face != null ? splatcraft$inkEntry.get(face.get3DDataValue()) : null;
+            splatcraft$faceEntry = faceEntry;
+            splatcraft$isFaceInked = faceEntry != null;
+
             List<BakedQuad> quads = new ArrayList<>();
             if (splatcraft$isFaceInked && splatcraft$faceEntry.type() != InkBlockUtils.InkType.CLEAR)
             {

@@ -7,6 +7,10 @@ public class VectorUtils
 {
     public static Vec3 lerp(double progress, Vec3 start, Vec3 end)
     {
-        return new Vec3(Mth.lerp(progress, start.x(), end.x()), Mth.lerp(progress, start.y(), end.y()), Mth.lerp(progress, start.z(), end.z()));
+        return new Vec3(
+            Mth.lerp(progress, start.x(), end.x()),
+            Mth.lerp(progress, start.y(), end.y()),
+            Mth.lerp(progress, start.z(), end.z())
+        );
     }
 }

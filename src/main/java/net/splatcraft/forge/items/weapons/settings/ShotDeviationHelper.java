@@ -14,30 +14,6 @@ public class ShotDeviationHelper
 
         CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), timeDelta);
         CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, timeDelta);
-        /* if (airborneTime > 0)
-        {
-            airborneTime -= timeDelta;
-            if (airborneTime < 0)
-            {
-                if (data.airborneContractTimeToDecrease == 0)
-                    airborneInfluence = 0;
-                else
-                    airborneInfluence -= 1f / data.airborneContractTimeToDecrease * -airborneTime;
-                airborneTime = 0;
-            }
-        }
-        else
-        {
-            if (data.airborneContractTimeToDecrease == 0)
-                airborneInfluence = 0;
-            else
-            {
-                if (airborneInfluence > 0)
-                    airborneInfluence -= 1f / data.airborneContractTimeToDecrease;
-                if (airborneInfluence < 0)
-                    airborneInfluence = 0;
-            }
-        } */
 
         deviationData.setChanceDecreaseDelay(actualChanceResult.delay());
         deviationData.setChance(actualChanceResult.value());
@@ -103,7 +79,7 @@ public class ShotDeviationHelper
         public String toString()
         {
             return "DeviationData[" +
-                    "nbt=" + nbt + ']';
+                "nbt=" + nbt + ']';
         }
 
         public void cloneTo(DeviationData data)

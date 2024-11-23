@@ -16,7 +16,7 @@ public class WeaponHotkeyMixin
     public static abstract class PlayerControllerMix
     {
         @Inject(method = "releaseUsingItem", at = @At("HEAD"), cancellable = true)
-        private void releaseUsingItem(Player player, CallbackInfo callbackInfo)
+        private void splatcraft$releaseUsingItem(Player player, CallbackInfo callbackInfo)
         {
             if (SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getUsedItemHand() == InteractionHand.OFF_HAND)
                 callbackInfo.cancel();
@@ -27,7 +27,7 @@ public class WeaponHotkeyMixin
     public static abstract class MinecraftInstance
     {
         @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
-        private void startUseItem(CallbackInfo ci)
+        private void splatcraft$startUseItem(CallbackInfo ci)
         {
             if (SplatcraftKeyHandler.isSubWeaponHotkeyDown())
             {

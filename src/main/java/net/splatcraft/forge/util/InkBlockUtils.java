@@ -33,6 +33,7 @@ import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.forge.entities.SpawnShieldEntity;
 import net.splatcraft.forge.handlers.ChunkInkHandler;
+import net.splatcraft.forge.mixin.accessors.EntityAccessor;
 import net.splatcraft.forge.registries.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public class InkBlockUtils
         worldInk.ink(relative, index, color, inkType);
 
         if (SplatcraftGameRules.getLocalizedRule(level, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
-                isBlockFoliage(level.getBlockState(pos.above())))
+            isBlockFoliage(level.getBlockState(pos.above())))
             level.destroyBlock(pos.above(), true);
 
         if (!level.isClientSide())
@@ -366,9 +367,9 @@ public class InkBlockUtils
         if (onEnemyInk(entity))
             return null;
 
-        Vec3 inputVector = Entity.getInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), 0.1f, yRot);
+        Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), 0.1f, yRot);
         BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().expandTowards(inputVector), false, (bro, what) ->
-                bro);
+            bro);
 
         return checkSquidCollisions(entity, collisions, inputVector);
     }
@@ -391,9 +392,9 @@ public class InkBlockUtils
             }
 
             if (isInked(entity.level(), collidedBlock, direction) &&
-                    ColorUtils.colorEquals(entity.level(), collidedBlock,
-                            ColorUtils.getEntityColor(entity),
-                            getInkBlock(entity.level(), collidedBlock).color(direction.get3DDataValue())))
+                ColorUtils.colorEquals(entity.level(), collidedBlock,
+                    ColorUtils.getEntityColor(entity),
+                    getInkBlock(entity.level(), collidedBlock).color(direction.get3DDataValue())))
             {
                 if (inputVector == null || Vec3.atLowerCornerOf(direction.getNormal()).cross(inputVector).y() != 0)
                     return direction;
@@ -406,9 +407,9 @@ public class InkBlockUtils
     {
         Direction blockFaceToCheck = face.getOpposite();
         AABB baseBoundingBox = SplatcraftEntities.INK_SQUID.get().getDimensions().makeBoundingBox(entity.position());
-        Vec3 inputVector = Entity.getInputVector(new Vec3(-Math.signum(strafeImpulse), Math.signum(forwardImpulse), 0), 0.1f, face.toYRot());
+        Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(-Math.signum(strafeImpulse), Math.signum(forwardImpulse), 0), 0.1f, face.toYRot());
         BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, baseBoundingBox.expandTowards(inputVector), false, (bro, what) ->
-                bro);
+            bro);
 
         Direction otherWallClosion = checkSquidCollisions(entity, collisions, inputVector);
         if (otherWallClosion != null)
@@ -417,7 +418,7 @@ public class InkBlockUtils
         inputVector = Vec3.atLowerCornerOf(blockFaceToCheck.getNormal()).scale(0.01);
         AABB aabb = baseBoundingBox.expandTowards(inputVector);
         collisions = new BlockCollisions<>(entity.level(), entity, aabb, false, (bro, what) ->
-                bro);
+            bro);
 
         return checkSquidCollisions(entity, collisions, null);
     }

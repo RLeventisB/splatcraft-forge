@@ -1,6 +1,7 @@
 package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -100,4 +101,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
             return speed * (straightShotTicks + delaySpeedMult * drag / (1 - drag));
         return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
     }
+
+    public abstract float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem);
 }

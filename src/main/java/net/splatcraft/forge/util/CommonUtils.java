@@ -35,6 +35,7 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -140,10 +141,10 @@ public class CommonUtils
                 for (int z = 0; z < 2; z++)
                 {
                     CommonUtils.spawnTestParticle(level,
-                            ParticleTypes.BUBBLE, new Vec3(
-                                    x == 0 ? aabb.min(Direction.Axis.X) : aabb.max(Direction.Axis.X),
-                                    y == 0 ? aabb.min(Direction.Axis.Y) : aabb.max(Direction.Axis.Y),
-                                    z == 0 ? aabb.min(Direction.Axis.Z) : aabb.max(Direction.Axis.Z)));
+                        ParticleTypes.BUBBLE, new Vec3(
+                            x == 0 ? aabb.min(Direction.Axis.X) : aabb.max(Direction.Axis.X),
+                            y == 0 ? aabb.min(Direction.Axis.Y) : aabb.max(Direction.Axis.Y),
+                            z == 0 ? aabb.min(Direction.Axis.Z) : aabb.max(Direction.Axis.Z)));
                 }
             }
         }
@@ -362,11 +363,11 @@ public class CommonUtils
         return new Result(delay, value);
     }
 
-    public static Vec3 getOldPosition(Entity entity)
+    public static Vec3 getOldPosition(Entity entity, double partialTick)
     {
         if (entity instanceof Player player)
-            return WeaponHandler.getPlayerPrevPos(player);
-        return new Vec3(entity.xo, entity.yo, entity.zo);
+            return WeaponHandler.getPlayerPrevPos(player).getPosition(partialTick);
+        throw new NotImplementedException();
     }
 
     public static <T> T returnValueDependantOnSquidCancel(Player player, T withCancel, T withoutCancel)

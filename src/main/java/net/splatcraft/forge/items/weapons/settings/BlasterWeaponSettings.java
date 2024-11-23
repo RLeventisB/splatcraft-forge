@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.data.SplatcraftConvertors;
@@ -34,11 +35,11 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
     public WeaponTooltip<BlasterWeaponSettings>[] tooltipsToRegister()
     {
         return new WeaponTooltip[]
-                {
-                        new WeaponTooltip<BlasterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<BlasterWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<BlasterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.startupTicks() + settings.shotData.endlagTicks(), WeaponTooltip.RANKER_DESCENDING)
-                };
+            {
+                new WeaponTooltip<BlasterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
+                new WeaponTooltip<BlasterWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
+                new WeaponTooltip<BlasterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.startupTicks() + settings.shotData.endlagTicks(), WeaponTooltip.RANKER_DESCENDING)
+            };
     }
 
     @Override
@@ -77,41 +78,47 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
         return new DataRecord(projectileData, shotData, blasterData, moveSpeed, bypassesMobDamage, isSecret);
     }
 
+    @Override
+    public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
+    {
+        return projectileData.speed();
+    }
+
     public record DataRecord(
-            CommonRecords.ProjectileDataRecord projectile,
-            CommonRecords.ShotDataRecord shot,
-            DetonationRecord blast,
-            float mobility,
-            boolean bypassesMobDamage,
-            boolean isSecret
+        CommonRecords.ProjectileDataRecord projectile,
+        CommonRecords.ShotDataRecord shot,
+        DetonationRecord blast,
+        float mobility,
+        boolean bypassesMobDamage,
+        boolean isSecret
     )
     {
         public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
-                        CommonRecords.ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
-                        DetonationRecord.CODEC.fieldOf("blaster_data").forGetter(DataRecord::blast),
-                        Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
-                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
-                        Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
-                ).apply(instance, DataRecord::new)
+            instance -> instance.group(
+                CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
+                CommonRecords.ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
+                DetonationRecord.CODEC.fieldOf("blaster_data").forGetter(DataRecord::blast),
+                Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
+                Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
+                Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
+            ).apply(instance, DataRecord::new)
         );
     }
 
     public record DetonationRecord(
-            DamageRangesRecord damageRadiuses,
-            DamageRangesRecord sparkDamageRadiuses,
-            float explosionPaint,
-            boolean newAttackId
+        DamageRangesRecord damageRadiuses,
+        DamageRangesRecord sparkDamageRadiuses,
+        float explosionPaint,
+        boolean newAttackId
     )
     {
         public static final Codec<DetonationRecord> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        DamageRangesRecord.CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
-                        DamageRangesRecord.CODEC.optionalFieldOf("spark_damage_data").forGetter(t -> Optional.ofNullable(t.sparkDamageRadiuses())),
-                        Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint)),
-                        Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
-                ).apply(instance, DetonationRecord::create)
+            instance -> instance.group(
+                DamageRangesRecord.CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
+                DamageRangesRecord.CODEC.optionalFieldOf("spark_damage_data").forGetter(t -> Optional.ofNullable(t.sparkDamageRadiuses())),
+                Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint)),
+                Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
+            ).apply(instance, DetonationRecord::create)
         );
 
         public static DetonationRecord create(DamageRangesRecord damageRadiuses,

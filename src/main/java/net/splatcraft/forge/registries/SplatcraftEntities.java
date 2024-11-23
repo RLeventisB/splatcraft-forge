@@ -49,7 +49,7 @@ import net.splatcraft.forge.entities.subs.BurstBombEntity;
 import net.splatcraft.forge.entities.subs.CurlingBombEntity;
 import net.splatcraft.forge.entities.subs.SplatBombEntity;
 import net.splatcraft.forge.entities.subs.SuctionBombEntity;
-import net.splatcraft.forge.mixin.AddLayersAccessor;
+import net.splatcraft.forge.mixin.accessors.AddLayersAccessor;
 
 import java.util.Objects;
 
@@ -153,9 +153,9 @@ public class SplatcraftEntities
             attachInkOverlay(Objects.requireNonNull(skin));
         });
         ((AddLayersAccessor) event).getRenderers()
-                .values().stream()
-                .filter(LivingEntityRenderer.class::isInstance)
-                .map(LivingEntityRenderer.class::cast)
-                .forEach(SplatcraftEntities::attachInkOverlay);
+            .values().stream()
+            .filter(LivingEntityRenderer.class::isInstance)
+            .map(LivingEntityRenderer.class::cast)
+            .forEach(SplatcraftEntities::attachInkOverlay);
     }
 }

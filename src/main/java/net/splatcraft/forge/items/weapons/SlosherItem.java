@@ -4,7 +4,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -21,6 +20,7 @@ import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
+import net.splatcraft.forge.mixin.accessors.EntityAccessor;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.AttackId;
 import net.splatcraft.forge.util.InkBlockUtils;
@@ -180,16 +180,16 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
                         float xRotation = Mth.lerp(partialTick, yRotOld, yRot);
                         proj.shootFromRotation(
-                                null,
-                                Mth.lerp(partialTick, xRotOld, xRot),
-                                xRotation + projectileSetting.offsetAngle() - 3,
-                                shotSetting.pitchCompensation(),
-                                projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
-                                0,
-                                partialTick);
+                            null,
+                            Mth.lerp(partialTick, xRotOld, xRot),
+                            xRotation + projectileSetting.offsetAngle() - 3,
+                            shotSetting.pitchCompensation(),
+                            projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
+                            0,
+                            partialTick);
                         proj.setAttackId(attackId);
 
-                        proj.moveTo(proj.position().add(Entity.getInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
+                        proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
 
                         switch (slosherItem.slosherType)
                         {

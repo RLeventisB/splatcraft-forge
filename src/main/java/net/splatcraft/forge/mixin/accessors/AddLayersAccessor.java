@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.forge.mixin.accessors;
 
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.world.entity.EntityType;
@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
-@Mixin(value = EntityRenderersEvent.AddLayers.class)
+@Mixin(EntityRenderersEvent.AddLayers.class)
 public interface AddLayersAccessor
 {
     @Accessor

@@ -9,6 +9,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.forge.VectorUtils;
 import net.splatcraft.forge.client.particles.SquidSoulParticleData;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
@@ -24,7 +25,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class WeaponHandler
 {
-    private static final Map<Player, Vec3> prevPosMap = new LinkedHashMap<>();
+    private static final Map<Player, OldPosData> prevPosMap = new LinkedHashMap<>();
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event)
@@ -119,11 +120,33 @@ public class WeaponHandler
         {
             PlayerCharge.dischargeWeapon(player);
         }
-        prevPosMap.put(player, player.position());
+        Vec3 oldOldPos = player.position();
+        if (prevPosMap.containsKey(player))
+        {
+            oldOldPos = prevPosMap.get(player).oldPosition;
+        }
+        OldPosData posData = new OldPosData(player.position(), oldOldPos);
+        prevPosMap.put(player, posData);
     }
 
-    public static Vec3 getPlayerPrevPos(Player player)
+    public static OldPosData getPlayerPrevPos(Player player)
     {
-        return prevPosMap.containsKey(player) ? prevPosMap.get(player) : player.position();
+        return prevPosMap.containsKey(player) ? prevPosMap.get(player) : new OldPosData(player.position(), player.position());
+    }
+
+    public static class OldPosData
+    {
+        public Vec3 oldPosition, oldOldPosition;
+
+        public OldPosData(Vec3 oldPosition, Vec3 oldOldPosition)
+        {
+            this.oldPosition = oldPosition;
+            this.oldOldPosition = oldOldPosition;
+        }
+
+        public Vec3 getPosition(double partialTick)
+        {
+            return VectorUtils.lerp(partialTick, oldOldPosition, oldPosition);
+        }
     }
 }

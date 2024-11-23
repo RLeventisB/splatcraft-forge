@@ -227,7 +227,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
                 CompoundTag nbt = stack.getOrCreateTag();
                 boolean oldGroundState = nbt.getBoolean("Deviation_Jumping_State");
                 nbt.putBoolean("Deviation_Jumping_State", livingEntity.onGround());
-                if (oldGroundState && !livingEntity.onGround())
+                if (oldGroundState && !livingEntity.onGround() && livingEntity.getDeltaMovement().y > 0)
                 {
                     ShotDeviationHelper.registerJumpForShotDeviation(stack, deviationData);
                 }

@@ -11,6 +11,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -26,6 +27,7 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,12 +56,16 @@ import net.splatcraft.forge.client.renderer.InkSquidRenderer;
 import net.splatcraft.forge.data.SplatcraftTags;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.items.weapons.IChargeableWeapon;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.forge.mixin.accessors.EntityAccessor;
+import net.splatcraft.forge.mixin.accessors.GameRendererFovAccessor;
 import net.splatcraft.forge.util.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -102,9 +108,16 @@ public class RendererHandler
     public static void onRenderTick(TickEvent.RenderTickEvent event)
     {
         Player player = Minecraft.getInstance().player;
-        if (PlayerCooldown.hasPlayerCooldown(player) && !player.isSpectator() && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
+        if (player != null && !player.isSpectator())
         {
-            player.getInventory().selected = PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
+            if (ShootingHandler.isDoingShootingAction(player))
+            {
+                player.getInventory().selected = ShootingHandler.firingTimer.get(player).selected;
+            }
+            if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
+            {
+                player.getInventory().selected = PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
+            }
         }
     }
 
@@ -350,7 +363,7 @@ public class RendererHandler
 
     public static void renderGuiInternal(ForgeGui gui, GuiGraphics graphics, float partialTicks, int width, int height)
     {
-        Player player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         boolean hasCapability = PlayerInfoCapability.hasCapability(player);
         if (player.isSpectator() || !hasCapability)
         {
@@ -405,7 +418,8 @@ public class RendererHandler
             RenderSystem.setShaderTexture(0, WIDGETS);
             RenderSystem.enableBlend();
 
-            CommonRecords.ShotDeviationDataRecord data = weaponBaseItem.getSettings(player.getMainHandItem()).getShotDeviationData(player.getMainHandItem(), player);
+            AbstractWeaponSettings<?, ?> settings = weaponBaseItem.getSettings(player.getMainHandItem());
+            CommonRecords.ShotDeviationDataRecord data = settings.getShotDeviationData(player.getMainHandItem(), player);
             ShotDeviationHelper.DeviationData deviationData = ShotDeviationHelper.getDeviationData(player.getMainHandItem());
 
             CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), partialTicks);
@@ -413,11 +427,12 @@ public class RendererHandler
 
             Minecraft mc = Minecraft.getInstance();
 
+            double fov = ((GameRendererFovAccessor) mc.gameRenderer).invokeGetFov(
+                mc.gameRenderer.getMainCamera(),
+                partialTicks,
+                true);
             Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
-                mc.gameRenderer.getFov(
-                    mc.gameRenderer.getMainCamera(),
-                    partialTicks,
-                    true));
+                fov);
 
 //            float aspectRatio = Mth.lerp(1 / (1 + data.getMaximumDeviation() * 100), (float) height / width, 1f);
 
@@ -437,7 +452,20 @@ public class RendererHandler
                 };
             RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
 
-            Vec3 relativePos = new Vec3(0, 0, 1);
+            Vec3 deltaMovementLerped = player.getDeltaMovementLerped(partialTicks);
+
+            boolean flag = player.getDeltaMovement().y <= 0.0;
+            double finalGravity = -0.08;
+
+            if (flag && player.hasEffect(MobEffects.SLOW_FALLING))
+            {
+                finalGravity += 0.07;
+            }
+
+            deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(partialTicks));
+            Vec3 relativePos = new Vec3(0, 0, weaponBaseItem.getSettings(player.getMainHandItem()).getSpeedForRender(player, player.getMainHandItem())).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
+            double horizontalScale = Math.E / relativePos.z;
+            relativePos = relativePos.multiply(horizontalScale, horizontalScale, 1);
             float textureSize = 4 * (scale + 1);
 
             for (int x = -1; x <= 1; x += 2)

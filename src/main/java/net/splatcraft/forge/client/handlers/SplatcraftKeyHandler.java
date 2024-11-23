@@ -26,7 +26,7 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.IChargeableWeapon;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.mixin.MinecraftClientAccessor;
+import net.splatcraft.forge.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.SwapSlotWithOffhandPacket;
 import net.splatcraft.forge.network.c2s.UpdateChargeStatePacket;
@@ -99,7 +99,7 @@ public class SplatcraftKeyHandler
         updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
 
         if ((PlayerCooldown.hasPlayerCooldown(player) && !(PlayerCooldown.getPlayerCooldown(player).cancellable && SQUID_KEYBIND.active))
-                || CommonUtils.anyWeaponOnCooldown(player))
+            || CommonUtils.anyWeaponOnCooldown(player))
         {
             return;
         }
@@ -109,9 +109,9 @@ public class SplatcraftKeyHandler
         if (!Minecraft.getInstance().isPaused())
         {
             int autoSquidMaxDelay = PlayerCooldown.hasPlayerCooldown(player) ? (int) (PlayerCooldown.getPlayerCooldown(player).getTime() + 10) :
-                    (player.getUseItem().getItem() instanceof IChargeableWeapon ? 100 : 10); //autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
+                (player.getUseItem().getItem() instanceof IChargeableWeapon ? 100 : 10); //autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
             SplatcraftKeyHandler.autoSquidDelay = SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || PlayerCooldown.hasPlayerCooldown(player) ? autoSquidMaxDelay :
-                    Mth.clamp(SplatcraftKeyHandler.autoSquidDelay - 1, 0, autoSquidMaxDelay);
+                Mth.clamp(SplatcraftKeyHandler.autoSquidDelay - 1, 0, autoSquidMaxDelay);
         }
 
         if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
@@ -125,7 +125,7 @@ public class SplatcraftKeyHandler
             ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
 
             if (sub.isEmpty() || (info.isSquid() && player.level().getBlockCollisions(player,
-                    new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext()))
+                new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext()))
             {
                 player.displayClientMessage(Component.translatable("status.cant_use"), true);
             }
@@ -173,8 +173,8 @@ public class SplatcraftKeyHandler
         }
 
         if (player.getVehicle() == null &&
-                !player.level().getBlockCollisions(player,
-                        new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext())
+            !player.level().getBlockCollisions(player,
+                new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext())
         {
             if (SQUID_KEYBIND.equals(last) || !SQUID_KEYBIND.active)
             {

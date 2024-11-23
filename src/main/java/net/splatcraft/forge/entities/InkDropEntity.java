@@ -94,6 +94,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     public void tick(float timeDelta)
     {
         Vec3 vel = getDeltaMovement();
+        InkProjectileEntity.MixinTimeDelta = timeDelta;
         super.tick();
 
         if (isInWater() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))

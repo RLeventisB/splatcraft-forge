@@ -30,6 +30,7 @@ import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.entities.SquidBumperEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
 import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
+import net.splatcraft.forge.mixin.accessors.EntityAccessor;
 import net.splatcraft.forge.registries.SplatcraftItems;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.*;
@@ -86,7 +87,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
                 if (cooldown.getSlotIndex() > -1 && cooldown.getTime() > (cooldown.isGrounded() ? -10 : 0))
                 {
                     ItemStack cooldownStack = cooldown.getHand() == (InteractionHand.MAIN_HAND) ? (player).getInventory().items.get(cooldown.getSlotIndex())
-                            : entity.getOffhandItem();
+                        : entity.getOffhandItem();
                     return stack.equals(cooldownStack) && (getSettings(stack).isBrush || cooldown.isGrounded()) ? 1 : 0;
                 }
             }
@@ -287,13 +288,13 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 
                     float progress = (float) i / (count - 1f);
                     proj.shootFromRotation(
-                            player,
-                            player.getXRot() - Mth.lerp(progress, settings.flingData.startPitchCompensation(), settings.flingData.endPitchCompensation()),
-                            player.getYRot(), 0,
-                            Mth.lerp(progress, attackData.minSpeed(), attackData.maxSpeed()),
-                            0.05f);
+                        player,
+                        player.getXRot() - Mth.lerp(progress, settings.flingData.startPitchCompensation(), settings.flingData.endPitchCompensation()),
+                        player.getYRot(), 0,
+                        Mth.lerp(progress, attackData.minSpeed(), attackData.maxSpeed()),
+                        0.05f);
 
-                    proj.moveTo(proj.position().add(LivingEntity.getInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
+                    proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
                     proj.setRollerSwingStats(settings);
                     proj.setAttackId(attackId);
                     level.addFreshEntity(proj);

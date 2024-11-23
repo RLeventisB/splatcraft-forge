@@ -51,12 +51,12 @@ public class SplatcraftConfig
 
     public static class Server
     {
-        public static ForgeConfigSpec.BooleanValue uhhhhh;
+        public static ForgeConfigSpec.BooleanValue limitFallSpeed;
 
         public static void init(ForgeConfigSpec.Builder client)
         {
             client.comment("Server Settings");
-            uhhhhh = client.comment("No there isnt a config for the server for now").define("splatcraft.squidKeyMode", false);
+            limitFallSpeed = client.comment("Specifies whether to limit the maximum fall speed of players").define("splatcraft.limitFallSpeed", false);
         }
     }
 

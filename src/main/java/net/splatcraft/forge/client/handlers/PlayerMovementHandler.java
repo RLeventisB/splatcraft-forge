@@ -3,9 +3,7 @@ package net.splatcraft.forge.client.handlers;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -18,11 +16,13 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.RollerItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.forge.mixin.accessors.EntityAccessor;
 import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.SquidInputPacket;
 import net.splatcraft.forge.registries.SplatcraftAttributes;
@@ -46,8 +46,13 @@ public class PlayerMovementHandler
     @SubscribeEvent
     public static void playerMovement(TickEvent.PlayerTickEvent event)
     {
-        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
+        if (event.phase == TickEvent.Phase.END)
         {
+            Vec3 deltaMovement = event.player.getDeltaMovement();
+            if (SplatcraftConfig.Server.limitFallSpeed.get() && deltaMovement.y < -0.5)
+            {
+                event.player.setDeltaMovement(deltaMovement.x, -0.5, deltaMovement.z);
+            }
         }
         else if (event.phase == TickEvent.Phase.START && event.player instanceof LocalPlayer player)
         {
@@ -59,6 +64,7 @@ public class PlayerMovementHandler
             PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
 
             AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            AttributeInstance gravityAttribute = player.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
             AttributeInstance swimAttribute = player.getAttribute(ForgeMod.SWIM_SPEED.get());
 
             if (speedAttribute.hasModifier(INK_SWIM_SPEED))
@@ -83,7 +89,7 @@ public class PlayerMovementHandler
                 useStack = cooldown.storedStack;
             else if (useStack.isEmpty())
                 useStack = player.getCooldowns().isOnCooldown(player.getMainHandItem().getItem()) ? player.getMainHandItem() :
-                        player.getCooldowns().isOnCooldown(player.getOffhandItem().getItem()) ? player.getOffhandItem() : ItemStack.EMPTY;
+                    player.getCooldowns().isOnCooldown(player.getOffhandItem().getItem()) ? player.getOffhandItem() : ItemStack.EMPTY;
 
             if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(player, useStack))
             {
@@ -196,9 +202,9 @@ public class PlayerMovementHandler
                 {
                     float yRot = player.getYHeadRot();
                     Vec3 vec3 =
-                            Entity.getInputVector(new Vec3(0f, forwardImpulse, 0f), 0.12f, yRot).add(
-                                    Entity.getInputVector(new Vec3(leftImpulse, 0f, 0f), 0.02f, yRot)
-                            );
+                        EntityAccessor.invokeGetInputVector(new Vec3(0f, forwardImpulse, 0f), 0.12f, yRot).add(
+                            EntityAccessor.invokeGetInputVector(new Vec3(leftImpulse, 0f, 0f), 0.02f, yRot)
+                        );
 
                     deltaMovement = deltaMovement.add(vec3);
                 }
@@ -271,7 +277,7 @@ public class PlayerMovementHandler
             }
         }
         SplatcraftPacketHandler.sendToServer(new SquidInputPacket(
-                playerInfo.getClimbedDirection(),
-                playerInfo.getSquidSurgeCharge()));
+            playerInfo.getClimbedDirection(),
+            playerInfo.getSquidSurgeCharge()));
     }
 }

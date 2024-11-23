@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.forge.data.SplatcraftConvertors;
@@ -30,11 +31,11 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
     public WeaponTooltip<ShooterWeaponSettings>[] tooltipsToRegister()
     {
         return new WeaponTooltip[]
-                {
-                        new WeaponTooltip<ShooterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<ShooterWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-                        new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.getFiringSpeed(), WeaponTooltip.RANKER_DESCENDING)
-                };
+            {
+                new WeaponTooltip<ShooterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
+                new WeaponTooltip<ShooterWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
+                new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.getFiringSpeed(), WeaponTooltip.RANKER_DESCENDING)
+            };
     }
 
     @Override
@@ -72,22 +73,28 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
         return new DataRecord(projectileData, shotData, moveSpeed, bypassesMobDamage, isSecret);
     }
 
+    @Override
+    public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
+    {
+        return projectileData.speed();
+    }
+
     public record DataRecord(
-            CommonRecords.ProjectileDataRecord projectile,
-            CommonRecords.ShotDataRecord shot,
-            float mobility,
-            boolean bypassesMobDamage,
-            boolean isSecret
+        CommonRecords.ProjectileDataRecord projectile,
+        CommonRecords.ShotDataRecord shot,
+        float mobility,
+        boolean bypassesMobDamage,
+        boolean isSecret
     )
     {
         public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
-                        CommonRecords.ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
-                        Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
-                        Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
-                        Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
-                ).apply(instance, DataRecord::new)
+            instance -> instance.group(
+                CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
+                CommonRecords.ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
+                Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
+                Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
+                Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
+            ).apply(instance, DataRecord::new)
         );
     }
 }

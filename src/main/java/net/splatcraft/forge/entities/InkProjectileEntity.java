@@ -46,6 +46,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<Float> GRAVITY_SPEED_MULT = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
     private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
+    public static float MixinTimeDelta;
 
     protected double straightShotTime = -1;
     public float lifespan = 600;
@@ -246,6 +247,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         setDeltaMovement(velocity);
         straightShotTime -= timeDelta;
 
+        InkProjectileEntity.MixinTimeDelta = timeDelta;
         super.tick();
 
         if (isInWater())
@@ -294,110 +296,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             calculateDrops(lastPosition, timeDelta);
         }
     }
-
-    // we NEED the HitResult actual position or else my stupid obsession with partial frame damage falloff will make me perish
-    // yes this breaks like 40 fundamentals like encapsulation and mixins but uhhhhhhhhhhhhhhhhhhhhhhhhhhh
-    // wait! this can be done with mixins god i am so fucking dumb
-    /*public static void superTick(Projectile entity, float timeDelta)
-    {
-        if (!entity.hasBeenShot)
-        {
-            entity.gameEvent(GameEvent.PROJECTILE_SHOOT, entity.getOwner());
-            entity.hasBeenShot = true;
-        }
-
-        if (!entity.leftOwner)
-        {
-            entity.leftOwner = entity.checkLeftOwner();
-        }
-
-        entity.baseTick();
-
-        HitResult hitresult = getHitResultOnMoveVector(entity);
-        boolean teleported = false;
-        if (hitresult.getType() == HitResult.Type.BLOCK)
-        {
-            BlockPos blockpos = ((BlockHitResult) hitresult).getBlockPos();
-            BlockState blockstate = entity.level().getBlockState(blockpos);
-            if (blockstate.is(Blocks.NETHER_PORTAL))
-            {
-                entity.handleInsidePortal(blockpos);
-                teleported = true;
-            }
-            else if (blockstate.is(Blocks.END_GATEWAY))
-            {
-                BlockEntity blockentity = entity.level().getBlockEntity(blockpos);
-                if (blockentity instanceof TheEndGatewayBlockEntity gatewayBlock && TheEndGatewayBlockEntity.canEntityTeleport(entity))
-                {
-                    TheEndGatewayBlockEntity.teleportEntity(entity.level(), blockpos, blockstate, entity, gatewayBlock);
-                }
-
-                teleported = true;
-            }
-        }
-
-        if (hitresult.getType() != HitResult.Type.MISS && !teleported && !ForgeEventFactory.onProjectileImpact(entity, hitresult) && !entity.level().isClientSide())
-        {
-            entity.onHit(hitresult);
-        }
-
-        entity.checkInsideBlocks();
-        Vec3 deltaMovement = entity.getDeltaMovement();
-        double newX = entity.getX() + deltaMovement.x * timeDelta;
-        double newY = entity.getY() + deltaMovement.y * timeDelta;
-        double newZ = entity.getZ() + deltaMovement.z * timeDelta;
-
-        entity.updateRotation();
-        entity.setPos(newX, newY, newZ);
-    }
-
-    public static @NotNull HitResult getHitResultOnMoveVector(Projectile entity)
-    {
-        Vec3 movement = entity.getDeltaMovement();
-        Level level = entity.level();
-        Vec3 startPos = entity.position();
-        Vec3 nextPos = startPos.add(movement);
-
-        HitResult hitresult = level.clip(new ClipContext(startPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
-        if (hitresult.getType() != HitResult.Type.MISS)
-        {
-            nextPos = hitresult.getLocation();
-        }
-
-        HitResult hitresult1 = getEntityHitResult(level, entity, startPos, nextPos, entity.getBoundingBox().expandTowards(movement).inflate(1.0), entity::canHitEntity);
-        if (hitresult1 != null)
-        {
-            hitresult = hitresult1;
-        }
-
-        return hitresult;
-    }
-
-    private static EntityHitResult getEntityHitResult(Level pLevel, Entity projectile, Vec3 pStartVec, Vec3 pEndVec, AABB boundingBox, Predicate<Entity> filter)
-    {
-        double d0 = Double.MAX_VALUE;
-        Entity entity = null;
-        Vec3 hitPos = null;
-
-        for (Entity entity1 : pLevel.getEntities(projectile, boundingBox, filter))
-        {
-            AABB aabb = entity1.getBoundingBox().inflate(0.3f);
-            Optional<Vec3> optional = aabb.clip(pStartVec, pEndVec);
-            if (optional.isPresent())
-            {
-                double d1 = pStartVec.distanceToSqr(optional.get());
-                if (d1 < d0)
-                {
-                    entity = entity1;
-                    d0 = d1;
-                    hitPos = optional.get();
-                }
-            }
-        }
-
-        return entity == null ? null : new EntityHitResult(entity, hitPos);
-    }*/
-
+    
     private void calculateDrops(Vec3 lastPosition, float timeDelta)
     {
         if (distanceBetweenDrops == 0)
@@ -619,7 +518,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         try
         {
-            posDiff = thrower.position().subtract(CommonUtils.getOldPosition(thrower));
+            posDiff = thrower.position().subtract(CommonUtils.getOldPosition(thrower, partialTicks));
             if (thrower.onGround())
                 posDiff.multiply(1, 0, 1);
             posDiff = posDiff.scale(0.8);
@@ -889,7 +788,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     public boolean isNoGravity()
     {
-        return straightShotTime > 0 || getGravity() == 0 || super.isNoGravity();
+//        return straightShotTime > 0 || getGravity() == 0 || super.isNoGravity();
+        return true;
     }
 
     public float getProjectileSize()
