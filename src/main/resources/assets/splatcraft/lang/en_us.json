@@ -280,7 +280,7 @@
     "weaponStat.metric.seconds": "%ss",
     "weaponStat.metric.ticks": "%st",
     "weaponStat.metric.blocks": "%s blocks",
-    "weaponStat.metric.blocks_per_second": "%sb/s",
+    "weaponStat.metric.bullets_per_second": "%s shots per s",
     "weaponStat.metric.blocks_per_tick": "%sb/t",
     "weaponStat.metric.multiplier": "x%s",
     "weaponStat.metric.units": "%su",

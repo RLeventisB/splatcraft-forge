@@ -2,6 +2,7 @@ package net.splatcraft.forge.items.weapons;
 
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -13,13 +14,14 @@ import net.minecraftforge.registries.RegistryObject;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.AttackId;
 import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import org.jetbrains.annotations.NotNull;
 
 public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 {
@@ -45,16 +47,47 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     }
 
     @Override
-    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
+    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int no)
     {
-        Player player = (Player) entity;
-        ItemCooldowns cooldownTracker = player.getCooldowns();
+        BlasterWeaponSettings settings = getSettings(stack);
+        ShootingHandler.notifyStartShooting(entity, CommonUtils.startupSquidSwitch(entity, settings.shotData), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
+            (data, accumulatedTime, entity1, isStillUsing) -> {
+                if (!isStillUsing || !data.isPlayer)
+                    return;
 
-        if (!cooldownTracker.isOnCooldown(this) && !PlayerCooldown.hasPlayerCooldown(player))
-        {
-            BlasterWeaponSettings settings = getSettings(stack);
-            PlayerCooldown.setPlayerCooldown(player, new BlasterCooldown(stack, CommonUtils.startupSquidSwitch(player, settings.shotData), settings.shotData.startupTicks(), settings.shotData.endlagTicks(), player.getInventory().selected, entity.getUsedItemHand(), player.onGround()));
-        }
+                ItemCooldowns cooldownTracker = data.player.getCooldowns();
+
+                if (!data.player.isLocalPlayer())
+                {
+                    cooldownTracker.addCooldown(data.player.getInventory().getItem(data.selected).getItem(), (int) (settings.shotData.getFiringSpeed() - accumulatedTime));
+                }
+            },
+            (data, accumulatedTime, entity1) -> {
+                if (!level.isClientSide())
+                {
+                    BlasterItem item = (BlasterItem) data.useItem.getItem();
+                    if (reduceInk(entity, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
+                    {
+                        InkProjectileEntity proj = new InkProjectileEntity(level, entity, data.useItem, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+                        proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, level.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
+                        proj.setBlasterStats(settings);
+                        proj.setAttackId(AttackId.registerAttack().countProjectile());
+                        proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
+                        level.addFreshEntity(proj);
+                        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                        proj.tick(accumulatedTime);
+                    }
+                }
+            }, null);
+    }
+
+    @Override
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    {
+        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        
+        if (isSelected && entity instanceof LivingEntity livingEntity)
+            ShootingHandler.handleShooting(livingEntity);
     }
 
     @Override

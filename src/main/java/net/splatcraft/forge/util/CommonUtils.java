@@ -19,6 +19,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -380,9 +381,11 @@ public class CommonUtils
         return didCancel ? withCancel : withoutCancel;
     }
 
-    public static float startupSquidSwitch(Player player, CommonRecords.ShotDataRecord shotData)
+    public static float startupSquidSwitch(LivingEntity entity, CommonRecords.ShotDataRecord shotData)
     {
-        return returnValueDependantOnSquidCancel(player, shotData.squidStartupTicks(), shotData.startupTicks());
+        if (entity instanceof Player player)
+            return returnValueDependantOnSquidCancel(player, shotData.squidStartupTicks(), shotData.startupTicks());
+        return shotData.startupTicks();
     }
 
     public static float triangle(RandomSource random, float min, float max)
