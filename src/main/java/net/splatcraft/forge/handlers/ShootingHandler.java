@@ -1,5 +1,6 @@
 package net.splatcraft.forge.handlers;
 
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -8,6 +9,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,14 @@ public class ShootingHandler
             return;
 
         FiringData data = firingData.get(entity);
+
+        data.update(entity);
+    }
+
+    public static void handleShootingUnsafe(LivingEntity entity, FiringData data)
+    {
+        if (entity.level().isClientSide())
+            return;
 
         data.update(entity);
     }
@@ -84,6 +94,7 @@ public class ShootingHandler
 
     public static class FiringData
     {
+        public final InteractionHand hand;
         public boolean usedThisTick, doingEndlag;
         public final int selected;
         public float timer;
@@ -107,13 +118,14 @@ public class ShootingHandler
             this.onShoot = onShoot;
             this.onEnd = onEnd;
             this.selected = isPlayer ? player.getInventory().selected : -1;
+            this.hand = entity.getUsedItemHand();
             this.timer = initialTimer;
             this.useItem = item;
         }
 
         public void update(LivingEntity entity)
         {
-            boolean isUsing = entity.isUsingItem() && entity.getUseItem().getItem().equals(useItem.getItem());
+            boolean isUsing = entity.isUsingItem() && entity.getUsedItemHand() == hand && entity.getItemInHand(hand).getItem().equals(useItem.getItem());
 
             while (timer <= 0)
             {
@@ -145,7 +157,9 @@ public class ShootingHandler
                     timer += endlagFrames;
                 }
                 if (isPlayer)
+                {
                     player.getInventory().selected = selected;
+                }
 
                 doingEndlag = !doingEndlag;
             }
@@ -176,6 +190,11 @@ public class ShootingHandler
                 "usedThisTick=" + usedThisTick + ", " +
                 "doingEndlag=" + doingEndlag + ", " +
                 "useItem=" + useItem + ']';
+        }
+
+        public boolean isFor(@NotNull ItemStack stack, @NotNull LivingEntity entity)
+        {
+            return stack.getItem().equals(useItem.getItem()) && entity.getItemInHand(hand).equals(stack);
         }
     }
 }

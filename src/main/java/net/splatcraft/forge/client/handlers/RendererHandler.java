@@ -282,17 +282,6 @@ public class RendererHandler
         }
     }
 
-    /*
-    protected static RenderType getItemEntityTranslucent(ResourceLocation locationIn)
-    {
-        RenderType.CompositeState rendertype$state = RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(locationIn, false, false)).setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                .target(locationIn);/*.setDiffuseLightingState(new RenderState.DiffuseLightingState(true)).setAlphaState(new RenderStateShard.AlphaState(0.003921569F)).setLightmapState(new RenderStateShard.LightmapState(true))
-                .setOverlayState(new RenderState.OverlayState(true)).createCompositeState(true);
-
-        return RenderType.create("item_entity_translucent", VertexFormat.Mode.NEW_ENTITY, 7, 256, true, false, rendertype$state);
-    }
-    */
-
     @SubscribeEvent
     public static void onChatMessage(ClientChatReceivedEvent event)
     {
@@ -434,8 +423,6 @@ public class RendererHandler
             Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
                 fov);
 
-//            float aspectRatio = Mth.lerp(1 / (1 + data.getMaximumDeviation() * 100), (float) height / width, 1f);
-
             float currentAirInfluence = airInfluenceResult.value();
             float currentDeviationChance = actualChanceResult.value();
 
@@ -463,8 +450,9 @@ public class RendererHandler
             }
 
             deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(partialTicks));
+            // TODO: do this correctly please this aproximation works half the time
             Vec3 relativePos = new Vec3(0, 0, weaponBaseItem.getSettings(player.getMainHandItem()).getSpeedForRender(player, player.getMainHandItem())).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
-            double horizontalScale = Math.E / relativePos.z;
+            double horizontalScale = Math.PI / relativePos.z;
             relativePos = relativePos.multiply(horizontalScale, horizontalScale, 1);
             float textureSize = 4 * (scale + 1);
 

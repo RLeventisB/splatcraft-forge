@@ -38,7 +38,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
             {
                 new WeaponTooltip<BlasterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
                 new WeaponTooltip<BlasterWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-                new WeaponTooltip<BlasterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.getFirerate(), WeaponTooltip.RANKER_DESCENDING)
+                new WeaponTooltip<BlasterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.getFireRate(), WeaponTooltip.RANKER_DESCENDING)
             };
     }
 

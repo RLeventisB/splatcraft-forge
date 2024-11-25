@@ -34,7 +34,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
             {
                 new WeaponTooltip<ShooterWeaponSettings>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
                 new WeaponTooltip<ShooterWeaponSettings>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-                new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.getFiringSpeed(), WeaponTooltip.RANKER_DESCENDING)
+                new WeaponTooltip<ShooterWeaponSettings>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.getFireRate(), WeaponTooltip.RANKER_DESCENDING)
             };
     }
 

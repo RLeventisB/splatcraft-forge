@@ -253,7 +253,7 @@ public class CommonRecords
             return startupTicks + endlagTicks;
         }
 
-        public float getFirerate()
+        public float getFireRate()
         {
             return 1 / getFiringSpeed() * 20f;
         }
@@ -367,6 +367,6 @@ public class CommonRecords
         }
 
         public static final ShotDeviationDataRecord DEFAULT = new ShotDeviationDataRecord(5, 12, 0.01f, 0.25f, 0.4f, 0.01f, 6f, 0.015f, 25f, 70f);
-        public static final ShotDeviationDataRecord PERFECT_DEFAULT = new ShotDeviationDataRecord(0, 0, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
+        public static final ShotDeviationDataRecord PERFECT_DEFAULT = new ShotDeviationDataRecord(0, 0, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f);
     }
 }

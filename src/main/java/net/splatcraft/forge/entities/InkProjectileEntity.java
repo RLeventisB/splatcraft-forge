@@ -296,7 +296,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             calculateDrops(lastPosition, timeDelta);
         }
     }
-    
+
     private void calculateDrops(Vec3 lastPosition, float timeDelta)
     {
         if (distanceBetweenDrops == 0)
@@ -518,7 +518,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         try
         {
-            posDiff = thrower.position().subtract(CommonUtils.getOldPosition(thrower, partialTicks));
+            posDiff = thrower.getPosition(partialTicks).subtract(CommonUtils.getOldPosition(thrower, partialTicks));
             if (thrower.onGround())
                 posDiff.multiply(1, 0, 1);
             posDiff = posDiff.scale(0.8);
