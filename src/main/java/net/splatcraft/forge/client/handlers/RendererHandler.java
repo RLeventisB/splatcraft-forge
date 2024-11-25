@@ -112,7 +112,7 @@ public class RendererHandler
         {
             if (ShootingHandler.isDoingShootingAction(player))
             {
-                player.getInventory().selected = ShootingHandler.firingData.get(player).selected;
+                player.getInventory().selected = ShootingHandler.shootingData.get(player).selected;
             }
             if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
             {

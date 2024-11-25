@@ -32,6 +32,7 @@ import net.splatcraft.forge.blocks.InkwellBlock;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.DataHandler;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.IColoredItem;
 import net.splatcraft.forge.items.InkTankItem;
 import net.splatcraft.forge.items.weapons.settings.*;
@@ -257,6 +258,11 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
                 }
             }
         }
+    }
+
+    public ShootingHandler.FiringStatData getWeaponFireData(ItemStack itemStack, LivingEntity entity)
+    {
+        return ShootingHandler.FiringStatData.DEFAULT;
     }
 
     @Override

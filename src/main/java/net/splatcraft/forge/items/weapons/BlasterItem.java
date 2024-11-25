@@ -19,7 +19,6 @@ import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.registries.SplatcraftSounds;
 import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,20 +48,17 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     @Override
     public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int no)
     {
+        ShootingHandler.notifyStartShooting(entity);
+    }
+
+    @Override
+    public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
+    {
         BlasterWeaponSettings settings = getSettings(stack);
-        ShootingHandler.notifyStartShooting(entity, CommonUtils.startupSquidSwitch(entity, settings.shotData), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
-            (data, accumulatedTime, entity1, isStillUsing) -> {
-                if (!isStillUsing || !data.isPlayer)
-                    return;
-
-                ItemCooldowns cooldownTracker = data.player.getCooldowns();
-
-                if (!data.player.isLocalPlayer())
-                {
-                    cooldownTracker.addCooldown(data.player.getInventory().getItem(data.selected).getItem(), (int) (settings.shotData.getFiringSpeed() - accumulatedTime));
-                }
-            },
+        return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
+            BlasterItem::getEndlagConsumer,
             (data, accumulatedTime, entity1) -> {
+                Level level = entity1.level();
                 if (!level.isClientSide())
                 {
                     BlasterItem item = (BlasterItem) data.useItem.getItem();
@@ -81,13 +77,23 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
             }, null);
     }
 
+    private static void getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
+    {
+        if (!isStillUsing || !data.entityData.isPlayer)
+            return;
+
+        ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
+
+        if (!data.entityData.player.isLocalPlayer())
+        {
+            cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
+        }
+    }
+
     @Override
     public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
-        
-        if (isSelected && entity instanceof LivingEntity livingEntity)
-            ShootingHandler.handleShooting(livingEntity);
     }
 
     @Override

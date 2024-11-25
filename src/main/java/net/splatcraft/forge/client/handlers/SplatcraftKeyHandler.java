@@ -24,6 +24,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.splatcraft.forge.SplatcraftConfig;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.weapons.IChargeableWeapon;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.mixin.accessors.MinecraftClientAccessor;
@@ -99,7 +100,7 @@ public class SplatcraftKeyHandler
         updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
 
         if ((PlayerCooldown.hasPlayerCooldown(player) && !(PlayerCooldown.getPlayerCooldown(player).cancellable && SQUID_KEYBIND.active))
-            || CommonUtils.anyWeaponOnCooldown(player))
+            || CommonUtils.anyWeaponOnCooldown(player) || ShootingHandler.isDoingShootingAction(player))
         {
             return;
         }

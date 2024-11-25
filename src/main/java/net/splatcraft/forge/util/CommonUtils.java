@@ -33,6 +33,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.handlers.WeaponHandler;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
@@ -386,6 +387,13 @@ public class CommonUtils
         if (entity instanceof Player player)
             return returnValueDependantOnSquidCancel(player, shotData.squidStartupTicks(), shotData.startupTicks());
         return shotData.startupTicks();
+    }
+
+    public static float startupSquidSwitch(LivingEntity entity, ShootingHandler.FiringStatData firingData)
+    {
+        if (entity instanceof Player player)
+            return returnValueDependantOnSquidCancel(player, firingData.squidStartupFrames(), firingData.startupFrames());
+        return firingData.startupFrames();
     }
 
     public static float triangle(RandomSource random, float min, float max)

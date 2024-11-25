@@ -14,7 +14,6 @@ import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.weapons.settings.ShooterWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,23 +49,22 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
     public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
-
-        if (entity instanceof LivingEntity livingEntity && ShootingHandler.isDoingShootingAction(livingEntity))
-        {
-            ShootingHandler.FiringData firingData = ShootingHandler.firingData.get(livingEntity);
-            if (firingData.isFor(stack, livingEntity))
-                ShootingHandler.handleShootingUnsafe(livingEntity, firingData);
-        }
     }
 
     @Override
     public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
     {
-        ShooterWeaponSettings settings = getSettings(stack);
+        ShootingHandler.notifyStartShooting(entity);
+    }
 
-        ShootingHandler.notifyStartShooting(entity, CommonUtils.startupSquidSwitch(entity, settings.shotData), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
+    @Override
+    public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
+    {
+        ShooterWeaponSettings settings = getSettings(stack);
+        return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
             null,
             (data, accumulatedTime, entity1) -> {
+                Level level = entity1.level();
                 if (!level.isClientSide())
                 {
                     if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))

@@ -70,7 +70,7 @@ public class WeaponHandler
             return;
         }
 
-        boolean canUseWeapon = true;
+        boolean notPreventedByCooldown = true;
 
         if (hasCooldown)
         {
@@ -89,7 +89,7 @@ public class WeaponHandler
                 cooldown.tick(player);
                 player.setSprinting(false);
 
-                canUseWeapon = !cooldown.preventWeaponUse();
+                notPreventedByCooldown = !cooldown.preventWeaponUse();
                 ItemStack stack = cooldown.storedStack;
 
                 if (cooldown.getTime() <= 1)
@@ -107,7 +107,7 @@ public class WeaponHandler
                 cooldown.setTime(cooldown.getTime() - 1);
             }
         }
-        if (canUseWeapon && player.getUseItemRemainingTicks() > 0 && !CommonUtils.anyWeaponOnCooldown(player))
+        if (notPreventedByCooldown && player.getUseItemRemainingTicks() > 0 && !CommonUtils.anyWeaponOnCooldown(player))
         {
             ItemStack stack = player.getItemInHand(player.getUsedItemHand());
             if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
