@@ -1,5 +1,7 @@
 package net.splatcraft.forge.handlers;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -40,10 +42,26 @@ public class ShootingHandler
         }
 
         entityData.startShooting();
-//        WeaponShootingData data = new WeaponShootingData(entity, entity.getUseItem().copy(), firstUseStartupFrames, startupFrames, endlagFrames, onEndlagEnd, onShoot, onEnd);
         entityData.doStartningEndlagAction();
         shootingData.put(entity, entityData);
         return true;
+    }
+
+    public static boolean notifyForceEndShooting(LivingEntity entity)
+    {
+        if (entity.level().isClientSide())
+        {
+            return false;
+        }
+        EntityData entityData;
+        if (shootingData.containsKey(entity))
+        {
+            entityData = shootingData.get(entity);
+            entityData.mainHandData.end();
+            entityData.offHandData.end();
+            return true;
+        }
+        return false;
     }
 
     public static boolean isDoingShootingAction(LivingEntity entity)
@@ -53,7 +71,7 @@ public class ShootingHandler
 
     public interface EndlagConsumer
     {
-        void accept(WeaponShootingData data, Float timeLeft, LivingEntity entity, Boolean isStillUsing);
+        boolean accept(WeaponShootingData data, Float timeLeft, LivingEntity entity, Boolean isStillUsing);
     }
 
     public interface ShootConsumer
@@ -102,6 +120,11 @@ public class ShootingHandler
         public final WeaponShootingData offHandData;
         public int selected;
 
+        public boolean isDualFire()
+        {
+            return mainHandData.active && offHandData.active;
+        }
+
         public EntityData(LivingEntity entity)
         {
             isPlayer = entity instanceof Player;
@@ -131,14 +154,17 @@ public class ShootingHandler
                 }
             }
 
-            if (!mainHandData.active && !offHandData.active)
+            if (mainHandData.active || offHandData.active)
             {
-                usedThisTick = false;
+                usedThisTick = true;
             }
         }
 
         public void startShooting()
         {
+            if (mainHandData.active || offHandData.active)
+                return;
+
             if (isPlayer)
                 selected = player.getInventory().selected;
             ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
@@ -153,10 +179,11 @@ public class ShootingHandler
             {
                 FiringStatData offHandFireData = offHandWeapon.getWeaponFireData(offHand, entity);
                 if (weaponFireData != null)
-                    offHandData.start(offHand, offHandFireData, CommonUtils.startupSquidSwitch(entity, weaponFireData) + offHandFireData.getFiringSpeed() / 2);
+                    offHandData.start(offHand, offHandFireData, CommonUtils.startupSquidSwitch(entity, weaponFireData), offHandFireData.getFiringSpeed() / 2);
                 else
                     offHandData.start(offHand, offHandFireData);
             }
+            usedThisTick = true;
         }
 
         public void doStartningEndlagAction()
@@ -166,6 +193,22 @@ public class ShootingHandler
             if (offHandData.active && offHandData.firingData.onEndlagEnd != null)
                 offHandData.firingData.onEndlagEnd.accept(offHandData, 0f, entity, true);
         }
+
+        public void recalculateFiringData()
+        {
+            ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
+            if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
+            {
+                FiringStatData weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
+                mainHandData.modifyFiringData(weaponFireData);
+            }
+            ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
+            if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
+            {
+                FiringStatData weaponFireData = offHandWeapon.getWeaponFireData(mainHand, entity);
+                offHandData.modifyFiringData(weaponFireData);
+            }
+        }
     }
 
     public static class WeaponShootingData
@@ -173,7 +216,7 @@ public class ShootingHandler
         public final InteractionHand hand;
         public final EntityData entityData;
         public boolean doingEndlag, active;
-        public float timer;
+        public float timer, offHandTimeout;
         public ItemStack useItem;
         public FiringStatData firingData;
 //        public static long milli;
@@ -186,17 +229,28 @@ public class ShootingHandler
 
         public void start(ItemStack item, FiringStatData firingData)
         {
-            start(item, firingData, CommonUtils.startupSquidSwitch(entityData.entity, firingData));
+            start(item, firingData, CommonUtils.startupSquidSwitch(entityData.entity, firingData), 0);
         }
 
-        public void start(ItemStack item, FiringStatData firingData, float initialTimer)
+        public void modifyFiringData(FiringStatData data)
+        {
+            if (active && data.getFiringSpeed() != firingData.getFiringSpeed())
+            {
+                // TODO: do conversion in case of dualies having different firing speeds, maybe, i think
+            }
+            firingData = data;
+        }
+
+        public void start(ItemStack item, FiringStatData firingData, float initialTimer, float offHandTimeout)
         {
             if (active)
                 return;
 
             this.firingData = firingData;
             this.timer = initialTimer;
+            doingEndlag = false;
             this.useItem = item.copy();
+            this.offHandTimeout = offHandTimeout;
             active = true;
         }
 
@@ -204,16 +258,31 @@ public class ShootingHandler
         {
             if (!isUsingWeaponEqualToStoredWeapon(entity))
             {
-                active = false;
                 end();
                 return;
+            }
+            if (offHandTimeout > 0)
+            {
+                if (!isUsing)
+                {
+                    end();
+                    return;
+                }
+                offHandTimeout--;
+                if (offHandTimeout < 0)
+                {
+                    timer += offHandTimeout;
+                    offHandTimeout = 0;
+                }
+                else
+                    return;
             }
             while (timer <= 0)
             {
                 if (doingEndlag)
                 {
                     if (firingData.onEndlagEnd != null)
-                        firingData.onEndlagEnd.accept(this, -timer, entity, isUsing);
+                        isUsing = firingData.onEndlagEnd.accept(this, -timer, entity, isUsing);
                     if (isUsing)
                     {
                         timer += firingData.startupFrames;
@@ -273,6 +342,13 @@ public class ShootingHandler
                                  EndlagConsumer onEndlagEnd,
                                  ShootConsumer onShoot, EndConsumer onEnd)
     {
+        public static final Codec<FiringStatData> CODEC = RecordCodecBuilder.create(
+            instance -> instance.group(
+                Codec.FLOAT.optionalFieldOf("squid_startup_frames", 2f).forGetter(FiringStatData::squidStartupFrames),
+                Codec.FLOAT.fieldOf("startup_frames").forGetter(FiringStatData::startupFrames),
+                Codec.FLOAT.fieldOf("endlag_frames").forGetter(FiringStatData::endlagFrames)
+            ).apply(instance, (Float squidStartupFrames, Float startupFrames, Float endlagFrames) -> new FiringStatData(squidStartupFrames, startupFrames, endlagFrames, null, null, null))
+        );
 
         public static final FiringStatData DEFAULT = new FiringStatData(2, 1, 1, null, null, null);
 

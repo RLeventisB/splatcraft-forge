@@ -71,7 +71,7 @@ public class ClientUtils
     public static boolean showDurabilityBar(ItemStack stack)
     {
         return (SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
-                getClientPlayer().getItemInHand(InteractionHand.MAIN_HAND).equals(stack) && getDurabilityForDisplay() > 0;
+            getClientPlayer().getItemInHand(InteractionHand.MAIN_HAND).equals(stack) && getDurabilityForDisplay() > 0;
     }
 
     public static double getDurabilityForDisplay()

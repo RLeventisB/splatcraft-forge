@@ -3,6 +3,7 @@ package net.splatcraft.forge.items.weapons;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -75,6 +76,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
                             InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
                             proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy, accumulatedTime);
                             proj.setShooterStats(settings);
+                            proj.tick(accumulatedTime);
                             level.addFreshEntity(proj);
                         }
 
@@ -85,8 +87,8 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
-        return PlayerPosingHandler.WeaponPose.FIRE;
+        return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
     }
 }

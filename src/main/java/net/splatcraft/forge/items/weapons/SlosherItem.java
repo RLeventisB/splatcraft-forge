@@ -32,7 +32,6 @@ import java.util.Optional;
 
 public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 {
-    public List<SlosherWeaponSettings.SingularSloshShotData> pendingSloshes = new ArrayList<>();
     public Type slosherType = Type.DEFAULT;
 
     public static RegistryObject<SlosherItem> create(DeferredRegister<Item> register, String settings, String name, Type slosherType)
@@ -65,24 +64,27 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
     @Override
     public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
     {
+        if (level.isClientSide)
+            return;
+
         SlosherWeaponSettings settings = getSettings(stack);
-        if (entity instanceof Player player && getUseDuration(stack) - timeLeft < settings.shotData.endlagTicks())
+        if (entity instanceof Player player)
         {
             ItemCooldowns cooldownTracker = player.getCooldowns();
-            if (!cooldownTracker.isOnCooldown(this))
+            if (cooldownTracker.isOnCooldown(this))
             {
-                pendingSloshes.addAll(settings.shotData.sloshes());
-                PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks()));
-                if (!level.isClientSide && settings.shotData.endlagTicks() > 0)
-                {
-                    cooldownTracker.addCooldown(this, settings.shotData.endlagTicks());
-                }
+                return;
+            }
+            PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks()));
+            if (settings.shotData.endlagTicks() > 0)
+            {
+                cooldownTracker.addCooldown(this, settings.shotData.endlagTicks());
             }
         }
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.BUCKET_SWING;
     }

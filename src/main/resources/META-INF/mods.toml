@@ -48,3 +48,9 @@ mandatory = true
 versionRange = "[1.20.1]"
 ordering = "NONE"
 side = "BOTH"
+[[dependencies.splatcraft]]
+modId = "create"
+mandatory = false
+versionRange = "[0.5.1.i,)"
+ordering = "NONE"
+side = "BOTH"

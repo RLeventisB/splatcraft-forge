@@ -245,11 +245,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         Vec3 lastPosition = position();
         Vec3 velocity = getShootVelocity(timeDelta);
         setDeltaMovement(velocity);
-        straightShotTime -= timeDelta;
 
         InkProjectileEntity.MixinTimeDelta = timeDelta;
         super.tick();
 
+        straightShotTime -= timeDelta;
         if (isInWater())
         {
             discard();
@@ -342,7 +342,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         Vec3 velocity = shootDirection.scale(speedData[0]);
         if (speedData[1] <= 0)
             return velocity;
-        return velocity.subtract(0, getGravity() * speedData[1] * timeDelta, 0);
+        return velocity.subtract(0, getGravity() * speedData[1], 0);
     }
 
     public double[] getSpeed(double frame, float straightShotFrame, float timeDelta)
@@ -360,7 +360,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             speed *= getHorizontalDrag() * getGravitySpeedMult() * Math.pow(getHorizontalDrag(), fallenFrames);
             return new double[]{speed * timeDelta, fallenFramesNext};
         }
-        double straightFraction = timeDelta - fallenFramesNext;
+        double straightFraction = -fallenFrames;
         return new double[]{(speed * straightFraction + speed * getHorizontalDrag() * getGravitySpeedMult() * Math.pow(getHorizontalDrag(), fallenFrames) * fallenFramesNext), fallenFramesNext};
     }
 
@@ -403,63 +403,67 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     {
         super.onHitEntity(result);
 
-        Entity target = result.getEntity();
-        float storedCrystalSoundIntensity = crystalSoundIntensity;
-
-        // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
-        // lol i didnt even use it
-
-        Vec3 nextPosition = position().add(getDeltaMovement());
-        Vec3 impactPos = result.getLocation();
         Vec3 oldPos = position();
-
-        List<Double> values = new ArrayList<>();
-        values.add(Mth.inverseLerp(impactPos.x, getX(), nextPosition.x));
-        values.add(Mth.inverseLerp(impactPos.y, getY(), nextPosition.y));
-        values.add(Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z));
-        values.removeIf(d -> !Double.isFinite(d));
-        crystalSoundIntensity = (float) values.stream().mapToDouble(v -> v).average().orElse(0.5);
-        setPos(impactPos);
-        float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
         if (canPierce)
             setPos(oldPos);
-        crystalSoundIntensity = storedCrystalSoundIntensity;
 
-        if (!level().isClientSide() && target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
+        if (!level().isClientSide())
         {
-            discard();
-            level().broadcastEntityEvent(this, (byte) -1);
-        }
+            Entity target = result.getEntity();
+            float storedCrystalSoundIntensity = crystalSoundIntensity;
 
-        if (target instanceof LivingEntity livingTarget)
-        {
-            if (InkDamageUtils.isSplatted(livingTarget)) return;
+            // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
+            // lol i didnt even use it
 
-            boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
-            if (!level().isClientSide && didDamage)
+            Vec3 nextPosition = position().add(getDeltaMovement());
+            Vec3 impactPos = result.getLocation();
+
+            List<Double> values = new ArrayList<>();
+            values.add(Mth.inverseLerp(impactPos.x, getX(), nextPosition.x));
+            values.add(Mth.inverseLerp(impactPos.y, getY(), nextPosition.y));
+            values.add(Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z));
+            values.removeIf(d -> !Double.isFinite(d));
+            crystalSoundIntensity = (float) values.stream().mapToDouble(v -> v).average().orElse(0.5);
+            setPos(impactPos);
+            float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
+            crystalSoundIntensity = storedCrystalSoundIntensity;
+
+            if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
             {
-                ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-                if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
-                    Objects.equals(getProjectileType(), Types.BLASTER))
+                discard();
+                level().broadcastEntityEvent(this, (byte) -1);
+            }
+
+            if (target instanceof LivingEntity livingTarget)
+            {
+                if (InkDamageUtils.isSplatted(livingTarget)) return;
+
+                boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
+                if (!level().isClientSide && didDamage)
                 {
-                    level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
+                    ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
+                    if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
+                        Objects.equals(getProjectileType(), Types.BLASTER))
+                    {
+                        level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundSource.PLAYERS, 0.8F, 1);
+                    }
                 }
             }
-        }
-        if (!canPierce)
-        {
-            ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-            if (explodes && explosionData != null)
-            {
-                InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
-                level().broadcastEntityEvent(this, (byte) 3);
-                level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
-            }
-            else
-                level().broadcastEntityEvent(this, (byte) 2);
 
-            if (!level().isClientSide())
+            if (!canPierce)
+            {
+                ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
+                if (explodes && explosionData != null)
+                {
+                    InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+                    level().broadcastEntityEvent(this, (byte) 3);
+                    level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
+                }
+                else
+                    level().broadcastEntityEvent(this, (byte) 2);
+
                 discard();
+            }
         }
     }
 

@@ -3,41 +3,44 @@
     "full_damage_to_mobs": false,
     "mobility": 0.72,
     "projectile": {
-        "size": 0.267,
-        "speed": 4.6,
+        "size": 2,
+        "speed": 23,
         "delay_speed_mult": 1,
-        "ink_coverage_on_impact": 1.32,
-        "ink_drop_coverage": 0.8,
-        "distance_between_drops": 6,
-        "straight_shot_ticks": 1.66666666,
-        "base_damage": 5.6,
-        "decayed_damage": 2.8,
-        "damage_decay_start_tick": 3,
-        "damage_decay_per_tick": 0.528
+        "ink_coverage_on_impact": 16.5,
+        "ink_drop_coverage": 12,
+        "distance_between_drops": 90,
+        "straight_shot_ticks": 5,
+        "base_damage": 28,
+        "decayed_damage": 14,
+        "damage_decay_start_tick": 9,
+        "damage_decay_per_tick": 0.88
     },
     "shot": {
-        "endlag_ticks": 4,
+        "startup_ticks": 3,
+        "startup_ticks_from_squid": 12,
+        "endlag_ticks": 9,
         "accuracy_data": {
             "ground_deviation_degrees": 4,
             "airborne_deviation_degrees": 8,
             "chance_min": 0.04,
             "chance_max": 0.3,
             "chance_increase_per_shot": 0.02,
-            "time_inactive_to_decrease": 2,
-            "chance_decrease_when_inactive": 0.03
+            "time_inactive_to_decrease": 6,
+            "chance_decrease_when_inactive": 0.01
         },
         "ink_consumption": 1.2,
-        "ink_recovery_cooldown": 7
+        "ink_recovery_cooldown": 20
     },
     "dodge_roll": {
         "count": 1,
-        "movement_impulse": 0.6,
+        "distance_covered_by_roll": 45,
         "ink_consumption": 8,
-        "ink_recovery_cooldown": 20,
-        "roll_startup": 1,
-        "roll_endlag": 3,
-        "turret_duration": 8,
-        "final_roll_turret_duration": 16,
+        "ink_recovery_cooldown": 60,
+        "roll_startup": 4,
+        "roll_duration": 12,
+        "roll_endlag": 8,
+        "turret_duration": 24,
+        "final_roll_turret_duration": 24,
         "allows_movement": true
     },
     "turret_shot": {
@@ -47,8 +50,8 @@
             "chance_min": 0.04,
             "chance_max": 0.3,
             "chance_increase_per_shot": 0.02,
-            "time_inactive_to_decrease": 2,
-            "chance_decrease_when_inactive": 0.03
+            "time_inactive_to_decrease": 6,
+            "chance_decrease_when_inactive": 0.01
         }
     },
     "turret_projectile": {

@@ -83,15 +83,14 @@ public class InkTankItem extends ColoredArmorItem
         stack.getOrCreateTag().putFloat("Ink", Math.max(0, Math.min(((InkTankItem) stack.getItem()).capacity, value)));
     }
 
-    public static boolean canRecharge(ItemStack stack, boolean fromTick)
+    public static boolean canRecharge(ItemStack stack, boolean updateCooldown)
     {
-        return rechargeMult(stack, fromTick) != 0;
+        return rechargeMult(stack, updateCooldown) != 0;
     }
 
-    public static float rechargeMult(ItemStack stack, boolean fromTick)
+    public static float rechargeMult(ItemStack stack, boolean updateCooldown)
     {
         CompoundTag tag = stack.getOrCreateTag();
-        // boolean cannotRecharge = tag.contains("CannotRecharge"); // is this used????
         if (!tag.contains("RecoveryCooldown"))
         {
             tag.putFloat("RecoveryCooldown", 0);
@@ -99,13 +98,15 @@ public class InkTankItem extends ColoredArmorItem
         }
 
         float cooldown = tag.getFloat("RecoveryCooldown");
-        if ((cooldown < 1 || !fromTick))
+        if (cooldown < 1)
         {
             float remainder = 1f - cooldown;
-            tag.putFloat("RecoveryCooldown", 0);
+            if (updateCooldown)
+                tag.putFloat("RecoveryCooldown", 0);
             return remainder;
         }
-        tag.putFloat("RecoveryCooldown", Math.max(0, cooldown - 1));
+        if (updateCooldown)
+            tag.putFloat("RecoveryCooldown", Math.max(0, cooldown - 1));
         return 0f;
     }
 
@@ -127,10 +128,10 @@ public class InkTankItem extends ColoredArmorItem
             float rechargeMult = rechargeMult(stack, true);
 
             if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
-                    && (!PlayerCooldown.hasPlayerCooldown(player))
-                    && !PlayerCharge.hasCharge(player)
-                    && (!(using instanceof WeaponBaseItem)
-                    || (using instanceof RollerItem r && !r.isMoving))
+                && (!PlayerCooldown.hasPlayerCooldown(player))
+                && !PlayerCharge.hasCharge(player)
+                && (!(using instanceof WeaponBaseItem)
+                || (using instanceof RollerItem r && !r.isMoving))
             )
             {
                 setInkAmount(stack, ink + (5.0f / ((InkBlockUtils.canSquidHide(player) && PlayerInfoCapability.isSquid(player)) ? 3f : 10f)) * rechargeMult);
@@ -237,7 +238,7 @@ public class InkTankItem extends ColoredArmorItem
     public boolean isBarVisible(@NotNull ItemStack stack)
     {
         return (SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.Client.inkIndicator.get().equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
-                stack.getOrCreateTag().contains("Ink") && getInkAmount(stack) < capacity;
+            stack.getOrCreateTag().contains("Ink") && getInkAmount(stack) < capacity;
     }
 
     @Override

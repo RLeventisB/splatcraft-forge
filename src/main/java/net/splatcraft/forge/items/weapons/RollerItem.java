@@ -337,7 +337,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
         return getSettings(stack).isBrush ? PlayerPosingHandler.WeaponPose.BRUSH : PlayerPosingHandler.WeaponPose.ROLL;
     }

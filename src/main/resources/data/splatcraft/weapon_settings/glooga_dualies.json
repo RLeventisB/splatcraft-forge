@@ -3,48 +3,51 @@
     "full_damage_to_mobs": false,
     "mobility": 0.6,
     "projectile": {
-        "size": 0.33,
-        "speed": 5.7,
+        "size": 2.5,
+        "speed": 28.5,
         "delay_speed_mult": 1,
-        "ink_coverage_on_impact": 1.28,
-        "ink_drop_coverage": 0.88,
-        "distance_between_drops": 4.67,
-        "straight_shot_ticks": 1,
-        "base_damage": 7.3,
-        "decayed_damage": 3.6,
-        "damage_decay_start_tick": 2,
-        "damage_decay_per_tick": 0.11
+        "ink_coverage_on_impact": 17.6,
+        "ink_drop_coverage": 13.2,
+        "distance_between_drops": 70,
+        "straight_shot_ticks": 3,
+        "base_damage": 36,
+        "decayed_damage": 18,
+        "damage_decay_start_tick": 7,
+        "damage_decay_per_tick": 0.55
     },
     "shot": {
-        "endlag_ticks": 6,
+        "startup_ticks": 3,
+        "startup_ticks_from_squid": 12,
+        "endlag_ticks": 15,
         "accuracy_data": {
-            "ground_deviation_degrees": 3,
+            "ground_deviation_degrees": 3.2,
             "airborne_deviation_degrees": 8,
             "chance_min": 0.03,
+            "chance_max": 0.25,
             "chance_increase_per_shot": 0.03,
-            "time_inactive_to_decrease": 3,
-            "chance_decrease_when_inactive": 0.015
+            "time_inactive_to_decrease": 9,
+            "chance_decrease_when_inactive": 0.05
         },
         "ink_consumption": 1.4,
-        "ink_recovery_cooldown": 7
+        "ink_recovery_cooldown": 20
     },
     "dodge_roll": {
         "count": 1,
-        "movement_impulse": 0.65,
+        "distance_covered_by_roll": 52,
         "ink_consumption": 8,
         "ink_recovery_cooldown": 23,
-        "roll_startup": 2,
-        "roll_endlag": 1,
-        "turret_duration": 11,
+        "roll_startup": 4,
+        "roll_duration": 16,
+        "roll_endlag": 8,
+        "turret_duration": 32,
         "final_roll_turret_duration": 24
     },
     "turret_projectile": {
-        "speed": 6.4,
-        "straight_shot_ticks": 1,
-        "base_damage": 10.6,
-        "decayed_damage": 5.26,
-        "damage_decay_start_tick": 2.33,
-        "damage_decay_per_tick": 0.474
+        "speed": 32,
+        "base_damage": 52,
+        "decayed_damage": 26.3,
+        "damage_decay_start_tick": 7,
+        "damage_decay_per_tick": 0.79
     },
     "turret_shot": {
         "accuracy_data": {

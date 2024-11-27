@@ -77,10 +77,10 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
             }, null);
     }
 
-    private static void getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
+    private static boolean getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
     {
         if (!isStillUsing || !data.entityData.isPlayer)
-            return;
+            return isStillUsing;
 
         ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
 
@@ -88,6 +88,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         {
             cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
         }
+        return true;
     }
 
     @Override
@@ -97,9 +98,9 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
-        return PlayerPosingHandler.WeaponPose.FIRE;
+        return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
     }
 
     public static class BlasterCooldown extends WeaponFireCooldown<BlasterItem>

@@ -10,7 +10,9 @@ import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.util.WeaponTooltip;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponSettings, SlosherWeaponSettings.DataRecord>
 {
@@ -108,7 +110,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
     @Override
     public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
     {
-        return Arrays.stream(mergedProjectileData).sorted(Comparator.comparingDouble(CommonRecords.ProjectileDataRecord::speed)).map(CommonRecords.ProjectileDataRecord::speed).findFirst().orElse((float) 0);
+        return Float.POSITIVE_INFINITY;
     }
 
     public SlosherWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)

@@ -153,7 +153,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.BOW_CHARGE;
     }

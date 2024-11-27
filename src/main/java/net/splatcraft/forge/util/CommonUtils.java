@@ -16,6 +16,7 @@ import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -35,6 +36,7 @@ import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.handlers.WeaponHandler;
+import net.splatcraft.forge.items.weapons.DualieItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import org.apache.commons.lang3.NotImplementedException;
@@ -365,6 +367,35 @@ public class CommonUtils
         return new Result(delay, value);
     }
 
+    public static @NotNull Result tickValueToMax(float delay, float value, float increase, float maxValue, float timeDelta)
+    {
+        if (delay > 0)
+        {
+            delay -= timeDelta;
+            if (delay < 0)
+            {
+                if (Float.isInfinite(increase) || Float.isNaN(increase))
+                    value = 0;
+                else
+                    value += increase * -delay;
+                delay = 0;
+            }
+        }
+        else
+        {
+            if (increase == 0)
+                value = 0;
+            else
+            {
+                if (value < maxValue)
+                    value += increase * timeDelta;
+                if (value > maxValue)
+                    value = maxValue;
+            }
+        }
+        return new Result(delay, value);
+    }
+
     public static Vec3 getOldPosition(Entity entity, double partialTick)
     {
         if (entity instanceof Player player)
@@ -399,6 +430,16 @@ public class CommonUtils
     public static float triangle(RandomSource random, float min, float max)
     {
         return min + max * (random.nextFloat() - random.nextFloat());
+    }
+
+    public static boolean isRolling(LivingEntity entity)
+    {
+        return entity instanceof Player player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown;
+    }
+
+    public static InteractionHand otherHand(InteractionHand hand)
+    {
+        return hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
     }
 
     public record Result(float delay, float value)

@@ -22,6 +22,7 @@ import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.handlers.PlayerPosingHandler;
+import net.splatcraft.forge.handlers.ShootingHandler;
 import net.splatcraft.forge.items.weapons.settings.CommonRecords;
 import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
@@ -29,10 +30,7 @@ import net.splatcraft.forge.network.SplatcraftPacketHandler;
 import net.splatcraft.forge.network.c2s.DodgeRollEndPacket;
 import net.splatcraft.forge.network.c2s.DodgeRollPacket;
 import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.InkExplosion;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.forge.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -75,32 +73,28 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
     private static float getInkForRoll(ItemStack stack)
     {
-        return stack.getItem() instanceof DualieItem ? ((DualieItem) stack.getItem()).getSettings(stack).rollData.inkConsumption() : 0;
+        return stack.getItem() instanceof DualieItem item ? item.getSettings(stack).rollData.inkConsumption() : 0;
     }
 
-    public static int getRollTurretDuration(ItemStack stack, boolean lastRoll)
+    public static int getRollTurretDuration(ItemStack stack)
     {
         if (stack.getItem() instanceof DualieItem dualie)
-            return lastRoll ? dualie.getSettings(stack).rollData.lastRollTurretDuration() : dualie.getSettings(stack).rollData.turretDuration();
+            return dualie.getSettings(stack).rollData.turretDuration();
 
         return 0;
     }
 
-    public void performRoll(Player player, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollDirection, boolean local)
+    public void performRoll(Player player, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
     {
         int rollCount = getRollCount(player);
 
-        boolean lastRoll = rollCount == maxRolls - 1;
-        if (rollCount > maxRolls - 1)
-        {
-            return;
-        }
         DualieWeaponSettings activeSettings = getSettings(activeDualie);
 
         if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
         {
-            int turretDuration = getRollTurretDuration(activeDualie, lastRoll);
-            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollDirection, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), lastRoll));
+            ShootingHandler.notifyForceEndShooting(player);
+            int turretDuration = getRollTurretDuration(activeDualie);
+            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
 
             PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
         }
@@ -184,27 +178,31 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
                 int rollCount = getRollCount(localPlayer);
                 int maxRolls = getMaxRollCount(localPlayer);
+                if (rollCount > 0 && !PlayerCooldown.hasPlayerCooldown(localPlayer)) // fix just in case
+                {
+                    rollCount = 0;
+                }
                 if (rollCount < maxRolls && ClientUtils.canPerformRoll(localPlayer))
                 {
                     ItemStack activeDualie;
-                    boolean lastRoll = rollCount == maxRolls - 1;
+                    boolean lastRoll = false;
                     if (lastRoll)
                     {
-                        activeDualie = getRollTurretDuration(stack, true) >= getRollTurretDuration(offhandDualie, true) ? stack : offhandDualie;
+                        activeDualie = getRollTurretDuration(stack) >= getRollTurretDuration(offhandDualie) ? stack : offhandDualie;
                     }
                     else
                     {
-                        activeDualie = maxRolls % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
+                        activeDualie = rollCount % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
                     }
                     DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
                     // why does vec2 use floats but vec3 use doubles
 
-                    if (reduceInk(localPlayer, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
+                    if (enoughInk(localPlayer, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
                     {
-                        Vec2 rollDirection = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.rollDistance());
+                        Vec2 rollPotency = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.getRollImpulse());
 
-                        performRoll(localPlayer, stack, hand, maxRolls, rollDirection, true);
-                        SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, hand, maxRolls, rollDirection));
+                        performRoll(localPlayer, stack, hand, maxRolls, rollPotency, true);
+                        SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUUID(), activeDualie, hand, maxRolls, rollPotency));
                     }
                 }
             }
@@ -223,7 +221,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         Player player = (Player) entity;
         player.setYBodyRot(player.getYHeadRot()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 
-        if (!level.isClientSide())
+        ShootingHandler.notifyStartShooting(entity);
+
+        /*if (!level.isClientSide())
         {
             player.yBodyRotO = player.getYHeadRot();
             int rollCount = getRollCount(player);
@@ -239,82 +239,83 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                 dualieItem.fireDualie(level, entity, offhandDualie, timeLeft + firingData.getFiringSpeed() / 2, entity.onGround() && hasCooldown);
             }
             fireDualie(level, entity, stack, timeLeft, onRollCooldown);
-        }
-    }
-
-    protected void fireDualie(Level level, LivingEntity entity, ItemStack stack, float timeLeft, boolean onRollCooldown)
-    {
-        DualieWeaponSettings settings = getSettings(stack);
-        CommonRecords.ShotDataRecord firingData = onRollCooldown ? settings.turretShotData : settings.standardShotData;
-        CommonRecords.ProjectileDataRecord projectileData = onRollCooldown ? settings.turretProjectileData : settings.standardProjectileData;
-        if (!level.isClientSide() && (getUseDuration(stack) - timeLeft - 1) % (firingData.getFiringSpeed()) == 0)
-        {
-            if (reduceInk(entity, this, firingData.inkConsumption(), firingData.inkRecoveryCooldown(), true))
-            {
-                float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), firingData.accuracyData());
-                ShotDeviationHelper.DeviationData data = ShotDeviationHelper.getDeviationData(stack);
-                ItemStack mainHandItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
-                ItemStack offHandItem = entity.getItemInHand(InteractionHand.OFF_HAND);
-                if (!mainHandItem.isEmpty() && mainHandItem.getItem() instanceof DualieItem dualieItem && dualieItem.getSettingsClass().equals(getSettingsClass()))
-                {
-                    data.cloneTo(ShotDeviationHelper.getDeviationData(mainHandItem));
-                }
-                if (!offHandItem.isEmpty() && offHandItem.getItem() instanceof DualieItem dualieItem && dualieItem.getSettingsClass().equals(getSettingsClass()))
-                {
-                    data.cloneTo(ShotDeviationHelper.getDeviationData(offHandItem));
-                }
-                for (int i = 0; i < firingData.projectileCount(); i++)
-                {
-                    InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
-
-                    proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), firingData.pitchCompensation(), projectileData.speed(), inaccuracy);
-                    proj.addExtraData(new ExtraSaveData.DualieExtraData(onRollCooldown));
-                    proj.setDualieStats(projectileData);
-                    level.addFreshEntity(proj);
-                }
-
-                level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-            }
-        }
+        }*/
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
     {
+        DualieWeaponSettings settings = getSettings(stack);
+        CommonRecords.ShotDataRecord shotData = settings.getShotData(entity);
+        CommonRecords.ProjectileDataRecord projectileData = settings.getProjectileData(entity);
+        Level level = entity.level();
+        return new ShootingHandler.FiringStatData(shotData.squidStartupTicks(), shotData.startupTicks(), shotData.endlagTicks(),
+            null,
+            (data, accumulatedTime, entity1) -> {
+                if (!level.isClientSide())
+                {
+                    if (reduceInk(entity1, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
+                    {
+                        float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), shotData.accuracyData());
+                        ShotDeviationHelper.DeviationData deviationData = ShotDeviationHelper.getDeviationData(stack);
+                        ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(data.hand));
+                        if (!otherHand.isEmpty() && otherHand.getItem() instanceof DualieItem)
+                        {
+                            deviationData.cloneTo(ShotDeviationHelper.getDeviationData(otherHand));
+                        }
+                        for (int i = 0; i < shotData.projectileCount(); i++)
+                        {
+                            InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
+
+                            proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), projectileData.speed(), inaccuracy);
+                            proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity1)));
+                            proj.setDualieStats(projectileData);
+                            proj.tick(accumulatedTime);
+                            level.addFreshEntity(proj);
+                        }
+
+                        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                    }
+                }
+            }, null);
+    }
+
+    @Override
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    {
+        // loong if
+        if (PlayerCooldown.hasPlayerCooldown(player) && ShootingHandler.isDoingShootingAction(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DodgeRollCooldown dodgeRoll && dodgeRoll.rollState == DodgeRollCooldown.RollState.TURRET && ShootingHandler.shootingData.get(player).isDualFire())
+            return PlayerPosingHandler.WeaponPose.TURRET_FIRE;
         return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
     }
 
     public static class DodgeRollCooldown extends PlayerCooldown
     {
-        final byte rollFrame, rollEndFrame, turretModeFrame, rollDuration;
-        final boolean lastRoll;
+        final byte rollFrame, rollEndFrame, turretModeFrame;
         final Vec2 rollDirection;
         boolean canSlide;
+        RollState rollState = RollState.BEFORE_ROLL;
 
-        public DodgeRollCooldown(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean lastRoll)
+        public DodgeRollCooldown(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide)
         {
             super(stack, startupFrames + rollDuration + endlagFrames + turretModeFrames, slotIndex, hand, false, false, true, false);
             this.rollDirection = rollDirection;
             this.rollFrame = (byte) (rollDuration + turretModeFrames + endlagFrames);
             this.rollEndFrame = (byte) (turretModeFrames + endlagFrames);
             this.turretModeFrame = turretModeFrames;
-            this.lastRoll = lastRoll;
             this.canSlide = canSlide;
-            this.rollDuration = rollDuration;
         }
 
         public DodgeRollCooldown(CompoundTag nbt)
         {
-            this(ItemStack.of(nbt.getCompound("StoredStack")),
-                nbt.getInt("SlotIndex"),
-                nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND,
-                new Vec2(nbt.getFloat("RollDirectionX"), nbt.getFloat("RollDirectionZ")),
-                nbt.getByte("StartupFrames"),
-                nbt.getByte("RollDuration"),
-                nbt.getByte("EndlagFrames"),
-                nbt.getByte("TurretModeFrames"),
-                nbt.getBoolean("CanSlide"),
-                nbt.getBoolean("LastRoll"));
+            super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, false, false, true, false);
+
+            rollDirection = new Vec2(nbt.getFloat("RollDirectionX"), nbt.getFloat("RollDirectionZ"));
+            rollFrame = nbt.getByte("RollFrame");
+            rollEndFrame = nbt.getByte("RollEndFrame");
+            turretModeFrame = nbt.getByte("TurretModeFrame");
+            canSlide = nbt.getBoolean("CanSlide");
+            rollState = RollState.fromValue(nbt.getByte("RollState"));
             setTime(nbt.getFloat("Time"));
         }
 
@@ -322,95 +323,141 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         public void tick(Player player)
         {
             boolean local = player.level().isClientSide;
-            if (getTime() == rollFrame)
+            boolean doLogic = true;
+            while (doLogic)
             {
-                if (!local)
+                switch (rollState)
                 {
-                    player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level().random.nextFloat() - player.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-                    InkExplosion.createInkExplosion(player, player.position(), 0.9f, 0, 0, InkBlockUtils.getInkType(player), storedStack);
-                }
-                player.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
-            }
-            else if (getTime() == rollEndFrame + 1)
-            {
-                player.setDiscardFriction(false);
-            }
-            else if (getTime() == 1)
-            {
-                if (local)
-                {
-                    Input input = ClientUtils.getUnmodifiedInput((LocalPlayer) player);
-                    boolean endedTurretMode = input.jumping || input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
-                    if (endedTurretMode)
-                    {
-                        setTime(0);
-                        PlayerInfoCapability.get(player).setDodgeCount(0);
-                        SplatcraftPacketHandler.sendToServer(new DodgeRollEndPacket(player.getUUID()));
-                    }
-                    else
-                    {
-                        setTime(2);
-                    }
-                }
-                else if (getTime() > 0)
-                {
-                    setTime(2);
-                }
-            }
-        }
+                    case BEFORE_ROLL:
+                        if (getTime() <= rollFrame)
+                        {
+                            if (!local)
+                            {
+                                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level().random.nextFloat() - player.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                                InkExplosion.createInkExplosion(player, player.position(), 0.9f, 0, 0, InkBlockUtils.getInkType(player), storedStack);
+                            }
+                            player.setDiscardFriction(true);
 
-        @Override
-        public void onStart(Player player)
-        {
-            player.setDiscardFriction(true);
+                            player.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
+                            rollState = RollState.ROLL;
+                            break;
+                        }
+                        doLogic = false;
+                        break;
+                    case ROLL:
+                        if (getTime() <= rollEndFrame)
+                        {
+                            player.setDiscardFriction(false);
+
+                            rollState = RollState.AFTER_ROLL;
+                            break;
+                        }
+                        doLogic = false;
+                        break;
+                    case AFTER_ROLL:
+                        if (getTime() <= turretModeFrame)
+                        {
+                            rollState = RollState.TURRET;
+                            break;
+                        }
+                        doLogic = false;
+                        break;
+                    case TURRET:
+                        doLogic = false;
+                        if (getTime() <= 1)
+                        {
+                            if (local)
+                            {
+                                Input input = ClientUtils.getUnmodifiedInput((LocalPlayer) player);
+                                boolean endedTurretMode = input.jumping || input.forwardImpulse != 0 || input.leftImpulse != 0 || !player.isUsingItem() || player.getDeltaMovement().y > 0.1;
+                                if (endedTurretMode)
+                                {
+                                    setTime(0);
+                                    PlayerInfoCapability.get(player).setDodgeCount(0);
+                                    SplatcraftPacketHandler.sendToServer(new DodgeRollEndPacket(player.getUUID()));
+                                }
+                                else
+                                {
+                                    setTime(2);
+                                }
+                            }
+                            else if (getTime() > 0)
+                            {
+                                setTime(2);
+                            }
+                        }
+                        break;
+                }
+            }
         }
 
         @Override
         public CompoundTag writeNBT(CompoundTag nbt)
         {
             nbt.putBoolean("DodgeRollCooldown", true);
-            int endlagFrames = rollEndFrame - turretModeFrame;
-            nbt.put("StoredStack", storedStack.serializeNBT());
-            nbt.putInt("SlotIndex", getSlotIndex());
-            nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
-            nbt.putByte("StartupFrames", (byte) (getMaxTime() - rollDuration - endlagFrames - turretModeFrame));
-            nbt.putByte("RollDuration", (byte) (getMaxTime() - rollDuration - endlagFrames - turretModeFrame));
-            nbt.putByte("EndlagFrames", (byte) (endlagFrames));
-            nbt.putByte("TurretModeFrames", turretModeFrame);
+            nbt.putByte("RollFrame", rollFrame);
+            nbt.putByte("RollEndFrame", rollEndFrame);
+            nbt.putByte("TurretModeFrame", turretModeFrame);
             nbt.putBoolean("CanSlide", canSlide);
-            nbt.putBoolean("LastRoll", isLastRoll());
             nbt.putFloat("RollDirectionX", rollDirection.x);
             nbt.putFloat("RollDirectionZ", rollDirection.y);
-            nbt.putFloat("Time", getTime());
-            return nbt;
-        }
+            nbt.putByte("RollState", rollState.value);
 
-        public boolean isLastRoll()
-        {
-            return lastRoll;
+            nbt.putFloat("Time", getTime());
+            nbt.putFloat("MaxTime", getMaxTime());
+            nbt.putInt("SlotIndex", getSlotIndex());
+            nbt.put("StoredStack", storedStack.serializeNBT());
+            nbt.putBoolean("Hand", getHand() == InteractionHand.MAIN_HAND);
+            return nbt;
         }
 
         public boolean canCancelRoll()
         {
-            return getTime() <= rollEndFrame;
+            return rollState == RollState.AFTER_ROLL || rollState == RollState.TURRET;
         }
 
         @Override
         public boolean canMove()
         {
-            return canSlide && getTime() <= rollEndFrame;
+            return canSlide && canCancelRoll();
         }
 
         @Override
         public boolean forceCrouch()
         {
-            return getTime() > turretModeFrame - 8;
+            return rollState == RollState.TURRET;
         }
 
         @Override
         public boolean preventWeaponUse()
         {
-            return getTime() > turretModeFrame;
+            return rollState != RollState.TURRET;
+        }
+
+        enum RollState
+        {
+            BEFORE_ROLL(0),
+            ROLL(1),
+            AFTER_ROLL(2),
+            TURRET(3);
+
+            final byte value;
+
+            RollState(int value)
+            {
+                this.value = (byte) value;
+            }
+
+            public static RollState fromValue(byte value)
+            {
+                return switch (value)
+                {
+                    case 0 -> BEFORE_ROLL;
+                    case 1 -> ROLL;
+                    case 2 -> TURRET;
+                    default -> throw new IllegalStateException("Unexpected value: " + value);
+                };
+            }
         }
     }
 }

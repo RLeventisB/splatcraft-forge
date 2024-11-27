@@ -56,7 +56,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
         setPos(projectile.getX(), projectile.getY(), projectile.getZ());
         setOwner(projectile.getOwner());
         setColor(color);
-        setProjectileSize(0.45f);
+        setProjectileSize(0.045f);
         this.impactCoverage = splatSize;
         this.inkType = inkType;
         this.sourceWeapon = sourceWeapon;
@@ -66,7 +66,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     protected void defineSynchedData()
     {
         entityData.define(DROP_COLOR, ColorUtils.DEFAULT);
-        entityData.define(DROP_SIZE, 0.45f);
+        entityData.define(DROP_SIZE, 0.045f);
         entityData.define(GRAVITY, 0.275f);
     }
 

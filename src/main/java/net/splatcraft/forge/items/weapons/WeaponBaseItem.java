@@ -371,7 +371,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         return getSettings(stack).getSpeedModifier();
     }
 
-    public PlayerPosingHandler.WeaponPose getPose(ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.NONE;
     }

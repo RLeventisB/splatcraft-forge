@@ -17,6 +17,7 @@ import net.splatcraft.forge.items.weapons.SlosherItem;
 import net.splatcraft.forge.items.weapons.SubWeaponItem;
 import net.splatcraft.forge.items.weapons.WeaponBaseItem;
 import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
+import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.forge.util.PlayerCooldown;
 
 @Mod.EventBusSubscriber
@@ -50,7 +51,7 @@ public class PlayerPosingHandler
         }
 
         if (useTime > 0 || player.getCooldowns().isOnCooldown(mainStack.getItem())
-                || (playerInfo != null && playerInfo.getPlayerCooldown() != null && playerInfo.getPlayerCooldown().getTime() > 0))
+            || (playerInfo != null && playerInfo.getPlayerCooldown() != null && playerInfo.getPlayerCooldown().getTime() > 0))
         {
             useTime = mainStack.getItem().getUseDuration(mainStack) - useTime;
             float animTime;
@@ -58,17 +59,37 @@ public class PlayerPosingHandler
 
             PlayerCooldown cooldown;
 
-            switch (weaponBaseItem.getPose(mainStack))
+            switch (weaponBaseItem.getPose(player, mainStack))
             {
+                case TURRET_FIRE:
+                    model.body.zRot += 0.1;
+
+                    model.leftLeg.x -= 1f;
+                    model.leftLeg.xRot -= 0.23f;
+                    model.leftLeg.zRot -= 0.07f;
+
+                    model.rightLeg.x -= 1f;
+                    model.rightLeg.xRot += 0.14f;
+                    model.rightLeg.zRot += 0.14f;
+
+                    offHand.x -= 1f;
+                    offHand.yRot = 0.1F + model.getHead().yRot;
+                    offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot + 0.1f;
+                    offHand.zRot -= 0.4f;
+
+                    mainHand.yRot = -0.1F + model.getHead().yRot;
+                    mainHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
+                    mainHand.zRot += 0.2f;
+                    break;
                 case DUAL_FIRE:
-                    if (offStack.getItem() instanceof WeaponBaseItem && ((WeaponBaseItem) offStack.getItem()).getPose(offStack).equals(WeaponPose.DUAL_FIRE))
+                    if (offStack.getItem() instanceof WeaponBaseItem && ((WeaponBaseItem) offStack.getItem()).getPose(player, offStack).equals(WeaponPose.DUAL_FIRE))
                     {
                         offHand.yRot = -0.1F + model.getHead().yRot;
                         offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
                     }
                 case FIRE:
                     mainHand.yRot = -0.1F + model.getHead().yRot;
-                    mainHand.xRot = -((float) Math.PI / 2) + model.getHead().xRot;
+                    mainHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
                     break;
                 case SUB_HOLD:
                     if (!(mainStack.getItem() instanceof SubWeaponItem) || useTime < ((SubWeaponItem) mainStack.getItem()).getSettings(mainStack).subDataRecord.holdTime())
@@ -84,7 +105,8 @@ public class PlayerPosingHandler
 
                     break;
                 case BUCKET_SWING:
-                    animTime = ((SlosherItem) mainStack.getItem()).getSettings(mainStack).shotData.endlagTicks();
+                    SlosherWeaponSettings settings = ((SlosherItem) mainStack.getItem()).getSettings(mainStack);
+                    animTime = settings.shotData.endlagTicks();
                     mainHand.yRot = 0;
                     mainHand.xRot = -0.36f;
 
@@ -154,6 +176,7 @@ public class PlayerPosingHandler
         NONE,
         FIRE,
         DUAL_FIRE,
+        TURRET_FIRE,
         ROLL,
         BRUSH,
         BOW_CHARGE,

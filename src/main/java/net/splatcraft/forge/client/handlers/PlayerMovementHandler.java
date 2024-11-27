@@ -64,7 +64,6 @@ public class PlayerMovementHandler
             PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
 
             AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
-            AttributeInstance gravityAttribute = player.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
             AttributeInstance swimAttribute = player.getAttribute(ForgeMod.SWIM_SPEED.get());
 
             if (speedAttribute.hasModifier(INK_SWIM_SPEED))

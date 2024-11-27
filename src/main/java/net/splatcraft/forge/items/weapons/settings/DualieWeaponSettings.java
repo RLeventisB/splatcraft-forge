@@ -9,6 +9,7 @@ import net.splatcraft.forge.data.SplatcraftConvertors;
 import net.splatcraft.forge.entities.ExtraSaveData;
 import net.splatcraft.forge.entities.InkProjectileEntity;
 import net.splatcraft.forge.items.weapons.DualieItem;
+import net.splatcraft.forge.util.CommonUtils;
 import net.splatcraft.forge.util.PlayerCooldown;
 import net.splatcraft.forge.util.WeaponTooltip;
 
@@ -102,6 +103,16 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
         return this;
     }
 
+    public CommonRecords.ShotDataRecord getShotData(LivingEntity entity)
+    {
+        return CommonUtils.isRolling(entity) ? turretShotData : standardShotData;
+    }
+
+    public CommonRecords.ProjectileDataRecord getProjectileData(LivingEntity entity)
+    {
+        return CommonUtils.isRolling(entity) ? turretProjectileData : standardProjectileData;
+    }
+
     public record DataRecord(
         CommonRecords.ProjectileDataRecord projectile,
         CommonRecords.ShotDataRecord shot,
@@ -163,15 +174,13 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
             ).apply(instance, RollDataRecord::new)
         );
 
-        public double getRollImpulse()
+        public float getRollImpulse()
         {
             // x is speed, this should be the value that should be found
-            // x * 0.4 ^ y = 0.001
-            // y = log(0.4, 0.001)
-            // rollDistance = x * roll_duration + x * 0.4 ^ log(0.4, 0.001)
-            // rollDistance = x * (roll_duration + 0.4 ^ log(0.4, 0.001))
-            // rollDistance / (roll_duration + 0.4 ^ log(0.4, 0.001)) = x
-            return rollDistance / (rollDuration + Math.pow(0.4, Math.log10(0.001) / Math.log10(0.4)));
+            // rollDistance = x * roll_duration + x / (1 - 0.4)
+            // rollDistance = x * (roll_duration + 0.6)
+            // rollDistance / (roll_duration + 0.6) = x
+            return rollDistance / (rollDuration + 0.4f) / SplatcraftConvertors.SplatoonFramesPerMinecraftTick;
         }
 
         public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false);

@@ -67,6 +67,7 @@ public class SplatcraftConfig
         public static ForgeConfigSpec.BooleanValue vanillaInkDurability;
         public static ForgeConfigSpec.BooleanValue holdBarrierToRender;
         public static ForgeConfigSpec.IntValue barrierRenderDistance;
+        public static ForgeConfigSpec.DoubleValue inkTankGuiScale;
         public static ForgeConfigSpec.BooleanValue colorLock;
         public static ForgeConfigSpec.BooleanValue makeShinier;
         public static ForgeConfigSpec.EnumValue<PreventBobView> preventBobView;
@@ -95,6 +96,7 @@ public class SplatcraftConfig
                 .define("splatcraft.lowInkWarning", true);
             coloredPlayerNames = client.comment("Determines whether instances of player names share the same color as their ink.")
                 .define("splatcraft.coloredPlayerNames", true);
+            inkTankGuiScale = client.comment("Specifies the scale of the GUI that is associated with the ink tank.").defineInRange("splatcraft.inkTankGuiScale", 1f, 0.1f, 10f);
         }
     }
 }

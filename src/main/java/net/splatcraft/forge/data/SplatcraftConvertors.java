@@ -36,8 +36,8 @@ public class SplatcraftConvertors
             dataRecord.distanceBetweenInkDrops() / DistanceUnitsPerMinecraftSquare,
             dataRecord.baseDamage() / SplatoonHealthPerMinecraftHealth,
             dataRecord.minDamage() / SplatoonHealthPerMinecraftHealth,
-            dataRecord.damageDecayStartTick() / SplatoonHealthPerMinecraftHealth * SplatoonFramesPerMinecraftTick,
-            dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth * SplatoonFramesPerMinecraftTick);
+            dataRecord.damageDecayStartTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
+            dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick);
     }
 
     public static CommonRecords.ShotDataRecord convert(CommonRecords.ShotDataRecord dataRecord)
@@ -75,8 +75,8 @@ public class SplatcraftConvertors
             multiplyIfPresentFloat(dataRecord.distanceBetweenInkDrops(), 1.0 / DistanceUnitsPerMinecraftSquare),
             multiplyIfPresentFloat(dataRecord.baseDamage(), 1.0 / SplatoonHealthPerMinecraftHealth),
             multiplyIfPresentFloat(dataRecord.minDamage(), 1.0 / SplatoonHealthPerMinecraftHealth),
-            multiplyIfPresentFloat(dataRecord.damageDecayStartTick(), 1.0 / SplatoonHealthPerMinecraftHealth * SplatoonFramesPerMinecraftTick),
-            multiplyIfPresentFloat(dataRecord.damageDecayPerTick(), 1.0 / SplatoonHealthPerMinecraftHealth * SplatoonFramesPerMinecraftTick));
+            multiplyIfPresentFloat(dataRecord.damageDecayStartTick(), 1.0 / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick),
+            multiplyIfPresentFloat(dataRecord.damageDecayPerTick(), 1.0 / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick));
     }
 
     public static CommonRecords.OptionalShotDataRecord convert(CommonRecords.OptionalShotDataRecord dataRecord)
@@ -118,14 +118,29 @@ public class SplatcraftConvertors
         if (SkipConverting)
             return dataRecord;
 
+        float rollTotalTime = 0;
+        float startupValue = (float) dataRecord.rollStartup() / SplatoonFramesPerMinecraftTick;
+        rollTotalTime += startupValue;
+        byte roundedStartup = (byte) startupValue;
+
+        float durationValue = (float) dataRecord.rollDuration() / SplatoonFramesPerMinecraftTick;
+        rollTotalTime += durationValue;
+
+        byte roundedDuration = (byte) (rollTotalTime - roundedStartup);
+
+        float endlagValue = (float) dataRecord.rollEndlag() / SplatoonFramesPerMinecraftTick;
+        rollTotalTime += endlagValue;
+
+        byte roundedEndlag = (byte) Math.ceil(rollTotalTime - roundedStartup - roundedDuration);
+
         return new DualieWeaponSettings.RollDataRecord(
             dataRecord.count(),
             dataRecord.rollDistance() / DistanceUnitsPerMinecraftSquare,
             dataRecord.inkConsumption(),
             dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
-            (byte) (dataRecord.rollStartup() / SplatoonFramesPerMinecraftTick),
-            (byte) (dataRecord.rollDuration() / SplatoonFramesPerMinecraftTick),
-            (byte) (dataRecord.rollEndlag() / SplatoonFramesPerMinecraftTick),
+            roundedStartup,
+            roundedDuration,
+            roundedEndlag,
             dataRecord.turretDuration(),
             dataRecord.lastRollTurretDuration(),
             dataRecord.canMove()

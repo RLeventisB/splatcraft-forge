@@ -14,15 +14,15 @@ public class DodgeRollPacket extends PlayC2SPacket
     UUID target;
     ItemStack activeDualie;
     int maxRolls;
-    Vec2 rollDirection;
+    Vec2 rollPotency;
     InteractionHand hand;
 
-    public DodgeRollPacket(UUID target, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollDirection)
+    public DodgeRollPacket(UUID target, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency)
     {
         this.target = target;
         this.activeDualie = activeDualie;
         this.maxRolls = maxRolls;
-        this.rollDirection = rollDirection;
+        this.rollPotency = rollPotency;
         this.hand = hand;
     }
 
@@ -35,7 +35,7 @@ public class DodgeRollPacket extends PlayC2SPacket
     public void execute(Player player)
     {
         Player target = player.level().getPlayerByUUID(this.target);
-        ((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, hand, maxRolls, rollDirection, false);
+        ((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, hand, maxRolls, rollPotency, false);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class DodgeRollPacket extends PlayC2SPacket
         buffer.writeItem(activeDualie);
         buffer.writeBoolean(hand == InteractionHand.OFF_HAND);
         buffer.writeInt(maxRolls);
-        buffer.writeFloat(rollDirection.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3 uses doubles)
-        buffer.writeFloat(rollDirection.y);
+        buffer.writeFloat(rollPotency.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3 uses doubles)
+        buffer.writeFloat(rollPotency.y);
     }
 }
