@@ -20,7 +20,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.forge.Splatcraft;
 import net.splatcraft.forge.blocks.IColoredBlock;
@@ -257,26 +259,11 @@ public class InkBlockUtils
 
         if (!SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
             return false;
-        BlockState blockState = level.getBlockState(pos.relative(direction));
-        VoxelShape collisionShape = blockState.getCollisionShape(level, pos);
-        if (!blockState.canOcclude())
-            return false;
-        Direction.Axis inkAxis = direction.getAxis();
-        for (var axis : Direction.Axis.values())
-        {
-            if (inkAxis == axis)
-            {
-                if (direction.getAxisDirection() == Direction.AxisDirection.NEGATIVE ? collisionShape.max(axis) < 1 : collisionShape.min(axis) > 0)
-                    return false;
-            }
-            else
-            {
-                if (collisionShape.max(axis) < 1 || collisionShape.min(axis) > 0)
-                    return false;
-            }
-        }
-
-        return true;
+        BlockState blockState = level.getBlockState(pos);
+        BlockState occludingBlockState = level.getBlockState(pos.relative(direction));
+        VoxelShape blockCollision = blockState.getCollisionShape(level, pos).getFaceShape(direction);
+        VoxelShape occludingCollision = occludingBlockState.getCollisionShape(level, pos.relative(direction)).getFaceShape(direction.getOpposite());
+        return blockState.canOcclude() && !Shapes.joinIsNotEmpty(blockCollision, occludingCollision, BooleanOp.NOT_SAME);
     }
 
     public static boolean isBlockUninkable(Level level, BlockPos pos)
