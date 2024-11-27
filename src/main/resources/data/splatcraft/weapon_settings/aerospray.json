@@ -1,19 +1,21 @@
 {
     "type": "splatcraft:shooter",
     "projectile": {
-        "size": 0.267,
-        "speed": 4.4,
+        "size": 2,
+        "speed": 22,
         "delay_speed_mult": 0.86,
-        "ink_coverage_on_impact": 1.424,
-        "ink_drop_coverage": 0.8,
-        "distance_between_drops": 8.333333,
-        "straight_shot_ticks": 1,
-        "base_damage": 4.8,
-        "decayed_damage": 2.4,
-        "damage_decay_start_tick": 2.66666666,
-        "damage_decay_per_tick": 0.45
+        "ink_coverage_on_impact": 18.334,
+        "ink_drop_coverage": 13.2,
+        "distance_between_drops": 125,
+        "straight_shot_ticks": 3,
+        "base_damage": 24,
+        "decayed_damage": 12,
+        "damage_decay_start_tick": 8,
+        "damage_decay_per_tick": 0.75
     },
     "shot": {
+        "startup_ticks": 3,
+        "startup_ticks_from_squid": 10,
         "endlag_ticks": 1,
         "accuracy_data": {
             "ground_deviation_degrees": 13,
@@ -21,14 +23,12 @@
             "chance_min": 0.06,
             "chance_max": 0.5,
             "chance_increase_per_shot": 0.03,
-            "time_inactive_to_decrease": 1.33333333,
-            "chance_decrease_when_inactive": 0.03
+            "time_inactive_to_decrease": 4,
+            "chance_decrease_when_inactive": 0.01
         },
 
-        "ground_inaccuracy": 13,
-        "airborne_inaccuracy": 16,
         "ink_consumption": 0.5,
-        "ink_recovery_cooldown": 5
+        "ink_recovery_cooldown": 15
     },
     "full_damage_to_mobs": false,
     "mobility": 0.72
