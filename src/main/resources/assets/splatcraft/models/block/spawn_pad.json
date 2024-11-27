@@ -7,7 +7,7 @@
     "render_type": "cutout",
     "textures": {
         "1": "splatcraft:block/spawn_pad",
-        "particle": "splatcraft:particle/spawn_pad"
+        "particle": "splatcraft:block/spawn_pad_particle"
     },
     "elements": [
         {

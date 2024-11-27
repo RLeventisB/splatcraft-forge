@@ -77,6 +77,8 @@ import java.util.stream.StreamSupport;
 public class ChunkInkHandler
 {
     public static final HashMap<Level, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
+    private static final HashMap<Level, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
+    private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
 
     public static void addInkToRemove(Level level, BlockPos pos)
     {
@@ -142,7 +144,19 @@ public class ChunkInkHandler
             {
                 if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(level, pos, Direction.from3DDataValue(i), true))
                 {
-                    ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
+                    List<BlockPos> blockPos = INK_IGNORE_REMOVE.get(level);
+                    if (INK_IGNORE_REMOVE.containsKey(level) && blockPos.contains(pos))
+                    {
+                        blockPos.remove(pos);
+                        if (blockPos.isEmpty())
+                            INK_IGNORE_REMOVE.remove(level);
+                        else
+                            INK_IGNORE_REMOVE.put(level, blockPos);
+                    }
+                    else
+                    {
+                        ColorUtils.addInkDestroyParticle(level, pos, inkBlock.color(i));
+                    }
                     InkBlockUtils.clearInk(level, pos, i, false);
                 }
             }
@@ -310,8 +324,6 @@ public class ChunkInkHandler
         }
     }
 
-    private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
-
     @OnlyIn(Dist.CLIENT)
     public static void updateClientInkForChunk(Level level, LevelChunk chunk)
     {
@@ -336,6 +348,21 @@ public class ChunkInkHandler
     public static void markInkInChunkForUpdate(ChunkPos pos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry> map)
     {
         INK_CACHE.put(pos, map);
+    }
+
+    public static void addBlocksToIgnoreRemoveInk(Level world, Collection<BlockPos> positions)
+    {
+        List<BlockPos> blocks;
+        if (INK_IGNORE_REMOVE.containsKey(world))
+        {
+            blocks = INK_IGNORE_REMOVE.get(world);
+        }
+        else
+        {
+            blocks = new ArrayList<>();
+        }
+        blocks.addAll(positions);
+        INK_IGNORE_REMOVE.put(world, blocks);
     }
 
     @OnlyIn(Dist.CLIENT)

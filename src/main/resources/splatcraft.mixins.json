@@ -16,6 +16,7 @@
         "SheepMixin",
         "SquidPassthroughMixin",
         "accessors.EntityAccessor",
+        "compat.CreateMixin",
         "compat.SodiumMixin$ChunkRebuildMixin"
     ],
     "minVersion": "0.8",

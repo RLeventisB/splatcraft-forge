@@ -134,7 +134,7 @@ dependencies {
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
     implementation 'org.jetbrains:annotations:23.0.0'
 
-    implementation fg.deobf("curse.maven:embeddium-908741:5681725")
+    compileOnly fg.deobf("curse.maven:embeddium-908741:5681725")
     implementation fg.deobf("curse.maven:config-menus-forge-544048:4672356")
 
     implementation fg.deobf("com.simibubi.create:create-${create_minecraft_version}:${create_version}:slim") { transitive = false }

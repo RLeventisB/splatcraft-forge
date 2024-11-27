@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class MixinInitializer implements IMixinConfigPlugin
 {
-    public boolean sodiumInstalled;
+    public boolean sodiumInstalled, createInstalled;
 
     @Override
     public void onLoad(String mixinPackage)
@@ -21,6 +21,7 @@ public class MixinInitializer implements IMixinConfigPlugin
         {
 //            Class.forName("me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer", false, null);
             sodiumInstalled = LoadingModList.get().getModFileById("rubidium") != null;
+            createInstalled = LoadingModList.get().getModFileById("create") != null;
         }
 //        catch (ClassNotFoundException ignored)
 //        {
@@ -39,7 +40,14 @@ public class MixinInitializer implements IMixinConfigPlugin
     {
         if (mixinClassName.startsWith("net.splatcraft.forge.mixin.compat"))
         {
-            return sodiumInstalled;
+            if (mixinClassName.contains("Sodium"))
+            {
+                return sodiumInstalled;
+            }
+            if (mixinClassName.contains("Create"))
+            {
+                return createInstalled;
+            }
         }
         return true;
     }

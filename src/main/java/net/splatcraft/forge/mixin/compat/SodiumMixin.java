@@ -44,7 +44,7 @@ import java.util.List;
 
 public class SodiumMixin
 {
-    @Mixin(BlockRenderer.class)
+    @Mixin(value = BlockRenderer.class, remap = false)
     public abstract static class BlockRendererMixin
     {
         @Unique
@@ -103,7 +103,7 @@ public class SodiumMixin
         }
     }
 
-    @Mixin(ChunkBuilderMeshingTask.class)
+    @Mixin(value = ChunkBuilderMeshingTask.class, remap = false)
     public static class ChunkRebuildMixin
     {
         @Unique
