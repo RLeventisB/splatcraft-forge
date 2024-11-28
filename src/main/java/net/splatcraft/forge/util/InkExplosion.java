@@ -167,20 +167,21 @@ public class InkExplosion
                     if (dist <= paintRadius + noiseRange)
                     {
                         List<Tuple<Vec3, Direction>> points = new ArrayList<>(3);
+//                        level.getChunk(pos).
 
 //                        Vec3 worldClosestPos = data[0].add(pos.getCenter());
 //                        points.add(new Tuple<>(worldClosestPos, Direction.getNearest(position.x - worldClosestPos.x, position.y - worldClosestPos.y, position.z - worldClosestPos.z)));
                         if (position.y > blockCenterY)
                             points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY + 0.5, blockCenterZ), Direction.UP));
-                        if (position.y < blockCenterY)
+                        else if (position.y < blockCenterY)
                             points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY - 0.5, blockCenterZ), Direction.DOWN));
                         if (position.x > blockCenterX)
                             points.add(new Tuple<>(new Vec3(blockCenterX + 0.5, blockCenterY, blockCenterZ), Direction.EAST));
-                        if (position.x < blockCenterX)
+                        else if (position.x < blockCenterX)
                             points.add(new Tuple<>(new Vec3(blockCenterX - 0.5, blockCenterY, blockCenterZ), Direction.WEST));
                         if (position.z > blockCenterZ)
                             points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY, blockCenterZ + 0.5), Direction.SOUTH));
-                        if (position.z < blockCenterZ)
+                        else if (position.z < blockCenterZ)
                             points.add(new Tuple<>(new Vec3(blockCenterX, blockCenterY, blockCenterZ - 0.5), Direction.NORTH));
                         points.sort((tuple1, tuple2) -> Double.compare(tuple1.getA().distanceToSqr(position), tuple2.getA().distanceToSqr(position)));
 

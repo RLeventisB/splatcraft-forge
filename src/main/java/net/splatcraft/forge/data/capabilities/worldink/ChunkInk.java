@@ -168,10 +168,10 @@ public class ChunkInk
                 for (byte i = 0; i < 6; i++)
                 {
                     ink(
-                            pos,
-                            i,
-                            color,
-                            inkType
+                        pos,
+                        i,
+                        color,
+                        inkType
                     );
                 }
             }
@@ -213,9 +213,9 @@ public class ChunkInk
                         Direction direction = Direction.from3DDataValue(activeIndex);
 
                         ink(pos,
-                                activeIndex,
-                                element.getInt("Color" + direction.name()),
-                                InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type" + direction.name())))
+                            activeIndex,
+                            element.getInt("Color" + direction.name()),
+                            InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type" + direction.name())))
                         );
                         if (isPermanent)
                             markInmutable(pos);

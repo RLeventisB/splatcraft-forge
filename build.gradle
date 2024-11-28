@@ -3,18 +3,21 @@ buildscript {
         maven { url = 'https://maven.minecraftforge.net' }
         maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
         maven { url = "https://plugins.gradle.org/m2/" }
-        maven { url = 'https://maven.parchmentmc.org' }
+        maven {
+            name = "Fabric"
+            url = uri("https://maven.fabricmc.net/")
+        }
         mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
         classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7.+'
         classpath group: 'net.kyori', name: 'indra-git', version: '3.+'
-        classpath group: 'org.parchmentmc', name: 'librarian', version: '1.+'
+        classpath group: 'net.fabricmc', name: 'fabric-loom', version: '+'
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
+apply plugin: 'fabric-loom'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'org.spongepowered.mixin'
@@ -45,9 +48,6 @@ repositories {
         content {
             includeGroup "curse.maven"
         }
-    }
-    maven {
-        url "https://maven.blamejared.com"
     }
     maven {
         name "KosmX's maven"
@@ -131,7 +131,7 @@ dependencies {
         jarJar.ranged(it, "[0.3.0,)")
     }
 
-    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    annotationProcessor "net.fabricmc:sponge-mixin:0.15.4+mixin.0.8.7"
     implementation 'org.jetbrains:annotations:23.0.0'
 
     compileOnly fg.deobf("curse.maven:embeddium-908741:5681725")

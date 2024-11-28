@@ -394,7 +394,7 @@ public class ChunkInkHandler
                             Arrays.fill(output, ColorARGB.toABGR(color, 255));
                             break;
                         case 1: // glitter
-                            Arrays.fill(output, 0xAAFFFFFF);
+                            Arrays.fill(output, 0xFFFFFFFF);
                             break;
                         case 2: // permanent ink overlay
                             Arrays.fill(output, 0xFFFFFFFF);
