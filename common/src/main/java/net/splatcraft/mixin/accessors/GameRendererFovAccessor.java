@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin.accessors;
+package net.splatcraft.mixin.accessors;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;

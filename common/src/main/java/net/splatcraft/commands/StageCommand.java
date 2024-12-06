@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands;
+package net.splatcraft.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -19,22 +19,22 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.server.command.EnumArgument;
-import net.splatcraft.forge.blocks.SpawnPadBlock;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.StageGameMode;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.blocks.SpawnPadBlock;
+import net.splatcraft.commands.arguments.InkColorArgument;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.StageGameMode;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateStageListPacket;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.tileentities.SpawnPadTileEntity;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -102,7 +102,7 @@ public class StageCommand
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> stageId(String argumentName)
     {
-        return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest((context.getSource().getLevel().isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).keySet(), builder));
+        return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) -> SharedSuggestionProvider.suggest((context.getSource().getLevel().isClient() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).keySet(), builder));
     }
 
     public static RequiredArgumentBuilder<CommandSourceStack, String> stageTeam(String argumentName, String stageArgumentName)
@@ -111,7 +111,7 @@ public class StageCommand
         {
             try
             {
-                Stage stage = (context.getSource().getLevel().isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).get(StringArgumentType.getString(context, stageArgumentName));
+                Stage stage = (context.getSource().getLevel().isClient() ? ClientUtils.clientStages : SaveInfoCapability.get(context.getSource().getServer()).getStages()).get(StringArgumentType.getString(context, stageArgumentName));
                 if (stage == null)
                     return Suggestions.empty();
                 return SharedSuggestionProvider.suggest(stage.getTeamIds(), builder);
@@ -433,7 +433,7 @@ public class StageCommand
 
         Stage stage = stages.get(stageId);
         HashMap<Integer, ArrayList<SpawnPadTileEntity>> spawnPads = stage.getSpawnPads(source.getLevel());
-        ServerLevel stageLevel = stage.getStageLevel(source.getServer());
+        ServerWorld stageLevel = stage.getStageLevel(source.getServer());
 
         if (spawnPads.isEmpty())
             throw NO_SPAWN_PADS_FOUND.create(stageId);
@@ -459,7 +459,7 @@ public class StageCommand
 
                 if (setSpawn)
                 {
-                    player.setRespawnPosition(player.level().dimension(), te.getBlockPos(), player.level().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+                    player.setRespawnPosition(player.getWorld().dimension(), te.getBlockPos(), player.getWorld().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
                 }
 
                 playersTeleported.put(playerColor, playersTeleported.get(playerColor) + 1);
@@ -483,7 +483,7 @@ public class StageCommand
             throw STAGE_NOT_FOUND.create(stageId);
 
         Stage stage = stages.get(stageId);
-        ServerLevel stageLevel = stage.getStageLevel(source.getServer());
+        ServerWorld stageLevel = stage.getStageLevel(source.getServer());
         ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(stageLevel));
 
         if (spawnPads.isEmpty())
@@ -502,7 +502,7 @@ public class StageCommand
                 player.teleportTo(stageLevel, te.getBlockPos().getX() + .5, te.getBlockPos().getY() + .5, te.getBlockPos().getZ(), pitch, 0);
 
             if (setSpawn)
-                player.setRespawnPosition(player.level().dimension(), te.getBlockPos(), player.level().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+                player.setRespawnPosition(player.getWorld().dimension(), te.getBlockPos(), player.getWorld().getBlockState(te.getBlockPos()).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
 
             playersTeleported++;
         }

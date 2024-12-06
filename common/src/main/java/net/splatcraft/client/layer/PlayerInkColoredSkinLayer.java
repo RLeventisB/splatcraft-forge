@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.layer;
+package net.splatcraft.client.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -11,8 +11,8 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -21,9 +21,7 @@ import java.util.UUID;
 public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>
 {
     public static final HashMap<UUID, ResourceLocation> TEXTURES = new HashMap<>();
-
     public static final String PATH = "config/skins/";
-
     PlayerModel<AbstractClientPlayer> MODEL;
 
     public PlayerInkColoredSkinLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer, PlayerModel<AbstractClientPlayer> model)

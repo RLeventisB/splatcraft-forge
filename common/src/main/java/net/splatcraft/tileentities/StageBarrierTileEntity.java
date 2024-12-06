@@ -1,7 +1,7 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -12,13 +12,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.blocks.StageBarrierBlock;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.registries.SplatcraftDamageTypes;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.util.ClientUtils;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.blocks.StageBarrierBlock;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.util.ClientUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StageBarrierTileEntity extends BlockEntity
@@ -87,7 +87,7 @@ public class StageBarrierTileEntity extends BlockEntity
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
 
@@ -98,16 +98,16 @@ public class StageBarrierTileEntity extends BlockEntity
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound)
+    public void saveAdditional(NbtCompound compound)
     {
         compound.putInt("ActiveTime", activeTime);
         super.saveAdditional(compound);
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag()
+    public @NotNull NbtCompound getUpdateTag()
     {
-        return new CompoundTag()
+        return new NbtCompound()
         {{
             saveAdditional(this);
         }};

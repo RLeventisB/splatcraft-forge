@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -11,15 +11,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
@@ -71,8 +71,9 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         BlasterWeaponSettings settings = getSettings(stack);
         return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
             BlasterItem::getEndlagConsumer,
-            (data, accumulatedTime, entity1) -> {
-                Level level = entity1.level();
+            (data, accumulatedTime, entity1) ->
+            {
+                Level level = entity1.getWorld();
                 if (!level.isClientSide())
                 {
                     BlasterItem item = (BlasterItem) data.useItem.getItem();
@@ -127,7 +128,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         @Override
         public void onFire(Player player, float time)
         {
-            Level level = player.level();
+            Level level = player.getWorld();
             if (!level.isClientSide())
             {
                 BlasterItem item = getItem();

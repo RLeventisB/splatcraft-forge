@@ -1,4 +1,4 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -14,12 +14,12 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.OnDatapackSyncEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.InkColorAliases;
-import net.splatcraft.forge.data.InkColorTags;
-import net.splatcraft.forge.items.weapons.settings.*;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateWeaponSettingsPacket;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.data.InkColorTags;
+import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateWeaponSettingsPacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;

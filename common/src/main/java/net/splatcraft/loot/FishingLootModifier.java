@@ -1,4 +1,4 @@
-package net.splatcraft.forge.loot;
+package net.splatcraft.loot;
 
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;

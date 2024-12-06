@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui;
+package net.splatcraft.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -10,14 +10,14 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.tileentities.InkVatTileEntity;
-import net.splatcraft.forge.tileentities.container.InkVatContainer;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.tileentities.InkVatTileEntity;
+import net.splatcraft.tileentities.container.InkVatContainer;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -85,7 +85,6 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
         drawScrollBar(pGuiGraphics, scrollBarX, scrollBarY, 132, mouseX, mouseY);
     }
 
-    @SuppressWarnings("ConstantConditions")
     protected void drawAvailableColors(GuiGraphics guiGraphics, List<Integer> colorSelection, int x, int y)
     {
         TextureManager textureManager = minecraft.getTextureManager();
@@ -117,7 +116,6 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     protected void drawScrollBar(GuiGraphics guiGraphics, int x, int y, int width, int mouseX, int mouseY)
     {
         TextureManager textureManager = minecraft.getTextureManager();
@@ -193,7 +191,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
         if (isHovering(scrollBarX, scrollBarY, 146, 10, mouseX, mouseY) && canScroll)
         {
             scrolling = true;
-            scroll = Mth.clamp((float) (mouseX - leftPos - scrollBarX) / 132f, 0f, 1f);
+            scroll = MathHelper.clamp((float) (mouseX - leftPos - scrollBarX) / 132f, 0f, 1f);
         }
 
         return super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -214,7 +212,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     {
         if (scrolling && canScroll)
         {
-            scroll = Mth.clamp((float) (x - leftPos - scrollBarX) / 132f, 0f, 1f);
+            scroll = MathHelper.clamp((float) (x - leftPos - scrollBarX) / 132f, 0f, 1f);
         }
 
         return super.mouseDragged(x, y, mouseButton, p_231045_6_, p_231045_8_);
@@ -225,7 +223,7 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     {
         if (canScroll)
         {
-            scroll = Mth.clamp(scroll + 1 / maxScroll * -Math.signum((float) amount), 0.0f, 1.0f);
+            scroll = MathHelper.clamp(scroll + 1 / maxScroll * -Math.signum((float) amount), 0.0f, 1.0f);
         }
 
         return true;

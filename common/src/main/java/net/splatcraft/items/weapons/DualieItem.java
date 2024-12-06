@@ -1,10 +1,10 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -18,19 +18,19 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
-import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.DodgeRollEndPacket;
-import net.splatcraft.forge.network.c2s.DodgeRollPacket;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
+import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.DodgeRollEndPacket;
+import net.splatcraft.network.c2s.DodgeRollPacket;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -109,7 +109,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
         DualieWeaponSettings activeSettings = getSettings(activeDualie);
 
-        if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
+        if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.getWorld().isClientSide()))
         {
             ShootingHandler.notifyForceEndShooting(player);
             int turretDuration = getRollTurretDuration(activeDualie);
@@ -157,7 +157,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
     {
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
 
         nbt.putBoolean("IsPlural", false);
         if (entity instanceof LivingEntity livingEntity)
@@ -248,10 +248,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         DualieWeaponSettings settings = getSettings(stack);
         CommonRecords.ShotDataRecord shotData = settings.getShotData(entity);
         CommonRecords.ProjectileDataRecord projectileData = settings.getProjectileData(entity);
-        Level level = entity.level();
+        Level level = entity.getWorld();
         return new ShootingHandler.FiringStatData(shotData.squidStartupTicks(), shotData.startupTicks(), shotData.endlagTicks(),
             null,
-            (data, accumulatedTime, entity1) -> {
+            (data, accumulatedTime, entity1) ->
+            {
                 if (!level.isClientSide())
                 {
                     if (reduceInk(entity1, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
@@ -306,7 +307,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             this.canSlide = canSlide;
         }
 
-        public DodgeRollCooldown(CompoundTag nbt)
+        public DodgeRollCooldown(NbtCompound nbt)
         {
             super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, false, false, true, false);
 
@@ -322,7 +323,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         @Override
         public void tick(Player player)
         {
-            boolean local = player.level().isClientSide;
+            boolean local = player.getWorld().isClientSide;
             boolean doLogic = true;
             while (doLogic)
             {
@@ -333,7 +334,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
                         {
                             if (!local)
                             {
-                                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.level().random.nextFloat() - player.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, ((player.getWorld().random.nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
                                 InkExplosion.createInkExplosion(player, player.position(), 0.9f, 0, 0, InkBlockUtils.getInkType(player), storedStack);
                             }
                             player.setDiscardFriction(true);
@@ -392,7 +393,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         }
 
         @Override
-        public CompoundTag writeNBT(CompoundTag nbt)
+        public NbtCompound writeNBT(NbtCompound nbt)
         {
             nbt.putBoolean("DodgeRollCooldown", true);
             nbt.putByte("RollFrame", rollFrame);
@@ -440,7 +441,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             ROLL(1),
             AFTER_ROLL(2),
             TURRET(3);
-
             final byte value;
 
             RollState(int value)

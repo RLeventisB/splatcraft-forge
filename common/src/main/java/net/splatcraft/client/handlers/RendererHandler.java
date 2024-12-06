@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.handlers;
+package net.splatcraft.client.handlers;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -7,8 +7,8 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ClientWorld;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
@@ -25,7 +25,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
@@ -38,7 +38,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HalfTransparentBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
@@ -48,24 +48,24 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.client.layer.PlayerInkColoredSkinLayer;
-import net.splatcraft.forge.client.renderer.InkSquidRenderer;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.IChargeableWeapon;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
-import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.forge.mixin.accessors.EntityAccessor;
-import net.splatcraft.forge.mixin.accessors.GameRendererFovAccessor;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
+import net.splatcraft.client.renderer.InkSquidRenderer;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
+import net.splatcraft.util.*;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -73,9 +73,8 @@ import org.joml.Vector4f;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static net.splatcraft.forge.items.weapons.WeaponBaseItem.enoughInk;
+import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
 
-@SuppressWarnings("deprecation")
 @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = Splatcraft.MODID)
 public class RendererHandler
 {
@@ -288,7 +287,7 @@ public class RendererHandler
     @SubscribeEvent
     public static void onChatMessage(ClientChatReceivedEvent event)
     {
-        ClientLevel level = Minecraft.getInstance().level;
+        ClientWorld level = Minecraft.getInstance().level;
         if (level != null && SplatcraftConfig.Client.coloredPlayerNames.get())
         {
             HashMap<String, UUID> players = new HashMap<>();
@@ -356,7 +355,7 @@ public class RendererHandler
         {
             return;
         }
-        net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo info = PlayerInfoCapability.get(player);
+        net.splatcraft.data.capabilities.playerinfo.PlayerInfo info = PlayerInfoCapability.get(player);
         //if (event.getType().equals(RenderGameOverlayEvent.ElementType.LAYER))
         {
             if (player.getMainHandItem().getItem() instanceof IChargeableWeapon || player.getOffhandItem().getItem() instanceof IChargeableWeapon)
@@ -424,24 +423,24 @@ public class RendererHandler
             float currentAirInfluence = airInfluenceResult.value();
             float currentDeviationChance = actualChanceResult.value();
 
-            float currentDeviation = Math.max(0.017453292f, Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f * 1.34f);
+            float currentDeviation = Math.max(0.017453292f, MathHelper.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * MathHelper.DEG_TO_RAD / 2f * 1.34f);
 
-            float aspectRatio = Mth.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
+            float aspectRatio = MathHelper.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
 
             float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
             float[] rgb = new float[]
                 {
-                    Mth.lerp(value, 0.6f, playerColor[0]),
-                    Mth.lerp(value, 0.6f, playerColor[1]),
-                    Mth.lerp(value, 0.6f, playerColor[2])
+                    MathHelper.lerp(value, 0.6f, playerColor[0]),
+                    MathHelper.lerp(value, 0.6f, playerColor[1]),
+                    MathHelper.lerp(value, 0.6f, playerColor[2])
                 };
             RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
 
-            Vec3 deltaMovementLerped = player.getDeltaMovementLerped(frameTime);
+            Vec3d deltaMovementLerped = player.getDeltaMovementLerped(frameTime);
 
             deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(frameTime));
             // TODO: do this correctly please this aproximation works half the time
-            Vec3 relativePos = new Vec3(0, 0, weaponBaseItem.getSettings(player.getMainHandItem()).getSpeedForRender(player, player.getMainHandItem())).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
+            Vec3d relativePos = new Vec3d(0, 0, weaponBaseItem.getSettings(player.getMainHandItem()).getSpeedForRender(player, player.getMainHandItem())).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
             double horizontalScale = Math.PI / relativePos.z;
             relativePos = relativePos.multiply(horizontalScale, horizontalScale, 1);
             float textureSize = 4 * (scale + 1);
@@ -450,7 +449,7 @@ public class RendererHandler
             {
                 for (int y = -1; y <= 1; y += 2)
                 {
-                    Vec3 rotatedPos = relativePos.yRot(currentDeviation * x).xRot(currentDeviation * y);
+                    Vec3d rotatedPos = relativePos.yRot(currentDeviation * x).xRot(currentDeviation * y);
 
                     Vector3f camSpace = rotatedPos.toVector3f();
 
@@ -539,7 +538,7 @@ public class RendererHandler
 
                     if (SplatcraftConfig.Client.vanillaInkDurability.get())
                     {
-                        float[] durRgb = ColorUtils.hexToRGB(Mth.hsvToRgb(Math.max(0.0F, inkPctgLerp) / 3.0F, 1.0F, 1.0F));
+                        float[] durRgb = ColorUtils.hexToRGB(MathHelper.hsvToRgb(Math.max(0.0F, inkPctgLerp) / 3.0F, 1.0F, 1.0F));
                         RenderSystem.setShaderColor(durRgb[0], durRgb[1], durRgb[2], 1);
                     }
                     else

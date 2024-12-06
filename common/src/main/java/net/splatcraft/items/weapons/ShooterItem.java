@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -9,13 +9,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.weapons.settings.ShooterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.weapons.settings.ShooterWeaponSettings;
+import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
@@ -64,8 +64,9 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
         ShooterWeaponSettings settings = getSettings(stack);
         return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
             null,
-            (data, accumulatedTime, entity1) -> {
-                Level level = entity1.level();
+            (data, accumulatedTime, entity1) ->
+            {
+                Level level = entity1.getWorld();
                 if (!level.isClientSide())
                 {
                     if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))

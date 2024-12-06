@@ -1,11 +1,11 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import com.google.common.collect.Maps;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.InkColorAliases;
-import net.splatcraft.forge.util.InkColor;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.util.InkColor;
 
 import java.util.*;
 

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui;
+package net.splatcraft.client.gui;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
@@ -17,18 +17,18 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.client.handlers.JumpLureHudHandler;
-import net.splatcraft.forge.mixin.accessors.GameRendererFovAccessor;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.GraphicsUtils;
+import net.splatcraft.client.handlers.JumpLureHudHandler;
+import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.GraphicsUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
@@ -39,7 +39,6 @@ import java.util.UUID;
 
 public class SuperJumpSelectorScreen
 {
-
     private static final Minecraft mc = Minecraft.getInstance();
 
     public SuperJumpSelectorScreen()
@@ -96,7 +95,7 @@ public class SuperJumpSelectorScreen
             float x = -1, y = -1, scale = 1;
             if (i == 1 && targets.canTargetSpawn && option instanceof ItemStackMenuItem)
             {
-                Vec3 spawnPos = Vec3.atCenterOf(targets.spawnPosition);
+                Vec3d spawnPos = Vec3d.atCenterOf(targets.spawnPosition);
                 Vector4f screenPos = GraphicsUtils.worldToScreenSpace(spawnPos, projectionMatrix);
                 if (screenPos.z > 0)
                     continue;
@@ -108,7 +107,7 @@ public class SuperJumpSelectorScreen
             }
             else if (option instanceof PlayerMenuItem menuItem)
             {
-                Vec3 playerPos = mc.level.getPlayerByUUID(menuItem.profile.getId()).position();
+                Vec3d playerPos = mc.level.getPlayerByUUID(menuItem.profile.getId()).position();
                 Vector4f screenPos = GraphicsUtils.worldToScreenSpace(playerPos, projectionMatrix);
                 if (screenPos.z > 0)
                     continue;
@@ -119,7 +118,7 @@ public class SuperJumpSelectorScreen
                 y = (screenPos.y * screenHeight);
             }
             scale = Math.max(1, (float) Math.pow(scale, 0.3f));
-            boolean close = Mth.lengthSquared(x, y) < 1024;
+            boolean close = MathHelper.lengthSquared(x, y) < 1024;
             if (close && clicked && !selected && index != i)
             {
                 scrollDelta = i;
@@ -177,7 +176,6 @@ public class SuperJumpSelectorScreen
 
     static class ItemStackMenuItem implements MenuItem
     {
-
         final Component name;
         final ItemStack stack;
 

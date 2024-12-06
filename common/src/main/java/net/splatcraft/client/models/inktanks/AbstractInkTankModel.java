@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.models.inktanks;
+package net.splatcraft.client.models.inktanks;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -13,9 +13,7 @@ import java.util.List;
 
 public class AbstractInkTankModel extends HumanoidModel<LivingEntity>
 {
-
     protected List<ModelPart> inkPieces = new ArrayList<>();
-
     protected float inkBarY = 0;
 
     public AbstractInkTankModel(ModelPart root)

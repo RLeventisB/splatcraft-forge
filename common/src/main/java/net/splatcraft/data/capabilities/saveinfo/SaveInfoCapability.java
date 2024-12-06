@@ -1,7 +1,7 @@
-package net.splatcraft.forge.data.capabilities.saveinfo;
+package net.splatcraft.data.capabilities.saveinfo;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.Capability;
@@ -13,7 +13,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable<CompoundTag>
+public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
 {
     public static Capability<SaveInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
     {
@@ -35,13 +35,13 @@ public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable
     }
 
     @Override
-    public CompoundTag serializeNBT()
+    public NbtCompound serializeNBT()
     {
-        return opt.orElse(null).writeNBT(new CompoundTag());
+        return opt.orElse(null).writeNBT(new NbtCompound());
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt)
+    public void deserializeNBT(NbtCompound nbt)
     {
         opt.orElse(null).readNBT(nbt);
     }

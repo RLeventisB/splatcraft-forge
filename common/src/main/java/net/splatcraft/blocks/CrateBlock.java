@@ -1,14 +1,14 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,21 +32,20 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.CrateTileEntity;
-import net.splatcraft.forge.util.BlockInkedResult;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.CrateTileEntity;
+import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("deprecation")
 public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 {
     public static final IntegerProperty STATE = IntegerProperty.create("state", 0, 4);
@@ -70,16 +69,16 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 
         BlockPos pos = crate.getBlockPos();
 
-        LootParams.Builder contextBuilder = new LootParams.Builder((ServerLevel) level);
+        LootParams.Builder contextBuilder = new LootParams.Builder((ServerWorld) level);
         return level.getServer().getLootData().getLootTable(crate.getLootTable()).getRandomItems(contextBuilder.withLuck(luckValue)
-            .withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
+            .withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3d(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
     }
 
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @Nullable BlockGetter levelIn, @NotNull List<Component> tooltip, @NotNull TooltipFlag flagIn)
     {
         super.appendHoverText(stack, levelIn, tooltip, flagIn);
-        CompoundTag compoundnbt = stack.getTagElement("BlockEntityTag");
+        NbtCompound compoundnbt = stack.getTagElement("BlockEntityTag");
 
         if (!isSunken && compoundnbt == null)
             return;

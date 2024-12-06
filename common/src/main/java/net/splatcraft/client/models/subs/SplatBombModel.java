@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.models.subs;// Made with Blockbench 4.7.2
+package net.splatcraft.client.models.subs;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
@@ -9,9 +9,9 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.AbstractSubWeaponModel;
-import net.splatcraft.forge.entities.subs.SplatBombEntity;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.models.AbstractSubWeaponModel;
+import net.splatcraft.entities.subs.SplatBombEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class SplatBombModel extends AbstractSubWeaponModel<SplatBombEntity>

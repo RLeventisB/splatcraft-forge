@@ -1,11 +1,11 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -14,18 +14,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.client.handlers.PlayerMovementHandler;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.DualieItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.PlayerSetSquidC2SPacket;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.DualieItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
+import net.splatcraft.registries.SplatcraftGameRules;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
@@ -78,7 +78,7 @@ public class ClientUtils
     {
         Player player = getClientPlayer();
 
-        if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
+        if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
         {
             return 0;
         }
@@ -103,8 +103,8 @@ public class ClientUtils
         Vec2 direction = new Vec2(input.leftImpulse, input.forwardImpulse);
         float p_20018_ = player.getYRot(); // Entity::getInputVector
         Vec2 vec3 = direction.normalized().scale(rollSpeed);
-        float f = Mth.sin(p_20018_ * (0.017453292f));
-        float f1 = Mth.cos(p_20018_ * (0.017453292f));
+        float f = MathHelper.sin(p_20018_ * (0.017453292f));
+        float f1 = MathHelper.cos(p_20018_ * (0.017453292f));
         return new Vec2(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
     }
 
@@ -116,9 +116,9 @@ public class ClientUtils
         BlockPos tePos = te.getBlockPos();
 
         Vector3f lookVec = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
-        Vec3 blockVec = Vec3.atBottomCenterOf(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
+        Vec3d blockVec = Vec3d.atBottomCenterOf(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
 
-        Vec3 directionVec3d = blockVec.subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).normalize();
+        Vec3d directionVec3d = blockVec.subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).normalize();
         Vector3f directionVec = new Vector3f((float) directionVec3d.x, (float) directionVec3d.y, (float) directionVec3d.z);
         if (lookVec.dot(directionVec) > 0)
         {

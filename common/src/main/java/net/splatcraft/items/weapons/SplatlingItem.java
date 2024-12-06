@@ -1,10 +1,10 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -16,22 +16,22 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.client.audio.SplatlingChargingTickableSound;
-import net.splatcraft.forge.client.handlers.SplatcraftKeyHandler;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
-import net.splatcraft.forge.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.forge.items.weapons.settings.SplatlingWeaponSettings;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.ReleaseChargePacket;
-import net.splatcraft.forge.network.c2s.UpdateChargeStatePacket;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.client.audio.SplatlingChargingTickableSound;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.items.weapons.settings.SplatlingWeaponSettings;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.ReleaseChargePacket;
+import net.splatcraft.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.PlayerCooldown;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -68,28 +68,28 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
     {
         float min = getter.apply(settings.firstChargeLevelShot);
         float max = getter.apply(settings.secondChargeLevelShot);
-        return min + (max - min) * Mth.clamp(charge, 0, 1);
+        return min + (max - min) * MathHelper.clamp(charge, 0, 1);
     }
 
     public static float getScaledProjectileSettingFloat(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Float> getter)
     {
         float min = getter.apply(settings.firstChargeLevelProjectile);
         float max = getter.apply(settings.secondChargeLevelProjectile);
-        return min + (max - min) * Mth.clamp(charge, 0, 1);
+        return min + (max - min) * MathHelper.clamp(charge, 0, 1);
     }
 
     public static int getScaledShotSettingInt(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Integer> getter)
     {
         float min = getter.apply(settings.firstChargeLevelShot);
         float max = getter.apply(settings.secondChargeLevelShot);
-        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
+        return Math.round(min + (max - min) * MathHelper.clamp(charge, 0, 1));
     }
 
     public static int getScaledProjectileSettingInt(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Integer> getter)
     {
         float min = getter.apply(settings.firstChargeLevelProjectile);
         float max = getter.apply(settings.secondChargeLevelProjectile);
-        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
+        return Math.round(min + (max - min) * MathHelper.clamp(charge, 0, 1));
     }
 
     @Override
@@ -136,7 +136,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
             float prevCharge = PlayerCharge.getChargeValue(player, stack);
             float newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.secondChargeTime() : settings.chargeData.firstChargeTime());
 
-            if (!enoughInk(entity, this, Mth.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, timeLeft % 4 == 0))
+            if (!enoughInk(entity, this, MathHelper.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, timeLeft % 4 == 0))
             {
                 float rechargeMult = InkTankItem.rechargeMult(player.getItemBySlot(EquipmentSlot.CHEST), true);
                 if (!hasInkInTank(player, this) || rechargeMult == 0)
@@ -166,7 +166,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 
                 float chargeLevel = cooldown.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
                 float cooldownLeft = cooldown.getTime() / cooldown.getMaxTime();
-                float inkConsumed = Mth.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
+                float inkConsumed = MathHelper.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
                 float inkRefunded = inkConsumed * cooldownLeft;
 
                 refundInk(player, inkRefunded);
@@ -219,7 +219,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
         stack.getOrCreateTag().putFloat("Charge", charge);
 
         int cooldownTime = (int) (getDecayTicks(stack) * charge);
-        reduceInk(player, this, Mth.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
+        reduceInk(player, this, MathHelper.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
         PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, cooldownTime, player.getInventory().selected, player.getUsedItemHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.onGround()).setCancellable());
     }
 

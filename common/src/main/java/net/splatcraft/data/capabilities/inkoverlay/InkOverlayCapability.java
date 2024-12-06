@@ -1,7 +1,7 @@
-package net.splatcraft.forge.data.capabilities.inkoverlay;
+package net.splatcraft.data.capabilities.inkoverlay;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -12,12 +12,11 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkOverlayCapability implements ICapabilityProvider, INBTSerializable<CompoundTag>
+public class InkOverlayCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
 {
     public static Capability<InkOverlayInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
     {
     });
-
     private InkOverlayInfo inkOverlayInfo = null;
     private final LazyOptional<InkOverlayInfo> opt = LazyOptional.of(() ->
         inkOverlayInfo == null ? (inkOverlayInfo = new InkOverlayInfo()) : inkOverlayInfo);
@@ -40,13 +39,13 @@ public class InkOverlayCapability implements ICapabilityProvider, INBTSerializab
     }
 
     @Override
-    public CompoundTag serializeNBT()
+    public NbtCompound serializeNBT()
     {
-        return opt.orElse(null).writeNBT(new CompoundTag());
+        return opt.orElse(null).writeNBT(new NbtCompound());
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt)
+    public void deserializeNBT(NbtCompound nbt)
     {
         opt.orElse(null).readNBT(nbt);
     }

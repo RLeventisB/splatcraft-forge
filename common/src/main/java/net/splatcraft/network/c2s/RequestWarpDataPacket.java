@@ -1,10 +1,10 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.SendStageWarpDataToPadPacket;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendStageWarpDataToPadPacket;
 
 public class RequestWarpDataPacket extends PlayC2SPacket
 {

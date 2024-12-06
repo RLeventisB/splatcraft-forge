@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -9,14 +9,14 @@ import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfo;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
 
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class SplatcraftCapabilities

@@ -1,7 +1,7 @@
-package net.splatcraft.forge.data.capabilities.inkoverlay;
+package net.splatcraft.data.capabilities.inkoverlay;
 
-import net.minecraft.nbt.CompoundTag;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.nbt.NbtCompound;
+import net.splatcraft.util.ColorUtils;
 
 public class InkOverlayInfo
 {
@@ -67,7 +67,7 @@ public class InkOverlayInfo
         return squidRotO;
     }
 
-    public CompoundTag writeNBT(CompoundTag nbt)
+    public NbtCompound writeNBT(NbtCompound nbt)
     {
         nbt.putInt("Color", getColor());
         nbt.putFloat("Amount", getAmount());
@@ -79,7 +79,7 @@ public class InkOverlayInfo
         return nbt;
     }
 
-    public void readNBT(CompoundTag nbt)
+    public void readNBT(NbtCompound nbt)
     {
         setColor(ColorUtils.getColorFromNbt(nbt));
         setAmount(nbt.getFloat("Amount"));

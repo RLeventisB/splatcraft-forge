@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin.compat;
+package net.splatcraft.mixin.compat;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -25,12 +25,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -91,8 +91,8 @@ public class SodiumMixin
             return quads;
         }
 
-        @WrapOperation(method = "renderModel", remap = false, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderQuadList(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/terrain/material/Material;Lme/jellysquid/mods/sodium/client/model/light/LightPipeline;Lme/jellysquid/mods/sodium/client/model/color/ColorProvider;Lnet/minecraft/world/phys/Vec3;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;Ljava/util/List;Lnet/minecraft/core/Direction;)V"))
-        public void splatcraft$modifyColorProvider(BlockRenderer instance, BlockRenderContext context, Material quad, LightPipeline lightData, ColorProvider<BlockState> vertexColors, Vec3 sprite, ChunkModelBuilder i, List<BakedQuad> quadsSize, Direction direction, Operation<Void> original)
+        @WrapOperation(method = "renderModel", remap = false, at = @At(value = "INVOKE", target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;renderQuadList(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lme/jellysquid/mods/sodium/client/render/chunk/terrain/material/Material;Lme/jellysquid/mods/sodium/client/model/light/LightPipeline;Lme/jellysquid/mods/sodium/client/model/color/ColorProvider;Lnet/minecraft/world/phys/Vec3d;Lme/jellysquid/mods/sodium/client/render/chunk/compile/buffers/ChunkModelBuilder;Ljava/util/List;Lnet/minecraft/core/Direction;)V"))
+        public void splatcraft$modifyColorProvider(BlockRenderer instance, BlockRenderContext context, Material quad, LightPipeline lightData, ColorProvider<BlockState> vertexColors, Vec3d sprite, ChunkModelBuilder i, List<BakedQuad> quadsSize, Direction direction, Operation<Void> original)
         {
             if (splatcraft$isFaceInked)
             {

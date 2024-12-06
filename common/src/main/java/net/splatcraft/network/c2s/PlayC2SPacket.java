@@ -1,9 +1,9 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
-import net.splatcraft.forge.network.SplatcraftPacket;
+import net.splatcraft.network.SplatcraftPacket;
 
 import java.util.function.Supplier;
 

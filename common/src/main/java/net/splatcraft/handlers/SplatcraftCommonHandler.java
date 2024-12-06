@@ -1,9 +1,9 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
@@ -29,29 +29,29 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.blocks.IColoredBlock;
-import net.splatcraft.forge.client.layer.PlayerInkColoredSkinLayer;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.InkWaxerItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.RequestPlayerInfoPacket;
-import net.splatcraft.forge.network.c2s.SendPlayerOverlayPacket;
-import net.splatcraft.forge.network.s2c.*;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.tileentities.InkedBlockTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.blocks.IColoredBlock;
+import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.InkWaxerItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.RequestPlayerInfoPacket;
+import net.splatcraft.network.c2s.SendPlayerOverlayPacket;
+import net.splatcraft.network.s2c.*;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.tileentities.InkedBlockTileEntity;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCooldown;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +83,7 @@ public class SplatcraftCommonHandler
     @SubscribeEvent
     public static void onLivingDestroyBlock(LivingDestroyBlockEvent event)
     {
-        if (!(event.getEntity().level().getBlockEntity(event.getPos()) instanceof InkedBlockTileEntity te))
+        if (!(event.getEntity().getWorld().getBlockEntity(event.getPos()) instanceof InkedBlockTileEntity te))
         {
             return;
         }
@@ -93,7 +93,7 @@ public class SplatcraftCommonHandler
             (event.getEntity() instanceof EnderDragon && savedState.is(BlockTags.DRAGON_IMMUNE)) ||
             (event.getEntity() instanceof WitherBoss && savedState.is(BlockTags.WITHER_IMMUNE))))
         {
-            block.remoteInkClear(event.getEntity().level(), event.getPos());
+            block.remoteInkClear(event.getEntity().getWorld(), event.getPos());
             event.setCanceled(true);
         }
     }
@@ -109,7 +109,7 @@ public class SplatcraftCommonHandler
         Player player = event.getEntity();
 
         event.getOriginal().reviveCaps(); // Mod devs should not have to do this
-        PlayerInfoCapability.get(player).readNBT(PlayerInfoCapability.get(event.getOriginal()).writeNBT(new CompoundTag()));
+        PlayerInfoCapability.get(player).readNBT(PlayerInfoCapability.get(event.getOriginal()).writeNBT(new NbtCompound()));
         event.getOriginal().invalidateCaps();
 
         NonNullList<ItemStack> matchInv = PlayerInfoCapability.get(player).getMatchInventory();
@@ -210,7 +210,7 @@ public class SplatcraftCommonHandler
             return;
         }
 
-        if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
+        if (!player.getWorld().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
         {
             PlayerInfo playerCapability;
             try
@@ -253,7 +253,7 @@ public class SplatcraftCommonHandler
 
         TreeMap<UUID, Integer> playerColors = new TreeMap<>();
 
-        for (Player p : event.getEntity().level().players())
+        for (Player p : event.getEntity().getWorld().players())
         {
             if (PlayerInfoCapability.hasCapability(p))
             {
@@ -264,7 +264,7 @@ public class SplatcraftCommonHandler
         SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(event.getEntity().getUUID(), PlayerInfoCapability.get(event.getEntity()).getColor()));
         SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
         SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, criteriaColors), player);
-        SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get(event.getEntity().level().getServer()).getStages()), player);
+        SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get(event.getEntity().getWorld().getServer()).getStages()), player);
         if (!COLOR_SKIN_OVERLAY_SERVER_CACHE.isEmpty())
         {
             COLOR_SKIN_OVERLAY_SERVER_CACHE.forEach(((uuid, bytes) -> SplatcraftPacketHandler.sendToPlayer(new ReceivePlayerOverlayPacket(uuid, bytes), player)));

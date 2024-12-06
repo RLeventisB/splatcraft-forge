@@ -1,4 +1,4 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 public enum BlockInkedResult
 {

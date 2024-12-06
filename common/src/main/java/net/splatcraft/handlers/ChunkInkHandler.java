@@ -1,4 +1,4 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -22,7 +22,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ChunkHolder;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.BlockItem;
@@ -45,22 +45,22 @@ import net.minecraftforge.event.level.ChunkWatchEvent;
 import net.minecraftforge.event.level.PistonEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.mixin.BlockRenderMixin;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.DeleteInkPacket;
-import net.splatcraft.forge.network.s2c.IncrementalChunkBasedPacket;
-import net.splatcraft.forge.network.s2c.UpdateInkPacket;
-import net.splatcraft.forge.network.s2c.WatchInkPacket;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.mixin.BlockRenderMixin;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.DeleteInkPacket;
+import net.splatcraft.network.s2c.IncrementalChunkBasedPacket;
+import net.splatcraft.network.s2c.UpdateInkPacket;
+import net.splatcraft.network.s2c.WatchInkPacket;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -130,10 +130,10 @@ public class ChunkInkHandler
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event)
     {
-        ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(event.getPlayer().level(), event.getPos());
+        ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(event.getPlayer().getWorld(), event.getPos());
         if (inkBlock != null)
         {
-            InkBlockUtils.clearBlock(event.getPlayer().level(), event.getPos(), true);
+            InkBlockUtils.clearBlock(event.getPlayer().getWorld(), event.getPos(), true);
         }
     }
 
@@ -190,7 +190,7 @@ public class ChunkInkHandler
         {
             if (event.phase == TickEvent.Phase.START)
             {
-                if (event.level instanceof ServerLevel level)
+                if (event.level instanceof ServerWorld level)
                 {
                     List<LevelChunk> chunks = StreamSupport.stream(level.getChunkSource().chunkMap.getChunks().spliterator(), false).map(ChunkHolder::getTickingChunk)
                         .filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.get(chunk).getInkInChunk().isEmpty()).toList();

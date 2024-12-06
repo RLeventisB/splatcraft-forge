@@ -1,15 +1,15 @@
-package net.splatcraft.forge.data.capabilities.playerinfo;
+package net.splatcraft.data.capabilities.playerinfo;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraftforge.common.capabilities.*;
 import net.minecraftforge.common.util.LazyOptional;
-import net.splatcraft.forge.entities.InkSquidEntity;
+import net.splatcraft.entities.InkSquidEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PlayerInfoCapability implements ICapabilitySerializable<CompoundTag>
+public class PlayerInfoCapability implements ICapabilitySerializable<NbtCompound>
 {
     public static Capability<PlayerInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
     {
@@ -25,7 +25,7 @@ public class PlayerInfoCapability implements ICapabilitySerializable<CompoundTag
     @Nullable
     public static PlayerInfo get(LivingEntity entity)
     {
-        LazyOptional<PlayerInfo> capability = entity.getCapability(CAPABILITY);
+        PlayerInfo capability = entity.getDataTracker().get(CAPABILITY);
         return capability.resolve().orElse(null);
     }
 
@@ -50,13 +50,13 @@ public class PlayerInfoCapability implements ICapabilitySerializable<CompoundTag
     }
 
     @Override
-    public CompoundTag serializeNBT()
+    public NbtCompound serializeNBT()
     {
-        return opt.orElseThrow(IllegalStateException::new).writeNBT(new CompoundTag());
+        return opt.orElseThrow(IllegalStateException::new).writeNBT(new NbtCompound());
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt)
+    public void deserializeNBT(NbtCompound nbt)
     {
         opt.orElseThrow(IllegalStateException::new).readNBT(nbt);
     }

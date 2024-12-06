@@ -1,12 +1,13 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -16,9 +17,8 @@ public class SplatcraftGameRules
     public static final TreeMap<Integer, Boolean> booleanRules = new TreeMap<>();
     public static final TreeMap<Integer, Integer> intRules = new TreeMap<>();
     public static final ArrayList<GameRules.Key<?>> ruleList = new ArrayList<>();
-
     public static GameRules.Key<GameRules.BooleanValue> INK_DECAY;
-    public static GameRules.Key<GameRules.IntegerValue> INK_DECAY_RATE;
+    public static GameRules.Key<GameRules.IntegerRule> INK_DECAY_RATE;
     public static GameRules.Key<GameRules.BooleanValue> INKABLE_GROUND;
     public static GameRules.Key<GameRules.BooleanValue> INK_DESTROYS_FOLIAGE;
     public static GameRules.Key<GameRules.BooleanValue> KEEP_MATCH_ITEMS;
@@ -26,7 +26,7 @@ public class SplatcraftGameRules
     public static GameRules.Key<GameRules.BooleanValue> DROP_CRATE_LOOT;
     public static GameRules.Key<GameRules.BooleanValue> WATER_DAMAGE;
     public static GameRules.Key<GameRules.BooleanValue> REQUIRE_INK_TANK;
-    public static GameRules.Key<GameRules.IntegerValue> INK_MOB_DAMAGE_PERCENTAGE;
+    public static GameRules.Key<GameRules.IntegerRule> INK_MOB_DAMAGE_PERCENTAGE;
     public static GameRules.Key<GameRules.BooleanValue> INK_FRIENDLY_FIRE;
     public static GameRules.Key<GameRules.BooleanValue> INK_HEALING;
     public static GameRules.Key<GameRules.BooleanValue> INK_HEALING_CONSUMES_HUNGER;
@@ -35,8 +35,8 @@ public class SplatcraftGameRules
     public static GameRules.Key<GameRules.BooleanValue> RECHARGEABLE_INK_TANK;
     public static GameRules.Key<GameRules.BooleanValue> GLOBAL_SUPERJUMPING;
     public static GameRules.Key<GameRules.BooleanValue> BLOCK_DESTROY_INK;
-    public static GameRules.Key<GameRules.IntegerValue> SUPERJUMP_DISTANCE_LIMIT;
-    public static GameRules.Key<GameRules.IntegerValue> INK_PROJECTILE_FREQUENCY;
+    public static GameRules.Key<GameRules.IntegerRule> SUPERJUMP_DISTANCE_LIMIT;
+    public static GameRules.Key<GameRules.IntegerRule> INK_PROJECTILE_FREQUENCY;
 
     public static void registerGamerules()
     {
@@ -62,9 +62,9 @@ public class SplatcraftGameRules
         INK_PROJECTILE_FREQUENCY = createIntRule("projectileTickFrequencyPercent", GameRules.Category.UPDATES, 100);
     }
 
-    public static boolean getLocalizedRule(Level level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule)
+    public static boolean getLocalizedRule(LevelInfo level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule)
     {
-        ArrayList<Stage> stages = Stage.getStagesForPosition(level, new Vec3(pos.getX(), pos.getY(), pos.getZ()));
+        ArrayList<Stage> stages = Stage.getStagesForPosition(level, new Vec3d(pos.getX(), pos.getY(), pos.getZ()));
 
         Stage localStage = null;
         AABB localStageBounds = null;
@@ -95,10 +95,10 @@ public class SplatcraftGameRules
         return ruleKey;
     }
 
-    public static GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue)
+    public static GameRules.Key<GameRules.IntegerRule> createIntRule(String name, GameRules.Category category, int defaultValue)
     {
-        GameRules.Type<GameRules.IntegerValue> intValue = GameRules.IntegerValue.create(defaultValue);
-        GameRules.Key<GameRules.IntegerValue> ruleKey = GameRules.register(Splatcraft.MODID + "." + name, category, intValue);
+        GameRules.Type<GameRules.IntegerRule> intValue = GameRules.IntegerRule.create(defaultValue);
+        GameRules.Key<GameRules.IntegerRule> ruleKey = GameRules.register(Splatcraft.MODID + "." + name, category, intValue);
 
         ruleList.add(ruleKey);
         intRules.put(getRuleIndex(ruleKey), defaultValue);
@@ -115,12 +115,12 @@ public class SplatcraftGameRules
         return (GameRules.Key<T>) ruleList.get(index);
     }
 
-    public static boolean getBooleanRuleValue(Level level, GameRules.Key<GameRules.BooleanValue> rule)
+    public static boolean getBooleanRuleValue(LevelInfo level, GameRules.Key<GameRules.BooleanRule> rule)
     {
         return level.isClientSide() ? getClientsideBooleanValue(rule) : level.getGameRules().getBoolean(rule);
     }
 
-    public static int getIntRuleValue(Level level, GameRules.Key<GameRules.IntegerValue> rule)
+    public static int getIntRuleValue(Level level, GameRules.Key<GameRules.IntegerRule> rule)
     {
         return level.isClientSide() ? getClientsideIntValue(rule) : level.getGameRules().getInt(rule);
     }
@@ -130,7 +130,7 @@ public class SplatcraftGameRules
         return booleanRules.get(getRuleIndex(rule));
     }
 
-    public static int getClientsideIntValue(GameRules.Key<GameRules.IntegerValue> rule)
+    public static int getClientsideIntValue(GameRules.Key<GameRules.IntegerRule> rule)
     {
         return intRules.get(getRuleIndex(rule));
     }

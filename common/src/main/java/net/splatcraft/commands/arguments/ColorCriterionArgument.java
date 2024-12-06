@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands.arguments;
+package net.splatcraft.commands.arguments;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.context.CommandContext;
@@ -8,8 +8,8 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
-import net.splatcraft.forge.commands.InkColorCommand;
-import net.splatcraft.forge.handlers.ScoreboardHandler;
+import net.splatcraft.commands.InkColorCommand;
+import net.splatcraft.handlers.ScoreboardHandler;
 
 import java.util.concurrent.CompletableFuture;
 

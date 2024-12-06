@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin.accessors;
+package net.splatcraft.mixin.accessors;
 
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.world.entity.EntityType;

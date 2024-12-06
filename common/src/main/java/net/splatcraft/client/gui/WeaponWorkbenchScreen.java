@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui;
+package net.splatcraft.client.gui;
 
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -31,16 +31,16 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.crafting.SplatcraftRecipeTypes;
-import net.splatcraft.forge.crafting.WeaponWorkbenchRecipe;
-import net.splatcraft.forge.crafting.WeaponWorkbenchSubtypeRecipe;
-import net.splatcraft.forge.crafting.WeaponWorkbenchTab;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.CraftWeaponPacket;
-import net.splatcraft.forge.tileentities.container.WeaponWorkbenchContainer;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.crafting.SplatcraftRecipeTypes;
+import net.splatcraft.crafting.WeaponWorkbenchRecipe;
+import net.splatcraft.crafting.WeaponWorkbenchSubtypeRecipe;
+import net.splatcraft.crafting.WeaponWorkbenchTab;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.CraftWeaponPacket;
+import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 
@@ -107,7 +107,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
 
             guiGraphics.blit(TEXTURES, x, y, 0, 0, imageWidth, imageHeight);
 
-            Level level = player.level();
+            Level level = player.getWorld();
             List<WeaponWorkbenchTab> tabList = level.getRecipeManager().getRecipesFor(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, inventory, level);
             tabList.removeIf(tab -> tab.hidden && tab.getTabRecipes(level, player).isEmpty());
             tabList.sort(WeaponWorkbenchTab::compareTo);
@@ -162,14 +162,13 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         guiGraphics.pose().popPose();
     }
 
-    @SuppressWarnings({"ConstantConditions"})
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY)
     {
         guiGraphics.drawString(font, title.getString(), (float) imageWidth / 2 - (float) font.width(title.getString()) / 2, 22, 4210752, true);
         guiGraphics.drawString(font, this.inventory.getDisplayName(), this.titleLabelX, this.titleLabelY, 4210752);
 
-        Level level = player.level();
+        Level level = player.getWorld();
         List<WeaponWorkbenchTab> tabList = level.getRecipeManager().getRecipesFor(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, inventory, level);
         tabList.sort(WeaponWorkbenchTab::compareTo);
         tabList.removeIf(tab -> tab.hidden && tab.getTabRecipes(level, player).isEmpty());
@@ -451,11 +450,10 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button)
     {
-        Level level = player.level();
+        Level level = player.getWorld();
         List<WeaponWorkbenchTab> tabList = level.getRecipeManager().getRecipesFor(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, inventory, level);
         tabList.sort(WeaponWorkbenchTab::compareTo);
         tabList.removeIf(tab -> tab.hidden && tab.getTabRecipes(level, player).isEmpty());
@@ -572,7 +570,6 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void playButtonSound()
     {
         SoundManager soundHandler = minecraft.getSoundManager();

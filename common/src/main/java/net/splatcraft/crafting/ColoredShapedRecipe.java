@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.gson.JsonObject;
 import net.minecraft.core.NonNullList;
@@ -12,8 +12,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ColoredShapedRecipe extends ShapedRecipe

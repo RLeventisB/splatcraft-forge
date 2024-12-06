@@ -1,8 +1,8 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
@@ -20,12 +20,11 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.StageBarrierTileEntity;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.StageBarrierTileEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class StageBarrierBlock extends Block implements EntityBlock
 {
     public static final VoxelShape COLLISION = box(0.0, 0.01, 0.0, 16, 15.99, 16);
@@ -38,7 +37,7 @@ public class StageBarrierBlock extends Block implements EntityBlock
     }
 
     @Override
-    public boolean addLandingEffects(BlockState state1, ServerLevel levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
+    public boolean addLandingEffects(BlockState state1, ServerWorld levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
     {
         return true;
     }

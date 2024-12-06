@@ -1,13 +1,13 @@
-package net.splatcraft.forge.entities.subs;
+package net.splatcraft.entities.subs;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
@@ -18,14 +18,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.client.particles.InkSplashParticleData;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,13 +33,10 @@ import java.util.List;
 public class CurlingBombEntity extends AbstractSubWeaponEntity
 {
     public static final int FLASH_DURATION = 20;
-
     private static final EntityDataAccessor<Integer> INIT_FUSE_TIME = SynchedEntityData.defineId(CurlingBombEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> COOK_SCALE = SynchedEntityData.defineId(CurlingBombEntity.class, EntityDataSerializers.FLOAT);
-
     public int fuseTime = 0;
     public int prevFuseTime = 0;
-
     public float bladeRot = 0;
     public float prevBladeRot = 0;
     private boolean playedActivationSound = false;
@@ -52,7 +49,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 
     public static void onItemUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime)
     {
-        CompoundTag data = stack.getTag().getCompound("EntityData");
+        NbtCompound data = stack.getTag().getCompound("EntityData");
         data.putInt("CookTime", stack.getItem().getUseDuration(stack) - useTime);
 
         stack.getTag().put("EntityData", data);
@@ -73,7 +70,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
     }
 
     @Override
-    public void readItemData(CompoundTag nbt)
+    public void readItemData(NbtCompound nbt)
     {
         if (nbt.contains("CookTime"))
         {
@@ -112,7 +109,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
             {
                 for (float j = -0.15f; j <= 0.15f; j += 0.3f)
                 {
-                    Vec3 normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
+                    Vec3d normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
                     double sideX = -normalized.z;
                     double sideZ = normalized.x;
                     for (int i = 0; i <= 2; i++)
@@ -140,7 +137,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         {
             float f1 = 0.98F;
             if (onGround())
-                f1 = this.level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getFriction(level(), CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ()), this);
+                f1 = this.getWorld().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getFriction(level(), CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ()), this);
 
             f1 = (float) Math.min(0.98, f1 * 3f) * Math.min(1, 2 * (1 - fuseTime / (float) settings.subDataRecord.fuseTime()));
 
@@ -162,7 +159,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         }
         move(MoverType.SELF, getDeltaMovement().multiply(0, 1, 0));
 
-        Vec3 vec = getDeltaMovement().multiply(1, 0, 1);
+        Vec3d vec = getDeltaMovement().multiply(1, 0, 1);
         vec = position().add(collide(vec));
 
         setPos(vec.x, vec.y, vec.z);
@@ -238,14 +235,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
     public float getFlashIntensity(float partialTicks)
     {
         SubWeaponSettings settings = getSettings();
-        return Math.max(0, Mth.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+        return Math.max(0, MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
     }
 
-    private boolean canStepUp(Vec3 p_20273_)
+    private boolean canStepUp(Vec3d p_20273_)
     {
         AABB aabb = this.getBoundingBox();
-        List<VoxelShape> list = this.level().getEntityCollisions(this, aabb.expandTowards(p_20273_));
-        Vec3 vec3 = p_20273_.lengthSqr() == 0.0D ? p_20273_ : collideBoundingBox(this, p_20273_, aabb, this.level(), list);
+        List<VoxelShape> list = this.getWorld().getEntityCollisions(this, aabb.expandTowards(p_20273_));
+        Vec3d vec3 = p_20273_.lengthSqr() == 0.0D ? p_20273_ : collideBoundingBox(this, p_20273_, aabb, this.getWorld(), list);
         boolean flag = p_20273_.x != vec3.x;
         boolean flag1 = p_20273_.y != vec3.y;
         boolean flag2 = p_20273_.z != vec3.z;
@@ -253,11 +250,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         float stepHeight = getStepHeight();
         if (stepHeight > 0.0F && flag3 && (flag || flag2))
         {
-            Vec3 vec31 = collideBoundingBox(this, new Vec3(p_20273_.x, stepHeight, p_20273_.z), aabb, this.level(), list);
-            Vec3 vec32 = collideBoundingBox(this, new Vec3(0.0D, stepHeight, 0.0D), aabb.expandTowards(p_20273_.x, 0.0D, p_20273_.z), this.level(), list);
+            Vec3d vec31 = collideBoundingBox(this, new Vec3d(p_20273_.x, stepHeight, p_20273_.z), aabb, this.getWorld(), list);
+            Vec3d vec32 = collideBoundingBox(this, new Vec3d(0.0D, stepHeight, 0.0D), aabb.expandTowards(p_20273_.x, 0.0D, p_20273_.z), this.getWorld(), list);
             if (vec32.y < (double) stepHeight)
             {
-                Vec3 vec33 = collideBoundingBox(this, new Vec3(p_20273_.x, 0.0D, p_20273_.z), aabb.move(vec32), this.level(), list).add(vec32);
+                Vec3d vec33 = collideBoundingBox(this, new Vec3d(p_20273_.x, 0.0D, p_20273_.z), aabb.move(vec32), this.getWorld(), list).add(vec32);
                 if (vec33.horizontalDistanceSqr() > vec31.horizontalDistanceSqr())
                 {
                     vec31 = vec33;
@@ -270,11 +267,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         return false;
     }
 
-    private Vec3 collide(Vec3 p_20273_)
+    private Vec3d collide(Vec3d p_20273_)
     {
         AABB aabb = this.getBoundingBox();
-        List<VoxelShape> list = this.level().getEntityCollisions(this, aabb.expandTowards(p_20273_));
-        Vec3 vec3 = p_20273_.lengthSqr() == 0.0D ? p_20273_ : collideBoundingBox(this, p_20273_, aabb, this.level(), list);
+        List<VoxelShape> list = this.getWorld().getEntityCollisions(this, aabb.expandTowards(p_20273_));
+        Vec3d vec3 = p_20273_.lengthSqr() == 0.0D ? p_20273_ : collideBoundingBox(this, p_20273_, aabb, this.getWorld(), list);
         boolean flag = p_20273_.x != vec3.x;
         boolean flag1 = p_20273_.y != vec3.y;
         boolean flag2 = p_20273_.z != vec3.z;
@@ -282,11 +279,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         float stepHeight = getStepHeight();
         if (stepHeight > 0.0F && flag3 && (flag || flag2))
         {
-            Vec3 vec31 = collideBoundingBox(this, new Vec3(p_20273_.x, stepHeight, p_20273_.z), aabb, this.level(), list);
-            Vec3 vec32 = collideBoundingBox(this, new Vec3(0.0D, stepHeight, 0.0D), aabb.expandTowards(p_20273_.x, 0.0D, p_20273_.z), this.level(), list);
+            Vec3d vec31 = collideBoundingBox(this, new Vec3d(p_20273_.x, stepHeight, p_20273_.z), aabb, this.getWorld(), list);
+            Vec3d vec32 = collideBoundingBox(this, new Vec3d(0.0D, stepHeight, 0.0D), aabb.expandTowards(p_20273_.x, 0.0D, p_20273_.z), this.getWorld(), list);
             if (vec32.y < (double) stepHeight)
             {
-                Vec3 vec33 = collideBoundingBox(this, new Vec3(p_20273_.x, 0.0D, p_20273_.z), aabb.move(vec32), this.level(), list).add(vec32);
+                Vec3d vec33 = collideBoundingBox(this, new Vec3d(p_20273_.x, 0.0D, p_20273_.z), aabb.move(vec32), this.getWorld(), list).add(vec32);
                 if (vec33.horizontalDistanceSqr() > vec31.horizontalDistanceSqr())
                 {
                     vec31 = vec33;
@@ -295,7 +292,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 
             if (vec31.horizontalDistanceSqr() > vec3.horizontalDistanceSqr())
             {
-                return vec31.add(collideBoundingBox(this, new Vec3(0.0D, -vec31.y + p_20273_.y, 0.0D), aabb.move(vec31), this.level(), list));
+                return vec31.add(collideBoundingBox(this, new Vec3d(0.0D, -vec31.y + p_20273_.y, 0.0D), aabb.move(vec31), this.getWorld(), list));
             }
         }
 
@@ -303,14 +300,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt)
+    public void readAdditionalSaveData(NbtCompound nbt)
     {
         super.readAdditionalSaveData(nbt);
         setInitialFuseTime(nbt.getInt("FuseTime"));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt)
+    public void addAdditionalSaveData(NbtCompound nbt)
     {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("FuseTime", fuseTime);

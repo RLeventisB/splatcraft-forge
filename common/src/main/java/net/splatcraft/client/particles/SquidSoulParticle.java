@@ -1,12 +1,12 @@
-package net.splatcraft.forge.client.particles;
+package net.splatcraft.client.particles;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.*;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.client.multiplayer.ClientWorld;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -14,15 +14,16 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class SquidSoulParticle extends TextureSheetParticle
+public class SquidSoulParticle extends Particle
 {
-    private final SpriteSet spriteProvider;
+    private final SpriteProvider spriteProvider;
 
-    public SquidSoulParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ, SquidSoulParticleData data, SpriteSet sprite)
+    public SquidSoulParticle(ClientWorld level, double x, double y, double z, double motionX, double motionY, double motionZ, SquidSoulParticleData data, SpriteProvider sprite)
     {
         super(level, x, y, z, motionX, motionY, motionZ);
 
-        rCol = Math.max(0.018f, data.getRed() - 0.018f);
+        this.
+            rCol = Math.max(0.018f, data.getRed() - 0.018f);
         gCol = Math.max(0.018f, data.getGreen() - 0.018f);
         bCol = Math.max(0.018f, data.getBlue() - 0.018f);
 
@@ -62,10 +63,10 @@ public class SquidSoulParticle extends TextureSheetParticle
     @Override
     public void render(@NotNull VertexConsumer buffer, Camera renderInfo, float partialTicks)
     {
-        Vec3 renderPos = renderInfo.getPosition();
-        float lvt_5_1_ = (float) (Mth.lerp(partialTicks, this.xo, this.x) - renderPos.x());
-        float lvt_6_1_ = (float) (Mth.lerp(partialTicks, this.yo, this.y) - renderPos.y());
-        float lvt_7_1_ = (float) (Mth.lerp(partialTicks, this.zo, this.z) - renderPos.z());
+        Vec3d renderPos = renderInfo.getPosition();
+        float lvt_5_1_ = (float) (MathHelper.lerp(partialTicks, this.xo, this.x) - renderPos.x());
+        float lvt_6_1_ = (float) (MathHelper.lerp(partialTicks, this.yo, this.y) - renderPos.y());
+        float lvt_7_1_ = (float) (MathHelper.lerp(partialTicks, this.zo, this.z) - renderPos.z());
         Quaternionf rotation;
         if (this.roll == 0.0F)
         {
@@ -74,7 +75,7 @@ public class SquidSoulParticle extends TextureSheetParticle
         else
         {
             rotation = new Quaternionf(renderInfo.rotation());
-            float lvt_9_1_ = Mth.lerp(partialTicks, this.roll, this.oRoll);
+            float lvt_9_1_ = MathHelper.lerp(partialTicks, this.roll, this.oRoll);
             rotation.mul(Axis.ZP.rotation(lvt_9_1_));
         }
 
@@ -120,16 +121,16 @@ public class SquidSoulParticle extends TextureSheetParticle
     @OnlyIn(Dist.CLIENT)
     public static class Factory implements ParticleProvider<SquidSoulParticleData>
     {
-        private final SpriteSet spriteSet;
+        private final SpriteProvider spriteSet;
 
-        public Factory(SpriteSet sprite)
+        public Factory(SpriteProvider sprite)
         {
             this.spriteSet = sprite;
         }
 
         @Nullable
         @Override
-        public Particle createParticle(@NotNull SquidSoulParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull SquidSoulParticleData typeIn, @NotNull ClientWorld levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
             return new SquidSoulParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
         }

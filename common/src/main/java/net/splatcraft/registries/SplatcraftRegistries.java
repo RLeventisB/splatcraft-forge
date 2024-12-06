@@ -1,17 +1,15 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
-import net.splatcraft.forge.crafting.SplatcraftRecipeTypes;
-import net.splatcraft.forge.worldgen.SplatcraftOreGen;
+import net.splatcraft.crafting.SplatcraftRecipeTypes;
+import net.splatcraft.worldgen.SplatcraftOreGen;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftRegistries
 {
     public static void register()
@@ -25,7 +23,7 @@ public class SplatcraftRegistries
         SplatcraftTileEntities.CONTAINER_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
         SplatcraftOreGen.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
         SplatcraftLoot.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        SplatcraftParticleTypes.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
+        SplatcraftParticleTypes.registerParticles();
         SplatcraftCommands.REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
 
         SplatcraftRecipeTypes.register();

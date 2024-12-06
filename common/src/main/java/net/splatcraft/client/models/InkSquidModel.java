@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.models;// Made with Blockbench 4.7.2
+package net.splatcraft.client.models;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
@@ -10,11 +10,11 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class InkSquidModel extends EntityModel<LivingEntity>
@@ -93,14 +93,14 @@ public class InkSquidModel extends EntityModel<LivingEntity>
         {
             InkOverlayInfo info = InkOverlayCapability.get(entitylivingbaseIn);
 
-            double angle = isSwimming ? -(entitylivingbaseIn.getXRot() * Math.PI / 180F) : Mth.lerp(partialTickTime, info.getSquidRotO(), info.getSquidRot()) * 1.1f;
+            double angle = isSwimming ? -(entitylivingbaseIn.getXRot() * Math.PI / 180F) : MathHelper.lerp(partialTickTime, info.getSquidRotO(), info.getSquidRot()) * 1.1f;
             squid.xRot = (float) -Math.min(Math.PI / 2, Math.max(-Math.PI / 2, angle));
         }
 
         if (entitylivingbaseIn.onGround() || isSwimming)
         {
-            this.rightLimb.yRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount / (isSwimming ? 2.2f : 1.5f);
-            this.leftLimb.yRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount / (isSwimming ? 2.2f : 1.5f);
+            this.rightLimb.yRot = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount / (isSwimming ? 2.2f : 1.5f);
+            this.leftLimb.yRot = MathHelper.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount / (isSwimming ? 2.2f : 1.5f);
         }
         else
         {

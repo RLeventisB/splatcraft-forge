@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -9,9 +9,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.entities.InkDropEntity;
-import net.splatcraft.forge.entities.InkProjectileEntity;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.entities.InkDropEntity;
+import net.splatcraft.entities.InkProjectileEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,18 +29,18 @@ public abstract class ProjectileMixin
     public abstract static class InkProjectileDataMixin
     {
         @Unique
-        private static Vec3 splatcraft$hitPos = new Vec3(0, 0, 0);
+        private static Vec3d splatcraft$hitPos = new Vec3d(0, 0, 0);
 
-        @WrapOperation(method = "getHitResultOnMoveVector", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getHitResult(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/phys/HitResult;"))
-        private static HitResult splatcraft$applyDeltaTime(Vec3 pStartVec, Entity pProjectile, Predicate<Entity> pFilter, Vec3 pEndVecOffset, Level pLevel, Operation<HitResult> original)
+        @WrapOperation(method = "getHitResultOnMoveVector", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getHitResult(Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/entity/Entity;Ljava/util/function/Predicate;Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/phys/HitResult;"))
+        private static HitResult splatcraft$applyDeltaTime(Vec3d pStartVec, Entity pProjectile, Predicate<Entity> pFilter, Vec3d pEndVecOffset, Level pLevel, Operation<HitResult> original)
         {
             if (pProjectile instanceof InkProjectileEntity || pProjectile instanceof InkDropEntity)
                 return original.call(pStartVec, pProjectile, pFilter, pEndVecOffset.scale(InkProjectileEntity.MixinTimeDelta), pLevel);
             return original.call(pStartVec, pProjectile, pFilter, pEndVecOffset, pLevel);
         }
 
-        @Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE_ASSIGN", shift = At.Shift.AFTER, target = "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D"))
-        private static void splatcraft$addHitLocation(Level pLevel, Entity pProjectile, Vec3 pStartVec, Vec3 pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, double d0, Entity entity, Iterator var10, Entity entity1, AABB aabb, Optional<Vec3> optional, double d1)
+        @Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "INVOKE_ASSIGN", shift = At.Shift.AFTER, target = "Lnet/minecraft/world/phys/Vec3d;distanceToSqr(Lnet/minecraft/world/phys/Vec3d;)D"))
+        private static void splatcraft$addHitLocation(Level pLevel, Entity pProjectile, Vec3d pStartVec, Vec3d pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, double d0, Entity entity, Iterator var10, Entity entity1, AABB aabb, Optional<Vec3d> optional, double d1)
         {
             if (d1 < d0 && (pProjectile instanceof InkProjectileEntity || pProjectile instanceof InkDropEntity))
             {
@@ -48,8 +48,8 @@ public abstract class ProjectileMixin
             }
         }
 
-        @Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "RETURN"), cancellable = true)
-        private static void splatcraft$addHitLocation(Level pLevel, Entity pProjectile, Vec3 pStartVec, Vec3 pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, double d0, Entity entity)
+        @Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/phys/Vec3d;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "RETURN"), cancellable = true)
+        private static void splatcraft$addHitLocation(Level pLevel, Entity pProjectile, Vec3d pStartVec, Vec3d pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, double d0, Entity entity)
         {
             if (entity != null && (pProjectile instanceof InkProjectileEntity || pProjectile instanceof InkDropEntity))
             {
@@ -70,8 +70,8 @@ public abstract class ProjectileMixin
         }
 
         // ok this is only because i dont like minecraft applying 0.99 to the velocity this is easily removable
-        @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;"))
-        private Vec3 splatcraft$cancelMinimalAcceleration(Vec3 instance, double pFactor, Operation<Vec3> original)
+        @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3d;scale(D)Lnet/minecraft/world/phys/Vec3d;"))
+        private Vec3d splatcraft$cancelMinimalAcceleration(Vec3d instance, double pFactor, Operation<Vec3d> original)
         {
             if (!splatcraft$isSplatcraftEntity() || pFactor != 0.99)
                 return original.call(instance, pFactor);

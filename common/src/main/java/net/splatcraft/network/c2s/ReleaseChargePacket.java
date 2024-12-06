@@ -1,10 +1,10 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.items.weapons.IChargeableWeapon;
-import net.splatcraft.forge.util.PlayerCharge;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.util.PlayerCharge;
 
 public class ReleaseChargePacket extends PlayC2SPacket
 {
@@ -41,7 +41,7 @@ public class ReleaseChargePacket extends PlayC2SPacket
 
         if (stack.getItem() instanceof IChargeableWeapon weapon)
         {
-            weapon.onReleaseCharge(player.level(), player, stack, charge);
+            weapon.onReleaseCharge(player.getWorld(), player, stack, charge);
         }
 
         if (resetCharge)

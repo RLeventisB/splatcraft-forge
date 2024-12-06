@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.layer;
+package net.splatcraft.client.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -10,12 +10,12 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.forge.entities.SquidBumperEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

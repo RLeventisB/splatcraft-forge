@@ -1,11 +1,11 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 
 public class SplatcraftRecipeTypes
 {

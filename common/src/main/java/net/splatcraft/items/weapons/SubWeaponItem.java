@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockSource;
@@ -18,13 +18,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.client.SplatcraftItemRenderer;
-import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.client.SplatcraftItemRenderer;
+import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

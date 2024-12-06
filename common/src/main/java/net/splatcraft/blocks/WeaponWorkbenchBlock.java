@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,11 +30,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.tileentities.container.WeaponWorkbenchContainer;
+import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements SimpleWaterloggedBlock
 {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;

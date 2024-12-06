@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -21,13 +21,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.extensions.IForgeBakedModel;
 import net.minecraftforge.client.model.data.ModelData;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -43,6 +43,13 @@ import java.util.*;
 @OnlyIn(Dist.CLIENT)
 public class BlockRenderMixin
 {
+    @Mixin(RenderChunkRegion.class)
+    public interface ChunkRegionAccessor
+    {
+        @Accessor("level")
+        Level getLevel();
+    }
+
     /*@Mixin(ModelBlockRenderer.class)
     public static class Renderer
     {
@@ -54,14 +61,6 @@ public class BlockRenderMixin
                 ci.cancel();
         }
     }*/
-
-    @Mixin(RenderChunkRegion.class)
-    public interface ChunkRegionAccessor
-    {
-        @Accessor("level")
-        Level getLevel();
-    }
-
     @Mixin(ChunkRenderDispatcher.RenderChunk.RebuildTask.class)
     public static class ChunkRenderDispatcherMixin
     {

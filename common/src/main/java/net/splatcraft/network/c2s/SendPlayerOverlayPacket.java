@@ -1,13 +1,13 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.handlers.SplatcraftCommonHandler;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.ReceivePlayerOverlayPacket;
+import net.splatcraft.handlers.SplatcraftCommonHandler;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.ReceivePlayerOverlayPacket;
 
 import java.io.File;
 import java.io.FileInputStream;

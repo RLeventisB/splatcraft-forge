@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands;
+package net.splatcraft.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -7,12 +7,12 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.splatcraft.forge.commands.arguments.ColorCriterionArgument;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.handlers.ScoreboardHandler;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateColorScoresPacket;
+import net.splatcraft.commands.arguments.ColorCriterionArgument;
+import net.splatcraft.commands.arguments.InkColorArgument;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateColorScoresPacket;
 
 import java.util.Collection;
 

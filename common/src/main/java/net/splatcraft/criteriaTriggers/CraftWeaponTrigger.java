@@ -1,11 +1,11 @@
-package net.splatcraft.forge.criteriaTriggers;
+package net.splatcraft.criteriaTriggers;
 
 import com.google.gson.JsonObject;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.NotNull;
 
 public class CraftWeaponTrigger extends SimpleCriterionTrigger<CraftWeaponTrigger.TriggerInstance>

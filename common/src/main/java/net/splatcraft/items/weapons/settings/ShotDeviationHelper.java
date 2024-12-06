@@ -1,10 +1,10 @@
-package net.splatcraft.forge.items.weapons.settings;
+package net.splatcraft.items.weapons.settings;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.Mth;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.util.CommonUtils;
 
 public class ShotDeviationHelper
 {
@@ -28,14 +28,14 @@ public class ShotDeviationHelper
 
     public static float updateShotDeviation(ItemStack stack, RandomSource random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
     {
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
         float chance = nbt.getFloat("Deviation_Chance");
         float airborneInfluence = nbt.getFloat("Deviation_Airborne_Influence");
         float maxAngle = chance; // could be 0, but chance is a value less than 1 anyways and these water guns look wrong with perfect accuracy lol
 
         if (random.nextFloat() <= chance)
         {
-            maxAngle = Mth.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
+            maxAngle = MathHelper.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
         }
 
         if (chance < shotDeviationData.maxDeviateChance())
@@ -48,7 +48,7 @@ public class ShotDeviationHelper
 
     public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
     {
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
         nbt.putFloat("Deviation_Airborne_Time", shotDeviationData.airborneContractDelay());
         nbt.putFloat("Deviation_Airborne_Influence", 1);
         nbt.putFloat("Deviation_Chance", shotDeviationData.deviationChanceWhenAirborne());
@@ -61,20 +61,32 @@ public class ShotDeviationHelper
 
     public static final class DeviationData // you wouldn't guess how many times the code that gets these floats has changed
     {
-        private final CompoundTag nbt;
+        private final NbtCompound nbt;
 
-        public DeviationData(CompoundTag nbt)
+        public DeviationData(NbtCompound nbt)
         {
             this.nbt = nbt;
         }
 
-        public float chanceDecreaseDelay() {return nbt.getFloat("Deviation_Remaining_Time_Decrease");}
+        public float chanceDecreaseDelay()
+        {
+            return nbt.getFloat("Deviation_Remaining_Time_Decrease");
+        }
 
-        public float chance() {return nbt.getFloat("Deviation_Chance");}
+        public float chance()
+        {
+            return nbt.getFloat("Deviation_Chance");
+        }
 
-        public float airborneDecreaseDelay() {return nbt.getFloat("Deviation_Airborne_Time");}
+        public float airborneDecreaseDelay()
+        {
+            return nbt.getFloat("Deviation_Airborne_Time");
+        }
 
-        public float airborneInfluence() {return nbt.getFloat("Deviation_Airborne_Influence");}
+        public float airborneInfluence()
+        {
+            return nbt.getFloat("Deviation_Airborne_Influence");
+        }
 
         public void setChanceDecreaseDelay(float chanceDecreaseDelay)
         {

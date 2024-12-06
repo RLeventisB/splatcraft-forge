@@ -1,10 +1,10 @@
-package net.splatcraft.forge.mixin.compat;
+package net.splatcraft.mixin.compat;
 
 import com.simibubi.create.content.contraptions.Contraption;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

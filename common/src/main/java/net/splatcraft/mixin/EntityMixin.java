@@ -1,10 +1,10 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCooldown;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

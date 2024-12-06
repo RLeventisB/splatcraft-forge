@@ -1,14 +1,14 @@
-package net.splatcraft.forge.client.renderer.subs;
+package net.splatcraft.client.renderer.subs;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.subs.BurstBombModel;
-import net.splatcraft.forge.entities.subs.BurstBombEntity;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.models.subs.BurstBombModel;
+import net.splatcraft.entities.subs.BurstBombEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstBombModel>
@@ -31,8 +31,8 @@ public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstB
         if (!entityIn.isItem)
         {
             //PoseStackIn.translate(0.0D, 0.2/*0.15000000596046448D*/, 0.0D);
-            PoseStackIn.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
-            PoseStackIn.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot()) + 90F));
+            PoseStackIn.mulPose(Axis.YP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
+            PoseStackIn.mulPose(Axis.XP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot()) + 90F));
             PoseStackIn.scale(1, -1, 1);
         }
         super.render(entityIn, entityYaw, partialTicks, PoseStackIn, bufferIn, packedLightIn);

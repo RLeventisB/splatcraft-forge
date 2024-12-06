@@ -1,21 +1,21 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 
 import java.util.UUID;
 
 public class UpdatePlayerInfoPacket extends PlayS2CPacket
 {
     UUID target;
-    CompoundTag nbt;
+    NbtCompound nbt;
 
-    protected UpdatePlayerInfoPacket(UUID player, CompoundTag nbt)
+    protected UpdatePlayerInfoPacket(UUID player, NbtCompound nbt)
     {
         this.target = player;
         this.nbt = nbt;
@@ -23,7 +23,7 @@ public class UpdatePlayerInfoPacket extends PlayS2CPacket
 
     public UpdatePlayerInfoPacket(Player target)
     {
-        this(target.getUUID(), PlayerInfoCapability.get(target).writeNBT(new CompoundTag()));
+        this(target.getUUID(), PlayerInfoCapability.get(target).writeNBT(new NbtCompound()));
     }
 
     public static UpdatePlayerInfoPacket decode(FriendlyByteBuf buffer)

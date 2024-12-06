@@ -1,10 +1,10 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.splatcraft.forge.handlers.DataHandler;
-import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
+import net.splatcraft.handlers.DataHandler;
+import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 
 import java.text.DecimalFormat;
 import java.util.List;

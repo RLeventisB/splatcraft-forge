@@ -1,4 +1,4 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 public interface IHasTeam
 {

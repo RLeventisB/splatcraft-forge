@@ -1,4 +1,4 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -19,24 +19,24 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.blocks.IColoredBlock;
-import net.splatcraft.forge.blocks.InkedBlock;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.mixin.accessors.EntityAccessor;
-import net.splatcraft.forge.registries.*;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.blocks.IColoredBlock;
+import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.registries.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -299,15 +299,15 @@ public class InkBlockUtils
         boolean canSwim = false;
 
         BlockPos down = entity.getOnPos();
-        Block standingBlock = entity.level().getBlockState(down).getBlock();
+        Block standingBlock = entity.getWorld().getBlockState(down).getBlock();
 
-        if (isInked(entity.level(), down, Direction.UP))
-            return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down).color(Direction.UP.get3DDataValue()));
+        if (isInked(entity.getWorld(), down, Direction.UP))
+            return ColorUtils.colorEquals(entity.getWorld(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.getWorld(), down).color(Direction.UP.get3DDataValue()));
 
         if (standingBlock instanceof IColoredBlock coloredBlock)
             canSwim = coloredBlock.canSwim();
 
-        return canSwim && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(down));
+        return canSwim && ColorUtils.colorEquals(entity, entity.getWorld().getBlockEntity(down));
     }
 
     public static BlockPos getBlockStandingOnPos(Entity entity)
@@ -322,7 +322,7 @@ public class InkBlockUtils
         {
             result = CommonUtils.createBlockPos(entity.getX(), entity.getY() + i, entity.getZ());
 
-            VoxelShape shape = entity.level().getBlockState(result).getCollisionShape(entity.level(), result, CollisionContext.of(entity));
+            VoxelShape shape = entity.getWorld().getBlockState(result).getCollisionShape(entity.getWorld(), result, CollisionContext.of(entity));
             shape.collide(Direction.Axis.Y, entity.getBoundingBox(), 0.0);
 
             if (!shape.isEmpty() && shape.bounds().minY <= entity.getY() - result.getY())
@@ -337,10 +337,10 @@ public class InkBlockUtils
             return false;
         BlockPos pos = entity.getOnPos();
 
-        if (isInked(entity.level(), pos, Direction.UP))
+        if (isInked(entity.getWorld(), pos, Direction.UP))
             return !canSquidSwim(entity);
-        else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
-            return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.level(), pos) != -1 && !canSquidSwim(entity);
+        else if (entity.getWorld().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
+            return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.getWorld(), pos) != -1 && !canSquidSwim(entity);
         else return false;
     }
 
@@ -349,20 +349,20 @@ public class InkBlockUtils
         if (onEnemyInk(entity))
             return null;
 
-        Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), 0.1f, yRot);
-        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().expandTowards(inputVector), false, (bro, what) ->
+        Vec3d inputVector = EntityAccessor.invokeGetInputVector(new Vec3d(Math.signum(strafeImpulse), 0, Math.signum(forwardImpulse)), 0.1f, yRot);
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.getWorld(), entity, entity.getBoundingBox().expandTowards(inputVector), false, (bro, what) ->
             bro);
 
         return checkSquidCollisions(entity, collisions, inputVector);
     }
 
     @Nullable
-    private static Direction checkSquidCollisions(LivingEntity entity, BlockCollisions<BlockPos> collisions, Vec3 inputVector)
+    private static Direction checkSquidCollisions(LivingEntity entity, BlockCollisions<BlockPos> collisions, Vec3d inputVector)
     {
         while (collisions.hasNext())
         {
             BlockPos collidedBlock = collisions.next();
-            Vec3 center = collidedBlock.getCenter();
+            Vec3d center = collidedBlock.getCenter();
             Direction direction;
             if (Math.abs(center.x - entity.getX()) > Math.abs(center.z - entity.getZ()))
             {
@@ -373,12 +373,12 @@ public class InkBlockUtils
                 direction = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
             }
 
-            if (isInked(entity.level(), collidedBlock, direction) &&
-                ColorUtils.colorEquals(entity.level(), collidedBlock,
+            if (isInked(entity.getWorld(), collidedBlock, direction) &&
+                ColorUtils.colorEquals(entity.getWorld(), collidedBlock,
                     ColorUtils.getEntityColor(entity),
-                    getInkBlock(entity.level(), collidedBlock).color(direction.get3DDataValue())))
+                    getInkBlock(entity.getWorld(), collidedBlock).color(direction.get3DDataValue())))
             {
-                if (inputVector == null || Vec3.atLowerCornerOf(direction.getNormal()).cross(inputVector).y() != 0)
+                if (inputVector == null || Vec3d.atLowerCornerOf(direction.getNormal()).cross(inputVector).y() != 0)
                     return direction;
             }
         }
@@ -389,17 +389,17 @@ public class InkBlockUtils
     {
         Direction blockFaceToCheck = face.getOpposite();
         AABB baseBoundingBox = SplatcraftEntities.INK_SQUID.get().getDimensions().makeBoundingBox(entity.position());
-        Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(-Math.signum(strafeImpulse), Math.signum(forwardImpulse), 0), 0.1f, face.toYRot());
-        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, baseBoundingBox.expandTowards(inputVector), false, (bro, what) ->
+        Vec3d inputVector = EntityAccessor.invokeGetInputVector(new Vec3d(-Math.signum(strafeImpulse), Math.signum(forwardImpulse), 0), 0.1f, face.toYRot());
+        BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.getWorld(), entity, baseBoundingBox.expandTowards(inputVector), false, (bro, what) ->
             bro);
 
         Direction otherWallClosion = checkSquidCollisions(entity, collisions, inputVector);
         if (otherWallClosion != null)
             return otherWallClosion;
 
-        inputVector = Vec3.atLowerCornerOf(blockFaceToCheck.getNormal()).scale(0.01);
+        inputVector = Vec3d.atLowerCornerOf(blockFaceToCheck.getNormal()).scale(0.01);
         AABB aabb = baseBoundingBox.expandTowards(inputVector);
-        collisions = new BlockCollisions<>(entity.level(), entity, aabb, false, (bro, what) ->
+        collisions = new BlockCollisions<>(entity.getWorld(), entity, aabb, false, (bro, what) ->
             bro);
 
         return checkSquidCollisions(entity, collisions, null);

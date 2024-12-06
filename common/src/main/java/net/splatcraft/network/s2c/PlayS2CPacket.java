@@ -1,8 +1,8 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
-import net.splatcraft.forge.network.SplatcraftPacket;
+import net.splatcraft.network.SplatcraftPacket;
 
 import java.util.function.Supplier;
 

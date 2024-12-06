@@ -1,11 +1,11 @@
-package net.splatcraft.forge.client.particles;
+package net.splatcraft.client.particles;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.*;
+import net.minecraft.client.multiplayer.ClientWorld;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
@@ -13,12 +13,11 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class InkSplashParticle extends TextureSheetParticle
 {
-    private final SpriteSet spriteProvider;
+    private final SpriteProvider spriteProvider;
 
-    public InkSplashParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ, InkSplashParticleData data, SpriteSet sprite)
+    public InkSplashParticle(ClientWorld level, double x, double y, double z, double motionX, double motionY, double motionZ, InkSplashParticleData data, SpriteProvider sprite)
     {
         super(level, x, y, z, motionX, motionY, motionZ);
 
@@ -94,16 +93,16 @@ public class InkSplashParticle extends TextureSheetParticle
     @OnlyIn(Dist.CLIENT)
     public static class Factory implements ParticleProvider<InkSplashParticleData>
     {
-        private final SpriteSet spriteSet;
+        private final SpriteProvider spriteSet;
 
-        public Factory(SpriteSet sprite)
+        public Factory(SpriteProvider sprite)
         {
             this.spriteSet = sprite;
         }
 
         @Nullable
         @Override
-        public Particle createParticle(@NotNull InkSplashParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull InkSplashParticleData typeIn, @NotNull ClientWorld levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
             return new InkSplashParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
         }

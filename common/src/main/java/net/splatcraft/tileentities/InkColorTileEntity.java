@@ -1,21 +1,21 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.math.BlockPos;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InkColorTileEntity extends BlockEntity implements IHasTeam
 {
-
     private int color = ColorUtils.DEFAULT;
     private boolean inverted = false;
     private String team = "";
@@ -31,53 +31,52 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
     {
         nbt.putBoolean("Inverted", inverted);
         nbt.putInt("Color", color);
         if (!team.isEmpty())
             nbt.putString("Team", team);
-        super.saveAdditional(nbt);
+        super.writeNbt(nbt, registryLookup);
     }
 
     //Nbt Read
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
     {
-        super.load(nbt);
+        super.readNbt(nbt, registryLookup);
         color = ColorUtils.getColorFromNbt(nbt);
         team = nbt.getString("Team");
         inverted = nbt.getBoolean("Inverted");
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag()
+    public @Nullable Packet<ClientPlayPacketListener> toUpdatePacket()
     {
-        CompoundTag tag = new CompoundTag();
-        saveAdditional(tag);
-        return tag;
+        return BlockEntityUpdateS2CPacket.create(this);
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag)
+    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup)
     {
-        this.load(tag);
+        NbtCompound nbt = new NbtCompound();
+        writeNbt(nbt, registryLookup);
+        return nbt;
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket()
+    public void handleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup)
     {
-        // Will get tag from #getUpdateTag
-        return ClientboundBlockEntityDataPacket.create(this);
+        this.readNbt(tag);
     }
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt)
     {
-        if (level != null)
+        if (world != null)
         {
-            BlockState state = level.getBlockState(getBlockPos());
-            level.sendBlockUpdated(getBlockPos(), state, state, 2);
+            BlockState state = world.getBlockState(getBlockPos());
+            world.sendBlockUpdated(this.getPos(), state, state, 2);
             handleUpdateTag(pkt.getTag());
         }
     }

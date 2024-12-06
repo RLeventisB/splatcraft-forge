@@ -1,8 +1,8 @@
-package net.splatcraft.forge.data;
+package net.splatcraft.data;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
@@ -10,22 +10,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfo;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.tileentities.SpawnPadTileEntity;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -61,7 +61,7 @@ public class Stage implements Comparable<Stage>
     private Component name;
     private boolean needsSpawnPadUpdate = false;
 
-    public Stage(CompoundTag nbt, String id)
+    public Stage(NbtCompound nbt, String id)
     {
         this.id = id;
         dimID = new ResourceLocation(nbt.getString("Dimension"));
@@ -70,11 +70,11 @@ public class Stage implements Comparable<Stage>
 
         settings.clear();
 
-        CompoundTag settingsNbt = nbt.getCompound("Settings");
+        NbtCompound settingsNbt = nbt.getCompound("Settings");
         for (String key : settingsNbt.getAllKeys())
             settings.put(key, settingsNbt.getBoolean(key));
 
-        CompoundTag teamsNbt = nbt.getCompound("Teams");
+        NbtCompound teamsNbt = nbt.getCompound("Teams");
         for (String key : teamsNbt.getAllKeys())
             teams.put(key, teamsNbt.getInt(key));
 
@@ -84,7 +84,7 @@ public class Stage implements Comparable<Stage>
 
         ListTag list = nbt.getList("SpawnPads", Tag.TAG_COMPOUND);
         for (Tag tag : list)
-            spawnPadPositions.add(NbtUtils.readBlockPos((CompoundTag) tag));
+            spawnPadPositions.add(NbtUtils.readBlockPos((NbtCompound) tag));
 
         name = nbt.contains("Name") ? Component.Serializer.fromJson(nbt.getString("Name")) : Component.literal(id);
     }
@@ -103,7 +103,7 @@ public class Stage implements Comparable<Stage>
         VALID_SETTINGS.put(rule.toString().replace(Splatcraft.MODID + ".", ""), rule);
     }
 
-    public static boolean targetsOnSameStage(Level level, Vec3 targetA, Vec3 targetB)
+    public static boolean targetsOnSameStage(Level level, Vec3d targetA, Vec3d targetB)
     {
         return !getStagesForPosition(level, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
     }
@@ -118,7 +118,7 @@ public class Stage implements Comparable<Stage>
         return (level.isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(level.getServer()).getStages()).get(id);
     }
 
-    public static ArrayList<Stage> getStagesForPosition(Level level, Vec3 pos)
+    public static ArrayList<Stage> getStagesForPosition(Level level, Vec3d pos)
     {
         ArrayList<Stage> stages = getAllStages(level);
         stages.removeIf(stage -> !stage.dimID.equals(level.dimension().location()) || !stage.getBounds().contains(pos));
@@ -211,16 +211,16 @@ public class Stage implements Comparable<Stage>
             updateSpawnPads(level);
     }
 
-    public CompoundTag writeData()
+    public NbtCompound writeData()
     {
-        CompoundTag nbt = new CompoundTag();
+        NbtCompound nbt = new NbtCompound();
 
         nbt.put("CornerA", NbtUtils.writeBlockPos(cornerA));
         nbt.put("CornerB", NbtUtils.writeBlockPos(cornerB));
         nbt.putString("Dimension", dimID.toString());
 
-        CompoundTag settingsNbt = new CompoundTag();
-        CompoundTag teamsNbt = new CompoundTag();
+        NbtCompound settingsNbt = new NbtCompound();
+        NbtCompound teamsNbt = new NbtCompound();
 
         for (Map.Entry<String, Boolean> setting : settings.entrySet())
             settingsNbt.putBoolean(setting.getKey(), setting.getValue());
@@ -314,7 +314,7 @@ public class Stage implements Comparable<Stage>
 
     public boolean superJumpToStage(ServerPlayer player)
     {
-        if (!player.level().dimension().location().equals(dimID) || getSpawnPadPositions().isEmpty())
+        if (!player.getWorld().dimension().location().equals(dimID) || getSpawnPadPositions().isEmpty())
             return false;
 
         int playerColor = ColorUtils.getPlayerColor(player);
@@ -328,7 +328,7 @@ public class Stage implements Comparable<Stage>
 
         BlockPos targetPos = spawnPads.get(playerColor).get(player.getRandom().nextInt(spawnPads.get(playerColor).size())).getBlockPos();
 
-        return SuperJumpCommand.superJump(player, new Vec3(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.level()), targetPos.getZ() + 0.5));
+        return SuperJumpCommand.superJump(player, new Vec3d(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.level()), targetPos.getZ() + 0.5));
     }
 
     @OnlyIn(Dist.DEDICATED_SERVER)
@@ -347,7 +347,7 @@ public class Stage implements Comparable<Stage>
         return true;
     }
 
-    public ServerLevel getStageLevel(MinecraftServer server)
+    public ServerWorld getStageLevel(MinecraftServer server)
     {
         return server.getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
     }

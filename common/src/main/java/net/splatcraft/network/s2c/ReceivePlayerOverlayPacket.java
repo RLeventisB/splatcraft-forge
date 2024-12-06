@@ -1,4 +1,4 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
@@ -7,8 +7,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.layer.PlayerInkColoredSkinLayer;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

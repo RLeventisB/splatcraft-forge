@@ -1,9 +1,9 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.DyeColor;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.TreeMap;

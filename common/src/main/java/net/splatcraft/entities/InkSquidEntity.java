@@ -1,74 +1,84 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.goal.LookAroundGoal;
+import net.minecraft.entity.ai.goal.LookAtEntityGoal;
+import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.World;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.client.particles.SquidSoulParticleData;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.client.particles.SquidSoulParticleData;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InkSquidEntity extends PathfinderMob implements IColoredEntity
+public class InkSquidEntity extends PathAwareEntity implements IColoredEntity
 {
-    private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkSquidEntity.class, EntityDataSerializers.INT);
+    private static final TrackedData<Integer> COLOR = DataTracker.registerData(InkSquidEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
-    public InkSquidEntity(EntityType<? extends PathfinderMob> type, Level level)
+    public InkSquidEntity(EntityType<? extends PathAwareEntity> type, World world)
     {
-        super(type, level);
+        super(type, world);
     }
 
-    public static AttributeSupplier.Builder setCustomAttributes()
+    public static DefaultAttributeContainer.Builder setCustomAttributes()
     {
-        return Mob.createLivingAttributes()
-            .add(Attributes.MAX_HEALTH, 20)
-            .add(Attributes.MOVEMENT_SPEED, 0.23D)
-            .add(Attributes.FOLLOW_RANGE, 16);
-    }
-
-    @Override
-    protected void defineSynchedData()
-    {
-        super.defineSynchedData();
-        entityData.define(COLOR, ColorUtils.DEFAULT);
+        return MobEntity.createLivingAttributes()
+            .add(EntityAttributes.GENERIC_MAX_HEALTH, 20)
+            .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.23D)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16);
     }
 
     @Override
-    protected void registerGoals()
+    protected void initDataTracker(DataTracker.Builder builder)
     {
-        goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.6D));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
-        goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 10.0F));
+        super.initDataTracker(builder);
+        builder.add(COLOR, ColorUtils.DEFAULT);
     }
 
     @Override
-    public void die(@NotNull DamageSource source)
+    protected void initGoals()
     {
-        level().broadcastEntityEvent(this, (byte) 60);
-        super.die(source);
+        super.initGoals();
+    }
+
+    protected void initCustomGoals()
+    {
+        goalSelector.add(6, new WanderAroundFarGoal(this, 0.6D));
+        goalSelector.add(8, new LookAroundGoal(this));
+        goalSelector.add(11, new LookAtEntityGoal(this, PlayerEntity.class, 10.0F));
     }
 
     @Override
+    public void onDeath(DamageSource damageSource)
+    {
+        getWorld().sendEntityStatus(this, (byte) 60);
+        super.onDeath(damageSource);
+    }
+
+    @Override
+    public void handleStatus(byte status)
+    {
+        super.handleStatus(status);
+    }
+
     public void handleEntityEvent(byte id)
     {
         if (id == 60)
         {
-            level().addParticle(new SquidSoulParticleData(getColor()), this.getX(), this.getY(), this.getZ(), 0, 1, 0);
+            getEntityWorld().addParticle(new SquidSoulParticleData(getColor()), this.getX(), this.getY(), this.getZ(), 0, 1, 0);
         }
         else
         {
@@ -111,7 +121,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag nbt)
+    public void readAdditionalSaveData(@NotNull NbtCompound nbt)
     {
         super.readAdditionalSaveData(nbt);
         if (nbt.contains("Color"))
@@ -121,7 +131,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag nbt)
+    public void addAdditionalSaveData(@NotNull NbtCompound nbt)
     {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("Color", getColor());

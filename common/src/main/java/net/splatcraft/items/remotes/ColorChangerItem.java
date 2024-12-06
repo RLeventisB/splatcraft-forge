@@ -1,7 +1,7 @@
-package net.splatcraft.forge.items.remotes;
+package net.splatcraft.items.remotes;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.TextColor;
@@ -14,18 +14,18 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.commands.InkColorCommand;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.items.IColoredItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateStageListPacket;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.tileentities.IHasTeam;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.commands.InkColorCommand;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.items.IColoredItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateStageListPacket;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.tileentities.IHasTeam;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +79,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
     {
         super.appendHoverText(stack, level, tooltip, flag);
 
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
 
         if (nbt.contains("Team") && !nbt.getString("Team").isEmpty())
         {
@@ -111,11 +111,11 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
     {
         BlockPos pos = entity.blockPosition().below();
 
-        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }

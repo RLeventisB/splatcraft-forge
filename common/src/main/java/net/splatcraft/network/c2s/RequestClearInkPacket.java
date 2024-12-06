@@ -1,12 +1,12 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.items.remotes.InkDisruptorItem;
+import net.splatcraft.data.Stage;
+import net.splatcraft.items.remotes.InkDisruptorItem;
 
 public class RequestClearInkPacket extends PlayC2SPacket
 {
@@ -31,8 +31,8 @@ public class RequestClearInkPacket extends PlayC2SPacket
     @Override
     public void execute(Player player)
     {
-        Stage stage = Stage.getStage(player.level(), stageId);
-        ServerLevel stageLevel = player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
+        Stage stage = Stage.getStage(player.getWorld(), stageId);
+        ServerWorld stageLevel = player.getWorld().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
         player.displayClientMessage(InkDisruptorItem.clearInk(stageLevel, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
     }
 }

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,13 +24,12 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.network.NetworkHooks;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.InkVatTileEntity;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.InkVatTileEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;

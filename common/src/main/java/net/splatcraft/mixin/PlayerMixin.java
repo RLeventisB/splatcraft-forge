@@ -1,9 +1,9 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.registries.SplatcraftEntities;
+import net.splatcraft.registries.SplatcraftEntities;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 

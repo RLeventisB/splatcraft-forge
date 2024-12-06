@@ -1,4 +1,4 @@
-package net.splatcraft.forge.data;
+package net.splatcraft.data;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -9,13 +9,13 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.storage.loot.Deserializers;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static net.splatcraft.forge.data.InkColorTags.Listener.getOrCreateTag;
+import static net.splatcraft.data.InkColorTags.Listener.getOrCreateTag;
 
 public class InkColorTags
 {
@@ -58,7 +58,6 @@ public class InkColorTags
     public static class Listener extends SimpleJsonResourceReloadListener
     {
         private static final HashMap<ResourceLocation, InkColorTags> REGISTRY = new HashMap<>();
-
         private static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
         private static final String folder = "tags/ink_colors";
         private static final List<Map.Entry<ResourceLocation, JsonElement>> entries = new ArrayList<>(), entriesThatReferenceAnotherTag = new ArrayList<>();

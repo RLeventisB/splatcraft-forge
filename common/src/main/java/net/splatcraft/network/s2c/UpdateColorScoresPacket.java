@@ -1,8 +1,8 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.splatcraft.forge.crafting.InkVatColorRecipe;
-import net.splatcraft.forge.handlers.ScoreboardHandler;
+import net.splatcraft.crafting.InkVatColorRecipe;
+import net.splatcraft.handlers.ScoreboardHandler;
 
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {

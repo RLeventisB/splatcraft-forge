@@ -1,12 +1,12 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.client.gui.stagepad.StageCreationScreen;
-import net.splatcraft.forge.client.gui.stagepad.StageSelectionScreen;
-import net.splatcraft.forge.client.gui.stagepad.StageSettingsScreen;
+import net.splatcraft.client.gui.stagepad.StageCreationScreen;
+import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
+import net.splatcraft.client.gui.stagepad.StageSettingsScreen;
 
 public class NotifyStageCreatePacket extends PlayS2CPacket
 {

@@ -1,9 +1,9 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.entity.Entity;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.util.AttackId.DefaultAttackId.EmptyAttackId;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.util.AttackId.DefaultAttackId.EmptyAttackId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public abstract class AttackId
         return nextAttackId++;
     }
 
-    public static AttackId readNbt(CompoundTag tag)
+    public static AttackId readNbt(NbtCompound tag)
     {
         return tag.contains("Id") ? new DefaultAttackId(tag) : new EmptyAttackId();
     }
@@ -45,7 +45,7 @@ public abstract class AttackId
 
     public abstract boolean checkEntity(Entity entity);
 
-    public abstract CompoundTag serializeNbt();
+    public abstract NbtCompound serializeNbt();
 
     public static final class DefaultAttackId extends AttackId
     {
@@ -59,7 +59,7 @@ public abstract class AttackId
             hitEnemies = new ArrayList<>(0);
         }
 
-        private DefaultAttackId(CompoundTag tag)
+        private DefaultAttackId(NbtCompound tag)
         {
             id = tag.getShort("Id");
             hitEnemies = new ArrayList<>(tag.getInt("HitCount"));
@@ -109,9 +109,9 @@ public abstract class AttackId
             return false;
         }
 
-        public CompoundTag serializeNbt()
+        public NbtCompound serializeNbt()
         {
-            CompoundTag ret = new CompoundTag();
+            NbtCompound ret = new NbtCompound();
             ret.putShort("Id", id);
             ret.putInt("HitCount", hitEnemies.size());
             long[] uuidArray = new long[hitEnemies.size() << 1];
@@ -152,9 +152,9 @@ public abstract class AttackId
             }
 
             @Override
-            public CompoundTag serializeNbt()
+            public NbtCompound serializeNbt()
             {
-                return new CompoundTag();
+                return new NbtCompound();
             }
         }
     }

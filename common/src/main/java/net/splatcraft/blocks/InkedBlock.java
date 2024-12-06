@@ -1,8 +1,9 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
+import net.minecraft.block.Block;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -26,20 +26,19 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.tileentities.InkedBlockTileEntity;
-import net.splatcraft.forge.util.BlockInkedResult;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.tileentities.InkedBlockTileEntity;
+import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class InkedBlock extends Block implements EntityBlock, IColoredBlock
 {
     public static final int GLOWING_LIGHT_LEVEL = 6;
@@ -267,7 +266,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public boolean addLandingEffects(BlockState state1, ServerLevel levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
+    public boolean addLandingEffects(BlockState state1, ServerWorld levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
     {
         ColorUtils.addInkSplashParticle(levelserver, getColor(levelserver, pos), entity.getX(), entity.getY(levelserver.random.nextFloat() * 0.3f), entity.getZ(), (float) Math.sqrt(numberOfParticles) * 0.3f);
         return true;
@@ -281,7 +280,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     }
 
     @Override
-    public void randomTick(@NotNull BlockState state, @NotNull ServerLevel level, @NotNull BlockPos pos, @NotNull RandomSource randomSource)
+    public void randomTick(@NotNull BlockState state, @NotNull ServerWorld level, @NotNull BlockPos pos, @NotNull RandomSource randomSource)
     {
         if (SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_DECAY) && level.getBlockEntity(pos) instanceof InkedBlockTileEntity)
         {

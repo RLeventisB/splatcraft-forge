@@ -1,13 +1,13 @@
-package net.splatcraft.forge.data.capabilities.worldink;
+package net.splatcraft.data.capabilities.worldink;
 
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -119,7 +119,7 @@ public class ChunkInk
         return INK_MAP.get(pos);
     }
 
-    public CompoundTag writeNBT(CompoundTag nbt)
+    public NbtCompound writeNBT(NbtCompound nbt)
     {
         ListTag inkMapList = new ListTag();
 
@@ -127,8 +127,8 @@ public class ChunkInk
         {
             RelativeBlockPos pos = pair.getKey();
             BlockEntry entry = pair.getValue();
-            CompoundTag element = new CompoundTag();
-            element.put("Pos", pos.writeNBT(new CompoundTag()));
+            NbtCompound element = new NbtCompound();
+            element.put("Pos", pos.writeNBT(new NbtCompound()));
             element.putBoolean("IsPermanent", entry.inmutable);
             if (!entry.isInkedAny())
                 continue;
@@ -150,7 +150,7 @@ public class ChunkInk
         return nbt;
     }
 
-    public void readNBT(CompoundTag nbt)
+    public void readNBT(NbtCompound nbt)
     {
         INK_MAP.clear();
         boolean oldFormat = nbt.contains("PermanentInk");
@@ -160,7 +160,7 @@ public class ChunkInk
             INK_MAP.clear();
             for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
             {
-                CompoundTag element = (CompoundTag) tag;
+                NbtCompound element = (NbtCompound) tag;
                 RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
                 int color = element.getInt("Color");
                 InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type")));
@@ -178,7 +178,7 @@ public class ChunkInk
 
             for (Tag tag : nbt.getList("PermanentInk", Tag.TAG_COMPOUND))
             {
-                CompoundTag element = (CompoundTag) tag;
+                NbtCompound element = (NbtCompound) tag;
                 RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
                 int color = element.getInt("Color");
                 InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type")));
@@ -202,7 +202,7 @@ public class ChunkInk
         {
             for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
             {
-                CompoundTag element = (CompoundTag) tag;
+                NbtCompound element = (NbtCompound) tag;
                 boolean isPermanent = element.getBoolean("IsPermanent");
                 RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
                 if (element.contains("Faces"))

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.data;
+package net.splatcraft.data;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -8,8 +8,8 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.storage.loot.Deserializers;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

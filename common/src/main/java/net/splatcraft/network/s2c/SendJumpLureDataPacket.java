@@ -1,10 +1,10 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.client.handlers.JumpLureHudHandler;
+import net.splatcraft.client.handlers.JumpLureHudHandler;
 
 import java.util.ArrayList;
 import java.util.UUID;

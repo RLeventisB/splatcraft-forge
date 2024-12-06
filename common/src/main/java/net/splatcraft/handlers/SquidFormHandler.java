@@ -1,8 +1,8 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.effect.MobEffectUtil;
@@ -12,7 +12,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
@@ -25,21 +25,21 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.blocks.SpawnPadBlock;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
-import net.splatcraft.forge.registries.SplatcraftDamageTypes;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.registries.SplatcraftStats;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.blocks.SpawnPadBlock;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.registries.SplatcraftStats;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -63,15 +63,15 @@ public class SquidFormHandler
 
         if (InkBlockUtils.onEnemyInk(player))
         {
-            if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.level().getDifficulty() != Difficulty.PEACEFUL)
+            if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.getWorld().getDifficulty() != Difficulty.PEACEFUL)
                 player.hurt(player.damageSources().source(SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
-            if (player.level().getRandom().nextFloat() < 0.5f)
+            if (player.getWorld().getRandom().nextFloat() < 0.5f)
             {
-                ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
+                ColorUtils.addStandingInkSplashParticle(player.getWorld(), player, 1);
             }
         }
 
-        if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isInWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
+        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isInWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
             player.hurt(player.damageSources().source(SplatcraftDamageTypes.WATER), 8f);
 
         if (!PlayerInfoCapability.hasCapability(player))
@@ -102,9 +102,9 @@ public class SquidFormHandler
 
             if (state == SquidState.SUBMERGING)
             {
-                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 
-                if (player.level() instanceof ServerLevel serverLevel)
+                if (player.getWorld() instanceof ServerWorld serverLevel)
                 {
                     for (int i = 0; i < 2; i++)
                         ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
@@ -112,7 +112,7 @@ public class SquidFormHandler
             }
             else if (state == SquidState.SURFACING)
             {
-                player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
             }
 
             squidSubmergeMode.put(player, state);
@@ -133,10 +133,10 @@ public class SquidFormHandler
 
             if (InkBlockUtils.canSquidHide(player))
             {
-                if (player.getHealth() < player.getMaxHealth() && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) && player.tickCount % 5 == 0 && !player.hasEffect(MobEffects.POISON) && !player.hasEffect(MobEffects.WITHER))
+                if (player.getHealth() < player.getMaxHealth() && SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) && player.tickCount % 5 == 0 && !player.hasEffect(MobEffects.POISON) && !player.hasEffect(MobEffects.WITHER))
                 {
                     player.heal(0.5f);
-                    if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
+                    if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
                         player.causeFoodExhaustion(0.25f);
                     if (InkOverlayCapability.hasCapability(player))
                     {
@@ -145,41 +145,41 @@ public class SquidFormHandler
                 }
 
                 boolean crouch = player.isCrouching();
-                if (!crouch && player.level().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
+                if (!crouch && player.getWorld().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
                 {
-                    ColorUtils.addInkSplashParticle(player.level(), player, 1.1f);
+                    ColorUtils.addInkSplashParticle(player.getWorld(), player, 1.1f);
                 }
             }
-            if (info.getSquidSurgeCharge() > 0 && player.level().getRandom().nextFloat() <= info.getSquidSurgeCharge() / 30)
+            if (info.getSquidSurgeCharge() > 0 && player.getWorld().getRandom().nextFloat() <= info.getSquidSurgeCharge() / 30)
             {
-                ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
+                ColorUtils.addInkSplashParticle(player.getWorld(), player, 0.9f);
             }
 
             BlockPos posBelow = InkBlockUtils.getBlockStandingOnPos(player);
-            Block blockBelow = player.level().getBlockState(posBelow).getBlock();
+            Block blockBelow = player.getWorld().getBlockState(posBelow).getBlock();
 
             if (blockBelow instanceof SpawnPadBlock.Aux aux)
             {
-                BlockPos newPos = aux.getParentPos(player.level().getBlockState(posBelow), posBelow);
-                if (player.level().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
+                BlockPos newPos = aux.getParentPos(player.getWorld().getBlockState(posBelow), posBelow);
+                if (player.getWorld().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
                 {
                     posBelow = newPos;
-                    blockBelow = player.level().getBlockState(newPos).getBlock();
+                    blockBelow = player.getWorld().getBlockState(newPos).getBlock();
                 }
             }
 
-            if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
+            if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.getWorld(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
             {
-                ColorUtils.setPlayerColor(player, ColorUtils.getInkColorOrInverted(player.level(), posBelow));
+                ColorUtils.setPlayerColor(player, ColorUtils.getInkColorOrInverted(player.getWorld(), posBelow));
             }
 
             if (blockBelow instanceof SpawnPadBlock)
             {
-                InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
+                InkColorTileEntity spawnPad = (InkColorTileEntity) player.getWorld().getBlockEntity(posBelow);
 
                 if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
                 {
-                    serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+                    serverPlayer.setRespawnPosition(player.getWorld().dimension(), posBelow, player.getWorld().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
                 }
             }
         }
@@ -254,13 +254,13 @@ public class SquidFormHandler
     @SubscribeEvent
     public static void onClientLivingTick(LivingEvent.LivingTickEvent event)
     {
-        if (!event.getEntity().level().isClientSide())
+        if (!event.getEntity().getWorld().isClientSide())
             return;
         LivingEntity living = event.getEntity();
         if (InkOverlayCapability.hasCapability(living))
         {
             InkOverlayInfo info = InkOverlayCapability.get(living);
-            Vec3 prev = living.getPosition(0);
+            Vec3d prev = living.getPosition(0);
 
             info.setSquidRot(Math.abs(living.getY() - prev.y()) * living.position().subtract(prev).normalize().y);
         }

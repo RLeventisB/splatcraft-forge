@@ -1,15 +1,15 @@
-package net.splatcraft.forge.criteriaTriggers;
+package net.splatcraft.criteriaTriggers;
 
 import com.google.gson.JsonObject;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.InkColorAliases;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkColor;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColorTrigger.TriggerInstance>
@@ -40,7 +40,7 @@ public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColor
                 }
             }
             else
-                color = Mth.clamp(GsonHelper.getAsInt(json, "color"), 0, 0xFFFFFF);
+                color = MathHelper.clamp(GsonHelper.getAsInt(json, "color"), 0, 0xFFFFFF);
         }
         return new ChangeInkColorTrigger.TriggerInstance(composite, color);
     }

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
@@ -9,14 +9,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.CreateOrEditStagePacket;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.CreateOrEditStagePacket;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static net.splatcraft.forge.client.gui.stagepad.StageCreationScreen.getShortenedInt;
+import static net.splatcraft.client.gui.stagepad.StageCreationScreen.getShortenedInt;
 
 public class StageSettingsScreen extends AbstractStagePadScreen
 {
@@ -66,9 +66,11 @@ public class StageSettingsScreen extends AbstractStagePadScreen
         addButton(new MenuButton(167, 88, 30, 12, (b) -> clickSetCornerButton(b, false),
             showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
 
-        addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.cornerA), showCopyPos(() -> stage.cornerA), (ps, b) -> {
+        addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.cornerA), showCopyPos(() -> stage.cornerA), (ps, b) ->
+        {
         }));
-        addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> stage.cornerB), showCopyPos(() -> stage.cornerB), (ps, b) -> {
+        addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> stage.cornerB), showCopyPos(() -> stage.cornerB), (ps, b) ->
+        {
         }));
 
         addTextBox((font) ->

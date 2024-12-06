@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.minecraftforge.fml.loading.LoadingModList;
@@ -38,7 +38,7 @@ public class MixinInitializer implements IMixinConfigPlugin
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
     {
-        if (mixinClassName.startsWith("net.splatcraft.forge.mixin.compat"))
+        if (mixinClassName.startsWith("net.splatcraft.mixin.compat"))
         {
             if (mixinClassName.contains("Sodium"))
             {

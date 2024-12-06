@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.DyeColor;
@@ -16,12 +16,12 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.MissingMappingsEvent;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.blocks.*;
+import net.splatcraft.blocks.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
+import static net.splatcraft.Splatcraft.MODID;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftBlocks

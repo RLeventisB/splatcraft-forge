@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
@@ -14,13 +14,13 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.level.GameRules;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.RequestSetStageRulePacket;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.RequestSetStageRulePacket;
+import net.splatcraft.registries.SplatcraftGameRules;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -132,7 +132,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
         int y = (height - imageHeight) / 2;
 
         if (scrollBarHeld)
-            scroll = Mth.clamp((mouseY - (y + 24)) / 96f, 0, 1);
+            scroll = MathHelper.clamp((mouseY - (y + 24)) / 96f, 0, 1);
 
         return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
     }
@@ -141,7 +141,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
     public boolean mouseScrolled(double mouseX, double mouseY, double amount)
     {
         if (rules.size() >= 8)
-            scroll = Mth.clamp(scroll - Math.signum(amount) / (rules.size() - 8), 0.0f, 1.0f);
+            scroll = MathHelper.clamp(scroll - Math.signum(amount) / (rules.size() - 8), 0.0f, 1.0f);
 
         return true;
     }
@@ -164,7 +164,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
     {
         public RuleNameLabel(GameRules.Key<GameRules.BooleanValue> rule)
         {
-            super(10, 24, 144, 12, (b) -> {
+            super(10, 24, 144, 12, (b) ->
+            {
             }, ((button, guiGraphics, mouseX, mouseY, partialTicks) ->
             {
 
@@ -177,7 +178,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
                     lines.addAll(font.split(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY), 150));
 
                 guiGraphics.renderTooltip(Minecraft.getInstance().font, lines, mouseX, mouseY);
-            }), (ps, b) -> {
+            }), (ps, b) ->
+            {
             }, ButtonColor.GREEN);
             setMessage(Component.translatable(rule.getDescriptionId()));
         }
@@ -199,7 +201,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
             if (font.width(label) > width)
                 sequence = Language.getInstance().getVisualOrder(FormattedText.composite(Arrays.asList(font.substrByWidth(label, width - 12), FormattedText.of("...", Style.EMPTY))));
 
-            guiGraphics.drawString(font, sequence, getX() + (3), getY() + (getHeight() - 8) / 2, getFGColor() | Mth.ceil(getAlpha() * 255.0F) << 24);
+            guiGraphics.drawString(font, sequence, getX() + (3), getY() + (getHeight() - 8) / 2, getFGColor() | MathHelper.ceil(getAlpha() * 255.0F) << 24);
         }
 
         @Override
@@ -215,7 +217,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
 
         public RuleValueButton(GameRules.Key<GameRules.BooleanValue> rule)
         {
-            super(154, 24, 34, 12, (b) -> {
+            super(154, 24, 34, 12, (b) ->
+            {
             }, (button, poseStack, mouseX, mouseY, partialTicks) ->
             {
                 if (heldButton == null || heldButton.rule.equals(rule) /*can't ref to self before super, so this'll have to do*/)
@@ -225,7 +228,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
                         Component.translatable("gui.stage_pad.button.rule_value." + (SplatcraftGameRules.getClientsideBooleanValue(rule) ? "on" : "off"))) :
                         Component.translatable("gui.stage_pad.button.rule_value." + (value ? "on" : "off"))).onTooltip(button, poseStack, mouseX, mouseY, partialTicks);
                 }
-            }, (guiGraphics, button) -> {
+            }, (guiGraphics, button) ->
+            {
             }, ButtonColor.LIME);
             this.rule = rule;
         }
@@ -271,7 +275,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 
         void setValue(RuleEntry entry, double mouseX)
         {
-            entry.value = new Boolean[]{false, null, true}[Mth.clamp((int) ((mouseX - getX()) / width * 3), 0, 2)];
+            entry.value = new Boolean[]{false, null, true}[MathHelper.clamp((int) ((mouseX - getX()) / width * 3), 0, 2)];
         }
 
         @Override

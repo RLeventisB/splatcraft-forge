@@ -1,4 +1,4 @@
-package net.splatcraft.forge.network;
+package net.splatcraft.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
@@ -11,9 +11,9 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.network.c2s.*;
-import net.splatcraft.forge.network.s2c.*;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.network.c2s.*;
+import net.splatcraft.network.s2c.*;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;

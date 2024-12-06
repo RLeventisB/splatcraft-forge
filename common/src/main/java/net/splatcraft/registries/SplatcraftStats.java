@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.Registry;
@@ -6,11 +6,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.StatFormatter;
 import net.minecraft.stats.Stats;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.criteriaTriggers.ChangeInkColorTrigger;
-import net.splatcraft.forge.criteriaTriggers.CraftWeaponTrigger;
-import net.splatcraft.forge.criteriaTriggers.FallIntoInkTrigger;
-import net.splatcraft.forge.criteriaTriggers.ScanTurfTrigger;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.criteriaTriggers.ChangeInkColorTrigger;
+import net.splatcraft.criteriaTriggers.CraftWeaponTrigger;
+import net.splatcraft.criteriaTriggers.FallIntoInkTrigger;
+import net.splatcraft.criteriaTriggers.ScanTurfTrigger;
 
 public class SplatcraftStats
 {

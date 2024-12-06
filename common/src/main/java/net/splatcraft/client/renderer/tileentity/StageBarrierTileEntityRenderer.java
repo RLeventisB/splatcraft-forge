@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.renderer.tileentity;
+package net.splatcraft.client.renderer.tileentity;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -20,14 +20,14 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.blocks.IColoredBlock;
-import net.splatcraft.forge.blocks.StageBarrierBlock;
-import net.splatcraft.forge.tileentities.StageBarrierTileEntity;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.blocks.IColoredBlock;
+import net.splatcraft.blocks.StageBarrierBlock;
+import net.splatcraft.tileentities.StageBarrierTileEntity;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StageBarrierTileEntityRenderer implements BlockEntityRenderer<StageBarrierTileEntity>

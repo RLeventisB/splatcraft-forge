@@ -1,9 +1,9 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.items.JumpLureItem;
+import net.splatcraft.items.JumpLureItem;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;

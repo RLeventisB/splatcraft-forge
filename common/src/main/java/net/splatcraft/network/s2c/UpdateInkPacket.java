@@ -1,17 +1,17 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientWorld;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -78,7 +78,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
     @Override
     public void execute()
     {
-        ClientLevel level = Minecraft.getInstance().level;
+        ClientWorld level = Minecraft.getInstance().level;
 
         if (level != null)
         {

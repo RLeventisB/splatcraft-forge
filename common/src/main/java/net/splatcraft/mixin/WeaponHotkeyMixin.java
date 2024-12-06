@@ -1,10 +1,10 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

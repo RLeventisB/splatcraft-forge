@@ -1,12 +1,12 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,15 +20,15 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.blocks.InkedBlock;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.SquidBumperEntity;
-import net.splatcraft.forge.registries.SplatcraftEntities;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.registries.SplatcraftEntities;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,15 +80,15 @@ public class SquidBumperItem extends Item implements IColoredItem
     {
         BlockPos pos = entity.blockPosition().below();
 
-        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }
-        else if (InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.isColorLocked(stack))
+        else if (InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.isColorLocked(stack))
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);
@@ -107,17 +107,17 @@ public class SquidBumperItem extends Item implements IColoredItem
         BlockPos pos = new BlockPlaceContext(context).getClickedPos();
         ItemStack stack = context.getItemInHand();
 
-        Vec3 vector3d = Vec3.atBottomCenterOf(pos);
+        Vec3d vector3d = Vec3d.atBottomCenterOf(pos);
         AABB axisalignedbb = SplatcraftEntities.SQUID_BUMPER.get().getDimensions().makeBoundingBox(vector3d.x(), vector3d.y(), vector3d.z());
         if (level.noCollision(null, axisalignedbb) && level.getEntities(null, axisalignedbb).isEmpty())
         {
-            if (level instanceof ServerLevel serverLevel)
+            if (level instanceof ServerWorld serverLevel)
             {
                 SquidBumperEntity bumper = SplatcraftEntities.SQUID_BUMPER.get().create(serverLevel, stack.getTag(), null, pos, MobSpawnType.SPAWN_EGG, true, true);
                 if (bumper != null)
                 {
                     bumper.setColor(ColorUtils.getInkColorOrInverted(stack));
-                    float f = (float) Mth.floor((Mth.wrapDegrees(context.getRotation() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
+                    float f = (float) MathHelper.floor((MathHelper.wrapDegrees(context.getRotation() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
                     bumper.moveTo(bumper.getX(), bumper.getY(), bumper.getZ(), f, 0);
                     bumper.setYHeadRot(f);
                     bumper.yHeadRotO = f;

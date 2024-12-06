@@ -1,4 +1,4 @@
-package net.splatcraft.forge.tileentities.container;
+package net.splatcraft.tileentities.container;
 
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -7,7 +7,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftBlocks;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PlayerInventoryContainer<T extends PlayerInventoryContainer<?>> extends AbstractContainerMenu

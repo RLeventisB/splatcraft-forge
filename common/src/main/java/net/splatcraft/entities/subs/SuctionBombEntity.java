@@ -1,28 +1,28 @@
-package net.splatcraft.forge.entities.subs;
+package net.splatcraft.entities.subs;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkExplosion;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkExplosion;
 import org.jetbrains.annotations.Nullable;
 
 public class SuctionBombEntity extends AbstractSubWeaponEntity
@@ -61,7 +61,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
     public void tick()
     {
         super.tick();
-        BlockState state = this.level().getBlockState(blockPosition());
+        BlockState state = this.getWorld().getBlockState(blockPosition());
         SubWeaponSettings settings = getSettings();
         if (shakeTime > 0)
             --shakeTime;
@@ -89,10 +89,10 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
         }
 
         if (inGround)
-            if (inBlockState != state && this.level().noCollision((new AABB(this.position(), this.position())).inflate(0.06D)))
+            if (inBlockState != state && this.getWorld().noCollision((new AABB(this.position(), this.position())).inflate(0.06D)))
             {
                 this.inGround = false;
-                Vec3 vector3d = this.getDeltaMovement();
+                Vec3d vector3d = this.getDeltaMovement();
                 this.setDeltaMovement(vector3d.multiply(this.random.nextFloat() * 0.2F, this.random.nextFloat() * 0.2F, this.random.nextFloat() * 0.2F));
             }
             else
@@ -130,7 +130,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
     public float getFlashIntensity(float partialTicks)
     {
         SubWeaponSettings settings = getSettings();
-        return Math.max(0, Mth.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+        return Math.max(0, MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
     }
 
     @Override
@@ -144,9 +144,9 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
 
             setActivated(true);
 
-            Vec3 vector3d = result.getLocation().subtract(this.getX(), this.getY(), this.getZ());
+            Vec3d vector3d = result.getLocation().subtract(this.getX(), this.getY(), this.getZ());
             this.setDeltaMovement(vector3d);
-            Vec3 vector3d1 = vector3d.normalize().scale(0.05F);
+            Vec3d vector3d1 = vector3d.normalize().scale(0.05F);
             this.setPosRaw(this.getX() - vector3d1.x, this.getY() - vector3d1.y, this.getZ() - vector3d1.z);
 
             stickFacing = result.getDirection();
@@ -165,7 +165,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt)
+    public void readAdditionalSaveData(NbtCompound nbt)
     {
         super.readAdditionalSaveData(nbt);
         setActivated(nbt.getBoolean("Activated"));
@@ -181,7 +181,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt)
+    public void addAdditionalSaveData(NbtCompound nbt)
     {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("Activated", isActivated());

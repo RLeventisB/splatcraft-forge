@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
@@ -10,12 +10,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.items.StagePadItem;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.items.StagePadItem;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -281,7 +281,7 @@ public abstract class AbstractStagePadScreen extends Screen
         return (guiGraphics, button) ->
         {
             int j = button.getFGColor();
-            guiGraphics.drawString(font, label, button.getX() + (centeredText ? (button.getWidth() - font.width(label)) / 2 : 3), button.getY() + (button.getHeight() - 8) / 2, j | Mth.ceil(button.getAlpha() * 255.0F) << 24);
+            guiGraphics.drawString(font, label, button.getX() + (centeredText ? (button.getWidth() - font.width(label)) / 2 : 3), button.getY() + (button.getHeight() - 8) / 2, j | MathHelper.ceil(button.getAlpha() * 255.0F) << 24);
         };
     }
 

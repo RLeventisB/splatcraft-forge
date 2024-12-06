@@ -1,11 +1,11 @@
-package net.splatcraft.forge.client.handlers;
+package net.splatcraft.client.handlers;
 
 import com.google.common.collect.Iterables;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -21,20 +21,20 @@ import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.weapons.IChargeableWeapon;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.mixin.accessors.MinecraftClientAccessor;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.SwapSlotWithOffhandPacket;
-import net.splatcraft.forge.network.c2s.UpdateChargeStatePacket;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
+import net.splatcraft.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.PlayerCooldown;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -112,7 +112,7 @@ public class SplatcraftKeyHandler
             int autoSquidMaxDelay = PlayerCooldown.hasPlayerCooldown(player) ? (int) (PlayerCooldown.getPlayerCooldown(player).getTime() + 10) :
                 (player.getUseItem().getItem() instanceof IChargeableWeapon ? 100 : 10); //autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
             SplatcraftKeyHandler.autoSquidDelay = SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || PlayerCooldown.hasPlayerCooldown(player) ? autoSquidMaxDelay :
-                Mth.clamp(SplatcraftKeyHandler.autoSquidDelay - 1, 0, autoSquidMaxDelay);
+                MathHelper.clamp(SplatcraftKeyHandler.autoSquidDelay - 1, 0, autoSquidMaxDelay);
         }
 
         if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
@@ -125,7 +125,7 @@ public class SplatcraftKeyHandler
         {
             ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
 
-            if (sub.isEmpty() || (info.isSquid() && player.level().getBlockCollisions(player,
+            if (sub.isEmpty() || (info.isSquid() && player.getWorld().getBlockCollisions(player,
                 new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext()))
             {
                 player.displayClientMessage(Component.translatable("status.cant_use"), true);
@@ -174,7 +174,7 @@ public class SplatcraftKeyHandler
         }
 
         if (player.getVehicle() == null &&
-            !player.level().getBlockCollisions(player,
+            !player.getWorld().getBlockCollisions(player,
                 new AABB(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext())
         {
             if (SQUID_KEYBIND.equals(last) || !SQUID_KEYBIND.active)

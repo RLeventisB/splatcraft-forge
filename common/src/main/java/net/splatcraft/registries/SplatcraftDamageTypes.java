@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 
 public class SplatcraftDamageTypes
 {

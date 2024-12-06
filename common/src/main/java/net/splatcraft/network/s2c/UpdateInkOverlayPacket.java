@@ -1,24 +1,24 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 
 public class UpdateInkOverlayPacket extends PlayS2CPacket
 {
     int entityId;
-    CompoundTag nbt;
+    NbtCompound nbt;
 
     public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayInfo info)
     {
-        this(entity.getId(), info.writeNBT(new CompoundTag()));
+        this(entity.getId(), info.writeNBT(new NbtCompound()));
     }
 
-    public UpdateInkOverlayPacket(int entity, CompoundTag info)
+    public UpdateInkOverlayPacket(int entity, NbtCompound info)
     {
         this.entityId = entity;
         this.nbt = info;

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.remotes;
+package net.splatcraft.items.remotes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -6,8 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -11,23 +11,22 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.InkColorTags;
-import net.splatcraft.forge.items.ColoredBlockItem;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.InkColorTags;
+import net.splatcraft.items.ColoredBlockItem;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.util.ColorUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.splatcraft.forge.registries.SplatcraftItems.*;
+import static net.splatcraft.registries.SplatcraftItems.*;
 
 @Mod.EventBusSubscriber
 public class SplatcraftItemGroups
 {
-
     public static final ArrayList<Item> colorTabItems = new ArrayList<>();
     protected static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Splatcraft.MODID);
     public static final RegistryObject<CreativeModeTab> GROUP_GENERAL = REGISTRY.register("splatcraft_general", () -> CreativeModeTab.builder()
@@ -118,7 +117,8 @@ public class SplatcraftItemGroups
             output.acceptAll(visibleWeapons.stream().filter(weapon -> !(weapon instanceof SubWeaponItem)).map(Item::getDefaultInstance).toList());
             List<WeaponBaseItem<?>> subWeapons = visibleWeapons.stream().filter(weapon -> weapon instanceof SubWeaponItem).toList();
             output.acceptAll(subWeapons.stream().map(Item::getDefaultInstance).toList());
-            output.acceptAll(subWeapons.stream().map(weaponBaseItem -> {
+            output.acceptAll(subWeapons.stream().map(weaponBaseItem ->
+            {
                 ItemStack stack = weaponBaseItem.getDefaultInstance();
                 stack.getOrCreateTag().putBoolean("SingleUse", true);
                 return stack;

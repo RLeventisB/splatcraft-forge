@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,13 +13,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-import static net.splatcraft.forge.client.gui.stagepad.AbstractStagePadScreen.WIDGETS;
+import static net.splatcraft.client.gui.stagepad.AbstractStagePadScreen.WIDGETS;
 
 public class MenuButton extends Button
 {
-    public static final OnTooltip NO_TOOLTIP = (h, e, l, o, partialTicks) -> {
+    public static final OnTooltip NO_TOOLTIP = (h, e, l, o, partialTicks) ->
+    {
     };
-    public static OnPress DO_NOTHING = (v) -> {
+    public static OnPress DO_NOTHING = (v) ->
+    {
     };
     final PostDraw draw;
     final OnTooltip onTooltip;

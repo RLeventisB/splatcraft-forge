@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -12,13 +12,13 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.handlers.ChunkInkHandler;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

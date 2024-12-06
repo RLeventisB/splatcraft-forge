@@ -1,10 +1,10 @@
-package net.splatcraft.forge.data;
+package net.splatcraft.data;
 
-import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
-import net.splatcraft.forge.items.weapons.settings.DualieWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.util.DamageRangesRecord;
+import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.util.DamageRangesRecord;
 
 import java.util.Map;
 import java.util.Optional;

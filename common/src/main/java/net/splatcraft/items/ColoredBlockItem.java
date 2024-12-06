@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
@@ -21,11 +21,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.blocks.InkedBlock;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,16 +158,16 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
     {
         BlockPos pos = entity.blockPosition();
 
-        if (entity.level().getBlockState(pos.below()).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos.below()).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos.below()))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.below()))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos.below()));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.below()));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }
         else if (!(equals(clearItem) && ColorUtils.getInkColor(stack) < 0) &&
-            clearItem != null && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos), Direction.UP))
+            clearItem != null && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos), Direction.UP))
         {
             entity.setItem(new ItemStack(clearItem, stack.getCount()));
         }

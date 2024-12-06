@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.models;// Made with Blockbench 4.7.2
+package net.splatcraft.client.models;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
@@ -11,9 +11,9 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.entities.SquidBumperEntity;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.entities.SquidBumperEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperModel extends EntityModel<SquidBumperEntity>
@@ -61,7 +61,7 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity>
         super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
         scale = entityIn.getBumperScale(Minecraft.getInstance().getDeltaFrameTime());
-        Bumper.yRot = Mth.DEG_TO_RAD * Mth.lerp(partialTick, entityIn.yHeadRot, entityIn.yHeadRotO) + (float) Math.PI;
+        Bumper.yRot = MathHelper.DEG_TO_RAD * MathHelper.lerp(partialTick, entityIn.yHeadRot, entityIn.yHeadRotO) + (float) Math.PI;
 
         Base.xRot = 0.0F;
         Base.yRot = 0.0F;

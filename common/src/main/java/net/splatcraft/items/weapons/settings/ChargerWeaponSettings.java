@@ -1,13 +1,13 @@
-package net.splatcraft.forge.items.weapons.settings;
+package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.util.WeaponTooltip;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.util.WeaponTooltip;
 
 import java.util.Optional;
 

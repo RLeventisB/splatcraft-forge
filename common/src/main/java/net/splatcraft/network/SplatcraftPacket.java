@@ -1,4 +1,4 @@
-package net.splatcraft.forge.network;
+package net.splatcraft.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -12,14 +12,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
-import net.splatcraft.forge.client.renderer.tileentity.StageBarrierTileEntityRenderer;
-import net.splatcraft.forge.tileentities.*;
-import net.splatcraft.forge.tileentities.container.InkVatContainer;
-import net.splatcraft.forge.tileentities.container.WeaponWorkbenchContainer;
+import net.splatcraft.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
+import net.splatcraft.client.renderer.tileentity.StageBarrierTileEntityRenderer;
+import net.splatcraft.tileentities.*;
+import net.splatcraft.tileentities.container.InkVatContainer;
+import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
-import static net.splatcraft.forge.registries.SplatcraftBlocks.*;
+import static net.splatcraft.Splatcraft.MODID;
+import static net.splatcraft.registries.SplatcraftBlocks.*;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftTileEntities

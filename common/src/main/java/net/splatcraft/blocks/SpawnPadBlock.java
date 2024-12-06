@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,22 +25,21 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.tileentities.SpawnPadTileEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-@SuppressWarnings("deprecation")
 public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock
 {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -70,12 +69,12 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
     }
 
     @Override
-    public Optional<Vec3> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader levelReader, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+    public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader levelReader, BlockPos pos, float orientation, @Nullable LivingEntity entity)
     {
         if (entity != null && !ColorUtils.colorEquals(entity, levelReader.getBlockEntity(pos)))
             return Optional.empty();
 
-        Vec3 vec = DismountHelper.findSafeDismountLocation(type, levelReader, pos, false);
+        Vec3d vec = DismountHelper.findSafeDismountLocation(type, levelReader, pos, false);
 
         return vec == null ? Optional.empty() : Optional.of(vec);
     }
@@ -368,7 +367,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
         }
 
         @Override
-        public Optional<Vec3> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader world, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+        public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader world, BlockPos pos, float orientation, @Nullable LivingEntity entity)
         {
             BlockPos parentPos = getParentPos(state, pos);
             return parent.getRespawnPosition(world.getBlockState(parentPos), type, world, parentPos, orientation, entity);

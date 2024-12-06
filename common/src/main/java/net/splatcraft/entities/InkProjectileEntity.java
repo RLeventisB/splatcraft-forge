@@ -1,7 +1,10 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
 import com.google.common.reflect.TypeToken;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.projectile.thrown.ThrownItemEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.protocol.Packet;
@@ -11,32 +14,30 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
 import net.minecraftforge.network.NetworkHooks;
-import net.splatcraft.forge.VectorUtils;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.blocks.StageBarrierBlock;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.client.particles.InkSplashParticleData;
-import net.splatcraft.forge.handlers.DataHandler;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.items.weapons.settings.*;
-import net.splatcraft.forge.registries.*;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.VectorUtils;
+import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.blocks.StageBarrierBlock;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.handlers.DataHandler;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.registries.*;
+import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity
+public class InkProjectileEntity extends ThrownItemEntity implements IColoredEntity
 {
-    private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
+    private static final TrackedData<String> PROJ_TYPE = TrackedDataHandlerRegistry.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Vec2> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC2SERIALIZER);
     private static final EntityDataAccessor<Float> GRAVITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
@@ -45,7 +46,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<Float> HORIZONTAL_DRAG = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> GRAVITY_SPEED_MULT = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
-    private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
+    private static final EntityDataAccessor<Vec3d> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
     public static float MixinTimeDelta;
     public float lifespan = 600;
     public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
@@ -209,7 +210,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.define(SPEED, 0f);
         entityData.define(HORIZONTAL_DRAG, 1F);
         entityData.define(GRAVITY_SPEED_MULT, 1F);
-        entityData.define(SHOOT_DIRECTION, new Vec3(0, 0, 0));
+        entityData.define(SHOOT_DIRECTION, new Vec3d(0, 0, 0));
         entityData.define(EXTRA_DATA, new ExtraDataList());
     }
 
@@ -241,8 +242,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         if (timeDelta > lifespan)
             timeDelta = lifespan;
 
-        Vec3 lastPosition = position();
-        Vec3 velocity = getShootVelocity(timeDelta);
+        Vec3d lastPosition = position();
+        Vec3d velocity = getShootVelocity(timeDelta);
         setDeltaMovement(velocity);
 
         InkProjectileEntity.MixinTimeDelta = timeDelta;
@@ -257,19 +258,19 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         if (isRemoved())
         {
-            Vec3 nextPosition = lastPosition.add(velocity);
+            Vec3d nextPosition = lastPosition.add(velocity);
             double frame = (
                 (
-                    Mth.inverseLerp(getX(), lastPosition.x, nextPosition.x) +
-                        Mth.inverseLerp(getY(), lastPosition.y, nextPosition.y) +
-                        Mth.inverseLerp(getZ(), lastPosition.z, nextPosition.z)
+                    MathHelper.inverseLerp(getX(), lastPosition.x, nextPosition.x) +
+                        MathHelper.inverseLerp(getY(), lastPosition.y, nextPosition.y) +
+                        MathHelper.inverseLerp(getZ(), lastPosition.z, nextPosition.z)
                 ) / 3);
             setDeltaMovement(getDeltaMovement().scale(frame));
             calculateDrops(lastPosition, (float) frame);
             return;
         }
 
-        if (!level().isClientSide() && !persistent && (lifespan -= timeDelta) <= 0)
+        if (!level().isClient() && !persistent && (lifespan -= timeDelta) <= 0)
         {
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
@@ -296,14 +297,14 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         }
     }
 
-    private void calculateDrops(Vec3 lastPosition, float timeDelta)
+    private void calculateDrops(Vec3d lastPosition, float timeDelta)
     {
         if (distanceBetweenDrops == 0)
         {
             createDrop(getX(), getY(), getZ(), 0, timeDelta);
             return;
         }
-        Vec3 deltaMovement = getDeltaMovement();
+        Vec3d deltaMovement = getDeltaMovement();
         float dropsTravelled = (float) deltaMovement.length() / distanceBetweenDrops;
         if (dropsTravelled > 0)
         {
@@ -313,7 +314,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
                 accumulatedDrops -= 1;
 
                 double progress = accumulatedDrops / dropsTravelled;
-                Vec3 dropPos = VectorUtils.lerp(progress, position(), lastPosition);
+                Vec3d dropPos = VectorUtils.lerp(progress, position(), lastPosition);
 
                 createDrop(dropPos.x(), dropPos.y(), dropPos.z(), progress, timeDelta);
             }
@@ -333,12 +334,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         proj.tick((float) (extraFrame + timeDelta));
     }
 
-    private Vec3 getShootVelocity(float timeDelta)
+    private Vec3d getShootVelocity(float timeDelta)
     {
-        Vec3 shootDirection = entityData.get(SHOOT_DIRECTION);
+        Vec3d shootDirection = entityData.get(SHOOT_DIRECTION);
         double frame = getMaxStraightShotTime() - straightShotTime;
         double[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
-        Vec3 velocity = shootDirection.scale(speedData[0]);
+        Vec3d velocity = shootDirection.scale(speedData[0]);
         if (speedData[1] <= 0)
             return velocity;
         return velocity.subtract(0, getGravity() * speedData[1], 0);
@@ -366,12 +367,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     @Override
     public void updateRotation()
     {
-        Vec3 motion = getDeltaMovement();
+        Vec3d motion = getDeltaMovement();
 
-        if (!Vec3.ZERO.equals(motion))
+        if (!Vec3d.ZERO.equals(motion))
         {
-            this.setXRot(lerpRotation(this.xRotO, (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG)));
-            this.setYRot(lerpRotation(this.yRotO, (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG)));
+            this.setXRot(lerpRotation(this.xRotO, (float) (MathHelper.atan2(motion.y, motion.horizontalDistance()) * MathHelper.RAD_TO_DEG)));
+            this.setYRot(lerpRotation(this.yRotO, (float) (MathHelper.atan2(motion.x, motion.z) * MathHelper.RAD_TO_DEG)));
         }
     }
 
@@ -402,7 +403,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     {
         super.onHitEntity(result);
 
-        Vec3 oldPos = position();
+        Vec3d oldPos = position();
         if (canPierce)
             setPos(oldPos);
 
@@ -414,13 +415,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             // idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
             // lol i didnt even use it
 
-            Vec3 nextPosition = position().add(getDeltaMovement());
-            Vec3 impactPos = result.getLocation();
+            Vec3d nextPosition = position().add(getDeltaMovement());
+            Vec3d impactPos = result.getLocation();
 
             List<Double> values = new ArrayList<>();
-            values.add(Mth.inverseLerp(impactPos.x, getX(), nextPosition.x));
-            values.add(Mth.inverseLerp(impactPos.y, getY(), nextPosition.y));
-            values.add(Mth.inverseLerp(impactPos.z, getZ(), nextPosition.z));
+            values.add(MathHelper.inverseLerp(impactPos.x, getX(), nextPosition.x));
+            values.add(MathHelper.inverseLerp(impactPos.y, getY(), nextPosition.y));
+            values.add(MathHelper.inverseLerp(impactPos.z, getZ(), nextPosition.z));
             values.removeIf(d -> !Double.isFinite(d));
             crystalSoundIntensity = (float) values.stream().mapToDouble(v -> v).average().orElse(0.5);
             setPos(impactPos);
@@ -489,7 +490,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         else
         {
             level().broadcastEntityEvent(this, (byte) 2);
-            Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
+            Vec3d impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
             ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
             if (explodes && explosionData != null)
             {
@@ -514,10 +515,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
     public void shootFromRotation(Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
     {
-        double f = -Math.sin(yaw * Mth.DEG_TO_RAD) * Math.cos(pitch * Mth.DEG_TO_RAD);
-        double f1 = -Math.sin((pitch + pitchOffset) * Mth.DEG_TO_RAD);
-        double f2 = Math.cos(yaw * Mth.DEG_TO_RAD) * Math.cos(pitch * Mth.DEG_TO_RAD);
-        Vec3 posDiff = new Vec3(0, 0, 0);
+        double f = -Math.sin(yaw * MathHelper.DEG_TO_RAD) * Math.cos(pitch * MathHelper.DEG_TO_RAD);
+        double f1 = -Math.sin((pitch + pitchOffset) * MathHelper.DEG_TO_RAD);
+        double f2 = Math.cos(yaw * MathHelper.DEG_TO_RAD) * Math.cos(pitch * MathHelper.DEG_TO_RAD);
+        Vec3d posDiff = new Vec3d(0, 0, 0);
 
         try
         {
@@ -545,8 +546,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public void shoot(double x, double y, double z, float velocity, float inaccuracy, float partialTicks)
     {
         // 1.34f is only to make the acurracy more aproppiate in minecraft since 5 degrees in splatoon isnt as impactful as 5 degrees in minecraft kinda
-        float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD * 1.34f;
-        Vec3 vec3 = new Vec3(x, y, z)
+        float usedInaccuracy = inaccuracy * MathHelper.DEG_TO_RAD * 1.34f;
+        Vec3d vec3 = new Vec3d(x, y, z)
             .yRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy)
             .xRot((this.random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
 
@@ -554,8 +555,8 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         vec3 = vec3.scale(velocity);
 
         double d0 = vec3.horizontalDistance();
-        this.setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
-        this.setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
+        this.setYRot((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG));
+        this.setXRot((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG));
         this.yRotO = this.getViewYRot(partialTicks);
         this.xRotO = this.getViewXRot(partialTicks);
         setDeltaMovement(vec3);
@@ -584,7 +585,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag nbt)
+    public void readAdditionalSaveData(@NotNull NbtCompound nbt)
     {
         super.readAdditionalSaveData(nbt);
 
@@ -612,7 +613,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
             straightShotTime = nbt.getDouble("StraightShotTime");
 
         ListTag directionTag = nbt.getList("Direction", DoubleTag.TAG_DOUBLE);
-        entityData.set(SHOOT_DIRECTION, new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
+        entityData.set(SHOOT_DIRECTION, new Vec3d(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
 
         distanceBetweenDrops = nbt.getFloat("TrailFrequency");
         dropImpactSize = nbt.getFloat("TrailSize");
@@ -640,7 +641,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt)
+    public void addAdditionalSaveData(NbtCompound nbt)
     {
         nbt.putFloat("Size", getProjectileSize());
         nbt.putFloat("VisualSize", getProjectileVisualSize());
@@ -653,7 +654,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         nbt.putDouble("StraightShotTime", straightShotTime);
 
         ListTag directionTag = new ListTag();
-        Vec3 direction = getShotDirection();
+        Vec3d direction = getShotDirection();
         directionTag.add(DoubleTag.valueOf(direction.x));
         directionTag.add(DoubleTag.valueOf(direction.y));
         directionTag.add(DoubleTag.valueOf(direction.z));
@@ -673,7 +674,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 
         nbt.putString("ProjectileType", getProjectileType());
         nbt.putString("InkType", inkType.getSerializedName());
-        nbt.put("SourceWeapon", sourceWeapon.save(new CompoundTag()));
+        nbt.put("SourceWeapon", sourceWeapon.save(new NbtCompound()));
         if (attackId != AttackId.NONE)
             nbt.put("AttackId", attackId.serializeNbt());
 
@@ -777,7 +778,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return entityData.get(STRAIGHT_SHOT_TIME);
     }
 
-    public Vec3 getShotDirection()
+    public Vec3d getShotDirection()
     {
         return entityData.get(SHOOT_DIRECTION);
     }

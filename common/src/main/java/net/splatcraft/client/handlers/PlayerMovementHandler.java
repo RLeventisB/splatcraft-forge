@@ -1,34 +1,34 @@
-package net.splatcraft.forge.client.handlers;
+package net.splatcraft.client.handlers;
 
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.DualieItem;
-import net.splatcraft.forge.items.weapons.RollerItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.mixin.accessors.EntityAccessor;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.SquidInputPacket;
-import net.splatcraft.forge.registries.SplatcraftAttributes;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.DualieItem;
+import net.splatcraft.items.weapons.RollerItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.SquidInputPacket;
+import net.splatcraft.registries.SplatcraftAttributes;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCooldown;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class PlayerMovementHandler
     {
         if (event.phase == TickEvent.Phase.END)
         {
-            Vec3 deltaMovement = event.player.getDeltaMovement();
+            Vec3d deltaMovement = event.player.getDeltaMovement();
             if (SplatcraftConfig.Server.limitFallSpeed.get() && deltaMovement.y < -0.5)
             {
                 event.player.setDeltaMovement(deltaMovement.x, -0.5, deltaMovement.z);
@@ -110,7 +110,7 @@ public class PlayerMovementHandler
 
             if (!player.getAbilities().flying)
                 if (speedAttribute.hasModifier(INK_SWIM_SPEED))
-                    player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed.get()) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
+                    player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed.get()) * (player.onGround() ? 1 : 0.75f), new Vec3d(player.xxa, 0.0f, player.zza).normalize());
         }
     }
 
@@ -196,41 +196,41 @@ public class PlayerMovementHandler
             if (climbedDirection != null && !player.onGround()) // if player is still swimming on a wall
             {
                 playerInfo.setClimbedDirection(climbedDirection);
-                Vec3 deltaMovement = player.getDeltaMovement();
+                Vec3d deltaMovement = player.getDeltaMovement();
                 if (deltaMovement.y() < 0.4f && (forwardImpulse != 0 || leftImpulse != 0)) // handle input on wall
                 {
                     float yRot = player.getYHeadRot();
-                    Vec3 vec3 =
-                        EntityAccessor.invokeGetInputVector(new Vec3(0f, forwardImpulse, 0f), 0.12f, yRot).add(
-                            EntityAccessor.invokeGetInputVector(new Vec3(leftImpulse, 0f, 0f), 0.02f, yRot)
+                    Vec3d vec3 =
+                        EntityAccessor.invokeGetInputVector(new Vec3d(0f, forwardImpulse, 0f), 0.12f, yRot).add(
+                            EntityAccessor.invokeGetInputVector(new Vec3d(leftImpulse, 0f, 0f), 0.02f, yRot)
                         );
 
                     deltaMovement = deltaMovement.add(vec3);
                 }
                 if (shiftKeyDown) // set minimum y velocity to 0 if shifting
-                    deltaMovement = new Vec3(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
+                    deltaMovement = new Vec3d(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
 
                 if (climbedDirection.getAxis() != oldClimbedDirection.getAxis()) // if player swam to another wall, rotate velocity
                 {
-                    deltaMovement = deltaMovement.yRot(Mth.DEG_TO_RAD * (climbedDirection.toYRot() - oldClimbedDirection.toYRot()));
+                    deltaMovement = deltaMovement.yRot(MathHelper.DEG_TO_RAD * (climbedDirection.toYRot() - oldClimbedDirection.toYRot()));
                 }
 
                 if (climbedDirection.getAxis() == Direction.Axis.X) // set velocity perpendicular to the wall to 0 because YOU CANNOT ESCAPE THE WALL (unless you press back).
                 {
                     double parallelMovement = deltaMovement.x;
                     if (Math.abs(parallelMovement) < 0.6)
-                        deltaMovement = new Vec3(0, deltaMovement.y, deltaMovement.z);
+                        deltaMovement = new Vec3d(0, deltaMovement.y, deltaMovement.z);
                 }
                 else
                 {
                     double parallelMovement = deltaMovement.z;
                     if (Math.abs(parallelMovement) < 0.6)
-                        deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y, 0);
+                        deltaMovement = new Vec3d(deltaMovement.x, deltaMovement.y, 0);
                 }
 
                 if (deltaMovement.y <= -0.3D) // limit gravity
                 {
-                    deltaMovement = new Vec3(deltaMovement.x, -0.3D, deltaMovement.z);
+                    deltaMovement = new Vec3d(deltaMovement.x, -0.3D, deltaMovement.z);
                 }
 
                 if (jumping) // squid surge
@@ -244,7 +244,7 @@ public class PlayerMovementHandler
                 {
                     if (playerInfo.getSquidSurgeCharge() >= 30) // do squid surge logic
                     {
-                        deltaMovement = new Vec3(0, 10, 0);
+                        deltaMovement = new Vec3d(0, 10, 0);
                     }
                     playerInfo.setSquidSurgeCharge(0f);
                 }

@@ -1,6 +1,6 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,19 +12,19 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.BlasterItem;
-import net.splatcraft.forge.items.weapons.DualieItem;
-import net.splatcraft.forge.items.weapons.SlosherItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.BlasterItem;
+import net.splatcraft.items.weapons.DualieItem;
+import net.splatcraft.items.weapons.SlosherItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.function.Supplier;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
+import static net.splatcraft.Splatcraft.MODID;
 
 @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PlayerCooldown
@@ -41,7 +41,6 @@ public class PlayerCooldown
     boolean preventWeaponUse;
     boolean isGrounded;
     float time;
-
     public PlayerCooldown(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
     {
         this.storedStack = stack;
@@ -60,7 +59,7 @@ public class PlayerCooldown
         this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
     }
 
-    public PlayerCooldown(CompoundTag nbt)
+    public PlayerCooldown(NbtCompound nbt)
     {
         fromNbt(nbt);
     }
@@ -80,7 +79,7 @@ public class PlayerCooldown
         });
     }
 
-    public static PlayerCooldown readNBT(CompoundTag nbt)
+    public static PlayerCooldown readNBT(NbtCompound nbt)
     {
         if (nbt.contains("CooldownClass"))
         {
@@ -88,7 +87,7 @@ public class PlayerCooldown
             try
             {
                 if (clazz == null) throw new AssertionError();
-                return clazz.getConstructor(CompoundTag.class).newInstance(nbt);
+                return clazz.getConstructor(NbtCompound.class).newInstance(nbt);
             }
             catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                    NoSuchMethodException e)
@@ -144,7 +143,7 @@ public class PlayerCooldown
         return cooldown != null;
     }
 
-    public final void fromNbt(CompoundTag nbt)
+    public final void fromNbt(NbtCompound nbt)
     {
         this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
         this.time = nbt.getFloat("Time");
@@ -218,7 +217,7 @@ public class PlayerCooldown
     {
     }
 
-    public CompoundTag writeNBT(CompoundTag nbt)
+    public NbtCompound writeNBT(NbtCompound nbt)
     {
         nbt.putFloat("Time", time);
         nbt.putFloat("MaxTime", maxTime);

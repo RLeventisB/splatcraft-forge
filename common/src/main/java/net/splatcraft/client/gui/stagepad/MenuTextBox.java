@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.EditBox;

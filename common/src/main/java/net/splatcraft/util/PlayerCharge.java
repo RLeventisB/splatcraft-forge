@@ -1,16 +1,16 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.IChargeableWeapon;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.UpdateChargeStatePacket;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -132,7 +132,7 @@ public class PlayerCharge
 
     public static void dischargeWeapon(Player player)
     {
-        if (!player.level().isClientSide() || !hasCharge(player))
+        if (!player.getWorld().isClient() || !hasCharge(player))
             return;
 
         PlayerCharge charge = getCharge(player);
@@ -189,7 +189,7 @@ public class PlayerCharge
         if (chargedWeapon.getItem() instanceof IChargeableWeapon chargeable)
         {
             float maxDischargeTicks = chargeable.getDischargeTicks(chargedWeapon);
-            return maxDischargeTicks <= 0 ? 1 : 1 - Mth.lerp(partialTicks, prevDischargedTicks / maxDischargeTicks, dischargedTicks / maxDischargeTicks);
+            return maxDischargeTicks <= 0 ? 1 : 1 - MathHelper.lerp(partialTicks, prevDischargedTicks / maxDischargeTicks, dischargedTicks / maxDischargeTicks);
         }
 
         return 1;

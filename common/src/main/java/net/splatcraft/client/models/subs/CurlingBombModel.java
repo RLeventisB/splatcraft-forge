@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.models.subs;// Made with Blockbench 4.7.2
+package net.splatcraft.client.models.subs;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
@@ -9,10 +9,10 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.AbstractSubWeaponModel;
-import net.splatcraft.forge.entities.subs.CurlingBombEntity;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.models.AbstractSubWeaponModel;
+import net.splatcraft.entities.subs.CurlingBombEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity>
@@ -97,9 +97,9 @@ public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity>
     {
         super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
-        blades.yRot = Mth.lerp(partialTick, entityIn.prevBladeRot, entityIn.bladeRot);
+        blades.yRot = MathHelper.lerp(partialTick, entityIn.prevBladeRot, entityIn.bladeRot);
 
-        top.y = 20 - Mth.clamp(Mth.lerp(partialTick, entityIn.prevFuseTime, entityIn.fuseTime) - 50, 0, .95f) * 3f;
+        top.y = 20 - MathHelper.clamp(MathHelper.lerp(partialTick, entityIn.prevFuseTime, entityIn.fuseTime) - 50, 0, .95f) * 3f;
     }
 
     @Override

@@ -1,6 +1,6 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.protocol.Packet;
@@ -9,7 +9,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -21,18 +21,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.network.NetworkHooks;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.blocks.StageBarrierBlock;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.client.particles.InkSplashParticleData;
-import net.splatcraft.forge.registries.SplatcraftEntities;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.InkExplosion;
+import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.blocks.StageBarrierBlock;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.registries.SplatcraftEntities;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkExplosion;
 import org.jetbrains.annotations.NotNull;
 
 public class InkDropEntity extends ThrowableItemProjectile implements IColoredEntity
@@ -93,7 +93,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
 
     public void tick(float timeDelta)
     {
-        Vec3 vel = getDeltaMovement();
+        Vec3d vel = getDeltaMovement();
         InkProjectileEntity.MixinTimeDelta = timeDelta;
         super.tick();
 
@@ -116,12 +116,12 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     @Override
     public void updateRotation()
     {
-        Vec3 motion = getDeltaMovement();
+        Vec3d motion = getDeltaMovement();
 
-        if (!Vec3.ZERO.equals(motion))
+        if (!Vec3d.ZERO.equals(motion))
         {
-            this.setXRot((float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG));
-            this.setYRot((float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG));
+            this.setXRot((float) (MathHelper.atan2(motion.y, motion.horizontalDistance()) * MathHelper.RAD_TO_DEG));
+            this.setYRot((float) (MathHelper.atan2(motion.x, motion.z) * MathHelper.RAD_TO_DEG));
         }
     }
 
@@ -172,12 +172,12 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     @Override
     public void shoot(double x, double y, double z, float velocity, float inaccuracy)
     {
-        Vec3 vec3 = (new Vec3(x, y, z)).normalize().add(this.random.nextGaussian() * 0.0075 * inaccuracy, this.random.nextGaussian() * 0.0075D * inaccuracy, this.random.nextGaussian() * 0.0075 * inaccuracy);
+        Vec3d vec3 = (new Vec3d(x, y, z)).normalize().add(this.random.nextGaussian() * 0.0075 * inaccuracy, this.random.nextGaussian() * 0.0075D * inaccuracy, this.random.nextGaussian() * 0.0075 * inaccuracy);
 
         setDeltaMovement(vec3);
         double d0 = vec3.horizontalDistance();
-        this.setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
-        this.setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
+        this.setYRot((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG));
+        this.setXRot((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG));
     }
 
     @Override
@@ -194,7 +194,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull CompoundTag nbt)
+    public void readAdditionalSaveData(@NotNull NbtCompound nbt)
     {
         super.readAdditionalSaveData(nbt);
 
@@ -202,7 +202,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
             setProjectileSize(nbt.getFloat("Size"));
 
         ListTag directionTag = nbt.getList("DeltaMotion", DoubleTag.TAG_DOUBLE);
-        setDeltaMovement(new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
+        setDeltaMovement(new Vec3d(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
 
         impactCoverage = nbt.getFloat("ImpactCoverage");
 
@@ -221,11 +221,11 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt)
+    public void addAdditionalSaveData(NbtCompound nbt)
     {
         nbt.putFloat("Size", getProjectileSize());
         ListTag directionTag = new ListTag();
-        Vec3 direction = getDeltaMovement();
+        Vec3d direction = getDeltaMovement();
         directionTag.add(DoubleTag.valueOf(direction.x));
         directionTag.add(DoubleTag.valueOf(direction.y));
         directionTag.add(DoubleTag.valueOf(direction.z));
@@ -240,7 +240,7 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
         nbt.putBoolean("Invisible", isInvisible());
 
         nbt.putString("InkType", inkType.getSerializedName());
-        nbt.put("SourceWeapon", sourceWeapon.save(new CompoundTag()));
+        nbt.put("SourceWeapon", sourceWeapon.save(new NbtCompound()));
 
         super.addAdditionalSaveData(nbt);
         nbt.remove("Item");

@@ -1,7 +1,7 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -15,11 +15,11 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.forge.registries.SplatcraftEntities;
-import net.splatcraft.forge.tileentities.SpawnPadTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
+import net.splatcraft.registries.SplatcraftEntities;
+import net.splatcraft.tileentities.SpawnPadTileEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SpawnShieldEntity extends Entity implements IColoredEntity
@@ -115,7 +115,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag nbt)
+    protected void readAdditionalSaveData(NbtCompound nbt)
     {
         if (nbt.contains("Size"))
             setSize(nbt.getFloat("Size"));
@@ -126,7 +126,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag nbt)
+    protected void addAdditionalSaveData(NbtCompound nbt)
     {
         nbt.putFloat("Size", getSize());
         nbt.putInt("Color", getColor());

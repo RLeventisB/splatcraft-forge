@@ -1,4 +1,4 @@
-package net.splatcraft.forge.worldgen;
+package net.splatcraft.worldgen;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -9,9 +9,9 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.worldgen.features.CrateFeature;
-import net.splatcraft.forge.worldgen.features.SardiniumDepositFeature;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.worldgen.features.CrateFeature;
+import net.splatcraft.worldgen.features.SardiniumDepositFeature;
 
 import java.util.ArrayList;
 import java.util.Arrays;

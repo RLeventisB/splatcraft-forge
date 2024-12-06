@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,16 +22,15 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.util.BlockInkedResult;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock
 {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.remotes;
+package net.splatcraft.items.remotes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -9,21 +9,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
-import net.splatcraft.forge.blocks.IColoredBlock;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.forge.handlers.ScoreboardHandler;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.SendScanTurfResultsPacket;
-import net.splatcraft.forge.registries.SplatcraftStats;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.blocks.IColoredBlock;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendScanTurfResultsPacket;
+import net.splatcraft.registries.SplatcraftStats;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
-@SuppressWarnings("deprecation")
 public class TurfScannerItem extends RemoteItem
 {
     public TurfScannerItem()

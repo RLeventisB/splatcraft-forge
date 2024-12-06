@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.renderer.subs;
+package net.splatcraft.client.renderer.subs;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -9,11 +9,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.client.models.AbstractSubWeaponModel;
-import net.splatcraft.forge.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.models.AbstractSubWeaponModel;
+import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

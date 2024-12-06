@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.registries.Registries;
@@ -8,10 +8,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.loot.BlueprintLootFunction;
-import net.splatcraft.forge.loot.ChestLootModifier;
-import net.splatcraft.forge.loot.FishingLootModifier;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.loot.BlueprintLootFunction;
+import net.splatcraft.loot.ChestLootModifier;
+import net.splatcraft.loot.FishingLootModifier;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = Splatcraft.MODID)
 public class SplatcraftLoot

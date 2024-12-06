@@ -1,4 +1,4 @@
-package net.splatcraft.forge.tileentities.container;
+package net.splatcraft.tileentities.container;
 
 import com.google.common.collect.Lists;
 import net.minecraft.core.NonNullList;
@@ -12,15 +12,15 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.splatcraft.forge.blocks.InkVatBlock;
-import net.splatcraft.forge.crafting.InkVatColorRecipe;
-import net.splatcraft.forge.crafting.SplatcraftRecipeTypes;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.UpdateBlockColorPacket;
-import net.splatcraft.forge.registries.*;
-import net.splatcraft.forge.tileentities.InkVatTileEntity;
-import net.splatcraft.forge.util.InkColor;
+import net.splatcraft.blocks.InkVatBlock;
+import net.splatcraft.crafting.InkVatColorRecipe;
+import net.splatcraft.crafting.SplatcraftRecipeTypes;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.UpdateBlockColorPacket;
+import net.splatcraft.registries.*;
+import net.splatcraft.tileentities.InkVatTileEntity;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -73,7 +73,7 @@ public class InkVatContainer extends AbstractContainerMenu
         Objects.requireNonNull(inventory);
         Objects.requireNonNull(buffer);
 
-        final BlockEntity te = inventory.player.level().getBlockEntity(buffer.readBlockPos());
+        final BlockEntity te = inventory.player.getWorld().getBlockEntity(buffer.readBlockPos());
 
         if (te instanceof InkVatTileEntity)
         {

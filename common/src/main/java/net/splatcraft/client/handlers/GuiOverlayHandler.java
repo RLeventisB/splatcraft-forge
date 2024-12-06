@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.handlers;
+package net.splatcraft.client.handlers;
 
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;

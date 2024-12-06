@@ -1,4 +1,4 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -11,9 +11,9 @@ import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public class ShootingHandler
 
     public static boolean notifyStartShooting(LivingEntity entity)
     {
-        if (entity.level().isClientSide())
+        if (entity.getWorld().isClientSide())
         {
             return false;
         }
@@ -49,7 +49,7 @@ public class ShootingHandler
 
     public static boolean notifyForceEndShooting(LivingEntity entity)
     {
-        if (entity.level().isClientSide())
+        if (entity.getWorld().isClientSide())
         {
             return false;
         }
@@ -219,8 +219,8 @@ public class ShootingHandler
         public float timer, offHandTimeout;
         public ItemStack useItem;
         public FiringStatData firingData;
-//        public static long milli;
 
+        //        public static long milli;
         public WeaponShootingData(EntityData data, InteractionHand hand)
         {
             this.entityData = data;
@@ -349,7 +349,6 @@ public class ShootingHandler
                 Codec.FLOAT.fieldOf("endlag_frames").forGetter(FiringStatData::endlagFrames)
             ).apply(instance, (Float squidStartupFrames, Float startupFrames, Float endlagFrames) -> new FiringStatData(squidStartupFrames, startupFrames, endlagFrames, null, null, null))
         );
-
         public static final FiringStatData DEFAULT = new FiringStatData(2, 1, 1, null, null, null);
 
         public float getFiringSpeed()

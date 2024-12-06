@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.remotes;
+package net.splatcraft.items.remotes;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -10,15 +10,15 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.InteractionHand;
@@ -32,12 +32,12 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +95,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     {
         if (!hasCoordSet(stack))
             return null;
-        CompoundTag nbt = stack.getTag();
+        NbtCompound nbt = stack.getTag();
 
         if (nbt.contains("Stage"))
         {
@@ -114,7 +114,7 @@ public abstract class RemoteItem extends Item implements CommandSource
         if (hasCoordSet(stack))
             return false;
 
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
 
         if (!nbt.contains("Dimension"))
             nbt.putString("Dimension", level.dimension().location().toString());
@@ -128,7 +128,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 
     public static Level getLevel(Level level, ItemStack stack)
     {
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
 
         Level result = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, nbt.contains("Stage") ?
             (level.isClientSide() ? ClientUtils.clientStages.get(nbt.getString("Stage")) : SaveInfoCapability.get(level.getServer()).getStages().get(nbt.getString("Stage"))).dimID
@@ -157,7 +157,7 @@ public abstract class RemoteItem extends Item implements CommandSource
     {
         super.appendHoverText(stack, levelIn, tooltip, flagIn);
 
-        CompoundTag nbt = stack.getOrCreateTag();
+        NbtCompound nbt = stack.getOrCreateTag();
 
         if (!nbt.contains("Stage") || ClientUtils.clientStages.containsKey(nbt.getString("Stage")))
         {
@@ -232,7 +232,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 
     public abstract RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets);
 
-    public RemoteResult onRemoteUse(Level usedOnWorld, ItemStack stack, int colorIn, Vec3 pos, Entity user)
+    public RemoteResult onRemoteUse(Level usedOnWorld, ItemStack stack, int colorIn, Vec3d pos, Entity user)
     {
         Tuple<BlockPos, BlockPos> coordSet = getCoordSet(stack, usedOnWorld);
 
@@ -244,7 +244,7 @@ public abstract class RemoteItem extends Item implements CommandSource
         if (stack.getTag().contains("Targets") && !stack.getTag().getString("Targets").isEmpty())
             try
             {
-                targets = EntityArgument.players().parse(new StringReader(stack.getTag().getString("Targets"))).findPlayers(createCommandSourceStack(stack, (ServerLevel) usedOnWorld, pos, user));
+                targets = EntityArgument.players().parse(new StringReader(stack.getTag().getString("Targets"))).findPlayers(createCommandSourceStack(stack, (ServerWorld) usedOnWorld, pos, user));
             }
             catch (CommandSyntaxException e)
             {
@@ -254,7 +254,7 @@ public abstract class RemoteItem extends Item implements CommandSource
         return onRemoteUse(usedOnWorld, coordSet.getA(), coordSet.getB(), stack, colorIn, getRemoteMode(stack), targets);
     }
 
-    public CommandSourceStack createCommandSourceStack(ItemStack stack, ServerLevel level, Vec3 pos, Entity user)
+    public CommandSourceStack createCommandSourceStack(ItemStack stack, ServerWorld level, Vec3d pos, Entity user)
     {
         return new CommandSourceStack(this, pos, Vec2.ZERO, level, 2, getName(stack).toString(), getName(stack), level.getServer(), user);
     }

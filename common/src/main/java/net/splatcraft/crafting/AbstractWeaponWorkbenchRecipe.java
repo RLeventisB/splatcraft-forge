@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.gson.JsonArray;
 import net.minecraft.core.NonNullList;

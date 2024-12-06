@@ -1,18 +1,18 @@
-package net.splatcraft.forge.client.renderer.subs;
+package net.splatcraft.client.renderer.subs;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.subs.CurlingBombModel;
-import net.splatcraft.forge.entities.subs.CurlingBombEntity;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.models.subs.CurlingBombModel;
+import net.splatcraft.entities.subs.CurlingBombEntity;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.minecraft.util.Mth.*;
+import static net.minecraft.util.MathHelper.*;
 
 public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, CurlingBombModel>
 {

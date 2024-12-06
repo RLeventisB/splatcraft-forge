@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons.settings;
+package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -152,7 +152,6 @@ public class CommonRecords
                 Codec.FLOAT.optionalFieldOf("damage_decay_per_tick").forGetter(OptionalProjectileDataRecord::damageDecayPerTick)
             ).apply(instance, OptionalProjectileDataRecord::new)
         );
-
         public static final OptionalProjectileDataRecord DEFAULT = new OptionalProjectileDataRecord(
             Optional.empty(),
             Optional.empty(),
@@ -282,7 +281,6 @@ public class CommonRecords
                 Codec.FLOAT.optionalFieldOf("ink_recovery_cooldown").forGetter(OptionalShotDataRecord::inkRecoveryCooldown)
             ).apply(instance, OptionalShotDataRecord::new)
         );
-
         public static final OptionalShotDataRecord DEFAULT = new OptionalShotDataRecord(
             Optional.empty(),
             Optional.empty(),

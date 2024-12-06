@@ -1,15 +1,15 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.RequestClearInkPacket;
-import net.splatcraft.forge.network.c2s.RequestTurfScanPacket;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.RequestClearInkPacket;
+import net.splatcraft.network.c2s.RequestTurfScanPacket;
 import org.jetbrains.annotations.NotNull;
 
 public class StageActionsScreen extends AbstractStagePadScreen
@@ -25,7 +25,8 @@ public class StageActionsScreen extends AbstractStagePadScreen
 
         addOptionsTabs(label, stageId, mainMenu);
 
-        scanMode = addButton(new StageSelectionScreen.ToggleMenuButton(136, 50, 24, 12, (b) -> {
+        scanMode = addButton(new StageSelectionScreen.ToggleMenuButton(136, 50, 24, 12, (b) ->
+        {
         }, (b, ps, mx, my, partialTicks) ->
         {
             showText(Component.translatable("gui.stage_pad.button.scan_mode", Component.translatable("item.splatcraft.turf_scanner.mode." + (((StageSelectionScreen.ToggleMenuButton) b).toggle ? "1" : "0")))).onTooltip(b, ps, mx, my, partialTicks);

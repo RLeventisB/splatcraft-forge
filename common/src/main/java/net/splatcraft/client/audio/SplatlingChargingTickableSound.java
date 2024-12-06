@@ -1,15 +1,15 @@
-package net.splatcraft.forge.client.audio;
+package net.splatcraft.client.audio;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.IChargeableWeapon;
-import net.splatcraft.forge.util.PlayerCharge;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.util.PlayerCharge;
 import org.jetbrains.annotations.Nullable;
 
 public class SplatlingChargingTickableSound extends AbstractTickableSoundInstance
@@ -70,7 +70,7 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
                     volume = fadeTime / (float) maxFadeTime;
                 }
 
-                pitch = (Mth.lerp(Minecraft.getInstance().getDeltaFrameTime(), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
+                pitch = (MathHelper.lerp(Minecraft.getInstance().getDeltaFrameTime(), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
                 return;
             }
         }

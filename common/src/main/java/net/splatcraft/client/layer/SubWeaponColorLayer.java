@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.layer;
+package net.splatcraft.client.layer;
 
 public class SubWeaponColorLayer//< M extends AbstractSubWeaponModel<AbstractSubWeaponEntity>> extends LayerRenderer<AbstractSubWeaponEntity, M>
 {

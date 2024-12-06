@@ -1,7 +1,7 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.splatcraft.forge.util.ClientUtils;
+import net.splatcraft.util.ClientUtils;
 
 import java.util.TreeMap;
 import java.util.UUID;

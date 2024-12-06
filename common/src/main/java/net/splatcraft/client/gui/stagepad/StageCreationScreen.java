@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
@@ -9,12 +9,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.CreateOrEditStagePacket;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.CreateOrEditStagePacket;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,11 +82,14 @@ public class StageCreationScreen extends AbstractStagePadScreen
                 pendingCreation = true;
             }
         }, MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.button.create"), true), MenuButton.ButtonColor.LIME));
-        addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> corner1), showCopyPos(() -> corner1), (ps, b) -> {
+        addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> corner1), showCopyPos(() -> corner1), (ps, b) ->
+        {
         }));
-        addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> corner2), showCopyPos(() -> corner2), (ps, b) -> {
+        addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> corner2), showCopyPos(() -> corner2), (ps, b) ->
+        {
         }));
-        addTextBox(font -> {
+        addTextBox(font ->
+        {
             this.stageName = new MenuTextBox(font, 17, 40, 178, 12, Component.translatable("gui.stage_pad.label.set_stage_name.textbox"), false);
             this.stageName.setValue(savedStageName);
             this.stageName.setFocused(true);
@@ -235,7 +238,6 @@ public class StageCreationScreen extends AbstractStagePadScreen
         BILLION(10, 'B'),
         MILLION(7, 'M'),
         THOUSAND(4, 'K');
-
         final int length;
         final double minValue;
         final char letter;

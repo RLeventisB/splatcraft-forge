@@ -1,8 +1,8 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
@@ -10,15 +10,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.RollerItem;
-import net.splatcraft.forge.items.weapons.SlosherItem;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.RollerItem;
+import net.splatcraft.items.weapons.SlosherItem;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
+import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
+import net.splatcraft.util.PlayerCooldown;
 
 @Mod.EventBusSubscriber
 public class PlayerPosingHandler
@@ -74,22 +74,22 @@ public class PlayerPosingHandler
 
                     offHand.x -= 1f;
                     offHand.yRot = 0.1F + model.getHead().yRot;
-                    offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot + 0.1f;
+                    offHand.xRot = -(MathHelper.HALF_PI) + model.getHead().xRot + 0.1f;
                     offHand.zRot -= 0.4f;
 
                     mainHand.yRot = -0.1F + model.getHead().yRot;
-                    mainHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
+                    mainHand.xRot = -(MathHelper.HALF_PI) + model.getHead().xRot;
                     mainHand.zRot += 0.2f;
                     break;
                 case DUAL_FIRE:
                     if (offStack.getItem() instanceof WeaponBaseItem && ((WeaponBaseItem) offStack.getItem()).getPose(player, offStack).equals(WeaponPose.DUAL_FIRE))
                     {
                         offHand.yRot = -0.1F + model.getHead().yRot;
-                        offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
+                        offHand.xRot = -(MathHelper.HALF_PI) + model.getHead().xRot;
                     }
                 case FIRE:
                     mainHand.yRot = -0.1F + model.getHead().yRot;
-                    mainHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
+                    mainHand.xRot = -(MathHelper.HALF_PI) + model.getHead().xRot;
                     break;
                 case SUB_HOLD:
                     if (!(mainStack.getItem() instanceof SubWeaponItem) || useTime < ((SubWeaponItem) mainStack.getItem()).getSettings(mainStack).subDataRecord.holdTime())
@@ -114,7 +114,7 @@ public class PlayerPosingHandler
                     {
                         cooldown = PlayerCooldown.getPlayerCooldown(player);
                         angle = (cooldown.getTime() - partialTicks) / cooldown.getMaxTime();
-                        mainHand.xRot = -0.36f + 0.5f + Mth.cos(angle) * 0.5f;
+                        mainHand.xRot = -0.36f + 0.5f + MathHelper.cos(angle) * 0.5f;
                     }
                     break;
                 case BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge pose 😭😭😭😭 sorry
@@ -123,15 +123,15 @@ public class PlayerPosingHandler
                         mainHand.yRot = -0.1F + model.getHead().yRot;
                         offHand.yRot = 0.1F + model.getHead().yRot + 0.4F;
 
-                        mainHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
-                        offHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
+                        mainHand.xRot = (-MathHelper.HALF_PI) + model.getHead().xRot;
+                        offHand.xRot = (-MathHelper.HALF_PI) + model.getHead().xRot;
                     }
                     else
                     {
                         offHand.yRot = -0.1F + model.getHead().yRot - 0.4F;
                         mainHand.yRot = 0.1F + model.getHead().yRot;
-                        offHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
-                        mainHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
+                        offHand.xRot = (-MathHelper.HALF_PI) + model.getHead().xRot;
+                        mainHand.xRot = (-MathHelper.HALF_PI) + model.getHead().xRot;
                     }
                     break;
                 case ROLL:
@@ -144,8 +144,8 @@ public class PlayerPosingHandler
                         RollerWeaponSettings.RollerAttackDataRecord attackData = cooldown.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
 
                         animTime = attackData.startupTime();
-                        angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Mth.HALF_PI) + ((float) Math.PI) / 1.8f;
-                        mainHand.xRot = Mth.cos(angle) * 2.4f + (0.05f - 0.31415927f);
+                        angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * MathHelper.HALF_PI) + ((float) Math.PI) / 1.8f;
+                        mainHand.xRot = MathHelper.cos(angle) * 2.4f + (0.05f - 0.31415927f);
                     }
                     else
                     {
@@ -163,7 +163,7 @@ public class PlayerPosingHandler
                         animTime = attackData.startupTime();
                         angle = (float) -((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 
-                        mainHand.yRot = model.getHead().yRot + Mth.cos(angle);
+                        mainHand.yRot = model.getHead().yRot + MathHelper.cos(angle);
                     }
                     else mainHand.yRot = model.getHead().yRot;
                     break;

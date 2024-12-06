@@ -1,18 +1,18 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements IHasTeam
@@ -73,7 +73,7 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
         setColor(ColorUtils.getColorFromNbt(nbt));
@@ -82,7 +82,7 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound)
+    public void saveAdditional(NbtCompound compound)
     {
         compound.putInt("Color", getColor());
         compound.putString("Team", getTeam());

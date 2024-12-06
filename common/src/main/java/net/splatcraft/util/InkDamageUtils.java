@@ -1,29 +1,29 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.World;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.forge.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.IColoredEntity;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.entities.SquidBumperEntity;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.UpdateInkOverlayPacket;
-import net.splatcraft.forge.registries.SplatcraftDamageTypes;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.entities.IColoredEntity;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.registries.SplatcraftGameRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,17 +48,17 @@ public class InkDamageUtils
 
     public static boolean canDamage(Entity target, int color)
     {
-        boolean result = canDamageColor(target.level(), target.blockPosition(), ColorUtils.getEntityColor(target), color);
+        boolean result = canDamageColor(target.getWorld(), target.blockPosition(), ColorUtils.getEntityColor(target), color);
 
         if (result)
-            for (SpawnShieldEntity shield : target.level().getEntitiesOfClass(SpawnShieldEntity.class, target.getBoundingBox()))
-                if (ColorUtils.colorEquals(target.level(), target.blockPosition(), ColorUtils.getEntityColor(shield), ColorUtils.getEntityColor(target)))
+            for (SpawnShieldEntity shield : target.getWorld().getEntitiesOfClass(SpawnShieldEntity.class, target.getBoundingBox()))
+                if (ColorUtils.colorEquals(target.getWorld(), target.blockPosition(), ColorUtils.getEntityColor(shield), ColorUtils.getEntityColor(target)))
                     return false;
 
         return result;
     }
 
-    public static boolean canDamageColor(Level level, BlockPos pos, int targetColor, int sourceColor)
+    public static boolean canDamageColor(World level, BlockPos pos, int targetColor, int sourceColor)
     {
         return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_FRIENDLY_FIRE) || !ColorUtils.colorEquals(level, pos, targetColor, sourceColor);
     }
@@ -73,7 +73,7 @@ public class InkDamageUtils
                 return false;
         }
 
-        Level targetLevel = target.level();
+        Level targetLevel = target.getWorld();
         int color = ColorUtils.getEntityColor(projectile);
         InkDamageSource damageSource = new InkDamageSource(SplatcraftDamageTypes.get(targetLevel, damageType), owner, projectile, sourceItem);
 
@@ -97,7 +97,7 @@ public class InkDamageUtils
 
         if (target instanceof IColoredEntity coloredEntity)
         {
-            target.invulnerableTime = (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN)) ? 0 : 20;
+            target.invulnerableTime = (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.getWorld(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN)) ? 0 : 20;
             doDamage = coloredEntity.onEntityInked(damageSource, damage, color);
         }
         else if (target instanceof Sheep sheep)
@@ -120,7 +120,7 @@ public class InkDamageUtils
 
         if (!(target instanceof SquidBumperEntity) && doDamage)
         {
-            doDamage = target.hurt(damageSource, damage * (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg));
+            doDamage = target.hurt(damageSource, damage * (target instanceof PlayerEntity || target instanceof IColoredEntity ? 1 : mobDmgPctg));
             target.hurtMarked = false;
         }
 
@@ -139,7 +139,7 @@ public class InkDamageUtils
             }
         }
 
-        if (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
+        if (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.getWorld(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
             target.hurtTime = 0;
 
         return doDamage;

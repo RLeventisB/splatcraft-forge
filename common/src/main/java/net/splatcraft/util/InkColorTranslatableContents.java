@@ -1,10 +1,10 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.data.InkColorAliases;
+import net.splatcraft.data.InkColorAliases;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,7 +12,6 @@ import java.util.Optional;
 
 public class InkColorTranslatableContents extends TranslatableContents
 {
-
     private final TranslatableContents inverted;
     private int color;
     private Language decomposedWith;

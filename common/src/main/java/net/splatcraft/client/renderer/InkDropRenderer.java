@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.renderer;
+package net.splatcraft.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -8,13 +8,13 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.client.models.projectiles.InkDropModel;
-import net.splatcraft.forge.client.models.projectiles.ShooterInkProjectileModel;
-import net.splatcraft.forge.entities.InkDropEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.models.projectiles.InkDropModel;
+import net.splatcraft.client.models.projectiles.ShooterInkProjectileModel;
+import net.splatcraft.entities.InkDropEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements RenderLayerParent<InkDropEntity, InkDropModel>
@@ -50,8 +50,8 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
             //0.30000001192092896D
             matrixStackIn.pushPose();
             matrixStackIn.translate(0.0D, scale, 0.0D);
-            matrixStackIn.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
-            matrixStackIn.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
+            matrixStackIn.mulPose(Axis.YP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
+            matrixStackIn.mulPose(Axis.XP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
             matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getDeltaMovement().length()));
 
             InkDropModel model = MODEL;

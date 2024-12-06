@@ -1,21 +1,21 @@
-package net.splatcraft.forge.entities.subs;
+package net.splatcraft.entities.subs;
 
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkExplosion;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkExplosion;
 
 public class SplatBombEntity extends AbstractSubWeaponEntity
 {
@@ -46,7 +46,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
         {
             float f1 = 0.98F;
             if (this.onGround())
-                f1 = this.level().getBlockState(CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level(), CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
+                f1 = this.getWorld().getBlockState(CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level(), CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
 
             f1 = (float) Math.min(0.98, f1 * 1.5f);
 
@@ -129,6 +129,6 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
     public float getFlashIntensity(float partialTicks)
     {
         SubWeaponSettings settings = getSettings();
-        return Math.max(0, Mth.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+        return Math.max(0, MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
     }
 }

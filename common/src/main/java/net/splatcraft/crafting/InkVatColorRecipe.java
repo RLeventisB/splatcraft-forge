@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
@@ -14,16 +14,16 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.data.InkColorAliases;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static net.splatcraft.forge.Splatcraft.LOGGER;
+import static net.splatcraft.Splatcraft.LOGGER;
 
 public class InkVatColorRecipe implements Recipe<Container>
 {

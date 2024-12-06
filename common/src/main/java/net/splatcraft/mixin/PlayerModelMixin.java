@@ -1,4 +1,4 @@
-package net.splatcraft.forge.mixin;
+package net.splatcraft.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -6,7 +6,7 @@ import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.PlayerPosingHandler;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,23 +24,18 @@ public class PlayerModelMixin<T extends LivingEntity> extends HumanoidModel<T>
     @Shadow
     @Final
     public ModelPart leftSleeve;
-
     @Shadow
     @Final
     public ModelPart rightSleeve;
-
     @Shadow
     @Final
     public ModelPart leftPants;
-
     @Shadow
     @Final
     public ModelPart rightPants;
-
     @Shadow
     @Final
     public ModelPart jacket;
-
     @Shadow
     @Final
     private boolean slim;

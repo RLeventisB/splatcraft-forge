@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
@@ -11,10 +11,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.commands.*;
-import net.splatcraft.forge.commands.arguments.ColorCriterionArgument;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.commands.*;
+import net.splatcraft.commands.arguments.ColorCriterionArgument;
+import net.splatcraft.commands.arguments.InkColorArgument;
 
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SplatcraftCommands

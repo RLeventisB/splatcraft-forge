@@ -1,10 +1,10 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import java.util.List;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -12,9 +12,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.blocks.CrateBlock;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.util.CommonUtils;
+import net.splatcraft.blocks.CrateBlock;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class CrateTileEntity extends InkColorTileEntity implements Container
@@ -80,7 +80,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
 
@@ -93,7 +93,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(NbtCompound nbt)
     {
         nbt.putFloat("Health", health);
         nbt.putFloat("MaxHealth", maxHealth);

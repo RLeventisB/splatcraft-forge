@@ -1,8 +1,8 @@
-package net.splatcraft.forge.tileentities.container;
+package net.splatcraft.tileentities.container;
 
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
+import net.splatcraft.registries.SplatcraftTileEntities;
 
 public class WeaponWorkbenchContainer extends PlayerInventoryContainer<WeaponWorkbenchContainer>
 {

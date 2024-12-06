@@ -1,22 +1,22 @@
-package net.splatcraft.forge.entities.subs;
+package net.splatcraft.entities.subs;
 
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkDamageUtils;
-import net.splatcraft.forge.util.InkExplosion;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkDamageUtils;
+import net.splatcraft.util.InkExplosion;
 
 public class BurstBombEntity extends AbstractSubWeaponEntity
 {
@@ -46,7 +46,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
     protected void onBlockHit(BlockHitResult result)
     {
         SubWeaponSettings settings = getSettings();
-        Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
+        Vec3d impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
         InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
         level().broadcastEntityEvent(this, (byte) 1);
         level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
@@ -66,11 +66,11 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
     @Override
     public void updateRotation()
     {
-        float angle = -tickCount * Mth.RAD_TO_DEG * 0.4f;
-        Vec3 vec3 = this.getDeltaMovement();
+        float angle = -tickCount * MathHelper.RAD_TO_DEG * 0.4f;
+        Vec3d vec3 = this.getDeltaMovement();
         double d0 = vec3.horizontalDistance();
         this.setXRot(angle);
-        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG)));
+        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG)));
     }
 
     @Override

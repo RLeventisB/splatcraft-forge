@@ -1,8 +1,8 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.GameRules;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftGameRules;
 
 import java.util.Map;
 import java.util.Set;

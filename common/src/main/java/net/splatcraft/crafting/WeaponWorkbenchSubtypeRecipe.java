@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.gson.JsonObject;
 import net.minecraft.advancements.Advancement;
@@ -75,7 +75,7 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 
         if (advancement == null)
             return true;
-        if (player.level().isClientSide())
+        if (player.getWorld().isClientSide())
             return isAvailableOnClient(player);
         if (player instanceof ServerPlayer serverPlayer && serverPlayer.getServer().getAdvancements().getAdvancement(advancement) != null)
             return serverPlayer.getAdvancements().getOrStartProgress(serverPlayer.getServer().getAdvancements().getAdvancement(advancement)).isDone();

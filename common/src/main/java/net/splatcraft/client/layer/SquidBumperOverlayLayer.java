@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.layer;
+package net.splatcraft.client.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -9,9 +9,9 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.models.SquidBumperModel;
-import net.splatcraft.forge.entities.SquidBumperEntity;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.models.SquidBumperModel;
+import net.splatcraft.entities.SquidBumperEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperOverlayLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>

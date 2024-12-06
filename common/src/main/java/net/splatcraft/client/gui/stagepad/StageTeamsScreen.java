@@ -1,12 +1,12 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
 import org.jetbrains.annotations.NotNull;
 
 public class StageTeamsScreen extends AbstractStagePadScreen

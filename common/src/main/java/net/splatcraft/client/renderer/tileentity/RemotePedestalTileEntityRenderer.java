@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.renderer.tileentity;
+package net.splatcraft.client.renderer.tileentity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.tileentities.RemotePedestalTileEntity;
+import net.splatcraft.tileentities.RemotePedestalTileEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class RemotePedestalTileEntityRenderer implements BlockEntityRenderer<RemotePedestalTileEntity>

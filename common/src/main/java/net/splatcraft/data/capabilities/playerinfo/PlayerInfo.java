@@ -1,15 +1,15 @@
-package net.splatcraft.forge.data.capabilities.playerinfo;
+package net.splatcraft.data.capabilities.playerinfo;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.PlayerCooldown;
 
 import java.util.Optional;
 
@@ -158,7 +158,7 @@ public class PlayerInfo
         isPlaying = playing;
     }
 
-    public CompoundTag writeNBT(CompoundTag nbt)
+    public NbtCompound writeNBT(NbtCompound nbt)
     {
         nbt.putInt("DodgeCount", getDodgeCount());
         nbt.putInt("Color", getColor());
@@ -174,14 +174,14 @@ public class PlayerInfo
 
         if (!matchInventory.isEmpty())
         {
-            CompoundTag invNBT = new CompoundTag();
+            NbtCompound invNBT = new NbtCompound();
             ContainerHelper.saveAllItems(invNBT, matchInventory);
             nbt.put("MatchInventory", invNBT);
         }
 
         if (playerCooldown != null)
         {
-            CompoundTag cooldownNBT = new CompoundTag();
+            NbtCompound cooldownNBT = new NbtCompound();
             playerCooldown.writeNBT(cooldownNBT);
 
             if (playerCooldown.getClass() != PlayerCooldown.class)
@@ -200,7 +200,7 @@ public class PlayerInfo
         return nbt;
     }
 
-    public void readNBT(CompoundTag nbt)
+    public void readNBT(NbtCompound nbt)
     {
         setDodgeCount(nbt.getInt("DodgeCount"));
         setColor(ColorUtils.getColorFromNbt(nbt));

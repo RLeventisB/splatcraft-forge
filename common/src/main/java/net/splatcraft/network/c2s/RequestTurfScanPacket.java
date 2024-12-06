@@ -1,13 +1,13 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.items.remotes.TurfScannerItem;
+import net.splatcraft.data.Stage;
+import net.splatcraft.items.remotes.TurfScannerItem;
 
 import java.util.ArrayList;
 
@@ -37,10 +37,10 @@ public class RequestTurfScanPacket extends PlayC2SPacket
     @Override
     public void execute(Player player)
     {
-        Stage stage = Stage.getStage(player.level(), stageId);
+        Stage stage = Stage.getStage(player.getWorld(), stageId);
         ServerPlayer serverPlayer = (ServerPlayer) player;
 
-        ServerLevel stageLevel = player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
+        ServerWorld stageLevel = player.getWorld().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
         ArrayList<ServerPlayer> playerList = new ArrayList<>(stageLevel.getEntitiesOfClass(ServerPlayer.class, stage.getBounds()));
         if (!playerList.contains(serverPlayer))
             playerList.add(0, serverPlayer);

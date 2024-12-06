@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.gui.stagepad;
+package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
@@ -8,14 +8,14 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.items.StagePadItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.RequestUpdateStageSpawnPadsPacket;
-import net.splatcraft.forge.network.c2s.RequestWarpDataPacket;
-import net.splatcraft.forge.network.c2s.SuperJumpToStagePacket;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.Stage;
+import net.splatcraft.items.StagePadItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.RequestUpdateStageSpawnPadsPacket;
+import net.splatcraft.network.c2s.RequestWarpDataPacket;
+import net.splatcraft.network.c2s.SuperJumpToStagePacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -193,7 +193,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
         int y = (height - imageHeight) / 2;
 
         if (scrollBarHeld)
-            scroll = Mth.clamp((mouseY - (y + 24)) / 96f, 0, 1);
+            scroll = MathHelper.clamp((mouseY - (y + 24)) / 96f, 0, 1);
 
         return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
     }
@@ -202,7 +202,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
     public boolean mouseScrolled(double mouseX, double mouseY, double amount)
     {
         if (stages.size() > 7)
-            scroll = Mth.clamp(scroll - Math.signum(amount) / (buttonListSize - 7), 0.0f, 1.0f);
+            scroll = MathHelper.clamp(scroll - Math.signum(amount) / (buttonListSize - 7), 0.0f, 1.0f);
 
         return true;
     }
@@ -299,7 +299,6 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 
     public static class HiddenButton extends MenuButton
     {
-
         public HiddenButton(int x, int y, int width, int height, OnPress onPress, OnTooltip onTooltip, PostDraw draw)
         {
             super(x, y, width, height, onPress, onTooltip, draw, ButtonColor.GREEN);
@@ -365,7 +364,6 @@ public class StageSelectionScreen extends AbstractStagePadScreen
             NO_SPAWN_PADS(false, ButtonColor.RED, Component.translatable("gui.stage_pad.button.superjump_to.no_pads_found").withStyle(ChatFormatting.RED)),
             VALID(true, ButtonColor.CYAN, Component.translatable("gui.stage_pad.button.superjump_to")),
             REQUIRES_UPDATE(true, ButtonColor.YELLOW, Component.translatable("gui.stage_pad.button.superjump_to.requires_update").withStyle(ChatFormatting.YELLOW));
-
             final boolean valid;
             final Component tooltipText;
             final ButtonColor color;

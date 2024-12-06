@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
-@SuppressWarnings("deprecation")
 public class GrateBlock extends Block implements SimpleWaterloggedBlock
 {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;

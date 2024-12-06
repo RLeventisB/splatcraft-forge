@@ -1,11 +1,11 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraftforge.common.util.ForgeSoundType;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 
 import java.util.ArrayList;
 import java.util.List;

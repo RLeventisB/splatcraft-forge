@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -9,8 +9,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
 import org.jetbrains.annotations.NotNull;
 
 public class PowerEggCanItem extends Item

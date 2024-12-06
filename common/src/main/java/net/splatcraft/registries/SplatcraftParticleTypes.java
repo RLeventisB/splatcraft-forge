@@ -1,60 +1,102 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
-import com.mojang.serialization.Codec;
-import net.minecraft.core.particles.ParticleType;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.particles.*;
-import org.jetbrains.annotations.NotNull;
+import com.mojang.serialization.MapCodec;
+import dev.architectury.registry.client.particle.ParticleProviderRegistry;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.model.SpriteAtlasManager;
+import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.texture.SpriteLoader;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.particles.*;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftParticleTypes
 {
-    public static final DeferredRegister<ParticleType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, Splatcraft.MODID);
-    public static final RegistryObject<ParticleType<InkSplashParticleData>> INK_SPLASH = REGISTRY.register("ink_splash", () -> new ParticleType<>(false, InkSplashParticleData.DESERIALIZER)
+    public static final ParticleType<InkSplashParticleData> INK_SPLASH = new ParticleType<>(false)
     {
         @Override
-        public @NotNull Codec<InkSplashParticleData> codec()
+        public MapCodec<InkSplashParticleData> getCodec()
         {
             return InkSplashParticleData.CODEC;
         }
-    });
-    public static final RegistryObject<ParticleType<InkExplosionParticleData>> INK_EXPLOSION = REGISTRY.register("ink_explosion", () -> new ParticleType<>(false, InkExplosionParticleData.DESERIALIZER)
+
+        @Override
+        public PacketCodec<? super RegistryByteBuf, InkSplashParticleData> getPacketCodec()
+        {
+            return InkSplashParticleData.PACKET_CODEC;
+        }
+    };
+    public static final ParticleType<InkExplosionParticleData> INK_EXPLOSION = new ParticleType<>(false)
     {
         @Override
-        public @NotNull Codec<InkExplosionParticleData> codec()
+        public MapCodec<InkExplosionParticleData> getCodec()
         {
             return InkExplosionParticleData.CODEC;
         }
-    });
-    public static final RegistryObject<ParticleType<SquidSoulParticleData>> SQUID_SOUL = REGISTRY.register("squid_soul", () -> new ParticleType<>(false, SquidSoulParticleData.DESERIALIZER)
+
+        @Override
+        public PacketCodec<? super RegistryByteBuf, InkExplosionParticleData> getPacketCodec()
+        {
+            return InkExplosionParticleData.PACKET_CODEC;
+        }
+    };
+    public static final ParticleType<SquidSoulParticleData> SQUID_SOUL = new ParticleType<>(false)
     {
         @Override
-        public @NotNull Codec<SquidSoulParticleData> codec()
+        public MapCodec<SquidSoulParticleData> getCodec()
         {
             return SquidSoulParticleData.CODEC;
         }
-    });
-    public static final RegistryObject<ParticleType<InkTerrainParticleData>> INK_TERRAIN = REGISTRY.register("ink_terrain", () -> new ParticleType<>(false, InkTerrainParticleData.DESERIALIZER)
+
+        @Override
+        public PacketCodec<? super RegistryByteBuf, SquidSoulParticleData> getPacketCodec()
+        {
+            return SquidSoulParticleData.PACKET_CODEC;
+        }
+    };
+    public static final ParticleType<InkTerrainParticleData> INK_TERRAIN = new ParticleType<>(false)
     {
         @Override
-        public @NotNull Codec<InkTerrainParticleData> codec()
+        public MapCodec<InkTerrainParticleData> getCodec()
         {
             return InkTerrainParticleData.CODEC;
         }
-    });
 
-    @SubscribeEvent
-    public static void registerFactories(RegisterParticleProvidersEvent event)
+        @Override
+        public PacketCodec<? super RegistryByteBuf, InkTerrainParticleData> getPacketCodec()
+        {
+            return InkTerrainParticleData.PACKET_CODEC;
+        }
+    };
+
+    public static void registerParticles()
     {
-        event.registerSpriteSet(INK_SPLASH.get(), InkSplashParticle.Factory::new);
-        event.registerSpriteSet(INK_EXPLOSION.get(), InkExplosionParticle.Factory::new);
-        event.registerSpriteSet(SQUID_SOUL.get(), SquidSoulParticle.Factory::new);
-        event.registerSpriteSet(INK_TERRAIN.get(), InkTerrainParticle.Factory::new);
+        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_splash"), INK_SPLASH);
+        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_explosion"), INK_SPLASH);
+        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("squid_soul"), INK_SPLASH);
+        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_terrain"), INK_SPLASH);
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static void registerClientFactories()
+    {
+        SpriteLoader.fromAtlas(new SpriteAtlasTexture(Splatcraft.identifierOf("")))
+        ClientSpriteRegistryCallback.event(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).register(((atlasTexture, registry) ->
+        {
+            registry.register(new Identifier("modid", "particle/green_flame"));
+        }));
+
+        /* Registers our particle client-side.
+         * First argument is our particle's instance, created previously on ExampleMod.
+         * Second argument is the particle's factory. The factory controls how the particle behaves.
+         * In this example, we'll use FlameParticle's Factory.*/
+        ParticleProviderRegistry.register(INK_TERRAIN, InkTerrainParticle.Factory::new);
+        ParticleProviderRegistry.register(INK_EXPLOSION, InkExplosionParticle.Factory::new);
     }
 }

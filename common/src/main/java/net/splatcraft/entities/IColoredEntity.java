@@ -1,6 +1,6 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.entity.damage.DamageSource;
 
 public interface IColoredEntity
 {

@@ -1,8 +1,8 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -11,20 +11,20 @@ import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
-import net.splatcraft.forge.items.weapons.settings.SlosherWeaponSettings;
-import net.splatcraft.forge.mixin.accessors.EntityAccessor;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.AttackId;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
+import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCooldown;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,7 +121,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
             attackId = AttackId.registerAttack().countProjectile(sloshes.size());
         }
 
-        public SloshCooldown(CompoundTag nbt)
+        public SloshCooldown(NbtCompound nbt)
         {
             super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true, false, true, false);
             setTime(nbt.getFloat("Time"));
@@ -132,7 +132,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         @Override
         public void tick(Player player)
         {
-            Level level = player.level();
+            Level level = player.getWorld();
 
             if (level.isClientSide || sloshData == null)
                 return;
@@ -143,8 +143,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
             if (shotSetting.allowFlicking())
             {
-                xDelta = xDelta * 0.7f + (Mth.degreesDifference(xRot, player.getXRot())) * 0.12f;
-                yDelta = yDelta * 0.7f + (Mth.degreesDifference(yRot, player.getYRot())) * 0.12f;
+                xDelta = xDelta * 0.7f + (MathHelper.degreesDifference(xRot, player.getXRot())) * 0.12f;
+                yDelta = yDelta * 0.7f + (MathHelper.degreesDifference(yRot, player.getYRot())) * 0.12f;
                 xRotOld = xRot;
                 yRotOld = yRot;
 
@@ -175,10 +175,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                         InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileData.size(), sloshData);
                         proj.setSlosherStats(projectileData);
 
-                        float xRotation = Mth.lerp(partialTick, yRotOld, yRot);
+                        float xRotation = MathHelper.lerp(partialTick, yRotOld, yRot);
                         proj.shootFromRotation(
                             null,
-                            Mth.lerp(partialTick, xRotOld, xRot),
+                            MathHelper.lerp(partialTick, xRotOld, xRot),
                             xRotation + projectileSetting.offsetAngle() - 3,
                             shotSetting.pitchCompensation(),
                             projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
@@ -186,7 +186,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                             partialTick);
                         proj.setAttackId(attackId);
 
-                        proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
+                        proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3d(-0.4, -1, 0), 1, xRotation)));
 
                         switch (slosherItem.slosherType)
                         {
@@ -226,7 +226,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         }
 
         @Override
-        public CompoundTag writeNBT(CompoundTag nbt)
+        public NbtCompound writeNBT(NbtCompound nbt)
         {
             nbt.putFloat("Time", getTime());
             nbt.putFloat("MaxTime", getMaxTime());

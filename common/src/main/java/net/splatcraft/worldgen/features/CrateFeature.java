@@ -1,4 +1,4 @@
-package net.splatcraft.forge.worldgen.features;
+package net.splatcraft.worldgen.features;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
@@ -11,10 +11,10 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.CountConfiguration;
 import net.minecraft.world.level.material.Fluids;
-import net.splatcraft.forge.blocks.CrateBlock;
-import net.splatcraft.forge.blocks.DebrisBlock;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.tileentities.CrateTileEntity;
+import net.splatcraft.blocks.CrateBlock;
+import net.splatcraft.blocks.DebrisBlock;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.tileentities.CrateTileEntity;
 
 public class CrateFeature extends Feature<CountConfiguration>
 {
@@ -28,7 +28,7 @@ public class CrateFeature extends Feature<CountConfiguration>
     {
         int i = 0;
         RandomSource random = context.random();
-        WorldGenLevel worldgenlevel = context.level();
+        WorldGenLevel worldgenlevel = context.getWorld();
         BlockPos blockpos = context.origin();
         int j = context.config().count().sample(random);
 

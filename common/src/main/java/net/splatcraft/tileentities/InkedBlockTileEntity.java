@@ -1,8 +1,8 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -10,12 +10,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.splatcraft.forge.blocks.IColoredBlock;
-import net.splatcraft.forge.data.capabilities.worldink.ChunkInkCapability;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.RelativeBlockPos;
+import net.splatcraft.blocks.IColoredBlock;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -77,7 +77,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 
     //Read NBT
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
         savedState = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), nbt.getCompound("SavedState"));
@@ -90,7 +90,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(NbtCompound nbt)
     {
         nbt.put("SavedState", NbtUtils.writeBlockState(savedState));
         if (hasSavedColor())

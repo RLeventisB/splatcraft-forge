@@ -1,4 +1,4 @@
-package net.splatcraft.forge.dispenser;
+package net.splatcraft.dispenser;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockSource;

@@ -1,44 +1,23 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Display;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ProjectileWeaponItem;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.handlers.WeaponHandler;
-import net.splatcraft.forge.items.weapons.DualieItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.items.weapons.settings.CommonRecords;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.particle.DustParticleEffect;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.*;
+import net.minecraft.util.math.random.BaseRandom;
+import net.minecraft.world.World;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.handlers.WeaponHandler;
+import net.splatcraft.items.weapons.DualieItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.CommonRecords;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -48,10 +27,10 @@ import java.util.function.Predicate;
 
 public class CommonUtils
 {
-    public static final EntityDataSerializer<Vec3> VEC3SERIALIZER = new EntityDataSerializer<>()
+    public static final EntityDataSerializer<Vec3d> VEC3SERIALIZER = new EntityDataSerializer<>()
     {
         @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3 vec3)
+        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3d vec3)
         {
             buf.writeDouble(vec3.x);
             buf.writeDouble(vec3.y);
@@ -59,15 +38,15 @@ public class CommonUtils
         }
 
         @Override
-        public @NotNull Vec3 read(@NotNull FriendlyByteBuf buf)
+        public @NotNull Vec3d read(@NotNull FriendlyByteBuf buf)
         {
-            return new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            return new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
         }
 
         @Override
-        public @NotNull Vec3 copy(@NotNull Vec3 vec3)
+        public @NotNull Vec3d copy(@NotNull Vec3d vec3)
         {
-            return new Vec3(vec3.x, vec3.y, vec3.z);
+            return new Vec3d(vec3.x, vec3.y, vec3.z);
         }
     };
     public static final EntityDataSerializer<Vec2> VEC2SERIALIZER = new EntityDataSerializer<>()
@@ -92,12 +71,12 @@ public class CommonUtils
         }
     };
 
-    public static void spawnTestParticle(Vec3 pos)
+    public static void spawnTestParticle(Vec3d pos)
     {
-        spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
+        spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(1, 0, 0), 1), pos);
     }
 
-    public static void spawnTestText(Level level, Vec3 pos, String text)
+    public static void spawnTestText(Level level, Vec3d pos, String text)
     {
         if (level != null)
         {
@@ -109,34 +88,34 @@ public class CommonUtils
         }
     }
 
-    public static void spawnTestParticle(Vec3 pos, Color color)
+    public static void spawnTestParticle(Vec3d pos, Color color)
     {
         float[] rgb = color.getRGBColorComponents(null);
 
-        spawnTestParticle(Minecraft.getInstance().level, new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
+        spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
     }
 
-    public static void spawnTestBlockParticle(Vec3 pos, BlockState state)
+    public static void spawnTestBlockParticle(Vec3d pos, BlockState state)
     {
-        spawnTestParticle(Minecraft.getInstance().level, new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state), pos);
+        spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(ParticleTypes.BLOCK_MARKER, state), pos);
     }
 
-    public static void spawnTestParticle(Level level, ParticleOptions options, Vec3 pos)
+    public static void spawnTestParticle(World world, ParticleEffect options, Vec3d pos)
     {
-        if (level != null)
+        if (world != null)
         {
-            if (level instanceof ClientLevel clientLevel)
+            if (world instanceof ClientWorld clientLevel)
             {
                 clientLevel.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
             }
-            if (level instanceof ServerLevel serverLevel)
+            if (world instanceof ServerWorld serverLevel)
             {
-                serverLevel.sendParticles(options, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+                serverLevel.spawnParticles(options, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
             }
         }
     }
 
-    public static void showBoundingBoxCorners(Level level, AABB aabb)
+    public static void showBoundingBoxCorners(World world, Box aabb)
     {
         for (int x = 0; x < 2; x++)
         {
@@ -144,17 +123,17 @@ public class CommonUtils
             {
                 for (int z = 0; z < 2; z++)
                 {
-                    CommonUtils.spawnTestParticle(level,
-                        ParticleTypes.BUBBLE, new Vec3(
-                            x == 0 ? aabb.min(Direction.Axis.X) : aabb.max(Direction.Axis.X),
-                            y == 0 ? aabb.min(Direction.Axis.Y) : aabb.max(Direction.Axis.Y),
-                            z == 0 ? aabb.min(Direction.Axis.Z) : aabb.max(Direction.Axis.Z)));
+                    CommonUtils.spawnTestParticle(world,
+                        ParticleTypes.BUBBLE, new Vec3d(
+                            x == 0 ? aabb.getMin(Direction.Axis.X) : aabb.getMax(Direction.Axis.X),
+                            y == 0 ? aabb.getMin(Direction.Axis.Y) : aabb.getMax(Direction.Axis.Y),
+                            z == 0 ? aabb.getMin(Direction.Axis.Z) : aabb.getMax(Direction.Axis.Z)));
                 }
             }
         }
     }
 
-    public static float nextFloat(RandomSource random, float min, float max)
+    public static float nextFloat(BaseRandom random, float min, float max)
     {
         return min + (max - min) * random.nextFloat();
     }
@@ -164,12 +143,12 @@ public class CommonUtils
         return min + (max - min) * random.nextDouble();
     }
 
-    public static Vec3i round(Vec3 vec3)
+    public static net.minecraft.util.math.Vec3i round(Vec3d vec3)
     {
         return new Vec3i((int) Math.floor(vec3.x), (int) Math.floor(vec3.y), (int) Math.floor(vec3.z));
     }
 
-    public static BlockPos createBlockPos(double x, double y, double z)
+    public static net.minecraft.util.math.BlockPos createBlockPos(double x, double y, double z)
     {
         return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
     }
@@ -179,7 +158,7 @@ public class CommonUtils
         return new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
-    public static BlockPos createBlockPos(Vec3 vec3)
+    public static BlockPos createBlockPos(Vec3d vec3)
     {
         return new BlockPos(round(vec3));
     }
@@ -303,7 +282,7 @@ public class CommonUtils
             a += 360.0F;
         }
 
-        return Mth.lerp(0.2F, a, b);
+        return MathHelper.lerp(0.2F, a, b);
     }
 
     public static <S, V> V getArgumentOrDefault(CommandContext<S> context, String name, Class<V> clazz, V defaultValue) // why do i have to do this though
@@ -396,7 +375,7 @@ public class CommonUtils
         return new Result(delay, value);
     }
 
-    public static Vec3 getOldPosition(Entity entity, double partialTick)
+    public static Vec3d getOldPosition(Entity entity, double partialTick)
     {
         if (entity instanceof Player player)
             return WeaponHandler.getPlayerPrevPos(player).getPosition(partialTick);

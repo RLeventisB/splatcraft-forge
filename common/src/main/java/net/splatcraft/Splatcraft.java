@@ -1,101 +1,51 @@
-package net.splatcraft.forge;
+package net.splatcraft;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.forgespi.language.IModInfo;
-import net.splatcraft.forge.client.handlers.ClientSetupHandler;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.handlers.ScoreboardHandler;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.registries.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import dev.architectury.injectables.annotations.PlatformOnly;
+import dev.architectury.platform.Mod;
+import dev.architectury.platform.Platform;
+import net.minecraft.util.Identifier;
+import net.splatcraft.config.ConfigScreenProvider;
+import net.splatcraft.registries.SplatcraftInitializer;
+import net.splatcraft.registries.SplatcraftRegistries;
 
-import java.util.Objects;
-
-// The value here should match an entry in the META-INF/mods.toml file
-@Mod(Splatcraft.MODID)
-public class Splatcraft
+public final class Splatcraft
 {
     public static final String MODID = "splatcraft";
-    public static final String MODNAME = "Splatcraft";
-    public static final Logger LOGGER = LogManager.getLogger(MODNAME);
-    public static String version;
+    private static Mod modInstance;
+    private static SplatcraftInitializer initializer;
 
-    public Splatcraft()
+    public static void init(SplatcraftInitializer initializer)
     {
-        for (IModInfo m : ModList.get().getMods())
-        { // Forge is stupid
-            if (Objects.equals(m.getModId(), MODID) && m.getVersion() != null)
-            {
-                version = m.getVersion().toString();
-                break;
-            }
-        }
-
+        Splatcraft.initializer = initializer;
+        // Write common init code here.
+        modInstance = Platform.getMod(MODID);
+        ConfigScreenProvider configProvider = new ConfigScreenProvider();
+        modInstance.registerConfigurationScreen(configProvider);
         SplatcraftRegistries.register();
-
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SplatcraftConfig.clientConfig);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, SplatcraftConfig.serverConfig);
-        SplatcraftConfig.loadConfig(SplatcraftConfig.clientConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-client.toml").toString());
-        SplatcraftConfig.loadConfig(SplatcraftConfig.serverConfig, FMLPaths.CONFIGDIR.get().resolve(Splatcraft.MODID + "-server.toml").toString());
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
 
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(FMLJavaModLoadingContext.get().getModEventBus());
-
-        //addBuiltinPack("classic_weapons", Component.literal("Splatcraft - Classic Weapons"));
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event)
+    @PlatformOnly(PlatformOnly.FABRIC)
+    public static void initClient()
     {
-        SplatcraftPacketHandler.registerMessages();
-
-        SplatcraftGameRules.registerGamerules();
-        SplatcraftTags.register();
-        SplatcraftStats.register();
-        ScoreboardHandler.register();
-        SplatcraftCommands.registerArguments();
-
-//        SplatcraftOreGen.registerOres();
-        SplatcraftItems.postRegister();
     }
 
-    private void clientSetup(final FMLClientSetupEvent event)
+    public static void initServer()
     {
-        SplatcraftEntities.bindRenderers();
-        SplatcraftTileEntities.bindTESR();
-
-        event.enqueueWork(() ->
-        {
-            SplatcraftItems.registerModelProperties();
-            ClientSetupHandler.bindScreenContainers();
-        });
     }
 
-    @SubscribeEvent
-    public void registerCaps(RegisterCapabilitiesEvent event)
+    public static Mod getModInstance()
     {
-        event.register(PlayerInfoCapability.class);
+        return modInstance;
     }
 
-    @SubscribeEvent
-    public void onServerStarted(ServerStartedEvent event)
+    public static Identifier identifierOf(String path)
     {
-        SplatcraftGameRules.booleanRules.replaceAll((k, v) -> event.getServer().getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
-        SplatcraftGameRules.intRules.replaceAll((k, v) -> event.getServer().getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
+        return Identifier.of(MODID, path);
     }
 }

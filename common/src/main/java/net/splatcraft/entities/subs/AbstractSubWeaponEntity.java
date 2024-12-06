@@ -1,9 +1,9 @@
-package net.splatcraft.forge.entities.subs;
+package net.splatcraft.entities.subs;
 
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -11,8 +11,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerWorld;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,18 +28,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkHooks;
-import net.splatcraft.forge.client.particles.InkExplosionParticleData;
-import net.splatcraft.forge.entities.IColoredEntity;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.items.weapons.settings.SubWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftDamageTypes;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.entities.IColoredEntity;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,7 +92,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         return result;
     }
 
-    public void readItemData(CompoundTag nbt)
+    public void readItemData(NbtCompound nbt)
     {
 
     }
@@ -113,7 +113,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
             discard();
         }
 
-        Vec3 raytraceOffset = new Vec3(getBbWidth() / 2f * Math.signum(getDeltaMovement().x), getBbHeight() * Math.max(0, Math.signum(getDeltaMovement().y)), getBbWidth() / 2f * Math.signum(getDeltaMovement().z));
+        Vec3d raytraceOffset = new Vec3d(getBbWidth() / 2f * Math.signum(getDeltaMovement().x), getBbHeight() * Math.max(0, Math.signum(getDeltaMovement().y)), getBbWidth() / 2f * Math.signum(getDeltaMovement().z));
 
         setDeltaMovement(getDeltaMovement().add(raytraceOffset));
         HitResult raytraceresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
@@ -123,7 +123,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         if (raytraceresult.getType() == HitResult.Type.BLOCK)
         {
             BlockPos blockpos = ((BlockHitResult) raytraceresult).getBlockPos();
-            BlockState blockstate = this.level().getBlockState(blockpos);
+            BlockState blockstate = this.getWorld().getBlockState(blockpos);
             if (blockstate.is(Blocks.NETHER_PORTAL))
             {
                 this.handleInsidePortal(blockpos);
@@ -131,7 +131,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
             }
             else if (blockstate.is(Blocks.END_GATEWAY))
             {
-                if (this.level().getBlockEntity(blockpos) instanceof TheEndGatewayBlockEntity gate && TheEndGatewayBlockEntity.canEntityTeleport(this))
+                if (this.getWorld().getBlockEntity(blockpos) instanceof TheEndGatewayBlockEntity gate && TheEndGatewayBlockEntity.canEntityTeleport(this))
                 {
                     TheEndGatewayBlockEntity.teleportEntity(level(), blockpos, blockstate, this, gate);
                 }
@@ -145,9 +145,9 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         }
 
         this.checkInsideBlocks();
-        Vec3 deltaMovement = this.getDeltaMovement();
+        Vec3d deltaMovement = this.getDeltaMovement();
 
-        Vec3 newPos = new Vec3(getX() + getDeltaMovement().x, getY() + getDeltaMovement().y, getZ() + getDeltaMovement().z);
+        Vec3d newPos = new Vec3d(getX() + getDeltaMovement().x, getY() + getDeltaMovement().y, getZ() + getDeltaMovement().z);
 
         double newX = this.getX() + deltaMovement.x;
         double newY = this.getY() + deltaMovement.y;
@@ -158,7 +158,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         {
             for (int i = 0; i < 4; ++i)
             {
-                this.level().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25D, newY - deltaMovement.y * 0.25D, newZ - deltaMovement.z * 0.25D, deltaMovement.x, deltaMovement.y, deltaMovement.z);
+                this.getWorld().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25D, newY - deltaMovement.y * 0.25D, newZ - deltaMovement.z * 0.25D, deltaMovement.x, deltaMovement.y, deltaMovement.z);
             }
 
             f = 0.8F;
@@ -167,7 +167,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         this.setDeltaMovement(deltaMovement.scale(f));
         if (!this.isNoGravity())
         {
-            Vec3 vector3d1 = this.getDeltaMovement();
+            Vec3d vector3d1 = this.getDeltaMovement();
             this.setDeltaMovement(vector3d1.x, vector3d1.y - (double) this.getGravity(), vector3d1.z);
         }
 
@@ -190,7 +190,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     {
         shootFromRotation(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy);
 
-        Vec3 posDiff = new Vec3(0, 0, 0);
+        Vec3d posDiff = new Vec3d(0, 0, 0);
 
         if (thrower instanceof Player player)
         {
@@ -229,12 +229,12 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag nbt)
+    public void addAdditionalSaveData(NbtCompound nbt)
     {
         nbt.putInt("Color", getColor());
         nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
         nbt.putString("InkType", inkType.getSerializedName());
-        nbt.put("SourceWeapon", sourceWeapon.save(new CompoundTag()));
+        nbt.put("SourceWeapon", sourceWeapon.save(new NbtCompound()));
 
         if (this.ownerUUID != null)
             nbt.putUUID("Owner", this.ownerUUID);
@@ -244,11 +244,11 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
         ItemStack itemstack = this.getItemRaw();
         if (!itemstack.isEmpty())
-            nbt.put("Item", itemstack.save(new CompoundTag()));
+            nbt.put("Item", itemstack.save(new NbtCompound()));
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag nbt)
+    public void readAdditionalSaveData(NbtCompound nbt)
     {
         if (nbt.contains("Color"))
             setColor(ColorUtils.getColorFromNbt(nbt));
@@ -330,13 +330,13 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     @Nullable
     public Entity getOwner()
     {
-        if (this.ownerUUID != null && this.level() instanceof ServerLevel serverLevel)
+        if (this.ownerUUID != null && this.getWorld() instanceof ServerWorld serverLevel)
         {
             return serverLevel.getEntity(this.ownerUUID);
         }
         else
         {
-            return this.ownerNetworkId != 0 ? this.level().getEntity(this.ownerNetworkId) : null;
+            return this.ownerNetworkId != 0 ? this.getWorld().getEntity(this.ownerNetworkId) : null;
         }
     }
 
@@ -360,7 +360,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         Entity entity = this.getOwner();
         if (entity != null)
         {
-            for (Entity entity1 : this.level().getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
+            for (Entity entity1 : this.getWorld().getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
                 !p_234613_0_.isSpectator() && p_234613_0_.isPickable()))
             {
                 if (entity1.getRootVehicle() == entity.getRootVehicle())
@@ -375,22 +375,22 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
     public void shoot(double p_37266_, double p_37267_, double p_37268_, float p_37269_, float p_37270_)
     {
-        Vec3 vec3 = (new Vec3(p_37266_, p_37267_, p_37268_)).normalize().add(this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_).scale(p_37269_);
+        Vec3d vec3 = (new Vec3d(p_37266_, p_37267_, p_37268_)).normalize().add(this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_).scale(p_37269_);
         this.setDeltaMovement(vec3);
         double d0 = vec3.horizontalDistance();
-        this.setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
-        this.setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
+        this.setYRot((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG));
+        this.setXRot((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG));
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
     }
 
     public void shootFromRotation(Entity p_234612_1_, float p_234612_2_, float p_234612_3_, float p_234612_4_, float p_234612_5_, float p_234612_6_)
     {
-        float f = -Mth.sin(p_234612_3_ * (Mth.DEG_TO_RAD)) * Mth.cos(p_234612_2_ * (Mth.DEG_TO_RAD));
-        float f1 = -Mth.sin((p_234612_2_ + p_234612_4_) * (Mth.DEG_TO_RAD));
-        float f2 = Mth.cos(p_234612_3_ * (Mth.DEG_TO_RAD)) * Mth.cos(p_234612_2_ * (Mth.DEG_TO_RAD));
+        float f = -MathHelper.sin(p_234612_3_ * (MathHelper.DEG_TO_RAD)) * MathHelper.cos(p_234612_2_ * (MathHelper.DEG_TO_RAD));
+        float f1 = -MathHelper.sin((p_234612_2_ + p_234612_4_) * (MathHelper.DEG_TO_RAD));
+        float f2 = MathHelper.cos(p_234612_3_ * (MathHelper.DEG_TO_RAD)) * MathHelper.cos(p_234612_2_ * (MathHelper.DEG_TO_RAD));
         this.shoot(f, f1, f2, p_234612_5_, p_234612_6_);
-        Vec3 vector3d = p_234612_1_.getDeltaMovement();
+        Vec3d vector3d = p_234612_1_.getDeltaMovement();
         this.setDeltaMovement(this.getDeltaMovement().add(vector3d.x, p_234612_1_.onGround() ? 0.0D : vector3d.y, vector3d.z));
     }
 
@@ -400,9 +400,9 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         this.setDeltaMovement(p_70016_1_, p_70016_3_, p_70016_5_);
         if (this.xRotO == 0.0F && this.yRotO == 0.0F)
         {
-            float f = Mth.sqrt((float) (p_70016_1_ * p_70016_1_ + p_70016_5_ * p_70016_5_));
-            this.setXRot((float) (Mth.atan2(p_70016_3_, f) * Mth.RAD_TO_DEG));
-            this.setYRot((float) (Mth.atan2(p_70016_1_, p_70016_5_) * Mth.RAD_TO_DEG));
+            float f = MathHelper.sqrt((float) (p_70016_1_ * p_70016_1_ + p_70016_5_ * p_70016_5_));
+            this.setXRot((float) (MathHelper.atan2(p_70016_3_, f) * MathHelper.RAD_TO_DEG));
+            this.setYRot((float) (MathHelper.atan2(p_70016_1_, p_70016_5_) * MathHelper.RAD_TO_DEG));
             this.xRotO = this.getXRot();
             this.yRotO = this.getYRot();
             this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
@@ -424,9 +424,9 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
     public void updateRotation()
     {
-        Vec3 vec3 = this.getDeltaMovement();
+        Vec3d vec3 = this.getDeltaMovement();
         double d0 = vec3.horizontalDistance();
-        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG)));
-        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG)));
+        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG)));
+        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG)));
     }
 }

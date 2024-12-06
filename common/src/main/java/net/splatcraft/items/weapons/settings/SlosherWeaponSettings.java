@@ -1,14 +1,14 @@
-package net.splatcraft.forge.items.weapons.settings;
+package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.util.WeaponTooltip;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
         if (relativeY < -minDamageHeight)
             damage = projectileData.minDamage();
         else if (relativeY < -damageDecayStartHeight)
-            damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
+            damage = MathHelper.lerp(MathHelper.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
         return damage;
     }
 
@@ -150,7 +150,6 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                 Codec.FLOAT.optionalFieldOf("fall_damage_end", 5f).forGetter(CommonRecords.ProjectileDataRecord::damageDecayPerTick)
             ).apply(instance, DataRecord::createSlosherProjectile)
         );
-
         public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
             instance -> instance.group(
                 SlosherShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
@@ -224,7 +223,6 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                 Codec.FLOAT.optionalFieldOf("fall_damage_end").forGetter(CommonRecords.OptionalProjectileDataRecord::damageDecayPerTick)
             ).apply(instance, CommonRecords.OptionalProjectileDataRecord::new)
         );
-
         public static final Codec<SingularSloshShotData> CODEC = RecordCodecBuilder.create(
             instance -> instance.group(
                 Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(SingularSloshShotData::startupTicks),
@@ -236,9 +234,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
                 BlasterWeaponSettings.DetonationRecord.CODEC.optionalFieldOf("detonation_data").forGetter(SingularSloshShotData::detonationData)
             ).apply(instance, SingularSloshShotData::new)
         );
-
         public static final CommonRecords.ProjectileDataRecord SLOSHER_PROJECTILE_DEFAULT = new CommonRecords.ProjectileDataRecord(0, 0, 600, 0, 1f, 0.729f, 0, 0.225f, 0, 0, 4, 0, 0, 1f, 5f);
-
         public static final SingularSloshShotData DEFAULT = new SingularSloshShotData(0, 1, 1f, 0, 0, Optional.empty(), Optional.empty());
     }
 }

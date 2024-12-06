@@ -1,15 +1,15 @@
-package net.splatcraft.forge.data;
+package net.splatcraft.data;
 
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +45,7 @@ public final class PlaySession
         timer = gameMode.DEFAULT_TIME;
     }
 
-    public static PlaySession fromTag(MinecraftServer server, CompoundTag tag)
+    public static PlaySession fromTag(MinecraftServer server, NbtCompound tag)
     {
         int playerCount = tag.getInt("PlayerCount");
         List<ServerPlayer> players = new ArrayList<>(playerCount);
@@ -103,9 +103,9 @@ public final class PlaySession
             "gameMode=" + gameMode + ']';
     }
 
-    public CompoundTag saveTag()
+    public NbtCompound saveTag()
     {
-        CompoundTag tag = new CompoundTag();
+        NbtCompound tag = new NbtCompound();
 
         tag.putString("LevelId", level.dimensionTypeId().location().toString());
         tag.putString("StageId", stageId);

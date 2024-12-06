@@ -1,4 +1,4 @@
-package net.splatcraft.forge.loot;
+package net.splatcraft.loot;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
-import net.splatcraft.forge.items.BlueprintItem;
+import net.splatcraft.items.BlueprintItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

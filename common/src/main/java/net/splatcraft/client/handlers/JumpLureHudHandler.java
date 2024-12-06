@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.handlers;
+package net.splatcraft.client.handlers;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -13,11 +13,11 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.client.gui.SuperJumpSelectorScreen;
-import net.splatcraft.forge.items.JumpLureItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.UseJumpLurePacket;
-import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.client.gui.SuperJumpSelectorScreen;
+import net.splatcraft.items.JumpLureItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.UseJumpLurePacket;
+import net.splatcraft.registries.SplatcraftSounds;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -110,7 +110,7 @@ public class JumpLureHudHandler
         if (index == 0) return;
         UUID target = (targets.canTargetSpawn && index == 1) ? null : playerUuids.get(index - (targets.canTargetSpawn ? 2 : 1));
 
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.remoteUse, SoundSource.PLAYERS, 0.8F, 1);
+        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.remoteUse, SoundSource.PLAYERS, 0.8F, 1);
         SplatcraftPacketHandler.sendToServer(new UseJumpLurePacket(targets.color, target));
         scrollDelta = 0;
     }

@@ -1,16 +1,16 @@
-package net.splatcraft.forge.client.audio;
+package net.splatcraft.client.audio;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.items.weapons.RollerItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
-import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.items.weapons.RollerItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
+import net.splatcraft.registries.SplatcraftSounds;
 
 public class RollerRollTickableSound extends AbstractTickableSoundInstance
 {
@@ -53,13 +53,13 @@ public class RollerRollTickableSound extends AbstractTickableSoundInstance
             this.y = (float) this.player.getY();
             this.z = (float) this.player.getZ();
 
-            Vec3 motion = player.equals(Minecraft.getInstance().player) ? player.getDeltaMovement() : player.position().subtract(player.getPosition(0));
+            Vec3d motion = player.equals(Minecraft.getInstance().player) ? player.getDeltaMovement() : player.position().subtract(player.getPosition(0));
             double vol = Math.max(Math.abs(player.yHeadRotO - player.yHeadRot), motion.multiply(1, 0, 1).length()) * 3f;
 
             if (vol >= 0.01D)
             {
-                this.distance = Mth.clamp(this.distance + 0.0025F, 0.0F, 1.0F);
-                this.volume = (float) Mth.lerp(Mth.clamp(vol, 0.0F, 0.5F), 0.0F, 1F);
+                this.distance = MathHelper.clamp(this.distance + 0.0025F, 0.0F, 1.0F);
+                this.volume = (float) MathHelper.lerp(MathHelper.clamp(vol, 0.0F, 0.5F), 0.0F, 1F);
             }
             else
             {

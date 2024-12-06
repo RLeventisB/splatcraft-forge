@@ -1,9 +1,9 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -22,17 +22,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
-import net.splatcraft.forge.blocks.InkVatBlock;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.items.FilterItem;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.container.InkVatContainer;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.blocks.InkVatBlock;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.items.FilterItem;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.container.InkVatContainer;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public class InkVatTileEntity extends BaseContainerBlockEntity implements WorldlyContainer
 {
     private static final int[] INPUT_SLOTS = new int[]{0, 1, 2, 3};
@@ -179,7 +178,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(NbtCompound nbt)
     {
         nbt.putInt("Color", color);
         nbt.putInt("Pointer", pointer);
@@ -202,7 +201,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 
     //Nbt Read
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
         color = ColorUtils.getColorFromNbt(nbt);
@@ -214,9 +213,9 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag()
+    public @NotNull NbtCompound getUpdateTag()
     {
-        return new CompoundTag()
+        return new NbtCompound()
         {{
             saveAdditional(this);
         }};

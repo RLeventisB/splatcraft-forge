@@ -1,10 +1,10 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.splatcraft.forge.tileentities.InkColorTileEntity;
-import net.splatcraft.forge.util.BlockInkedResult;
-import net.splatcraft.forge.util.InkBlockUtils;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.splatcraft.tileentities.InkColorTileEntity;
+import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.InkBlockUtils;
 
 public interface IColoredBlock
 {
@@ -14,37 +14,37 @@ public interface IColoredBlock
 
     boolean canDamage();
 
-    default boolean isInverted(Level level, BlockPos pos)
+    default boolean isInverted(World world, BlockPos pos)
     {
-        return (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) && colorTileEntity.isInverted();
+        return (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) && colorTileEntity.isInverted();
     }
 
-    default void setInverted(Level level, BlockPos pos, boolean inverted)
+    default void setInverted(World world, BlockPos pos, boolean inverted)
     {
-        if (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
+        if (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
             colorTileEntity.setInverted(inverted);
     }
 
-    default int getColor(Level level, BlockPos pos)
+    default int getColor(World world, BlockPos pos)
     {
-        return (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) ? colorTileEntity.getColor() : -1;
+        return (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) ? colorTileEntity.getColor() : -1;
     }
 
-    default boolean canRemoteColorChange(Level level, BlockPos pos, int color, int newColor)
+    default boolean canRemoteColorChange(World world, BlockPos pos, int color, int newColor)
     {
         return color != newColor;
     }
 
-    boolean remoteColorChange(Level level, BlockPos pos, int newColor);
+    boolean remoteColorChange(World world, BlockPos pos, int newColor);
 
-    boolean remoteInkClear(Level level, BlockPos pos);
+    boolean remoteInkClear(World world, BlockPos pos);
 
-    default boolean setColor(Level level, BlockPos pos, int color)
+    default boolean setColor(World world, BlockPos pos, int color)
     {
         return false;
     }
 
-    default BlockInkedResult inkBlock(Level level, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
+    default BlockInkedResult inkBlock(World world, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
     {
         return BlockInkedResult.PASS;
     }

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -16,7 +16,6 @@ import org.joml.Vector4f;
 
 public class GraphicsUtils
 {
-
     public static void blit(GuiGraphics graphics, ResourceLocation pAtlasLocation, float pX, float pY, float pUOffset, float pVOffset, int pUWidth, int pVHeight)
     {
         blit(graphics, pAtlasLocation, pX, pY, 0, pUOffset, pVOffset, pUWidth, pVHeight, 256, 256);
@@ -57,17 +56,17 @@ public class GraphicsUtils
     }
 
     // omfg thank you random repo i didnt know about (sorry if this sounds rude)https://github.com/FiguraMC/Figura/blob/85a406acd607dc39d1d2c865af817a70941d1956/common/src/main/java/org/figuramc/figura/utils/MathUtils.java#L88
-    public static Vector4f worldToScreenSpace(Vec3 worldSpace, Matrix4f projMat)
+    public static Vector4f worldToScreenSpace(Vec3d worldSpace, Matrix4f projMat)
     {
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
 
-        Vec3 camPos = camera.getPosition();
-        Vec3 relativePos = worldSpace.subtract(camPos.x, camPos.y, camPos.z);
+        Vec3d camPos = camera.getPosition();
+        Vec3d relativePos = worldSpace.subtract(camPos.x, camPos.y, camPos.z);
         return relativeWorldToScreenSpace(relativePos, projMat);
     }
 
-    public static @NotNull Vector4f relativeWorldToScreenSpace(Vec3 relativePos, Matrix4f projMat)
+    public static @NotNull Vector4f relativeWorldToScreenSpace(Vec3d relativePos, Matrix4f projMat)
     {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         Matrix3f transformMatrix = new Matrix3f().rotation(camera.rotation());

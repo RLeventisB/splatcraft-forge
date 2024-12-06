@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands.arguments;
+package net.splatcraft.commands.arguments;
 
 import com.google.common.collect.Iterables;
 import com.mojang.brigadier.StringReader;
@@ -12,9 +12,9 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.registries.SplatcraftGameRules;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -49,13 +49,15 @@ public class JumpTargetArgument extends EntityArgument
             {
             }
 
-            return entityselectorparser.fillSuggestions(suggestionsBuilder, (p_91457_) -> {
+            return entityselectorparser.fillSuggestions(suggestionsBuilder, (p_91457_) ->
+            {
                 Collection<String> collection = sharedsuggestionprovider.getOnlinePlayerNames();
                 Entity source = ((CommandSourceStack) command.getSource()).getEntity();
                 List<Stage> validStages = SaveInfoCapability.get(source.getServer()).getStages().values().stream().filter(stage -> stage.getBounds().contains(source.position())).toList();
 
-                if (!SplatcraftGameRules.getLocalizedRule(source.level(), source.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
-                    collection.removeIf((str) -> {
+                if (!SplatcraftGameRules.getLocalizedRule(source.getWorld(), source.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+                    collection.removeIf((str) ->
+                    {
                         Player player = ((CommandSourceStack) command.getSource()).getServer().getPlayerList().getPlayerByName(str);
 
                         return validStages.stream().filter(stage -> stage.getBounds().contains(player.position())).toList().isEmpty();

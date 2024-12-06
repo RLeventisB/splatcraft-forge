@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands.arguments;
+package net.splatcraft.commands.arguments;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -11,9 +11,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.data.InkColorAliases;
-import net.splatcraft.forge.util.InkColor;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.util.InkColor;
 
 import java.util.Arrays;
 import java.util.Collection;

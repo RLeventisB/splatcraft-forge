@@ -1,9 +1,9 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -25,26 +25,26 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.blocks.InkedBlock;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.handlers.DataHandler;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.handlers.ShootingHandler;
-import net.splatcraft.forge.items.IColoredItem;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.settings.*;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.WeaponUseEndPacket;
-import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.ClientUtils;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.handlers.DataHandler;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.IColoredItem;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.WeaponUseEndPacket;
+import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.PlayerCooldown;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,9 +122,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage, boolean sub)
     {
         ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
-        if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
+        if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
             || player instanceof Player plr && plr.isCreative()
-            && SplatcraftGameRules.getBooleanRuleValue(player.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+            && SplatcraftGameRules.getBooleanRuleValue(player.getWorld(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
         }
@@ -146,9 +146,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     public static boolean hasInkInTank(LivingEntity livingEntity, Item item)
     {
         ItemStack tank = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
-        if (!SplatcraftGameRules.getLocalizedRule(livingEntity.level(), livingEntity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
+        if (!SplatcraftGameRules.getLocalizedRule(livingEntity.getWorld(), livingEntity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
             || livingEntity instanceof Player player && player.isCreative()
-            && SplatcraftGameRules.getBooleanRuleValue(livingEntity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+            && SplatcraftGameRules.getBooleanRuleValue(livingEntity.getWorld(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
         }
@@ -168,8 +168,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static void playNoInkSound(LivingEntity entity, SoundEvent sound)
     {
-        entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
-            ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+        entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
+            ((entity.getWorld().getRandom().nextFloat() - entity.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
     }
 
     public abstract Class<S> getSettingsClass();
@@ -223,7 +223,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             {
                 ShotDeviationHelper.tickDeviation(stack, deviationData, 1);
 
-                CompoundTag nbt = stack.getOrCreateTag();
+                NbtCompound nbt = stack.getOrCreateTag();
                 boolean oldGroundState = nbt.getBoolean("Deviation_Jumping_State");
                 nbt.putBoolean("Deviation_Jumping_State", livingEntity.onGround());
                 if (oldGroundState && !livingEntity.onGround() && livingEntity.getDeltaMovement().y > 0)
@@ -268,16 +268,16 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     {
         BlockPos pos = entity.blockPosition().below();
 
-        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }
         else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-            && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);
@@ -388,7 +388,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             this.endlagFrames = endlagFrames;
         }
 
-        public WeaponFireCooldown(CompoundTag nbt)
+        public WeaponFireCooldown(NbtCompound nbt)
         {
             super(nbt);
             startupFrames = nbt.getFloat("StartupFrames");
@@ -452,7 +452,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         }
 
         @Override
-        public CompoundTag writeNBT(CompoundTag nbt)
+        public NbtCompound writeNBT(NbtCompound nbt)
         {
             nbt.putFloat("StartupFrames", startupFrames);
             nbt.putFloat("EndlagFrames", endlagFrames);

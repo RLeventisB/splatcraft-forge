@@ -1,4 +1,4 @@
-package net.splatcraft.forge.registries;
+package net.splatcraft.registries;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
@@ -7,12 +7,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.InkColor;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 
 import java.util.function.Supplier;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
+import static net.splatcraft.Splatcraft.MODID;
 
 @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftInkColors

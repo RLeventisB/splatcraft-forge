@@ -1,8 +1,8 @@
-package net.splatcraft.forge.data.capabilities.worldink;
+package net.splatcraft.data.capabilities.worldink;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -15,7 +15,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChunkInkCapability implements ICapabilityProvider, INBTSerializable<CompoundTag>
+public class ChunkInkCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
 {
     public static Capability<ChunkInk> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
     {
@@ -57,13 +57,13 @@ public class ChunkInkCapability implements ICapabilityProvider, INBTSerializable
     }
 
     @Override
-    public CompoundTag serializeNBT()
+    public NbtCompound serializeNBT()
     {
-        return opt.orElse(null).writeNBT(new CompoundTag());
+        return opt.orElse(null).writeNBT(new NbtCompound());
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt)
+    public void deserializeNBT(NbtCompound nbt)
     {
         opt.orElse(null).readNBT(nbt);
     }

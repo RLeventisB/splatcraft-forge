@@ -1,13 +1,13 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.PlayerSetSquidS2CPacket;
-import net.splatcraft.forge.registries.SplatcraftSounds;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.registries.SplatcraftSounds;
 
 public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 {
@@ -43,7 +43,7 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
         target.setIsSquid(squid);
         if (isCancel)
             target.flagSquidCancel();
-        player.level().playSound(null, player.getX(), player.getY(), player.getZ(), squid ? SplatcraftSounds.squidTransform : SplatcraftSounds.squidRevert, SoundSource.PLAYERS, 0.75F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), squid ? SplatcraftSounds.squidTransform : SplatcraftSounds.squidRevert, SoundSource.PLAYERS, 0.75F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
 
         SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), squid, isCancel), player);
     }

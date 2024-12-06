@@ -1,4 +1,4 @@
-package net.splatcraft.forge.client.renderer;
+package net.splatcraft.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -9,11 +9,11 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.client.layer.SquidBumperColorLayer;
-import net.splatcraft.forge.client.models.SquidBumperModel;
-import net.splatcraft.forge.entities.SquidBumperEntity;
+import net.minecraft.util.MathHelper;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.layer.SquidBumperColorLayer;
+import net.splatcraft.client.models.SquidBumperModel;
+import net.splatcraft.entities.SquidBumperEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity, SquidBumperModel> implements RenderLayerParent<SquidBumperEntity, SquidBumperModel>
@@ -51,16 +51,16 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
     protected void setupRotations(SquidBumperEntity entityLiving, @NotNull PoseStack PoseStackIn, float ageInTicks, float rotationYaw, float partialTicks)
     {
         //PoseStackIn.rotate(Vector3f.YP.rotationDegrees(180.0F - rotationYaw));
-        float punchTime = (float) (entityLiving.level().getGameTime() - entityLiving.punchCooldown) + partialTicks;
-        float hurtTime = (float) (entityLiving.level().getGameTime() - entityLiving.hurtCooldown) + partialTicks;
+        float punchTime = (float) (entityLiving.getWorld().getGameTime() - entityLiving.punchCooldown) + partialTicks;
+        float hurtTime = (float) (entityLiving.getWorld().getGameTime() - entityLiving.hurtCooldown) + partialTicks;
 
         if (punchTime < 5.0F)
         {
-            PoseStackIn.mulPose(Axis.YP.rotationDegrees(Mth.sin(punchTime / 1.5F * (float) Math.PI) * 3.0F));
+            PoseStackIn.mulPose(Axis.YP.rotationDegrees(MathHelper.sin(punchTime / 1.5F * (float) Math.PI) * 3.0F));
         }
         if (hurtTime < 5.0F)
         {
-            PoseStackIn.mulPose(Axis.ZP.rotationDegrees(Mth.sin(hurtTime / 1.5F * (float) Math.PI) * 3.0F));
+            PoseStackIn.mulPose(Axis.ZP.rotationDegrees(MathHelper.sin(hurtTime / 1.5F * (float) Math.PI) * 3.0F));
         }
     }
 

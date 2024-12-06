@@ -1,8 +1,8 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
@@ -20,9 +20,9 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.items.weapons.*;
-import net.splatcraft.forge.registries.SplatcraftItems;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.items.weapons.*;
+import net.splatcraft.registries.SplatcraftItems;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +76,7 @@ public class BlueprintItem extends Item
         if (!weaponPools.containsKey(weaponType))
             return blueprint;
 
-        CompoundTag nbt = blueprint.getOrCreateTag();
+        NbtCompound nbt = blueprint.getOrCreateTag();
         ListTag pool = nbt.contains("Pools", Tag.TAG_LIST) ? nbt.getList("Pools", Tag.TAG_STRING) : new ListTag();
         pool.add(StringTag.valueOf(weaponType));
 
@@ -87,7 +87,7 @@ public class BlueprintItem extends Item
 
     public static ItemStack addToAdvancementPool(ItemStack blueprint, Stream<String> advancementIds)
     {
-        CompoundTag nbt = blueprint.getOrCreateTag();
+        NbtCompound nbt = blueprint.getOrCreateTag();
         ListTag pool = nbt.contains("Advancements", Tag.TAG_LIST) ? nbt.getList("Advancements", Tag.TAG_STRING) : new ListTag();
 
         advancementIds.map(StringTag::valueOf).forEach(pool::add);
@@ -134,7 +134,7 @@ public class BlueprintItem extends Item
 
         if (stack.hasTag())
         {
-            CompoundTag nbt = stack.getTag();
+            NbtCompound nbt = stack.getTag();
 
             if (nbt.getBoolean("HideTooltip"))
                 return;

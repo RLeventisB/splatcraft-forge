@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;

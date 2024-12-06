@@ -1,8 +1,8 @@
-package net.splatcraft.forge.worldgen.features;
+package net.splatcraft.worldgen.features;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftBlocks;
 
 public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 {
@@ -33,7 +33,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         RandomSource random = context.random();
         BlockPos centerPos = context.origin();
 
-        WorldGenLevel worldgenlevel = context.level();
+        WorldGenLevel worldgenlevel = context.getWorld();
         centerPos = new BlockPos(centerPos.getX(), worldgenlevel.getHeight(Heightmap.Types.OCEAN_FLOOR, centerPos.getX(), centerPos.getZ()), centerPos.getZ());
         boolean flag = random.nextDouble() > 0.7D;
         double d0 = random.nextDouble() * 2.0D * Math.PI;
@@ -74,11 +74,11 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
             {
                 for (int k3 = -1; k3 > -i1; --k3)
                 {
-                    int l3 = flag1 ? Mth.ceil((float) k1 * (1.0F - (float) Math.pow(k3, 2.0D) / ((float) i1 * 8.0F))) : k1;
+                    int l3 = flag1 ? MathHelper.ceil((float) k1 * (1.0F - (float) Math.pow(k3, 2.0D) / ((float) i1 * 8.0F))) : k1;
                     int l2 = this.heightDependentRadiusSteep(random, -k3, i1, j1);
                     if (i3 < l2)
                     {
-                        this.generateIcebergBlock(context.level(), random, centerPos, i1, i3, k3, j3, l2, l3, flag1, j, d0,
+                        this.generateIcebergBlock(context.getWorld(), random, centerPos, i1, i3, k3, j3, l2, l3, flag1, j, d0,
                             random.nextFloat() < 0.05f ? SplatcraftBlocks.rawSardiniumBlock.get().defaultBlockState() : random.nextFloat() < 0.3f ? SplatcraftBlocks.sardiniumOre.get().defaultBlockState() : SplatcraftBlocks.coralite.get().defaultBlockState());
                     }
                 }
@@ -130,7 +130,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 
     private double signedDistanceCircle(int p_66030_, int p_66031_, BlockPos p_66032_, int p_66033_, RandomSource p_66034_)
     {
-        float f = 10.0F * Mth.clamp(p_66034_.nextFloat(), 0.2F, 0.8F) / (float) p_66033_;
+        float f = 10.0F * MathHelper.clamp(p_66034_.nextFloat(), 0.2F, 0.8F) / (float) p_66033_;
         return (double) f + Math.pow(p_66030_ - p_66032_.getX(), 2.0D) + Math.pow(p_66031_ - p_66032_.getZ(), 2.0D) - Math.pow(p_66033_, 2.0D);
     }
 
@@ -143,7 +143,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
     {
         float f = 1.0F + p_66114_.nextFloat() / 2.0F;
         float f1 = (1.0F - (float) p_66115_ / ((float) p_66116_ * f)) * (float) p_66117_;
-        return Mth.ceil(f1 / 2.0F);
+        return MathHelper.ceil(f1 / 2.0F);
     }
 
     private int heightDependentRadiusRound(RandomSource p_66095_, int p_66096_, int p_66097_, int p_66098_)
@@ -156,14 +156,14 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
             f1 = (1.0F - (float) i / ((float) p_66097_ * f * 0.4F)) * (float) p_66098_;
         }
 
-        return Mth.ceil(f1 / 2.0F);
+        return MathHelper.ceil(f1 / 2.0F);
     }
 
     private int heightDependentRadiusEllipse(int p_66110_, int p_66111_, int p_66112_)
     {
         float f = 1.0F;
         float f1 = (1.0F - (float) Math.pow(p_66110_, 2.0D) / ((float) p_66111_)) * (float) p_66112_;
-        return Mth.ceil(f1 / 2.0F);
+        return MathHelper.ceil(f1 / 2.0F);
     }
 
     private void smooth(LevelAccessor p_66052_, BlockPos p_66053_, int p_66054_, int p_66055_, boolean p_66056_, int p_66057_)

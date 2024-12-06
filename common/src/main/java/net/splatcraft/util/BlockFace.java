@@ -1,4 +1,4 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

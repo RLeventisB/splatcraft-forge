@@ -1,7 +1,7 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
@@ -16,15 +16,15 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.client.models.inktanks.AbstractInkTankModel;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.RollerItem;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.RollerItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-@SuppressWarnings("deprecation")
 public class InkTankItem extends ColoredArmorItem
 {
     public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
@@ -89,7 +88,7 @@ public class InkTankItem extends ColoredArmorItem
 
     public static float rechargeMult(ItemStack stack, boolean updateCooldown)
     {
-        CompoundTag tag = stack.getOrCreateTag();
+        NbtCompound tag = stack.getOrCreateTag();
         if (!tag.contains("RecoveryCooldown"))
         {
             tag.putFloat("RecoveryCooldown", 0);
@@ -111,7 +110,7 @@ public class InkTankItem extends ColoredArmorItem
 
     public static void setRecoveryCooldown(ItemStack stack, float recoveryCooldown)
     {
-        CompoundTag tag = stack.getOrCreateTag();
+        NbtCompound tag = stack.getOrCreateTag();
         tag.putFloat("RecoveryCooldown", Math.max(tag.getFloat("RecoveryCooldown"), recoveryCooldown));
     }
 

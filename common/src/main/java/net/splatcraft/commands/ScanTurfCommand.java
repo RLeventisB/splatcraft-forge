@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands;
+package net.splatcraft.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -11,11 +11,11 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.items.remotes.RemoteItem;
-import net.splatcraft.forge.items.remotes.TurfScannerItem;
-import net.splatcraft.forge.registries.SplatcraftStats;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.items.remotes.RemoteItem;
+import net.splatcraft.items.remotes.TurfScannerItem;
+import net.splatcraft.registries.SplatcraftStats;
 
 import java.util.Collection;
 import java.util.Collections;

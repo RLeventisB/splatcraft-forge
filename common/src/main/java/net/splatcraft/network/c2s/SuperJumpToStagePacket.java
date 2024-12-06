@@ -1,13 +1,9 @@
-package net.splatcraft.forge.network.c2s;
+package net.splatcraft.network.c2s;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.items.JumpLureItem;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
+import net.splatcraft.data.Stage;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
@@ -32,6 +28,6 @@ public class SuperJumpToStagePacket extends PlayC2SPacket
     @Override
     public void execute(Player player)
     {
-        Stage.getStage(player.level(), stageId).superJumpToStage((ServerPlayer) player);
+        Stage.getStage(player.getWorld(), stageId).superJumpToStage((ServerPlayer) player);
     }
 }

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.crafting;
+package net.splatcraft.crafting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;

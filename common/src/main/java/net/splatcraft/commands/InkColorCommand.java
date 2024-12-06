@@ -1,4 +1,4 @@
-package net.splatcraft.forge.commands;
+package net.splatcraft.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -11,10 +11,10 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.saveinfo.SaveInfoCapability;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.commands.arguments.InkColorArgument;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.util.ColorUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,7 +40,8 @@ public class InkColorCommand
     {
         ColorUtils.setPlayerColor(source.getPlayerOrException(), color);
 
-        source.sendSuccess(() -> {
+        source.sendSuccess(() ->
+        {
             try
             {
                 return Component.translatable("commands.inkcolor.success.single", source.getPlayerOrException().getDisplayName(), getColorName(color));

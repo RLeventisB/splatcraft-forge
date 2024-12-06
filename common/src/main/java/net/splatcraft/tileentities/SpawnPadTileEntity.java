@@ -1,18 +1,18 @@
-package net.splatcraft.forge.tileentities;
-
-import java.util.UUID;
+package net.splatcraft.tileentities;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.entities.SpawnShieldEntity;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.Stage;
+import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.registries.SplatcraftTileEntities;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 public class SpawnPadTileEntity extends InkColorTileEntity
 {
@@ -35,7 +35,7 @@ public class SpawnPadTileEntity extends InkColorTileEntity
         if (level.isClientSide() || spawnShieldUuid == null)
             return null;
 
-        Entity res = ((ServerLevel) level).getEntity(spawnShieldUuid);
+        Entity res = ((ServerWorld) level).getEntity(spawnShieldUuid);
         return (res instanceof SpawnShieldEntity) ? (SpawnShieldEntity) res : null;
     }
 
@@ -49,17 +49,17 @@ public class SpawnPadTileEntity extends InkColorTileEntity
     public void addToStages()
     {
         if (!level.isClientSide())
-            for (Stage stage : Stage.getStagesForPosition(level, new Vec3(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ())))
+            for (Stage stage : Stage.getStagesForPosition(level, new Vec3d(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ())))
                 stage.addSpawnPad(this);
     }
 
-    public Vec3 getSuperJumpPos()
+    public Vec3d getSuperJumpPos()
     {
-        return new Vec3(getBlockPos().getX(), getBlockPos().getY() + SuperJumpCommand.blockHeight(getBlockPos(), level), getBlockPos().getZ() + 0.5);
+        return new Vec3d(getBlockPos().getX(), getBlockPos().getY() + SuperJumpCommand.blockHeight(getBlockPos(), level), getBlockPos().getZ() + 0.5);
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(NbtCompound nbt)
     {
         if (spawnShieldUuid != null)
             nbt.putUUID("SpawnShield", spawnShieldUuid);
@@ -67,7 +67,7 @@ public class SpawnPadTileEntity extends InkColorTileEntity
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
 

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.entities;
+package net.splatcraft.entities;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
@@ -8,8 +8,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
-import net.splatcraft.forge.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.forge.util.DamageRangesRecord;
+import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -17,7 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
-import static net.splatcraft.forge.Splatcraft.MODID;
+import static net.splatcraft.Splatcraft.MODID;
 
 @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public abstract class ExtraSaveData

@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -13,9 +13,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
-import net.splatcraft.forge.tileentities.ColoredBarrierTileEntity;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.registries.SplatcraftTileEntities;
+import net.splatcraft.tileentities.ColoredBarrierTileEntity;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +89,7 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
 
     public boolean canAllowThrough(BlockPos pos, Entity entity)
     {
-        return blocksColor != ColorUtils.colorEquals(entity, entity.level().getBlockEntity(pos));
+        return blocksColor != ColorUtils.colorEquals(entity, entity.getWorld().getBlockEntity(pos));
     }
 
     @Override

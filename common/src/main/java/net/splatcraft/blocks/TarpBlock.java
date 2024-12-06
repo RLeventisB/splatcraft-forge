@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.Util;
@@ -25,7 +25,7 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.splatcraft.forge.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftBlocks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("deprecation")
 public class TarpBlock extends Block implements SimpleWaterloggedBlock
 {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
@@ -143,7 +142,6 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
         return stateToShapeMap.get(state);
     }
 
-    @SuppressWarnings("deprecation")
     public static class Seethrough extends TarpBlock
     {
         public Seethrough()

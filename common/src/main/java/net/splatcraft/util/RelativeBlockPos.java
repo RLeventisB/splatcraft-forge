@@ -1,9 +1,9 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
 
@@ -37,7 +37,7 @@ public class RelativeBlockPos extends Vec3i
      * @param tag The compound tag to read from
      * @apiNote The tag must contain ints "X", "Y" and "Z" for construction to be successful.
      */
-    public static RelativeBlockPos readNBT(CompoundTag tag)
+    public static RelativeBlockPos readNBT(NbtCompound tag)
     {
         return new RelativeBlockPos(
             tag.getByte("X"),
@@ -78,7 +78,7 @@ public class RelativeBlockPos extends Vec3i
      * @param tag The tag to write to
      * @return The modified tag
      */
-    public CompoundTag writeNBT(CompoundTag tag)
+    public NbtCompound writeNBT(NbtCompound tag)
     {
         tag.putByte("X", (byte) getX());
         tag.putInt("Y", getY());

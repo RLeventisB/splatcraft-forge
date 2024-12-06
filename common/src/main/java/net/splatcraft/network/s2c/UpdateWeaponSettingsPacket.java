@@ -1,10 +1,10 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.forge.data.SplatcraftConvertors;
-import net.splatcraft.forge.handlers.DataHandler;
-import net.splatcraft.forge.items.weapons.settings.AbstractWeaponSettings;
+import net.splatcraft.data.SplatcraftConvertors;
+import net.splatcraft.handlers.DataHandler;
+import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;

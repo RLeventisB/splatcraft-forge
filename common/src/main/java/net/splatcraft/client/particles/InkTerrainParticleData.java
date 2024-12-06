@@ -1,48 +1,34 @@
-package net.splatcraft.forge.client.particles;
+package net.splatcraft.client.particles;
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleType;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.forge.SplatcraftConfig;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
-import net.splatcraft.forge.registries.SplatcraftParticleTypes;
-import net.splatcraft.forge.util.ColorUtils;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.particle.ParticleEffect;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.registry.Registries;
+import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.registries.SplatcraftParticleTypes;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-@SuppressWarnings("deprecation")
-public class InkTerrainParticleData implements ParticleOptions
+public class InkTerrainParticleData implements ParticleEffect
 {
-    public static final Deserializer<InkTerrainParticleData> DESERIALIZER = new Deserializer<>()
-    {
-        @Override
-        public @NotNull InkTerrainParticleData fromCommand(@NotNull ParticleType<InkTerrainParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
-        {
-            reader.expect(' ');
-            return new InkTerrainParticleData(InkColorArgument.parseStatic(reader));
-        }
-
-        @Override
-        public @NotNull InkTerrainParticleData fromNetwork(@NotNull ParticleType<InkTerrainParticleData> particleTypeIn, FriendlyByteBuf buffer)
-        {
-            return new InkTerrainParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
-        }
-    };
-    public static final Codec<InkTerrainParticleData> CODEC = RecordCodecBuilder.create(
-        p_239803_0_ -> p_239803_0_.group(
-            Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
-            Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
-            Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue)
-        ).apply(p_239803_0_, InkTerrainParticleData::new)
-    );
+    public static final MapCodec<InkTerrainParticleData> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+        instance.group(
+            Codec.FLOAT.fieldOf("r").forGetter(InkTerrainParticleData::getRed),
+            Codec.FLOAT.fieldOf("g").forGetter(InkTerrainParticleData::getGreen),
+            Codec.FLOAT.fieldOf("b").forGetter(InkTerrainParticleData::getBlue)
+        ).apply(instance, InkTerrainParticleData::new));
+    public static final PacketCodec<RegistryByteBuf, InkTerrainParticleData> PACKET_CODEC = PacketCodec.tuple(
+        PacketCodecs.FLOAT, InkTerrainParticleData::getRed,
+        PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
+        PacketCodecs.FLOAT, InkTerrainParticleData::getGreen,
+        InkTerrainParticleData::new);
     protected final float red;
     protected final float green;
     protected final float blue;
@@ -75,36 +61,25 @@ public class InkTerrainParticleData implements ParticleOptions
     @Override
     public @NotNull ParticleType<?> getType()
     {
-        return SplatcraftParticleTypes.INK_TERRAIN.get();
+        return SplatcraftParticleTypes.INK_TERRAIN;
     }
 
     @Override
-    public void writeToNetwork(FriendlyByteBuf buffer)
+    public @NotNull String toString()
     {
-        buffer.writeFloat(red);
-        buffer.writeFloat(green);
-        buffer.writeFloat(blue);
+        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), this.red, this.green, this.blue);
     }
 
-    @Override
-    public @NotNull String writeToString()
-    {
-        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", ForgeRegistries.PARTICLE_TYPES.getKey(this.getType()), this.red, this.green, this.blue);
-    }
-
-    @OnlyIn(Dist.CLIENT)
     public float getRed()
     {
         return this.red;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getGreen()
     {
         return this.green;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public float getBlue()
     {
         return this.blue;

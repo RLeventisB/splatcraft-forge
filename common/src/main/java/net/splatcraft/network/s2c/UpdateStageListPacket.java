@@ -1,29 +1,29 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.client.gui.stagepad.AbstractStagePadScreen;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.util.ClientUtils;
+import net.splatcraft.client.gui.stagepad.AbstractStagePadScreen;
+import net.splatcraft.data.Stage;
+import net.splatcraft.util.ClientUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class UpdateStageListPacket extends PlayS2CPacket
 {
-    CompoundTag nbt;
+    NbtCompound nbt;
 
-    public UpdateStageListPacket(CompoundTag nbt)
+    public UpdateStageListPacket(NbtCompound nbt)
     {
         this.nbt = nbt;
     }
 
     public UpdateStageListPacket(HashMap<String, Stage> stages)
     {
-        CompoundTag stageNbt = new CompoundTag();
+        NbtCompound stageNbt = new NbtCompound();
 
         for (Map.Entry<String, Stage> e : stages.entrySet())
             stageNbt.put(e.getKey(), e.getValue().writeData());

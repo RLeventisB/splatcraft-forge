@@ -1,4 +1,4 @@
-package net.splatcraft.forge.network.s2c;
+package net.splatcraft.network.s2c;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.client.gui.stagepad.StageSelectionScreen;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.Stage;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.Stage;
 
 public class SendStageWarpDataToPadPacket extends PlayS2CPacket
 {
@@ -41,7 +41,7 @@ public class SendStageWarpDataToPadPacket extends PlayS2CPacket
             ArrayList<BlockPos> validPads = new ArrayList<>(stage.getSpawnPadPositions());
 
             validPads.removeIf(pos ->
-                !(SuperJumpCommand.canSuperJumpTo(player, new Vec3(pos.getX() + 0.5, pos.getY(), pos.getZ()))));
+                !(SuperJumpCommand.canSuperJumpTo(player, new Vec3d(pos.getX() + 0.5, pos.getY(), pos.getZ()))));
 
             if (validPads.isEmpty())
                 outOfRange.add(stage);

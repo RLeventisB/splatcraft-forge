@@ -1,11 +1,11 @@
-package net.splatcraft.forge.util;
+package net.splatcraft.util;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.splatcraft.forge.Splatcraft;
+import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.NotNull;
 
 public class SplatcraftArmorMaterial implements ArmorMaterial

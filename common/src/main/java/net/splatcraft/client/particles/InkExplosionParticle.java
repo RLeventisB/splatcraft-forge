@@ -1,75 +1,74 @@
-package net.splatcraft.forge.client.particles;
+package net.splatcraft.client.particles;
 
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.*;
-import net.minecraft.core.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
-public class InkExplosionParticle extends TextureSheetParticle
+public class InkExplosionParticle extends SpriteBillboardParticle
 {
-    private final SpriteSet spriteProvider;
+    private final SpriteProvider spriteProvider;
 
-    public InkExplosionParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ, InkExplosionParticleData data, SpriteSet sprite)
+    public InkExplosionParticle(ClientWorld level, double x, double y, double z, double motionX, double motionY, double motionZ, InkExplosionParticleData data, SpriteProvider provider)
     {
         super(level, x, y, z, motionX, motionY, motionZ);
 
-        this.xd = motionX;
-        this.yd = motionY;
-        this.zd = motionZ;
+        this.velocityX = motionX;
+        this.velocityY = motionY;
+        this.velocityZ = motionZ;
 
-        rCol = Math.max(0.018f, data.getRed() - 0.018f);
-        gCol = Math.max(0.018f, data.getGreen() - 0.018f);
-        bCol = Math.max(0.018f, data.getBlue() - 0.018f);
+        this.setColor(Math.max(0.018f, data.getRed() - 0.018f),
+            Math.max(0.018f, data.getGreen() - 0.018f),
+            Math.max(0.018f, data.getBlue() - 0.018f));
 
-        this.quadSize = 0.33F * (this.random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
-        this.gravity = 0;
-        this.lifetime = 6 + this.random.nextInt(4);
+        this.scale = 0.33F * (this.random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
+        this.gravityStrength = 0;
+        this.maxAge = 6 + this.random.nextInt(4);
 
-        spriteProvider = sprite;
-        this.setSpriteFromAge(sprite);
+        spriteProvider = provider;
+        this.setSpriteForAge(provider);
     }
 
     @Override
     public void tick()
     {
-        this.xo = this.x;
-        this.yo = this.y;
-        this.zo = this.z;
-        if (this.age++ >= this.lifetime || this.level.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).liquid())
+        this.prevPosX = this.x;
+        this.prevPosY = this.y;
+        this.prevPosZ = this.z;
+        if (this.age++ >= this.maxAge || world.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).isLiquid())
         {
-            this.remove();
+            this.markDead();
         }
         else
         {
-            this.setSpriteFromAge(this.spriteProvider);
+            this.setSpriteForAge(this.spriteProvider);
         }
     }
 
     @Override
-    public @NotNull ParticleRenderType getRenderType()
+    public ParticleTextureSheet getType()
     {
-        return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+        return ParticleTextureSheet.PARTICLE_SHEET_OPAQUE;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public static class Factory implements ParticleProvider<InkExplosionParticleData>
+    @Environment(EnvType.CLIENT)
+    public static class Factory implements ParticleFactory<InkExplosionParticleData>
     {
-        private final SpriteSet spriteSet;
+        private final SpriteProvider provider;
 
-        public Factory(SpriteSet sprite)
+        public Factory(SpriteProvider sprite)
         {
-            this.spriteSet = sprite;
+            this.provider = sprite;
         }
 
         @Nullable
         @Override
-        public Particle createParticle(@NotNull InkExplosionParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+        public Particle createParticle(@NotNull InkExplosionParticleData typeIn, @NotNull ClientWorld levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
-            return new InkExplosionParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.spriteSet);
+            return new InkExplosionParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.provider);
         }
     }
 }

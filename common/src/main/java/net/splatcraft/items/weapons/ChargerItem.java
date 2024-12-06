@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -13,19 +13,19 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.client.audio.ChargerChargingTickableSound;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.entities.ExtraSaveData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.items.InkTankItem;
-import net.splatcraft.forge.items.weapons.settings.ChargerWeaponSettings;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.c2s.ReleaseChargePacket;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.InkBlockUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.client.audio.ChargerChargingTickableSound;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.ReleaseChargePacket;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.PlayerCooldown;
 import org.jetbrains.annotations.NotNull;
 
 public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implements IChargeableWeapon

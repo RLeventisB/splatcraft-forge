@@ -1,9 +1,9 @@
-package net.splatcraft.forge.tileentities;
+package net.splatcraft.tileentities;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -13,10 +13,10 @@ import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
-import net.splatcraft.forge.data.SplatcraftTags;
-import net.splatcraft.forge.items.remotes.RemoteItem;
-import net.splatcraft.forge.registries.SplatcraftTileEntities;
+import net.minecraft.world.phys.Vec3d;
+import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.items.remotes.RemoteItem;
+import net.splatcraft.registries.SplatcraftTileEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,15 +39,15 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
             return;
         }
 
-        RemoteItem.RemoteResult result = ((RemoteItem) remote.getItem()).onRemoteUse(level, remote, getColor(), Vec3.atCenterOf(worldPosition), null);
+        RemoteItem.RemoteResult result = ((RemoteItem) remote.getItem()).onRemoteUse(level, remote, getColor(), Vec3d.atCenterOf(worldPosition), null);
         signal = result.getComparatorResult();
         remoteResult = result.getCommandResult();
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag()
+    public @NotNull NbtCompound getUpdateTag()
     {
-        return new CompoundTag()
+        return new NbtCompound()
         {{
             saveAdditional(this);
         }};
@@ -142,7 +142,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt)
+    public void load(@NotNull NbtCompound nbt)
     {
         super.load(nbt);
 
@@ -156,12 +156,12 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
     }
 
     @Override
-    public void saveAdditional(CompoundTag nbt)
+    public void saveAdditional(NbtCompound nbt)
     {
         nbt.putInt("Signal", signal);
 
         if (!remote.isEmpty())
-            nbt.put("Remote", remote.save(new CompoundTag()));
+            nbt.put("Remote", remote.save(new NbtCompound()));
         if (remoteResult != 0)
             nbt.putInt("RemoteResult", remoteResult);
 

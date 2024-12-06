@@ -1,23 +1,23 @@
-package net.splatcraft.forge.handlers;
+package net.splatcraft.handlers;
 
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerWorld;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.forge.Splatcraft;
-import net.splatcraft.forge.VectorUtils;
-import net.splatcraft.forge.client.particles.SquidSoulParticleData;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.WeaponBaseItem;
-import net.splatcraft.forge.util.ColorUtils;
-import net.splatcraft.forge.util.CommonUtils;
-import net.splatcraft.forge.util.PlayerCharge;
-import net.splatcraft.forge.util.PlayerCooldown;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.VectorUtils;
+import net.splatcraft.client.particles.SquidSoulParticleData;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.PlayerCooldown;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class WeaponHandler
         if (event.getEntity() instanceof Player target && !event.getEntity().isSpectator())
         {
             int color = ColorUtils.getPlayerColor(target);
-            ((ServerLevel) target.level()).sendParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);
+            ((ServerWorld) target.level()).sendParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);
 
             if (ScoreboardHandler.hasColorCriterion(color))
             {
@@ -79,7 +79,7 @@ public class WeaponHandler
                 ItemStack stack = cooldown.storedStack;
 
                 if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-                    weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
+                    weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, cooldown);
                 PlayerCooldown.setPlayerCooldown(player, null);
             }
             else
@@ -95,14 +95,14 @@ public class WeaponHandler
                 if (cooldown.getTime() <= 1)
                 {
                     if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-                        weapon.onPlayerCooldownEnd(player.level(), player, stack, cooldown);
+                        weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, cooldown);
                     cooldown.onEnd(player);
                     PlayerCooldown.setPlayerCooldown(player, null);
                     hasCooldown = false;
                 }
                 else if (cooldown.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
                 {
-                    weapon.onPlayerCooldownTick(player.level(), player, stack, cooldown);
+                    weapon.onPlayerCooldownTick(player.getWorld(), player, stack, cooldown);
                 }
                 cooldown.setTime(cooldown.getTime() - 1);
             }
@@ -112,7 +112,7 @@ public class WeaponHandler
             ItemStack stack = player.getItemInHand(player.getUsedItemHand());
             if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
             {
-                weapon.weaponUseTick(player.level(), player, stack, player.getUseItemRemainingTicks());
+                weapon.weaponUseTick(player.getWorld(), player, stack, player.getUseItemRemainingTicks());
                 player.setSprinting(false);
             }
         }
@@ -120,7 +120,7 @@ public class WeaponHandler
         {
             PlayerCharge.dischargeWeapon(player);
         }
-        Vec3 oldOldPos = player.position();
+        Vec3d oldOldPos = player.position();
         if (prevPosMap.containsKey(player))
         {
             oldOldPos = prevPosMap.get(player).oldPosition;
@@ -136,15 +136,15 @@ public class WeaponHandler
 
     public static class OldPosData
     {
-        public Vec3 oldPosition, oldOldPosition;
+        public Vec3d oldPosition, oldOldPosition;
 
-        public OldPosData(Vec3 oldPosition, Vec3 oldOldPosition)
+        public OldPosData(Vec3d oldPosition, Vec3d oldOldPosition)
         {
             this.oldPosition = oldPosition;
             this.oldOldPosition = oldOldPosition;
         }
 
-        public Vec3 getPosition(double partialTick)
+        public Vec3d getPosition(double partialTick)
         {
             return VectorUtils.lerp(partialTick, oldOldPosition, oldPosition);
         }

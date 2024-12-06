@@ -1,4 +1,4 @@
-package net.splatcraft.forge.blocks;
+package net.splatcraft.blocks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
-@SuppressWarnings("deprecation")
 public class DebrisBlock extends Block
 {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;

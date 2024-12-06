@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items.weapons;
+package net.splatcraft.items.weapons;
 
 import com.google.common.collect.Lists;
 import net.minecraft.client.Minecraft;
@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,23 +17,23 @@ import net.minecraft.world.item.ItemCooldowns;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.forge.blocks.ColoredBarrierBlock;
-import net.splatcraft.forge.client.audio.RollerRollTickableSound;
-import net.splatcraft.forge.client.particles.InkSplashParticleData;
-import net.splatcraft.forge.entities.InkProjectileEntity;
-import net.splatcraft.forge.entities.SquidBumperEntity;
-import net.splatcraft.forge.handlers.PlayerPosingHandler;
-import net.splatcraft.forge.items.weapons.settings.RollerWeaponSettings;
-import net.splatcraft.forge.mixin.accessors.EntityAccessor;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.registries.SplatcraftSounds;
-import net.splatcraft.forge.util.*;
+import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.client.audio.RollerRollTickableSound;
+import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
+import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.*;
 
 import java.util.ArrayList;
 
@@ -60,7 +60,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 
     public static void applyRecoilKnockback(LivingEntity entity, double pow)
     {
-        entity.setDeltaMovement(new Vec3(Math.cos(Math.toRadians(entity.getYRot() + 90)) * -pow, entity.getDeltaMovement().y(), Math.sin(Math.toRadians(entity.getYRot() + 90)) * -pow));
+        entity.setDeltaMovement(new Vec3d(Math.cos(Math.toRadians(entity.getYRot() + 90)) * -pow, entity.getDeltaMovement().y(), Math.sin(Math.toRadians(entity.getYRot() + 90)) * -pow));
         entity.hurtMarked = true;
     }
 
@@ -132,7 +132,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
             return;
         }
 
-        float toConsume = Mth.lerp(Math.min(1, rollTime / settings.rollData.dashTime()), settings.rollData.inkConsumption(), settings.rollData.dashConsumption());
+        float toConsume = MathHelper.lerp(Math.min(1, rollTime / settings.rollData.dashTime()), settings.rollData.inkConsumption(), settings.rollData.dashConsumption());
         isMoving = Math.abs(entity.yHeadRotO - entity.yHeadRot) > 0 || (player.walkDist != player.walkDistO);
 
         double dxOff = 0;
@@ -289,12 +289,12 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
                     float progress = (float) i / (count - 1f);
                     proj.shootFromRotation(
                         player,
-                        player.getXRot() - Mth.lerp(progress, settings.flingData.startPitchCompensation(), settings.flingData.endPitchCompensation()),
+                        player.getXRot() - MathHelper.lerp(progress, settings.flingData.startPitchCompensation(), settings.flingData.endPitchCompensation()),
                         player.getYRot(), 0,
-                        Mth.lerp(progress, attackData.minSpeed(), attackData.maxSpeed()),
+                        MathHelper.lerp(progress, attackData.minSpeed(), attackData.maxSpeed()),
                         0.05f);
 
-                    proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
+                    proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3d(0, 1, 0), 1.4f, proj.getYRot())));
                     proj.setRollerSwingStats(settings);
                     proj.setAttackId(attackId);
                     level.addFreshEntity(proj);

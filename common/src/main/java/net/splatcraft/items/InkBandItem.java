@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;

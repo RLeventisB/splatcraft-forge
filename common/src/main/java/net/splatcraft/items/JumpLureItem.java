@@ -1,4 +1,4 @@
-package net.splatcraft.forge.items;
+package net.splatcraft.items;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -18,21 +18,21 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.splatcraft.forge.blocks.InkedBlock;
-import net.splatcraft.forge.blocks.InkwellBlock;
-import net.splatcraft.forge.client.handlers.JumpLureHudHandler;
-import net.splatcraft.forge.commands.SuperJumpCommand;
-import net.splatcraft.forge.data.Stage;
-import net.splatcraft.forge.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.forge.items.weapons.SubWeaponItem;
-import net.splatcraft.forge.network.SplatcraftPacketHandler;
-import net.splatcraft.forge.network.s2c.SendJumpLureDataPacket;
-import net.splatcraft.forge.registries.SplatcraftGameRules;
-import net.splatcraft.forge.registries.SplatcraftItems;
-import net.splatcraft.forge.util.ColorUtils;
+import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.client.handlers.JumpLureHudHandler;
+import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendJumpLureDataPacket;
+import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,14 +50,14 @@ public class JumpLureItem extends Item implements IColoredItem
 
     public static void activate(ServerPlayer player, UUID targetUUID, int color)
     {
-        Vec3 target;
+        Vec3d target;
         if (targetUUID == null)
         {
             BlockPos spawnPos = SuperJumpCommand.getSpawnPadPos(player);
             if (spawnPos != null)
             {
-                target = new Vec3(spawnPos.getCenter().x(), spawnPos.getY() + SuperJumpCommand.blockHeight(spawnPos, player.level()), spawnPos.getCenter().z());
-                if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, target))
+                target = new Vec3d(spawnPos.getCenter().x(), spawnPos.getY() + SuperJumpCommand.blockHeight(spawnPos, player.level()), spawnPos.getCenter().z());
+                if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, target))
                 {
                     player.sendSystemMessage(Component.literal("Spawn Pad outside of stage bounds!")); //TODO better feedback
                     return;
@@ -71,9 +71,9 @@ public class JumpLureItem extends Item implements IColoredItem
         }
         else
         {
-            Player targetPlayer = player.level().getPlayerByUUID(targetUUID);
+            Player targetPlayer = player.getWorld().getPlayerByUUID(targetUUID);
 
-            if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
+            if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
                 && !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())))
             {
                 player.sendSystemMessage(Component.literal("A communication error has occurred.")); //TODO better feedback
@@ -89,7 +89,7 @@ public class JumpLureItem extends Item implements IColoredItem
     {
         for (int i = 0; i < targetPlayer.getInventory().getContainerSize(); i++)
             if (targetPlayer.getInventory().getItem(i).getItem() instanceof JumpLureItem &&
-                ColorUtils.colorEquals(targetPlayer.level(), targetPlayer.blockPosition(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getItem(i))))
+                ColorUtils.colorEquals(targetPlayer.getWorld(), targetPlayer.blockPosition(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getItem(i))))
                 return true;
         return false;
     }
@@ -97,15 +97,15 @@ public class JumpLureItem extends Item implements IColoredItem
     public static List<? extends Player> getAvailableCandidates(Player player, int color)
     {
         ArrayList<Player> players = new ArrayList<>();
-        if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
         {
-            players.addAll(player.level().players());
+            players.addAll(player.getWorld().players());
         }
         else
         {
-            ArrayList<Stage> stages = Stage.getStagesForPosition(player.level(), player.position());
+            ArrayList<Stage> stages = Stage.getStagesForPosition(player.getWorld(), player.position());
             for (Stage stage : stages)
-                players.addAll(player.level().getEntitiesOfClass(Player.class, stage.getBounds()));
+                players.addAll(player.getWorld().getEntitiesOfClass(Player.class, stage.getBounds()));
         }
         players.removeIf(target ->
             player.equals(target) || !hasMatchingLure(target, color)
@@ -165,7 +165,7 @@ public class JumpLureItem extends Item implements IColoredItem
 
         BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
 
-        if (!SplatcraftGameRules.getLocalizedRule(level, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
+        if (!SplatcraftGameRules.getLocalizedRule(level, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3d(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
             spawnPadPos = null;
 
         if (spawnPadPos == null && players.isEmpty())
@@ -206,16 +206,16 @@ public class JumpLureItem extends Item implements IColoredItem
     {
         BlockPos pos = entity.blockPosition().below();
 
-        if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.level(), pos))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.level(), pos));
+                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
                 ColorUtils.setColorLocked(entity.getItem(), true);
             }
         }
         else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-            && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);

@@ -1,43 +1,31 @@
-package net.splatcraft.forge.client.particles;
+package net.splatcraft.client.particles;
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.particles.ParticleType;
-import net.minecraft.network.FriendlyByteBuf;
-import net.splatcraft.forge.commands.arguments.InkColorArgument;
-import net.splatcraft.forge.registries.SplatcraftParticleTypes;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.particle.ParticleType;
+import net.minecraft.util.dynamic.Codecs;
+import net.splatcraft.registries.SplatcraftParticleTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class InkExplosionParticleData extends InkSplashParticleData
 {
-    public static final Codec<InkExplosionParticleData> CODEC = RecordCodecBuilder.create(
-        p_239803_0_ -> p_239803_0_.group(
-            Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
-            Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
-            Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue),
-            Codec.FLOAT.fieldOf("scale").forGetter(p_239804_0_ -> p_239804_0_.scale)
-        ).apply(p_239803_0_, InkExplosionParticleData::new)
-    );
-    @SuppressWarnings("deprecation")
-    public static final Deserializer<InkExplosionParticleData> DESERIALIZER = new Deserializer<>()
-    {
-        @Override
-        public @NotNull InkExplosionParticleData fromCommand(@NotNull ParticleType<InkExplosionParticleData> particleTypeIn, StringReader reader) throws CommandSyntaxException
-        {
-            reader.expect(' ');
-            Integer color = InkColorArgument.parseStatic(reader);
-            reader.expect(' ');
-            return new InkExplosionParticleData(color, reader.readFloat());
-        }
-
-        @Override
-        public @NotNull InkExplosionParticleData fromNetwork(@NotNull ParticleType<InkExplosionParticleData> particleTypeIn, FriendlyByteBuf buffer)
-        {
-            return new InkExplosionParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
-        }
-    };
+    public static final MapCodec<InkExplosionParticleData> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+        instance.group(
+            Codec.FLOAT.fieldOf("r").forGetter(InkSplashParticleData::getRed),
+            Codec.FLOAT.fieldOf("g").forGetter(InkSplashParticleData::getGreen),
+            Codec.FLOAT.fieldOf("b").forGetter(InkSplashParticleData::getBlue),
+            Codecs.POSITIVE_FLOAT.fieldOf("scale").forGetter(InkSplashParticleData::getScale)
+        ).apply(instance, InkExplosionParticleData::new));
+    public static final PacketCodec<RegistryByteBuf, InkExplosionParticleData> PACKET_CODEC = PacketCodec.tuple(
+        PacketCodecs.FLOAT, InkSplashParticleData::getRed,
+        PacketCodecs.FLOAT, InkSplashParticleData::getBlue,
+        PacketCodecs.FLOAT, InkSplashParticleData::getGreen,
+        PacketCodecs.FLOAT, InkSplashParticleData::getScale,
+        InkExplosionParticleData::new);
 
     public InkExplosionParticleData(Integer color, float scale)
     {
@@ -52,6 +40,6 @@ public class InkExplosionParticleData extends InkSplashParticleData
     @Override
     public @NotNull ParticleType<?> getType()
     {
-        return SplatcraftParticleTypes.INK_EXPLOSION.get();
+        return SplatcraftParticleTypes.INK_EXPLOSION;
     }
 }
