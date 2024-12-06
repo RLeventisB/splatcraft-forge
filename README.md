@@ -7,4 +7,4 @@
 [![Discord Chat](https://img.shields.io/discord/671749458840518656?label=discord&logo=discord&style=flat-square)](https://discord.splatcraft.net)
 [![CurseForge Downloads](http://cf.way2muchnoise.eu/full_splatcraft_downloads.svg?badge_style=flat)](https://www.curseforge.com/minecraft/mc-mods/splatcraft)
 
-Splatoon in Minecraft.
+Splatoon in Minecraft, but modified slightly.

@@ -1,0 +1,56 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+issueTrackerURL = "https://github.com/splatcraft/splatcraft-forge/issues"
+license = "MIT"
+
+[[mods]]
+modId = "splatcraft"
+version = "${version}"
+displayName = "Splatcraft"
+description = '''
+Splatcraft is a Minecraft mod based on Nintendo's popular game Splatoon!
+This mod aims to add items and mechanics based on the game in a cohesive way, such as Turf Wars, Weapons, Squid Transformations and many more!
+'''
+
+authors = "Cibernet, Octol1ttle"
+credits = '''
+Thanks to Nintendo and Mojang, for making such great games!
+
+Programming and Design by Cibernet and Octol1ttle
+Models by Cibernet & JustHatless
+French translation by Flyse and Este
+Portuguese translation by gatoazulado
+Simplified Chinese translation by White Mind
+Spanish translation by Cibernet and Chichi
+Russian translation by jskces
+Italian translation by Alessio798
+
+Block of Power Eggs texture by rose bushes
+
+Special Thanks to Andante and seamuskills
+'''
+logoFile = "icon.png"
+
+[[dependencies.splatcraft]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.splatcraft]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.splatcraft]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.2,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "splatcraft.mixins.json"
