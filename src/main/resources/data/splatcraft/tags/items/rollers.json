@@ -1,11 +1,11 @@
 {
-  "replace": false,
-  "values": [
-    "#splatcraft:brushes",
-    "splatcraft:splat_roller",
-    "splatcraft:krak_on_splat_roller",
-    "splatcraft:corocoro_splat_roller",
-    "splatcraft:carbon_roller",
-    "splatcraft:dynamo_roller"
-  ]
+    "replace": false,
+    "values": [
+        "#splatcraft:brushes",
+        "splatcraft:splat_roller",
+        "splatcraft:krak_on_splat_roller",
+        "splatcraft:corocoro_splat_roller",
+        "splatcraft:carbon_roller",
+        "splatcraft:dynamo_roller"
+    ]
 }

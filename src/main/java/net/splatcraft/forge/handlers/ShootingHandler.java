@@ -69,21 +69,6 @@ public class ShootingHandler
         return shootingData.containsKey(entity) && shootingData.get(entity).usedThisTick;
     }
 
-    public interface EndlagConsumer
-    {
-        boolean accept(WeaponShootingData data, Float timeLeft, LivingEntity entity, Boolean isStillUsing);
-    }
-
-    public interface ShootConsumer
-    {
-        void accept(WeaponShootingData data, Float timeLeft, LivingEntity entity);
-    }
-
-    public interface EndConsumer
-    {
-        void accept(WeaponShootingData data, Float timeLeft, LivingEntity entity);
-    }
-
     @SubscribeEvent
     public static void update(TickEvent.ServerTickEvent event)
     {
@@ -110,20 +95,30 @@ public class ShootingHandler
         shootingData.remove(event.getEntity());
     }
 
+    public interface EndlagConsumer
+    {
+        boolean accept(WeaponShootingData data, Float timeLeft, LivingEntity entity, Boolean isStillUsing);
+    }
+
+    public interface ShootConsumer
+    {
+        void accept(WeaponShootingData data, Float timeLeft, LivingEntity entity);
+    }
+
+    public interface EndConsumer
+    {
+        void accept(WeaponShootingData data, Float timeLeft, LivingEntity entity);
+    }
+
     public static class EntityData
     {
         public final boolean isPlayer;
         public final Player player;
         public final LivingEntity entity;
-        public boolean usedThisTick;
         public final WeaponShootingData mainHandData;
         public final WeaponShootingData offHandData;
+        public boolean usedThisTick;
         public int selected;
-
-        public boolean isDualFire()
-        {
-            return mainHandData.active && offHandData.active;
-        }
 
         public EntityData(LivingEntity entity)
         {
@@ -132,6 +127,11 @@ public class ShootingHandler
             this.entity = entity;
             mainHandData = new WeaponShootingData(this, InteractionHand.MAIN_HAND);
             offHandData = new WeaponShootingData(this, InteractionHand.OFF_HAND);
+        }
+
+        public boolean isDualFire()
+        {
+            return mainHandData.active && offHandData.active;
         }
 
         public void update()

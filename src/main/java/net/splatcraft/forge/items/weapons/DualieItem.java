@@ -41,6 +41,15 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
     public static final ArrayList<DualieItem> dualies = Lists.newArrayList();
     public String settings;
 
+    protected DualieItem(String settings)
+    {
+        super(settings);
+
+        this.settings = settings;
+
+        dualies.add(this);
+    }
+
     public static RegistryObject<DualieItem> create(DeferredRegister<Item> registry, String settings)
     {
         return registry.register(settings, () -> new DualieItem(settings));
@@ -56,21 +65,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
         return registry.register(name, () -> new DualieItem(settings));
     }
 
-    protected DualieItem(String settings)
-    {
-        super(settings);
-
-        this.settings = settings;
-
-        dualies.add(this);
-    }
-
-    @Override
-    public Class<DualieWeaponSettings> getSettingsClass()
-    {
-        return DualieWeaponSettings.class;
-    }
-
     private static float getInkForRoll(ItemStack stack)
     {
         return stack.getItem() instanceof DualieItem item ? item.getSettings(stack).rollData.inkConsumption() : 0;
@@ -82,22 +76,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             return dualie.getSettings(stack).rollData.turretDuration();
 
         return 0;
-    }
-
-    public void performRoll(Player player, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
-    {
-        int rollCount = getRollCount(player);
-
-        DualieWeaponSettings activeSettings = getSettings(activeDualie);
-
-        if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
-        {
-            ShootingHandler.notifyForceEndShooting(player);
-            int turretDuration = getRollTurretDuration(activeDualie);
-            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
-
-            PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
-        }
     }
 
     public static int getRollCount(Player player)
@@ -117,6 +95,28 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
             maxRolls += dualieItem.getSettings(player.getOffhandItem()).rollData.count();
         }
         return (int) maxRolls;
+    }
+
+    @Override
+    public Class<DualieWeaponSettings> getSettingsClass()
+    {
+        return DualieWeaponSettings.class;
+    }
+
+    public void performRoll(Player player, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
+    {
+        int rollCount = getRollCount(player);
+
+        DualieWeaponSettings activeSettings = getSettings(activeDualie);
+
+        if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.level().isClientSide()))
+        {
+            ShootingHandler.notifyForceEndShooting(player);
+            int turretDuration = getRollTurretDuration(activeDualie);
+            PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
+
+            PlayerInfoCapability.get(player).setDodgeCount(rollCount + 1);
+        }
     }
 
     public ClampedItemPropertyFunction getIsLeft()

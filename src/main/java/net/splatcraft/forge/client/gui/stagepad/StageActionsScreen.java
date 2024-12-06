@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 public class StageActionsScreen extends AbstractStagePadScreen
 {
     private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_actions.png");
-    private Stage stage;
     private final StageSelectionScreen.ToggleMenuButton scanMode;
+    private Stage stage;
 
     public StageActionsScreen(Component label, String stageId, Screen mainMenu)
     {
@@ -64,7 +64,7 @@ public class StageActionsScreen extends AbstractStagePadScreen
 
         int x = (width - imageWidth) / 2;
         int y = (height - imageHeight) / 2;
-        
+
         graphics.blit(TEXTURES, x, y, 0, 0, imageWidth, imageHeight);
     }
 }

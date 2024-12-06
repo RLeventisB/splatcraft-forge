@@ -11,10 +11,10 @@ import net.splatcraft.forge.util.WeaponTooltip;
 
 public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponSettings, ShooterWeaponSettings.DataRecord>
 {
+    public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings("default");
     public CommonRecords.ProjectileDataRecord projectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
     public CommonRecords.ShotDataRecord shotData = CommonRecords.ShotDataRecord.DEFAULT;
     public boolean bypassesMobDamage = false;
-    public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings("default");
 
     public ShooterWeaponSettings(String name)
     {

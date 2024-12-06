@@ -16,14 +16,15 @@ import net.splatcraft.forge.loot.FishingLootModifier;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = Splatcraft.MODID)
 public class SplatcraftLoot
 {
-	public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> REGISTRY = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, Splatcraft.MODID);
-	static
-	{
-		REGISTRY.register("fishing", FishingLootModifier.CODEC);
-		REGISTRY.register("chest_loot", ChestLootModifier.CODEC);
-	}
-	public static final DeferredRegister<LootItemFunctionType> REGISTRY2 = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, Splatcraft.MODID);
-	public static final RegistryObject<LootItemFunctionType> BLUEPRINT = REGISTRY2.register("blueprint_pool", () -> new LootItemFunctionType(new BlueprintLootFunction.Serializer()));
+    public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> REGISTRY = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, Splatcraft.MODID);
+    public static final DeferredRegister<LootItemFunctionType> REGISTRY2 = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, Splatcraft.MODID);
+    public static final RegistryObject<LootItemFunctionType> BLUEPRINT = REGISTRY2.register("blueprint_pool", () -> new LootItemFunctionType(new BlueprintLootFunction.Serializer()));
+
+    static
+    {
+        REGISTRY.register("fishing", FishingLootModifier.CODEC);
+        REGISTRY.register("chest_loot", ChestLootModifier.CODEC);
+    }
 //	@SubscribeEvent
 //	public static void registerGLM(NewRegistryEvent event)
 //	{

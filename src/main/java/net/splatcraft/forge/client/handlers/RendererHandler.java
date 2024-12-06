@@ -83,6 +83,10 @@ public class RendererHandler
     private static float oldCooldown = 0;
     private static float tickTime = 0;
     private static InkSquidRenderer squidRenderer;
+    //Render Player HUD elements
+    private static float squidTime = 0;
+    private static float prevInkPctg = 0;
+    private static float inkFlash = 0;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void playerRender(RenderPlayerEvent event)
@@ -335,11 +339,6 @@ public class RendererHandler
     {
         return info.getTabListDisplayName() != null ? info.getTabListDisplayName().copy() : PlayerTeam.formatNameForTeam(info.getTeam(), Component.literal(info.getProfile().getName()));
     }
-
-    //Render Player HUD elements
-    private static float squidTime = 0;
-    private static float prevInkPctg = 0;
-    private static float inkFlash = 0;
 
     @SubscribeEvent
     public static void renderGui(RenderGuiOverlayEvent.Pre event)

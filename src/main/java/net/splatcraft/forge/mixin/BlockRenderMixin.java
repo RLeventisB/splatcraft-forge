@@ -55,6 +55,13 @@ public class BlockRenderMixin
         }
     }*/
 
+    @Mixin(RenderChunkRegion.class)
+    public interface ChunkRegionAccessor
+    {
+        @Accessor("level")
+        Level getLevel();
+    }
+
     @Mixin(ChunkRenderDispatcher.RenderChunk.RebuildTask.class)
     public static class ChunkRenderDispatcherMixin
     {
@@ -120,12 +127,5 @@ public class BlockRenderMixin
                 return originalList;
             }
         }
-    }
-
-    @Mixin(RenderChunkRegion.class)
-    public interface ChunkRegionAccessor
-    {
-        @Accessor("level")
-        Level getLevel();
     }
 }

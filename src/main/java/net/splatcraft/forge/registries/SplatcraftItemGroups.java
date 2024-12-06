@@ -28,8 +28,8 @@ import static net.splatcraft.forge.registries.SplatcraftItems.*;
 public class SplatcraftItemGroups
 {
 
+    public static final ArrayList<Item> colorTabItems = new ArrayList<>();
     protected static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Splatcraft.MODID);
-
     public static final RegistryObject<CreativeModeTab> GROUP_GENERAL = REGISTRY.register("splatcraft_general", () -> CreativeModeTab.builder()
         .withTabsBefore(CreativeModeTabs.COMBAT)
         .icon(() -> sardiniumBlock.get().getDefaultInstance())
@@ -108,7 +108,6 @@ public class SplatcraftItemGroups
             output.acceptAll(ColorUtils.getColorVariantsForItem(allowedColorBarrier.get(), true, true, false));
             output.acceptAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
         }).build());
-
     public static final RegistryObject<CreativeModeTab> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> CreativeModeTab.builder()
         .withTabsBefore(GROUP_GENERAL.getKey())
         .icon(() -> ColorUtils.setInkColor(splattershot.get().getDefaultInstance(), ColorUtils.ORANGE))
@@ -131,9 +130,6 @@ public class SplatcraftItemGroups
             output.accept(inkClothLeggings.get());
             output.accept(inkClothBoots.get());
         }).build());
-
-    public static final ArrayList<Item> colorTabItems = new ArrayList<>();
-
     public static final RegistryObject<CreativeModeTab> GROUP_COLORS = REGISTRY.register("splatcraft_colors", () -> CreativeModeTab.builder()
         .withTabsBefore(GROUP_WEAPONS.getKey())
         .icon(() -> ColorUtils.setInkColor(inkwell.get().getDefaultInstance(), ColorUtils.ORANGE))

@@ -16,10 +16,10 @@ import static net.minecraft.util.Mth.*;
 
 public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, CurlingBombModel>
 {
-    private final CurlingBombModel MODEL;
     private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/curling_bomb.png");
     private static final ResourceLocation INK_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/curling_bomb_ink.png");
     private static final ResourceLocation OVERLAY_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/curling_bomb_overlay.png");
+    private final CurlingBombModel MODEL;
 
     public CurlingBombRenderer(EntityRendererProvider.Context context)
     {

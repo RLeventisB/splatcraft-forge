@@ -30,8 +30,8 @@ public class Splatcraft
 {
     public static final String MODID = "splatcraft";
     public static final String MODNAME = "Splatcraft";
-    public static String version;
     public static final Logger LOGGER = LogManager.getLogger(MODNAME);
+    public static String version;
 
     public Splatcraft()
     {

@@ -15,15 +15,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientRecipeBook.class)
 public class RecipeCategoryMixin
 {
-	@OnlyIn(Dist.CLIENT)
-	@Inject(method = "getCategory", at = @At("HEAD"), cancellable = true)
-	private static void getCategory(Recipe<?> itemstack, CallbackInfoReturnable<RecipeBookCategories> cir)
-	{
-		RecipeType<?> type = itemstack.getType();
-		if(type == SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE || type == SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE
-			|| type == SplatcraftRecipeTypes.WEAPON_STATION_TYPE)
-		{
-			cir.setReturnValue(RecipeBookCategories.UNKNOWN);
-		}
-	}
+    @OnlyIn(Dist.CLIENT)
+    @Inject(method = "getCategory", at = @At("HEAD"), cancellable = true)
+    private static void getCategory(Recipe<?> itemstack, CallbackInfoReturnable<RecipeBookCategories> cir)
+    {
+        RecipeType<?> type = itemstack.getType();
+        if (type == SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE || type == SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE
+            || type == SplatcraftRecipeTypes.WEAPON_STATION_TYPE)
+        {
+            cir.setReturnValue(RecipeBookCategories.UNKNOWN);
+        }
+    }
 }

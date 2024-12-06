@@ -1,6 +1,7 @@
 package net.splatcraft.forge.tileentities;
 
 import java.util.List;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -42,11 +43,11 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
             level.destroyBlock(getBlockPos(), false);
 
             dropInventory();
-        } else
+        }
+        else
         {
             level.setBlock(getBlockPos(), getBlockState().setValue(CrateBlock.STATE, getState()), 2);
         }
-
     }
 
     @Override
@@ -73,7 +74,8 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
         return lootTable;
     }
 
-    public void setLootTable(ResourceLocation lootTable) {
+    public void setLootTable(ResourceLocation lootTable)
+    {
         this.lootTable = lootTable;
     }
 
@@ -86,7 +88,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
         maxHealth = nbt.getFloat("MaxHealth");
         ContainerHelper.loadAllItems(nbt, inventory);
 
-        if(nbt.contains("LootTable"))
+        if (nbt.contains("LootTable"))
             lootTable = new ResourceLocation(nbt.getString("LootTable"));
     }
 
@@ -97,7 +99,7 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
         nbt.putFloat("MaxHealth", maxHealth);
         ContainerHelper.saveAllItems(nbt, inventory);
 
-        if(hasLoot())
+        if (hasLoot())
             nbt.putString("LootTable", lootTable.toString());
 
         super.saveAdditional(nbt);
@@ -212,5 +214,4 @@ public class CrateTileEntity extends InkColorTileEntity implements Container
         }
         return 4 - Math.round(health * 4 / maxHealth);
     }
-
 }

@@ -15,11 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PlayerTabOverlayMixin
 {
 
-	@Inject(method = "decorateName", at = @At("HEAD"))
-	public void decorateName(PlayerInfo playerInfo, MutableComponent component, CallbackInfoReturnable<Component> cir)
-	{
-		if(SplatcraftConfig.Client.coloredPlayerNames.get())
-			component.setStyle(component.getStyle().withColor(ClientUtils.getClientPlayerColor(playerInfo.getProfile().getId())));
-	}
-
+    @Inject(method = "decorateName", at = @At("HEAD"))
+    public void decorateName(PlayerInfo playerInfo, MutableComponent component, CallbackInfoReturnable<Component> cir)
+    {
+        if (SplatcraftConfig.Client.coloredPlayerNames.get())
+            component.setStyle(component.getStyle().withColor(ClientUtils.getClientPlayerColor(playerInfo.getProfile().getId())));
+    }
 }

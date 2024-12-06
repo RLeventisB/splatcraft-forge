@@ -12,28 +12,17 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public record DamageRangesRecord(
-        TreeMap<Float, Float> damageValues,
-        boolean lerpBetween
+    TreeMap<Float, Float> damageValues,
+    boolean lerpBetween
 )
 {
     public static final Codec<DamageRangesRecord> CODEC = RecordCodecBuilder.create(
-            instance -> instance.group(
-                    Codec.list(DamageRangeRecord.CODEC).fieldOf("points").forGetter(DamageRangesRecord ->
-                            DamageRangesRecord.damageValues().entrySet().stream().map(v -> new DamageRangeRecord(v.getKey(), v.getValue())).collect(Collectors.toList())),
-                    Codec.BOOL.optionalFieldOf("lerp_between", true).forGetter(DamageRangesRecord::lerpBetween)
-            ).apply(instance, DamageRangesRecord::create)
+        instance -> instance.group(
+            Codec.list(DamageRangeRecord.CODEC).fieldOf("points").forGetter(DamageRangesRecord ->
+                DamageRangesRecord.damageValues().entrySet().stream().map(v -> new DamageRangeRecord(v.getKey(), v.getValue())).collect(Collectors.toList())),
+            Codec.BOOL.optionalFieldOf("lerp_between", true).forGetter(DamageRangesRecord::lerpBetween)
+        ).apply(instance, DamageRangesRecord::create)
     );
-
-    public record DamageRangeRecord(float maxRange, float damage)
-    {
-        public static final Codec<DamageRangeRecord> CODEC = RecordCodecBuilder.create(
-                instance -> instance.group(
-                        Codec.FLOAT.fieldOf("max_range").forGetter(v -> v.maxRange),
-                        Codec.FLOAT.fieldOf("damage").forGetter(v -> v.damage)
-                ).apply(instance, DamageRangeRecord::new)
-        );
-    }
-
     public static final DamageRangesRecord DEFAULT = new DamageRangesRecord(new TreeMap<>(Collections.emptyMap()), false);
 
     // yes this is from https://github.com/WeaponMechanics/MechanicsMain/blob/master/WeaponMechanics/src/main/java/me/deecaad/weaponmechanics/weapon/damage/DamageDropoff.java
@@ -46,6 +35,44 @@ public record DamageRangesRecord(
             distances.put(pair.maxRange(), pair.damage());
         }
         return new DamageRangesRecord(distances, lerpBetween);
+    }
+
+    public static DamageRangesRecord createSimpleLerped(float closeDamage, float farDamage, float maxRange)
+    {
+        return new DamageRangesRecord(new TreeMap<>()
+        {
+            {
+                put(0f, closeDamage);
+                put(maxRange, farDamage);
+            }
+        }, true);
+    }
+
+    public static DamageRangesRecord createSimpleLerped(float closeDamage, float maxRange)
+    {
+        return new DamageRangesRecord(new TreeMap<>()
+        {
+            {
+                put(0f, closeDamage);
+                put(maxRange, 0f);
+            }
+        }, true);
+    }
+
+    public static DamageRangesRecord empty()
+    {
+        return new DamageRangesRecord(new TreeMap<>(), false);
+    }
+
+    public static DamageRangesRecord fromBuffer(ByteBuf buffer)
+    {
+        int size = buffer.readInt();
+        TreeMap<Float, Float> damageValues = new TreeMap<>();
+        for (int i = 0; i < size; i++)
+        {
+            damageValues.put(buffer.readFloat(), buffer.readFloat());
+        }
+        return new DamageRangesRecord(damageValues, buffer.readBoolean());
     }
 
     public float getDamage(float distance)
@@ -84,33 +111,6 @@ public record DamageRangesRecord(
         return damageValues.isEmpty() ? 0 : damageValues.firstEntry().getValue();
     }
 
-    public static DamageRangesRecord createSimpleLerped(float closeDamage, float farDamage, float maxRange)
-    {
-        return new DamageRangesRecord(new TreeMap<>()
-        {
-            {
-                put(0f, closeDamage);
-                put(maxRange, farDamage);
-            }
-        }, true);
-    }
-
-    public static DamageRangesRecord createSimpleLerped(float closeDamage, float maxRange)
-    {
-        return new DamageRangesRecord(new TreeMap<>()
-        {
-            {
-                put(0f, closeDamage);
-                put(maxRange, 0f);
-            }
-        }, true);
-    }
-
-    public static DamageRangesRecord empty()
-    {
-        return new DamageRangesRecord(new TreeMap<>(), false);
-    }
-
     public boolean isInsignificant()
     {
         return this.damageValues.isEmpty() || getMaxDistance() == 0;
@@ -139,14 +139,13 @@ public record DamageRangesRecord(
         buffer.writeBoolean(lerpBetween);
     }
 
-    public static DamageRangesRecord fromBuffer(ByteBuf buffer)
+    public record DamageRangeRecord(float maxRange, float damage)
     {
-        int size = buffer.readInt();
-        TreeMap<Float, Float> damageValues = new TreeMap<>();
-        for (int i = 0; i < size; i++)
-        {
-            damageValues.put(buffer.readFloat(), buffer.readFloat());
-        }
-        return new DamageRangesRecord(damageValues, buffer.readBoolean());
+        public static final Codec<DamageRangeRecord> CODEC = RecordCodecBuilder.create(
+            instance -> instance.group(
+                Codec.FLOAT.fieldOf("max_range").forGetter(v -> v.maxRange),
+                Codec.FLOAT.fieldOf("damage").forGetter(v -> v.damage)
+            ).apply(instance, DamageRangeRecord::new)
+        );
     }
 }

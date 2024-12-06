@@ -34,6 +34,11 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 {
     public Type slosherType = Type.DEFAULT;
 
+    protected SlosherItem(String settings)
+    {
+        super(settings);
+    }
+
     public static RegistryObject<SlosherItem> create(DeferredRegister<Item> register, String settings, String name, Type slosherType)
     {
         return register.register(name, () -> new SlosherItem(settings).setSlosherType(slosherType));
@@ -42,11 +47,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
     public static RegistryObject<SlosherItem> create(DeferredRegister<Item> register, RegistryObject<SlosherItem> parent, String name)
     {
         return register.register(name, () -> new SlosherItem(parent.get().settingsId.toString()).setSlosherType(parent.get().slosherType));
-    }
-
-    protected SlosherItem(String settings)
-    {
-        super(settings);
     }
 
     @Override
@@ -99,16 +99,11 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
     public static class SloshCooldown extends PlayerCooldown
     {
-        public record CalculatedSloshData(float time, byte indexInSlosh, int sloshDataIndex)
-        {
-        }
-
         public SlosherWeaponSettings sloshData = null;
         public List<CalculatedSloshData> sloshes = new ArrayList<>();
         public boolean didSound;
         public AttackId attackId;
         public float xRot, xDelta, yRot, yDelta, xRotOld, yRotOld;
-
         public SloshCooldown(Player player, ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, int duration)
         {
             super(stack, duration, slotIndex, hand, true, false, true, false);
@@ -246,6 +241,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
             nbt.putBoolean("SloshCooldown", true);
 
             return nbt;
+        }
+
+        public record CalculatedSloshData(float time, byte indexInSlosh, int sloshDataIndex)
+        {
         }
     }
 }

@@ -22,9 +22,9 @@ import java.util.function.Supplier;
 public class SplatcraftPacketHandler
 {
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(new ResourceLocation(Splatcraft.MODID, "main"),
-            () -> Splatcraft.version,
-            Splatcraft.version::equals,
-            Splatcraft.version::equals);
+        () -> Splatcraft.version,
+        Splatcraft.version::equals,
+        Splatcraft.version::equals);
     private static int ID = 0;
 
     public static void registerMessages()

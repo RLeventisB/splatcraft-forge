@@ -27,17 +27,17 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public class JumpLureHudHandler
 {
+    private static final SuperJumpSelectorScreen selectorGui = new SuperJumpSelectorScreen();
+    public static boolean clickedThisFrame = false;
     private static SuperJumpTargets targets;
     private static double scrollDelta = 0;
-    public static boolean clickedThisFrame = false;
-    private static final SuperJumpSelectorScreen selectorGui = new SuperJumpSelectorScreen();
 
     public static void renderGui(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight)
     {
         LocalPlayer player = Minecraft.getInstance().player;
 
         if (player == null ||
-                !(player.getUseItem().getItem() instanceof JumpLureItem) || targets == null)
+            !(player.getUseItem().getItem() instanceof JumpLureItem) || targets == null)
             return;
 
         scrollDelta = selectorGui.render(guiGraphics, partialTick, targets, scrollDelta, clickedThisFrame);

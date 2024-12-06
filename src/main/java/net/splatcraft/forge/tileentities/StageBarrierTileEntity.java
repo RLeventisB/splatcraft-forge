@@ -51,7 +51,7 @@ public class StageBarrierTileEntity extends BlockEntity
 
             resetActiveTime();
             if (getBlockState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
-                    entity instanceof Player)
+                entity instanceof Player)
             {
                 entity.hurt(level.damageSources().source(SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
             }
@@ -68,7 +68,7 @@ public class StageBarrierTileEntity extends BlockEntity
             else if (SplatcraftConfig.Client.holdBarrierToRender.get())
             {
                 canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
-                        player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
+                    player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
             }
             if (canRender)
                 resetActiveTime();

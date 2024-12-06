@@ -46,47 +46,14 @@ public class BlueprintItem extends Item
         put("wildcard", item -> true);
     }};
 
-    public static Predicate<Item> instanceOf(Class<? extends Item> clazz)
-    {
-        return clazz::isInstance;
-    }
-
     public BlueprintItem()
     {
         super(new Properties().stacksTo(16));
     }
 
-    @OnlyIn(Dist.CLIENT)
-    @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> components, @NotNull TooltipFlag flag)
+    public static Predicate<Item> instanceOf(Class<? extends Item> clazz)
     {
-        super.appendHoverText(stack, level, components, flag);
-
-        if (stack.hasTag())
-        {
-            CompoundTag nbt = stack.getTag();
-
-            if (nbt.getBoolean("HideTooltip"))
-                return;
-
-            if (nbt.contains("Advancements"))
-            {
-                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
-                return;
-            }
-
-            if (nbt.contains("Pools"))
-            {
-                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
-                nbt.getList("Pools", Tag.TAG_STRING).forEach((weaponType) ->
-                        components.add(Component.translatable("item.splatcraft.blueprint.tooltip." + weaponType.getAsString())
-                                .withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withItalic(false)))
-                );
-                return;
-            }
-        }
-
-        components.add(Component.translatable("item.splatcraft.blueprint.tooltip.empty"));
+        return clazz::isInstance;
     }
 
     //	@Override
@@ -136,27 +103,60 @@ public class BlueprintItem extends Item
         if (blueprint.hasTag())
         {
             blueprint.getTag().getList("Advancements", Tag.TAG_STRING).forEach(
-                    tag ->
-                    {
-                        Advancement advancement;
-                        advancement = level.getServer().getAdvancements().getAdvancement(new ResourceLocation(tag.getAsString()));
+                tag ->
+                {
+                    Advancement advancement;
+                    advancement = level.getServer().getAdvancements().getAdvancement(new ResourceLocation(tag.getAsString()));
 
-                        if (advancement != null)
-                            output.add(advancement);
-                    }
+                    if (advancement != null)
+                        output.add(advancement);
+                }
             );
             blueprint.getTag().getList("Pools", Tag.TAG_STRING).forEach(
-                    tag ->
-                            SplatcraftItems.weapons.stream().
-                                    filter(weaponPools.get(tag.getAsString()).and(item ->
-                                            !Objects.equals(ForgeRegistries.ITEMS.getKey(item), SplatcraftTags.Items.BLUEPRINT_EXCLUDED.location())))
-                                    .map(ForgeRegistries.ITEMS::getKey).filter(Objects::nonNull).map(holder ->
-                                            new ResourceLocation(holder.getNamespace(), "unlocks/" + holder.getPath())).map(level.getServer().getAdvancements()::getAdvancement)
-                                    .filter(Objects::nonNull).forEach(output::add)
+                tag ->
+                    SplatcraftItems.weapons.stream().
+                        filter(weaponPools.get(tag.getAsString()).and(item ->
+                            !Objects.equals(ForgeRegistries.ITEMS.getKey(item), SplatcraftTags.Items.BLUEPRINT_EXCLUDED.location())))
+                        .map(ForgeRegistries.ITEMS::getKey).filter(Objects::nonNull).map(holder ->
+                            new ResourceLocation(holder.getNamespace(), "unlocks/" + holder.getPath())).map(level.getServer().getAdvancements()::getAdvancement)
+                        .filter(Objects::nonNull).forEach(output::add)
             );
         }
 
         return output;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> components, @NotNull TooltipFlag flag)
+    {
+        super.appendHoverText(stack, level, components, flag);
+
+        if (stack.hasTag())
+        {
+            CompoundTag nbt = stack.getTag();
+
+            if (nbt.getBoolean("HideTooltip"))
+                return;
+
+            if (nbt.contains("Advancements"))
+            {
+                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
+                return;
+            }
+
+            if (nbt.contains("Pools"))
+            {
+                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
+                nbt.getList("Pools", Tag.TAG_STRING).forEach((weaponType) ->
+                    components.add(Component.translatable("item.splatcraft.blueprint.tooltip." + weaponType.getAsString())
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withItalic(false)))
+                );
+                return;
+            }
+        }
+
+        components.add(Component.translatable("item.splatcraft.blueprint.tooltip.empty"));
     }
 
     @Override

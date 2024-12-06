@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(Player.class)
 public class PlayerMixin
 {
-	@ModifyReturnValue(method = "createAttributes", at = @At("RETURN"))
-	private static AttributeSupplier.Builder createAttributes(AttributeSupplier.Builder original)
-	{
-		return SplatcraftEntities.injectPlayerAttributes(original);
-	}
+    @ModifyReturnValue(method = "createAttributes", at = @At("RETURN"))
+    private static AttributeSupplier.Builder createAttributes(AttributeSupplier.Builder original)
+    {
+        return SplatcraftEntities.injectPlayerAttributes(original);
+    }
 }

@@ -24,17 +24,6 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
         this.spawnPosition = spawnPosition;
     }
 
-    @Override
-    public void encode(FriendlyByteBuf buffer)
-    {
-        buffer.writeInt(color);
-        buffer.writeBoolean(canJumpToSpawn);
-        buffer.writeBlockPos(spawnPosition);
-        buffer.writeInt(uuids.size());
-        for (UUID uuid : uuids)
-            buffer.writeUUID(uuid);
-    }
-
     public static SendJumpLureDataPacket decode(FriendlyByteBuf buffer)
     {
         int color = buffer.readInt();
@@ -46,6 +35,17 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
             uuids.add(buffer.readUUID());
 
         return new SendJumpLureDataPacket(color, canJump, uuids, spawnPosition);
+    }
+
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeInt(color);
+        buffer.writeBoolean(canJumpToSpawn);
+        buffer.writeBlockPos(spawnPosition);
+        buffer.writeInt(uuids.size());
+        for (UUID uuid : uuids)
+            buffer.writeUUID(uuid);
     }
 
     @OnlyIn(Dist.CLIENT)

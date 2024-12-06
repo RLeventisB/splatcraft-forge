@@ -16,12 +16,12 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("deprecation")
 public class InkedCarpetBlock extends InkStainedBlock
 {
+    protected static final VoxelShape SHAPE = box(0.0D, 0.0D, 0.0D, 16.0D, 1.0D, 16.0D);
+
     public InkedCarpetBlock(String name)
     {
         super(Properties.of().isRedstoneConductor((state, getter, pos) -> false).mapColor(MapColor.WOOL).ignitedByLava().strength(0.1F).sound(SoundType.WOOL));
     }
-
-    protected static final VoxelShape SHAPE = box(0.0D, 0.0D, 0.0D, 16.0D, 1.0D, 16.0D);
 
     public @NotNull VoxelShape getShape(@NotNull BlockState st, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {

@@ -37,6 +37,11 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
         this.dimension = dimension;
     }
 
+    public static CreateOrEditStagePacket decode(FriendlyByteBuf buf)
+    {
+        return new CreateOrEditStagePacket(buf.readUtf(), buf.readComponent(), buf.readBlockPos(), buf.readBlockPos(), buf.readResourceLocation());
+    }
+
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
@@ -45,11 +50,6 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
         buffer.writeBlockPos(corner1);
         buffer.writeBlockPos(corner2);
         buffer.writeResourceLocation(dimension);
-    }
-
-    public static CreateOrEditStagePacket decode(FriendlyByteBuf buf)
-    {
-        return new CreateOrEditStagePacket(buf.readUtf(), buf.readComponent(), buf.readBlockPos(), buf.readBlockPos(), buf.readResourceLocation());
     }
 
     @Override

@@ -1,19 +1,19 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "S#S",
-    "S#S"
-  ],
-  "key": {
-    "S": {
-      "item": "splatcraft:sardinium"
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "S#S",
+        "S#S"
+    ],
+    "key": {
+        "S": {
+            "item": "splatcraft:sardinium"
+        },
+        "#": {
+            "item": "minecraft:iron_bars"
+        }
     },
-    "#": {
-      "item": "minecraft:iron_bars"
+    "result": {
+        "item": "splatcraft:grate",
+        "count": 2
     }
-  },
-  "result": {
-    "item": "splatcraft:grate",
-    "count": 2
-  }
 }

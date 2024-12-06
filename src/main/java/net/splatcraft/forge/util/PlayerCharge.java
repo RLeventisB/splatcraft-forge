@@ -130,17 +130,6 @@ public class PlayerCharge
         return chargeMatches(player, stack) ? getCharge(player).charge : 0;
     }
 
-    public float getDischargeValue(float partialTicks)
-    {
-        if (chargedWeapon.getItem() instanceof IChargeableWeapon chargeable)
-        {
-            float maxDischargeTicks = chargeable.getDischargeTicks(chargedWeapon);
-            return maxDischargeTicks <= 0 ? 1 : 1 - Mth.lerp(partialTicks, prevDischargedTicks / maxDischargeTicks, dischargedTicks / maxDischargeTicks);
-        }
-
-        return 1;
-    }
-
     public static void dischargeWeapon(Player player)
     {
         if (!player.level().isClientSide() || !hasCharge(player))
@@ -164,7 +153,7 @@ public class PlayerCharge
                 }
             }
             else if ((charge.storePartial || charge.charge >= 1.0f) &&
-                    charge.dischargedTicks < chargeable.getDischargeTicks(charge.chargedWeapon))
+                charge.dischargedTicks < chargeable.getDischargeTicks(charge.chargedWeapon))
             {
                 charge.dischargedTicks++;
                 return;
@@ -193,6 +182,17 @@ public class PlayerCharge
         }
 
         hasChargeServerPlayerMap.put(serverPlayer.getUUID(), hasCharge);
+    }
+
+    public float getDischargeValue(float partialTicks)
+    {
+        if (chargedWeapon.getItem() instanceof IChargeableWeapon chargeable)
+        {
+            float maxDischargeTicks = chargeable.getDischargeTicks(chargedWeapon);
+            return maxDischargeTicks <= 0 ? 1 : 1 - Mth.lerp(partialTicks, prevDischargedTicks / maxDischargeTicks, dischargedTicks / maxDischargeTicks);
+        }
+
+        return 1;
     }
 
     public void reset()

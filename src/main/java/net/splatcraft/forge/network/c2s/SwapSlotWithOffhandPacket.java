@@ -7,33 +7,33 @@ import net.minecraft.world.item.ItemStack;
 
 public class SwapSlotWithOffhandPacket extends PlayC2SPacket
 {
-	final int slot;
-	final boolean stopUsing;
+    final int slot;
+    final boolean stopUsing;
 
-	public SwapSlotWithOffhandPacket(int slot, boolean stopUsing)
-	{
-		this.slot = slot;
-		this.stopUsing = stopUsing;
-	}
+    public SwapSlotWithOffhandPacket(int slot, boolean stopUsing)
+    {
+        this.slot = slot;
+        this.stopUsing = stopUsing;
+    }
 
-	@Override
-	public void execute(Player player)
-	{
-		ItemStack stack = player.getOffhandItem();
-		player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
-		player.getInventory().setItem(slot, stack);
-		player.stopUsingItem();
-	}
+    public static SwapSlotWithOffhandPacket decode(FriendlyByteBuf buffer)
+    {
+        return new SwapSlotWithOffhandPacket(buffer.readInt(), buffer.readBoolean());
+    }
 
-	@Override
-	public void encode(FriendlyByteBuf buffer)
-	{
-		buffer.writeInt(slot);
-		buffer.writeBoolean(stopUsing);
-	}
+    @Override
+    public void execute(Player player)
+    {
+        ItemStack stack = player.getOffhandItem();
+        player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
+        player.getInventory().setItem(slot, stack);
+        player.stopUsingItem();
+    }
 
-	public static SwapSlotWithOffhandPacket decode(FriendlyByteBuf buffer)
-	{
-		return new SwapSlotWithOffhandPacket(buffer.readInt(), buffer.readBoolean());
-	}
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeInt(slot);
+        buffer.writeBoolean(stopUsing);
+    }
 }

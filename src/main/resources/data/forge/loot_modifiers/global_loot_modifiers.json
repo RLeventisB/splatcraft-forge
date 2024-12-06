@@ -1,10 +1,10 @@
 {
-  "replace": false,
-  "entries": [
-    "splatcraft:sunken_crate_fishing",
-    "splatcraft:big_ocean_ruin_crate",
-    "splatcraft:bonus_chest_kit_main",
-    "splatcraft:bonus_chest_kit_sub",
-    "splatcraft:bonus_chest_kit_tank"
-  ]
+    "replace": false,
+    "entries": [
+        "splatcraft:sunken_crate_fishing",
+        "splatcraft:big_ocean_ruin_crate",
+        "splatcraft:bonus_chest_kit_main",
+        "splatcraft:bonus_chest_kit_sub",
+        "splatcraft:bonus_chest_kit_tank"
+    ]
 }

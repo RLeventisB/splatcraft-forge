@@ -1,29 +1,29 @@
 {
-  "type": "splatcraft:weapon_workbench",
-  "tab": "splatcraft:weapon_workbench_tabs/sub_weapons",
-  "pos": 1,
-  "recipes": [
-    {
-      "name": "weaponType.original",
-      "advancement": "splatcraft:unlocks/burst_bomb",
-      "result": {
-        "item": "splatcraft:burst_bomb",
-        "count": 1
-      },
-      "ingredients": [
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tabs/sub_weapons",
+    "pos": 1,
+    "recipes": [
         {
-          "item": "splatcraft:sardinium",
-          "count": 1
-        },
-        {
-          "item": "splatcraft:power_egg",
-          "count": 8
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 3
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/burst_bomb",
+            "result": {
+                "item": "splatcraft:burst_bomb",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 1
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 8
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 3
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

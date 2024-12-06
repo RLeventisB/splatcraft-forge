@@ -6,10 +6,12 @@ import net.minecraft.world.level.Level;
 
 public abstract class IncrementalChunkBasedPacket extends PlayS2CPacket
 {
-	protected final ChunkPos chunkPos;
-	public IncrementalChunkBasedPacket(ChunkPos pos)
-	{
-		chunkPos = pos;
-	}
-	public abstract void add(Level level, BlockPos pos);
+    protected final ChunkPos chunkPos;
+
+    public IncrementalChunkBasedPacket(ChunkPos pos)
+    {
+        chunkPos = pos;
+    }
+
+    public abstract void add(Level level, BlockPos pos);
 }

@@ -1,7 +1,7 @@
 {
-  "parent": "splatcraft:item/n-zap85",
-  "textures": {
-		"0": "splatcraft:item/weapons/n-zap89",
-		"particle": "splatcraft:item/weapons/n-zap89"
-	}
+    "parent": "splatcraft:item/n-zap85",
+    "textures": {
+        "0": "splatcraft:item/weapons/n-zap89",
+        "particle": "splatcraft:item/weapons/n-zap89"
+    }
 }

@@ -114,6 +114,13 @@ public class ClientSetupHandler
         colors.register(new InkBlockColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
     }
 
+    // https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
+    @SubscribeEvent
+    public static void registerTextureAtlasSpriteLoaders(RegisterTextureAtlasSpriteLoadersEvent event)
+    {
+        event.register("weapon_loader", new WeaponLoader()); // so the gal deco texture has this!!! idk why but ok here it is
+    }
+
     protected static class InkItemColor implements ItemColor
     {
         @Override
@@ -159,13 +166,6 @@ public class ClientSetupHandler
 
             return color;
         }
-    }
-
-    // https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
-    @SubscribeEvent
-    public static void registerTextureAtlasSpriteLoaders(RegisterTextureAtlasSpriteLoadersEvent event)
-    {
-        event.register("weapon_loader", new WeaponLoader()); // so the gal deco texture has this!!! idk why but ok here it is
     }
 
     public static class WeaponLoader implements ITextureAtlasSpriteLoader

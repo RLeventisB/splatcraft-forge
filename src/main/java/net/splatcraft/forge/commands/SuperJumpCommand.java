@@ -37,12 +37,12 @@ public class SuperJumpCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
         dispatcher.register(Commands.literal("superjump").requires(commandSource -> commandSource.hasPermission(2)).then(Commands.argument("location", Vec3Argument.vec3()).executes(context ->
-                {
-                    Vec3 target = Vec3Argument.getVec3(context, "location");
-                    return executeLocation(context, new Vec3(target.x(), target.y(), target.z()));
-                })).then(Commands.argument("target", EntityArgument.entity()).executes(context ->
-                        executeLocation(context, EntityArgument.getEntity(context, "target").position())))
-                .executes(SuperJumpCommand::executeSpawn));
+            {
+                Vec3 target = Vec3Argument.getVec3(context, "location");
+                return executeLocation(context, new Vec3(target.x(), target.y(), target.z()));
+            })).then(Commands.argument("target", EntityArgument.entity()).executes(context ->
+                executeLocation(context, EntityArgument.getEntity(context, "target").position())))
+            .executes(SuperJumpCommand::executeSpawn));
     }
 
     private static int executeLocation(CommandContext<CommandSourceStack> context, Vec3 target) throws CommandSyntaxException
@@ -96,10 +96,10 @@ public class SuperJumpCommand
     public static boolean superJump(ServerPlayer player, Vec3 target, boolean global)
     {
         return superJump(player, target,
-                (int) player.getAttribute(SplatcraftAttributes.superJumpTravelTime.get()).getValue(),
-                (int) player.getAttribute(SplatcraftAttributes.superJumpWindupTime.get()).getValue(),
-                player.getAttribute(SplatcraftAttributes.superJumpHeight.get()).getValue(),
-                global);
+            (int) player.getAttribute(SplatcraftAttributes.superJumpTravelTime.get()).getValue(),
+            (int) player.getAttribute(SplatcraftAttributes.superJumpWindupTime.get()).getValue(),
+            player.getAttribute(SplatcraftAttributes.superJumpHeight.get()).getValue(),
+            global);
     }
 
     public static boolean superJump(ServerPlayer player, Vec3 target, int windupTime, int travelTime, double jumpHeight, boolean global)
@@ -165,10 +165,15 @@ public class SuperJumpCommand
         public SuperJump(CompoundTag nbt)
         {
             this(new Vec3(nbt.getDouble("SourceX"), nbt.getDouble("SourceY"), nbt.getDouble("SourceZ")),
-                    new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")),
-                    nbt.getInt("TravelTime"), nbt.getInt("WindupTime"),
-                    nbt.getDouble("Height"), nbt.getBoolean("CanClip"), nbt.getBoolean("HadInvulnerability"));
+                new Vec3(nbt.getDouble("TargetX"), nbt.getDouble("TargetY"), nbt.getDouble("TargetZ")),
+                nbt.getInt("TravelTime"), nbt.getInt("WindupTime"),
+                nbt.getDouble("Height"), nbt.getBoolean("CanClip"), nbt.getBoolean("HadInvulnerability"));
             setTime(nbt.getFloat("TimeLeft"));
+        }
+
+        public static double getSuperJumpYPos(double progress, double startY, double endY, double arcHeight)
+        {
+            return arcHeight * Math.sin(progress * Math.PI) + ((endY - startY) * (progress) + startY);
         }
 
         @Override
@@ -260,11 +265,6 @@ public class SuperJumpCommand
         public float getSuperJumpProgress(float add)
         {
             return 1f - Mth.clamp((getTime() + add) / (float) getTravelTime(), 0, 1);
-        }
-
-        public static double getSuperJumpYPos(double progress, double startY, double endY, double arcHeight)
-        {
-            return arcHeight * Math.sin(progress * Math.PI) + ((endY - startY) * (progress) + startY);
         }
 
         public boolean isSquid()

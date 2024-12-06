@@ -49,7 +49,8 @@ public class InkSplashParticle extends TextureSheetParticle
         if (this.level.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).liquid())
         {
             this.remove();
-        } else
+        }
+        else
         {
             setSpriteFromAge(spriteProvider);
         }
@@ -74,9 +75,11 @@ public class InkSplashParticle extends TextureSheetParticle
                     return;
                 setAlpha((float) (Math.sqrt(dist) - 1));
                 super.render(buffer, renderInfo, partialTicks);
-            } else
+            }
+            else
                 super.render(buffer, renderInfo, partialTicks);
-        } else
+        }
+        else
             super.render(buffer, renderInfo, partialTicks);
     }
 

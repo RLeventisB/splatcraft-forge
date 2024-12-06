@@ -1,6 +1,6 @@
 {
-  "replace": false,
-  "values": [
-    "#splatcraft:ink_passthrough"
-  ]
+    "replace": false,
+    "values": [
+        "#splatcraft:ink_passthrough"
+    ]
 }

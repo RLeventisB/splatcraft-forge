@@ -20,6 +20,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 {
+    protected ShooterItem(String settings)
+    {
+        super(settings);
+    }
+
     public static RegistryObject<ShooterItem> create(DeferredRegister<Item> registry, String settings, String name)
     {
         return registry.register(name, () -> new ShooterItem(settings));
@@ -33,11 +38,6 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
     public static RegistryObject<ShooterItem> create(DeferredRegister<Item> registry, RegistryObject<ShooterItem> parent, String name, boolean secret)
     {
         return registry.register(name, () -> new ShooterItem(parent.get().settingsId.toString()).setSecret(secret));
-    }
-
-    protected ShooterItem(String settings)
-    {
-        super(settings);
     }
 
     @Override

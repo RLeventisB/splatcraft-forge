@@ -1,22 +1,22 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "# #",
-    "EIE",
-    "###"
-  ],
-  "key": {
-    "#": {
-      "item": "splatcraft:sardinium"
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "# #",
+        "EIE",
+        "###"
+    ],
+    "key": {
+        "#": {
+            "item": "splatcraft:sardinium"
+        },
+        "E": {
+            "item": "splatcraft:power_egg"
+        },
+        "I": {
+            "item": "splatcraft:empty_inkwell"
+        }
     },
-    "E": {
-      "item": "splatcraft:power_egg"
-    },
-    "I": {
-      "item": "splatcraft:empty_inkwell"
+    "result": {
+        "item": "splatcraft:ink_vat"
     }
-  },
-  "result": {
-    "item": "splatcraft:ink_vat"
-  }
 }

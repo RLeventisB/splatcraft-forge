@@ -17,11 +17,11 @@ import java.util.Optional;
 
 public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSettings, DualieWeaponSettings.DataRecord>
 {
+    public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings("default");
     public CommonRecords.ProjectileDataRecord standardProjectileData = CommonRecords.ProjectileDataRecord.DEFAULT, turretProjectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
     public CommonRecords.ShotDataRecord standardShotData = CommonRecords.ShotDataRecord.DEFAULT, turretShotData = CommonRecords.ShotDataRecord.DEFAULT;
     public RollDataRecord rollData = RollDataRecord.DEFAULT;
     public boolean bypassesMobDamage = false;
-    public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings("default");
 
     public DualieWeaponSettings(String name)
     {
@@ -173,6 +173,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
                 Codec.BOOL.optionalFieldOf("allows_movement", false).forGetter(RollDataRecord::canMove)
             ).apply(instance, RollDataRecord::new)
         );
+        public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false);
 
         public float getRollImpulse()
         {
@@ -182,7 +183,5 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
             // rollDistance / (roll_duration + 0.6) = x
             return rollDistance / (rollDuration + 0.4f) / SplatcraftConvertors.SplatoonFramesPerMinecraftTick;
         }
-
-        public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false);
     }
 }

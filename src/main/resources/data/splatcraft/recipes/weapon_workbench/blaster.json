@@ -1,63 +1,63 @@
 {
-  "type": "splatcraft:weapon_workbench",
-  "tab": "splatcraft:weapon_workbench_tabs/blasters",
-  "pos": 0,
-  "recipes": [
-    {
-      "name": "weaponType.original",
-      "advancement": "splatcraft:unlocks/blaster",
-      "result": {
-        "item": "splatcraft:blaster",
-        "count": 1
-      },
-      "ingredients": [
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tabs/blasters",
+    "pos": 0,
+    "recipes": [
         {
-          "item": "splatcraft:sardinium",
-          "count": 10
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/blaster",
+            "result": {
+                "item": "splatcraft:blaster",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "item": "minecraft:gunpowder",
+                    "count": 12
+                }
+            ]
         },
         {
-          "item": "splatcraft:power_egg",
-          "count": 18
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 12
-        },
-        {
-          "item": "minecraft:gunpowder",
-          "count": 12
+            "name": "weaponType.grim",
+            "advancement": "splatcraft:unlocks/grim_blaster",
+            "result": {
+                "item": "splatcraft:grim_blaster",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 17
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "item": "minecraft:gunpowder",
+                    "count": 14
+                },
+                {
+                    "item": "minecraft:lime_dye",
+                    "count": 4
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "weaponType.grim",
-      "advancement": "splatcraft:unlocks/grim_blaster",
-      "result": {
-        "item": "splatcraft:grim_blaster",
-        "count": 1
-      },
-      "ingredients": [
-        {
-          "item": "splatcraft:sardinium",
-          "count": 8
-        },
-        {
-          "item": "splatcraft:power_egg",
-          "count": 17
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 12
-        },
-        {
-          "item": "minecraft:gunpowder",
-          "count": 14
-        },
-        {
-          "item": "minecraft:lime_dye",
-          "count": 4
-        }
-      ]
-    }
-  ]
+    ]
 }

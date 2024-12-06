@@ -17,15 +17,15 @@ public class RequestClearInkPacket extends PlayC2SPacket
         this.stageId = stageId;
     }
 
+    public static RequestClearInkPacket decode(FriendlyByteBuf buffer)
+    {
+        return new RequestClearInkPacket(buffer.readUtf());
+    }
+
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
         buffer.writeUtf(stageId);
-    }
-
-    public static RequestClearInkPacket decode(FriendlyByteBuf buffer)
-    {
-        return new RequestClearInkPacket(buffer.readUtf());
     }
 
     @Override

@@ -108,6 +108,16 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
         return false;
     }
 
+    public static InkedBlock glowing()
+    {
+        return new InkedBlock(defaultProperties().lightLevel(state -> GLOWING_LIGHT_LEVEL));
+    }
+
+    private static BlockState clearInk(LevelAccessor level, BlockPos pos)
+    {
+        return level.getBlockState(pos);
+    }
+
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type)
@@ -121,16 +131,6 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock
     {
 
         return SplatcraftTileEntities.inkedTileEntity.get().create(pos, state);
-    }
-
-    public static InkedBlock glowing()
-    {
-        return new InkedBlock(defaultProperties().lightLevel(state -> GLOWING_LIGHT_LEVEL));
-    }
-
-    private static BlockState clearInk(LevelAccessor level, BlockPos pos)
-    {
-        return level.getBlockState(pos);
     }
 
     @Override

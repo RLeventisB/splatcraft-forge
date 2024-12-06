@@ -78,7 +78,7 @@ public class TurfScannerItem extends RemoteItem
                         }
                     }
                     else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
-                            level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
+                        level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
                     {
                         color = coloredBlock.getColor(level, checkPos);
                         if (scores.containsKey(color))
@@ -140,7 +140,7 @@ public class TurfScannerItem extends RemoteItem
                             }
                         }
                         else if (level.getBlockState(checkPos).is(SplatcraftTags.Blocks.SCAN_TURF_SCORED) &&
-                                level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
+                            level.getBlockState(checkPos).getBlock() instanceof IColoredBlock coloredBlock)
                         {
                             color = coloredBlock.getColor(level, checkPos);
                             if (scores.containsKey(color))
@@ -218,7 +218,7 @@ public class TurfScannerItem extends RemoteItem
             BlockState state = chunk.getBlockState(blockpos);
 
             if (state.is(SplatcraftTags.Blocks.SCAN_TURF_IGNORED) || !InkBlockUtils.canInkPassthrough(level, blockpos) ||
-                    state.blocksMotion())
+                state.blocksMotion())
             {
                 break;
             }

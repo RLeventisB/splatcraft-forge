@@ -26,6 +26,39 @@ public class ShotDeviationHelper
         return new DeviationData(stack.getOrCreateTag());
     }
 
+    public static float updateShotDeviation(ItemStack stack, RandomSource random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
+    {
+        CompoundTag nbt = stack.getOrCreateTag();
+        float chance = nbt.getFloat("Deviation_Chance");
+        float airborneInfluence = nbt.getFloat("Deviation_Airborne_Influence");
+        float maxAngle = chance; // could be 0, but chance is a value less than 1 anyways and these water guns look wrong with perfect accuracy lol
+
+        if (random.nextFloat() <= chance)
+        {
+            maxAngle = Mth.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
+        }
+
+        if (chance < shotDeviationData.maxDeviateChance())
+            chance += Math.min(shotDeviationData.maxDeviateChance() - chance, shotDeviationData.chanceIncreasePerShot());
+
+        nbt.putFloat("Deviation_Remaining_Time_Decrease", shotDeviationData.chanceDecreaseDelay() + 1);
+        nbt.putFloat("Deviation_Chance", chance);
+        return maxAngle;
+    }
+
+    public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
+    {
+        CompoundTag nbt = stack.getOrCreateTag();
+        nbt.putFloat("Deviation_Airborne_Time", shotDeviationData.airborneContractDelay());
+        nbt.putFloat("Deviation_Airborne_Influence", 1);
+        nbt.putFloat("Deviation_Chance", shotDeviationData.deviationChanceWhenAirborne());
+    }
+
+    public static float getModifiedAirInfluence(float airborneInfluence)
+    {
+        return (float) Math.pow(1 - airborneInfluence, 2);
+    }
+
     public static final class DeviationData // you wouldn't guess how many times the code that gets these floats has changed
     {
         private final CompoundTag nbt;
@@ -89,38 +122,5 @@ public class ShotDeviationHelper
             data.setAirborneDecreaseDelay(airborneDecreaseDelay());
             data.setAirborneInfluence(airborneInfluence());
         }
-    }
-
-    public static float updateShotDeviation(ItemStack stack, RandomSource random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
-    {
-        CompoundTag nbt = stack.getOrCreateTag();
-        float chance = nbt.getFloat("Deviation_Chance");
-        float airborneInfluence = nbt.getFloat("Deviation_Airborne_Influence");
-        float maxAngle = chance; // could be 0, but chance is a value less than 1 anyways and these water guns look wrong with perfect accuracy lol
-
-        if (random.nextFloat() <= chance)
-        {
-            maxAngle = Mth.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
-        }
-
-        if (chance < shotDeviationData.maxDeviateChance())
-            chance += Math.min(shotDeviationData.maxDeviateChance() - chance, shotDeviationData.chanceIncreasePerShot());
-
-        nbt.putFloat("Deviation_Remaining_Time_Decrease", shotDeviationData.chanceDecreaseDelay() + 1);
-        nbt.putFloat("Deviation_Chance", chance);
-        return maxAngle;
-    }
-
-    public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
-    {
-        CompoundTag nbt = stack.getOrCreateTag();
-        nbt.putFloat("Deviation_Airborne_Time", shotDeviationData.airborneContractDelay());
-        nbt.putFloat("Deviation_Airborne_Influence", 1);
-        nbt.putFloat("Deviation_Chance", shotDeviationData.deviationChanceWhenAirborne());
-    }
-
-    public static float getModifiedAirInfluence(float airborneInfluence)
-    {
-        return (float) Math.pow(1 - airborneInfluence, 2);
     }
 }

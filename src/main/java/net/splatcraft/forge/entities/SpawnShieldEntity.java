@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpawnShieldEntity extends Entity implements IColoredEntity
 {
-    public final int MAX_ACTIVE_TIME = 20;
     private static final EntityDataAccessor<Integer> ACTIVE_TIME = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.FLOAT);
+    public final int MAX_ACTIVE_TIME = 20;
     private BlockPos spawnPadPos;
 
     public SpawnShieldEntity(EntityType<SpawnShieldEntity> type, Level level)
@@ -63,7 +63,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
             return;
 
         if (!(getSpawnPadPos() != null && level().getBlockEntity(getSpawnPadPos()) instanceof SpawnPadTileEntity spawnPad &&
-                spawnPad.isSpawnShield(this)))
+            spawnPad.isSpawnShield(this)))
         {
             discard();
             return;

@@ -46,7 +46,7 @@ public class DataHandler
     {
         SplatcraftPacketHandler.sendToAll(new UpdateWeaponSettingsPacket());
     }
-    
+
     public static class WeaponStatsListener extends SimpleJsonResourceReloadListener
     {
         public static final HashMap<String, Class<? extends AbstractWeaponSettings<?, ?>>> SETTING_TYPES = new HashMap<>()
@@ -86,7 +86,7 @@ public class DataHandler
 
                     AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(String.class).newInstance(key.toString());
                     settings.getCodec().parse(JsonOps.INSTANCE, json).resultOrPartial(msg -> Splatcraft.LOGGER.error("Failed to load weapon settings for %s: %s".formatted(key, msg))).ifPresent(
-                            settings::castAndDeserialize
+                        settings::castAndDeserialize
                     );
 
                     settings.registerStatTooltips();

@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstBombModel>
 {
-    private final BurstBombModel MODEL;
     private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/burst_bomb.png");
     private static final ResourceLocation OVERLAY_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/burst_bomb_ink.png");
+    private final BurstBombModel MODEL;
 
     public BurstBombRenderer(EntityRendererProvider.Context context)
     {

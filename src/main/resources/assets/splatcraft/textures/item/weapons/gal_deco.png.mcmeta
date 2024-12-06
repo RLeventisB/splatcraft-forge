@@ -1,7 +1,6 @@
 {
-  
-  "forge": 
-  {
-    "loader": "splatcraft:weapon_loader"
-  }
+
+    "forge": {
+        "loader": "splatcraft:weapon_loader"
+    }
 }

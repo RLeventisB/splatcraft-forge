@@ -54,7 +54,17 @@ import java.util.List;
 public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem
 {
     public static final int USE_DURATION = 72000;
-
+    private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, AbstractWeaponSettings<?, ?>> DEFAULTS = new HashMap<>() // a
+    {{
+        put(ShooterWeaponSettings.class, ShooterWeaponSettings.DEFAULT);
+        put(BlasterWeaponSettings.class, BlasterWeaponSettings.DEFAULT);
+        put(RollerWeaponSettings.class, RollerWeaponSettings.DEFAULT);
+        put(ChargerWeaponSettings.class, ChargerWeaponSettings.DEFAULT);
+        put(SlosherWeaponSettings.class, SlosherWeaponSettings.DEFAULT);
+        put(DualieWeaponSettings.class, DualieWeaponSettings.DEFAULT);
+        put(SubWeaponSettings.class, SubWeaponSettings.DEFAULT);
+        put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
+    }};
     public ResourceLocation settingsId;
     public boolean isSecret;
 
@@ -80,39 +90,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             }
             return InteractionResult.PASS;
         });
-    }
-
-    public abstract Class<S> getSettingsClass();
-
-    private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, AbstractWeaponSettings<?, ?>> DEFAULTS = new HashMap<>() // a
-    {{
-        put(ShooterWeaponSettings.class, ShooterWeaponSettings.DEFAULT);
-        put(BlasterWeaponSettings.class, BlasterWeaponSettings.DEFAULT);
-        put(RollerWeaponSettings.class, RollerWeaponSettings.DEFAULT);
-        put(ChargerWeaponSettings.class, ChargerWeaponSettings.DEFAULT);
-        put(SlosherWeaponSettings.class, SlosherWeaponSettings.DEFAULT);
-        put(DualieWeaponSettings.class, DualieWeaponSettings.DEFAULT);
-        put(SubWeaponSettings.class, SubWeaponSettings.DEFAULT);
-        put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
-    }};
-
-    public S getSettings(ItemStack stack)
-    {
-        ResourceLocation id = stack.hasTag() && stack.getTag().contains("Settings") ? new ResourceLocation(stack.getTag().getString("Settings")) : settingsId;
-
-        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
-            id = settingsId;
-
-        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
-            return (S) DEFAULTS.get(getSettingsClass());
-
-        return getSettingsClass().cast(DataHandler.WeaponStatsListener.SETTINGS.get(id));
-    }
-
-    public <T extends WeaponBaseItem<?>> T setSecret(boolean secret)
-    {
-        isSecret = secret;
-        return (T) this;
     }
 
     public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage)
@@ -193,6 +170,27 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     {
         entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
             ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+    }
+
+    public abstract Class<S> getSettingsClass();
+
+    public S getSettings(ItemStack stack)
+    {
+        ResourceLocation id = stack.hasTag() && stack.getTag().contains("Settings") ? new ResourceLocation(stack.getTag().getString("Settings")) : settingsId;
+
+        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
+            id = settingsId;
+
+        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
+            return (S) DEFAULTS.get(getSettingsClass());
+
+        return getSettingsClass().cast(DataHandler.WeaponStatsListener.SETTINGS.get(id));
+    }
+
+    public <T extends WeaponBaseItem<?>> T setSecret(boolean secret)
+    {
+        isSecret = secret;
+        return (T) this;
     }
 
     @Override
@@ -382,11 +380,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         public float timer;
         public boolean isDoingEndlag = false;
 
-        public T getItem()
-        {
-            return (T) storedStack.getItem();
-        }
-
         public WeaponFireCooldown(ItemStack stack, float initialTimer, float startupFrames, float endlagFrames, int slotIndex, InteractionHand hand, boolean isGrounded)
         {
             super(stack, 100, slotIndex, hand, true, false, true, isGrounded);
@@ -402,6 +395,11 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             endlagFrames = nbt.getFloat("EndlagFrames");
             timer = nbt.getFloat("Timer");
             isDoingEndlag = nbt.getBoolean("DoingEndlag");
+        }
+
+        public T getItem()
+        {
+            return (T) storedStack.getItem();
         }
 
         @Override

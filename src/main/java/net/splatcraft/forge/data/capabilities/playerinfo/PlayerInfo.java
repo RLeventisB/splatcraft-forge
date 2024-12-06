@@ -128,14 +128,14 @@ public class PlayerInfo
         playerCharge = charge;
     }
 
-    public void setSquidSurgeCharge(float squidSurgeCharge)
-    {
-        this.squidSurgeCharge = squidSurgeCharge;
-    }
-
     public float getSquidSurgeCharge()
     {
         return squidSurgeCharge;
+    }
+
+    public void setSquidSurgeCharge(float squidSurgeCharge)
+    {
+        this.squidSurgeCharge = squidSurgeCharge;
     }
 
     public int getDodgeCount()
@@ -148,14 +148,14 @@ public class PlayerInfo
         this.dodgeCount = dodgeCount;
     }
 
-    public void setPlaying(boolean playing)
-    {
-        isPlaying = playing;
-    }
-
     public boolean isPlaying()
     {
         return isPlaying;
+    }
+
+    public void setPlaying(boolean playing)
+    {
+        isPlaying = playing;
     }
 
     public CompoundTag writeNBT(CompoundTag nbt)

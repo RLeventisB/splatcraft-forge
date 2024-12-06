@@ -13,8 +13,8 @@ import net.splatcraft.forge.util.WeaponTooltip;
 
 public class SubWeaponSettings extends AbstractWeaponSettings<SubWeaponSettings, SubWeaponSettings.DataRecord>
 {
-    public DataRecord subDataRecord = DataRecord.DEFAULT;
     public static final SubWeaponSettings DEFAULT = new SubWeaponSettings("default");
+    public DataRecord subDataRecord = DataRecord.DEFAULT;
 
     public SubWeaponSettings(String name)
     {

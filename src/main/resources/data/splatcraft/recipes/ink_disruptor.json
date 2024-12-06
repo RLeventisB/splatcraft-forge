@@ -1,26 +1,26 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    " # ",
-    "#S#",
-    "PAP"
-  ],
-  "key": {
-    "#": {
-      "item": "splatcraft:sardinium"
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " # ",
+        "#S#",
+        "PAP"
+    ],
+    "key": {
+        "#": {
+            "item": "splatcraft:sardinium"
+        },
+        "P": {
+            "item": "splatcraft:power_egg"
+        },
+        "A": {
+            "item": "splatcraft:ammo_knights_scrap"
+        },
+        "S": {
+            "item": "minecraft:water_bucket"
+        }
     },
-    "P": {
-      "item": "splatcraft:power_egg"
-    },
-    "A": {
-      "item": "splatcraft:ammo_knights_scrap"
-    },
-    "S": {
-      "item": "minecraft:water_bucket"
+    "result": {
+        "item": "splatcraft:ink_disruptor",
+        "count": 1
     }
-  },
-  "result": {
-    "item": "splatcraft:ink_disruptor",
-    "count": 1
-  }
 }

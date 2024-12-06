@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 public class InkExplosionParticleData extends InkSplashParticleData
 {
     public static final Codec<InkExplosionParticleData> CODEC = RecordCodecBuilder.create(
-            p_239803_0_ -> p_239803_0_.group(
-                    Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
-                    Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
-                    Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue),
-                    Codec.FLOAT.fieldOf("scale").forGetter(p_239804_0_ -> p_239804_0_.scale)
-            ).apply(p_239803_0_, InkExplosionParticleData::new)
+        p_239803_0_ -> p_239803_0_.group(
+            Codec.FLOAT.fieldOf("r").forGetter(p_239807_0_ -> p_239807_0_.red),
+            Codec.FLOAT.fieldOf("g").forGetter(p_239806_0_ -> p_239806_0_.green),
+            Codec.FLOAT.fieldOf("b").forGetter(p_239805_0_ -> p_239805_0_.blue),
+            Codec.FLOAT.fieldOf("scale").forGetter(p_239804_0_ -> p_239804_0_.scale)
+        ).apply(p_239803_0_, InkExplosionParticleData::new)
     );
     @SuppressWarnings("deprecation")
     public static final Deserializer<InkExplosionParticleData> DESERIALIZER = new Deserializer<>()

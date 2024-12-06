@@ -23,9 +23,6 @@ import java.util.HashMap;
 public class StageCreationScreen extends AbstractStagePadScreen
 {
     private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_create.png");
-
-    protected String stageId = "";
-
     public static BlockPos corner1;
     public static BlockPos corner2;
     public static ResourceLocation dimension;
@@ -33,10 +30,9 @@ public class StageCreationScreen extends AbstractStagePadScreen
     @Nullable
     //null when stage creation screen was closed via escape key, opens creation menu back up without setting a corner pos
     static Boolean setCorner1 = null;
-
-    private MenuTextBox stageName;
     private final MenuButton createButton;
-
+    protected String stageId = "";
+    private MenuTextBox stageName;
     private boolean pendingCreation = false;
 
     public StageCreationScreen(Component label, @Nullable Screen parent, String savedStageName, @Nullable BlockPos cornerA, @Nullable BlockPos cornerB)
@@ -70,11 +66,11 @@ public class StageCreationScreen extends AbstractStagePadScreen
         }));
 
         addButton(new MenuButton(51, 107, 50, 12, goToScreen(() -> parent),
-                MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.button.cancel"), true), MenuButton.ButtonColor.RED));
+            MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.button.cancel"), true), MenuButton.ButtonColor.RED));
         addButton(new MenuButton(167, 70, 30, 12, (b) -> clickSetCornerButton(b, true),
-                showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
         addButton(new MenuButton(167, 88, 30, 12, (b) -> clickSetCornerButton(b, false),
-                showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
         createButton = addButton(new MenuButton(107, 107, 50, 12, (b) ->
         {
             if (canCreate())
@@ -104,6 +100,18 @@ public class StageCreationScreen extends AbstractStagePadScreen
     public StageCreationScreen(Component label, @Nullable Screen parent)
     {
         this(label, parent, savedName, corner1, corner2);
+    }
+
+    protected static String getShortenedInt(int v)
+    {
+        if (Integer.toString(v).length() > 5)
+            for (NumberLetters nl : NumberLetters.values())
+            {
+                if (nl.minValue <= Math.abs(v))
+                    return Integer.toString((int) (v / nl.minValue)) + nl.letter;
+            }
+
+        return String.valueOf(v);
     }
 
     protected void clickSetCornerButton(Button button, boolean isCorner1)
@@ -220,18 +228,6 @@ public class StageCreationScreen extends AbstractStagePadScreen
     public String getStageId()
     {
         return stageId;
-    }
-
-    protected static String getShortenedInt(int v)
-    {
-        if (Integer.toString(v).length() > 5)
-            for (NumberLetters nl : NumberLetters.values())
-            {
-                if (nl.minValue <= Math.abs(v))
-                    return Integer.toString((int) (v / nl.minValue)) + nl.letter;
-            }
-
-        return String.valueOf(v);
     }
 
     enum NumberLetters

@@ -14,20 +14,18 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class ServerGamePacketMixin
 {
 
-	//Hijacking move packet to prevent players from being kicked out for flying
-	//Please forge make an event for this or something >_>
+    //Hijacking move packet to prevent players from being kicked out for flying
+    //Please forge make an event for this or something >_>
 
-	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))
-	public boolean isChangingDimOrSuperjumping(ServerPlayer player, Operation<Boolean> original)
-	{
-		return original.call(player) || PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump;
-	}
+    @WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))
+    public boolean isChangingDimOrSuperjumping(ServerPlayer player, Operation<Boolean> original)
+    {
+        return original.call(player) || PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump;
+    }
 
-	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isAutoSpinAttack()Z"))
-	public boolean isSpinninggOrSuperJumping(ServerPlayer player, Operation<Boolean> original)
-	{
-		return original.call(player) || PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump;
-	}
-
-
+    @WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isAutoSpinAttack()Z"))
+    public boolean isSpinninggOrSuperJumping(ServerPlayer player, Operation<Boolean> original)
+    {
+        return original.call(player) || PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump;
+    }
 }

@@ -16,6 +16,7 @@ public class ReleaseChargePacket extends PlayC2SPacket
     {
         this(charge, stack, true);
     }
+
     public ReleaseChargePacket(float charge, ItemStack stack, boolean resetCharge)
     {
         this.charge = charge;
@@ -31,17 +32,19 @@ public class ReleaseChargePacket extends PlayC2SPacket
     @Override
     public void execute(Player player)
     {
-        if (!PlayerCharge.hasCharge(player)) {
+        if (!PlayerCharge.hasCharge(player))
+        {
             throw new IllegalStateException(
-                    String.format("%s attempted to release a charge (%.2f; %s), but the server does not recall them having a charge",
-                            player.getGameProfile(), charge, stack.getItem()));
+                String.format("%s attempted to release a charge (%.2f; %s), but the server does not recall them having a charge",
+                    player.getGameProfile(), charge, stack.getItem()));
         }
 
-        if (stack.getItem() instanceof IChargeableWeapon weapon) {
+        if (stack.getItem() instanceof IChargeableWeapon weapon)
+        {
             weapon.onReleaseCharge(player.level(), player, stack, charge);
         }
 
-        if(resetCharge)
+        if (resetCharge)
             PlayerCharge.updateServerMap(player, false);
     }
 

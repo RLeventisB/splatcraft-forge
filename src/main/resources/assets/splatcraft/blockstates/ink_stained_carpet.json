@@ -1,7 +1,7 @@
 {
-  "variants": {
-    "": {
-      "model": "splatcraft:block/ink_stained_carpet"
+    "variants": {
+        "": {
+            "model": "splatcraft:block/ink_stained_carpet"
+        }
     }
-  }
 }

@@ -21,7 +21,7 @@ public interface IColoredBlock
 
     default void setInverted(Level level, BlockPos pos, boolean inverted)
     {
-        if(level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
+        if (level.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
             colorTileEntity.setInverted(inverted);
     }
 

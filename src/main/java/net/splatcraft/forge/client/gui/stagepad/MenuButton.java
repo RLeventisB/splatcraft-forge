@@ -17,16 +17,15 @@ import static net.splatcraft.forge.client.gui.stagepad.AbstractStagePadScreen.WI
 
 public class MenuButton extends Button
 {
-    ButtonColor color;
-    final PostDraw draw;
-    final OnTooltip onTooltip;
-
-    int relativeX;
-    int relativeY;
     public static final OnTooltip NO_TOOLTIP = (h, e, l, o, partialTicks) -> {
     };
     public static OnPress DO_NOTHING = (v) -> {
     };
+    final PostDraw draw;
+    final OnTooltip onTooltip;
+    ButtonColor color;
+    int relativeX;
+    int relativeY;
 
     public MenuButton(int x, int y, int width, OnPress onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color)
     {
@@ -48,7 +47,7 @@ public class MenuButton extends Button
     {
         if (!visible)
             return;
-        
+
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, WIDGETS);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
@@ -107,11 +106,6 @@ public class MenuButton extends Button
         this.color = color;
     }
 
-    public interface PostDraw
-    {
-        void apply(GuiGraphics guiGraphics, MenuButton button);
-    }
-
     public enum ButtonColor
     {
         GREEN,
@@ -120,6 +114,11 @@ public class MenuButton extends Button
         CYAN,
         RED,
         YELLOW
+    }
+
+    public interface PostDraw
+    {
+        void apply(GuiGraphics guiGraphics, MenuButton button);
     }
 
     @OnlyIn(Dist.CLIENT)

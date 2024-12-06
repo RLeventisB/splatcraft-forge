@@ -35,9 +35,9 @@ import java.util.UUID;
 public class ClientUtils
 {
     @OnlyIn(Dist.CLIENT)
-    protected static final TreeMap<UUID, Integer> clientColors = new TreeMap<>();
-    @OnlyIn(Dist.CLIENT)
     public static final HashMap<String, Stage> clientStages = new HashMap<>();
+    @OnlyIn(Dist.CLIENT)
+    protected static final TreeMap<UUID, Integer> clientColors = new TreeMap<>();
 
     @OnlyIn(Dist.CLIENT)
     public static void resetClientColors()

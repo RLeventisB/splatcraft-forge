@@ -28,7 +28,6 @@ public class InkStainedSlabBlock extends SlabBlock implements IColoredBlock, Ent
     {
         super(properties);
         SplatcraftBlocks.inkColoredBlocks.add(this);
-
     }
 
     @Override

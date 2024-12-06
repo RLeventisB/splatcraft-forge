@@ -36,10 +36,9 @@ import java.util.function.Consumer;
 public class InkTankItem extends ColoredArmorItem
 {
     public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
-
+    private static boolean initModels = false;
     public final float capacity;
     public final Properties properties;
-
     @OnlyIn(Dist.CLIENT)
     private AbstractInkTankModel model;
 
@@ -160,8 +159,6 @@ public class InkTankItem extends ColoredArmorItem
             }
         }
     }
-
-    private static boolean initModels = false;
 
     @OnlyIn(Dist.CLIENT)
     @Override

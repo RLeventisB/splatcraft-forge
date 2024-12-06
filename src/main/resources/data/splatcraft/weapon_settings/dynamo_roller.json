@@ -1,39 +1,39 @@
 {
-	"type": "splatcraft:roller",
-	"roll": {
-		"ink_size": 4,
-		"hitbox_size": 7,
-		"ink_consumption": 0.06,
-		"ink_recovery_cooldown": 7,
-		"damage": 32,
-		"mobility": 0.88
-	},
-	"swing": {
-		"swing_blob_count": 26,
-		"swing_attack_angle": 35,
-		"allow_jumping_on_charge": true,
-		"mobility": 0.24,
-		"ink_consumption": 18,
-		"ink_recovery_cooldown": 22,
-		"projectile_speed": 2.5,
-		"startup_time": 15,
-		"base_damage": 36,
-		"letal_angle": 14.5,
-		"min_damage": 8,
-		"damage_decay_start_tick": 3,
-		"damage_decay_per_tick": 1.9,
-		"straight_ticks": 1,
-		"horizontal_drag": 0.93
-	},
-	"fling": {
-		"ink_recovery_cooldown": 26,
-		"projectile_speed": 0.98,
-		"startup_time": 18,
-		"base_damage": 36,
-		"min_damage": 8,
-		"damage_decay_start_tick": 6,
-		"damage_decay_per_tick": 1.6,
-		"straight_ticks": 6,
-		"horizontal_drag": 0.9
-	}
+    "type": "splatcraft:roller",
+    "roll": {
+        "ink_size": 4,
+        "hitbox_size": 7,
+        "ink_consumption": 0.06,
+        "ink_recovery_cooldown": 7,
+        "damage": 32,
+        "mobility": 0.88
+    },
+    "swing": {
+        "swing_blob_count": 26,
+        "swing_attack_angle": 35,
+        "allow_jumping_on_charge": true,
+        "mobility": 0.24,
+        "ink_consumption": 18,
+        "ink_recovery_cooldown": 22,
+        "projectile_speed": 2.5,
+        "startup_time": 15,
+        "base_damage": 36,
+        "letal_angle": 14.5,
+        "min_damage": 8,
+        "damage_decay_start_tick": 3,
+        "damage_decay_per_tick": 1.9,
+        "straight_ticks": 1,
+        "horizontal_drag": 0.93
+    },
+    "fling": {
+        "ink_recovery_cooldown": 26,
+        "projectile_speed": 0.98,
+        "startup_time": 18,
+        "base_damage": 36,
+        "min_damage": 8,
+        "damage_decay_start_tick": 6,
+        "damage_decay_per_tick": 1.6,
+        "straight_ticks": 6,
+        "horizontal_drag": 0.9
+    }
 }

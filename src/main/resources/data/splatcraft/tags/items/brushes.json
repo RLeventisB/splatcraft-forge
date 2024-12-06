@@ -1,8 +1,8 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:inkbrush",
-    "splatcraft:octobrush",
-    "splatcraft:kensa_octobrush"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:inkbrush",
+        "splatcraft:octobrush",
+        "splatcraft:kensa_octobrush"
+    ]
 }

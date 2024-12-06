@@ -22,16 +22,16 @@ public class RequestTurfScanPacket extends PlayC2SPacket
         this.isTopDown = isTopDown;
     }
 
+    public static RequestTurfScanPacket decode(FriendlyByteBuf buffer)
+    {
+        return new RequestTurfScanPacket(buffer.readUtf(), buffer.readBoolean());
+    }
+
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
         buffer.writeUtf(stageId);
         buffer.writeBoolean(isTopDown);
-    }
-
-    public static RequestTurfScanPacket decode(FriendlyByteBuf buffer)
-    {
-        return new RequestTurfScanPacket(buffer.readUtf(), buffer.readBoolean());
     }
 
     @Override

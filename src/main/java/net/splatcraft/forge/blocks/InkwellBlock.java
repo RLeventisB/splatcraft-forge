@@ -50,9 +50,9 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final SoundType SOUND_TYPE = new ForgeSoundType(1.0F, 1.0F, () -> SoundEvents.STONE_BREAK, () -> SoundEvents.SLIME_BLOCK_STEP, () -> SoundEvents.GLASS_PLACE, () -> SoundEvents.GLASS_HIT, () -> SoundEvents.SLIME_BLOCK_FALL);
     private static final VoxelShape SHAPE = Shapes.or(
-            box(0, 0, 0, 16, 12, 16),
-            box(1, 12, 1, 14, 13, 14),
-            box(0, 13, 0, 16, 16, 16));
+        box(0, 0, 0, 16, 12, 16),
+        box(1, 12, 1, 14, 13, 14),
+        box(0, 13, 0, 16, 16, 16));
 
     public InkwellBlock()
     {
@@ -60,6 +60,19 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
         this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false));
 
         SplatcraftBlocks.inkColoredBlocks.add(this);
+    }
+
+    private static void tick(Level level, BlockPos pos, BlockState state, InkColorTileEntity t)
+    {
+        AABB bb = new AABB(t.getBlockPos().above());
+
+        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, bb))
+        {
+            ItemStack stack = entity.getItem();
+
+            if (inkCoatingRecipes.containsKey(stack.getItem()))
+                entity.setItem(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(inkCoatingRecipes.get(stack.getItem()), stack.getCount()), t.getColor()), true));
+        }
     }
 
     @Override
@@ -208,18 +221,5 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> blockEntityType)
     {
         return level.isClientSide() ? null : (tickLevel, pos, tickState, te) -> tick(tickLevel, pos, tickState, (InkColorTileEntity) te);
-    }
-
-    private static void tick(Level level, BlockPos pos, BlockState state, InkColorTileEntity t)
-    {
-        AABB bb = new AABB(t.getBlockPos().above());
-
-        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, bb))
-        {
-            ItemStack stack = entity.getItem();
-
-            if (inkCoatingRecipes.containsKey(stack.getItem()))
-                entity.setItem(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(inkCoatingRecipes.get(stack.getItem()), stack.getCount()), t.getColor()), true));
-        }
     }
 }

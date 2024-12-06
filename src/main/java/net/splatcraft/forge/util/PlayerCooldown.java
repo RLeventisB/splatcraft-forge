@@ -29,23 +29,10 @@ import static net.splatcraft.forge.Splatcraft.MODID;
 @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PlayerCooldown
 {
+    public static final int OVERLOAD_LIMIT = -28800;
     public static Supplier<IForgeRegistry<Class<? extends PlayerCooldown>>> REGISTRY;
-
-    @SubscribeEvent
-    public static void registerRegistry(final NewRegistryEvent event)
-    {
-        RegistryBuilder<Class<? extends PlayerCooldown>> registryBuilder = new RegistryBuilder<>();
-        registryBuilder.setName(new ResourceLocation(MODID, "player_cooldowns"));
-        REGISTRY = event.create(registryBuilder, (registry) ->
-        {
-            registry.register(new ResourceLocation(MODID, "superjump"), SuperJumpCommand.SuperJump.class);
-            registry.register(new ResourceLocation(MODID, "sloshcooldown"), SlosherItem.SloshCooldown.class);
-            registry.register(new ResourceLocation(MODID, "dodgerollcooldown"), DualieItem.DodgeRollCooldown.class);
-            registry.register(new ResourceLocation(MODID, "blastercooldown"), BlasterItem.BlasterCooldown.class);
-            registry.register(new ResourceLocation(MODID, "weaponfirecooldown"), WeaponBaseItem.WeaponFireCooldown.class);
-        });
-    }
-
+    public ItemStack storedStack;
+    public boolean cancellable = false;
     float maxTime;
     int slotIndex;
     InteractionHand hand;
@@ -53,12 +40,7 @@ public class PlayerCooldown
     boolean forceCrouch;
     boolean preventWeaponUse;
     boolean isGrounded;
-    public ItemStack storedStack;
     float time;
-
-    public boolean cancellable = false;
-
-    public static final int OVERLOAD_LIMIT = -28800;
 
     public PlayerCooldown(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
     {
@@ -83,17 +65,19 @@ public class PlayerCooldown
         fromNbt(nbt);
     }
 
-    public final void fromNbt(CompoundTag nbt)
+    @SubscribeEvent
+    public static void registerRegistry(final NewRegistryEvent event)
     {
-        this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
-        this.time = nbt.getFloat("Time");
-        this.maxTime = nbt.getFloat("MaxTime");
-        this.slotIndex = nbt.getInt("SlotIndex");
-        this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-        this.canMove = nbt.getBoolean("CanMove");
-        this.forceCrouch = nbt.getBoolean("ForceCrouch");
-        this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
-        this.isGrounded = nbt.getBoolean("IsGrounded");
+        RegistryBuilder<Class<? extends PlayerCooldown>> registryBuilder = new RegistryBuilder<>();
+        registryBuilder.setName(new ResourceLocation(MODID, "player_cooldowns"));
+        REGISTRY = event.create(registryBuilder, (registry) ->
+        {
+            registry.register(new ResourceLocation(MODID, "superjump"), SuperJumpCommand.SuperJump.class);
+            registry.register(new ResourceLocation(MODID, "sloshcooldown"), SlosherItem.SloshCooldown.class);
+            registry.register(new ResourceLocation(MODID, "dodgerollcooldown"), DualieItem.DodgeRollCooldown.class);
+            registry.register(new ResourceLocation(MODID, "blastercooldown"), BlasterItem.BlasterCooldown.class);
+            registry.register(new ResourceLocation(MODID, "weaponfirecooldown"), WeaponBaseItem.WeaponFireCooldown.class);
+        });
     }
 
     public static PlayerCooldown readNBT(CompoundTag nbt)
@@ -114,12 +98,6 @@ public class PlayerCooldown
         }
 
         return new PlayerCooldown(nbt);
-    }
-
-    public PlayerCooldown setCancellable()
-    {
-        this.cancellable = true;
-        return this;
     }
 
     public static PlayerCooldown getPlayerCooldown(LivingEntity player)
@@ -164,6 +142,25 @@ public class PlayerCooldown
             return false;
         PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
         return cooldown != null;
+    }
+
+    public final void fromNbt(CompoundTag nbt)
+    {
+        this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
+        this.time = nbt.getFloat("Time");
+        this.maxTime = nbt.getFloat("MaxTime");
+        this.slotIndex = nbt.getInt("SlotIndex");
+        this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        this.canMove = nbt.getBoolean("CanMove");
+        this.forceCrouch = nbt.getBoolean("ForceCrouch");
+        this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
+        this.isGrounded = nbt.getBoolean("IsGrounded");
+    }
+
+    public PlayerCooldown setCancellable()
+    {
+        this.cancellable = true;
+        return this;
     }
 
     public boolean canMove()

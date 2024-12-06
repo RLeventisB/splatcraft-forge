@@ -79,28 +79,6 @@ public class InkColorTags
             return result;
         }
 
-        @Override
-        protected void apply(@NotNull Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
-        {
-            entries.clear();
-            entriesThatReferenceAnotherTag.clear();
-            for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
-            {
-                ResourceLocation key = entry.getKey();
-                JsonElement j = entry.getValue();
-                JsonObject json = j.getAsJsonObject();
-                if (json.has("values"))
-                {
-                    // this is cursed syntax
-                    (hasReferenceToAnotherTag(json) ? entriesThatReferenceAnotherTag : entries).add(entry);
-                }
-                else
-                {
-                    resourceList.remove(key);
-                }
-            }
-        }
-
         public static void doLoad()
         {
             for (var entry : REGISTRY.entrySet())
@@ -174,6 +152,28 @@ public class InkColorTags
                 }
             }
             return false;
+        }
+
+        @Override
+        protected void apply(@NotNull Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
+        {
+            entries.clear();
+            entriesThatReferenceAnotherTag.clear();
+            for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
+            {
+                ResourceLocation key = entry.getKey();
+                JsonElement j = entry.getValue();
+                JsonObject json = j.getAsJsonObject();
+                if (json.has("values"))
+                {
+                    // this is cursed syntax
+                    (hasReferenceToAnotherTag(json) ? entriesThatReferenceAnotherTag : entries).add(entry);
+                }
+                else
+                {
+                    resourceList.remove(key);
+                }
+            }
         }
     }
 }

@@ -22,15 +22,48 @@ import java.util.List;
 
 public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 {
+    public final List<WeaponWorkbenchSubtypeRecipe> siblings = new ArrayList<>();
     private final ResourceLocation advancement;
     private final boolean requireOther;
-    public final List<WeaponWorkbenchSubtypeRecipe> siblings = new ArrayList<>();
 
     public WeaponWorkbenchSubtypeRecipe(ResourceLocation id, Component name, ItemStack recipeOutput, NonNullList<StackedIngredient> recipeItems, ResourceLocation advancement, boolean requireOther)
     {
         super(id, name, recipeOutput, recipeItems);
         this.advancement = advancement;
         this.requireOther = requireOther;
+    }
+
+    public static WeaponWorkbenchSubtypeRecipe fromJson(ResourceLocation recipeId, JsonObject json)
+    {
+        JsonObject resultJson = GsonHelper.getAsJsonObject(json, "result");
+        ItemStack output = ShapedRecipe.itemStackFromJson(resultJson);
+
+        if (resultJson.has("nbt"))
+            output.setTag(JsonUtils.readNBT(resultJson, "nbt"));
+
+        NonNullList<StackedIngredient> input = readIngredients(json.getAsJsonArray("ingredients"));
+
+        Component displayComponent;
+
+        if (GsonHelper.isStringValue(json, "name"))
+            displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
+        else
+            displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : Component.literal("null");
+
+        ResourceLocation advancement = json.has("advancement") && !GsonHelper.getAsString(json, "advancement").isEmpty()
+            ? new ResourceLocation(GsonHelper.getAsString(json, "advancement")) : null;
+
+        return new WeaponWorkbenchSubtypeRecipe(recipeId, displayComponent, output, input, advancement, GsonHelper.getAsBoolean(json, "requires_other", false));
+    }
+
+    public static WeaponWorkbenchSubtypeRecipe fromBuffer(ResourceLocation recipeId, FriendlyByteBuf buffer)
+    {
+        int i = buffer.readVarInt();
+        NonNullList<StackedIngredient> input = NonNullList.withSize(i, StackedIngredient.EMPTY);
+
+        input.replaceAll(ignored -> new StackedIngredient(Ingredient.fromNetwork(buffer), buffer.readInt()));
+
+        return new WeaponWorkbenchSubtypeRecipe(recipeId, buffer.readComponent(), buffer.readItem(), input, buffer.readBoolean() ? new ResourceLocation(buffer.readUtf()) : null, buffer.readBoolean());
     }
 
     public boolean isAvailable(Player player)
@@ -58,39 +91,6 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 
         Advancement advancement = clientPlayer.connection.getAdvancements().getAdvancements().get(this.advancement);
         return clientPlayer.connection.getAdvancements().progress.containsKey(advancement) && clientPlayer.connection.getAdvancements().progress.get(advancement).isDone();
-    }
-
-    public static WeaponWorkbenchSubtypeRecipe fromJson(ResourceLocation recipeId, JsonObject json)
-    {
-        JsonObject resultJson = GsonHelper.getAsJsonObject(json, "result");
-        ItemStack output = ShapedRecipe.itemStackFromJson(resultJson);
-
-        if (resultJson.has("nbt"))
-            output.setTag(JsonUtils.readNBT(resultJson, "nbt"));
-
-        NonNullList<StackedIngredient> input = readIngredients(json.getAsJsonArray("ingredients"));
-
-        Component displayComponent;
-
-        if (GsonHelper.isStringValue(json, "name"))
-            displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
-        else
-            displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : Component.literal("null");
-
-        ResourceLocation advancement = json.has("advancement") && !GsonHelper.getAsString(json, "advancement").isEmpty()
-                ? new ResourceLocation(GsonHelper.getAsString(json, "advancement")) : null;
-
-        return new WeaponWorkbenchSubtypeRecipe(recipeId, displayComponent, output, input, advancement, GsonHelper.getAsBoolean(json, "requires_other", false));
-    }
-
-    public static WeaponWorkbenchSubtypeRecipe fromBuffer(ResourceLocation recipeId, FriendlyByteBuf buffer)
-    {
-        int i = buffer.readVarInt();
-        NonNullList<StackedIngredient> input = NonNullList.withSize(i, StackedIngredient.EMPTY);
-
-        input.replaceAll(ignored -> new StackedIngredient(Ingredient.fromNetwork(buffer), buffer.readInt()));
-
-        return new WeaponWorkbenchSubtypeRecipe(recipeId, buffer.readComponent(), buffer.readItem(), input, buffer.readBoolean() ? new ResourceLocation(buffer.readUtf()) : null, buffer.readBoolean());
     }
 
     public void toBuffer(FriendlyByteBuf buffer)

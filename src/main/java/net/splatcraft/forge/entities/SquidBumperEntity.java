@@ -442,6 +442,11 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
         return entityData.get(RESPAWN_TIME);
     }
 
+    public void setRespawnTime(int value)
+    {
+        entityData.set(RESPAWN_TIME, value);
+    }
+
     public boolean isImmortal()
     {
         return entityData.get(IMMORTAL);
@@ -455,11 +460,6 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     public float getBumperScale(float partialTicks)
     {
         return getInkHealth() <= 0 ? (10 - Math.min(Mth.lerp(partialTicks, prevRespawnTime, getRespawnTime()), 10)) / 10f : 1;
-    }
-
-    public void setRespawnTime(int value)
-    {
-        entityData.set(RESPAWN_TIME, value);
     }
 
     public void ink(float damage, int color)

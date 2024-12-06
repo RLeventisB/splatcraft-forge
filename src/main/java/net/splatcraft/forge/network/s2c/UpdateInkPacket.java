@@ -31,6 +31,22 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
         this.dirty = dirty;
     }
 
+    public static UpdateInkPacket decode(FriendlyByteBuf buffer)
+    {
+        ChunkPos chunkPos = buffer.readChunkPos();
+        int changedBlocks = buffer.readInt();
+        HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>(changedBlocks);
+
+        for (int i = 0; i < changedBlocks; i++)
+        {
+            BlockPos pos = buffer.readBlockPos();
+            ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
+            dirty.put(pos, entry);
+        }
+
+        return new UpdateInkPacket(chunkPos, dirty);
+    }
+
     @Override
     public void add(Level level, BlockPos pos)
     {
@@ -57,22 +73,6 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
             buffer.writeBlockPos(blockPos);
             blockPosTupleEntry.getValue().writeToBuffer(buffer);
         }
-    }
-
-    public static UpdateInkPacket decode(FriendlyByteBuf buffer)
-    {
-        ChunkPos chunkPos = buffer.readChunkPos();
-        int changedBlocks = buffer.readInt();
-        HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>(changedBlocks);
-
-        for (int i = 0; i < changedBlocks; i++)
-        {
-            BlockPos pos = buffer.readBlockPos();
-            ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
-            dirty.put(pos, entry);
-        }
-
-        return new UpdateInkPacket(chunkPos, dirty);
     }
 
     @Override

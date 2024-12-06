@@ -6,8 +6,8 @@ import net.minecraft.world.level.material.MapColor;
 
 public class OreBlock extends Block
 {
-	public OreBlock()
-	{
-		super(Properties.of().mapColor(MapColor.STONE).instrument(NoteBlockInstrument.BASEDRUM).strength(3.0F, 3.0F).requiresCorrectToolForDrops());
-	}
+    public OreBlock()
+    {
+        super(Properties.of().mapColor(MapColor.STONE).instrument(NoteBlockInstrument.BASEDRUM).strength(3.0F, 3.0F).requiresCorrectToolForDrops());
+    }
 }

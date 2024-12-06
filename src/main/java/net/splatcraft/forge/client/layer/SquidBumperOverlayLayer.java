@@ -16,23 +16,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperOverlayLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>
 {
-	private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/squid_bumper.png");
-	private final SquidBumperModel model;
+    private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/squid_bumper.png");
+    private final SquidBumperModel model;
 
-	public SquidBumperOverlayLayer(RenderLayerParent<SquidBumperEntity, SquidBumperModel> renderer, EntityModelSet modelSet)
-	{
-		super(renderer);
-		model = new SquidBumperModel(modelSet.bakeLayer(SquidBumperModel.LAYER_LOCATION));
-	}
+    public SquidBumperOverlayLayer(RenderLayerParent<SquidBumperEntity, SquidBumperModel> renderer, EntityModelSet modelSet)
+    {
+        super(renderer);
+        model = new SquidBumperModel(modelSet.bakeLayer(SquidBumperModel.LAYER_LOCATION));
+    }
 
-	@Override
-	public void render(@NotNull PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
-	{
-		getParentModel().copyPropertiesTo(model);
-		model.prepareMobModel(entity, limbSwing, limbSwingAmount, headPitch);
-		model.setupAnim(entity, limbSwing, limbSwingAmount, partialTickTime, ageInTicks, netHeadYaw);
+    @Override
+    public void render(@NotNull PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
+    {
+        getParentModel().copyPropertiesTo(model);
+        model.prepareMobModel(entity, limbSwing, limbSwingAmount, headPitch);
+        model.setupAnim(entity, limbSwing, limbSwingAmount, partialTickTime, ageInTicks, netHeadYaw);
 
-		VertexConsumer ivertexbuilder = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
-		model.renderToBuffer(poseStack, ivertexbuilder, packedLight, LivingEntityRenderer.getOverlayCoords(entity, 0.0F), 1, 1, 1, 1.0F);
-	}
+        VertexConsumer ivertexbuilder = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        model.renderToBuffer(poseStack, ivertexbuilder, packedLight, LivingEntityRenderer.getOverlayCoords(entity, 0.0F), 1, 1, 1, 1.0F);
+    }
 }

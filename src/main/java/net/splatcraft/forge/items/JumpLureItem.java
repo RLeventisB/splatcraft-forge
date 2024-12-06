@@ -48,29 +48,6 @@ public class JumpLureItem extends Item implements IColoredItem
         SplatcraftItems.inkColoredItems.add(this);
     }
 
-    @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flags)
-    {
-        super.appendHoverText(stack, level, tooltip, flags);
-        if (I18n.exists(getDescriptionId() + ".tooltip"))
-            tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
-        boolean inverted = ColorUtils.isInverted(stack);
-        if (ColorUtils.isColorLocked(stack))
-        {
-            tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
-            if (inverted)
-                tooltip.add(Component.translatable("item.splatcraft.tooltip.inverted").withStyle(Style.EMPTY.withItalic(true).withColor(ChatFormatting.DARK_PURPLE)));
-        }
-        else
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
-    }
-
-    @Override
-    public int getUseDuration(@NotNull ItemStack p_41454_)
-    {
-        return 72000;
-    }
-
     public static void activate(ServerPlayer player, UUID targetUUID, int color)
     {
         Vec3 target;
@@ -117,19 +94,6 @@ public class JumpLureItem extends Item implements IColoredItem
         return false;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private void releaseLure(LivingEntity entity)
-    {
-        if (entity.equals(Minecraft.getInstance().player))
-            JumpLureHudHandler.releaseLure();
-    }
-
-    @Override
-    public @NotNull UseAnim getUseAnimation(@NotNull ItemStack p_41452_)
-    {
-        return UseAnim.SPEAR;
-    }
-
     public static List<? extends Player> getAvailableCandidates(Player player, int color)
     {
         ArrayList<Player> players = new ArrayList<>();
@@ -147,6 +111,42 @@ public class JumpLureItem extends Item implements IColoredItem
             player.equals(target) || !hasMatchingLure(target, color)
                 && !SuperJumpCommand.canSuperJumpTo(player, target.position()));
         return players;
+    }
+
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flags)
+    {
+        super.appendHoverText(stack, level, tooltip, flags);
+        if (I18n.exists(getDescriptionId() + ".tooltip"))
+            tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
+        boolean inverted = ColorUtils.isInverted(stack);
+        if (ColorUtils.isColorLocked(stack))
+        {
+            tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
+            if (inverted)
+                tooltip.add(Component.translatable("item.splatcraft.tooltip.inverted").withStyle(Style.EMPTY.withItalic(true).withColor(ChatFormatting.DARK_PURPLE)));
+        }
+        else
+            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
+    }
+
+    @Override
+    public int getUseDuration(@NotNull ItemStack p_41454_)
+    {
+        return 72000;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void releaseLure(LivingEntity entity)
+    {
+        if (entity.equals(Minecraft.getInstance().player))
+            JumpLureHudHandler.releaseLure();
+    }
+
+    @Override
+    public @NotNull UseAnim getUseAnimation(@NotNull ItemStack p_41452_)
+    {
+        return UseAnim.SPEAR;
     }
 
     @Override

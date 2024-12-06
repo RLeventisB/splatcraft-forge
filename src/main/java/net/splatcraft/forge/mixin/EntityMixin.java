@@ -14,29 +14,31 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Entity.class)
 public class EntityMixin
 {
-	@Inject(method = "isInvisible", at = @At("TAIL"), cancellable = true)
-	public void isInvisible(CallbackInfoReturnable<Boolean> cir)
-	{
-		Entity entity = (Entity) (Object) this;
-		if (!(entity instanceof Player player) || !PlayerInfoCapability.hasCapability(player)) {
-			return;
-		}
+    @Inject(method = "isInvisible", at = @At("TAIL"), cancellable = true)
+    public void isInvisible(CallbackInfoReturnable<Boolean> cir)
+    {
+        Entity entity = (Entity) (Object) this;
+        if (!(entity instanceof Player player) || !PlayerInfoCapability.hasCapability(player))
+        {
+            return;
+        }
 
-		if (InkBlockUtils.canSquidHide(player) && PlayerInfoCapability.get(player).isSquid())
-			cir.setReturnValue(true);
-	}
+        if (InkBlockUtils.canSquidHide(player) && PlayerInfoCapability.get(player).isSquid())
+            cir.setReturnValue(true);
+    }
 
-	@Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
-	public void setSprinting(boolean p_70031_1_, CallbackInfo ci)
-	{
-		Entity entity = (Entity) (Object) this;
-		if (!(entity instanceof Player player) || !PlayerInfoCapability.hasCapability(player)) {
-			return;
-		}
-		if (p_70031_1_ && PlayerCooldown.hasPlayerCooldown(player))
-		{
-			player.setSprinting(false);
-			ci.cancel();
-		}
-	}
+    @Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
+    public void setSprinting(boolean p_70031_1_, CallbackInfo ci)
+    {
+        Entity entity = (Entity) (Object) this;
+        if (!(entity instanceof Player player) || !PlayerInfoCapability.hasCapability(player))
+        {
+            return;
+        }
+        if (p_70031_1_ && PlayerCooldown.hasPlayerCooldown(player))
+        {
+            player.setSprinting(false);
+            ci.cancel();
+        }
+    }
 }

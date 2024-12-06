@@ -32,12 +32,6 @@ public class InkedBlockTileEntity extends InkColorTileEntity
         super(SplatcraftTileEntities.inkedTileEntity.get(), pos, state);
     }
 
-    @Override
-    public void setLevel(@NotNull Level level)
-    {
-        super.setLevel(level);
-    }
-
     //Used to port Inked Blocks to World Ink system
     // ok fine
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T te)
@@ -73,6 +67,12 @@ public class InkedBlockTileEntity extends InkColorTileEntity
         if (state.is(SplatcraftBlocks.glowingInkedBlock.get()))
             return InkBlockUtils.InkType.GLOWING;
         return InkBlockUtils.InkType.NORMAL;
+    }
+
+    @Override
+    public void setLevel(@NotNull Level level)
+    {
+        super.setLevel(level);
     }
 
     //Read NBT

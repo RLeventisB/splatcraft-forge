@@ -19,12 +19,6 @@ public class InkDisruptorItem extends RemoteItem
         super(new Properties().stacksTo(1));
     }
 
-    @Override
-    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
-    {
-        return clearInk(getLevel(usedOnWorld, stack), posA, posB, false);
-    }
-
     public static RemoteResult clearInk(Level level, BlockPos from, BlockPos to, boolean removePermanent)
     {
         if (!level.isInWorldBounds(from) || !level.isInWorldBounds(to))
@@ -58,5 +52,11 @@ public class InkDisruptorItem extends RemoteItem
         }));
 
         return createResult(true, Component.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
+    }
+
+    @Override
+    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
+    {
+        return clearInk(getLevel(usedOnWorld, stack), posA, posB, false);
     }
 }

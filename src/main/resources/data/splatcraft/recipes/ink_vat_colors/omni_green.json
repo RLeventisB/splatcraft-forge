@@ -1,7 +1,7 @@
 {
-  "type": "splatcraft:ink_vat_color",
-  "color": "splatcraft:omni_green",
-  "filter": {
-    "item": "splatcraft:enchanted_filter"
-  }
+    "type": "splatcraft:ink_vat_color",
+    "color": "splatcraft:omni_green",
+    "filter": {
+        "item": "splatcraft:enchanted_filter"
+    }
 }

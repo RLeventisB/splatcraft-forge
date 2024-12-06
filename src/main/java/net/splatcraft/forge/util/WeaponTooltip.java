@@ -12,12 +12,12 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
 {
+    public static final IStatRanker RANKER_ASCENDING = Float::compare;
+    public static final IStatRanker RANKER_DESCENDING = (a, b) -> Float.compare(b, a);
     private final String name;
     private final IStatValueGetter<S> valueGetter;
     private final IStatRanker ranker;
     private final Metrics metric;
-    public static final IStatRanker RANKER_ASCENDING = Float::compare;
-    public static final IStatRanker RANKER_DESCENDING = (a, b) -> Float.compare(b, a);
 
     public WeaponTooltip(String name, Metrics metric, IStatValueGetter<S> valueGetter, IStatRanker ranker)
     {
@@ -76,21 +76,6 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
         return name;
     }
 
-    public interface IStatValueGetter<S extends AbstractWeaponSettings<S, ?>>
-    {
-        float get(S settings);
-    }
-
-    public interface IStatRanker
-    {
-        int apply(float value, float other);
-
-        default <S extends AbstractWeaponSettings<S, ?>> int apply(IStatValueGetter<S> statValueGetter, S settings, S other)
-        {
-            return apply(statValueGetter.get(settings), statValueGetter.get(other));
-        }
-    }
-
     public enum Metrics
     {
         SECONDS("seconds"),
@@ -106,6 +91,21 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
         Metrics(String localizedName)
         {
             this.localizedName = localizedName;
+        }
+    }
+
+    public interface IStatValueGetter<S extends AbstractWeaponSettings<S, ?>>
+    {
+        float get(S settings);
+    }
+
+    public interface IStatRanker
+    {
+        int apply(float value, float other);
+
+        default <S extends AbstractWeaponSettings<S, ?>> int apply(IStatValueGetter<S> statValueGetter, S settings, S other)
+        {
+            return apply(statValueGetter.get(settings), statValueGetter.get(other));
         }
     }
 }

@@ -41,62 +41,62 @@ import java.util.*;
 
 public class StageCommand
 {
-    private static final DynamicCommandExceptionType NO_SPAWN_PADS_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageWarp.noSpawnPads", p_208663_0_));
-    private static final DynamicCommandExceptionType NO_PLAYERS_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageWarp.noPlayers", p_208663_0_));
     public static final DynamicCommandExceptionType TEAM_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageTeam.notFound", ((Object[]) p_208663_0_)[0], ((Object[]) p_208663_0_)[1]));
     public static final DynamicCommandExceptionType STAGE_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.notFound", p_208663_0_));
     public static final DynamicCommandExceptionType NOT_ENOUGH_TEAMS = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.notEnoughTeams", p_208663_0_));
     public static final DynamicCommandExceptionType ALREADY_PLAYING = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.alreadyPlaying", p_208663_0_));
     public static final DynamicCommandExceptionType STAGE_ALREADY_EXISTS = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stage.alreadyExists", p_208663_0_));
     public static final DynamicCommandExceptionType SETTING_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageSetting.notFound", p_208663_0_));
+    private static final DynamicCommandExceptionType NO_SPAWN_PADS_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageWarp.noSpawnPads", p_208663_0_));
+    private static final DynamicCommandExceptionType NO_PLAYERS_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.stageWarp.noPlayers", p_208663_0_));
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
         dispatcher.register(Commands.literal("stage").requires(commandSource -> commandSource.hasPermission(2))
-                .then(Commands.literal("add")
-                        .then(Commands.argument("name", StringArgumentType.word())
-                                .then(Commands.argument("from", BlockPosArgument.blockPos())
-                                        .then(Commands.argument("to", BlockPosArgument.blockPos()).executes(StageCommand::add)))))
+            .then(Commands.literal("add")
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .then(Commands.argument("from", BlockPosArgument.blockPos())
+                        .then(Commands.argument("to", BlockPosArgument.blockPos()).executes(StageCommand::add)))))
+            .then(Commands.literal("remove")
+                .then(stageId("stage")
+                    .executes(StageCommand::remove)))
+            .then(Commands.literal("list")
+                .executes(StageCommand::list))
+            .then(Commands.literal("settings").then(stageId("stage")
+                .then(Commands.literal("cornerA").executes(context -> getStageCorner(context, true))
+                    .then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> setStageCorner(context, true))))
+                .then(Commands.literal("cornerB").executes(context -> getStageCorner(context, false))
+                    .then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> setStageCorner(context, false))))
+                .then(stageSetting("setting").executes(StageCommand::getSetting)
+                    .then(Commands.literal("true").executes(context -> setSetting(context, true)))
+                    .then(Commands.literal("false").executes(context -> setSetting(context, false)))
+                    .then(Commands.literal("default").executes(context -> setSetting(context, null))))))
+            .then(Commands.literal("teams").then(stageId("stage")
+                .then(Commands.literal("set")
+                    .then(stageTeam("teamName", "stage")
+                        .then(Commands.argument("teamColor", InkColorArgument.inkColor()).executes(StageCommand::setTeam))))
                 .then(Commands.literal("remove")
-                        .then(stageId("stage")
-                                .executes(StageCommand::remove)))
-                .then(Commands.literal("list")
-                        .executes(StageCommand::list))
-                .then(Commands.literal("settings").then(stageId("stage")
-                        .then(Commands.literal("cornerA").executes(context -> getStageCorner(context, true))
-                                .then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> setStageCorner(context, true))))
-                        .then(Commands.literal("cornerB").executes(context -> getStageCorner(context, false))
-                                .then(Commands.argument("pos", BlockPosArgument.blockPos()).executes(context -> setStageCorner(context, false))))
-                        .then(stageSetting("setting").executes(StageCommand::getSetting)
-                                .then(Commands.literal("true").executes(context -> setSetting(context, true)))
-                                .then(Commands.literal("false").executes(context -> setSetting(context, false)))
-                                .then(Commands.literal("default").executes(context -> setSetting(context, null))))))
-                .then(Commands.literal("teams").then(stageId("stage")
-                        .then(Commands.literal("set")
-                                .then(stageTeam("teamName", "stage")
-                                        .then(Commands.argument("teamColor", InkColorArgument.inkColor()).executes(StageCommand::setTeam))))
-                        .then(Commands.literal("remove")
-                                .then(stageTeam("teamName", "stage").executes(StageCommand::removeTeam)))
-                        .then(Commands.literal("get")
-                                .then(stageTeam("teamName", "stage").executes(StageCommand::getTeam)))))
-                .then(Commands.literal("warp").then(stageId("stage").executes(StageCommand::warpSelf)
-                        .then(Commands.argument("players", EntityArgument.players()).executes(context -> warp(context, false))
-                                .then(Commands.argument("setSpawn", BoolArgumentType.bool())
-                                        .then(Commands.literal("self").executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn"))))
-                                        .then(Commands.literal("any").executes(context -> warpAny(context, BoolArgumentType.getBool(context, "setSpawn"))))
-                                        .then(Commands.literal("color").then(Commands.argument("color", InkColorArgument.inkColor()).executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn"), InkColorArgument.getInkColor(context, "color")))))
-                                        .then(Commands.literal("team").then(stageTeam("team", "stage").executes(context -> warpToTeam(context, BoolArgumentType.getBool(context, "setSpawn"), StringArgumentType.getString(context, "team")))))
-                                        .executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn")))))))
-                .then(Commands.literal("play")
-                        .then(stageId("stage")
-                                .executes(StageCommand::playRecon)
-                                .then(Commands.argument("players", EntityArgument.players())
-                                        .executes(StageCommand::playWithPlayers)
-                                        .then(Commands.argument("assignTeams", BoolArgumentType.bool())
-                                                .executes(StageCommand::playWithSetAssignedTeams))
-                                        .then(Commands.argument("gamemode", EnumArgument.enumArgument(StageGameMode.class))
-                                                .executes(StageCommand::play))
-                                )))
+                    .then(stageTeam("teamName", "stage").executes(StageCommand::removeTeam)))
+                .then(Commands.literal("get")
+                    .then(stageTeam("teamName", "stage").executes(StageCommand::getTeam)))))
+            .then(Commands.literal("warp").then(stageId("stage").executes(StageCommand::warpSelf)
+                .then(Commands.argument("players", EntityArgument.players()).executes(context -> warp(context, false))
+                    .then(Commands.argument("setSpawn", BoolArgumentType.bool())
+                        .then(Commands.literal("self").executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn"))))
+                        .then(Commands.literal("any").executes(context -> warpAny(context, BoolArgumentType.getBool(context, "setSpawn"))))
+                        .then(Commands.literal("color").then(Commands.argument("color", InkColorArgument.inkColor()).executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn"), InkColorArgument.getInkColor(context, "color")))))
+                        .then(Commands.literal("team").then(stageTeam("team", "stage").executes(context -> warpToTeam(context, BoolArgumentType.getBool(context, "setSpawn"), StringArgumentType.getString(context, "team")))))
+                        .executes(context -> warp(context, BoolArgumentType.getBool(context, "setSpawn")))))))
+            .then(Commands.literal("play")
+                .then(stageId("stage")
+                    .executes(StageCommand::playRecon)
+                    .then(Commands.argument("players", EntityArgument.players())
+                        .executes(StageCommand::playWithPlayers)
+                        .then(Commands.argument("assignTeams", BoolArgumentType.bool())
+                            .executes(StageCommand::playWithSetAssignedTeams))
+                        .then(Commands.argument("gamemode", EnumArgument.enumArgument(StageGameMode.class))
+                            .executes(StageCommand::play))
+                    )))
         );
     }
 
@@ -127,7 +127,7 @@ public class StageCommand
     public static RequiredArgumentBuilder<CommandSourceStack, String> stageSetting(String argumentName)
     {
         return Commands.argument(argumentName, StringArgumentType.word()).suggests((context, builder) ->
-                SharedSuggestionProvider.suggest(Stage.VALID_SETTINGS.keySet(), builder));
+            SharedSuggestionProvider.suggest(Stage.VALID_SETTINGS.keySet(), builder));
     }
 
     private static int add(CommandContext<CommandSourceStack> context) throws CommandSyntaxException

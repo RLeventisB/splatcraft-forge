@@ -25,9 +25,9 @@ public class RelativeBlockPos extends Vec3i
     public static RelativeBlockPos fromAbsolute(BlockPos pos)
     {
         return new RelativeBlockPos(
-                (byte) SectionPos.sectionRelative(pos.getX()),
-                pos.getY(),
-                (byte) SectionPos.sectionRelative(pos.getZ())
+            (byte) SectionPos.sectionRelative(pos.getX()),
+            pos.getY(),
+            (byte) SectionPos.sectionRelative(pos.getZ())
         );
     }
 
@@ -40,9 +40,9 @@ public class RelativeBlockPos extends Vec3i
     public static RelativeBlockPos readNBT(CompoundTag tag)
     {
         return new RelativeBlockPos(
-                tag.getByte("X"),
-                tag.getByte("Y"),
-                tag.getByte("Z")
+            tag.getByte("X"),
+            tag.getByte("Y"),
+            tag.getByte("Z")
         );
     }
 
@@ -55,9 +55,9 @@ public class RelativeBlockPos extends Vec3i
     public static RelativeBlockPos fromBuf(FriendlyByteBuf buf)
     {
         return new RelativeBlockPos(
-                buf.readByte(),
-                buf.readInt(),
-                buf.readByte()
+            buf.readByte(),
+            buf.readInt(),
+            buf.readByte()
         );
     }
 

@@ -18,14 +18,28 @@ import java.util.List;
 
 public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, CODEC>, CODEC>
 {
+    private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
     public String name;
     public float moveSpeed = 1;
     public boolean isSecret = false;
-    private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
+    private AttributeModifier SPEED_MODIFIER;
 
     public AbstractWeaponSettings(String name)
     {
         this.name = name;
+    }
+
+    public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
+    {
+        return calculateAproximateRange(settings.straightShotTicks(), settings.horizontalDrag(), settings.speed(), settings.delaySpeedMult(), settings.lifeTicks());
+    }
+
+    public static float calculateAproximateRange(float straightShotTicks, float drag, float speed, float delaySpeedMult, float maxLifespan)
+    {
+        float dragOnEnd = (float) Math.pow(drag, maxLifespan - straightShotTicks);
+        if (dragOnEnd < 0.01)
+            return speed * (straightShotTicks + delaySpeedMult * drag / (1 - drag));
+        return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
     }
 
     public abstract float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list);
@@ -35,8 +49,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
         for (WeaponTooltip<SELF> stat : statTooltips)
             tooltip.add(stat.getTextComponent((SELF) this, flag.isAdvanced()));
     }
-
-    private AttributeModifier SPEED_MODIFIER;
 
     public AttributeModifier getSpeedModifier()
     {
@@ -87,19 +99,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     public void serializeToBuffer(FriendlyByteBuf buffer)
     {
         buffer.writeJsonWithCodec(getCodec(), serialize());
-    }
-
-    public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
-    {
-        return calculateAproximateRange(settings.straightShotTicks(), settings.horizontalDrag(), settings.speed(), settings.delaySpeedMult(), settings.lifeTicks());
-    }
-
-    public static float calculateAproximateRange(float straightShotTicks, float drag, float speed, float delaySpeedMult, float maxLifespan)
-    {
-        float dragOnEnd = (float) Math.pow(drag, maxLifespan - straightShotTicks);
-        if (dragOnEnd < 0.01)
-            return speed * (straightShotTicks + delaySpeedMult * drag / (1 - drag));
-        return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
     }
 
     public abstract float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem);

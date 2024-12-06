@@ -18,10 +18,10 @@ import java.util.Map;
 
 public class SaveInfo
 {
-    private ArrayList<Integer> colorScores = new ArrayList<>();
-    private final HashMap<String, Stage> stages = new HashMap<>();
     public final HashMap<String, PlaySession> playSessions = new HashMap<>();
+    private final HashMap<String, Stage> stages = new HashMap<>();
     boolean stagesLoaded = false;
+    private ArrayList<Integer> colorScores = new ArrayList<>();
 
     public Collection<Integer> getInitializedColorScores()
     {

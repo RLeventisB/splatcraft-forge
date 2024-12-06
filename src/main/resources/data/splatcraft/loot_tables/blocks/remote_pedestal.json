@@ -1,27 +1,27 @@
 {
-  "type": "minecraft:block",
-  "pools": [
-    {
-      "rolls": 1,
-      "entries": [
+    "type": "minecraft:block",
+    "pools": [
         {
-          "type": "minecraft:item",
-          "functions": [
-            {
-              "function": "minecraft:copy_nbt",
-              "source": "block_entity",
-              "ops": [
+            "rolls": 1,
+            "entries": [
                 {
-                  "source": "Color",
-                  "target": "Color",
-                  "op": "replace"
+                    "type": "minecraft:item",
+                    "functions": [
+                        {
+                            "function": "minecraft:copy_nbt",
+                            "source": "block_entity",
+                            "ops": [
+                                {
+                                    "source": "Color",
+                                    "target": "Color",
+                                    "op": "replace"
+                                }
+                            ]
+                        }
+                    ],
+                    "name": "splatcraft:remote_pedestal"
                 }
-              ]
-            }
-          ],
-          "name": "splatcraft:remote_pedestal"
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

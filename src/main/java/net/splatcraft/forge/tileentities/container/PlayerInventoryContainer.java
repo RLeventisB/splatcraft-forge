@@ -60,7 +60,8 @@ public abstract class PlayerInventoryContainer<T extends PlayerInventoryContaine
             {
                 return ItemStack.EMPTY;
             }
-        } else
+        }
+        else
         {
             if (!this.moveItemStackTo(stack, 0, this.slots.size() - 9, false))
             {

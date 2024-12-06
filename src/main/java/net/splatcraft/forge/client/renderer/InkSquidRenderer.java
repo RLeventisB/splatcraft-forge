@@ -25,8 +25,8 @@ import org.joml.Matrix4f;
 
 public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSquidModel> implements RenderLayerParent<LivingEntity, InkSquidModel>
 {
-    private static EntityRendererProvider.Context squidFormContext;
     private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_squid_overlay.png");
+    private static EntityRendererProvider.Context squidFormContext;
 
     public InkSquidRenderer(EntityRendererProvider.Context context)
     {
@@ -40,6 +40,23 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
     public static EntityRendererProvider.Context getContext()
     {
         return squidFormContext;
+    }
+
+    private static void addVertexPair(VertexConsumer p_174308_, Matrix4f p_174309_, float p_174310_, float p_174311_, float p_174312_, int p_174313_, int p_174314_, int p_174315_, int p_174316_, float p_174317_, float p_174318_, float p_174319_, float p_174320_, int p_174321_, boolean p_174322_)
+    {
+        float f = (float) p_174321_ / 24.0F;
+        int i = (int) Mth.lerp(f, (float) p_174313_, (float) p_174314_);
+        int j = (int) Mth.lerp(f, (float) p_174315_, (float) p_174316_);
+        int k = LightTexture.pack(i, j);
+        float f1 = p_174321_ % 2 == (p_174322_ ? 1 : 0) ? 0.7F : 1.0F;
+        float f2 = 0.5F * f1;
+        float f3 = 0.4F * f1;
+        float f4 = 0.3F * f1;
+        float f5 = p_174310_ * f;
+        float f6 = p_174311_ > 0.0F ? p_174311_ * f * f : p_174311_ - p_174311_ * (1.0F - f) * (1.0F - f);
+        float f7 = p_174312_ * f;
+        p_174308_.vertex(p_174309_, f5 - p_174319_, f6 + p_174318_, f7 + p_174320_).color(f2, f3, f4, 1.0F).uv2(k).endVertex();
+        p_174308_.vertex(p_174309_, f5 + p_174319_, f6 + p_174317_ - p_174318_, f7 - p_174320_).color(f2, f3, f4, 1.0F).uv2(k).endVertex();
     }
 
     @Override
@@ -117,22 +134,5 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
     protected int getHolderBlockLightLevel(Entity p_114496_, BlockPos p_114497_)
     {
         return p_114496_.isOnFire() ? 15 : p_114496_.level().getBrightness(LightLayer.BLOCK, p_114497_);
-    }
-
-    private static void addVertexPair(VertexConsumer p_174308_, Matrix4f p_174309_, float p_174310_, float p_174311_, float p_174312_, int p_174313_, int p_174314_, int p_174315_, int p_174316_, float p_174317_, float p_174318_, float p_174319_, float p_174320_, int p_174321_, boolean p_174322_)
-    {
-        float f = (float) p_174321_ / 24.0F;
-        int i = (int) Mth.lerp(f, (float) p_174313_, (float) p_174314_);
-        int j = (int) Mth.lerp(f, (float) p_174315_, (float) p_174316_);
-        int k = LightTexture.pack(i, j);
-        float f1 = p_174321_ % 2 == (p_174322_ ? 1 : 0) ? 0.7F : 1.0F;
-        float f2 = 0.5F * f1;
-        float f3 = 0.4F * f1;
-        float f4 = 0.3F * f1;
-        float f5 = p_174310_ * f;
-        float f6 = p_174311_ > 0.0F ? p_174311_ * f * f : p_174311_ - p_174311_ * (1.0F - f) * (1.0F - f);
-        float f7 = p_174312_ * f;
-        p_174308_.vertex(p_174309_, f5 - p_174319_, f6 + p_174318_, f7 + p_174320_).color(f2, f3, f4, 1.0F).uv2(k).endVertex();
-        p_174308_.vertex(p_174309_, f5 + p_174319_, f6 + p_174317_ - p_174318_, f7 - p_174320_).color(f2, f3, f4, 1.0F).uv2(k).endVertex();
     }
 }

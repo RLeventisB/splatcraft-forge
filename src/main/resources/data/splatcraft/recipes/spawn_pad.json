@@ -1,28 +1,28 @@
 {
-  "type": "splatcraft:colored_crafting_shaped",
-  "pattern": [
-    "SSS",
-    "#I#",
-    "PAP"
-  ],
-  "key": {
-    "S": {
-      "item": "splatcraft:sardinium"
+    "type": "splatcraft:colored_crafting_shaped",
+    "pattern": [
+        "SSS",
+        "#I#",
+        "PAP"
+    ],
+    "key": {
+        "S": {
+            "item": "splatcraft:sardinium"
+        },
+        "A": {
+            "item": "splatcraft:ammo_knights_scrap"
+        },
+        "P": {
+            "item": "splatcraft:power_egg_block"
+        },
+        "I": {
+            "item": "splatcraft:inkwell"
+        },
+        "#": {
+            "item": "minecraft:iron_ingot"
+        }
     },
-    "A": {
-      "item": "splatcraft:ammo_knights_scrap"
-    },
-    "P": {
-      "item": "splatcraft:power_egg_block"
-    },
-    "I": {
-      "item": "splatcraft:inkwell"
-    },
-    "#": {
-      "item": "minecraft:iron_ingot"
+    "result": {
+        "item": "splatcraft:spawn_pad"
     }
-  },
-  "result": {
-    "item": "splatcraft:spawn_pad"
-  }
 }

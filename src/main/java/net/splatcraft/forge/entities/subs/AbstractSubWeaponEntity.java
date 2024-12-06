@@ -305,15 +305,6 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         entityData.set(COLOR, color);
     }
 
-    public void setOwner(@Nullable Entity p_212361_1_)
-    {
-        if (p_212361_1_ != null)
-        {
-            this.ownerUUID = p_212361_1_.getUUID();
-            this.ownerNetworkId = p_212361_1_.getId();
-        }
-    }
-
     protected abstract Item getDefaultItem();
 
     protected ItemStack getItemRaw()
@@ -332,7 +323,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         if (item.getItem() != this.getDefaultItem() || item.hasTag())
         {
             this.getEntityData().set(DATA_ITEM_STACK, Util.make(item.copy(), (p_213883_0_) ->
-                    p_213883_0_.setCount(1)));
+                p_213883_0_.setCount(1)));
         }
     }
 
@@ -349,6 +340,15 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         }
     }
 
+    public void setOwner(@Nullable Entity p_212361_1_)
+    {
+        if (p_212361_1_ != null)
+        {
+            this.ownerUUID = p_212361_1_.getUUID();
+            this.ownerNetworkId = p_212361_1_.getId();
+        }
+    }
+
     @Override
     public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket()
     {
@@ -361,7 +361,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         if (entity != null)
         {
             for (Entity entity1 : this.level().getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
-                    !p_234613_0_.isSpectator() && p_234613_0_.isPickable()))
+                !p_234613_0_.isSpectator() && p_234613_0_.isPickable()))
             {
                 if (entity1.getRootVehicle() == entity.getRootVehicle())
                 {

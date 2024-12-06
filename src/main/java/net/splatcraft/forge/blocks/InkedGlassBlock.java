@@ -27,10 +27,10 @@ public class InkedGlassBlock extends AbstractGlassBlock implements IColoredBlock
     public InkedGlassBlock(String name)
     {
         super(Properties.of().instrument(NoteBlockInstrument.HAT).strength(0.3F).sound(SoundType.GLASS).noOcclusion()
-                .isValidSpawn((state, level, pos, entity) -> false)
-                .isRedstoneConductor((state, level, pos) -> false)
-                .isSuffocating((state, level, pos) -> false)
-                .isViewBlocking((state, level, pos) -> false));
+            .isValidSpawn((state, level, pos, entity) -> false)
+            .isRedstoneConductor((state, level, pos) -> false)
+            .isSuffocating((state, level, pos) -> false)
+            .isViewBlocking((state, level, pos) -> false));
         SplatcraftBlocks.inkColoredBlocks.add(this);
     }
 

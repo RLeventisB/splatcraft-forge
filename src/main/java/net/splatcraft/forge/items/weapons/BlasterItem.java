@@ -24,6 +24,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 {
+    protected BlasterItem(String settings)
+    {
+        super(settings);
+    }
+
     public static RegistryObject<BlasterItem> createBlaster(DeferredRegister<Item> registry, String settings, String name)
     {
         return registry.register(name, () -> new BlasterItem(settings));
@@ -34,9 +39,18 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         return registry.register(name, () -> new BlasterItem(parent.get().settingsId.toString()));
     }
 
-    protected BlasterItem(String settings)
+    private static boolean getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
     {
-        super(settings);
+        if (!isStillUsing || !data.entityData.isPlayer)
+            return isStillUsing;
+
+        ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
+
+        if (!data.entityData.player.isLocalPlayer())
+        {
+            cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
+        }
+        return true;
     }
 
     @Override
@@ -75,20 +89,6 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
                     }
                 }
             }, null);
-    }
-
-    private static boolean getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
-    {
-        if (!isStillUsing || !data.entityData.isPlayer)
-            return isStillUsing;
-
-        ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
-
-        if (!data.entityData.player.isLocalPlayer())
-        {
-            cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
-        }
-        return true;
     }
 
     @Override

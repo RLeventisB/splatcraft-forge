@@ -42,5 +42,4 @@ public class RequestPlayerInfoPacket extends PlayC2SPacket
             SplatcraftPacketHandler.sendToPlayer(new UpdatePlayerInfoPacket(target), (ServerPlayer) player);
         }
     }
-
 }

@@ -37,7 +37,8 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
             {
                 ScoreboardHandler.createColorCriterion(color);
             }
-        } else
+        }
+        else
         {
             for (int color : colors)
             {

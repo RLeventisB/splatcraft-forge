@@ -25,6 +25,15 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
         model = new InkSquidModel(modelSet.bakeLayer(InkSquidModel.LAYER_LOCATION));
     }
 
+    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(@NotNull EntityModel<T> parentModel, @NotNull EntityModel<T> model, @NotNull ResourceLocation textureLoc, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue)
+    {
+        if (!entity.isInvisible())
+        {
+            parentModel.copyPropertiesTo(model);
+            renderColoredCutoutModel(model, textureLoc, poseStack, bufferSource, packedLight, entity, red, green, blue);
+        }
+    }
+
     @Override
     public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
     {
@@ -38,14 +47,5 @@ public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>
         float b = (color & 255) / 255.0f;
 
         coloredCutoutModelCopyLayerRender(getParentModel(), model, TEXTURE, poseStack, bufferSource, packedLight, entity, limbSwing, limbSwingAmount, packedLight, ageInTicks, netHeadYaw, headPitch, r, g, b);
-    }
-
-    protected static <T extends LivingEntity> void coloredCutoutModelCopyLayerRender(@NotNull EntityModel<T> parentModel, @NotNull EntityModel<T> model, @NotNull ResourceLocation textureLoc, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch, float red, float green, float blue)
-    {
-        if (!entity.isInvisible())
-        {
-            parentModel.copyPropertiesTo(model);
-            renderColoredCutoutModel(model, textureLoc, poseStack, bufferSource, packedLight, entity, red, green, blue);
-        }
     }
 }

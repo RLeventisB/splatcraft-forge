@@ -72,7 +72,7 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 
         LootParams.Builder contextBuilder = new LootParams.Builder((ServerLevel) level);
         return level.getServer().getLootData().getLootTable(crate.getLootTable()).getRandomItems(contextBuilder.withLuck(luckValue)
-                .withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
+            .withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
     }
 
     @Override
@@ -160,7 +160,8 @@ public class CrateBlock extends Block implements IColoredBlock, EntityBlock
         if (levelIn.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) <= 0 && levelIn.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
         {
             crateTileEntity.dropInventory();
-        } else
+        }
+        else
         {
             dropResources(state, levelIn, pos, te, player, stack);
         }

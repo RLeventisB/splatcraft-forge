@@ -23,21 +23,6 @@ import static net.splatcraft.forge.Splatcraft.MODID;
 public abstract class ExtraSaveData
 {
     public static Supplier<IForgeRegistry<Class<? extends ExtraSaveData>>> REGISTRY;
-
-    @SubscribeEvent
-    public static void registerRegistry(final NewRegistryEvent event)
-    {
-        RegistryBuilder<Class<? extends ExtraSaveData>> registryBuilder = new RegistryBuilder<>();
-        registryBuilder.setName(new ResourceLocation(MODID, "extra_save_data"));
-        REGISTRY = event.create(registryBuilder, (registry) ->
-        {
-            registry.register(new ResourceLocation(MODID, "charge_data"), ChargeExtraData.class);
-            registry.register(new ResourceLocation(MODID, "blaster_explosion_data"), ExplosionExtraData.class);
-            registry.register(new ResourceLocation(MODID, "slosher_data"), SloshExtraData.class);
-            registry.register(new ResourceLocation(MODID, "dualie_data"), DualieExtraData.class);
-        });
-    }
-
     public static final EntityDataSerializer<InkProjectileEntity.ExtraDataList> SERIALIZER = new EntityDataSerializer<>()
     {
         @Override
@@ -78,6 +63,20 @@ public abstract class ExtraSaveData
             return new InkProjectileEntity.ExtraDataList(saveData.stream().map(ExtraSaveData::copy).toList());
         }
     };
+
+    @SubscribeEvent
+    public static void registerRegistry(final NewRegistryEvent event)
+    {
+        RegistryBuilder<Class<? extends ExtraSaveData>> registryBuilder = new RegistryBuilder<>();
+        registryBuilder.setName(new ResourceLocation(MODID, "extra_save_data"));
+        REGISTRY = event.create(registryBuilder, (registry) ->
+        {
+            registry.register(new ResourceLocation(MODID, "charge_data"), ChargeExtraData.class);
+            registry.register(new ResourceLocation(MODID, "blaster_explosion_data"), ExplosionExtraData.class);
+            registry.register(new ResourceLocation(MODID, "slosher_data"), SloshExtraData.class);
+            registry.register(new ResourceLocation(MODID, "dualie_data"), DualieExtraData.class);
+        });
+    }
 
     public abstract void save(@NotNull FriendlyByteBuf buffer);
 
@@ -183,9 +182,9 @@ public abstract class ExtraSaveData
         public ExplosionExtraData copy()
         {
             return new ExplosionExtraData(
-                    new DamageRangesRecord(new TreeMap<>(damageCalculator.damageValues()), damageCalculator.lerpBetween()),
-                    new DamageRangesRecord(new TreeMap<>(sparkDamageCalculator.damageValues()), sparkDamageCalculator.lerpBetween()),
-                    explosionPaint, newAttackId);
+                new DamageRangesRecord(new TreeMap<>(damageCalculator.damageValues()), damageCalculator.lerpBetween()),
+                new DamageRangesRecord(new TreeMap<>(sparkDamageCalculator.damageValues()), sparkDamageCalculator.lerpBetween()),
+                explosionPaint, newAttackId);
         }
     }
 

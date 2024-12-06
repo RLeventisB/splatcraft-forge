@@ -246,12 +246,6 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
         nbt.remove("Item");
     }
 
-    @Deprecated() //Modify sourceWeapon variable instead
-    @Override
-    public void setItem(@NotNull ItemStack itemStack)
-    {
-    }
-
     @Override
     protected @NotNull ItemStack getItemRaw()
     {
@@ -286,6 +280,12 @@ public class InkDropEntity extends ThrowableItemProjectile implements IColoredEn
     public @NotNull ItemStack getItem()
     {
         return ItemStack.EMPTY;
+    }
+
+    @Deprecated() //Modify sourceWeapon variable instead
+    @Override
+    public void setItem(@NotNull ItemStack itemStack)
+    {
     }
 
     @Override

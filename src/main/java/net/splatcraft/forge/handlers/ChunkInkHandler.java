@@ -79,6 +79,8 @@ public class ChunkInkHandler
     public static final HashMap<Level, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
     private static final HashMap<Level, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
     private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
+    private static final int MAX_DECAYABLE_PER_CHUNK = 3;
+    private static final int MAX_DECAYABLE_CHUNKS = 10;
 
     public static void addInkToRemove(Level level, BlockPos pos)
     {
@@ -180,9 +182,6 @@ public class ChunkInkHandler
             }
         }
     }
-
-    private static final int MAX_DECAYABLE_PER_CHUNK = 3;
-    private static final int MAX_DECAYABLE_CHUNKS = 10;
 
     @SubscribeEvent //Ink Decay
     public static void onWorldTick(TickEvent.LevelTickEvent event)

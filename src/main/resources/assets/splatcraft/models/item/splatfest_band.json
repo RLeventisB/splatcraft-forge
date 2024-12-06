@@ -1,7 +1,7 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "splatcraft:item/splatfest_band_overlay",
-    "layer1": "splatcraft:item/splatfest_band"
-  }
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "splatcraft:item/splatfest_band_overlay",
+        "layer1": "splatcraft:item/splatfest_band"
+    }
 }

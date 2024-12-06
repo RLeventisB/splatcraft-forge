@@ -40,7 +40,7 @@ public class DebrisBlock extends Block
     public DebrisBlock(MapColor color)
     {
         super(BlockBehaviour.Properties.of().mapColor(color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL).lightLevel(
-                (state) -> 1
+            (state) -> 1
         ));
         this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
     }
@@ -68,7 +68,7 @@ public class DebrisBlock extends Block
     public BlockState getStateForPlacement(BlockPlaceContext context)
     {
         return defaultBlockState().setValue(DIRECTION, context.getHorizontalDirection())
-                .setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+            .setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
     }
 
     @Override

@@ -64,6 +64,8 @@ import java.util.UUID;
 @Mod.EventBusSubscriber
 public class SplatcraftCommonHandler
 {
+    public static final HashMap<UUID, byte[]> COLOR_SKIN_OVERLAY_SERVER_CACHE = new HashMap<>();
+
     @SubscribeEvent
     public static void onPlayerJump(LivingEvent.LivingJumpEvent event)
     {
@@ -233,8 +235,6 @@ public class SplatcraftCommonHandler
             playerCapability.setMatchInventory(matchInv);
         }
     }
-
-    public static final HashMap<UUID, byte[]> COLOR_SKIN_OVERLAY_SERVER_CACHE = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event)

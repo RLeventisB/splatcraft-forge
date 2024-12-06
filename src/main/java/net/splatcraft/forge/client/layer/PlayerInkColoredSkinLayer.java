@@ -18,20 +18,24 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
+public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>
+{
     public static final HashMap<UUID, ResourceLocation> TEXTURES = new HashMap<>();
 
     public static final String PATH = "config/skins/";
 
     PlayerModel<AbstractClientPlayer> MODEL;
 
-    public PlayerInkColoredSkinLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer, PlayerModel<AbstractClientPlayer> model) {
+    public PlayerInkColoredSkinLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer, PlayerModel<AbstractClientPlayer> model)
+    {
         super(renderer);
         this.MODEL = model;
     }
 
-    public static void renderHand(PlayerModel<AbstractClientPlayer> playermodel, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve) {
-        if (!TEXTURES.containsKey(player.getUUID()) || player.isSpectator() || player.isInvisible() || !PlayerInfoCapability.hasCapability(player)) {
+    public static void renderHand(PlayerModel<AbstractClientPlayer> playermodel, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve)
+    {
+        if (!TEXTURES.containsKey(player.getUUID()) || player.isSpectator() || player.isInvisible() || !PlayerInfoCapability.hasCapability(player))
+        {
             return;
         }
 
@@ -60,8 +64,10 @@ public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer,
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5) {
-        if (entity.isSpectator() || entity.isInvisible() || !PlayerInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUUID())) {
+    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+    {
+        if (entity.isSpectator() || entity.isInvisible() || !PlayerInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUUID()))
+        {
             return;
         }
 
@@ -74,12 +80,14 @@ public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer,
         this.render(matrixStack, iRenderTypeBuffer, i, MODEL, r, g, b, TEXTURES.get(entity.getUUID()));
     }
 
-    private void render(PoseStack p_241738_1_, MultiBufferSource buffer, int p_241738_3_, PlayerModel<AbstractClientPlayer> p_241738_6_, float p_241738_8_, float p_241738_9_, float p_241738_10_, ResourceLocation armorResource) {
+    private void render(PoseStack p_241738_1_, MultiBufferSource buffer, int p_241738_3_, PlayerModel<AbstractClientPlayer> p_241738_6_, float p_241738_8_, float p_241738_9_, float p_241738_10_, ResourceLocation armorResource)
+    {
         VertexConsumer ivertexbuilder = buffer.getBuffer(RenderType.entityTranslucent(armorResource));
         p_241738_6_.renderToBuffer(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.NO_OVERLAY, p_241738_8_, p_241738_9_, p_241738_10_, 1.0F);
     }
 
-    private void copyPropertiesFrom(PlayerModel<AbstractClientPlayer> from, PlayerModel<AbstractClientPlayer> to) {
+    private void copyPropertiesFrom(PlayerModel<AbstractClientPlayer> from, PlayerModel<AbstractClientPlayer> to)
+    {
         from.copyPropertiesTo(to);
 
         to.jacket.copyFrom(from.jacket);

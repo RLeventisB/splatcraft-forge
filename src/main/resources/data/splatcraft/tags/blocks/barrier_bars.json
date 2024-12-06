@@ -1,8 +1,8 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:barrier_bar",
-    "splatcraft:plated_barrier_bar",
-    "splatcraft:caution_barrier_bar"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:barrier_bar",
+        "splatcraft:plated_barrier_bar",
+        "splatcraft:caution_barrier_bar"
+    ]
 }

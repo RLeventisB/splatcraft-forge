@@ -20,18 +20,18 @@ public class SquidInputPacket extends PlayC2SPacket
         this.squidSurgeCharge = squidSurgeCharge;
     }
 
+    public static SquidInputPacket decode(FriendlyByteBuf buffer)
+    {
+        byte index = buffer.readByte();
+        return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.from3DDataValue(index)), buffer.readFloat());
+    }
+
     @Override
     public void execute(Player target)
     {
         PlayerInfo playerInfo = PlayerInfoCapability.get(target);
         playerInfo.setClimbedDirection(climbedDirection.orElse(null));
         playerInfo.setSquidSurgeCharge(squidSurgeCharge);
-    }
-
-    public static SquidInputPacket decode(FriendlyByteBuf buffer)
-    {
-        byte index = buffer.readByte();
-        return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.from3DDataValue(index)), buffer.readFloat());
     }
 
     @Override

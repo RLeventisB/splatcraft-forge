@@ -74,6 +74,13 @@ public class InkTerrainParticle extends TextureSheetParticle
         return i == 0 && this.level.hasChunkAt(this.pos) ? LevelRenderer.getLightColor(this.level, this.pos) : i;
     }
 
+    public Particle updateSprite(BlockState state, BlockPos pos)
+    { //FORGE: we cannot assume that the x y z of the particles match the block pos of the block.
+        if (pos != null) // There are cases where we are not able to obtain the correct source pos, and need to fallback to the non-model data version
+            this.setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getTexture(state, level, pos));
+        return this;
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<BlockParticleOption>
     {
@@ -82,13 +89,6 @@ public class InkTerrainParticle extends TextureSheetParticle
             BlockState blockstate = p_108304_.getState();
             return !blockstate.isAir() && !blockstate.is(Blocks.MOVING_PISTON) ? (new net.minecraft.client.particle.TerrainParticle(p_108305_, p_108306_, p_108307_, p_108308_, p_108309_, p_108310_, p_108311_, blockstate)).updateSprite(blockstate, p_108304_.getPos()) : null;
         }
-    }
-
-    public Particle updateSprite(BlockState state, BlockPos pos)
-    { //FORGE: we cannot assume that the x y z of the particles match the block pos of the block.
-        if (pos != null) // There are cases where we are not able to obtain the correct source pos, and need to fallback to the non-model data version
-            this.setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getTexture(state, level, pos));
-        return this;
     }
 
     @OnlyIn(Dist.CLIENT)

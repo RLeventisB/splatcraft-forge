@@ -9,32 +9,33 @@ import net.splatcraft.forge.network.s2c.SendStageWarpDataToPadPacket;
 
 public class RequestUpdateStageSpawnPadsPacket extends PlayC2SPacket
 {
-	final String stageId;
+    final String stageId;
 
-	public RequestUpdateStageSpawnPadsPacket(String stageId)
-	{
-		this.stageId = stageId;
-	}
-	public RequestUpdateStageSpawnPadsPacket(Stage stage)
-	{
-		this(stage.id);
-	}
+    public RequestUpdateStageSpawnPadsPacket(String stageId)
+    {
+        this.stageId = stageId;
+    }
 
-	@Override
-	public void encode(FriendlyByteBuf buffer)
-	{
-		buffer.writeUtf(stageId);
-	}
+    public RequestUpdateStageSpawnPadsPacket(Stage stage)
+    {
+        this(stage.id);
+    }
 
-	public static RequestUpdateStageSpawnPadsPacket decode(FriendlyByteBuf buffer)
-	{
-		return new RequestUpdateStageSpawnPadsPacket(buffer.readUtf());
-	}
+    public static RequestUpdateStageSpawnPadsPacket decode(FriendlyByteBuf buffer)
+    {
+        return new RequestUpdateStageSpawnPadsPacket(buffer.readUtf());
+    }
 
-	@Override
-	public void execute(Player player)
-	{
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeUtf(stageId);
+    }
+
+    @Override
+    public void execute(Player player)
+    {
         Stage.getStage(player.level(), stageId).updateSpawnPads(player.level());
-		SplatcraftPacketHandler.sendToPlayer(SendStageWarpDataToPadPacket.compile(player), (ServerPlayer) player);
-	}
+        SplatcraftPacketHandler.sendToPlayer(SendStageWarpDataToPadPacket.compile(player), (ServerPlayer) player);
+    }
 }

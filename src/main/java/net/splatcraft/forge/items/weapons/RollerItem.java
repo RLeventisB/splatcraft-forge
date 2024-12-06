@@ -42,6 +42,12 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
     public static final ArrayList<RollerItem> rollers = Lists.newArrayList();
     public boolean isMoving;
 
+    protected RollerItem(String settings)
+    {
+        super(settings);
+        rollers.add(this);
+    }
+
     public static RegistryObject<RollerItem> create(DeferredRegister<Item> registry, String settings, String name)
     {
         return registry.register(name, () -> new RollerItem(settings));
@@ -50,18 +56,6 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
     public static RegistryObject<RollerItem> create(DeferredRegister<Item> registry, RegistryObject<RollerItem> parent, String name)
     {
         return registry.register(name, () -> new RollerItem(parent.get().settingsId.toString()));
-    }
-
-    protected RollerItem(String settings)
-    {
-        super(settings);
-        rollers.add(this);
-    }
-
-    @Override
-    public Class<RollerWeaponSettings> getSettingsClass()
-    {
-        return RollerWeaponSettings.class;
     }
 
     public static void applyRecoilKnockback(LivingEntity entity, double pow)
@@ -74,6 +68,12 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
     protected static void playRollSound(boolean isBrush)
     {
         Minecraft.getInstance().getSoundManager().queueTickingSound(new RollerRollTickableSound(Minecraft.getInstance().player, isBrush));
+    }
+
+    @Override
+    public Class<RollerWeaponSettings> getSettingsClass()
+    {
+        return RollerWeaponSettings.class;
     }
 
     public ClampedItemPropertyFunction getUnfolded()

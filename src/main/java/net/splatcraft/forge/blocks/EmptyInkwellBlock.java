@@ -25,10 +25,9 @@ public class EmptyInkwellBlock extends AbstractGlassBlock
 {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final VoxelShape SHAPE = Shapes.or(
-            box(0, 0, 0, 16, 12, 16),
-            box(1, 12, 1, 14, 13, 14),
-            box(0, 13, 0, 16, 16, 16));
-
+        box(0, 0, 0, 16, 12, 16),
+        box(1, 12, 1, 14, 13, 14),
+        box(0, 13, 0, 16, 16, 16));
 
     public EmptyInkwellBlock(Properties properties)
     {
@@ -42,8 +41,6 @@ public class EmptyInkwellBlock extends AbstractGlassBlock
         return true;
     }
 
-
-    
     @Override
     public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
@@ -55,7 +52,6 @@ public class EmptyInkwellBlock extends AbstractGlassBlock
     {
         return PushReaction.DESTROY;
     }
-
 
     @Nullable
     @Override
@@ -87,5 +83,4 @@ public class EmptyInkwellBlock extends AbstractGlassBlock
 
         return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
     }
-
 }

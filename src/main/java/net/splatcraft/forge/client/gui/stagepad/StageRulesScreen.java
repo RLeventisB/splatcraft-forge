@@ -30,8 +30,10 @@ import java.util.HashMap;
 public class StageRulesScreen extends AbstractStagePadScreen
 {
     private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_rules.png");
-    private Stage stage;
     private final HashMap<GameRules.Key<GameRules.BooleanValue>, RuleEntry> rules = new HashMap<>();
+    private Stage stage;
+    private boolean scrollBarHeld = false;
+    private double scroll = 0;
 
     public StageRulesScreen(Component label, String stageId, Screen mainMenu)
     {
@@ -41,8 +43,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
         for (GameRules.Key<GameRules.BooleanValue> rule : Stage.VALID_SETTINGS.values())
         {
             rules.put(rule, new RuleEntry(
-                    addButton(new RuleNameLabel(rule)),
-                    addButton(new RuleValueButton(rule)), stage.getSetting(rule)));
+                addButton(new RuleNameLabel(rule)),
+                addButton(new RuleValueButton(rule)), stage.getSetting(rule)));
         }
 
         addOptionsTabs(label, stageId, mainMenu);
@@ -98,9 +100,6 @@ public class StageRulesScreen extends AbstractStagePadScreen
         RenderSystem.setShaderTexture(0, WIDGETS);
         guiGraphics.blit(WIDGETS, x + 188, y + 24 + (int) (scroll * 81), 196 + (rules.size() > 8 ? (scrollBarHeld ? 2 : 1) * 12 : 0), 0, 12, 15);
     }
-
-    private boolean scrollBarHeld = false;
-    private double scroll = 0;
 
     @Override
     public boolean canClickButtons()
@@ -223,8 +222,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
                 {
                     Boolean value = rules.get(rule).value;
                     showText(value == null ? Component.translatable("gui.stage_pad.button.rule_value.default",
-                            Component.translatable("gui.stage_pad.button.rule_value." + (SplatcraftGameRules.getClientsideBooleanValue(rule) ? "on" : "off"))) :
-                            Component.translatable("gui.stage_pad.button.rule_value." + (value ? "on" : "off"))).onTooltip(button, poseStack, mouseX, mouseY, partialTicks);
+                        Component.translatable("gui.stage_pad.button.rule_value." + (SplatcraftGameRules.getClientsideBooleanValue(rule) ? "on" : "off"))) :
+                        Component.translatable("gui.stage_pad.button.rule_value." + (value ? "on" : "off"))).onTooltip(button, poseStack, mouseX, mouseY, partialTicks);
                 }
             }, (guiGraphics, button) -> {
             }, ButtonColor.LIME);

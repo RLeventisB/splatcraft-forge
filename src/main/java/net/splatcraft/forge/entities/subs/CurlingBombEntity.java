@@ -50,6 +50,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
         setMaxUpStep(.7f);
     }
 
+    public static void onItemUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime)
+    {
+        CompoundTag data = stack.getTag().getCompound("EntityData");
+        data.putInt("CookTime", stack.getItem().getUseDuration(stack) - useTime);
+
+        stack.getTag().put("EntityData", data);
+    }
+
     @Override
     protected void defineSynchedData()
     {
@@ -62,14 +70,6 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
     protected Item getDefaultItem()
     {
         return SplatcraftItems.curlingBomb.get();
-    }
-
-    public static void onItemUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime)
-    {
-        CompoundTag data = stack.getTag().getCompound("EntityData");
-        data.putInt("CookTime", stack.getItem().getUseDuration(stack) - useTime);
-
-        stack.getTag().put("EntityData", data);
     }
 
     @Override

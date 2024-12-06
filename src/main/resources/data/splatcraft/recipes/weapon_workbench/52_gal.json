@@ -1,86 +1,86 @@
 {
-  "type": "splatcraft:weapon_workbench",
-  "tab": "splatcraft:weapon_workbench_tabs/shooters",
-  "pos": 3,
-  "recipes": [
-    {
-      "name": "weaponType.original",
-      "advancement": "splatcraft:unlocks/52_gal",
-      "result": {
-        "item": "splatcraft:52_gal",
-        "count": 1
-      },
-      "ingredients": [
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tabs/shooters",
+    "pos": 3,
+    "recipes": [
         {
-          "item": "splatcraft:sardinium",
-          "count": 10
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/52_gal",
+            "result": {
+                "item": "splatcraft:52_gal",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 15
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 17
+                }
+            ]
         },
         {
-          "item": "splatcraft:power_egg",
-          "count": 15
+            "name": "weaponType.deco",
+            "advancement": "splatcraft:unlocks/52_gal_deco",
+            "result": {
+                "item": "splatcraft:52_gal_deco",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 17
+                },
+                {
+                    "item": "minecraft:diamond",
+                    "count": 1
+                }
+            ]
         },
         {
-          "item": "minecraft:ink_sac",
-          "count": 17
+            "name": "weaponType.kensa",
+            "advancement": "splatcraft:unlocks/kensa_52_gal",
+            "requires_other": true,
+            "result": {
+                "item": "splatcraft:kensa_52_gal",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "item": "splatcraft:power_egg",
+                    "count": 15
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 17
+                },
+                {
+                    "item": "minecraft:black_dye",
+                    "count": 8
+                },
+                {
+                    "item": "splatcraft:toni_kensa_pin",
+                    "count": 1
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "weaponType.deco",
-      "advancement": "splatcraft:unlocks/52_gal_deco",
-      "result": {
-        "item": "splatcraft:52_gal_deco",
-        "count": 1
-      },
-      "ingredients": [
-        {
-          "item": "splatcraft:sardinium",
-          "count": 8
-        },
-        {
-          "item": "splatcraft:power_egg",
-          "count": 12
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 17
-        },
-        {
-          "item": "minecraft:diamond",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "name": "weaponType.kensa",
-      "advancement": "splatcraft:unlocks/kensa_52_gal",
-      "requires_other": true,
-      "result": {
-        "item": "splatcraft:kensa_52_gal",
-        "count": 1
-      },
-      "ingredients": [
-        {
-          "item": "splatcraft:sardinium",
-          "count": 10
-        },
-        {
-          "item": "splatcraft:power_egg",
-          "count": 15
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 17
-        },
-        {
-          "item": "minecraft:black_dye",
-          "count": 8
-        },
-        {
-          "item": "splatcraft:toni_kensa_pin",
-          "count": 1
-        }
-      ]
-    }
-  ]
+    ]
 }

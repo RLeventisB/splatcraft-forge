@@ -56,8 +56,8 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
             int blockColor = coloredBlock.getColor(level, pos);
 
             if (coloredBlock.canRemoteColorChange(level, pos, blockColor, color) && (mode == 0 || (mode == 1) == (affectedTeam.isEmpty() ? blockColor == affectedColor :
-                    blockEntity instanceof IHasTeam team && team.getTeam().equals(affectedTeam)))
-                    && coloredBlock.remoteColorChange(level, pos, color))
+                blockEntity instanceof IHasTeam team && team.getTeam().equals(affectedTeam)))
+                && coloredBlock.remoteColorChange(level, pos, color))
             {
                 count.getAndIncrement();
             }
@@ -100,7 +100,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
         if (entity instanceof Player player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                && PlayerInfoCapability.hasCapability(player))
+            && PlayerInfoCapability.hasCapability(player))
         {
             ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
         }

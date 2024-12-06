@@ -24,16 +24,16 @@ public class InkColorCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
     {
         dispatcher.register(Commands.literal("inkcolor").requires(commandSource -> commandSource.hasPermission(2))
-                .then(Commands.argument("color", InkColorArgument.inkColor()).executes(
-                        context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"))
-                ).then(Commands.argument("targets", EntityArgument.players()).executes(
-                        context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"), EntityArgument.getPlayers(context, "targets"))
-                )))
-                .then(StageCommand.stageId("stage").then(StageCommand.stageTeam("team", "stage")
-                        .executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team")))
-                        .then(Commands.argument("targets", EntityArgument.players())
-                                .executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team"), EntityArgument.getPlayers(context, "targets")))
-                        ))));
+            .then(Commands.argument("color", InkColorArgument.inkColor()).executes(
+                context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"))
+            ).then(Commands.argument("targets", EntityArgument.players()).executes(
+                context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"), EntityArgument.getPlayers(context, "targets"))
+            )))
+            .then(StageCommand.stageId("stage").then(StageCommand.stageTeam("team", "stage")
+                .executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team")))
+                .then(Commands.argument("targets", EntityArgument.players())
+                    .executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team"), EntityArgument.getPlayers(context, "targets")))
+                ))));
     }
 
     private static int setColor(CommandSourceStack source, int color) throws CommandSyntaxException

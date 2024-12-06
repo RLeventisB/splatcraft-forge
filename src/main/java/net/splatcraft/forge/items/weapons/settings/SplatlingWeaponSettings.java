@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWeaponSettings, SplatlingWeaponSettings.DataRecord>
 {
+    public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
     public ShotDataRecord firstChargeLevelShot = ShotDataRecord.DEFAULT;
     public CommonRecords.ProjectileDataRecord firstChargeLevelProjectile = CommonRecords.ProjectileDataRecord.DEFAULT;
     public ShotDataRecord secondChargeLevelShot = ShotDataRecord.DEFAULT;
@@ -21,7 +22,6 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     public boolean bypassesMobDamage = false;
     public float inkConsumption;
     public int inkRecoveryCooldown;
-    public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
 
     public SplatlingWeaponSettings(String name)
     {

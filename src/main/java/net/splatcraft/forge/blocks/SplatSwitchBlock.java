@@ -34,18 +34,18 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("deprecation")
 public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock
 {
-    private static final VoxelShape[] SHAPES = new VoxelShape[]
-            {
-                    box(1, 14, 1, 15, 16, 15),
-                    box(1, 0, 1, 15, 2, 15),
-                    box(1, 1, 14, 15, 15, 16),
-                    box(1, 1, 0, 15, 15, 2),
-                    box(14, 1, 1, 16, 15, 15),
-                    box(0, 1, 1, 2, 15, 15)
-            };
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    private static final VoxelShape[] SHAPES = new VoxelShape[]
+        {
+            box(1, 14, 1, 15, 16, 15),
+            box(1, 0, 1, 15, 2, 15),
+            box(1, 1, 14, 15, 15, 16),
+            box(1, 1, 0, 15, 15, 2),
+            box(14, 1, 1, 16, 15, 15),
+            box(0, 1, 1, 2, 15, 15)
+        };
 
     public SplatSwitchBlock()
     {

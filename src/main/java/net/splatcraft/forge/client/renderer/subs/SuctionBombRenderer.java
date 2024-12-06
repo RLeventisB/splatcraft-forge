@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, SuctionBombModel>
 {
-    private final SuctionBombModel MODEL;
     private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/suction_bomb.png");
     private static final ResourceLocation OVERLAY_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/suction_bomb_ink.png");
+    private final SuctionBombModel MODEL;
 
     public SuctionBombRenderer(EntityRendererProvider.Context context)
     {

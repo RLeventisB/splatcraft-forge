@@ -254,6 +254,56 @@ public class ChunkInk
             this.inmutable = false;
         }
 
+        public static Byte[] getIndicesFromActiveFlag(byte flag)
+        {
+            ArrayList<Byte> list = new ArrayList<>(6);
+            if ((flag & 1) == 1)
+                list.add((byte) 0);
+            if ((flag & 2) == 2)
+                list.add((byte) 1);
+            if ((flag & 4) == 4)
+                list.add((byte) 2);
+            if ((flag & 8) == 8)
+                list.add((byte) 3);
+            if ((flag & 16) == 16)
+                list.add((byte) 4);
+            if ((flag & 32) == 32)
+                list.add((byte) 5);
+            list.trimToSize();
+            return list.toArray(new Byte[0]);
+        }
+
+        public static Boolean[] getStateFromActiveFlag(byte flag)
+        {
+            return new Boolean[]{(flag & 1) == 1, (flag & 2) == 2, (flag & 4) == 4, (flag & 8) == 8, (flag & 16) == 16, (flag & 32) == 32};
+        }
+
+        public static BlockEntry readFromBuffer(FriendlyByteBuf buffer)
+        {
+            BlockEntry entry = new BlockEntry();
+            byte state = buffer.readByte();
+            entry.inmutable = (state & 128) == 128;
+            if ((state & 1) == 1)
+            {
+                Boolean[] inked = getStateFromActiveFlag((byte) (state >> 1));
+                for (int i = 0; i < 6; i++)
+                {
+                    if (inked[i])
+                    {
+                        int color = buffer.readInt();
+                        InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
+                        entry.paint(i, color, type);
+                    }
+                    else
+                    {
+                        entry.clear(i);
+                    }
+                }
+            }
+
+            return entry;
+        }
+
         public InkEntry get(int index)
         {
             return entries[index];
@@ -324,30 +374,6 @@ public class ChunkInk
             return list.toArray(new Byte[0]);
         }
 
-        public static Byte[] getIndicesFromActiveFlag(byte flag)
-        {
-            ArrayList<Byte> list = new ArrayList<>(6);
-            if ((flag & 1) == 1)
-                list.add((byte) 0);
-            if ((flag & 2) == 2)
-                list.add((byte) 1);
-            if ((flag & 4) == 4)
-                list.add((byte) 2);
-            if ((flag & 8) == 8)
-                list.add((byte) 3);
-            if ((flag & 16) == 16)
-                list.add((byte) 4);
-            if ((flag & 32) == 32)
-                list.add((byte) 5);
-            list.trimToSize();
-            return list.toArray(new Byte[0]);
-        }
-
-        public static Boolean[] getStateFromActiveFlag(byte flag)
-        {
-            return new Boolean[]{(flag & 1) == 1, (flag & 2) == 2, (flag & 4) == 4, (flag & 8) == 8, (flag & 16) == 16, (flag & 32) == 32};
-        }
-
         public void writeToBuffer(FriendlyByteBuf buffer)
         {
             // format:
@@ -363,32 +389,6 @@ public class ChunkInk
                     buffer.writeByte(type(i).getId());
                 }
             }
-        }
-
-        public static BlockEntry readFromBuffer(FriendlyByteBuf buffer)
-        {
-            BlockEntry entry = new BlockEntry();
-            byte state = buffer.readByte();
-            entry.inmutable = (state & 128) == 128;
-            if ((state & 1) == 1)
-            {
-                Boolean[] inked = getStateFromActiveFlag((byte) (state >> 1));
-                for (int i = 0; i < 6; i++)
-                {
-                    if (inked[i])
-                    {
-                        int color = buffer.readInt();
-                        InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
-                        entry.paint(i, color, type);
-                    }
-                    else
-                    {
-                        entry.clear(i);
-                    }
-                }
-            }
-
-            return entry;
         }
 
         public void apply(ChunkInk worldInk, RelativeBlockPos pos)

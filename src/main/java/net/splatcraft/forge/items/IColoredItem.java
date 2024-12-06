@@ -1,4 +1,5 @@
 package net.splatcraft.forge.items;
 
-public interface IColoredItem {
+public interface IColoredItem
+{
 }

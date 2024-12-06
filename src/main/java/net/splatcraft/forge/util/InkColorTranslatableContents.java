@@ -13,32 +13,14 @@ import java.util.Optional;
 public class InkColorTranslatableContents extends TranslatableContents
 {
 
-    private int color;
     private final TranslatableContents inverted;
+    private int color;
+    private Language decomposedWith;
 
     public InkColorTranslatableContents(int color, Object... pArgs)
     {
         super(getKeyForColor(color), "#" + String.format("%06X", color).toUpperCase(), pArgs);
         inverted = new TranslatableContents("ink_color.invert", null, new TranslatableContents[]{new TranslatableContents(getKeyForColor(0xFFFFFF - color), getFallback(), pArgs)});
-    }
-
-    private Language decomposedWith;
-
-    @Override
-    public <T> @NotNull Optional<T> visit(FormattedText.@NotNull ContentConsumer<T> pContentConsumer)
-    {
-        Language language = Language.getInstance();
-
-        if (!language.has(getKey()) && language.has(getKeyForColor(0xFFFFFF - color)))
-            return inverted.visit(pContentConsumer);
-
-        return super.visit(pContentConsumer);
-    }
-
-    @Override
-    public @NotNull String getKey()
-    {
-        return super.getKey();
     }
 
     private static String getKeyForColor(int color)
@@ -56,5 +38,22 @@ public class InkColorTranslatableContents extends TranslatableContents
             }
         }
         return hex;
+    }
+
+    @Override
+    public <T> @NotNull Optional<T> visit(FormattedText.@NotNull ContentConsumer<T> pContentConsumer)
+    {
+        Language language = Language.getInstance();
+
+        if (!language.has(getKey()) && language.has(getKeyForColor(0xFFFFFF - color)))
+            return inverted.visit(pContentConsumer);
+
+        return super.visit(pContentConsumer);
+    }
+
+    @Override
+    public @NotNull String getKey()
+    {
+        return super.getKey();
     }
 }

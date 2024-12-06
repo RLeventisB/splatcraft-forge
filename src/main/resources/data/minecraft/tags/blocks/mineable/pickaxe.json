@@ -1,23 +1,23 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:sardinium_block",
-    "splatcraft:sardinium_ore",
-    "splatcraft:raw_sardinium_block",
-    "splatcraft:ink_vat",
-    "splatcraft:ammo_knights_workbench",
-    "splatcraft:grate",
-    "splatcraft:grate_ramp",
-    "splatcraft:barrier_bar",
-    "splatcraft:plated_barrier_bar",
-    "splatcraft:caution_barrier_bar",
-    "splatcraft:remote_pedestal",
-    "splatcraft:splat_switch",
-    "splatcraft:spawn_pad_edge",
-    "splatcraft:spawn_pad",
-    "splatcraft:coralite",
-    "splatcraft:coralite_slab",
-    "splatcraft:coralite_stairs",
-    "splatcraft:ammo_knights_debris"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:sardinium_block",
+        "splatcraft:sardinium_ore",
+        "splatcraft:raw_sardinium_block",
+        "splatcraft:ink_vat",
+        "splatcraft:ammo_knights_workbench",
+        "splatcraft:grate",
+        "splatcraft:grate_ramp",
+        "splatcraft:barrier_bar",
+        "splatcraft:plated_barrier_bar",
+        "splatcraft:caution_barrier_bar",
+        "splatcraft:remote_pedestal",
+        "splatcraft:splat_switch",
+        "splatcraft:spawn_pad_edge",
+        "splatcraft:spawn_pad",
+        "splatcraft:coralite",
+        "splatcraft:coralite_slab",
+        "splatcraft:coralite_stairs",
+        "splatcraft:ammo_knights_debris"
+    ]
 }

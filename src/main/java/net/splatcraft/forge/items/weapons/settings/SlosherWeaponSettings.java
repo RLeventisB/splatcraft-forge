@@ -16,8 +16,8 @@ import java.util.Optional;
 
 public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponSettings, SlosherWeaponSettings.DataRecord>
 {
-    public boolean bypassesMobDamage;
     public static final SlosherWeaponSettings DEFAULT = new SlosherWeaponSettings("default");
+    public boolean bypassesMobDamage;
     public SlosherShotDataRecord shotData = SlosherShotDataRecord.DEFAULT;
     public CommonRecords.ProjectileDataRecord baseProjectile = SingularSloshShotData.SLOSHER_PROJECTILE_DEFAULT;
     public float lowestStartup;
@@ -26,6 +26,19 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
     public SlosherWeaponSettings(String name)
     {
         super(name);
+    }
+
+    private static float getDamage(CommonRecords.ProjectileDataRecord projectileData, float relativeY)
+    {
+        float minDamageHeight = projectileData.damageDecayPerTick();
+        float damageDecayStartHeight = projectileData.damageDecayStartTick();
+
+        float damage = projectileData.baseDamage();
+        if (relativeY < -minDamageHeight)
+            damage = projectileData.minDamage();
+        else if (relativeY < -damageDecayStartHeight)
+            damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
+        return damage;
     }
 
     @Override
@@ -42,19 +55,6 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
             return getDamage(projectileData, (float) relativeY);
         }
         return baseProjectile.baseDamage();
-    }
-
-    private static float getDamage(CommonRecords.ProjectileDataRecord projectileData, float relativeY)
-    {
-        float minDamageHeight = projectileData.damageDecayPerTick();
-        float damageDecayStartHeight = projectileData.damageDecayStartTick();
-
-        float damage = projectileData.baseDamage();
-        if (relativeY < -minDamageHeight)
-            damage = projectileData.minDamage();
-        else if (relativeY < -damageDecayStartHeight)
-            damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
-        return damage;
     }
 
     @Override

@@ -10,8 +10,8 @@ import java.util.UUID;
 
 public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 {
-    UUID target;
     private final boolean squid, isCancel;
+    UUID target;
 
     public PlayerSetSquidS2CPacket(UUID player, boolean squid)
     {

@@ -64,6 +64,31 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
         this.stateToShapeMap = ImmutableMap.copyOf(this.getStateDefinition().getPossibleStates().stream().collect(Collectors.toMap(Function.identity(), TarpBlock::getShapeForState)));
     }
 
+    private static VoxelShape getShapeForState(BlockState state)
+    {
+        VoxelShape voxelshape = Shapes.empty();
+
+        if (state.getValue(UP))
+            voxelshape = UP_AABB;
+
+        if (state.getValue(DOWN))
+            voxelshape = Shapes.or(voxelshape, DOWN_AABB);
+
+        if (state.getValue(NORTH))
+            voxelshape = Shapes.or(voxelshape, SOUTH_AABB);
+
+        if (state.getValue(SOUTH))
+            voxelshape = Shapes.or(voxelshape, NORTH_AABB);
+
+        if (state.getValue(EAST))
+            voxelshape = Shapes.or(voxelshape, WEST_AABB);
+
+        if (state.getValue(WEST))
+            voxelshape = Shapes.or(voxelshape, EAST_AABB);
+
+        return voxelshape;
+    }
+
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
     {
@@ -75,7 +100,7 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
     public BlockState getStateForPlacement(BlockPlaceContext context)
     {
         BlockState state = context.getLevel().getBlockState(context.getClickedPos()).is(this) ? context.getLevel().getBlockState(context.getClickedPos()) :
-                super.getStateForPlacement(context).setValue(DOWN, false).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+            super.getStateForPlacement(context).setValue(DOWN, false).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
 
         state = state.setValue(FACING_TO_PROPERTY_MAP.get(context.getClickedFace().getOpposite()), true);
 
@@ -116,31 +141,6 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
     public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
     {
         return stateToShapeMap.get(state);
-    }
-
-    private static VoxelShape getShapeForState(BlockState state)
-    {
-        VoxelShape voxelshape = Shapes.empty();
-
-        if (state.getValue(UP))
-            voxelshape = UP_AABB;
-
-        if (state.getValue(DOWN))
-            voxelshape = Shapes.or(voxelshape, DOWN_AABB);
-
-        if (state.getValue(NORTH))
-            voxelshape = Shapes.or(voxelshape, SOUTH_AABB);
-
-        if (state.getValue(SOUTH))
-            voxelshape = Shapes.or(voxelshape, NORTH_AABB);
-
-        if (state.getValue(EAST))
-            voxelshape = Shapes.or(voxelshape, WEST_AABB);
-
-        if (state.getValue(WEST))
-            voxelshape = Shapes.or(voxelshape, EAST_AABB);
-
-        return voxelshape;
     }
 
     @SuppressWarnings("deprecation")

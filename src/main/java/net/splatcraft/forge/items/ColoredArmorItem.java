@@ -56,7 +56,7 @@ public class ColoredArmorItem extends DyeableArmorItem implements IColoredItem
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
         if (entity instanceof Player player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                && PlayerInfoCapability.hasCapability(player))
+            && PlayerInfoCapability.hasCapability(player))
         {
             ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
         }

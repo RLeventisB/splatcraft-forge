@@ -40,11 +40,22 @@ import java.util.UUID;
 public class SuperJumpSelectorScreen
 {
 
+    private static final Minecraft mc = Minecraft.getInstance();
+
     public SuperJumpSelectorScreen()
     {
     }
 
-    private static final Minecraft mc = Minecraft.getInstance();
+    private static void drawOptionIcon(GuiGraphics graphics, float x, float y, float z, float scale, float partialTicks, MenuItem option)
+    {
+        int screenWidth = mc.getWindow().getGuiScaledWidth();
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+
+        graphics.pose().pushPose();
+        graphics.pose().scale(scale, scale, scale);
+        option.renderIcon(graphics, ((screenWidth / 2f + x) / scale - 8), ((screenHeight / 2f + y) / scale - 8), z, 1, partialTicks);
+        graphics.pose().popPose();
+    }
 
     public double render(GuiGraphics graphics, float partialTicks, JumpLureHudHandler.SuperJumpTargets targets, double scrollDelta, boolean clicked)
     {
@@ -157,17 +168,6 @@ public class SuperJumpSelectorScreen
         return scrollDelta;
     }
 
-    private static void drawOptionIcon(GuiGraphics graphics, float x, float y, float z, float scale, float partialTicks, MenuItem option)
-    {
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
-
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, scale);
-        option.renderIcon(graphics, ((screenWidth / 2f + x) / scale - 8), ((screenHeight / 2f + y) / scale - 8), z, 1, partialTicks);
-        graphics.pose().popPose();
-    }
-
     interface MenuItem
     {
         Component getName();
@@ -185,21 +185,6 @@ public class SuperJumpSelectorScreen
         {
             this.name = name;
             this.stack = stack;
-        }
-
-        @Override
-        public Component getName()
-        {
-            return name;
-        }
-
-        @Override
-        public void renderIcon(GuiGraphics graphics, float x, float y, float z, float alpha, float partialTicks)
-        {
-            float[] rgba = RenderSystem.getShaderColor().clone();
-            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], alpha);
-            renderItem(graphics, Minecraft.getInstance().player, Minecraft.getInstance().level, this.stack, x, y, 0, z);
-            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], rgba[3]);
         }
 
         // yes this is GuiGraphics::renderItem but pX and pY are floats
@@ -244,6 +229,21 @@ public class SuperJumpSelectorScreen
                 graphics.pose().popPose();
             }
         }
+
+        @Override
+        public Component getName()
+        {
+            return name;
+        }
+
+        @Override
+        public void renderIcon(GuiGraphics graphics, float x, float y, float z, float alpha, float partialTicks)
+        {
+            float[] rgba = RenderSystem.getShaderColor().clone();
+            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], alpha);
+            renderItem(graphics, Minecraft.getInstance().player, Minecraft.getInstance().level, this.stack, x, y, 0, z);
+            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+        }
     }
 
     static class PlayerMenuItem implements MenuItem
@@ -265,22 +265,6 @@ public class SuperJumpSelectorScreen
             this.name = Component.literal(profile.getName());
         }
 
-        @Override
-        public Component getName()
-        {
-            return name;
-        }
-
-        @Override
-        public void renderIcon(GuiGraphics graphics, float x, float y, float z, float alpha, float partialTicks)
-        {
-            float[] rgba = RenderSystem.getShaderColor().clone();
-            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], alpha);
-            innerBlit(graphics, location, x, x + 16, y, y + 16, z, 0.125f, 0.25f, 0.125f, 0.25f);
-            innerBlit(graphics, location, x, x + 16, y, y + 16, z, 0.625f, 0.75f, 0.125f, 0.25f);
-            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], rgba[3]);
-        }
-
         public static void blit(GuiGraphics graphics, ResourceLocation pAtlasLocation, int pX, int pY, int pWidth, int pHeight, float pUOffset, float pVOffset, int pUWidth, int pVHeight, int pTextureWidth, int pTextureHeight)
         {
             innerBlit(graphics, pAtlasLocation, pX, pX + pWidth, pY, pY + pHeight, 0, (pUOffset + 0.0F) / (float) pTextureWidth, (pUOffset + (float) pUWidth) / (float) pTextureWidth, (pVOffset + 0.0F) / (float) pTextureHeight, (pVOffset + (float) pVHeight) / (float) pTextureHeight);
@@ -298,6 +282,22 @@ public class SuperJumpSelectorScreen
             bufferbuilder.vertex(matrix4f, pX2, pY2, pBlitOffset).uv(pMaxU, pMaxV).endVertex();
             bufferbuilder.vertex(matrix4f, pX2, pY1, pBlitOffset).uv(pMaxU, pMinV).endVertex();
             BufferUploader.drawWithShader(bufferbuilder.end());
+        }
+
+        @Override
+        public Component getName()
+        {
+            return name;
+        }
+
+        @Override
+        public void renderIcon(GuiGraphics graphics, float x, float y, float z, float alpha, float partialTicks)
+        {
+            float[] rgba = RenderSystem.getShaderColor().clone();
+            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], alpha);
+            innerBlit(graphics, location, x, x + 16, y, y + 16, z, 0.125f, 0.25f, 0.125f, 0.25f);
+            innerBlit(graphics, location, x, x + 16, y, y + 16, z, 0.625f, 0.75f, 0.125f, 0.25f);
+            RenderSystem.setShaderColor(rgba[0], rgba[1], rgba[2], rgba[3]);
         }
     }
 }

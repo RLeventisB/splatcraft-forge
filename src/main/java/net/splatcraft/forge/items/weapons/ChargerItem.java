@@ -37,12 +37,6 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
         super(settingsId);
     }
 
-    @Override
-    public Class<ChargerWeaponSettings> getSettingsClass()
-    {
-        return ChargerWeaponSettings.class;
-    }
-
     public static RegistryObject<ChargerItem> create(DeferredRegister<Item> register, String settings, String name)
     {
         return register.register(name, () -> new ChargerItem(settings));
@@ -51,6 +45,19 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
     public static RegistryObject<ChargerItem> create(DeferredRegister<Item> register, RegistryObject<ChargerItem> parent, String name)
     {
         return register.register(name, () -> new ChargerItem(parent.get().settingsId.toString()));
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    protected static void playChargeReadySound(Player player)
+    {
+        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getUUID().equals(player.getUUID()))
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.chargerReady, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
+    }
+
+    @Override
+    public Class<ChargerWeaponSettings> getSettingsClass()
+    {
+        return ChargerWeaponSettings.class;
     }
 
     @Override
@@ -67,13 +74,6 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
         reduceInk(player, this, getInkConsumption(stack, charge), settings.shotData.inkRecoveryCooldown(), false, true);
         PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selected, player.getUsedItemHand(), true, false, false, player.onGround()));
         player.getCooldowns().addCooldown(this, 7);
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    protected static void playChargeReadySound(Player player)
-    {
-        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getUUID().equals(player.getUUID()))
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.chargerReady, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
     }
 
     @OnlyIn(Dist.CLIENT)

@@ -45,6 +45,20 @@ public final class PlaySession
         timer = gameMode.DEFAULT_TIME;
     }
 
+    public static PlaySession fromTag(MinecraftServer server, CompoundTag tag)
+    {
+        int playerCount = tag.getInt("PlayerCount");
+        List<ServerPlayer> players = new ArrayList<>(playerCount);
+
+        Level level = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("LevelId"))));
+        for (int i = 0; i < playerCount; i++)
+        {
+            players.set(i, (ServerPlayer) level.getPlayerByUUID(tag.getUUID("Player[{" + i + "}]")));
+        }
+
+        return new PlaySession(level, players, SaveInfoCapability.get(server).getStages().get(tag.getString("StageId")), StageGameMode.valueOf(tag.getString("GameMode")));
+    }
+
     /**
      * Ticks all the play session related actions.
      *
@@ -70,8 +84,8 @@ public final class PlaySession
     {
         if (obj == this) return true;
         return obj instanceof PlaySession that && Objects.equals(this.players, that.players) &&
-                Objects.equals(this.stageId, that.stageId) &&
-                Objects.equals(this.gameMode, that.gameMode);
+            Objects.equals(this.stageId, that.stageId) &&
+            Objects.equals(this.gameMode, that.gameMode);
     }
 
     @Override
@@ -84,9 +98,9 @@ public final class PlaySession
     public String toString()
     {
         return "PlaySession[" +
-                "players=" + players + ", " +
-                "stageId=" + stageId + ", " +
-                "gameMode=" + gameMode + ']';
+            "players=" + players + ", " +
+            "stageId=" + stageId + ", " +
+            "gameMode=" + gameMode + ']';
     }
 
     public CompoundTag saveTag()
@@ -106,19 +120,5 @@ public final class PlaySession
         }
 
         return tag;
-    }
-
-    public static PlaySession fromTag(MinecraftServer server, CompoundTag tag)
-    {
-        int playerCount = tag.getInt("PlayerCount");
-        List<ServerPlayer> players = new ArrayList<>(playerCount);
-
-        Level level = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("LevelId"))));
-        for (int i = 0; i < playerCount; i++)
-        {
-            players.set(i, (ServerPlayer) level.getPlayerByUUID(tag.getUUID("Player[{" + i + "}]")));
-        }
-
-        return new PlaySession(level, players, SaveInfoCapability.get(server).getStages().get(tag.getString("StageId")), StageGameMode.valueOf(tag.getString("GameMode")));
     }
 }

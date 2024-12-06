@@ -84,6 +84,11 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
         this(block, new Properties().stacksTo(stackSize), null);
     }
 
+    public ColoredBlockItem(Block block)
+    {
+        this(block, 64, null);
+    }
+
     public ColoredBlockItem setMatchColor(boolean matchColor)
     {
         this.matchColor = matchColor;
@@ -93,11 +98,6 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
     public boolean matchesColor()
     {
         return matchColor;
-    }
-
-    public ColoredBlockItem(Block block)
-    {
-        this(block, 64, null);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
         if (matchColor && (ColorUtils.getInkColor(stack) == -1 || !ColorUtils.isColorLocked(stack)))
         {
             ColorUtils.setInkColor(stack, entityIn instanceof Player && PlayerInfoCapability.hasCapability((LivingEntity) entityIn) ?
-                    ColorUtils.getPlayerColor((Player) entityIn) : ColorUtils.DEFAULT);
+                ColorUtils.getPlayerColor((Player) entityIn) : ColorUtils.DEFAULT);
         }
     }
 
@@ -167,7 +167,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
             }
         }
         else if (!(equals(clearItem) && ColorUtils.getInkColor(stack) < 0) &&
-                clearItem != null && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos), Direction.UP))
+            clearItem != null && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos), Direction.UP))
         {
             entity.setItem(new ItemStack(clearItem, stack.getCount()));
         }

@@ -1,11 +1,11 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:cyan",
-    "splatcraft:peach",
-    "splatcraft:mint",
-    "splatcraft:cherry",
-    "splatcraft:royal_blue",
-    "splatcraft:light_green"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:cyan",
+        "splatcraft:peach",
+        "splatcraft:mint",
+        "splatcraft:cherry",
+        "splatcraft:royal_blue",
+        "splatcraft:light_green"
+    ]
 }

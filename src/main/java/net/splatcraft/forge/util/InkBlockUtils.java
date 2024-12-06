@@ -193,11 +193,6 @@ public class InkBlockUtils
             }
     }
 
-    public interface InkedBlockConsumer
-    {
-        void accept(BlockPos pos, ChunkInk.BlockEntry ink);
-    }
-
     public static boolean isBlockFoliage(BlockState state)
     {
         return state.is(BlockTags.CROPS) || state.is(BlockTags.SAPLINGS) || state.is(BlockTags.REPLACEABLE);
@@ -434,6 +429,11 @@ public class InkBlockUtils
         return false;
     }
 
+    public interface InkedBlockConsumer
+    {
+        void accept(BlockPos pos, ChunkInk.BlockEntry ink);
+    }
+
     public static class InkType implements Comparable<InkType>
     {
         public static final HashMap<ResourceLocation, InkType> values = new HashMap<>();
@@ -457,6 +457,17 @@ public class InkBlockUtils
         public InkType(int id, ResourceLocation name, InkedBlock inkedBlock)
         {
             this(id, name, Items.AIR, inkedBlock);
+        }
+
+        public static InkType fromId(int id)
+        {
+            return switch (id)
+            {
+                case 0 -> NORMAL;
+                case 1 -> GLOWING;
+                case 2 -> CLEAR;
+                default -> throw new IllegalStateException("Unexpected value: " + id);
+            };
         }
 
         @Override
@@ -489,17 +500,6 @@ public class InkBlockUtils
         public byte getId()
         {
             return id;
-        }
-
-        public static InkType fromId(int id)
-        {
-            return switch (id)
-            {
-                case 0 -> NORMAL;
-                case 1 -> GLOWING;
-                case 2 -> CLEAR;
-                default -> throw new IllegalStateException("Unexpected value: " + id);
-            };
         }
     }
 }

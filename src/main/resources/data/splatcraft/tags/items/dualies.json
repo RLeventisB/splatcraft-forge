@@ -1,11 +1,11 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:splat_dualies",
-    "splatcraft:enperry_splat_dualies",
-    "splatcraft:dualie_squelchers",
-    "splatcraft:glooga_dualies",
-    "splatcraft:glooga_dualies_deco",
-	"splatcraft:kensa_glooga_dualies"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:splat_dualies",
+        "splatcraft:enperry_splat_dualies",
+        "splatcraft:dualie_squelchers",
+        "splatcraft:glooga_dualies",
+        "splatcraft:glooga_dualies_deco",
+        "splatcraft:kensa_glooga_dualies"
+    ]
 }

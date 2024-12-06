@@ -32,21 +32,21 @@ public class BarrierBarBlock extends Block implements SimpleWaterloggedBlock
     protected static final AABB TOP_AABB = new AABB(0, 13 / 16f, 0, 1, 1, 1);
     protected static final VoxelShape NU_STRAIGHT = Block.box(0, 13, 0, 16, 16, 3);
     protected static final VoxelShape SU_STRAIGHT = modifyShapeForDirection(Direction.SOUTH, NU_STRAIGHT);
-    protected static final VoxelShape WU_STRAIGHT = modifyShapeForDirection(Direction.WEST, NU_STRAIGHT);
-    protected static final VoxelShape EU_STRAIGHT = modifyShapeForDirection(Direction.EAST, NU_STRAIGHT);
-    protected static final VoxelShape ND_STRAIGHT = mirrorShapeY(NU_STRAIGHT);
     protected static final VoxelShape SD_STRAIGHT = mirrorShapeY(SU_STRAIGHT);
+    protected static final VoxelShape WU_STRAIGHT = modifyShapeForDirection(Direction.WEST, NU_STRAIGHT);
     protected static final VoxelShape WD_STRAIGHT = mirrorShapeY(WU_STRAIGHT);
+    protected static final VoxelShape EU_STRAIGHT = modifyShapeForDirection(Direction.EAST, NU_STRAIGHT);
     protected static final VoxelShape ED_STRAIGHT = mirrorShapeY(EU_STRAIGHT);
+    protected static final VoxelShape ND_STRAIGHT = mirrorShapeY(NU_STRAIGHT);
     protected static final VoxelShape NU_CORNER = Block.box(0, 13, 0, 3, 16, 3);
     protected static final VoxelShape SU_CORNER = modifyShapeForDirection(Direction.SOUTH, NU_CORNER);
-    protected static final VoxelShape WU_CORNER = modifyShapeForDirection(Direction.WEST, NU_CORNER);
-    protected static final VoxelShape EU_CORNER = modifyShapeForDirection(Direction.EAST, NU_CORNER);
-    protected static final VoxelShape ND_CORNER = mirrorShapeY(NU_CORNER);
     protected static final VoxelShape SD_CORNER = mirrorShapeY(SU_CORNER);
+    protected static final VoxelShape WU_CORNER = modifyShapeForDirection(Direction.WEST, NU_CORNER);
     protected static final VoxelShape WD_CORNER = mirrorShapeY(WU_CORNER);
+    protected static final VoxelShape EU_CORNER = modifyShapeForDirection(Direction.EAST, NU_CORNER);
     protected static final VoxelShape ED_CORNER = mirrorShapeY(EU_CORNER);
     protected static final VoxelShape[] TOP_SHAPES = new VoxelShape[]{NU_STRAIGHT, SU_STRAIGHT, WU_STRAIGHT, EU_STRAIGHT, NU_CORNER, SU_CORNER, WU_CORNER, EU_CORNER};
+    protected static final VoxelShape ND_CORNER = mirrorShapeY(NU_CORNER);
     protected static final VoxelShape[] BOTTOM_SHAPES = new VoxelShape[]{ND_STRAIGHT, SD_STRAIGHT, WD_STRAIGHT, ED_STRAIGHT, ND_CORNER, SD_CORNER, WD_CORNER, ED_CORNER};
 
     public BarrierBarBlock()

@@ -2,7 +2,7 @@ package net.splatcraft.forge.tileentities;
 
 public interface IHasTeam
 {
-	String getTeam();
+    String getTeam();
 
-	void setTeam(String team);
+    void setTeam(String team);
 }

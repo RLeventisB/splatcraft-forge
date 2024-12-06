@@ -1,7 +1,7 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:ink_stained_wool",
-    "splatcraft:canvas"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:ink_stained_wool",
+        "splatcraft:canvas"
+    ]
 }

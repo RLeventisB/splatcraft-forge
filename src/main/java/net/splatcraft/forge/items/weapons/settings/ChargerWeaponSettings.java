@@ -192,6 +192,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
                 Codec.INT.optionalFieldOf("charge_storage_ticks", 25).forGetter(ChargeDataRecord::chargeStorageTime)
             ).apply(instance, ChargeDataRecord::create)
         );
+        public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(10, 1f / 3, 1f / 3, 25);
 
         private static ChargeDataRecord create(int chargeTime,
                                                float airborneChargeTime,
@@ -205,8 +206,6 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
         {
             return 1f / chargeTime;
         }
-
-        public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(10, 1f / 3, 1f / 3, 25);
     }
 
     public record ShotDataRecord(

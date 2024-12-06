@@ -50,6 +50,7 @@ import java.util.List;
 public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkbenchContainer>
 {
     private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/weapon_crafting.png");
+    private final Inventory inventory;
     Player player;
     private int tabPos = 0;
     private int sectionPos = 0;
@@ -60,7 +61,6 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
     private WeaponWorkbenchSubtypeRecipe selectedRecipe = null;
     private WeaponWorkbenchRecipe selectedWeapon = null;
     private int craftButtonState = -1;
-    private final Inventory inventory;
 
     public WeaponWorkbenchScreen(WeaponWorkbenchContainer screenContainer, Inventory inv, Component titleIn)
     {
@@ -71,6 +71,18 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         this.titleLabelY = this.imageHeight - 92;
         this.player = inv.player;
         this.inventory = inv;
+    }
+
+    protected static Component getDisplayName(ItemStack stack)
+    {
+        MutableComponent iformattabletextcomponent = MutableComponent.create(stack.getHoverName().getContents());
+        if (stack.hasCustomHoverName())
+            iformattabletextcomponent.withStyle(ChatFormatting.ITALIC);
+
+        iformattabletextcomponent.withStyle(stack.getRarity().getStyleModifier()).withStyle((style) ->
+            style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackInfo(stack))));
+
+        return iformattabletextcomponent;
     }
 
     @Override
@@ -425,18 +437,6 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
         }
     }
 
-    protected static Component getDisplayName(ItemStack stack)
-    {
-        MutableComponent iformattabletextcomponent = MutableComponent.create(stack.getHoverName().getContents());
-        if (stack.hasCustomHoverName())
-            iformattabletextcomponent.withStyle(ChatFormatting.ITALIC);
-
-        iformattabletextcomponent.withStyle(stack.getRarity().getStyleModifier()).withStyle((style) ->
-                style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackInfo(stack))));
-
-        return iformattabletextcomponent;
-    }
-
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button)
     {
@@ -568,7 +568,7 @@ public class WeaponWorkbenchScreen extends AbstractContainerScreen<WeaponWorkben
             craftButtonState = 1;
             playButtonSound();
         }
-        
+
         return super.mouseClicked(mouseX, mouseY, button);
     }
 

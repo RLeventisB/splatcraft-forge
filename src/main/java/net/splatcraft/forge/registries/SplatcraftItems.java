@@ -55,9 +55,9 @@ public class SplatcraftItems
 
     //Shooters
     public static final RegistryObject<ShooterItem> splattershot = ShooterItem.create(REGISTRY, "splattershot", "splattershot");
+    public static final RegistryObject<ShooterItem> ancientSplattershot = ShooterItem.create(REGISTRY, splattershot, "ancient_splattershot", true);
     public static final RegistryObject<ShooterItem> tentatekSplattershot = ShooterItem.create(REGISTRY, "splattershot", "tentatek_splattershot");
     public static final RegistryObject<ShooterItem> wasabiSplattershot = ShooterItem.create(REGISTRY, "splattershot", "wasabi_splattershot");
-    public static final RegistryObject<ShooterItem> ancientSplattershot = ShooterItem.create(REGISTRY, splattershot, "ancient_splattershot", true);
     public static final RegistryObject<ShooterItem> splattershotJr = ShooterItem.create(REGISTRY, "splattershot_jr", "splattershot_jr");
     public static final RegistryObject<ShooterItem> kensaSplattershotJr = ShooterItem.create(REGISTRY, "splattershot_jr", "kensa_splattershot_jr");
     public static final RegistryObject<ShooterItem> aerosprayMG = ShooterItem.create(REGISTRY, "aerospray", "aerospray_mg");
@@ -161,15 +161,15 @@ public class SplatcraftItems
     public static final RegistryObject<Item> powerEggCan = REGISTRY.register("power_egg_can", PowerEggCanItem::new);
     public static final RegistryObject<Item> powerEggBlock = REGISTRY.register("power_egg_block", () -> new BlockItem(SplatcraftBlocks.powerEggBlock.get()));
     public static final RegistryObject<Item> emptyInkwell = REGISTRY.register("empty_inkwell", () -> new BlockItem(SplatcraftBlocks.emptyInkwell.get()));
+    //Map Items
+    public static final RegistryObject<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.get(), 16, emptyInkwell.get()));
     public static final RegistryObject<Item> ammoKnightsScrap = REGISTRY.register("ammo_knights_scrap", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> blueprint = REGISTRY.register("blueprint", BlueprintItem::new);
     public static final RegistryObject<Item> kensaPin = REGISTRY.register("toni_kensa_pin", () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
-
     //Remotes
     public static final RegistryObject<RemoteItem> turfScanner = REGISTRY.register("turf_scanner", TurfScannerItem::new);
     public static final RegistryObject<RemoteItem> inkDisruptor = REGISTRY.register("ink_disruptor", InkDisruptorItem::new);
     public static final RegistryObject<RemoteItem> colorChanger = REGISTRY.register("color_changer", ColorChangerItem::new);
-
     //Filters
     public static final RegistryObject<FilterItem> emptyFilter = REGISTRY.register("filter", FilterItem::new);
     public static final RegistryObject<FilterItem> pastelFilter = REGISTRY.register("pastel_filter", FilterItem::new);
@@ -179,13 +179,9 @@ public class SplatcraftItems
     public static final RegistryObject<FilterItem> overgrownFilter = REGISTRY.register("overgrown_filter", FilterItem::new);
     public static final RegistryObject<FilterItem> midnightFilter = REGISTRY.register("midnight_filter", FilterItem::new);
     public static final RegistryObject<FilterItem> creativeFilter = REGISTRY.register("creative_filter", () -> new FilterItem(Rarity.RARE, false, true));
-
     //Crafting Stations
     public static final RegistryObject<Item> inkVat = REGISTRY.register("ink_vat", () -> new BlockItem(SplatcraftBlocks.inkVat.get()));
     public static final RegistryObject<Item> weaponWorkbench = REGISTRY.register("ammo_knights_workbench", () -> new BlockItem(SplatcraftBlocks.weaponWorkbench.get()));
-
-    //Map Items
-    public static final RegistryObject<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.get(), 16, emptyInkwell.get()));
     public static final RegistryObject<Item> spawnPad = REGISTRY.register("spawn_pad", () -> new ColoredBlockItem(SplatcraftBlocks.spawnPad.get(), 1));
     public static final RegistryObject<Item> grate = REGISTRY.register("grate", () -> new BlockItem(SplatcraftBlocks.grate.get()));
     public static final RegistryObject<Item> grateRamp = REGISTRY.register("grate_ramp", () -> new BlockItem(SplatcraftBlocks.grateRamp.get()));
@@ -271,7 +267,7 @@ public class SplatcraftItems
         {
             ItemProperties.register(dualie, isLeftProperty, dualie.getIsLeft());
         }
-        
+
         for (RollerItem roller : RollerItem.rollers)
         {
             ItemProperties.register(roller, unfoldedProperty, roller.getUnfolded());

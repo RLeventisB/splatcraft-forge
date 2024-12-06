@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatBombModel>
 {
-    private final SplatBombModel MODEL;
     private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/splat_bomb.png");
     private static final ResourceLocation OVERLAY_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/splat_bomb_ink.png");
+    private final SplatBombModel MODEL;
 
     public SplatBombRenderer(EntityRendererProvider.Context context)
     {

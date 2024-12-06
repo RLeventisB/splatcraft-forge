@@ -27,17 +27,17 @@ import org.jetbrains.annotations.Nullable;
 
 public class SuctionBombEntity extends AbstractSubWeaponEntity
 {
-    private static final EntityDataAccessor<Boolean> ACTIVATED = SynchedEntityData.defineId(SuctionBombEntity.class, EntityDataSerializers.BOOLEAN);
     public static final int FLASH_DURATION = 20;
+    private static final EntityDataAccessor<Boolean> ACTIVATED = SynchedEntityData.defineId(SuctionBombEntity.class, EntityDataSerializers.BOOLEAN);
+    public int shakeTime;
     protected int fuseTime = 0;
     protected int prevFuseTime = 0;
+    protected boolean inGround;
+    protected boolean playedActivationSound = false;
     @Nullable
     private BlockState inBlockState;
     @Nullable
     private Direction stickFacing;
-    protected boolean inGround;
-    public int shakeTime;
-    protected boolean playedActivationSound = false;
 
     public SuctionBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
     {
@@ -154,14 +154,14 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity
         }
     }
 
-    public void setActivated(boolean v)
-    {
-        entityData.set(ACTIVATED, v);
-    }
-
     public boolean isActivated()
     {
         return entityData.get(ACTIVATED);
+    }
+
+    public void setActivated(boolean v)
+    {
+        entityData.set(ACTIVATED, v);
     }
 
     @Override

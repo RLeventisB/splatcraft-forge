@@ -1,13 +1,13 @@
 {
-  "replace": false,
-  "values": [
-    "#splatcraft:classic",
-    "#splatcraft:pastel",
-    "#splatcraft:neon",
-    "#splatcraft:enchanted",
-    "#splatcraft:organic",
-    "#splatcraft:overgrown",
-    "#splatcraft:midnight",
-    "splatcraft:default"
-  ]
+    "replace": false,
+    "values": [
+        "#splatcraft:classic",
+        "#splatcraft:pastel",
+        "#splatcraft:neon",
+        "#splatcraft:enchanted",
+        "#splatcraft:organic",
+        "#splatcraft:overgrown",
+        "#splatcraft:midnight",
+        "splatcraft:default"
+    ]
 }

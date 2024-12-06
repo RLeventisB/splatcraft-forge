@@ -16,45 +16,47 @@ import java.util.UUID;
 
 public class ReceivePlayerOverlayPacket extends PlayS2CPacket
 {
-	final UUID player;
-	final byte[] imageBytes;
+    final UUID player;
+    final byte[] imageBytes;
 
-	public ReceivePlayerOverlayPacket(UUID player, byte[] imageBytes)
-	{
-		this.imageBytes = imageBytes;
-		this.player = player;
-	}
+    public ReceivePlayerOverlayPacket(UUID player, byte[] imageBytes)
+    {
+        this.imageBytes = imageBytes;
+        this.player = player;
+    }
 
-	@Override
-	public void encode(FriendlyByteBuf buffer)
-	{
-		buffer.writeUUID(player);
-		buffer.writeByteArray(imageBytes);
-	}
+    public static ReceivePlayerOverlayPacket decode(FriendlyByteBuf buffer)
+    {
+        return new ReceivePlayerOverlayPacket(buffer.readUUID(), buffer.readByteArray());
+    }
 
-	public static ReceivePlayerOverlayPacket decode(FriendlyByteBuf buffer)
-	{
-		return new ReceivePlayerOverlayPacket(buffer.readUUID(), buffer.readByteArray());
-	}
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeUUID(player);
+        buffer.writeByteArray(imageBytes);
+    }
 
-	@OnlyIn(Dist.CLIENT)
-	@Override
-	public void execute()
-	{
-		try {
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void execute()
+    {
+        try
+        {
 
-			ResourceLocation location = new ResourceLocation(Splatcraft.MODID, PlayerInkColoredSkinLayer.PATH + player.toString());
-			Minecraft.getInstance().getTextureManager().release(location);
+            ResourceLocation location = new ResourceLocation(Splatcraft.MODID, PlayerInkColoredSkinLayer.PATH + player.toString());
+            Minecraft.getInstance().getTextureManager().release(location);
 
-			if(imageBytes.length > 0)
-			{
-				DynamicTexture texture = new DynamicTexture(NativeImage.read(new ByteArrayInputStream(imageBytes)));
-				Minecraft.getInstance().getTextureManager().register(location, texture);
-				PlayerInkColoredSkinLayer.TEXTURES.put(player, location);
-			}
-
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+            if (imageBytes.length > 0)
+            {
+                DynamicTexture texture = new DynamicTexture(NativeImage.read(new ByteArrayInputStream(imageBytes)));
+                Minecraft.getInstance().getTextureManager().register(location, texture);
+                PlayerInkColoredSkinLayer.TEXTURES.put(player, location);
+            }
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
 }

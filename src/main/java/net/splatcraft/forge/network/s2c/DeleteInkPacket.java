@@ -30,6 +30,19 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
         this.toDelete = toDelete;
     }
 
+    public static DeleteInkPacket decode(FriendlyByteBuf buffer)
+    {
+        ChunkPos chunkPos = buffer.readChunkPos();
+        int changedBlocks = buffer.readInt();
+        List<BlockPos> toDelete = new ArrayList<>(changedBlocks);
+        for (int i = 0; i < changedBlocks; i++)
+        {
+            BlockPos pos = buffer.readBlockPos();
+            toDelete.add(pos);
+        }
+        return new DeleteInkPacket(chunkPos, toDelete);
+    }
+
     @Override
     public void add(Level level, BlockPos pos)
     {
@@ -45,19 +58,6 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
         {
             buffer.writeBlockPos(blockPos);
         }
-    }
-
-    public static DeleteInkPacket decode(FriendlyByteBuf buffer)
-    {
-        ChunkPos chunkPos = buffer.readChunkPos();
-        int changedBlocks = buffer.readInt();
-        List<BlockPos> toDelete = new ArrayList<>(changedBlocks);
-        for (int i = 0; i < changedBlocks; i++)
-        {
-            BlockPos pos = buffer.readBlockPos();
-            toDelete.add(pos);
-        }
-        return new DeleteInkPacket(chunkPos, toDelete);
     }
 
     @Override

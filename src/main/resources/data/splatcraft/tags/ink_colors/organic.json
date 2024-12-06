@@ -1,21 +1,21 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:organic_black",
-    "splatcraft:organic_blue",
-    "splatcraft:organic_brown",
-    "splatcraft:organic_cyan",
-    "splatcraft:organic_gray",
-    "splatcraft:organic_green",
-    "splatcraft:organic_light_blue",
-    "splatcraft:organic_light_gray",
-    "splatcraft:organic_lime",
-    "splatcraft:organic_magenta",
-    "splatcraft:organic_orange",
-    "splatcraft:organic_pink",
-    "splatcraft:organic_purple",
-    "splatcraft:organic_red",
-    "splatcraft:organic_white",
-    "splatcraft:organic_yellow"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:organic_black",
+        "splatcraft:organic_blue",
+        "splatcraft:organic_brown",
+        "splatcraft:organic_cyan",
+        "splatcraft:organic_gray",
+        "splatcraft:organic_green",
+        "splatcraft:organic_light_blue",
+        "splatcraft:organic_light_gray",
+        "splatcraft:organic_lime",
+        "splatcraft:organic_magenta",
+        "splatcraft:organic_orange",
+        "splatcraft:organic_pink",
+        "splatcraft:organic_purple",
+        "splatcraft:organic_red",
+        "splatcraft:organic_white",
+        "splatcraft:organic_yellow"
+    ]
 }

@@ -38,17 +38,12 @@ import java.util.function.Function;
 
 public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> implements IChargeableWeapon
 {
+    private static final int maxCharges = 2;
     public SplatlingChargingTickableSound chargingSound;
 
     protected SplatlingItem(String settingsId)
     {
         super(settingsId);
-    }
-
-    @Override
-    public Class<SplatlingWeaponSettings> getSettingsClass()
-    {
-        return SplatlingWeaponSettings.class;
     }
 
     public static RegistryObject<SplatlingItem> create(DeferredRegister<Item> register, String settings, String name)
@@ -66,6 +61,41 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
     {
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getUUID().equals(player.getUUID()))
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.splatlingReady, pitch, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
+    }
+
+    // its time for boilerplate code
+    public static float getScaledShotSettingFloat(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Float> getter)
+    {
+        float min = getter.apply(settings.firstChargeLevelShot);
+        float max = getter.apply(settings.secondChargeLevelShot);
+        return min + (max - min) * Mth.clamp(charge, 0, 1);
+    }
+
+    public static float getScaledProjectileSettingFloat(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Float> getter)
+    {
+        float min = getter.apply(settings.firstChargeLevelProjectile);
+        float max = getter.apply(settings.secondChargeLevelProjectile);
+        return min + (max - min) * Mth.clamp(charge, 0, 1);
+    }
+
+    public static int getScaledShotSettingInt(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Integer> getter)
+    {
+        float min = getter.apply(settings.firstChargeLevelShot);
+        float max = getter.apply(settings.secondChargeLevelShot);
+        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
+    }
+
+    public static int getScaledProjectileSettingInt(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Integer> getter)
+    {
+        float min = getter.apply(settings.firstChargeLevelProjectile);
+        float max = getter.apply(settings.secondChargeLevelProjectile);
+        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
+    }
+
+    @Override
+    public Class<SplatlingWeaponSettings> getSettingsClass()
+    {
+        return SplatlingWeaponSettings.class;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -89,8 +119,6 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
             Minecraft.getInstance().getSoundManager().play(chargingSound);
         }
     }
-
-    private static final int maxCharges = 2;
 
     @Override
     public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
@@ -216,35 +244,6 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
                 SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack, false));
             }
         }
-    }
-
-    // its time for boilerplate code
-    public static float getScaledShotSettingFloat(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Float> getter)
-    {
-        float min = getter.apply(settings.firstChargeLevelShot);
-        float max = getter.apply(settings.secondChargeLevelShot);
-        return min + (max - min) * Mth.clamp(charge, 0, 1);
-    }
-
-    public static float getScaledProjectileSettingFloat(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Float> getter)
-    {
-        float min = getter.apply(settings.firstChargeLevelProjectile);
-        float max = getter.apply(settings.secondChargeLevelProjectile);
-        return min + (max - min) * Mth.clamp(charge, 0, 1);
-    }
-
-    public static int getScaledShotSettingInt(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Integer> getter)
-    {
-        float min = getter.apply(settings.firstChargeLevelShot);
-        float max = getter.apply(settings.secondChargeLevelShot);
-        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
-    }
-
-    public static int getScaledProjectileSettingInt(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Integer> getter)
-    {
-        float min = getter.apply(settings.firstChargeLevelProjectile);
-        float max = getter.apply(settings.secondChargeLevelProjectile);
-        return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
     }
 
     @Override

@@ -1,6 +1,6 @@
 {
-  "replace": false,
-  "values": [
-    "minecraft:wet_sponge"
-  ]
+    "replace": false,
+    "values": [
+        "minecraft:wet_sponge"
+    ]
 }

@@ -11,11 +11,47 @@ import java.util.UUID;
 
 public abstract class AttackId
 {
+    public static final AttackId NONE = new EmptyAttackId();
+    public static List<AttackId> attackIdList = new ArrayList<>();
+    private static short nextAttackId = 0;
+
+    public static AttackId registerAttack()
+    {
+        AttackId attackId = new DefaultAttackId(getAttackId());
+        attackIdList.add(attackId);
+        return attackId;
+    }
+
+    public static short getAttackId()
+    {
+        return nextAttackId++;
+    }
+
+    public static AttackId readNbt(CompoundTag tag)
+    {
+        return tag.contains("Id") ? new DefaultAttackId(tag) : new EmptyAttackId();
+    }
+
+    public abstract short getId();
+
+    public AttackId countProjectile()
+    {
+        return countProjectile(1);
+    }
+
+    public abstract AttackId countProjectile(int count);
+
+    public abstract void projectileRemoved();
+
+    public abstract boolean checkEntity(Entity entity);
+
+    public abstract CompoundTag serializeNbt();
+
     public static final class DefaultAttackId extends AttackId
     {
         public final short id;
-        public byte projectileCount;
         public final List<UUID> hitEnemies;
+        public byte projectileCount;
 
         private DefaultAttackId(short id)
         {
@@ -121,41 +157,5 @@ public abstract class AttackId
                 return new CompoundTag();
             }
         }
-    }
-
-    public static final AttackId NONE = new EmptyAttackId();
-    public static List<AttackId> attackIdList = new ArrayList<>();
-    private static short nextAttackId = 0;
-
-    public abstract short getId();
-
-    public AttackId countProjectile()
-    {
-        return countProjectile(1);
-    }
-
-    public abstract AttackId countProjectile(int count);
-
-    public abstract void projectileRemoved();
-
-    public abstract boolean checkEntity(Entity entity);
-
-    public abstract CompoundTag serializeNbt();
-
-    public static AttackId registerAttack()
-    {
-        AttackId attackId = new DefaultAttackId(getAttackId());
-        attackIdList.add(attackId);
-        return attackId;
-    }
-
-    public static short getAttackId()
-    {
-        return nextAttackId++;
-    }
-
-    public static AttackId readNbt(CompoundTag tag)
-    {
-        return tag.contains("Id") ? new DefaultAttackId(tag) : new EmptyAttackId();
     }
 }

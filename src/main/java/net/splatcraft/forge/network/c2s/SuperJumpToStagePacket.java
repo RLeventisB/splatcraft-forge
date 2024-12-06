@@ -11,27 +11,27 @@ import java.util.UUID;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
-	final String stageId;
+    final String stageId;
 
-	public SuperJumpToStagePacket(String stageId)
-	{
-		this.stageId = stageId;
-	}
+    public SuperJumpToStagePacket(String stageId)
+    {
+        this.stageId = stageId;
+    }
 
-	@Override
-	public void encode(FriendlyByteBuf buffer)
-	{
-		buffer.writeUtf(stageId);
-	}
+    public static SuperJumpToStagePacket decode(FriendlyByteBuf buf)
+    {
+        return new SuperJumpToStagePacket(buf.readUtf());
+    }
 
-	public static SuperJumpToStagePacket decode(FriendlyByteBuf buf)
-	{
-		return new SuperJumpToStagePacket(buf.readUtf());
-	}
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeUtf(stageId);
+    }
 
-	@Override
-	public void execute(Player player)
-	{
+    @Override
+    public void execute(Player player)
+    {
         Stage.getStage(player.level(), stageId).superJumpToStage((ServerPlayer) player);
-	}
+    }
 }

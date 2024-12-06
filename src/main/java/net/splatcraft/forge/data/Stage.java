@@ -33,20 +33,6 @@ import java.util.*;
 public class Stage implements Comparable<Stage>
 {
     public static final TreeMap<String, GameRules.Key<GameRules.BooleanValue>> VALID_SETTINGS = new TreeMap<>();
-    private Component name;
-
-    public BlockPos cornerA;
-    public BlockPos cornerB;
-    public ResourceLocation dimID;
-
-    public final String id;
-
-    private final HashMap<String, Boolean> settings = new HashMap<>();
-    private final HashMap<String, Integer> teams = new HashMap<>();
-
-    private final ArrayList<BlockPos> spawnPadPositions = new ArrayList<>();
-
-    private boolean needsSpawnPadUpdate = false;
 
     static
     {
@@ -63,6 +49,80 @@ public class Stage implements Comparable<Stage>
         registerGameruleSetting(SplatcraftGameRules.RECHARGEABLE_INK_TANK);
         registerGameruleSetting(SplatcraftGameRules.GLOBAL_SUPERJUMPING);
         registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
+    }
+
+    public final String id;
+    private final HashMap<String, Boolean> settings = new HashMap<>();
+    private final HashMap<String, Integer> teams = new HashMap<>();
+    private final ArrayList<BlockPos> spawnPadPositions = new ArrayList<>();
+    public BlockPos cornerA;
+    public BlockPos cornerB;
+    public ResourceLocation dimID;
+    private Component name;
+    private boolean needsSpawnPadUpdate = false;
+
+    public Stage(CompoundTag nbt, String id)
+    {
+        this.id = id;
+        dimID = new ResourceLocation(nbt.getString("Dimension"));
+
+        updateBounds(null, NbtUtils.readBlockPos(nbt.getCompound("CornerA")), NbtUtils.readBlockPos(nbt.getCompound("CornerB")));
+
+        settings.clear();
+
+        CompoundTag settingsNbt = nbt.getCompound("Settings");
+        for (String key : settingsNbt.getAllKeys())
+            settings.put(key, settingsNbt.getBoolean(key));
+
+        CompoundTag teamsNbt = nbt.getCompound("Teams");
+        for (String key : teamsNbt.getAllKeys())
+            teams.put(key, teamsNbt.getInt(key));
+
+        spawnPadPositions.clear();
+
+        needsSpawnPadUpdate = !nbt.contains("SpawnPads", Tag.TAG_LIST);
+
+        ListTag list = nbt.getList("SpawnPads", Tag.TAG_COMPOUND);
+        for (Tag tag : list)
+            spawnPadPositions.add(NbtUtils.readBlockPos((CompoundTag) tag));
+
+        name = nbt.contains("Name") ? Component.Serializer.fromJson(nbt.getString("Name")) : Component.literal(id);
+    }
+
+    public Stage(Level level, BlockPos posA, BlockPos posB, String id, Component name)
+    {
+        dimID = level.dimension().location();
+        this.id = id;
+        this.name = name;
+
+        updateBounds(level, posA, posB);
+    }
+
+    public static void registerGameruleSetting(GameRules.Key<GameRules.BooleanValue> rule)
+    {
+        VALID_SETTINGS.put(rule.toString().replace(Splatcraft.MODID + ".", ""), rule);
+    }
+
+    public static boolean targetsOnSameStage(Level level, Vec3 targetA, Vec3 targetB)
+    {
+        return !getStagesForPosition(level, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
+    }
+
+    public static ArrayList<Stage> getAllStages(Level level)
+    {
+        return new ArrayList<>(level.isClientSide() ? ClientUtils.clientStages.values() : SaveInfoCapability.get(level.getServer()).getStages().values());
+    }
+
+    public static Stage getStage(Level level, String id)
+    {
+        return (level.isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(level.getServer()).getStages()).get(id);
+    }
+
+    public static ArrayList<Stage> getStagesForPosition(Level level, Vec3 pos)
+    {
+        ArrayList<Stage> stages = getAllStages(level);
+        stages.removeIf(stage -> !stage.dimID.equals(level.dimension().location()) || !stage.getBounds().contains(pos));
+        return stages;
     }
 
     public boolean hasSetting(String key)
@@ -151,34 +211,6 @@ public class Stage implements Comparable<Stage>
             updateSpawnPads(level);
     }
 
-    public Stage(CompoundTag nbt, String id)
-    {
-        this.id = id;
-        dimID = new ResourceLocation(nbt.getString("Dimension"));
-
-        updateBounds(null, NbtUtils.readBlockPos(nbt.getCompound("CornerA")), NbtUtils.readBlockPos(nbt.getCompound("CornerB")));
-
-        settings.clear();
-
-        CompoundTag settingsNbt = nbt.getCompound("Settings");
-        for (String key : settingsNbt.getAllKeys())
-            settings.put(key, settingsNbt.getBoolean(key));
-
-        CompoundTag teamsNbt = nbt.getCompound("Teams");
-        for (String key : teamsNbt.getAllKeys())
-            teams.put(key, teamsNbt.getInt(key));
-
-        spawnPadPositions.clear();
-
-        needsSpawnPadUpdate = !nbt.contains("SpawnPads", Tag.TAG_LIST);
-
-        ListTag list = nbt.getList("SpawnPads", Tag.TAG_COMPOUND);
-        for (Tag tag : list)
-            spawnPadPositions.add(NbtUtils.readBlockPos((CompoundTag) tag));
-
-        name = nbt.contains("Name") ? Component.Serializer.fromJson(nbt.getString("Name")) : Component.literal(id);
-    }
-
     public CompoundTag writeData()
     {
         CompoundTag nbt = new CompoundTag();
@@ -212,45 +244,9 @@ public class Stage implements Comparable<Stage>
         return nbt;
     }
 
-    public Stage(Level level, BlockPos posA, BlockPos posB, String id, Component name)
-    {
-        dimID = level.dimension().location();
-        this.id = id;
-        this.name = name;
-
-        updateBounds(level, posA, posB);
-    }
-
     public boolean needSpawnPadUpdate()
     {
         return needsSpawnPadUpdate;
-    }
-
-    public static void registerGameruleSetting(GameRules.Key<GameRules.BooleanValue> rule)
-    {
-        VALID_SETTINGS.put(rule.toString().replace(Splatcraft.MODID + ".", ""), rule);
-    }
-
-    public static boolean targetsOnSameStage(Level level, Vec3 targetA, Vec3 targetB)
-    {
-        return !getStagesForPosition(level, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
-    }
-
-    public static ArrayList<Stage> getAllStages(Level level)
-    {
-        return new ArrayList<>(level.isClientSide() ? ClientUtils.clientStages.values() : SaveInfoCapability.get(level.getServer()).getStages().values());
-    }
-
-    public static Stage getStage(Level level, String id)
-    {
-        return (level.isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(level.getServer()).getStages()).get(id);
-    }
-
-    public static ArrayList<Stage> getStagesForPosition(Level level, Vec3 pos)
-    {
-        ArrayList<Stage> stages = getAllStages(level);
-        stages.removeIf(stage -> !stage.dimID.equals(level.dimension().location()) || !stage.getBounds().contains(pos));
-        return stages;
     }
 
     public void updateSpawnPads(Level level)

@@ -23,16 +23,15 @@ import java.util.*;
 public class StageSelectionScreen extends AbstractStagePadScreen
 {
     static final TreeMap<Stage, Pair<MenuButton, SuperJumpMenuButton>> stages = new TreeMap<>();
-
+    private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_select.png");
+    public static StageSelectionScreen instance;
     MenuTextBox searchBar;
     MenuButton createStageButton;
     MenuButton toggleSearchBarButton;
-
+    int buttonListSize = 0;
+    String prevSearchBarText = "";
     private double scroll = 0;
-
-    public static StageSelectionScreen instance;
-
-    private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_select.png");
+    private boolean scrollBarHeld = false;
 
     public StageSelectionScreen(Component title)
     {
@@ -41,8 +40,8 @@ public class StageSelectionScreen extends AbstractStagePadScreen
         instance = this;
 
         createStageButton = addButton(new MenuButton(10, 0, 178, 12,
-                goToScreen(() -> new StageCreationScreen(title, this, "", null, null)), MenuButton.NO_TOOLTIP,
-                drawText(Component.translatable("gui.stage_pad.button.create_stage"), false), MenuButton.ButtonColor.LIME));
+            goToScreen(() -> new StageCreationScreen(title, this, "", null, null)), MenuButton.NO_TOOLTIP,
+            drawText(Component.translatable("gui.stage_pad.button.create_stage"), false), MenuButton.ButtonColor.LIME));
         stages.clear();
 
         toggleSearchBarButton = addButton(new ToggleMenuButton(176, 12, 24, 12, (b) ->
@@ -62,6 +61,18 @@ public class StageSelectionScreen extends AbstractStagePadScreen
         });
 
         onStagesUpdate();
+    }
+
+    public static void updateValidSuperJumpsList(List<String> validStages, List<String> outOfReachStages, List<String> needsUpdateStages)
+    {
+        stages.values().stream().map(Pair::getSecond).forEach(jumpButton ->
+        {
+            SuperJumpMenuButton.loading = false;
+            jumpButton.state = validStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.VALID :
+                needsUpdateStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE :
+                    outOfReachStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.OUT_OF_RANGE :
+                        SuperJumpMenuButton.ButtonState.NO_SPAWN_PADS;
+        });
     }
 
     @Override
@@ -87,8 +98,8 @@ public class StageSelectionScreen extends AbstractStagePadScreen
             }
         };
         SuperJumpMenuButton jumpButton = new SuperJumpMenuButton(176, 0, 12,
-                (button, poseStack, mx, my, partialTicks) -> poseStack.renderTooltip(Minecraft.getInstance().font, List.of(((SuperJumpMenuButton) button).state.tooltipText), Optional.empty(), mx, my),
-                (guiGraphics, button) -> drawIcon(guiGraphics, WIDGETS, 0, 0, 244, ((SuperJumpMenuButton) button).state == SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE ? 12 : 0, 12, 12).apply(guiGraphics, button), stage);
+            (button, poseStack, mx, my, partialTicks) -> poseStack.renderTooltip(Minecraft.getInstance().font, List.of(((SuperJumpMenuButton) button).state.tooltipText), Optional.empty(), mx, my),
+            (guiGraphics, button) -> drawIcon(guiGraphics, WIDGETS, 0, 0, 244, ((SuperJumpMenuButton) button).state == SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE ? 12 : 0, 12, 12).apply(guiGraphics, button), stage);
         jumpButton.active = false;
 
         if (stages.containsKey(stage))
@@ -105,24 +116,12 @@ public class StageSelectionScreen extends AbstractStagePadScreen
         addButton(jumpButton);
     }
 
-    public static void updateValidSuperJumpsList(List<String> validStages, List<String> outOfReachStages, List<String> needsUpdateStages)
-    {
-        stages.values().stream().map(Pair::getSecond).forEach(jumpButton ->
-        {
-            SuperJumpMenuButton.loading = false;
-            jumpButton.state = validStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.VALID :
-                    needsUpdateStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE :
-                            outOfReachStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.OUT_OF_RANGE :
-                                    SuperJumpMenuButton.ButtonState.NO_SPAWN_PADS;
-        });
-    }
-
     @Override
     public void handleWidgets(GuiGraphics matrixStack, int mouseX, int mouseY, float partialTicks)
     {
         List<Pair<MenuButton, SuperJumpMenuButton>> stageButtons = stages.keySet().stream().sorted(Comparator.comparing(s -> s.getStageName().getString()))
-                .filter(s -> s.getStageName().getString().toLowerCase().contains(searchBar.getValue().toLowerCase()))
-                .map(stages::get).toList();
+            .filter(s -> s.getStageName().getString().toLowerCase().contains(searchBar.getValue().toLowerCase()))
+            .map(stages::get).toList();
 
         buttonListSize = stageButtons.size() + 1;
 
@@ -167,10 +166,6 @@ public class StageSelectionScreen extends AbstractStagePadScreen
     {
         return !scrollBarHeld;
     }
-
-    private boolean scrollBarHeld = false;
-    int buttonListSize = 0;
-    String prevSearchBarText = "";
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int clickButton)
@@ -326,10 +321,9 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 
     public static class SuperJumpMenuButton extends MenuButton
     {
+        public static boolean loading = false;
         final Stage stage;
         private ButtonState state = ButtonState.REQUESTING;
-
-        public static boolean loading = false;
 
         public SuperJumpMenuButton(int x, int y, int width, OnTooltip onTooltip, PostDraw draw, Stage stage)
         {

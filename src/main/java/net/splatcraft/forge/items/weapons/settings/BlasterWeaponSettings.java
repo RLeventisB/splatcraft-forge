@@ -14,11 +14,11 @@ import java.util.Optional;
 
 public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponSettings, BlasterWeaponSettings.DataRecord>
 {
+    public static final BlasterWeaponSettings DEFAULT = new BlasterWeaponSettings("default");
     public CommonRecords.ProjectileDataRecord projectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
     public CommonRecords.ShotDataRecord shotData = CommonRecords.ShotDataRecord.DEFAULT;
     public DetonationRecord blasterData = DetonationRecord.DEFAULT;
     public boolean bypassesMobDamage = false;
-    public static final BlasterWeaponSettings DEFAULT = new BlasterWeaponSettings("default");
 
     public BlasterWeaponSettings(String name)
     {
@@ -120,6 +120,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
                 Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
             ).apply(instance, DetonationRecord::create)
         );
+        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, DamageRangesRecord.DEFAULT, 0, false);
 
         public static DetonationRecord create(DamageRangesRecord damageRadiuses,
                                               Optional<DamageRangesRecord> sparkDamageRadiuses,
@@ -128,7 +129,5 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
         {
             return new DetonationRecord(damageRadiuses, sparkDamageRadiuses.orElse(damageRadiuses.cloneWithMultiplier(0.5f, 0.5f)), explosionPaint.orElse(damageRadiuses.getMaxDistance()), newAttackId);
         }
-
-        public static final DetonationRecord DEFAULT = new DetonationRecord(DamageRangesRecord.DEFAULT, DamageRangesRecord.DEFAULT, 0, false);
     }
 }

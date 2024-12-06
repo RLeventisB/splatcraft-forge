@@ -56,6 +56,8 @@ public class ColorUtils
     public static final int COLOR_LOCK_HOSTILE = 0x4717A9;
 
     public static final int[] STARTER_COLORS = new int[]{ORANGE, BLUE, GREEN, PINK};
+    // actual heresy but i am a c# dev so public static!!!!!
+    public static final Random random = new Random();
 
     public static int getColorFromNbt(CompoundTag nbt)
     {
@@ -226,11 +228,6 @@ public class ColorUtils
         }
     }
 
-    public interface ColoredBlockConsumer
-    {
-        void accept(BlockPos pos, IColoredBlock coloredBlock, BlockEntity blockEntity);
-    }
-
     public static MutableComponent getColorName(int color)
     {
 
@@ -341,9 +338,6 @@ public class ColorUtils
         return (((int) (color[0] * 255f)) << 16) | (((int) (color[1] * 255f)) << 8) | (((int) (color[2] * 255f)));
     }
 
-    // actual heresy but i am a c# dev so public static!!!!!
-    public static final Random random = new Random();
-
     public static int getRandomStarterColor()
     {
         return InkColorTags.STARTER_COLORS.getRandom(random);
@@ -438,5 +432,10 @@ public class ColorUtils
                 }
             }
         });
+    }
+
+    public interface ColoredBlockConsumer
+    {
+        void accept(BlockPos pos, IColoredBlock coloredBlock, BlockEntity blockEntity);
     }
 }

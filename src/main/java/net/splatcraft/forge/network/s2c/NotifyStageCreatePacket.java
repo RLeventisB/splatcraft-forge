@@ -10,29 +10,29 @@ import net.splatcraft.forge.client.gui.stagepad.StageSettingsScreen;
 
 public class NotifyStageCreatePacket extends PlayS2CPacket
 {
-	final String stageId;
+    final String stageId;
 
-	public NotifyStageCreatePacket(String stageId)
-	{
-		this.stageId = stageId;
-	}
+    public NotifyStageCreatePacket(String stageId)
+    {
+        this.stageId = stageId;
+    }
 
-	@Override
-	public void encode(FriendlyByteBuf buffer)
-	{
-		buffer.writeUtf(stageId);
-	}
+    public static NotifyStageCreatePacket decode(FriendlyByteBuf buf)
+    {
+        return new NotifyStageCreatePacket(buf.readUtf());
+    }
 
-	public static NotifyStageCreatePacket decode(FriendlyByteBuf buf)
-	{
-		return new NotifyStageCreatePacket(buf.readUtf());
-	}
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
+        buffer.writeUtf(stageId);
+    }
 
-	@OnlyIn(Dist.CLIENT)
-	@Override
-	public void execute()
-	{
-		if(Minecraft.getInstance().screen instanceof StageCreationScreen screen && stageId.equals(screen.getStageId()))
-			Minecraft.getInstance().setScreen(new StageSettingsScreen(screen.getTitle(), stageId, StageSelectionScreen.instance));
-	}
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void execute()
+    {
+        if (Minecraft.getInstance().screen instanceof StageCreationScreen screen && stageId.equals(screen.getStageId()))
+            Minecraft.getInstance().setScreen(new StageSettingsScreen(screen.getTitle(), stageId, StageSelectionScreen.instance));
+    }
 }

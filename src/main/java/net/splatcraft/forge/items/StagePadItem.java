@@ -27,15 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class StagePadItem extends Item implements IColoredItem
 {
+    public static final UseAction OPEN_MAIN_MENU = ((level, player, hand, stack, pos) ->
+        ((StagePadItem) stack.getItem()).openMenu(stack));
+    public static UseAction clientUseAction = OPEN_MAIN_MENU;
     public StagePadItem()
     {
         super(new Properties().stacksTo(1));
         SplatcraftItems.inkColoredItems.add(this);
     }
-
-    public static final UseAction OPEN_MAIN_MENU = ((level, player, hand, stack, pos) ->
-            ((StagePadItem) stack.getItem()).openMenu(stack));
-    public static UseAction clientUseAction = OPEN_MAIN_MENU;
 
     public static void resetUseAction()
     {
@@ -77,7 +76,7 @@ public class StagePadItem extends Item implements IColoredItem
         if (entity instanceof Player player)
         {
             if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                    && PlayerInfoCapability.hasCapability(player))
+                && PlayerInfoCapability.hasCapability(player))
                 ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
         }
     }
@@ -96,7 +95,7 @@ public class StagePadItem extends Item implements IColoredItem
             }
         }
         else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-                && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+            && InkedBlock.causesClear(entity.level(), pos, entity.level().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
         {
             ColorUtils.setInkColor(stack, 0xFFFFFF);
             ColorUtils.setColorLocked(stack, false);

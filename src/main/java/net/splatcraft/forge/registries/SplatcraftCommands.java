@@ -19,23 +19,25 @@ import net.splatcraft.forge.commands.arguments.InkColorArgument;
 @Mod.EventBusSubscriber(modid = Splatcraft.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SplatcraftCommands
 {
-	public static final DeferredRegister<ArgumentTypeInfo<?, ?>> REGISTRY = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, Splatcraft.MODID);
-	public static final RegistryObject<SingletonArgumentInfo<InkColorArgument>> INK_COLOR_ARGUMENT_TYPE = REGISTRY.register("ink_color", () -> ArgumentTypeInfos.registerByClass(InkColorArgument.class, SingletonArgumentInfo.contextFree(InkColorArgument::inkColor)));
-	public static final RegistryObject<SingletonArgumentInfo<ColorCriterionArgument>> COLOR_CRITERION_ARGUMENT_TYPE = REGISTRY.register("color_criterion", () -> ArgumentTypeInfos.registerByClass(ColorCriterionArgument.class, SingletonArgumentInfo.contextFree(ColorCriterionArgument::colorCriterion)));
-	@SubscribeEvent
-	public static void registerCommands(RegisterCommandsEvent event)
-	{
-		CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-		
-		InkColorCommand.register(dispatcher);
-		ScanTurfCommand.register(dispatcher);
-		ClearInkCommand.register(dispatcher);
-		ReplaceColorCommand.register(dispatcher);
-		ColorScoresCommand.register(dispatcher);
-		StageCommand.register(dispatcher);
-		SuperJumpCommand.register(dispatcher);
-	}
-	public static void registerArguments()
-	{
-	}
+    public static final DeferredRegister<ArgumentTypeInfo<?, ?>> REGISTRY = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, Splatcraft.MODID);
+    public static final RegistryObject<SingletonArgumentInfo<InkColorArgument>> INK_COLOR_ARGUMENT_TYPE = REGISTRY.register("ink_color", () -> ArgumentTypeInfos.registerByClass(InkColorArgument.class, SingletonArgumentInfo.contextFree(InkColorArgument::inkColor)));
+    public static final RegistryObject<SingletonArgumentInfo<ColorCriterionArgument>> COLOR_CRITERION_ARGUMENT_TYPE = REGISTRY.register("color_criterion", () -> ArgumentTypeInfos.registerByClass(ColorCriterionArgument.class, SingletonArgumentInfo.contextFree(ColorCriterionArgument::colorCriterion)));
+
+    @SubscribeEvent
+    public static void registerCommands(RegisterCommandsEvent event)
+    {
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+
+        InkColorCommand.register(dispatcher);
+        ScanTurfCommand.register(dispatcher);
+        ClearInkCommand.register(dispatcher);
+        ReplaceColorCommand.register(dispatcher);
+        ColorScoresCommand.register(dispatcher);
+        StageCommand.register(dispatcher);
+        SuperJumpCommand.register(dispatcher);
+    }
+
+    public static void registerArguments()
+    {
+    }
 }

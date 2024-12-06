@@ -14,11 +14,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class InkOverlayCapability implements ICapabilityProvider, INBTSerializable<CompoundTag>
 {
-    public static Capability<InkOverlayInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
+    public static Capability<InkOverlayInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
+    {
+    });
 
     private InkOverlayInfo inkOverlayInfo = null;
     private final LazyOptional<InkOverlayInfo> opt = LazyOptional.of(() ->
-            inkOverlayInfo == null ? (inkOverlayInfo = new InkOverlayInfo()) : inkOverlayInfo);
+        inkOverlayInfo == null ? (inkOverlayInfo = new InkOverlayInfo()) : inkOverlayInfo);
 
     public static InkOverlayInfo get(LivingEntity entity) throws NullPointerException
     {
@@ -32,7 +34,8 @@ public class InkOverlayCapability implements ICapabilityProvider, INBTSerializab
 
     @NotNull
     @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side)
+    {
         return cap == CAPABILITY ? opt.cast() : LazyOptional.empty();
     }
 

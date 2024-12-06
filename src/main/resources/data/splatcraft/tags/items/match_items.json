@@ -1,13 +1,13 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:ink_cloth_helmet",
-    "splatcraft:ink_cloth_chestplate",
-    "splatcraft:ink_cloth_leggings",
-    "splatcraft:ink_cloth_boots",
-    "#splatcraft:ink_bands",
-    "#splatcraft:main_weapons",
-    "#splatcraft:sub_weapons",
-    "#splatcraft:ink_tanks"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:ink_cloth_helmet",
+        "splatcraft:ink_cloth_chestplate",
+        "splatcraft:ink_cloth_leggings",
+        "splatcraft:ink_cloth_boots",
+        "#splatcraft:ink_bands",
+        "#splatcraft:main_weapons",
+        "#splatcraft:sub_weapons",
+        "#splatcraft:ink_tanks"
+    ]
 }

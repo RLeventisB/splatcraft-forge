@@ -12,10 +12,10 @@ import java.util.TreeMap;
 
 public class SplatcraftConvertors
 {
-    public static boolean SkipConverting = false;
     public static final int DistanceUnitsPerMinecraftSquare = 14;
     public static final int SplatoonFramesPerMinecraftTick = 3;
     public static final int SplatoonHealthPerMinecraftHealth = 5;
+    public static boolean SkipConverting = false;
 
     public static CommonRecords.ProjectileDataRecord convert(CommonRecords.ProjectileDataRecord dataRecord)
     {

@@ -36,9 +36,9 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
     public static AttributeSupplier.Builder setCustomAttributes()
     {
         return Mob.createLivingAttributes()
-                .add(Attributes.MAX_HEALTH, 20)
-                .add(Attributes.MOVEMENT_SPEED, 0.23D)
-                .add(Attributes.FOLLOW_RANGE, 16);
+            .add(Attributes.MAX_HEALTH, 20)
+            .add(Attributes.MOVEMENT_SPEED, 0.23D)
+            .add(Attributes.FOLLOW_RANGE, 16);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
         super.tick();
 
         BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
-        
+
         if (level().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level().getBlockEntity(pos) instanceof InkColorTileEntity te)
         {
             if (te.getColor() != getColor())

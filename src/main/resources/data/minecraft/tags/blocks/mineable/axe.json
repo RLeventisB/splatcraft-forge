@@ -1,7 +1,7 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:sunken_crate",
-    "splatcraft:crate"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:sunken_crate",
+        "splatcraft:crate"
+    ]
 }

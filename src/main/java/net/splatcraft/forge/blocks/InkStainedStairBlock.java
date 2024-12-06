@@ -30,7 +30,6 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
     {
         super(parent, properties);
         SplatcraftBlocks.inkColoredBlocks.add(this);
-
     }
 
     @Override

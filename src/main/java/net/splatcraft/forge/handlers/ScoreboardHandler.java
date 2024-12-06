@@ -23,13 +23,13 @@ public class ScoreboardHandler
     public static void createColorCriterion(int color)
     {
         COLOR_CRITERIA.put(color, new CriteriaInkColor[]
-                {
-                        new CriteriaInkColor("colorKills", color),
-                        new CriteriaInkColor("deathsAsColor", color),
-                        new CriteriaInkColor("killsAsColor", color),
-                        new CriteriaInkColor("winsAsColor", color),
-                        new CriteriaInkColor("lossesAsColor", color),
-                });
+            {
+                new CriteriaInkColor("colorKills", color),
+                new CriteriaInkColor("deathsAsColor", color),
+                new CriteriaInkColor("killsAsColor", color),
+                new CriteriaInkColor("winsAsColor", color),
+                new CriteriaInkColor("lossesAsColor", color),
+            });
     }
 
     public static void clearColorCriteria()
@@ -133,9 +133,9 @@ public class ScoreboardHandler
         public CriteriaInkColor(String name, int color)
         {
             super((InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
-                    + "." + name + "." + getColorIdentifier(color));
+                + "." + name + "." + getColorIdentifier(color));
             this.name = (InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
-                    + "." + name + "." + getColorIdentifier(color);
+                + "." + name + "." + getColorIdentifier(color);
         }
 
         public void remove()

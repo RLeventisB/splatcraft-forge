@@ -1,7 +1,7 @@
 {
-  "variants": {
-    "": {
-      "model": "splatcraft:block/denied_color_barrier"
+    "variants": {
+        "": {
+            "model": "splatcraft:block/denied_color_barrier"
+        }
     }
-  }
 }

@@ -176,9 +176,9 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
             {
                 BlockPos auxPos = pos.relative(dir).relative(dir.getCounterClockWise(), i);
                 level.setBlock(auxPos, auxBlock.defaultBlockState()
-                        .setValue(WATERLOGGED, level.getFluidState(auxPos).getType() == Fluids.WATER)
-                        .setValue(DIRECTION, dir)
-                        .setValue(Aux.IS_CORNER, i == 1), 3);
+                    .setValue(WATERLOGGED, level.getFluidState(auxPos).getType() == Fluids.WATER)
+                    .setValue(DIRECTION, dir)
+                    .setValue(Aux.IS_CORNER, i == 1), 3);
             }
         }
         level.blockUpdated(pos, Blocks.AIR);
@@ -270,10 +270,10 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 
             if (SHAPES[i] == null)
                 SHAPES[i] = Shapes.or(
-                        BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 8 : 0, 0, 8, 16, 6, 16)),
-                        BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION).getOpposite(), Block.box(0, 6, 6, state.getValue(IS_CORNER) ? 7 : 16, 7, 7)),
-                        BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 10 : 0, 0, 10, 16, 6.1, 16)),
-                        state.getValue(IS_CORNER) ? BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(9, 6, 10, 10, 7, 16)) : Shapes.empty());
+                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 8 : 0, 0, 8, 16, 6, 16)),
+                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION).getOpposite(), Block.box(0, 6, 6, state.getValue(IS_CORNER) ? 7 : 16, 7, 7)),
+                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 10 : 0, 0, 10, 16, 6.1, 16)),
+                    state.getValue(IS_CORNER) ? BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(9, 6, 10, 10, 7, 16)) : Shapes.empty());
 
             return SHAPES[i];
         }

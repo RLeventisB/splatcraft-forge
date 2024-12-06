@@ -1,8 +1,8 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:inked_block",
-    "splatcraft:glowing_inked_block",
-    "splatcraft:clear_inked_block"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:inked_block",
+        "splatcraft:glowing_inked_block",
+        "splatcraft:clear_inked_block"
+    ]
 }

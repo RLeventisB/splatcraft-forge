@@ -1,59 +1,59 @@
 {
-  "type": "splatcraft:weapon_workbench",
-  "tab": "splatcraft:weapon_workbench_tabs/shooters",
-  "pos": 0,
-  "recipes": [
-    {
-      "name": "weaponType.original",
-      "result": {
-        "item": "splatcraft:splattershot_jr",
-        "count": 1
-      },
-      "ingredients": [
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tabs/shooters",
+    "pos": 0,
+    "recipes": [
         {
-          "item": "splatcraft:sardinium",
-          "count": 8
+            "name": "weaponType.original",
+            "result": {
+                "item": "splatcraft:splattershot_jr",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "item": "minecraft:glass",
+                    "count": 4
+                }
+            ]
         },
         {
-          "item": "minecraft:ink_sac",
-          "count": 4
-        },
-        {
-          "item": "minecraft:glass",
-          "count": 4
+            "name": "weaponType.kensa",
+            "advancement": "splatcraft:unlocks/kensa_splattershot_jr",
+            "requires_other": true,
+            "result": {
+                "item": "splatcraft:kensa_splattershot_jr",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "item": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "item": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "item": "minecraft:glass",
+                    "count": 4
+                },
+                {
+                    "item": "minecraft:black_dye",
+                    "count": 8
+                },
+                {
+                    "item": "splatcraft:toni_kensa_pin",
+                    "count": 1
+                }
+            ]
         }
-      ]
-    },
-    {
-      "name": "weaponType.kensa",
-      "advancement": "splatcraft:unlocks/kensa_splattershot_jr",
-      "requires_other": true,
-      "result": {
-        "item": "splatcraft:kensa_splattershot_jr",
-        "count": 1
-      },
-      "ingredients": [
-        {
-          "item": "splatcraft:sardinium",
-          "count": 8
-        },
-        {
-          "item": "minecraft:ink_sac",
-          "count": 4
-        },
-        {
-          "item": "minecraft:glass",
-          "count": 4
-        },
-        {
-          "item": "minecraft:black_dye",
-          "count": 8
-        },
-        {
-          "item": "splatcraft:toni_kensa_pin",
-          "count": 1
-        }
-      ]
-    }
-  ]
+    ]
 }

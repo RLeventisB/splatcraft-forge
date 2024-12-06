@@ -42,7 +42,8 @@ public class InkExplosionParticle extends TextureSheetParticle
         if (this.age++ >= this.lifetime || this.level.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).liquid())
         {
             this.remove();
-        } else
+        }
+        else
         {
             this.setSpriteFromAge(this.spriteProvider);
         }

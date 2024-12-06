@@ -1,14 +1,14 @@
 {
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    {
-      "item": "splatcraft:filter"
-    },
-    {
-      "item": "minecraft:glowstone_dust"
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {
+            "item": "splatcraft:filter"
+        },
+        {
+            "item": "minecraft:glowstone_dust"
+        }
+    ],
+    "result": {
+        "item": "splatcraft:neon_filter"
     }
-  ],
-  "result": {
-    "item": "splatcraft:neon_filter"
-  }
 }

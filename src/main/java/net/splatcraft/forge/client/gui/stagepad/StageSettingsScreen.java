@@ -21,10 +21,8 @@ import static net.splatcraft.forge.client.gui.stagepad.StageCreationScreen.getSh
 public class StageSettingsScreen extends AbstractStagePadScreen
 {
     private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_settings.png");
-    private Stage stage;
-
     private static Boolean setCorner1 = null;
-
+    private Stage stage;
     private MenuTextBox stageName;
 
     public StageSettingsScreen(Component label, String stageId, Screen mainMenu)
@@ -64,9 +62,9 @@ public class StageSettingsScreen extends AbstractStagePadScreen
         addOptionsTabs(label, stageId, mainMenu);
 
         addButton(new MenuButton(167, 70, 30, 12, (b) -> clickSetCornerButton(b, true),
-                showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
         addButton(new MenuButton(167, 88, 30, 12, (b) -> clickSetCornerButton(b, false),
-                showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
 
         addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.cornerA), showCopyPos(() -> stage.cornerA), (ps, b) -> {
         }));

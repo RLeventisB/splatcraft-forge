@@ -50,5 +50,4 @@ public class PlayerColorPacket extends PlayS2CPacket
             ColorUtils.setPlayerColor(player, color, false);
         ClientUtils.setClientPlayerColor(target, color);
     }
-
 }

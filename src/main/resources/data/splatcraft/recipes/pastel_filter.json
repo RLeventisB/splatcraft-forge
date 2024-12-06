@@ -1,14 +1,14 @@
 {
-  "type": "minecraft:crafting_shapeless",
-  "ingredients": [
-    {
-      "item": "splatcraft:filter"
-    },
-    {
-      "item": "minecraft:cake"
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {
+            "item": "splatcraft:filter"
+        },
+        {
+            "item": "minecraft:cake"
+        }
+    ],
+    "result": {
+        "item": "splatcraft:pastel_filter"
     }
-  ],
-  "result": {
-    "item": "splatcraft:pastel_filter"
-  }
 }

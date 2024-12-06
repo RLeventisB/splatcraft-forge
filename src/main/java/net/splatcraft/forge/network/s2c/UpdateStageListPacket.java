@@ -31,15 +31,15 @@ public class UpdateStageListPacket extends PlayS2CPacket
         nbt = stageNbt;
     }
 
+    public static UpdateStageListPacket decode(FriendlyByteBuf buffer)
+    {
+        return new UpdateStageListPacket(buffer.readNbt());
+    }
+
     @Override
     public void encode(FriendlyByteBuf buffer)
     {
         buffer.writeNbt(nbt);
-    }
-
-    public static UpdateStageListPacket decode(FriendlyByteBuf buffer)
-    {
-        return new UpdateStageListPacket(buffer.readNbt());
     }
 
     @OnlyIn(Dist.CLIENT)

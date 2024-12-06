@@ -57,7 +57,7 @@ public class InkColor implements Comparable<InkColor>
         return hexCode;
     }
 
-	public @Nullable DyeColor getDyeColor()
+    public @Nullable DyeColor getDyeColor()
     {
         return dyeColor;
     }

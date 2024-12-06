@@ -1,42 +1,42 @@
 {
-  "type": "minecraft:block",
-  "pools": [
-    {
-      "rolls": 1.0,
-      "bonus_rolls": 0.0,
-      "entries": [
+    "type": "minecraft:block",
+    "pools": [
         {
-          "type": "minecraft:item",
-          "functions": [
-            {
-              "function": "minecraft:copy_nbt",
-              "conditions": [
+            "rolls": 1.0,
+            "bonus_rolls": 0.0,
+            "entries": [
                 {
-                  "condition": "minecraft:block_state_property",
-                  "block": "splatcraft:coralite_stairs",
-                  "properties": {
-                    "colored": "true"
-                  }
+                    "type": "minecraft:item",
+                    "functions": [
+                        {
+                            "function": "minecraft:copy_nbt",
+                            "conditions": [
+                                {
+                                    "condition": "minecraft:block_state_property",
+                                    "block": "splatcraft:coralite_stairs",
+                                    "properties": {
+                                        "colored": "true"
+                                    }
+                                }
+                            ],
+                            "source": "block_entity",
+                            "ops": [
+                                {
+                                    "source": "Color",
+                                    "target": "Color",
+                                    "op": "replace"
+                                }
+                            ]
+                        }
+                    ],
+                    "name": "splatcraft:coralite_stairs"
                 }
-              ],
-              "source": "block_entity",
-              "ops": [
+            ],
+            "conditions": [
                 {
-                  "source": "Color",
-                  "target": "Color",
-                  "op": "replace"
+                    "condition": "minecraft:survives_explosion"
                 }
-              ]
-            }
-          ],
-          "name": "splatcraft:coralite_stairs"
+            ]
         }
-      ],
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ]
-    }
-  ]
+    ]
 }

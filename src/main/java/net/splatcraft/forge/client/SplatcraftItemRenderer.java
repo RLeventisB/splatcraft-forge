@@ -11,15 +11,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplatcraftItemRenderer extends BlockEntityWithoutLevelRenderer
 {
-	public static final SplatcraftItemRenderer INSTANCE = new SplatcraftItemRenderer();
-	public SplatcraftItemRenderer()
-	{
-		super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
-	}
-	@Override
-	public void renderByItem(@NotNull ItemStack stack, @NotNull ItemDisplayContext pDisplayContext, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, int packedOverlay)
-	{
-		if (!RendererHandler.renderSubWeapon(stack, poseStack, bufferSource, packedLight, Minecraft.getInstance().getDeltaFrameTime()))
-			super.renderByItem(stack, pDisplayContext, poseStack, bufferSource, packedLight, packedOverlay);
-	}
+    public static final SplatcraftItemRenderer INSTANCE = new SplatcraftItemRenderer();
+
+    public SplatcraftItemRenderer()
+    {
+        super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+    }
+
+    @Override
+    public void renderByItem(@NotNull ItemStack stack, @NotNull ItemDisplayContext pDisplayContext, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, int packedOverlay)
+    {
+        if (!RendererHandler.renderSubWeapon(stack, poseStack, bufferSource, packedLight, Minecraft.getInstance().getDeltaFrameTime()))
+            super.renderByItem(stack, pDisplayContext, poseStack, bufferSource, packedLight, packedOverlay);
+    }
 }

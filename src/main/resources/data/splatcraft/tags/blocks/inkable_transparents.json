@@ -1,7 +1,7 @@
 {
-  "replace": false,
-  "values": [
-    "#minecraft:leaves",
-    "minecraft:barrier"
-  ]
+    "replace": false,
+    "values": [
+        "#minecraft:leaves",
+        "minecraft:barrier"
+    ]
 }

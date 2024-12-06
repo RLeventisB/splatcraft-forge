@@ -8,20 +8,20 @@ import net.splatcraft.forge.network.s2c.SendStageWarpDataToPadPacket;
 
 public class RequestWarpDataPacket extends PlayC2SPacket
 {
-	@Override
-	public void encode(FriendlyByteBuf buffer) {
+    public static RequestWarpDataPacket decode(FriendlyByteBuf buf)
+    {
+        return new RequestWarpDataPacket();
+    }
 
-	}
+    @Override
+    public void encode(FriendlyByteBuf buffer)
+    {
 
-	public static RequestWarpDataPacket decode(FriendlyByteBuf buf)
-	{
-		return new RequestWarpDataPacket();
-	}
+    }
 
-	@Override
-	public void execute(Player player)
-	{
-		SplatcraftPacketHandler.sendToPlayer(SendStageWarpDataToPadPacket.compile(player), (ServerPlayer) player);
-
-	}
+    @Override
+    public void execute(Player player)
+    {
+        SplatcraftPacketHandler.sendToPlayer(SendStageWarpDataToPadPacket.compile(player), (ServerPlayer) player);
+    }
 }

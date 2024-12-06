@@ -25,17 +25,15 @@ import java.util.Optional;
 
 public abstract class AbstractStagePadScreen extends Screen
 {
-    protected int imageWidth = 210;
-    protected int imageHeight = 130;
     protected static final ResourceLocation COMMON_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/common.png");
     protected static final ResourceLocation CONTROLLERS_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/controllers.png");
     protected static final ResourceLocation WIDGETS = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/widgets.png");
+    public final StagePadItem.UseAction OPEN_SELF = (level, player, hand, stack, pos) -> getMinecraft().setScreen(this);
     protected final ArrayList<MenuButton> buttons = new ArrayList<>();
     protected final ArrayList<MenuTextBox> textFields = new ArrayList<>();
     protected final ArrayList<MenuTextBox.Factory> textFieldFactories = new ArrayList<>();
-
-    public final StagePadItem.UseAction OPEN_SELF = (level, player, hand, stack, pos) -> getMinecraft().setScreen(this);
-
+    protected int imageWidth = 210;
+    protected int imageHeight = 130;
     protected StagePadItem.UseAction useAction;
 
     protected AbstractStagePadScreen(Component label, @Nullable StagePadItem.UseAction useAction)
@@ -222,7 +220,7 @@ public abstract class AbstractStagePadScreen extends Screen
     public MenuButton.OnTooltip showText(Component... lines)
     {
         return (button, guiGraphics, x, y, partialTicks) ->
-                guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.stream(lines).toList(), Optional.empty(), x, y);
+            guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.stream(lines).toList(), Optional.empty(), x, y);
     }
 
     public MenuButton.OnTooltip showCopyPos(BlockPosGetter pos)
@@ -231,7 +229,7 @@ public abstract class AbstractStagePadScreen extends Screen
         {
             if (pos.get() != null)
                 guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.asList(Component.translatable("gui.stage_pad.button.position", pos.get().getX(), pos.get().getY(), pos.get().getZ()), Component.translatable("gui.stage_pad.button.copy_position").withStyle(ChatFormatting.YELLOW)),
-                        Optional.empty(), x, y);
+                    Optional.empty(), x, y);
         };
     }
 
@@ -242,11 +240,6 @@ public abstract class AbstractStagePadScreen extends Screen
             if (pos.get() != null)
                 getMinecraft().keyboardHandler.setClipboard(pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ());
         };
-    }
-
-    public interface BlockPosGetter
-    {
-        BlockPos get();
     }
 
     public MenuButton.PostDraw drawIcon(GuiGraphics guiGraphics, ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight)
@@ -297,11 +290,6 @@ public abstract class AbstractStagePadScreen extends Screen
         return (b) -> getMinecraft().setScreen(screen.create());
     }
 
-    public interface ScreenFactory
-    {
-        Screen create();
-    }
-
     public boolean canClickButtons()
     {
         return true;
@@ -318,5 +306,15 @@ public abstract class AbstractStagePadScreen extends Screen
         addButton(new MenuButton(68, 12, 44, 12, goToScreen(() -> new StageRulesScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.rules"), true), MenuButton.ButtonColor.PURPLE));
         addButton(new MenuButton(112, 12, 44, 12, goToScreen(() -> new StageTeamsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.teams"), true), MenuButton.ButtonColor.PURPLE));
         addButton(new MenuButton(156, 12, 44, 12, goToScreen(() -> new StageActionsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.actions"), true), MenuButton.ButtonColor.PURPLE));
+    }
+
+    public interface BlockPosGetter
+    {
+        BlockPos get();
+    }
+
+    public interface ScreenFactory
+    {
+        Screen create();
     }
 }

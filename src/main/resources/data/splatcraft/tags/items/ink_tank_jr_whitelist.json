@@ -1,8 +1,8 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:splattershot_jr",
-    "splatcraft:kensa_splattershot_jr",
-    "#splatcraft:sub_weapons"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:splattershot_jr",
+        "splatcraft:kensa_splattershot_jr",
+        "#splatcraft:sub_weapons"
+    ]
 }

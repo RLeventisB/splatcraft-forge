@@ -22,10 +22,10 @@ import java.util.List;
 
 public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponWorkbenchTab>
 {
+    public final boolean hidden;
     protected final ResourceLocation id;
     protected final ResourceLocation iconLoc;
     protected final int pos;
-    public final boolean hidden;
     protected final Component name;
 
     public WeaponWorkbenchTab(ResourceLocation id, ResourceLocation iconLoc, int pos, Component name, boolean hidden)
@@ -117,7 +117,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         public @NotNull WeaponWorkbenchTab fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json)
         {
             Component displayComponent;
-            
+
             if (GsonHelper.isStringValue(json, "name"))
                 displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
             else

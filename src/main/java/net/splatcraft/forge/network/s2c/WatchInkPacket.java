@@ -23,6 +23,17 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
         this.dirty = dirty;
     }
 
+    public static WatchInkPacket decode(FriendlyByteBuf buffer)
+    {
+        ChunkPos pos = buffer.readChunkPos();
+        HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
+        int size = buffer.readInt();
+        for (int i = 0; i < size; i++)
+            dirty.put(RelativeBlockPos.fromBuf(buffer), ChunkInk.BlockEntry.readFromBuffer(buffer));
+
+        return new WatchInkPacket(pos, dirty);
+    }
+
     @Override
     public void add(Level level, BlockPos pos)
     {
@@ -50,17 +61,6 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
             blockPos.writeBuf(buffer);
             entry.writeToBuffer(buffer);
         }
-    }
-
-    public static WatchInkPacket decode(FriendlyByteBuf buffer)
-    {
-        ChunkPos pos = buffer.readChunkPos();
-        HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
-        int size = buffer.readInt();
-        for (int i = 0; i < size; i++)
-            dirty.put(RelativeBlockPos.fromBuf(buffer), ChunkInk.BlockEntry.readFromBuffer(buffer));
-
-        return new WatchInkPacket(pos, dirty);
     }
 
     @Override

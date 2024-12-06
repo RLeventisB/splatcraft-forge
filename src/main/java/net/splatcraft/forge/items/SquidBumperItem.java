@@ -69,7 +69,7 @@ public class SquidBumperItem extends Item implements IColoredItem
         super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 
         if (entity instanceof Player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor((Player) entity)
-                && PlayerInfoCapability.hasCapability((LivingEntity) entity))
+            && PlayerInfoCapability.hasCapability((LivingEntity) entity))
         {
             ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor((Player) entity));
         }

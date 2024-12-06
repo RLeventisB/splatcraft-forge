@@ -4,24 +4,29 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.forge.util.PlayerCharge;
 
-public class UpdateChargeStatePacket extends PlayC2SPacket {
+public class UpdateChargeStatePacket extends PlayC2SPacket
+{
     private final boolean hasCharge;
 
-    public UpdateChargeStatePacket(boolean hasCharge) {
+    public UpdateChargeStatePacket(boolean hasCharge)
+    {
         this.hasCharge = hasCharge;
     }
 
-    public static UpdateChargeStatePacket decode(FriendlyByteBuf buffer) {
+    public static UpdateChargeStatePacket decode(FriendlyByteBuf buffer)
+    {
         return new UpdateChargeStatePacket(buffer.readBoolean());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer) {
+    public void encode(FriendlyByteBuf buffer)
+    {
         buffer.writeBoolean(hasCharge);
     }
 
     @Override
-    public void execute(Player player) {
+    public void execute(Player player)
+    {
         PlayerCharge.updateServerMap(player, hasCharge);
     }
 }

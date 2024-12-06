@@ -36,13 +36,13 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("deprecation")
 public class RemotePedestalBlock extends Block implements IColoredBlock, EntityBlock
 {
-    private static final VoxelShape SHAPE = Shapes.or(
-            box(3, 0, 3, 13, 2, 13),
-            box(4, 2, 4, 12, 3, 12),
-            box(5, 3, 5, 11, 11, 11),
-            box(4, 11, 4, 12, 13, 12)
-    );
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
+    private static final VoxelShape SHAPE = Shapes.or(
+        box(3, 0, 3, 13, 2, 13),
+        box(4, 2, 4, 12, 3, 12),
+        box(5, 3, 5, 11, 11, 11),
+        box(4, 11, 4, 12, 13, 12)
+    );
 
     public RemotePedestalBlock()
     {
@@ -79,7 +79,8 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
                 te.setItem(0, player.getItemInHand(hand).copy());
                 player.getItemInHand(hand).setCount(0);
                 return InteractionResult.sidedSuccess(level.isClientSide);
-            } else if (!te.isEmpty())
+            }
+            else if (!te.isEmpty())
             {
                 ItemStack remote = te.removeItemNoUpdate(0);
                 if (!player.addItem(remote))

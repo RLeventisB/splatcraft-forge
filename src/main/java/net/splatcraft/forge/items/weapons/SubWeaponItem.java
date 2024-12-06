@@ -34,9 +34,9 @@ import java.util.function.Consumer;
 
 public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 {
+    public static final ArrayList<SubWeaponItem> subs = new ArrayList<>();
     public final RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType;
     public final SubWeaponAction useTick;
-    public static final ArrayList<SubWeaponItem> subs = new ArrayList<>();
 
     public SubWeaponItem(RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings, SubWeaponAction useTick)
     {
@@ -159,6 +159,34 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         consumer.accept(new SubWeaponClientItemExtensions());
     }
 
+    @Override
+    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    {
+        return PlayerPosingHandler.WeaponPose.SUB_HOLD;
+    }
+
+    @Override
+    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
+    {
+        if (oldStack.hasTag() && newStack.hasTag())
+        {
+            oldStack = oldStack.copy();
+            newStack = newStack.copy();
+
+            oldStack.getTag().remove("EntityData");
+            newStack.getTag().remove("EntityData");
+
+            return !ItemStack.isSameItem(oldStack, newStack);
+        }
+
+        return super.shouldCauseReequipAnimation(oldStack, newStack, slotChanged);
+    }
+
+    public interface SubWeaponAction
+    {
+        void onUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime);
+    }
+
     public static class DispenseBehavior extends DefaultDispenseItemBehavior
     {
         @Override
@@ -206,34 +234,6 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         {
             return 0;
         }
-    }
-
-    @Override
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
-    {
-        return PlayerPosingHandler.WeaponPose.SUB_HOLD;
-    }
-
-    public interface SubWeaponAction
-    {
-        void onUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime);
-    }
-
-    @Override
-    public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
-    {
-        if (oldStack.hasTag() && newStack.hasTag())
-        {
-            oldStack = oldStack.copy();
-            newStack = newStack.copy();
-
-            oldStack.getTag().remove("EntityData");
-            newStack.getTag().remove("EntityData");
-
-            return !ItemStack.isSameItem(oldStack, newStack);
-        }
-
-        return super.shouldCauseReequipAnimation(oldStack, newStack, slotChanged);
     }
 
     private static class SubWeaponClientItemExtensions implements IClientItemExtensions

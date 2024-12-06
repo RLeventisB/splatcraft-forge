@@ -1,10 +1,10 @@
 {
-  "replace": false,
-  "values": [
-    "splatcraft:splat_bomb",
-    "splatcraft:splat_bomb_2",
-    "splatcraft:burst_bomb",
-    "splatcraft:suction_bomb",
-    "splatcraft:curling_bomb"
-  ]
+    "replace": false,
+    "values": [
+        "splatcraft:splat_bomb",
+        "splatcraft:splat_bomb_2",
+        "splatcraft:burst_bomb",
+        "splatcraft:suction_bomb",
+        "splatcraft:curling_bomb"
+    ]
 }

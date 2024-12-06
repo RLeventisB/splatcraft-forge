@@ -47,8 +47,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     private static final EntityDataAccessor<ExtraDataList> EXTRA_DATA = SynchedEntityData.defineId(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
     private static final EntityDataAccessor<Vec3> SHOOT_DIRECTION = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC3SERIALIZER);
     public static float MixinTimeDelta;
-
-    protected double straightShotTime = -1;
     public float lifespan = 600;
     public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
     public ItemStack sourceWeapon = ItemStack.EMPTY;
@@ -57,6 +55,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public boolean causesHurtCooldown, throwerAirborne;
     public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
     public InkBlockUtils.InkType inkType;
+    protected double straightShotTime = -1;
     private float accumulatedDrops;
     private AttackId attackId = AttackId.NONE;
 
@@ -723,12 +722,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         entityData.set(EXTRA_DATA, list);
     }
 
-    @Deprecated //Modify sourceWeapon variable instead
-    @Override
-    public void setItem(@NotNull ItemStack itemStack)
-    {
-    }
-
     @Override
     protected @NotNull ItemStack getItemRaw()
     {
@@ -763,6 +756,11 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return straightShotTime;
     }
 
+    public void setStraightShotTime(float time)
+    {
+        entityData.set(STRAIGHT_SHOT_TIME, time);
+    }
+
     public float calculateDamageDecay(float baseDamage, float startTick, float decayPerTick, float minDamage)
     {
         // getMaxStraightShotTime() - straightShotTime is just tickCount but it counts the partial ticks too (and time delta!!! yay i hate myself)
@@ -777,11 +775,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public float getMaxStraightShotTime()
     {
         return entityData.get(STRAIGHT_SHOT_TIME);
-    }
-
-    public void setStraightShotTime(float time)
-    {
-        entityData.set(STRAIGHT_SHOT_TIME, time);
     }
 
     public Vec3 getShotDirection()
@@ -801,6 +794,13 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
         return entityData.get(PROJ_SIZE).x;
     }
 
+    public void setProjectileSize(float size)
+    {
+        entityData.set(PROJ_SIZE, new Vec2(size, size * 3));
+        reapplyPosition();
+        refreshDimensions();
+    }
+
     public float getProjectileVisualSize()
     {
         return entityData.get(PROJ_SIZE).y;
@@ -809,13 +809,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public void setProjectileVisualSize(float visualSize)
     {
         entityData.set(PROJ_SIZE, new Vec2(getProjectileSize(), visualSize));
-    }
-
-    public void setProjectileSize(float size)
-    {
-        entityData.set(PROJ_SIZE, new Vec2(size, size * 3));
-        reapplyPosition();
-        refreshDimensions();
     }
 
     @Override
@@ -829,6 +822,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
     public @NotNull ItemStack getItem()
     {
         return ItemStack.EMPTY;
+    }
+
+    @Deprecated //Modify sourceWeapon variable instead
+    @Override
+    public void setItem(@NotNull ItemStack itemStack)
+    {
     }
 
     @Override
