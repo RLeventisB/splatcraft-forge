@@ -21,6 +21,7 @@ out
 eclipse
 run
 server
+src/generated
 
 # Files from Forge MDK
 forge*changelog.txt
