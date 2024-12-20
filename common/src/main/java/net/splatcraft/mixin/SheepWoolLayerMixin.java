@@ -2,36 +2,34 @@ package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.layers.SheepFurLayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.feature.SheepWoolFeatureRenderer;
+import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.Identifier;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@OnlyIn(Dist.CLIENT)
-@Mixin(SheepFurLayer.class)
+@Environment(EnvType.CLIENT)
+@Mixin(SheepWoolFeatureRenderer.class)
 public abstract class SheepWoolLayerMixin
 {
-    @WrapOperation(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/animal/Sheep;FFFFFF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/layers/SheepFurLayer;coloredCutoutModelCopyLayerRender(Lnet/minecraft/client/model/EntityModel;Lnet/minecraft/client/model/EntityModel;Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFFFFF)V"))
-    public void render(EntityModel<LivingEntity> parentModel, EntityModel<LivingEntity> entityModel, ResourceLocation resourceLocation, PoseStack matrixStack, MultiBufferSource iRenderTypeBuffer, int i, LivingEntity entity, float v1, float v2, float v3, float v4, float v5, float v6, float r, float g, float b, Operation<Void> original)
+    @WrapOperation(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/passive/SheepEntity;FFFFFF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/feature/SheepWoolFeatureRenderer;render(Lnet/minecraft/client/render/entity/model/EntityModel;Lnet/minecraft/client/render/entity/model/EntityModel;Lnet/minecraft/util/Identifier;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFFI)V"))
+    public void render(EntityModel instance, EntityModel entityModel, Identifier identifier, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int light, LivingEntity entity, float limbAngle, float limbDistance, float age, float headYaw, float headPitch, float tickDelta, int color, Operation<Void> original)
     {
-        float[] rgb = new float[]{r, g, b};
-
         if (InkOverlayCapability.hasCapability(entity))
         {
-            int color = InkOverlayCapability.get(entity).getWoolColor();
+            InkColor inkColor = InkOverlayCapability.get(entity).getWoolColor();
 
-            if (color >= 0)
-                rgb = ColorUtils.hexToRGB(color);
+            if (inkColor.isValid())
+                color = inkColor.getColorWithAlpha(255);
         }
 
-        original.call(parentModel, entityModel, resourceLocation, matrixStack, iRenderTypeBuffer, i, entity, v1, v2, v3, v4, v5, v6, rgb[0], rgb[1], rgb[2]);
+        original.call(instance, entityModel, identifier, matrixStack, consumerProvider, light, entity, limbAngle, limbDistance, age, headYaw, headPitch, tickDelta, color);
     }
 }

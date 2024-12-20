@@ -2,99 +2,96 @@ package net.splatcraft.client.models;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.model.*;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.entity.model.EntityModel;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.MathHelper;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.SquidBumperEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperModel extends EntityModel<SquidBumperEntity>
 {
-    // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Splatcraft.MODID, "squid_bumper"), "main");
+    // This layer location should be baked with EntityRendererFactory.Context in the entity renderer and passed into this model's constructor
+    public static final EntityModelLayer LAYER_LOCATION = new EntityModelLayer(Splatcraft.identifierOf("squid_bumper"), "main");
     private final ModelPart Base;
     private final ModelPart Bumper;
     private float scale = 1;
 
     public SquidBumperModel(ModelPart root)
     {
-        this.Base = root.getChild("Base");
-        this.Bumper = root.getChild("Bumper");
+        Base = root.getChild("Base");
+        Bumper = root.getChild("Bumper");
     }
 
-    public static LayerDefinition createBodyLayer()
+    public static TexturedModelData createBodyLayer()
     {
-        MeshDefinition meshdefinition = new MeshDefinition();
-        PartDefinition partdefinition = meshdefinition.getRoot();
+        ModelData meshdefinition = new ModelData();
+        ModelPartData partdefinition = meshdefinition.getRoot();
 
-        PartDefinition Base = partdefinition.addOrReplaceChild("Base", CubeListBuilder.create().texOffs(0, 46).addBox(-5.0F, -2.0F, -5.0F, 10.0F, 2.0F, 10.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
+        ModelPartData Base = partdefinition.addChild("Base", ModelPartBuilder.create().uv(0, 46).cuboid(-5.0F, -2.0F, -5.0F, 10.0F, 2.0F, 10.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
 
-        PartDefinition Bumper = partdefinition.addOrReplaceChild("Bumper", CubeListBuilder.create().texOffs(0, 0).addBox(-7.0F, -16.0F, -7.0F, 14.0F, 14.0F, 14.0F, new CubeDeformation(0.0F))
-            .texOffs(0, 28).addBox(-6.0F, -22.0F, -6.0F, 12.0F, 6.0F, 12.0F, new CubeDeformation(0.0F))
-            .texOffs(56, 1).addBox(-5.0F, -27.0F, -5.0F, 10.0F, 5.0F, 10.0F, new CubeDeformation(0.0F))
-            .texOffs(56, 17).addBox(-4.0F, -30.0F, -4.0F, 8.0F, 3.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
+        ModelPartData Bumper = partdefinition.addChild("Bumper", ModelPartBuilder.create().uv(0, 0).cuboid(-7.0F, -16.0F, -7.0F, 14.0F, 14.0F, 14.0F, new Dilation(0.0F))
+            .uv(0, 28).cuboid(-6.0F, -22.0F, -6.0F, 12.0F, 6.0F, 12.0F, new Dilation(0.0F))
+            .uv(56, 1).cuboid(-5.0F, -27.0F, -5.0F, 10.0F, 5.0F, 10.0F, new Dilation(0.0F))
+            .uv(56, 17).cuboid(-4.0F, -30.0F, -4.0F, 8.0F, 3.0F, 8.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
 
-        PartDefinition Left_Side = Bumper.addOrReplaceChild("Left_Side", CubeListBuilder.create().texOffs(72, 28).addBox(-11.3308F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, 0.7854F));
+        ModelPartData Left_Side = Bumper.addChild("Left_Side", ModelPartBuilder.create().uv(72, 28).cuboid(-11.3308F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new Dilation(0.0F)), ModelTransform.of(3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, 0.7854F));
 
-        PartDefinition Right_Side = Bumper.addOrReplaceChild("Right_Side", CubeListBuilder.create().texOffs(48, 28).mirror().addBox(1.3261F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offsetAndRotation(-3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, -0.7854F));
+        ModelPartData Right_Side = Bumper.addChild("Right_Side", ModelPartBuilder.create().uv(48, 28).mirrored().cuboid(1.3261F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new Dilation(0.0F)).mirrored(false), ModelTransform.of(-3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, -0.7854F));
 
-        return LayerDefinition.create(meshdefinition, 128, 128);
-    }
-
-    @Override
-    public void setupAnim(@NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
-    {
-
+        return TexturedModelData.of(meshdefinition, 128, 128);
     }
 
     @Override
-    public void prepareMobModel(@NotNull SquidBumperEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+    public void setAngles(@NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
     {
-        super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);
 
-        scale = entityIn.getBumperScale(Minecraft.getInstance().getDeltaFrameTime());
-        Bumper.yRot = MathHelper.DEG_TO_RAD * MathHelper.lerp(partialTick, entityIn.yHeadRot, entityIn.yHeadRotO) + (float) Math.PI;
+    }
 
-        Base.xRot = 0.0F;
-        Base.yRot = 0.0F;
-        Base.zRot = 0.0F;
+    @Override
+    public void animateModel(@NotNull SquidBumperEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
+    {
+        super.animateModel(entityIn, limbSwing, limbSwingAmount, partialTick);
+
+        scale = entityIn.getBumperScale(MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true));
+        Bumper.yaw = MathHelper.RADIANS_PER_DEGREE * MathHelper.lerp(partialTick, entityIn.headYaw, entityIn.prevHeadYaw) + (float) Math.PI;
+
+        Base.pitch = 0.0F;
+        Base.yaw = 0.0F;
+        Base.roll = 0.0F;
 
         float scale = entityIn.getBumperScale(partialTick);
 
-        Bumper.y = 24;
+        Bumper.pivotY = 24;
 
         if (entityIn.getInkHealth() <= 0f)
         {
-            Bumper.y *= 1 / scale;
+            Bumper.pivotY *= 1 / scale;
         }
     }
 
     @Override
-    public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    public void render(@NotNull MatrixStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
     {
-        Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+        Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 
-        poseStack.pushPose();
+        poseStack.push();
         poseStack.scale(scale, scale, scale);
-        Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-        poseStack.popPose();
+        Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+        poseStack.pop();
     }
 
-    public void renderBase(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    public void renderBase(MatrixStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
     {
-        Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+        Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 
-    public void renderBumper(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    public void renderBumper(MatrixStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
     {
-        Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+        Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 }

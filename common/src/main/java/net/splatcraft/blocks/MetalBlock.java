@@ -1,14 +1,14 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.MapColor;
+import net.minecraft.sound.BlockSoundGroup;
 
 public class MetalBlock extends Block
 {
     public MetalBlock(MapColor color)
     {
-        super(BlockBehaviour.Properties.of().mapColor(color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL));
+        super(AbstractBlock.Settings.create().mapColor(color).requiresTool().strength(5.0F, 6.0F).sounds(BlockSoundGroup.METAL));
     }
 }

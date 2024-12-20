@@ -2,11 +2,12 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.Optional;
@@ -61,7 +62,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     @Override
     public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
     {
-        return stack.getOrCreateTag().getFloat("Charge") > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
+        return stack.get(SplatcraftComponents.CHARGE) > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
     }
 
     @Override
@@ -87,7 +88,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
     }
 
     @Override
-    public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
+    public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
     {
         return firstChargeLevelProjectile.speed();
     }

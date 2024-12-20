@@ -1,48 +1,36 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
-import net.minecraft.core.Direction;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.nbt.NbtOps;
+import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.util.InkColor;
 
-public class SaveInfoCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class SaveInfoCapability
 {
-    public static Capability<SaveInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
-    {
-    });
-    private SaveInfo saveInfo = null;
-    private final LazyOptional<SaveInfo> opt = LazyOptional.of(() ->
-        saveInfo == null ? (saveInfo = new SaveInfo()) : saveInfo);
+    private static SaveInfo saveInfo = new SaveInfo(new HashMap<>(), new HashMap<>(), new ArrayList<>());
 
-    public static SaveInfo get(MinecraftServer server) throws NullPointerException
+    public static SaveInfo get() throws NullPointerException
     {
-        return server.getLevel(Level.OVERWORLD).getCapability(CAPABILITY).orElseThrow(() -> new NullPointerException("Couldn't find WorldData capability!"));
+        return saveInfo;
     }
 
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side)
+    public static void save(NbtCompound nbt)
     {
-        return cap == CAPABILITY ? opt.cast() : LazyOptional.empty();
+        SaveInfo.CODEC.encode(saveInfo, NbtOps.INSTANCE, nbt);
     }
 
-    @Override
-    public NbtCompound serializeNBT()
+    public static boolean load(Dynamic<?> dataGetter)
     {
-        return opt.orElse(null).writeNBT(new NbtCompound());
-    }
-
-    @Override
-    public void deserializeNBT(NbtCompound nbt)
-    {
-        opt.orElse(null).readNBT(nbt);
+        return dataGetter.decode(SaveInfo.CODEC).ifSuccess(v -> {
+            saveInfo = v.getFirst();
+            for (InkColor color : saveInfo.colorScores())
+            {
+                ScoreboardHandler.createColorCriterion(color);
+            }
+        }).isSuccess();
     }
 }

@@ -1,67 +1,66 @@
 package net.splatcraft.crafting;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.input.SingleStackRecipeInput;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<WeaponWorkbenchRecipe>
+public class WeaponWorkbenchRecipe implements Recipe<SingleStackRecipeInput>, Comparable<WeaponWorkbenchRecipe>
 {
-    protected final ResourceLocation id;
-    protected final ResourceLocation tab;
+    protected final Identifier tab;
     protected final List<WeaponWorkbenchSubtypeRecipe> subRecipes;
     protected final int pos;
 
-    public WeaponWorkbenchRecipe(ResourceLocation id, ResourceLocation tab, int pos, List<WeaponWorkbenchSubtypeRecipe> subRecipes)
+    public WeaponWorkbenchRecipe(Identifier tab, List<WeaponWorkbenchSubtypeRecipe> subRecipes, int pos)
     {
-        this.id = id;
         this.pos = pos;
-        this.tab = tab;
         this.subRecipes = subRecipes;
+        this.tab = tab;
     }
 
     @Override
-    public boolean matches(@NotNull Container inv, @NotNull Level levelIn)
+    public boolean matches(@NotNull SingleStackRecipeInput inv, @NotNull World levelIn)
     {
         return true;
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull Container inv, @NotNull RegistryAccess access)
+    public @NotNull ItemStack craft(@NotNull SingleStackRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
     {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public boolean canCraftInDimensions(int width, int height)
+    public boolean fits(int width, int height)
     {
         return false;
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess access)
+    public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
     {
-        return subRecipes.isEmpty() ? ItemStack.EMPTY : subRecipes.get(0).getOutput().copy();
+        return subRecipes.isEmpty() ? ItemStack.EMPTY : subRecipes.getFirst().getOutput().copy();
     }
 
-    @Override
-    public @NotNull ResourceLocation getId()
+    public Identifier getId()
     {
-        return id;
+        return Registries.ITEM.getId(getResult(DynamicRegistryManager.EMPTY).getItem());
     }
 
     @Override
@@ -82,81 +81,67 @@ public class WeaponWorkbenchRecipe implements Recipe<Container>, Comparable<Weap
         return pos - o.pos;
     }
 
-    @Nullable
-    public WeaponWorkbenchTab getTab(Level level)
+    public RecipeEntry<?> getTab(World world)
     {
-        return (WeaponWorkbenchTab) level.getRecipeManager().byKey(tab).orElse(null);
+        return world.getRecipeManager().get(tab).orElse(null);
     }
 
-    public WeaponWorkbenchSubtypeRecipe getRecipeFromIndex(Player player, int subTypePos)
+    public WeaponWorkbenchSubtypeRecipe getRecipeFromIndex(PlayerEntity player, int subTypePos)
     {
         return getAvailableRecipes(player).get(subTypePos);
     }
 
-    public int getAvailableRecipesTotal(Player player)
+    public int getAvailableRecipesTotal(PlayerEntity player)
     {
         return getAvailableRecipes(player).size();
     }
 
-    public List<WeaponWorkbenchSubtypeRecipe> getAvailableRecipes(Player player)
+    public List<WeaponWorkbenchSubtypeRecipe> getAvailableRecipes(PlayerEntity player)
     {
         return subRecipes.stream().filter(weaponWorkbenchSubtypeRecipe -> weaponWorkbenchSubtypeRecipe.isAvailable(player)).toList();
     }
 
+    public Identifier getTab()
+    {
+        return tab;
+    }
+
+    public List<WeaponWorkbenchSubtypeRecipe> getSubRecipes()
+    {
+        return subRecipes;
+    }
+
+    public int getPos()
+    {
+        return pos;
+    }
+
     public static class Serializer implements RecipeSerializer<WeaponWorkbenchRecipe>
     {
-        @Override
-        public @NotNull WeaponWorkbenchRecipe fromJson(@NotNull ResourceLocation recipeId, JsonObject json)
-        {
-            List<WeaponWorkbenchSubtypeRecipe> recipes = new ArrayList<>();
-            JsonArray arr = json.getAsJsonArray("recipes");
-
-            for (int i = 0; i < arr.size(); i++)
-            {
-                ResourceLocation id = new ResourceLocation(recipeId.getNamespace(), recipeId.getPath() + "subtype" + i);
-                recipes.add(WeaponWorkbenchSubtypeRecipe.fromJson(id, arr.get(i).getAsJsonObject()));
-            }
-
-            for (WeaponWorkbenchSubtypeRecipe r : recipes)
-            {
-                r.siblings.clear();
-                r.siblings.addAll(recipes);
-                r.siblings.removeIf(o -> o.equals(r));
-            }
-
-            return new WeaponWorkbenchRecipe(recipeId, new ResourceLocation(GsonHelper.getAsString(json, "tab")), json.has("pos") ? GsonHelper.getAsInt(json, "pos") : Integer.MAX_VALUE, recipes);
-        }
-
-        @Nullable
-        @Override
-        public WeaponWorkbenchRecipe fromNetwork(@NotNull ResourceLocation recipeId, FriendlyByteBuf buffer)
-        {
-            List<WeaponWorkbenchSubtypeRecipe> s = new ArrayList<>();
-            int count = buffer.readInt();
-            for (int i = 0; i < count; i++)
-            {
-                ResourceLocation loc = buffer.readResourceLocation();
-                s.add(WeaponWorkbenchSubtypeRecipe.fromBuffer(loc, buffer));
-            }
-
-            ResourceLocation loc = buffer.readResourceLocation();
-
-            return new WeaponWorkbenchRecipe(recipeId, loc, buffer.readInt(), s);
-        }
-
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, WeaponWorkbenchRecipe recipe)
-        {
-            buffer.writeInt(recipe.subRecipes.size());
-
-            for (WeaponWorkbenchSubtypeRecipe s : recipe.subRecipes)
-            {
-                buffer.writeResourceLocation(s.id);
-                s.toBuffer(buffer);
-            }
-
-            buffer.writeResourceLocation(recipe.tab);
+        public static final PacketCodec<RegistryByteBuf, WeaponWorkbenchRecipe> PACKET_CODEC = PacketCodec.of((recipe, buffer) -> {
+            buffer.writeIdentifier(recipe.tab);
+            WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.encode(buffer, recipe.subRecipes);
             buffer.writeInt(recipe.pos);
+        }, (buffer) -> new WeaponWorkbenchRecipe(buffer.readIdentifier(), WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.decode(buffer), buffer.readInt()));
+
+        public static final MapCodec<WeaponWorkbenchRecipe> CODEC = RecordCodecBuilder.mapCodec(inst ->
+            inst.group(
+                Identifier.CODEC.fieldOf("tab").forGetter(WeaponWorkbenchRecipe::getTab),
+                WeaponWorkbenchSubtypeRecipe.CODEC.listOf().fieldOf("recipes").forGetter(WeaponWorkbenchRecipe::getSubRecipes),
+                Codec.INT.fieldOf("pos").forGetter(WeaponWorkbenchRecipe::getPos)
+            ).apply(inst, WeaponWorkbenchRecipe::new)
+        );
+
+        @Override
+        public MapCodec<WeaponWorkbenchRecipe> codec()
+        {
+            return CODEC;
+        }
+
+        @Override
+        public PacketCodec<RegistryByteBuf, WeaponWorkbenchRecipe> packetCodec()
+        {
+            return PACKET_CODEC;
         }
     }
 }

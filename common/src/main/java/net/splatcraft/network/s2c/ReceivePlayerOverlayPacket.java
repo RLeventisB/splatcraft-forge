@@ -1,12 +1,12 @@
 package net.splatcraft.network.s2c;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.texture.NativeImageBackedTexture;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
 
@@ -16,6 +16,7 @@ import java.util.UUID;
 
 public class ReceivePlayerOverlayPacket extends PlayS2CPacket
 {
+    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("receive_player_overlay_packet"));
     final UUID player;
     final byte[] imageBytes;
 
@@ -25,32 +26,38 @@ public class ReceivePlayerOverlayPacket extends PlayS2CPacket
         this.player = player;
     }
 
-    public static ReceivePlayerOverlayPacket decode(FriendlyByteBuf buffer)
+    public static ReceivePlayerOverlayPacket decode(RegistryByteBuf buffer)
     {
-        return new ReceivePlayerOverlayPacket(buffer.readUUID(), buffer.readByteArray());
+        return new ReceivePlayerOverlayPacket(buffer.readUuid(), buffer.readByteArray());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeUUID(player);
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
+    {
+        buffer.writeUuid(player);
         buffer.writeByteArray(imageBytes);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void execute()
     {
         try
         {
 
-            ResourceLocation location = new ResourceLocation(Splatcraft.MODID, PlayerInkColoredSkinLayer.PATH + player.toString());
-            Minecraft.getInstance().getTextureManager().release(location);
+            Identifier location = Splatcraft.identifierOf(PlayerInkColoredSkinLayer.PATH + player.toString());
+            MinecraftClient.getInstance().getTextureManager().destroyTexture(location);
 
             if (imageBytes.length > 0)
             {
-                DynamicTexture texture = new DynamicTexture(NativeImage.read(new ByteArrayInputStream(imageBytes)));
-                Minecraft.getInstance().getTextureManager().register(location, texture);
+                NativeImageBackedTexture texture = new NativeImageBackedTexture(net.minecraft.client.texture.NativeImage.read(new ByteArrayInputStream(imageBytes)));
+                MinecraftClient.getInstance().getTextureManager().registerTexture(location, texture);
                 PlayerInkColoredSkinLayer.TEXTURES.put(player, location);
             }
         }

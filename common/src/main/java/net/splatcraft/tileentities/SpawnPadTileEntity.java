@@ -1,11 +1,12 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.core.BlockPos;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3d;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
 import net.splatcraft.entities.SpawnShieldEntity;
@@ -27,15 +28,15 @@ public class SpawnPadTileEntity extends InkColorTileEntity
     public boolean isSpawnShield(SpawnShieldEntity otherShield)
     {
 
-        return spawnShieldUuid != null && otherShield != null && spawnShieldUuid.equals(otherShield.getUUID());
+        return spawnShieldUuid != null && otherShield != null && spawnShieldUuid.equals(otherShield.getUuid());
     }
 
     public SpawnShieldEntity getSpawnShield()
     {
-        if (level.isClientSide() || spawnShieldUuid == null)
+        if (world.isClient() || spawnShieldUuid == null)
             return null;
 
-        Entity res = ((ServerWorld) level).getEntity(spawnShieldUuid);
+        Entity res = ((ServerWorld) world).getEntity(spawnShieldUuid);
         return (res instanceof SpawnShieldEntity) ? (SpawnShieldEntity) res : null;
     }
 
@@ -43,45 +44,36 @@ public class SpawnPadTileEntity extends InkColorTileEntity
     {
         if (shield == null)
             spawnShieldUuid = null;
-        else spawnShieldUuid = shield.getUUID();
+        else spawnShieldUuid = shield.getUuid();
     }
 
     public void addToStages()
     {
-        if (!level.isClientSide())
-            for (Stage stage : Stage.getStagesForPosition(level, new Vec3d(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ())))
+        if (!world.isClient())
+            for (Stage stage : Stage.getStagesForPosition(world, new Vec3d(getPos().getX(), getPos().getY(), getPos().getZ())))
                 stage.addSpawnPad(this);
     }
 
     public Vec3d getSuperJumpPos()
     {
-        return new Vec3d(getBlockPos().getX(), getBlockPos().getY() + SuperJumpCommand.blockHeight(getBlockPos(), level), getBlockPos().getZ() + 0.5);
+        return new Vec3d(getPos().getX(), getPos().getY() + SuperJumpCommand.blockHeight(getPos(), world), getPos().getZ() + 0.5);
     }
 
     @Override
-    public void saveAdditional(NbtCompound nbt)
+    public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)
     {
         if (spawnShieldUuid != null)
-            nbt.putUUID("SpawnShield", spawnShieldUuid);
-        super.saveAdditional(nbt);
+            nbt.putUuid("SpawnShield", spawnShieldUuid);
+        super.writeNbt(nbt, wrapperLookup);
     }
 
     @Override
-    public void load(@NotNull NbtCompound nbt)
+    public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
     {
-        super.load(nbt);
+        super.readNbt(nbt, lookup);
 
-        if (nbt.hasUUID("SpawnShield"))
-            spawnShieldUuid = nbt.getUUID("SpawnShield");
+        if (nbt.containsUuid("SpawnShield"))
+            spawnShieldUuid = nbt.getUuid("SpawnShield");
         updateStages = true;
-    }
-
-    @Override
-    public void onLoad()
-    {
-        //if(updateStages)
-        //	addToStages();
-
-        super.onLoad();
     }
 }

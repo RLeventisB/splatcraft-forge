@@ -2,50 +2,63 @@ package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.server.players.PlayerList;
-import net.minecraft.world.phys.Vec3d;
+import net.minecraft.entity.Entity;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
+import net.minecraft.server.PlayerManager;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.TeleportTarget;
+import net.splatcraft.network.s2c.UpdateWeaponSettingsPacket;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Optional;
-
-@Mixin(PlayerList.class)
+@Mixin(PlayerManager.class)
 public abstract class PlayerListMixin
 {
     @Unique
     private boolean splatcraft$canRespawn = true;
 
-    @Inject(method = "respawn", at = @At(value = "HEAD"))
-    public void getRespawnPosition(ServerPlayer instance, boolean p_11238_, CallbackInfoReturnable<ServerPlayer> cir)
+    @Shadow
+    public abstract void sendToAll(Packet<?> packet);
+
+    @Inject(method = "respawnPlayer", at = @At(value = "HEAD"))
+    public void getRespawnPosition(ServerPlayerEntity player, boolean alive, Entity.RemovalReason removalReason, CallbackInfoReturnable<ServerPlayerEntity> cir)
     {
-        BlockPos res = instance.getRespawnPosition();
+        BlockPos res = player.getSpawnPointPosition();
 
         if (res != null)
         {
-            if (instance.server.getLevel(instance.getRespawnDimension()).getBlockEntity(res) instanceof SpawnPadTileEntity te)
+            if (player.server.getWorld(player.getSpawnPointDimension()).getBlockEntity(res) instanceof SpawnPadTileEntity te)
             {
-                instance.reviveCaps();
-                splatcraft$canRespawn = ColorUtils.colorEquals(instance, te);
-                instance.invalidateCaps();
+                // todo: forg- why are there two forge metods
+//                player.reviveCaps();
+                splatcraft$canRespawn = ColorUtils.colorEquals(player, te);
+//                player.invalidateCaps();
                 return;
             }
         }
         splatcraft$canRespawn = true;
     }
 
-    @WrapOperation(method = "respawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;findRespawnPositionAndUseSpawnBlock(Lnet/minecraft/server/level/ServerWorld;Lnet/minecraft/core/BlockPos;FZZ)Ljava/util/Optional;"))
-    public Optional<Vec3d> respawn(ServerWorld level, BlockPos flag, float flag1, boolean p_242374_0_, boolean p_242374_1_, Operation<Optional<Vec3d>> original)
+    @WrapOperation(method = "respawnPlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;getRespawnTarget(ZLnet/minecraft/world/TeleportTarget$PostDimensionTransition;)Lnet/minecraft/world/TeleportTarget;"))
+    public TeleportTarget respawn(ServerPlayerEntity instance, boolean optional, TeleportTarget.PostDimensionTransition postDimensionTransition, Operation<TeleportTarget> original)
     {
         if (!splatcraft$canRespawn)
-            return Optional.empty();
-        return original.call(level, flag, flag1, p_242374_0_, p_242374_1_);
+            return TeleportTarget.missingSpawnBlock(instance.getServer().getOverworld(), instance, postDimensionTransition);
+        return original.call(instance, optional, postDimensionTransition);
+    }
+
+    @Inject(method = "onDataPacksReloaded", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/PlayerManager;sendToAll(Lnet/minecraft/network/packet/Packet;)V"))
+    public void splatcraft$onDatapackReload(CallbackInfo ci)
+    {
+        sendToAll(new CustomPayloadS2CPacket(new UpdateWeaponSettingsPacket()));
     }
 }

@@ -1,13 +1,10 @@
 package net.splatcraft.data;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.block.Block;
+import net.minecraft.entity.EntityType;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.TagKey;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.InkTankItem;
 
@@ -33,7 +30,7 @@ public class SplatcraftTags
         public static final TagKey<Item> ROLLERS = createTag("rollers");
         public static final TagKey<Item> CHARGERS = createTag("chargers");
         public static final TagKey<Item> DUALIES = createTag("dualies");
-        //public static final TagKey<Item> SPLATLINGS = createTag("splatlings");
+        public static final TagKey<Item> SPLATLINGS = createTag("splatlings");
         //public static final TagKey<Item> BRELLAS = createTag("brellas");
         public static final TagKey<Item> MAIN_WEAPONS = createTag("main_weapons");
         public static final TagKey<Item> SUB_WEAPONS = createTag("sub_weapons");
@@ -57,7 +54,7 @@ public class SplatcraftTags
 
         private static TagKey<Item> createTag(String name)
         {
-            return ItemTags.create(new ResourceLocation(Splatcraft.MODID, name));
+            return TagKey.of(Registries.ITEM.getKey(), Splatcraft.identifierOf(name));
         }
     }
 
@@ -75,7 +72,7 @@ public class SplatcraftTags
 
         private static TagKey<Block> createTag(String name)
         {
-            return BlockTags.create(new ResourceLocation(Splatcraft.MODID, name));
+            return TagKey.of(Registries.BLOCK.getKey(), Splatcraft.identifierOf(name));
         }
     }
 
@@ -86,7 +83,7 @@ public class SplatcraftTags
 
         private static TagKey<EntityType<?>> createTag(String name)
         {
-            return TagKey.create(ForgeRegistries.ENTITY_TYPES.getRegistryKey(), new ResourceLocation(Splatcraft.MODID, name));
+            return TagKey.of(Registries.ENTITY_TYPE.getKey(), Splatcraft.identifierOf(name));
         }
     }
 }

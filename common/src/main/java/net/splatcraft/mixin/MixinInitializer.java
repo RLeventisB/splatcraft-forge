@@ -1,7 +1,7 @@
 package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
-import net.minecraftforge.fml.loading.LoadingModList;
+import dev.architectury.platform.Platform;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -19,9 +19,8 @@ public class MixinInitializer implements IMixinConfigPlugin
         MixinExtrasBootstrap.init();
 //        try
         {
-//            Class.forName("me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer", false, null);
-            sodiumInstalled = LoadingModList.get().getModFileById("rubidium") != null;
-            createInstalled = LoadingModList.get().getModFileById("create") != null;
+            sodiumInstalled = Platform.getMods().stream().anyMatch(v -> v.getModId().contains("sodium") || v.getModId().contains("rubidium"));
+            createInstalled = Platform.getMods().stream().anyMatch(v -> v.getModId().contains("create"));
         }
 //        catch (ClassNotFoundException ignored)
 //        {

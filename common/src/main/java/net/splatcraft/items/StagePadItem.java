@@ -1,38 +1,40 @@
 package net.splatcraft.items;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.stats.Stats;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.stat.Stats;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StagePadItem extends Item implements IColoredItem
+public class StagePadItem extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
     public static final UseAction OPEN_MAIN_MENU = ((level, player, hand, stack, pos) ->
         ((StagePadItem) stack.getItem()).openMenu(stack));
     public static UseAction clientUseAction = OPEN_MAIN_MENU;
+
     public StagePadItem()
     {
-        super(new Properties().stacksTo(1));
+        super(new Item.Settings().maxCount(1));
         SplatcraftItems.inkColoredItems.add(this);
     }
 
@@ -42,62 +44,62 @@ public class StagePadItem extends Item implements IColoredItem
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player, @NotNull InteractionHand hand)
+    public @NotNull TypedActionResult<ItemStack> use(World world, PlayerEntity player, @NotNull Hand hand)
     {
-        ItemStack itemstack = player.getItemInHand(hand);
-        player.awardStat(Stats.ITEM_USED.get(this));
+        ItemStack itemstack = player.getStackInHand(hand);
+        player.incrementStat(Stats.USED.getOrCreateStat(this));
 
-        if (level.isClientSide())
-            clientUseAction.apply(level, player, hand, itemstack, null);
+        if (world.isClient())
+            clientUseAction.apply(world, player, hand, itemstack, null);
 
-        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
+        return TypedActionResult.success(itemstack, world.isClient());
     }
 
     @Override
-    public @NotNull InteractionResult useOn(UseOnContext context)
+    public @NotNull ActionResult useOnBlock(ItemUsageContext context)
     {
-        if (context.getLevel().isClientSide())
-            clientUseAction.apply(context.getLevel(), context.getPlayer(), context.getHand(), context.getItemInHand(), context.getClickedPos());
+        if (context.getWorld().isClient())
+            clientUseAction.apply(context.getWorld(), context.getPlayer(), context.getHand(), context.getStack(), context.getBlockPos());
 
-        return InteractionResultHolder.sidedSuccess(context.getItemInHand(), context.getLevel().isClientSide()).getResult();
+        return ActionResult.success(context.getWorld().isClient());
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public void openMenu(ItemStack itemStack)
     {
-        Minecraft.getInstance().setScreen(new StageSelectionScreen(itemStack.getDisplayName()));
+        MinecraftClient.getInstance().setScreen(new StageSelectionScreen(itemStack.getName()));
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
         {
-            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                && PlayerInfoCapability.hasCapability(player))
-                ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
+            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+                && EntityInfoCapability.hasCapability(player))
+                ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
         }
     }
 
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition().below();
+        BlockPos pos = entity.getBlockPos().down();
 
         if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
             if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
-        else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+        else if ((!(stack.getItem() instanceof SubWeaponItem) || !SubWeaponItem.singleUse(stack))
+            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack).getColor() != 0xFFFFFF)
         {
-            ColorUtils.setInkColor(stack, 0xFFFFFF);
+            ColorUtils.setInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
             ColorUtils.setColorLocked(stack, false);
         }
 
@@ -106,6 +108,6 @@ public class StagePadItem extends Item implements IColoredItem
 
     public interface UseAction
     {
-        void apply(Level level, Player player, InteractionHand hand, ItemStack stack, @Nullable BlockPos pos);
+        void apply(World world, PlayerEntity player, Hand hand, ItemStack stack, @Nullable BlockPos pos);
     }
 }

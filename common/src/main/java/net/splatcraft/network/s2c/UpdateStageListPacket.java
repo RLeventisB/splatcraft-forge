@@ -1,56 +1,56 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.client.gui.stagepad.AbstractStagePadScreen;
 import net.splatcraft.data.Stage;
 import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class UpdateStageListPacket extends PlayS2CPacket
 {
-    NbtCompound nbt;
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateStageListPacket.class);
+    private static final PacketCodec<RegistryByteBuf, Map<String, Stage>> STAGE_INFO_PACKET_CODEC = PacketCodecs.map(HashMap::new, PacketCodecs.STRING, Stage.PACKET_CODEC);
+    Map<String, Stage> stages;
 
-    public UpdateStageListPacket(NbtCompound nbt)
+    public UpdateStageListPacket(Map<String, Stage> stages)
     {
-        this.nbt = nbt;
+        this.stages = stages;
     }
 
-    public UpdateStageListPacket(HashMap<String, Stage> stages)
+    public static UpdateStageListPacket decode(RegistryByteBuf buffer)
     {
-        NbtCompound stageNbt = new NbtCompound();
-
-        for (Map.Entry<String, Stage> e : stages.entrySet())
-            stageNbt.put(e.getKey(), e.getValue().writeData());
-
-        nbt = stageNbt;
-    }
-
-    public static UpdateStageListPacket decode(FriendlyByteBuf buffer)
-    {
-        return new UpdateStageListPacket(buffer.readNbt());
+        return new UpdateStageListPacket(STAGE_INFO_PACKET_CODEC.decode(buffer));
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeNbt(nbt);
+        return ID;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void encode(RegistryByteBuf buffer)
+    {
+        PacketCodecs.map(HashMap::new, PacketCodecs.STRING, Stage.PACKET_CODEC).encode(buffer, (HashMap<String, Stage>) stages);
+    }
+
+    @Environment(EnvType.CLIENT)
     @Override
     public void execute()
     {
         ClientUtils.clientStages.clear();
-        for (String key : nbt.getAllKeys())
-            ClientUtils.clientStages.put(key, new Stage(nbt.getCompound(key), key));
+        ClientUtils.clientStages.putAll(stages);
 
-        if (Minecraft.getInstance().screen instanceof AbstractStagePadScreen stagePadScreen)
+        if (MinecraftClient.getInstance().currentScreen instanceof AbstractStagePadScreen stagePadScreen)
             stagePadScreen.onStagesUpdate();
     }
 }

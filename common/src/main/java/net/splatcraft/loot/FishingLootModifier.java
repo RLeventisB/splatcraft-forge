@@ -1,39 +1,38 @@
 package net.splatcraft.loot;
 
-import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.advancements.critereon.FishingHookPredicate;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.FishingHook;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraftforge.common.loot.IGlobalLootModifier;
-import net.minecraftforge.common.loot.LootModifier;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.FishingBobberEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.predicate.entity.FishingHookPredicate;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.server.world.ServerWorld;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
+import java.util.Objects;
 
-public class FishingLootModifier extends LootModifier
+public class FishingLootModifier extends SplatcraftLootModifier
 {
-    public static final Supplier<Codec<FishingLootModifier>> CODEC = Suppliers.memoize(() -> RecordCodecBuilder.create(inst -> codecStart(inst).and(
+    public static final Codec<FishingLootModifier> CODEC = RecordCodecBuilder.create(inst ->
         inst.group(
-            ForgeRegistries.ITEMS.getCodec().fieldOf("item").forGetter(v -> v.item),
+            LOOT_CONDITIONS_CODEC.fieldOf("conditions").forGetter(lm -> lm.conditions),
+            ItemStack.ITEM_CODEC.fieldOf("item").forGetter(v -> v.item),
             Codec.INT.fieldOf("countMin").forGetter(v -> v.countMin),
             Codec.INT.fieldOf("countMax").forGetter(v -> v.countMax),
             Codec.FLOAT.fieldOf("chance").forGetter(v -> v.chance),
             Codec.INT.fieldOf("quality").forGetter(v -> v.quality),
             Codec.BOOL.fieldOf("isTreasure").forGetter(v -> v.isTreasure)
-        )).apply(inst, FishingLootModifier::new)
-    ));
-    public final Item item;
+        ).apply(inst, FishingLootModifier::new)
+    );
+    public final RegistryEntry<Item> item;
     public final int countMin;
     public final int countMax;
     public final float chance;
@@ -45,9 +44,9 @@ public class FishingLootModifier extends LootModifier
      *
      * @param conditionsIn the ILootConditions that need to be matched before the loot is modified.
      */
-    protected FishingLootModifier(LootItemCondition[] conditionsIn, Item itemIn, int countMin, int countMax, float chance, int quality, boolean isTreasure)
+    protected FishingLootModifier(LootCondition[] conditionsIn, RegistryEntry<Item> itemIn, int countMin, int countMax, float chance, int quality, boolean isTreasure)
     {
-        super(conditionsIn);
+        super(conditionsIn, Objects::nonNull);
         item = itemIn;
         this.countMin = countMin;
         this.countMax = countMax;
@@ -57,26 +56,26 @@ public class FishingLootModifier extends LootModifier
     }
 
     @Override
-    public Codec<? extends IGlobalLootModifier> codec()
+    public Codec<? extends SplatcraftLootModifier> codec()
     {
-        return CODEC.get();
+        return CODEC;
     }
 
     @NotNull
     @Override
-    protected ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context)
+    public ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context)
     {
-        if (!(context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof FishingHook) || isTreasure && !FishingHookPredicate.inOpenWater(true).matches(context.getParamOrNull(LootContextParams.THIS_ENTITY), null, null))
+        if (!(context.get(LootContextParameters.THIS_ENTITY) instanceof FishingBobberEntity) || isTreasure && !FishingHookPredicate.of(true).test(context.get(LootContextParameters.THIS_ENTITY), null, null))
         {
             return generatedLoot;
         }
 
         float chanceMod = 0;
-        if (context.getParamOrNull(LootContextParams.KILLER_ENTITY) instanceof LivingEntity entity)
+        if (context.get(LootContextParameters.ATTACKING_ENTITY) instanceof LivingEntity entity)
         {
-            ItemStack stack = entity.getUseItem();
-            int fishingLuck = EnchantmentHelper.getFishingLuckBonus(stack);
-            float luck = entity instanceof Player player ? player.getLuck() : 0;
+            ItemStack stack = entity.getActiveItem();
+            int fishingLuck = EnchantmentHelper.getFishingLuckBonus((ServerWorld) entity.getWorld(), stack, entity);
+            float luck = entity instanceof PlayerEntity player ? player.getLuck() : 0;
 
             if (isTreasure)
             {

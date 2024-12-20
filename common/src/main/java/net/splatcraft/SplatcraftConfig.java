@@ -1,40 +1,104 @@
 package net.splatcraft;
 
-import com.electronwill.nightconfig.core.file.CommentedFileConfig;
-import com.electronwill.nightconfig.core.io.WritingMode;
-import net.minecraftforge.common.ForgeConfigSpec;
+import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public interface SplatcraftConfig
+public class SplatcraftConfig
 {
-    ForgeConfigSpec clientConfig;
-    ForgeConfigSpec serverConfig;
+    static Map<String, Setting<?>> settingsMap = new HashMap<>();
 
-    static
+    public static String getModConfigPathString(Env env)
     {
-        ForgeConfigSpec.Builder configBuilder = new ForgeConfigSpec.Builder();
-
-        Client.init(configBuilder);
-        clientConfig = configBuilder.build();
-
-        configBuilder = new ForgeConfigSpec.Builder();
-        Server.init(configBuilder);
-        serverConfig = configBuilder.build();
+        return getModConfigPath().resolve(Splatcraft.MODID + (env == Env.CLIENT ? "-client" : "-server") + ".toml").toString();
     }
 
-    static void loadConfig(ForgeConfigSpec config, String path)
+    public static void initializeSettingsMap()
     {
-        final CommentedFileConfig file = CommentedFileConfig.builder(new File(path)).sync().autosave().writingMode(WritingMode.REPLACE).build();
+        // server settings
+        settingsMap.put("splatcraft.limitFallSpeed", new Setting<>(Boolean.class));
 
-        file.load();
-        config.setConfig(file);
+        // client settings
+        settingsMap.put("splatcraft.squidKeyMode", new Setting<>(SplatcraftKeyHandler.KeyMode.class));
+        settingsMap.put("splatcraft.inkIndicator", new Setting<>(InkIndicator.class));
+        settingsMap.put("splatcraft.vanillaInkDurabilityColor", new Setting<>(Boolean.class));
+        settingsMap.put("splatcraft.holdBarrierToRender", new Setting<>(Boolean.class));
+        settingsMap.put("splatcraft.barrierRenderDistance", new Setting<>(Integer.class));
+        settingsMap.put("splatcraft.colorLock", new Setting<>(Double.class));
+        settingsMap.put("splatcraft.shinierConfig", new Setting<>(Boolean.class));
+        settingsMap.put("splatcraft.preventBobView", new Setting<>(Boolean.class));
+        settingsMap.put("splatcraft.lowInkWarning", new Setting<>(PreventBobView.class));
+        settingsMap.put("splatcraft.coloredPlayerNames", new Setting<>(Boolean.class));
+        settingsMap.put("splatcraft.inkTankGuiScale", new Setting<>(Boolean.class));
     }
 
-    enum InkIndicator
+    @ExpectPlatform
+    public static Path getModConfigPath()
+    {
+        throw new AssertionError();
+    }
+
+    @ExpectPlatform
+    public static void loadConfig(Env env)
+    {
+        throw new AssertionError();
+    }
+
+    @ExpectPlatform
+    public static void initializeConfigs()
+    {
+        throw new AssertionError();
+    }
+
+    public static <T> void registerConfigAccessor(String name, Supplier<T> getter, Consumer<T> setter)
+    {
+        if (!settingsMap.containsKey(name))
+        {
+            throw new IllegalArgumentException("No setting named " + name + "exists");
+        }
+        Setting<?> setting = settingsMap.get(name);
+        if (setter == null || getter == null || !setting.settingType.equals(setter.getClass().getTypeParameters()[0].getGenericDeclaration()))
+        {
+            throw new IllegalArgumentException("Getter or setter is null, or type parameter doesn't match the setting's type parameter");
+        }
+
+        Setting<T> castedSetting = (Setting<T>) setting;
+        if (!setting.isIncomplete())
+            throw new IllegalStateException("Setting is already complete");
+
+        castedSetting.setGetter(getter);
+        castedSetting.setSetter(setter);
+    }
+
+    public static <T> T get(String name)
+    {
+        if (!settingsMap.containsKey(name))
+        {
+            throw new IllegalArgumentException("No setting named " + name + "exists");
+        }
+
+        Setting<T> setting = (Setting<T>) settingsMap.get(name);
+        return setting.get();
+    }
+
+    public static void initialize()
+    {
+        initializeSettingsMap();
+        initializeConfigs();
+
+        loadConfig(Platform.getEnvironment());
+    }
+
+    public enum InkIndicator
     {
         CROSSHAIR,
         DURABILITY,
@@ -42,129 +106,66 @@ public interface SplatcraftConfig
         NONE
     }
 
-    enum PreventBobView
+    public enum PreventBobView
     {
         SUBMERGED,
         ALWAYS,
         OFF
     }
 
-    class Server
+    public static final class Setting<T>
     {
-        public static ForgeConfigSpec.BooleanValue limitFallSpeed;
+        @NotNull
+        private final Class<T> settingType;
+        private Supplier<T> getter;
+        private Consumer<T> setter;
 
-        public static void init(ForgeConfigSpec.Builder client)
+        public Setting(Class<T> settingType)
         {
-            client.comment("Server Settings");
-            limitFallSpeed = client.comment("Specifies whether to limit the maximum fall speed of players").define("splatcraft.limitFallSpeed", false);
-        }
-    }
-
-    class Client
-    {
-        public static ForgeConfigSpec.EnumValue<SplatcraftKeyHandler.KeyMode> squidKeyMode;
-        public static Setting<InkIndicator> inkIndicator;
-        public static Setting<Boolean> vanillaInkDurability;
-        public static Setting<Boolean> holdBarrierToRender;
-        public static Setting<Integer> barrierRenderDistance;
-        public static Setting<Double> inkTankGuiScale;
-        public static Setting<Boolean> colorLock;
-        public static Setting<Boolean> makeShinier;
-        public static Setting<PreventBobView> preventBobView;
-        public static Setting<Boolean> lowInkWarning;
-        public static Setting<Boolean> coloredPlayerNames;
-        public static String inkColoredSkinLayerPath = "config\\splatcraft\\player_ink_color.png";
-        public static File playerSkinInkColoredLayer;
-
-        public static void init()
-        {
-            squidKeyMode = client.comment("Squid Key Mode").defineEnum("splatcraft.squidKeyMode", SplatcraftKeyHandler.KeyMode.TOGGLE);
-            inkIndicator = new Setting<>(InkIndicator.BOTH, "Determines how the amount of ink left in your tank is visualized.", "splatcraft.inkIndicator");
-            vanillaInkDurability = new Setting<>(false, "Determines whether the indicator that determines how much ink you have left matches vanilla durability colors instead of your ink color.", "splatcraft.vanillaInkDurabilityColor");
-            holdBarrierToRender = client.comment("Prevents Stage Barriers from rendering in creative mode unless the player is holding one in their hand.")
-                .define("splatcraft.holdBarrierToRender", true);
-            barrierRenderDistance = client.comment("How far away stage barriers or voids will render away from you.")
-                .defineInRange("splatcraft.barrierRenderDistance", 40, 4, 80);
-            colorLock = client.comment("Sets a static color for friendly and hostile colors").define("splatcraft.colorLock", false);
-            makeShinier = client.comment("Makes projectiles colors more palid and more \"resistant\" to lightning changes").define("splatcraft.shinierConfig", false);
-            preventBobView = client.comment("Prevents changing FOV when in Squid Mode").defineEnum("splatcraft.preventBobView", PreventBobView.OFF);
-            lowInkWarning = client.comment("Determines whether the ink indicator near your crosshair warns you if your ink is low.")
-                .define("splatcraft.lowInkWarning", true);
-            coloredPlayerNames = client.comment("Determines whether instances of player names share the same color as their ink.")
-                .define("splatcraft.coloredPlayerNames", true);
-            inkTankGuiScale = client.comment("Specifies the scale of the GUI that is associated with the ink tank.").defineInRange("splatcraft.inkTankGuiScale", 1f, 0.1f, 10f);
-        }
-    }
-
-    final class Setting<S>
-    {
-        private final S defaultValue;
-        private final String description;
-        private final String configKey;
-        private final Predicate<S> checker;
-        private S value;
-
-        public Setting(S defaultValue, String description, String configKey, Predicate<S> checker)
-        {
-            this.defaultValue = defaultValue;
-            this.description = description;
-            this.configKey = configKey;
-            this.checker = checker;
+            this(null, null, settingType);
         }
 
-        public Setting(S defaultValue, String description, String configKey)
+        public Setting(Supplier<T> getter, Consumer<T> setter, @NotNull Class<T> settingType)
         {
-            this(defaultValue, description, configKey, null);
+            this.getter = getter;
+            this.setter = setter;
+            this.settingType = settingType;
         }
 
-        public boolean setValue(S newValue)
+        public boolean isIncomplete()
         {
-            boolean passedCheck = checker == null || checker.test(newValue);
-            if (passedCheck)
-            {
-                value = newValue;
-            }
-            return passedCheck;
+            return getter == null && setter == null;
         }
 
-        public boolean get()
+        public void setGetter(Supplier<T> getter)
         {
-            return false;
+            if (setter != null)
+                return;
+
+            this.getter = getter;
         }
 
-        public S defaultValue()
+        public void setSetter(Consumer<T> setter)
         {
-            return defaultValue;
+            if (this.setter != null)
+                return;
+
+            this.setter = setter;
         }
 
-        public String description()
-        {
-            return description;
-        }
+        public T get() {return getter.get();}
 
-        public String configKey()
-        {
-            return configKey;
-        }
+        public void set(T value) {setter.accept(value);}
 
-        public Predicate<S> checker()
-        {
-            return checker;
-        }
+        public Class<T> settingType() {return settingType;}
 
         @Override
         public String toString()
         {
             return "Setting[" +
-                "defaultValue=" + defaultValue + ", " +
-                "description=" + description + ", " +
-                "configKey=" + configKey + ", " +
-                "checker=" + checker + ']';
-        }
-
-        public S getValue()
-        {
-            return value;
+                "getter=" + getter + ", " +
+                "setter=" + setter + ", " +
+                "settingType=" + settingType + ']';
         }
 
         @Override
@@ -172,13 +173,13 @@ public interface SplatcraftConfig
         {
             if (this == o) return true;
             if (!(o instanceof Setting<?> setting)) return false;
-            return Objects.equals(defaultValue, setting.defaultValue) && Objects.equals(description, setting.description) && Objects.equals(configKey, setting.configKey) && Objects.equals(checker, setting.checker) && Objects.equals(value, setting.value);
+            return Objects.equals(getter, setting.getter) && Objects.equals(setter, setting.setter) && Objects.equals(settingType, setting.settingType);
         }
 
         @Override
         public int hashCode()
         {
-            return Objects.hash(defaultValue, description, configKey, checker, value);
+            return Objects.hash(getter, setter, settingType);
         }
     }
 }

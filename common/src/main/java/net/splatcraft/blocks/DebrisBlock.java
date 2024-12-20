@@ -1,77 +1,73 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
-public class DebrisBlock extends Block
+public class DebrisBlock extends Block implements ISplatcraftForgeBlockDummy
 {
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    public static final DirectionProperty DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
+    public static final DirectionProperty DIRECTION = Properties.HORIZONTAL_FACING;
     private static final HashMap<Direction, VoxelShape> SHAPES = new HashMap<>()
     {{
-        put(Direction.WEST, box(2.4, 0, 0, 15.2, 8, 16));
-        put(Direction.NORTH, box(0, 0, 2.4, 16, 8, 15.2));
-        put(Direction.EAST, box(0.8, 0, 0, 13.6, 8, 16));
-        put(Direction.SOUTH, box(0, 0, 0.8, 16, 8, 13.6));
+        put(Direction.WEST, createCuboidShape(2.4, 0, 0, 15.2, 8, 16));
+        put(Direction.NORTH, createCuboidShape(0, 0, 2.4, 16, 8, 15.2));
+        put(Direction.EAST, createCuboidShape(0.8, 0, 0, 13.6, 8, 16));
+        put(Direction.SOUTH, createCuboidShape(0, 0, 0.8, 16, 8, 13.6));
     }};
 
     public DebrisBlock(MapColor color)
     {
-        super(BlockBehaviour.Properties.of().mapColor(color).requiresCorrectToolForDrops().strength(5.0F, 6.0F).sound(SoundType.METAL).lightLevel(
+        super(AbstractBlock.Settings.create().mapColor(color).requiresTool().strength(5.0F, 6.0F).sounds(BlockSoundGroup.METAL).luminance(
             (state) -> 1
         ));
-        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
+        setDefaultState(getStateManager().getDefaultState().with(WATERLOGGED, false).with(DIRECTION, Direction.NORTH));
     }
 
     @Override
-    public boolean useShapeForLightOcclusion(@NotNull BlockState state)
+    public VoxelShape getOutlineShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
+    {
+        return SHAPES.get(state.get(DIRECTION));
+    }
+
+    @Override
+    public boolean hasSidedTransparency(@NotNull BlockState state)
     {
         return true;
     }
 
     @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    public @NotNull PistonBehavior getPistonBehavior(@NotNull BlockState state)
     {
-        return SHAPES.get(state.getValue(DIRECTION));
-    }
-
-    @Override
-    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
-    {
-        return PushReaction.DESTROY;
+        return PistonBehavior.DESTROY;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getPlacementState(ItemPlacementContext context)
     {
-        return defaultBlockState().setValue(DIRECTION, context.getHorizontalDirection())
-            .setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        return getDefaultState().with(DIRECTION, context.getHorizontalPlayerFacing())
+            .with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
     {
         builder.add(WATERLOGGED, DIRECTION);
     }
@@ -79,17 +75,17 @@ public class DebrisBlock extends Block
     @Override
     public @NotNull FluidState getFluidState(BlockState state)
     {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess world, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (stateIn.getValue(WATERLOGGED))
+        if (stateIn.get(WATERLOGGED))
         {
-            levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+            world.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(world));
         }
 
-        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+        return super.getStateForNeighborUpdate(stateIn, facing, facingState, world, currentPos, facingPos);
     }
 }

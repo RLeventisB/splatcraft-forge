@@ -1,64 +1,59 @@
 package net.splatcraft.client.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.projectiles.InkDropModel;
 import net.splatcraft.client.models.projectiles.ShooterInkProjectileModel;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements RenderLayerParent<InkDropEntity, InkDropModel>
+public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements FeatureRendererContext<InkDropEntity, InkDropModel>
 {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/entity/shooter_projectile.png");
+    private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/entity/shooter_projectile.png");
     private final InkDropModel MODEL;
 
-    public InkDropRenderer(EntityRendererProvider.Context context)
+    public InkDropRenderer(EntityRendererFactory.Context context)
     {
         super(context);
 
-        MODEL = new InkDropModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION));
+        MODEL = new InkDropModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION));
     }
 
     @Override
-    public void render(InkDropEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+    public void render(InkDropEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
     {
         if (entityIn.isInvisible())
             return;
 
-        if (this.entityRenderDispatcher.camera.getEntity().distanceToSqr(entityIn.getPosition(partialTicks)) >= 12.25D)
+        if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 12.25D)
         {
             float scale = entityIn.getProjectileSize();
-            int color = entityIn.getColor();
+            InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
 
-            if (SplatcraftConfig.Client.colorLock.get())
-                color = ColorUtils.getLockedColor(color);
-
-            float r = (float) (Math.floor((float) color / (256 * 256)) / 255f);
-            float g = (float) (Math.floor((float) color / 256) % 256 / 255f);
-            float b = (color % 256) / 255f;
+            int rgb = color.getColorWithAlpha(255);
 
             //0.30000001192092896D
-            matrixStackIn.pushPose();
+            matrixStackIn.push();
             matrixStackIn.translate(0.0D, scale, 0.0D);
-            matrixStackIn.mulPose(Axis.YP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
-            matrixStackIn.mulPose(Axis.XP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-            matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getDeltaMovement().length()));
+            matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
+            matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
+            matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getVelocity().length()));
 
             InkDropModel model = MODEL;
 
-            model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
-            model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), packedLightIn, OverlayTexture.NO_OVERLAY, r, g, b, 1);
-            matrixStackIn.popPose();
+            model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
+            model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), packedLightIn, OverlayTexture.DEFAULT_UV, rgb);
+            matrixStackIn.pop();
 
             super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
         }
@@ -66,7 +61,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
 
     protected float handleRotationFloat(InkDropEntity livingBase, float partialTicks)
     {
-        return (float) livingBase.tickCount + partialTicks;
+        return (float) livingBase.age + partialTicks;
     }
 
     @Override
@@ -76,8 +71,8 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull InkDropEntity entity)
+    public @NotNull Identifier getTexture(@NotNull InkDropEntity entity)
     {
-        return new ResourceLocation(Splatcraft.MODID, "textures/entity/ink_projectile_shooter.png");
+        return TEXTURE;
     }
 }

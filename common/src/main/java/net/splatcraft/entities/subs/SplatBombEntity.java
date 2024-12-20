@@ -1,14 +1,14 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.core.Direction;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.MovementType;
+import net.minecraft.item.Item;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftItems;
@@ -23,9 +23,9 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
     protected int fuseTime = 0;
     protected int prevFuseTime = 0;
 
-    public SplatBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
+    public SplatBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, World world)
     {
-        super(type, level);
+        super(type, world);
     }
 
     @Override
@@ -42,82 +42,82 @@ public class SplatBombEntity extends AbstractSubWeaponEntity
         prevFuseTime = fuseTime;
         SubWeaponSettings settings = getSettings();
 
-        if (!this.onGround() || distanceToSqr(this.getDeltaMovement()) > (double) 1.0E-5F)
+        if (!isOnGround() || squaredDistanceTo(getVelocity()) > (double) 1.0E-5F)
         {
             float f1 = 0.98F;
-            if (this.onGround())
-                f1 = this.getWorld().getBlockState(CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ())).getFriction(level(), CommonUtils.createBlockPos(this.getX(), this.getY() - 1.0D, this.getZ()), this);
+            if (isOnGround())
+                f1 = getWorld().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getSlipperiness();
 
             f1 = (float) Math.min(0.98, f1 * 1.5f);
 
-            this.setDeltaMovement(this.getDeltaMovement().multiply(f1, 0.98D, f1));
+            setVelocity(getVelocity().multiply(f1, 0.98D, f1));
         }
 
-        if (onGround())
+        if (isOnGround())
             fuseTime++;
         if (fuseTime >= settings.subDataRecord.fuseTime())
         {
             InkExplosion.createInkExplosion(getOwner(), getBoundingBox().getCenter(), settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
-            level().broadcastEntityEvent(this, (byte) 1);
-            level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
-            if (!level().isClientSide())
+            getWorld().sendEntityStatus(this, (byte) 1);
+            getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
+            if (!getWorld().isClient())
                 discard();
             return;
         }
 
-        this.move(MoverType.SELF, this.getDeltaMovement().multiply(0, 1, 0));
-        setPos(getX() + getDeltaMovement().x(), getY(), getZ() + getDeltaMovement().z);
+        move(MovementType.SELF, getVelocity().multiply(0, 1, 0));
+        setPos(getX() + getVelocity().x, getY(), getZ() + getVelocity().z);
     }
 
     @Override
-    public void handleEntityEvent(byte id)
+    public void handleStatus(byte id)
     {
-        super.handleEntityEvent(id);
+        super.handleStatus(id);
         if (id == 1)
         {
-            level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
         }
     }
 
     //Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
     @Override
-    protected void onHitEntity(EntityHitResult result)
+    protected void onEntityHit(EntityHitResult result)
     {
-        super.onHitEntity(result);
+        super.onEntityHit(result);
 
-        double velocityX = this.getDeltaMovement().x * 0.3;
-        double velocityY = this.getDeltaMovement().y;
-        double velocityZ = this.getDeltaMovement().z * 0.3;
+        double velocityX = getVelocity().x * 0.3;
+        double velocityY = getVelocity().y;
+        double velocityZ = getVelocity().z * 0.3;
         double absVelocityX = Math.abs(velocityX);
         double absVelocityY = Math.abs(velocityY);
         double absVelocityZ = Math.abs(velocityZ);
 
         if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
-            this.setDeltaMovement(-velocityX, velocityY, velocityZ);
+            setVelocity(-velocityX, velocityY, velocityZ);
         if (absVelocityY >= .05 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
-            this.setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
+            setVelocity(velocityX, -velocityY * .5, velocityZ);
         if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
-            this.setDeltaMovement(velocityX, velocityY, -velocityZ);
+            setVelocity(velocityX, velocityY, -velocityZ);
     }
 
     @Override
     protected void onBlockHit(BlockHitResult result)
     {
-        if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (position().y() - blockPosition().getY()) <= 0)
+        if (getWorld().getBlockState(result.getBlockPos()).getCollisionShape(getWorld(), result.getBlockPos()).getBoundingBox().maxY - (getBlockY() - getBlockY()) <= 0)
             return;
 
-        double velocityX = this.getDeltaMovement().x;
-        double velocityY = this.getDeltaMovement().y;
-        double velocityZ = this.getDeltaMovement().z;
+        double velocityX = getVelocity().x;
+        double velocityY = getVelocity().y;
+        double velocityZ = getVelocity().z;
 
-        Direction blockFace = result.getDirection();
+        Direction blockFace = result.getSide();
 
         if (blockFace == Direction.EAST || blockFace == Direction.WEST)
-            this.setDeltaMovement(-velocityX, velocityY, velocityZ);
+            setVelocity(-velocityX, velocityY, velocityZ);
         if (Math.abs(velocityY) >= 0.05 && (blockFace == Direction.DOWN || blockFace == Direction.UP))
-            this.setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
+            setVelocity(velocityX, -velocityY * .5, velocityZ);
         if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
-            this.setDeltaMovement(velocityX, velocityY, -velocityZ);
+            setVelocity(velocityX, velocityY, -velocityZ);
     }
 
     @Override

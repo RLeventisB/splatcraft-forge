@@ -1,25 +1,24 @@
 package net.splatcraft.client.gui.stagepad;
 
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.widget.EditBoxWidget;
+import net.minecraft.text.Text;
 
-public class MenuTextBox extends EditBox
+public class MenuTextBox extends EditBoxWidget
 {
     int relativeX;
     int relativeY;
 
-    public MenuTextBox(Font font, int x, int y, int width, int height, Component unfocusedText, boolean bordered)
+    public MenuTextBox(TextRenderer textRenderer, int x, int y, int width, int height, Text unfocusedText, boolean bordered)
     {
-        super(font, x, y, width, height, unfocusedText);
+        super(textRenderer, x, y, width, height, Text.empty(), unfocusedText);
         relativeX = x;
         relativeY = y;
-        setBordered(bordered);
     }
 
     public interface Factory
     {
-        MenuTextBox newInstance(Font font);
+        MenuTextBox newInstance(TextRenderer textRenderer);
     }
 
     public interface Setter

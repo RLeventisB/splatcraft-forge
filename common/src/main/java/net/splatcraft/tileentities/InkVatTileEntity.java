@@ -1,46 +1,49 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.SidedInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.WorldlyContainer;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.IItemHandler;
+import net.minecraft.network.ClientConnection;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.recipe.input.RecipeInput;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
+import net.splatcraft.blocks.ISplatcraftForgeBlockDummy;
 import net.splatcraft.blocks.InkVatBlock;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.items.FilterItem;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.container.InkVatContainer;
+import net.splatcraft.tileentities.container.InkVatScreenHandlerContext;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkVatTileEntity extends BaseContainerBlockEntity implements WorldlyContainer
+public class InkVatTileEntity extends LockableContainerBlockEntity implements SidedInventory, RecipeInput, ISplatcraftForgeBlockDummy
 {
     private static final int[] INPUT_SLOTS = new int[]{0, 1, 2, 3};
     private static final int[] OUTPUT_SLOTS = new int[]{4};
-    private final NonNullList<ItemStack> inventory = NonNullList.withSize(5, ItemStack.EMPTY);
     public int pointer = -1;
-    net.minecraftforge.common.util.LazyOptional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
-        net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
-    private int color = -1;
+    // todo: do item handler thingy
+    /*Optional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
+        net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);*/
+    private DefaultedList<ItemStack> inventory = DefaultedList.ofSize(5, ItemStack.EMPTY);
+    private InkColor color = InkColor.INVALID;
     private int recipeEntries = 0;
 
     public InkVatTileEntity(BlockPos pos, BlockState state)
@@ -48,35 +51,47 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         super(SplatcraftTileEntities.inkVatTileEntity.get(), pos, state);
     }
 
-    public static void tick(Level level, BlockPos pos, BlockState state, InkVatTileEntity te)
+    public static void tick(World world, BlockPos pos, BlockState state, InkVatTileEntity te)
     {
         te.updateRecipeOutput();
-        if (!level.isClientSide())
-            level.setBlock(pos, state.setValue(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
+        if (!world.isClient())
+            world.setBlockState(pos, state.with(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
     }
 
     @Override
-    public int @NotNull [] getSlotsForFace(@NotNull Direction side)
+    public int @NotNull [] getAvailableSlots(@NotNull Direction side)
     {
         return side == Direction.UP ? INPUT_SLOTS : OUTPUT_SLOTS;
     }
 
     @Override
-    public boolean canPlaceItemThroughFace(int index, @NotNull ItemStack itemStackIn, @Nullable Direction direction)
+    public boolean canExtract(int index, @NotNull ItemStack itemStackIn, @Nullable Direction direction)
     {
-        return canPlaceItem(index, itemStackIn);
+        return isValid(index, itemStackIn);
     }
 
     @Override
-    public boolean canTakeItemThroughFace(int index, @NotNull ItemStack stack, @NotNull Direction direction)
+    public boolean canInsert(int index, @NotNull ItemStack stack, @Nullable Direction direction)
     {
         return index == 4;
     }
 
     @Override
-    public int getContainerSize()
+    public int size()
     {
         return inventory.size();
+    }
+
+    @Override
+    public ItemStack getStackInSlot(int slot)
+    {
+        return getStack(slot);
+    }
+
+    @Override
+    public int getSize()
+    {
+        return size();
     }
 
     @Override
@@ -86,7 +101,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public @NotNull ItemStack getItem(int index)
+    public @NotNull ItemStack getStack(int index)
     {
         return inventory.get(index);
     }
@@ -95,25 +110,25 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     {
         if (inventory.get(0).getCount() >= count && inventory.get(1).getCount() >= count && inventory.get(2).getCount() >= count)
         {
-            removeItem(0, count);
-            removeItem(1, count);
-            removeItem(2, count);
+            removeStack(0, count);
+            removeStack(1, count);
+            removeStack(2, count);
             return true;
         }
         return false;
     }
 
     @Override
-    public @NotNull ItemStack removeItem(int index, int count)
+    public @NotNull ItemStack removeStack(int index, int count)
     {
         if (index == 4 && !consumeIngredients(count))
         {
             return ItemStack.EMPTY;
         }
 
-        ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
+        ItemStack itemstack = Inventories.splitStack(inventory, index, count);
         if (!itemstack.isEmpty())
-            this.setChanged();
+            markDirty();
 
         return itemstack;
     }
@@ -121,10 +136,10 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     public void updateRecipeOutput()
     {
         if (hasRecipe())
-            setItem(4, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkwell.get(), Math.min(SplatcraftItems.inkwell.get().getMaxStackSize(),
+            setStack(4, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkwell.get(), Math.min(SplatcraftItems.inkwell.get().getMaxCount(),
                 Math.min(Math.min(inventory.get(0).getCount(), inventory.get(1).getCount()), inventory.get(2).getCount()))), getColor()), true));
         else
-            setItem(4, ItemStack.EMPTY);
+            setStack(4, ItemStack.EMPTY);
     }
 
     public boolean hasOmniFilter()
@@ -136,118 +151,130 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     }
 
     @Override
-    public @NotNull ItemStack removeItemNoUpdate(int index)
+    public @NotNull ItemStack removeStack(int index)
     {
-        return ContainerHelper.takeItem(inventory, index);
+        return Inventories.removeStack(inventory, index);
     }
 
     @Override
-    public void setItem(int index, @NotNull ItemStack stack)
+    public void setStack(int index, @NotNull ItemStack stack)
     {
         inventory.set(index, stack);
-        if (stack.getCount() > this.getMaxStackSize())
+        if (stack.getCount() > getMaxCountPerStack())
         {
-            stack.setCount(this.getMaxStackSize());
+            stack.setCount(getMaxCountPerStack());
         }
 
-        this.setChanged();
+        markDirty();
     }
 
     @Override
-    public boolean stillValid(@NotNull Player player)
+    public boolean canPlayerUse(@NotNull PlayerEntity player)
     {
-        if (this.level != null && this.level.getBlockEntity(this.getBlockPos()) != this)
+        if (world != null && world.getBlockEntity(getPos()) != this)
             return false;
-        return !(player.distanceToSqr((double) this.getBlockPos().getX() + 0.5D, (double) this.getBlockPos().getY() + 0.5D, (double) this.getBlockPos().getZ() + 0.5D) > 64.0D);
+        return !(player.squaredDistanceTo(getPos().toCenterPos()) > 64.0D);
     }
 
     @Override
-    public void clearContent()
+    public void clear()
     {
         inventory.clear();
     }
 
     public boolean hasRecipe()
     {
-        return !inventory.get(0).isEmpty() && !inventory.get(1).isEmpty() && !inventory.get(2).isEmpty() && getColor() != -1;
+        return !inventory.get(0).isEmpty() && !inventory.get(1).isEmpty() && !inventory.get(2).isEmpty() && getColor().isValid();
     }
 
-    public NonNullList<ItemStack> getInventory()
+    public DefaultedList<ItemStack> getInventory()
     {
         return inventory;
     }
 
     @Override
-    public void saveAdditional(NbtCompound nbt)
+    public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
     {
-        nbt.putInt("Color", color);
+        nbt.put("Color", color.getNbt());
         nbt.putInt("Pointer", pointer);
         nbt.putInt("RecipeEntries", recipeEntries);
-        ContainerHelper.saveAllItems(nbt, inventory);
-        super.saveAdditional(nbt);
+        Inventories.writeNbt(nbt, inventory, lookup);
+        super.writeNbt(nbt, lookup);
     }
 
     @Override
-    protected @NotNull Component getDefaultName()
+    public @NotNull Text getContainerName()
     {
-        return Component.translatable("container.ink_vat");
+        return Text.translatable("container.ink_vat");
     }
 
     @Override
-    protected @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory player)
+    protected DefaultedList<ItemStack> getHeldStacks()
     {
-        return new InkVatContainer(id, player, this, false);
+        return inventory;
+    }
+
+    @Override
+    protected void setHeldStacks(DefaultedList<ItemStack> inventory)
+    {
+        this.inventory = inventory;
+    }
+
+    @Override
+    protected @NotNull ScreenHandler createScreenHandler(int id, @NotNull PlayerInventory player)
+    {
+        return new InkVatContainer(id, player, new InkVatScreenHandlerContext(world, getPos()), false);
     }
 
     //Nbt Read
     @Override
-    public void load(@NotNull NbtCompound nbt)
+    public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
     {
-        super.load(nbt);
-        color = ColorUtils.getColorFromNbt(nbt);
+        super.readNbt(nbt, lookup);
+        color = InkColor.getFromNbt(nbt.get("Color"));
         pointer = nbt.getInt("Pointer");
         recipeEntries = nbt.getInt("RecipeEntries");
 
-        clearContent();
-        ContainerHelper.loadAllItems(nbt, inventory);
+        clear();
+        Inventories.readNbt(nbt, inventory, lookup);
     }
 
     @Override
-    public @NotNull NbtCompound getUpdateTag()
+    public @NotNull NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup lookup)
     {
         return new NbtCompound()
         {{
-            saveAdditional(this);
+            writeNbt(this, lookup);
         }};
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket()
+    public Packet<ClientPlayPacketListener> toUpdatePacket()
     {
-        // Will get tag from #getUpdateTag
-        return ClientboundBlockEntityDataPacket.create(this);
+        // Will get tag from #toInitialChunkDataNbt
+        return BlockEntityUpdateS2CPacket.create(this);
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup wrapperLookup)
     {
-        if (level != null)
+        if (world != null)
         {
-            BlockState state = level.getBlockState(getBlockPos());
-            level.sendBlockUpdated(getBlockPos(), state, state, 2);
-            handleUpdateTag(pkt.getTag());
+            BlockState state = world.getBlockState(getPos());
+            world.updateListeners(getPos(), state, state, 2);
+            handleUpdateTag(pkt.getNbt(), wrapperLookup);
         }
     }
 
     @Override
-    public boolean canPlaceItem(int index, @NotNull ItemStack stack)
+    public boolean isValid(int slot, ItemStack stack)
     {
-        return switch (index)
+        return switch (slot)
         {
-            case 0 -> stack.is(Items.INK_SAC);
-            case 1 -> stack.is(SplatcraftItems.powerEgg.get());
-            case 2 -> stack.is(SplatcraftItems.emptyInkwell.get());
-            case 3 -> stack.is(SplatcraftTags.Items.FILTERS);
+            case 0 -> stack.isOf(Items.INK_SAC);
+            case 1 -> stack.isOf(SplatcraftItems.powerEgg.get());
+            case 2 -> stack.isOf(SplatcraftItems.emptyInkwell.get());
+            case 3 -> stack.isIn(SplatcraftTags.Items.FILTERS);
             default -> false;
         };
     }
@@ -256,8 +283,8 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
     {
         if (hasRecipe())
         {
-            if (level != null)
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
+            if (world != null)
+                world.updateListeners(getPos(), getCachedState(), getCachedState(), 2);
             if (pointer != -1 && recipeEntries > 0)
             {
                 pointer = (pointer + 1) % recipeEntries;
@@ -266,12 +293,12 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         }
     }
 
-    public int getColor()
+    public InkColor getColor()
     {
         return color;
     }
 
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
         this.color = color;
     }
@@ -281,10 +308,10 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
         recipeEntries = v;
     }
 
-    @Override
+    /*@Override
     public <T> net.minecraftforge.common.util.@NotNull LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.@NotNull Capability<T> capability, @Nullable Direction facing)
     {
-        if (!this.isRemoved() && facing != null && capability == ForgeCapabilities.ITEM_HANDLER)
+        if (!isRemoved() && facing != null && capability == ForgeCapabilities.ITEM_HANDLER)
         {
             if (facing == Direction.UP)
             {
@@ -300,34 +327,34 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
             }
         }
         return super.getCapability(capability, facing);
-    }
+    }*/
 
     /**
      * invalidates a tile entity
      */
     @Override
-    public void setRemoved()
+    public void markRemoved()
     {
-        super.setRemoved();
-        for (LazyOptional<? extends IItemHandler> handler : handlers)
+        super.markRemoved();
+        /*for (LazyOptional<? extends IItemHandler> handler : handlers)
         {
             handler.invalidate();
-        }
+        }*/
     }
 
-    public void setColorAndUpdate(int color)
+    public void setColorAndUpdate(InkColor color)
     {
-        boolean changeState = Math.min(color, 0) != Math.min(getColor(), 0);
+        boolean changeState = Math.min(color.getColor(), 0) != Math.min(getColor().getColor(), 0);
         setColor(color);
-        if (level != null)
+        if (world != null)
         {
             if (changeState)
             {
-                level.setBlock(getBlockPos(), getBlockState().setValue(InkVatBlock.ACTIVE, hasRecipe()), 2);
+                world.setBlockState(getPos(), getCachedState().with(InkVatBlock.ACTIVE, hasRecipe()), 2);
             }
             else
             {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
+                world.updateListeners(getPos(), getCachedState(), getCachedState(), 2);
             }
         }
     }

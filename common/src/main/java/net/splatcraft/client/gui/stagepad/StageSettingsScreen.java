@@ -1,14 +1,14 @@
 package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -20,51 +20,51 @@ import static net.splatcraft.client.gui.stagepad.StageCreationScreen.getShortene
 
 public class StageSettingsScreen extends AbstractStagePadScreen
 {
-    private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_settings.png");
+    private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_settings.png");
     private static Boolean setCorner1 = null;
     private Stage stage;
     private MenuTextBox stageName;
 
-    public StageSettingsScreen(Component label, String stageId, Screen mainMenu)
+    public StageSettingsScreen(Text label, String stageId, Screen mainMenu)
     {
         super(label);
-        stage = Stage.getStage(Minecraft.getInstance().level, stageId);
-        useAction = (level, player, hand, stack, pos) ->
+        stage = Stage.getStage(MinecraftClient.getInstance().world, stageId);
+        useAction = (world, player, hand, stack, pos) ->
         {
             if (setCorner1 != null && pos != null)
             {
                 if (setCorner1)
                 {
                     stage.cornerA = pos;
-                    if (!stage.dimID.equals(level.dimension().location()))
+                    if (!stage.dimID.equals(world.getDimension().effects()))
                     {
                         stage.cornerB = null;
-                        stage.dimID = level.dimension().location();
+                        stage.dimID = world.getDimension().effects();
                     }
                 }
                 else
                 {
                     stage.cornerB = pos;
-                    if (!stage.dimID.equals(level.dimension().location()))
+                    if (!stage.dimID.equals(world.getDimension().effects()))
                     {
                         stage.cornerA = null;
-                        stage.dimID = level.dimension().location();
+                        stage.dimID = world.getDimension().effects();
                     }
                 }
 
                 SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, stage.getStageName(), stage.cornerA, stage.cornerB, stage.dimID));
             }
 
-            Minecraft.getInstance().setScreen(this);
+            MinecraftClient.getInstance().setScreen(this);
             setCorner1 = null;
         };
 
         addOptionsTabs(label, stageId, mainMenu);
 
         addButton(new MenuButton(167, 70, 30, 12, (b) -> clickSetCornerButton(b, true),
-            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Text.translatable("gui.stage_pad.button.set_from_world"), Text.translatable("gui.stage_pad.button.set_from_clipboard").formatted(Formatting.YELLOW)), drawText(Text.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
         addButton(new MenuButton(167, 88, 30, 12, (b) -> clickSetCornerButton(b, false),
-            showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
+            showText(Text.translatable("gui.stage_pad.button.set_from_world"), Text.translatable("gui.stage_pad.button.set_from_clipboard").formatted(Formatting.YELLOW)), drawText(Text.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
 
         addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.cornerA), showCopyPos(() -> stage.cornerA), (ps, b) ->
         {
@@ -73,26 +73,26 @@ public class StageSettingsScreen extends AbstractStagePadScreen
         {
         }));
 
-        addTextBox((font) ->
+        addTextBox((textRenderer) ->
         {
-            this.stageName = new MenuTextBox(font, 17, 40, 178, 12, Component.translatable("gui.stage_pad.label.set_stage_name.textbox"), false);
-            this.stageName.setValue(stage.getStageName().getString());
-            this.stageName.setFocused(true);
-            return this.stageName;
+            stageName = new MenuTextBox(textRenderer, 17, 40, 178, 12, Text.translatable("gui.stage_pad.label.set_stage_name.textbox"), false);
+            stageName.setText(stage.getStageName().getString());
+            stageName.setFocused(true);
+            return stageName;
         });
     }
 
     @Override
     public void onStagesUpdate()
     {
-        stage = Stage.getStage(Minecraft.getInstance().level, stage.id);
+        stage = Stage.getStage(MinecraftClient.getInstance().world, stage.id);
     }
 
-    protected void clickSetCornerButton(Button button, boolean isCorner1)
+    protected void clickSetCornerButton(ButtonWidget button, boolean isCorner1)
     {
         if (hasShiftDown())
         {
-            String[] coords = getMinecraft().keyboardHandler.getClipboard().replaceAll(",+\\s+|\\s+|,", " ").replaceAll("[^\\.\\d\\s-]", "").split(" ");
+            String[] coords = client.keyboard.getClipboard().replaceAll(",+\\s+|\\s+|,", " ").replaceAll("[^\\.\\d\\s-]", "").split(" ");
 
             if (coords.length >= 3)
             {
@@ -107,16 +107,16 @@ public class StageSettingsScreen extends AbstractStagePadScreen
         else
         {
             setCorner1 = isCorner1;
-            minecraft.setScreen(null);
-            getMinecraft().player.displayClientMessage(Component.translatable("status.stage_pad.set_corner." + (isCorner1 ? 'a' : 'b')), true);
+            client.setScreen(null);
+            client.player.sendMessage(Text.translatable("status.stage_pad.set_corner." + (isCorner1 ? 'a' : 'b')), true);
         }
     }
 
     @Override
-    public void onClose()
+    public void close()
     {
         saveChanges();
-        super.onClose();
+        super.close();
     }
 
     @Override
@@ -128,50 +128,50 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 
     private void saveChanges()
     {
-        if (!stage.getStageName().toString().equals(stageName.getValue()))
-            SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Component.literal(stageName.getValue()), stage.cornerA, stage.cornerB, stage.dimID));
+        if (!stage.getStageName().toString().equals(stageName.getText()))
+            SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Text.literal(stageName.getText()), stage.cornerA, stage.cornerB, stage.dimID));
     }
 
     @Override
-    public void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void handleWidgets(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
     }
 
     @Override
-    public void renderBackground(@NotNull GuiGraphics guiGraphics)
+    public void renderBackground(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float delta)
     {
-        super.renderBackground(guiGraphics);
+        super.renderBackground(guiGraphics, mouseX, mouseY, delta);
 
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShaderTexture(0, TEXTURES);
 
-        int x = (width - imageWidth) / 2;
-        int y = (height - imageHeight) / 2;
+        int x = (width - backgroundWidth) / 2;
+        int y = (height - backgroundHeight) / 2;
 
-        guiGraphics.blit(TEXTURES, x, y, 0, 0, imageWidth, imageHeight);
+        guiGraphics.drawTexture(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
 
-        guiGraphics.drawString(font, Component.translatable("gui.stage_pad.label.set_stage_name"), x + 14, y + 28, 0xFFFFFF);
-        guiGraphics.drawString(font, Component.translatable("gui.stage_pad.label.stage_id", stage.id), x + 14, y + 55, 0x808080);
+        guiGraphics.drawTextWithShadow(textRenderer, Text.translatable("gui.stage_pad.label.set_stage_name"), x + 14, y + 28, 0xFFFFFF);
+        guiGraphics.drawTextWithShadow(textRenderer, Text.translatable("gui.stage_pad.label.stage_id", stage.id), x + 14, y + 55, 0x808080);
 
-        Component label = Component.translatable("gui.stage_pad.label.corner_1");
-        guiGraphics.drawString(font, label, x + 60 - font.width(label), y + 72, 0xFFFFFF);
-        label = Component.translatable("gui.stage_pad.label.corner_2");
-        guiGraphics.drawString(font, label, x + 60 - font.width(label), y + 90, 0xFFFFFF);
+        Text label = Text.translatable("gui.stage_pad.label.corner_1");
+        guiGraphics.drawTextWithShadow(textRenderer, label, x + 60 - textRenderer.getWidth(label), y + 72, 0xFFFFFF);
+        label = Text.translatable("gui.stage_pad.label.corner_2");
+        guiGraphics.drawTextWithShadow(textRenderer, label, x + 60 - textRenderer.getWidth(label), y + 90, 0xFFFFFF);
 
         BlockPos corner1 = stage.cornerA;
         BlockPos corner2 = stage.cornerB;
 
         if (corner1 != null)
         {
-            guiGraphics.drawString(font, getShortenedInt(corner1.getX()), x + 64, y + 73, 0xFFFFFF);
-            guiGraphics.drawString(font, getShortenedInt(corner1.getY()), x + 98, y + 73, 0xFFFFFF);
-            guiGraphics.drawString(font, getShortenedInt(corner1.getZ()), x + 132, y + 73, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner1.getX()), x + 64, y + 73, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner1.getY()), x + 98, y + 73, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner1.getZ()), x + 132, y + 73, 0xFFFFFF);
         }
         if (corner2 != null)
         {
-            guiGraphics.drawString(font, getShortenedInt(corner2.getX()), x + 64, y + 91, 0xFFFFFF);
-            guiGraphics.drawString(font, getShortenedInt(corner2.getY()), x + 98, y + 91, 0xFFFFFF);
-            guiGraphics.drawString(font, getShortenedInt(corner2.getZ()), x + 132, y + 91, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner2.getX()), x + 64, y + 91, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner2.getY()), x + 98, y + 91, 0xFFFFFF);
+            guiGraphics.drawTextWithShadow(textRenderer, getShortenedInt(corner2.getZ()), x + 132, y + 91, 0xFFFFFF);
         }
     }
 }

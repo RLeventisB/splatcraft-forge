@@ -1,12 +1,14 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.RelativeBlockPos;
 
@@ -15,6 +17,7 @@ import java.util.Map;
 
 public class WatchInkPacket extends IncrementalChunkBasedPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WatchInkPacket.class);
     private final HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty;
 
     public WatchInkPacket(ChunkPos chunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty)
@@ -23,7 +26,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
         this.dirty = dirty;
     }
 
-    public static WatchInkPacket decode(FriendlyByteBuf buffer)
+    public static WatchInkPacket decode(RegistryByteBuf buffer)
     {
         ChunkPos pos = buffer.readChunkPos();
         HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
@@ -35,9 +38,15 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
     }
 
     @Override
-    public void add(Level level, BlockPos pos)
+    public Id<? extends CustomPayload> getId()
     {
-        add(pos, InkBlockUtils.getInkBlock(level, pos));
+        return ID;
+    }
+
+    @Override
+    public void add(World world, BlockPos pos)
+    {
+        add(pos, InkBlockUtils.getInkBlock(world, pos));
     }
 
     public void add(BlockPos pos, ChunkInk.BlockEntry inkBlock)
@@ -49,7 +58,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeChunkPos(chunkPos);
         buffer.writeInt(dirty.size());

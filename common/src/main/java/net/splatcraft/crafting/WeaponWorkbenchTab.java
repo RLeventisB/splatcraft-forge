@@ -1,70 +1,64 @@
 package net.splatcraft.crafting;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonObject;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponWorkbenchTab>
+public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, Comparable<WeaponWorkbenchTab>
 {
     public final boolean hidden;
-    protected final ResourceLocation id;
-    protected final ResourceLocation iconLoc;
+    protected final Identifier iconLoc;
     protected final int pos;
-    protected final Component name;
+    protected final Text name;
 
-    public WeaponWorkbenchTab(ResourceLocation id, ResourceLocation iconLoc, int pos, Component name, boolean hidden)
+    public WeaponWorkbenchTab(Identifier iconLoc, int pos, Text name, boolean hidden)
     {
-        this.id = id;
         this.iconLoc = iconLoc;
         this.pos = pos;
         this.hidden = hidden;
-        this.name = name != null ? name : Component.translatable("weaponTab." + getId());
+        this.name = name != null ? name : Text.translatable("weaponTab." + 1);
     }
 
     @Override
-    public boolean matches(@NotNull Container inv, @NotNull Level levelIn)
+    public boolean matches(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull World levelIn)
     {
         return true;
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull Container inv, @NotNull RegistryAccess access)
+    public @NotNull ItemStack craft(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
     {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public boolean canCraftInDimensions(int width, int height)
+    public boolean fits(int width, int height)
     {
         return false;
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess access)
+    public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
     {
         return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ResourceLocation getId()
-    {
-        return id;
     }
 
     @Override
@@ -79,12 +73,15 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         return SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE;
     }
 
-    public List<WeaponWorkbenchRecipe> getTabRecipes(Level level, Player player)
+    public List<WeaponWorkbenchRecipe> getTabRecipes(World world, PlayerEntity player)
     {
-        List<Recipe<?>> stream = level.getRecipeManager().getRecipes().stream().filter(recipe -> recipe instanceof WeaponWorkbenchRecipe wwRecipe && this.equals(wwRecipe.getTab(level)) && !wwRecipe.getAvailableRecipes(player).isEmpty()).toList();
+        List<RecipeEntry<?>> stream = world.getRecipeManager().values().stream().filter(recipe ->
+            recipe.value() instanceof WeaponWorkbenchRecipe wwRecipe &&
+                equals(wwRecipe.getTab(world).value()) &&
+                !wwRecipe.getAvailableRecipes(player).isEmpty()).toList();
         ArrayList<WeaponWorkbenchRecipe> recipes = Lists.newArrayList();
 
-        stream.forEach(recipe -> recipes.add((WeaponWorkbenchRecipe) recipe));
+        stream.forEach(recipe -> recipes.add((WeaponWorkbenchRecipe) recipe.value()));
 
         return recipes;
     }
@@ -95,7 +92,7 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
         return pos - o.pos;
     }
 
-    public ResourceLocation getTabIcon()
+    public Identifier getTabIcon()
     {
         return iconLoc;
     }
@@ -103,42 +100,51 @@ public class WeaponWorkbenchTab implements Recipe<Container>, Comparable<WeaponW
     @Override
     public String toString()
     {
-        return getId().toString();
+        return getName().toString();
     }
 
-    public Component getName()
+    public Text getName()
     {
         return name;
     }
 
     public static class WeaponWorkbenchTabSerializer implements RecipeSerializer<WeaponWorkbenchTab>
     {
-        @Override
-        public @NotNull WeaponWorkbenchTab fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json)
-        {
-            Component displayComponent;
+        public static final MapCodec<WeaponWorkbenchTab> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+            Identifier.CODEC.fieldOf("icon").forGetter(v -> v.iconLoc),
+            Codec.INT.optionalFieldOf("pos", Integer.MAX_VALUE).forGetter(v -> v.pos),
+            TextCodecs.CODEC.optionalFieldOf("name", null).forGetter(v -> v.name),
+            Codec.BOOL.optionalFieldOf("hidden", false).forGetter(v -> v.hidden)
+        ).apply(inst, WeaponWorkbenchTab::new));
 
-            if (GsonHelper.isStringValue(json, "name"))
-                displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
-            else
-                displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : null;
-            return new WeaponWorkbenchTab(recipeId, new ResourceLocation(GsonHelper.getAsString(json, "icon")), GsonHelper.getAsInt(json, "pos", Integer.MAX_VALUE), displayComponent, GsonHelper.getAsBoolean(json, "hidden", false));
+        public static final PacketCodec<RegistryByteBuf, WeaponWorkbenchTab> PACKET_CODEC = new PacketCodec<RegistryByteBuf, WeaponWorkbenchTab>()
+        {
+            @Override
+            public WeaponWorkbenchTab decode(RegistryByteBuf buffer)
+            {
+                return new WeaponWorkbenchTab(buffer.readIdentifier(), buffer.readInt(), TextCodecs.PACKET_CODEC.decode(buffer), buffer.readBoolean());
+            }
+
+            @Override
+            public void encode(RegistryByteBuf buffer, WeaponWorkbenchTab recipe)
+            {
+                buffer.writeIdentifier(recipe.iconLoc);
+                buffer.writeInt(recipe.pos);
+                TextCodecs.PACKET_CODEC.encode(buffer, recipe.name);
+                buffer.writeBoolean(recipe.hidden);
+            }
+        };
+
+        @Override
+        public MapCodec<WeaponWorkbenchTab> codec()
+        {
+            return CODEC;
         }
 
-        @Nullable
         @Override
-        public WeaponWorkbenchTab fromNetwork(@NotNull ResourceLocation recipeId, FriendlyByteBuf buffer)
+        public PacketCodec<RegistryByteBuf, WeaponWorkbenchTab> packetCodec()
         {
-            return new WeaponWorkbenchTab(recipeId, buffer.readResourceLocation(), buffer.readInt(), buffer.readComponent(), buffer.readBoolean());
-        }
-
-        @Override
-        public void toNetwork(FriendlyByteBuf buffer, WeaponWorkbenchTab recipe)
-        {
-            buffer.writeResourceLocation(recipe.iconLoc);
-            buffer.writeInt(recipe.pos);
-            buffer.writeComponent(recipe.name);
-            buffer.writeBoolean(recipe.hidden);
+            return PACKET_CODEC;
         }
     }
 }

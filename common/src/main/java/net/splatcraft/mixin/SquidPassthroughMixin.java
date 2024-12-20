@@ -1,32 +1,32 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.EntityCollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.EntityShapeContext;
+import net.minecraft.block.ShapeContext;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(BlockBehaviour.BlockStateBase.class)
+@Mixin(AbstractBlock.AbstractBlockState.class)
 public class SquidPassthroughMixin
 {
-    @Inject(at = @At("TAIL"), method = "getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;", cancellable = true)
-    private void getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> callback)
+    @Inject(at = @At("TAIL"), method = "getCollisionShape(Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/ShapeContext;)Lnet/minecraft/util/shape/VoxelShape;", cancellable = true)
+    private void getCollisionShape(BlockView level, BlockPos pos, ShapeContext context, CallbackInfoReturnable<VoxelShape> callback)
     {
-        BlockBehaviour.BlockStateBase state = (BlockBehaviour.BlockStateBase) (Object) this;
+        AbstractBlock.AbstractBlockState state = (AbstractBlock.AbstractBlockState) (Object) this;
         try
         {
-            if (state.is(SplatcraftTags.Blocks.SQUID_PASSTHROUGH) && context instanceof EntityCollisionContext eContext &&
-                eContext.getEntity() instanceof LivingEntity entity && PlayerInfoCapability.isSquid(entity))
-                callback.setReturnValue(Shapes.empty());
+            if (state.isIn(SplatcraftTags.Blocks.SQUID_PASSTHROUGH) && context instanceof EntityShapeContext eContext &&
+                eContext.getEntity() instanceof LivingEntity entity && EntityInfoCapability.isSquid(entity))
+                callback.setReturnValue(VoxelShapes.empty());
         }
         catch (IllegalStateException ignored)
         {

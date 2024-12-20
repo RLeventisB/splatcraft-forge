@@ -2,9 +2,9 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.DamageRangesRecord;
@@ -79,7 +79,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
     }
 
     @Override
-    public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
+    public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
     {
         return projectileData.speed();
     }

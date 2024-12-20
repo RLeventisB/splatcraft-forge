@@ -1,7 +1,7 @@
 package net.splatcraft.util;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.entity.Entity;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.util.AttackId.DefaultAttackId.EmptyAttackId;
 
@@ -101,9 +101,9 @@ public abstract class AttackId
 
         public boolean checkEntity(Entity entity)
         {
-            if (!hitEnemies.contains(entity.getUUID()))
+            if (!hitEnemies.contains(entity.getUuid()))
             {
-                hitEnemies.add(entity.getUUID());
+                hitEnemies.add(entity.getUuid());
                 return true;
             }
             return false;

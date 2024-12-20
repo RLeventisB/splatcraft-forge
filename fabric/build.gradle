@@ -3,7 +3,7 @@ plugins {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/splatcraft.accesswidener")
+    accessWidenerPath = project(":common").loom.accessWidenerPath
 }
 
 architectury {
@@ -43,7 +43,7 @@ dependencies {
 
     modImplementation "com.terraformersmc:modmenu:11.0.1"
     modImplementation "me.shedaniel.cloth:cloth-config-fabric:15.0.140"
-//    modImplementation "maven.modrinth:sodium:mc1.21.3-0.6.0-fabric"
+//    modImplementation "maven.modrinth:sodium:aHtQZyzN"
 
     //implementation fg.deobf("com.simibubi.create:create-${create_minecraft_version}:${create_version}:slim") { transitive = false }
     //implementation fg.deobf("com.jozufozu.flywheel:flywheel-forge-${flywheel_minecraft_version}:${flywheel_version}")
@@ -67,5 +67,5 @@ shadowJar {
 }
 
 remapJar {
-    input.set shadowJar.archiveFile
+    inputFile.set shadowJar.archiveFile
 }

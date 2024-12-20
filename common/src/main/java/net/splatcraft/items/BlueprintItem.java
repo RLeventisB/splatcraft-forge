@@ -1,32 +1,32 @@
 package net.splatcraft.items;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.advancement.AdvancementEntry;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.world.World;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.items.weapons.*;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -48,7 +48,7 @@ public class BlueprintItem extends Item
 
     public BlueprintItem()
     {
-        super(new Properties().stacksTo(16));
+        super(new Settings().maxCount(16).component(SplatcraftComponents.BLUEPRINT_WEAPONS, new ArrayList<>()).component(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS, new ArrayList<>()));
     }
 
     public static Predicate<Item> instanceOf(Class<? extends Item> clazz)
@@ -57,16 +57,16 @@ public class BlueprintItem extends Item
     }
 
     //	@Override
-//	public void fillItemCategory(@NotNull CreativeModeTab tab, @NotNull NonNullList<ItemStack> list)
+//	public void fillItemCategory(@NotNull ItemGroup tab, @NotNull DefaultedList<ItemStack> list)
 //	{
-//		if (tab == CreativeModeTab.TAB_SEARCH)
+//		if (tab == ItemGroup.TAB_SEARCH)
 //			weaponPools.forEach((key, value) -> list.add(setPoolFromWeaponType(new ItemStack(this), key)));
 //		else if (allowdedIn(tab))
 //		{
 //			list.add(setPoolFromWeaponType(new ItemStack(this), "wildcard"));
 //		}
 //	}
-    public static ItemStack addToAdvancementPool(ItemStack blueprint, String... advancementIds)
+    public static ItemStack addToAdvancementPool(ItemStack blueprint, Identifier... advancementIds)
     {
         return addToAdvancementPool(blueprint, Arrays.stream(advancementIds));
     }
@@ -76,126 +76,128 @@ public class BlueprintItem extends Item
         if (!weaponPools.containsKey(weaponType))
             return blueprint;
 
-        NbtCompound nbt = blueprint.getOrCreateTag();
-        ListTag pool = nbt.contains("Pools", Tag.TAG_LIST) ? nbt.getList("Pools", Tag.TAG_STRING) : new ListTag();
-        pool.add(StringTag.valueOf(weaponType));
-
-        nbt.put("Pools", pool);
+        List<String> pools = blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS);
+        pools.add(weaponType);
+        blueprint.set(SplatcraftComponents.BLUEPRINT_WEAPONS, pools);
 
         return blueprint;
     }
 
-    public static ItemStack addToAdvancementPool(ItemStack blueprint, Stream<String> advancementIds)
+    public static ItemStack addToAdvancementPool(ItemStack blueprint, Stream<Identifier> advancementIds)
     {
-        NbtCompound nbt = blueprint.getOrCreateTag();
-        ListTag pool = nbt.contains("Advancements", Tag.TAG_LIST) ? nbt.getList("Advancements", Tag.TAG_STRING) : new ListTag();
+        List<Identifier> pool = blueprint.get(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS);
 
-        advancementIds.map(StringTag::valueOf).forEach(pool::add);
+        advancementIds.forEach(pool::add);
 
-        nbt.put("Advancements", pool);
         return blueprint;
     }
 
-    public static List<Advancement> getAdvancementPool(Level level, ItemStack blueprint)
+    public static List<AdvancementEntry> getAdvancementPool(World world, ItemStack blueprint)
     {
-        List<Advancement> output = new ArrayList<>();
+        List<AdvancementEntry> output = new ArrayList<>();
 
-        if (blueprint.hasTag())
+        if (blueprint.contains(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS))
         {
-            blueprint.getTag().getList("Advancements", Tag.TAG_STRING).forEach(
-                tag ->
+            blueprint.get(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS).forEach(
+                name ->
                 {
-                    Advancement advancement;
-                    advancement = level.getServer().getAdvancements().getAdvancement(new ResourceLocation(tag.getAsString()));
+                    AdvancementEntry entry = world.getServer().getAdvancementLoader().get(name);
 
-                    if (advancement != null)
-                        output.add(advancement);
+                    if (entry != null)
+                        output.add(entry);
                 }
             );
-            blueprint.getTag().getList("Pools", Tag.TAG_STRING).forEach(
-                tag ->
-                    SplatcraftItems.weapons.stream().
-                        filter(weaponPools.get(tag.getAsString()).and(item ->
-                            !Objects.equals(ForgeRegistries.ITEMS.getKey(item), SplatcraftTags.Items.BLUEPRINT_EXCLUDED.location())))
-                        .map(ForgeRegistries.ITEMS::getKey).filter(Objects::nonNull).map(holder ->
-                            new ResourceLocation(holder.getNamespace(), "unlocks/" + holder.getPath())).map(level.getServer().getAdvancements()::getAdvancement)
-                        .filter(Objects::nonNull).forEach(output::add)
-            );
+            for (String type : blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS))
+            {
+                for (var weapon : SplatcraftItems.weapons)
+                {
+                    if (weaponPools.get(type).test(weapon) && !weapon.arch$holder().isIn(SplatcraftTags.Items.BLUEPRINT_EXCLUDED))
+                    {
+                        Identifier identifier = Identifier.of(weapon.arch$registryName().getNamespace(), "unlocks/" + weapon.arch$registryName().getPath());
+                        AdvancementEntry advancementEntry = world.getServer().getAdvancementLoader().get(identifier);
+                        if (advancementEntry != null)
+                        {
+                            output.add(advancementEntry);
+                        }
+                    }
+                }
+                // yeah i rewrote this into normal code because i couldn't understand it
+/*
+                SplatcraftItems.weapons.stream().
+                    filter(weaponPools.get(type).and(item ->
+                        !Objects.equals(Registries.ITEM.getId(item), SplatcraftTags.Items.BLUEPRINT_EXCLUDED.id())))
+                    .map(Registries.ITEM::getId).map(holder ->
+                        Identifier.of(holder.getNamespace(), "unlocks/" + holder.getPath())).map(world.getServer().getAdvancementLoader()::get)
+                    .filter(Objects::nonNull).forEach(output::add);
+*/
+            }
         }
 
         return output;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> components, @NotNull TooltipFlag flag)
+    public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> components, @NotNull TooltipType type)
     {
-        super.appendHoverText(stack, level, components, flag);
+        super.appendTooltip(stack, context, components, type);
 
-        if (stack.hasTag())
+        if (stack.contains(DataComponentTypes.HIDE_TOOLTIP))
+            return;
+
+        if (stack.contains(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS))
         {
-            NbtCompound nbt = stack.getTag();
-
-            if (nbt.getBoolean("HideTooltip"))
-                return;
-
-            if (nbt.contains("Advancements"))
-            {
-                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
-                return;
-            }
-
-            if (nbt.contains("Pools"))
-            {
-                components.add(Component.translatable("item.splatcraft.blueprint.tooltip"));
-                nbt.getList("Pools", Tag.TAG_STRING).forEach((weaponType) ->
-                    components.add(Component.translatable("item.splatcraft.blueprint.tooltip." + weaponType.getAsString())
-                        .withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withItalic(false)))
-                );
-                return;
-            }
+            components.add(Text.translatable("item.splatcraft.blueprint.tooltip"));
+            return;
         }
 
-        components.add(Component.translatable("item.splatcraft.blueprint.tooltip.empty"));
+        if (stack.contains(SplatcraftComponents.BLUEPRINT_WEAPONS))
+        {
+            components.add(Text.translatable("item.splatcraft.blueprint.tooltip"));
+            stack.get(SplatcraftComponents.BLUEPRINT_WEAPONS).forEach((weaponType) ->
+                components.add(Text.translatable("item.splatcraft.blueprint.tooltip." + weaponType)
+                    .setStyle(Style.EMPTY.withColor(Formatting.BLUE).withItalic(false)))
+            );
+            return;
+        }
+
+        components.add(Text.translatable("item.splatcraft.blueprint.tooltip.empty"));
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand)
+    public @NotNull TypedActionResult<ItemStack> use(@NotNull World world, @NotNull PlayerEntity player, @NotNull Hand hand)
     {
-        if (!(player instanceof ServerPlayer serverPlayer))
-            return super.use(level, player, hand);
+        if (!(player instanceof ServerPlayerEntity serverPlayer))
+            return super.use(world, player, hand);
 
-        ItemStack stack = player.getItemInHand(hand);
+        ItemStack stack = player.getStackInHand(hand);
 
-        if (stack.hasTag())
+        List<AdvancementEntry> pool = getAdvancementPool(world, stack);
+        int count = pool.size();
+
+        if (count > 0)
         {
-            List<Advancement> pool = getAdvancementPool(level, stack);
-            int count = pool.size();
+            pool.removeIf(advancement -> serverPlayer.getAdvancementTracker().getProgress(advancement).isDone());
 
-            if (count > 0)
+            if (!pool.isEmpty())
             {
-                pool.removeIf(advancement -> serverPlayer.getAdvancements().getOrStartProgress(advancement).isDone());
+                AdvancementEntry advancement = pool.get(world.random.nextInt(pool.size()));
 
-                if (!pool.isEmpty())
-                {
-                    Advancement advancement = pool.get(level.random.nextInt(pool.size()));
+                for (String key : serverPlayer.getAdvancementTracker().getProgress(advancement).getUnobtainedCriteria())
+                    serverPlayer.getAdvancementTracker().grantCriterion(advancement, key);
 
-                    for (String key : serverPlayer.getAdvancements().getOrStartProgress(advancement).getRemainingCriteria())
-                        serverPlayer.getAdvancements().award(advancement, key);
+                if (advancement.value().display().isPresent() && !advancement.value().display().get().shouldShowToast())
+                    player.sendMessage(Text.translatable("status.blueprint.unlock", advancement.value().display().get().getTitle()), true);
 
-                    if (advancement.getDisplay() != null && !advancement.getDisplay().shouldShowToast())
-                        player.displayClientMessage(Component.translatable("status.blueprint.unlock", advancement.getDisplay().getTitle()), true);
-
-                    stack.shrink(1);
-                    return InteractionResultHolder.consume(stack);
-                }
-
-                player.displayClientMessage(Component.translatable("status.blueprint.already_unlocked" + (count > 1 ? "" : ".single")), true);
-                return super.use(level, player, hand);
+                stack.decrement(1);
+                return TypedActionResult.consume(stack);
             }
+
+            player.sendMessage(Text.translatable("status.blueprint.already_unlocked" + (count > 1 ? "" : ".single")), true);
+            return super.use(world, player, hand);
         }
 
-        player.displayClientMessage(Component.translatable("status.blueprint.invalid"), true);
-        return super.use(level, player, hand);
+        player.sendMessage(Text.translatable("status.blueprint.invalid"), true);
+        return super.use(world, player, hand);
     }
 }

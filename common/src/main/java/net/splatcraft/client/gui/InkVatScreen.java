@@ -1,31 +1,31 @@
 package net.splatcraft.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.texture.TextureManager;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.tileentities.InkVatTileEntity;
 import net.splatcraft.tileentities.container.InkVatContainer;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
-public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
+@Environment(EnvType.CLIENT)
+public class InkVatScreen extends HandledScreen<InkVatContainer>
 {
-    private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/inkwell_crafting.png");
+    private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/inkwell_crafting.png");
     private static final int colorSelectionX = 12;
     private static final int colorSelectionY = 16;
     private static final int scrollBarX = 15;
@@ -35,28 +35,28 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     private float maxScroll = 0;
     private float scroll = 0.0f;
 
-    public InkVatScreen(InkVatContainer screenContainer, Inventory inv, Component titleIn)
+    public InkVatScreen(InkVatContainer screenContainer, PlayerInventory inv, Text titleIn)
     {
         super(screenContainer, inv, titleIn);
-        this.imageHeight = 208;
-        this.titleLabelX = 8;
-        this.titleLabelY = this.imageHeight - 92;
+        backgroundHeight = 208;
+        titleX = 8;
+        titleY = backgroundHeight - 92;
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void render(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
-        renderBackground(guiGraphics);
+        renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        renderTooltip(guiGraphics, mouseX, mouseY);
+        drawMouseoverTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderTooltip(@NotNull GuiGraphics pGuiGraphics, int mouseX, int mouseY)
+    protected void drawMouseoverTooltip(@NotNull DrawContext pGuiGraphics, int mouseX, int mouseY)
     {
-        List<Integer> colorSelection = getMenu().sortRecipeList();
+        List<InkColor> colorSelection = getScreenHandler().sortRecipeList();
 
-        super.renderTooltip(pGuiGraphics, mouseX, mouseY);
+        super.drawMouseoverTooltip(pGuiGraphics, mouseX, mouseY);
         int sc = (int) Math.ceil(Math.max(0, (colorSelection.size() - 16) * scroll));
         sc += sc % 2;
 
@@ -65,29 +65,29 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
             int x = colorSelectionX + (i - sc) / 2 * 19;
             int y = colorSelectionY + (i - sc) % 2 * 18;
 
-            if (isHovering(x, y, 17, 16, mouseX, mouseY))
+            if (isPointWithinBounds(x, y, 17, 16, mouseX, mouseY))
             {
-                pGuiGraphics.renderTooltip(font, ColorUtils.getFormatedColorName(colorSelection.get(i), false), mouseX, mouseY);
+                pGuiGraphics.drawTooltip(textRenderer, ColorUtils.getFormatedColorName(colorSelection.get(i), false), mouseX, mouseY);
             }
         }
     }
 
     @Override
-    protected void renderLabels(@NotNull GuiGraphics pGuiGraphics, int mouseX, int mouseY)
+    protected void drawForeground(@NotNull DrawContext drawContext, int mouseX, int mouseY)
     {
-        pGuiGraphics.drawString(font, title.getString(), imageWidth / 2 - font.width(title.getString()) / 2, 6, 4210752);
+        drawContext.drawTextWithShadow(textRenderer, title.getString(), backgroundWidth / 2 - textRenderer.getWidth(title.getString()) / 2, 6, 4210752);
 
-        List<Integer> colors = getMenu().sortRecipeList();
-        drawAvailableColors(pGuiGraphics, colors, colorSelectionX, colorSelectionY);
+        List<InkColor> colors = getScreenHandler().sortRecipeList();
+        drawAvailableColors(drawContext, colors, colorSelectionX, colorSelectionY);
         canScroll = colors.size() > 16;
         maxScroll = (float) Math.ceil(colors.size() / 2.0) - 8;
 
-        drawScrollBar(pGuiGraphics, scrollBarX, scrollBarY, 132, mouseX, mouseY);
+        drawScrollBar(drawContext, scrollBarX, scrollBarY, 132, mouseX, mouseY);
     }
 
-    protected void drawAvailableColors(GuiGraphics guiGraphics, List<Integer> colorSelection, int x, int y)
+    protected void drawAvailableColors(DrawContext guiGraphics, List<InkColor> colorSelection, int x, int y)
     {
-        TextureManager textureManager = minecraft.getTextureManager();
+        TextureManager textureManager = client.getTextureManager();
         if (textureManager != null)
         {
             RenderSystem.setShaderTexture(0, TEXTURES);
@@ -95,77 +95,74 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
             sc += sc % 2;
             for (int i = sc; i < colorSelection.size() && i - sc < 16; i++)
             {
-                int color = colorSelection.get(i);
-
-                float r = (float) (color >> 16 & 255) / 255.0F;
-                float g = (float) (color >> 8 & 255) / 255.0F;
-                float b = (float) (color & 255) / 255.0F;
+                InkColor color = colorSelection.get(i);
+                float[] rgb = color.getRGB();
 
                 int cx = x + (i - sc) / 2 * 19;
                 int cy = y + (i - sc) % 2 * 18;
 
-                RenderSystem.setShaderColor(r, g, b, 1);
-                guiGraphics.blit(TEXTURES, cx, cy, 34, 220, 19, 18);
+                RenderSystem.setShaderColor(rgb[0], rgb[2], rgb[2], 1);
+                guiGraphics.drawTexture(TEXTURES, cx, cy, 34, 220, 19, 18);
                 RenderSystem.setShaderColor(1, 1, 1, 1);
 
-                if (getMenu().getSelectedRecipe() == i)
+                if (getScreenHandler().getSelectedRecipe() == i)
                 {
-                    guiGraphics.blit(TEXTURES, cx, cy, 34, 238, 19, 18);
+                    guiGraphics.drawTexture(TEXTURES, cx, cy, 34, 238, 19, 18);
                 }
             }
         }
     }
 
-    protected void drawScrollBar(GuiGraphics guiGraphics, int x, int y, int width, int mouseX, int mouseY)
+    protected void drawScrollBar(DrawContext guiGraphics, int x, int y, int width, int mouseX, int mouseY)
     {
-        TextureManager textureManager = minecraft.getTextureManager();
+        TextureManager textureManager = client.getTextureManager();
         if (textureManager != null)
         {
             RenderSystem.setShaderTexture(0, TEXTURES);
             if (canScroll)
             {
-                guiGraphics.blit(TEXTURES, (int) (x + width * scroll), y, 241, isHovering(15, 55, 146, 10, mouseX, mouseY) || scrolling ? 20 : 0, 15, 10);
+                guiGraphics.drawTexture(TEXTURES, (int) (x + width * scroll), y, 241, isPointWithinBounds(15, 55, 146, 10, mouseX, mouseY) || scrolling ? 20 : 0, 15, 10);
             }
             else
             {
-                guiGraphics.blit(TEXTURES, x, y, 241, 10, 15, 10);
+                guiGraphics.drawTexture(TEXTURES, x, y, 241, 10, 15, 10);
             }
         }
     }
 
     @Override
-    protected void renderBg(@NotNull GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY)
+    protected void drawBackground(@NotNull DrawContext guiGraphics, float partialTicks, int mouseX, int mouseY)
     {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         RenderSystem.setShaderTexture(0, TEXTURES);
-        int x = (width - imageWidth) / 2;
-        int y = (height - imageHeight) / 2;
+        int x = (width - backgroundWidth) / 2;
+        int y = (height - backgroundHeight) / 2;
 
-        guiGraphics.blit(TEXTURES, x, y, 0, 0, imageWidth, imageHeight);
+        guiGraphics.drawTexture(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
 
-        InkVatTileEntity te = getMenu().te;
-        if (te.getItem(0).isEmpty())
+        InkVatContainer container = getScreenHandler();
+        if (!container.getSlot(0).hasStack())
         {
-            guiGraphics.blit(TEXTURES, leftPos + 26, topPos + 70, 176, 0, 16, 16);
+            guiGraphics.drawTexture(TEXTURES, x + 26, y + 70, 176, 0, 16, 16);
         }
-        if (te.getItem(1).isEmpty())
+        if (!container.getSlot(1).hasStack())
         {
-            guiGraphics.blit(TEXTURES, leftPos + 46, topPos + 70, 192, 0, 16, 16);
+            guiGraphics.drawTexture(TEXTURES, x + 46, y + 70, 192, 0, 16, 16);
         }
-        if (te.getItem(2).isEmpty())
+        if (!container.getSlot(2).hasStack())
         {
-            guiGraphics.blit(TEXTURES, leftPos + 92, topPos + 82, 208, 0, 16, 16);
+            guiGraphics.drawTexture(TEXTURES, x + 92, y + 82, 208, 0, 16, 16);
         }
-        if (te.getItem(3).isEmpty())
+        if (!container.getSlot(3).hasStack())
         {
-            guiGraphics.blit(TEXTURES, leftPos + 36, topPos + 89, 224, 0, 16, 16);
+            guiGraphics.drawTexture(TEXTURES, x + 36, y + 89, 224, 0, 16, 16);
         }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton)
     {
-        List<Integer> colorSelection = getMenu().sortRecipeList();
+        List<InkColor> colorSelection = getScreenHandler().sortRecipeList();
         scrolling = false;
 
         int sc = (int) Math.ceil(Math.max(0, (colorSelection.size() - 16) * scroll));
@@ -176,22 +173,22 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
             int x = colorSelectionX + (i - sc) / 2 * 19;
             int y = colorSelectionY + (i - sc) % 2 * 18;
 
-            if (isHovering(x, y, 19, 18, mouseX, mouseY) && mouseButton == 0 && this.minecraft != null && this.minecraft.player != null && this.getMenu().clickMenuButton(this.minecraft.player, i))
+            if (isPointWithinBounds(x, y, 19, 18, mouseX, mouseY) && mouseButton == 0 && client != null && client.player != null && getScreenHandler().onButtonClick(client.player, i))
             {
-                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
-                MultiPlayerGameMode playerController = this.minecraft.gameMode;
+                MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
+                ClientPlayerInteractionManager playerController = client.interactionManager;
                 if (playerController != null)
                 {
-                    this.minecraft.gameMode.handleInventoryButtonClick(this.getMenu().containerId, i);
+                    client.interactionManager.clickButton(getScreenHandler().syncId, i);
                 }
-                getMenu().updateInkVatColor(i, colorSelection.get(i));
+                getScreenHandler().updateInkVatColor(i, colorSelection.get(i));
             }
         }
 
-        if (isHovering(scrollBarX, scrollBarY, 146, 10, mouseX, mouseY) && canScroll)
+        if (isPointWithinBounds(scrollBarX, scrollBarY, 146, 10, mouseX, mouseY) && canScroll)
         {
             scrolling = true;
-            scroll = MathHelper.clamp((float) (mouseX - leftPos - scrollBarX) / 132f, 0f, 1f);
+            scroll = MathHelper.clamp((float) (mouseX - x - scrollBarX) / 132f, 0f, 1f);
         }
 
         return super.mouseClicked(mouseX, mouseY, mouseButton);
@@ -212,18 +209,18 @@ public class InkVatScreen extends AbstractContainerScreen<InkVatContainer>
     {
         if (scrolling && canScroll)
         {
-            scroll = MathHelper.clamp((float) (x - leftPos - scrollBarX) / 132f, 0f, 1f);
+            scroll = MathHelper.clamp((float) (x - x - scrollBarX) / 132f, 0f, 1f);
         }
 
         return super.mouseDragged(x, y, mouseButton, p_231045_6_, p_231045_8_);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount)
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
     {
         if (canScroll)
         {
-            scroll = MathHelper.clamp(scroll + 1 / maxScroll * -Math.signum((float) amount), 0.0f, 1.0f);
+            scroll = MathHelper.clamp(scroll + 1 / maxScroll * -Math.signum((float) verticalAmount), 0.0f, 1.0f);
         }
 
         return true;

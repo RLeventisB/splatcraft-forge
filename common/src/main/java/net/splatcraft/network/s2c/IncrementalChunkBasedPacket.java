@@ -1,8 +1,8 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
 
 public abstract class IncrementalChunkBasedPacket extends PlayS2CPacket
 {
@@ -13,5 +13,5 @@ public abstract class IncrementalChunkBasedPacket extends PlayS2CPacket
         chunkPos = pos;
     }
 
-    public abstract void add(Level level, BlockPos pos);
+    public abstract void add(World world, BlockPos pos);
 }

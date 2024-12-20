@@ -1,134 +1,131 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.BlockInkedResult;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock
+public class SplatSwitchBlock extends Block implements IColoredBlock, Waterloggable, BlockEntityProvider, ISplatcraftForgeBlockDummy
 {
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
-    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final DirectionProperty FACING = Properties.FACING;
+    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
     private static final VoxelShape[] SHAPES = new VoxelShape[]
         {
-            box(1, 14, 1, 15, 16, 15),
-            box(1, 0, 1, 15, 2, 15),
-            box(1, 1, 14, 15, 15, 16),
-            box(1, 1, 0, 15, 15, 2),
-            box(14, 1, 1, 16, 15, 15),
-            box(0, 1, 1, 2, 15, 15)
+            createCuboidShape(1, 14, 1, 15, 16, 15),
+            createCuboidShape(1, 0, 1, 15, 2, 15),
+            createCuboidShape(1, 1, 14, 15, 15, 16),
+            createCuboidShape(1, 1, 0, 15, 15, 2),
+            createCuboidShape(14, 1, 1, 16, 15, 15),
+            createCuboidShape(0, 1, 1, 2, 15, 15)
         };
 
     public SplatSwitchBlock()
     {
-        super((Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops().strength(5.0F).sound(SoundType.METAL).noOcclusion()));
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.UP).setValue(POWERED, false));
+        super(Settings.create().mapColor(MapColor.IRON_GRAY).requiresTool().strength(5.0F).sounds(BlockSoundGroup.METAL).nonOpaque());
+        setDefaultState(getDefaultState().with(FACING, Direction.UP).with(POWERED, false));
 
         SplatcraftBlocks.inkColoredBlocks.add(this);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> containter)
+    public VoxelShape getOutlineShape(BlockState state, @NotNull BlockView level, @NotNull BlockPos pos, @NotNull ShapeContext context)
+    {
+        return SHAPES[state.get(FACING).ordinal()];
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> containter)
     {
         containter.add(FACING, POWERED, WATERLOGGED);
     }
 
     @Override
-    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
-    {
-        return SHAPES[state.getValue(FACING).ordinal()];
-    }
-
-    @Override
-    public boolean canConnectRedstone(BlockState state, BlockGetter level, BlockPos pos, @Nullable Direction side)
+    public boolean canConnectRedstone(BlockState state, BlockView level, BlockPos pos, @Nullable Direction side)
     {
         return true;
     }
 
     @Override
-    public boolean isSignalSource(@NotNull BlockState state)
+    public boolean emitsRedstonePower(@NotNull BlockState state)
     {
         return true;
     }
 
     @Override
-    public int getSignal(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull Direction face)
+    public int getWeakRedstonePower(BlockState state, @NotNull BlockView level, @NotNull BlockPos pos, @NotNull Direction face)
     {
-        return state.getValue(POWERED) ? 15 : 0;
+        return state.get(POWERED) ? 15 : 0;
     }
 
     @Override
-    public int getDirectSignal(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull Direction face)
+    public int getStrongRedstonePower(BlockState state, @NotNull BlockView level, @NotNull BlockPos pos, @NotNull Direction face)
     {
-        return state.getValue(POWERED) ? 15 : 0;
+        return state.get(POWERED) ? 15 : 0;
     }
 
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
+    public BlockState getPlacementState(@NotNull ItemPlacementContext context)
     {
-        BlockState state = super.getStateForPlacement(context).setValue(FACING, context.getClickedFace());
-        return state.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        BlockState state = super.getPlacementState(context).with(FACING, context.getSide());
+        return state.with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER);
     }
 
     @Override
     public @NotNull FluidState getFluidState(BlockState state)
     {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (InkedBlock.isTouchingLiquid(levelIn, currentPos) && levelIn instanceof Level)
+        if (InkedBlock.isTouchingLiquid(levelIn, currentPos) && levelIn instanceof World world)
         {
-            stateIn = stateIn.setValue(POWERED, false);
-            levelIn.setBlock(currentPos, stateIn, 3);
+            stateIn = stateIn.with(POWERED, false);
+            world.setBlockState(currentPos, stateIn, 3);
             playSound(levelIn, currentPos, stateIn);
-            updateNeighbors(stateIn, (Level) levelIn, currentPos);
+            updateNeighbors(stateIn, world, currentPos);
             return stateIn;
         }
-        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+        return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
     }
 
     @Override
-    public void onRemove(BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving)
+    public void onStateReplaced(BlockState state, @NotNull World world, @NotNull BlockPos pos, @NotNull BlockState newState, boolean isMoving)
     {
-        if (state.getValue(POWERED))
-            updateNeighbors(state, level, pos);
-        super.onRemove(state, level, pos, newState, isMoving);
+        if (state.get(POWERED))
+            updateNeighbors(state, world, pos);
+        super.onStateReplaced(state, world, pos, newState, isMoving);
     }
 
-    private void updateNeighbors(BlockState state, Level level, BlockPos pos)
+    private void updateNeighbors(BlockState state, World world, BlockPos pos)
     {
-        level.updateNeighborsAt(pos, this);
-        level.updateNeighborsAt(pos.relative(state.getValue(FACING).getOpposite()), this);
+        world.updateNeighborsAlways(pos, this);
+        world.updateNeighborsAlways(pos.offset(state.get(FACING).getOpposite()), this);
     }
 
     @Override
@@ -150,56 +147,56 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
     }
 
     @Override
-    public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
+    public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
     {
         return false;
     }
 
     @Override
-    public int getColor(Level level, BlockPos pos)
+    public InkColor getColor(WorldView world, BlockPos pos)
     {
-        BlockState state = level.getBlockState(pos);
-        return state.getValue(POWERED) && level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity ? tileEntity.getColor() : -1;
+        BlockState state = world.getBlockState(pos);
+        return state.get(POWERED) && world.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity ? tileEntity.getInkColor() : InkColor.INVALID;
     }
 
     @Override
-    public BlockInkedResult inkBlock(Level level, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
+    public BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, float damage, InkBlockUtils.InkType inkType)
     {
-        if (!(level.getBlockState(pos).getBlock().equals(this)) || !(level.getBlockEntity(pos) instanceof InkColorTileEntity te))
+        if (!(world.getBlockState(pos).getBlock().equals(this)) || !(world.getBlockEntity(pos) instanceof InkColorTileEntity te))
             return BlockInkedResult.FAIL;
 
-        BlockState state = level.getBlockState(pos);
-        int switchColor = te.getColor();
+        BlockState state = world.getBlockState(pos);
+        InkColor switchColor = te.getInkColor();
 
         te.setColor(color);
-        level.setBlock(pos, state.setValue(POWERED, true), 3);
-        playSound(level, pos, state);
-        updateNeighbors(state, level, pos);
+        world.setBlockState(pos, state.with(POWERED, true), 3);
+        playSound(world, pos, state);
+        updateNeighbors(state, world, pos);
         return color != switchColor ? BlockInkedResult.SUCCESS : BlockInkedResult.ALREADY_INKED;
     }
 
     @Override
-    public boolean remoteInkClear(Level level, BlockPos pos)
+    public boolean remoteInkClear(World world, BlockPos pos)
     {
-        BlockState state = level.getBlockState(pos);
-        if (state.getValue(POWERED))
+        BlockState state = world.getBlockState(pos);
+        if (state.get(POWERED))
         {
-            level.setBlock(pos, state.setValue(POWERED, false), 3);
-            playSound(level, pos, state);
+            world.setBlockState(pos, state.with(POWERED, false), 3);
+            playSound(world, pos, state);
             return true;
         }
         return false;
     }
 
-    private void playSound(LevelAccessor level, BlockPos currentPos, BlockState stateIn)
+    private void playSound(WorldAccess level, BlockPos currentPos, BlockState stateIn)
     {
-        level.playSound(null, currentPos, stateIn.getValue(POWERED) ? SplatcraftSounds.splatSwitchPoweredOn : SplatcraftSounds.splatSwitchPoweredOff, SoundSource.BLOCKS, 1f, 1f);
+        level.playSound(null, currentPos, stateIn.get(POWERED) ? SplatcraftSounds.splatSwitchPoweredOn : SplatcraftSounds.splatSwitchPoweredOff, SoundCategory.BLOCKS, 1f, 1f);
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+    public BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
-        return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
+        return SplatcraftTileEntities.colorTileEntity.get().instantiate(pos, state);
     }
 }

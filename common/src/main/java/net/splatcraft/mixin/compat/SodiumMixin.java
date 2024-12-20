@@ -1,4 +1,4 @@
-package net.splatcraft.mixin.compat;
+/*package net.splatcraft.mixin.compat;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -16,14 +16,13 @@ import me.jellysquid.mods.sodium.client.render.chunk.data.BuiltSectionInfo;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.renderer.RenderLayer;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3d;
 import net.minecraftforge.client.ChunkRenderTypeSet;
@@ -64,10 +63,10 @@ public class SodiumMixin
             splatcraft$hasInkEntry = ink != null;
         }
 
-        @WrapOperation(method = "getGeometry", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/BakedModel;getQuads(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)Ljava/util/List;"))
-        public List<BakedQuad> splatcraft$modifyQuadList(BakedModel instance, BlockState blockState, Direction face, RandomSource random, ModelData modelData, RenderType renderType, Operation<List<BakedQuad>> original)
+        @WrapOperation(method = "getGeometry", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/BakedModel;getQuads(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;Lnet/minecraft/util/RandomSource;Lnet/minecraftforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderLayer;)Ljava/util/List;"))
+        public List<BakedQuad> splatcraft$modifyQuadList(BakedModel instance, BlockState blockState, Direction face, RandomSource random, ModelData modelData, RenderLayer renderType, Operation<List<BakedQuad>> original)
         {
-            ChunkInk.InkEntry faceEntry = splatcraft$inkEntry != null && face != null ? splatcraft$inkEntry.get(face.get3DDataValue()) : null;
+            ChunkInk.InkEntry faceEntry = splatcraft$inkEntry != null && face != null ? splatcraft$inkEntry.get(face.getId()) : null;
             splatcraft$faceEntry = faceEntry;
             splatcraft$isFaceInked = faceEntry != null;
 
@@ -77,7 +76,7 @@ public class SodiumMixin
                 quads.addAll(ChunkInkHandler.Render.getInkedBlockQuad(face, random, renderType));
                 if (splatcraft$faceEntry.type() == InkBlockUtils.InkType.GLOWING)
                 {
-                    quads.add(ChunkInkHandler.Render.getGlitterQuad()[face.get3DDataValue()]);
+                    quads.add(ChunkInkHandler.Render.getGlitterQuad()[face.getId()]);
                 }
             }
             else
@@ -86,7 +85,7 @@ public class SodiumMixin
             }
             if (splatcraft$hasInkEntry && splatcraft$inkEntry.inmutable)
             {
-                quads.add(ChunkInkHandler.Render.getPermaInkQuads()[face == null ? 0 : face.get3DDataValue()]);
+                quads.add(ChunkInkHandler.Render.getPermaInkQuads()[face == null ? 0 : face.getId()]);
             }
             return quads;
         }
@@ -113,7 +112,7 @@ public class SodiumMixin
 
         @Inject(method = "execute(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;", locals = LocalCapture.CAPTURE_FAILHARD, remap = false, at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/resources/model/BakedModel;getModelData(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraftforge/client/model/data/ModelData;)Lnet/minecraftforge/client/model/data/ModelData;"))
-        public void getBlockState(ChunkBuildContext buildContext, CancellationToken cancellationToken, CallbackInfoReturnable<ChunkBuildOutput> cir, BuiltSectionInfo.Builder renderData, VisGraph occluder, ChunkBuildBuffers buffers, BlockRenderCache cache, WorldSlice slice, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockPos.MutableBlockPos blockPos, BlockPos.MutableBlockPos modelOffset, BlockRenderContext context, int y, int z, int x, BlockState blockState, BakedModel model)
+        public void getBlockState(ChunkBuildContext buildContext, CancellationToken cancellationToken, CallbackInfoReturnable<ChunkBuildOutput> cir, BuiltSectionInfo.Builder renderData, VisGraph occluder, ChunkBuildBuffers buffers, BlockRenderCache cache, WorldSlice slice, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BlockPos.Mutable blockPos, BlockPos.Mutable modelOffset, BlockRenderContext context, int y, int z, int x, BlockState blockState, BakedModel model)
         {
             splatcraft$level = slice.world;
             splatcraft$blockPos = blockPos;
@@ -126,8 +125,9 @@ public class SodiumMixin
             ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(splatcraft$level, splatcraft$blockPos);
 
             if (ink != null && ink.isInkedAny())
-                return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderType.translucent()));
+                return ChunkRenderTypeSet.union(original.call(instance, state, randomSource, modelData), ChunkRenderTypeSet.of(RenderLayer.translucent()));
             return original.call(instance, state, randomSource, modelData);
         }
     }
 }
+*/

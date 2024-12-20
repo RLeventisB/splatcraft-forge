@@ -1,0 +1,53 @@
+accessWidener v2 named
+
+#accessible net/minecraft/client/renderer/GameRenderer m_109141_(Lnet/minecraft/client/Camera;FZ)D
+accessible method net/minecraft/entity/Entity movementInputToVelocity (Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;
+# these dont work on release??? im building from gradle build btw
+
+#accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionFace
+
+#accessible class net/minecraft/client/renderer/entity/layers/LayerRenderer/coloredCutoutModelCopyLayerRender
+
+accessible method net/minecraft/world/GameRules$BooleanRule create (Z)Lnet/minecraft/world/GameRules$Type; # create
+
+accessible method net/minecraft/world/GameRules$IntRule create (I)Lnet/minecraft/world/GameRules$Type; # create
+
+accessible method net/minecraft/scoreboard/ScoreboardCriterion <init> (Ljava/lang/String;)V # ObjectiveCriteria
+
+accessible field net/minecraft/scoreboard/ScoreboardCriterion CRITERIA Ljava/util/Map; # CRITERIA_CACHE
+
+# DamageSources thank u https://github/com/Glitchfiend/BiomesOPlenty/blob/551bff467ade42cb2a0b23609f439137ca7fa60f/src/main/resources/META-INF/accesstransformer/cfg for existing
+#accessible method net/minecraft/entity/damage/DamageSources *
+
+#accessible net/minecraft/client/renderer/texture/TextureAtlas *
+
+accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setText (Lnet/minecraft/text/Text;)V
+accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setDisplayFlags (B)V
+accessible method net/minecraft/entity/decoration/DisplayEntity$BillboardMode getIndex ()B
+accessible method net/minecraft/block/entity/BlockEntity addComponents (Lnet/minecraft/component/ComponentMap$Builder;)V
+accessible class net/minecraft/entity/decoration/DisplayEntity
+accessible field net/minecraft/client/render/Tessellator allocator Lnet/minecraft/client/util/BufferAllocator;
+accessible field net/minecraft/client/network/ClientAdvancementManager advancementProgresses Ljava/util/Map;
+accessible field net/minecraft/client/gui/hud/InGameHud layeredDrawer Lnet/minecraft/client/gui/LayeredDrawer;
+accessible class net/minecraft/server/world/ServerEntityManager$Listener
+
+#accessible net/minecraft/client/gui/components/AbstractWidget *
+#accessible net/minecraft/client/gui/components/AbstractWidget *()
+
+#accessible net/minecraft/client/multiplayer/ClientAdvancements *
+
+accessible field net/minecraft/entity/Entity lastChimeIntensity F # dont ask why i used crystalSoundIntensity to store a value that shows the partialTick that an ink projectile hit a mob i want to save some memory ok
+accessible field net/minecraft/entity/Entity dimensions Lnet/minecraft/entity/EntityDimensions;
+accessible field net/minecraft/entity/LivingEntity jumping Z
+
+accessible method net/minecraft/entity/projectile/ProjectileEntity canHit (Lnet/minecraft/entity/Entity;)Z # canHitEntity
+accessible method net/minecraft/entity/projectile/ProjectileEntity updateRotation ()V # updateRotation
+accessible method net/minecraft/entity/projectile/ProjectileEntity onCollision (Lnet/minecraft/util/hit/HitResult;)V # onHit
+accessible method net/minecraft/entity/Entity checkBlockCollision ()V # checkBlockCollision
+accessible method net/minecraft/client/render/entity/LivingEntityRenderer addFeature (Lnet/minecraft/client/render/entity/feature/FeatureRenderer;)Z
+
+accessible class net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask
+accessible method net/minecraft/server/world/ServerChunkLoadingManager entryIterator ()Ljava/lang/Iterable;
+accessible field net/minecraft/server/world/ServerChunkManager chunkLoadingManager Lnet/minecraft/server/world/ServerChunkLoadingManager;
+
+accessible field net/minecraft/client/render/model/json/JsonUnbakedModel QUAD_FACTORY Lnet/minecraft/client/render/model/BakedQuadFactory;

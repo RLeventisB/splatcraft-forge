@@ -1,40 +1,33 @@
 package net.splatcraft.client.gui.stagepad;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
-import org.jetbrains.annotations.NotNull;
 
 public class StageTeamsScreen extends AbstractStagePadScreen
 {
-    private static final ResourceLocation TEXTURES = new ResourceLocation(Splatcraft.MODID, "textures/gui/stage_pad/stage_teams.png");
+    private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_teams.png");
     private Stage stage;
 
-    public StageTeamsScreen(Component label, String stageId, Screen mainMenu)
+    public StageTeamsScreen(Text label, String stageId, Screen mainMenu)
     {
         super(label);
-        stage = Stage.getStage(Minecraft.getInstance().level, stageId);
+        stage = Stage.getStage(MinecraftClient.getInstance().world, stageId);
         addOptionsTabs(label, stageId, mainMenu);
     }
 
     @Override
-    public void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void handleWidgets(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
-    }
-
-    @Override
-    public void renderBackground(@NotNull GuiGraphics guiGraphics)
-    {
-        super.renderBackground(guiGraphics);
     }
 
     @Override
     public void onStagesUpdate()
     {
-        stage = Stage.getStage(Minecraft.getInstance().level, stage.id);
+        stage = Stage.getStage(MinecraftClient.getInstance().world, stage.id);
     }
 }

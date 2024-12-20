@@ -1,16 +1,15 @@
 package net.splatcraft.items.weapons;
 
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemCooldowns;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ItemCooldownManager;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.world.World;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -29,12 +28,12 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         super(settings);
     }
 
-    public static RegistryObject<BlasterItem> createBlaster(DeferredRegister<Item> registry, String settings, String name)
+    public static RegistrySupplier<BlasterItem> createBlaster(DeferredRegister<Item> registry, String settings, String name)
     {
         return registry.register(name, () -> new BlasterItem(settings));
     }
 
-    public static RegistryObject<BlasterItem> createBlaster(DeferredRegister<Item> registry, RegistryObject<BlasterItem> parent, String name)
+    public static RegistrySupplier<BlasterItem> createBlaster(DeferredRegister<Item> registry, RegistrySupplier<BlasterItem> parent, String name)
     {
         return registry.register(name, () -> new BlasterItem(parent.get().settingsId.toString()));
     }
@@ -44,11 +43,11 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
         if (!isStillUsing || !data.entityData.isPlayer)
             return isStillUsing;
 
-        ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
+        ItemCooldownManager cooldownTracker = data.entityData.player.getItemCooldownManager();
 
-        if (!data.entityData.player.isLocalPlayer())
+        if (!data.entityData.player.getWorld().isClient)
         {
-            cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
+            cooldownTracker.set(data.entityData.player.getInventory().getStack(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
         }
         return true;
     }
@@ -60,7 +59,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     }
 
     @Override
-    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int no)
+    public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int no)
     {
         ShootingHandler.notifyStartShooting(entity);
     }
@@ -73,19 +72,19 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
             BlasterItem::getEndlagConsumer,
             (data, accumulatedTime, entity1) ->
             {
-                Level level = entity1.getWorld();
-                if (!level.isClientSide())
+                World world = entity1.getWorld();
+                if (!world.isClient())
                 {
                     BlasterItem item = (BlasterItem) data.useItem.getItem();
                     if (reduceInk(entity, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
                     {
-                        InkProjectileEntity proj = new InkProjectileEntity(level, entity, data.useItem, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-                        proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, level.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
+                        InkProjectileEntity proj = new InkProjectileEntity(world, entity, data.useItem, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+                        proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, world.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
                         proj.setBlasterStats(settings);
                         proj.setAttackId(AttackId.registerAttack().countProjectile());
                         proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
-                        level.addFreshEntity(proj);
-                        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                        world.spawnEntity(proj);
+                        world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.blasterShot, SoundCategory.PLAYERS, 0.7F, ((world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
                         proj.tick(accumulatedTime);
                     }
                 }
@@ -93,59 +92,14 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
     {
         return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
-    }
-
-    public static class BlasterCooldown extends WeaponFireCooldown<BlasterItem>
-    {
-        public BlasterCooldown(ItemStack stack, float initialTimer, float startupFrames, float endlagFrames, int slotIndex, InteractionHand hand, boolean isGrounded)
-        {
-            super(stack, initialTimer, startupFrames, endlagFrames, slotIndex, hand, isGrounded);
-        }
-
-        @Override
-        public void onEndlagEnd(Player player, float accumulatedTime, boolean stoppedUsing)
-        {
-            if (stoppedUsing)
-                return;
-
-            ItemCooldowns cooldownTracker = player.getCooldowns();
-
-            if (!player.isLocalPlayer())
-            {
-                cooldownTracker.addCooldown(storedStack.getItem(), (int) (startupFrames + endlagFrames - accumulatedTime));
-            }
-        }
-
-        @Override
-        public void onFire(Player player, float time)
-        {
-            Level level = player.getWorld();
-            if (!level.isClientSide())
-            {
-                BlasterItem item = getItem();
-                BlasterWeaponSettings settings = item.getSettings(storedStack);
-
-                if (reduceInk(player, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
-                {
-                    InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
-                    proj.shootFromRotation(player, player.getXRot(), player.getYRot(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(storedStack, level.getRandom(), settings.getShotDeviationData(storedStack, player)));
-                    proj.setBlasterStats(settings);
-                    proj.setAttackId(AttackId.registerAttack().countProjectile());
-                    proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
-                    level.addFreshEntity(proj);
-                    level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-                    proj.tick(time);
-                }
-            }
-        }
     }
 }

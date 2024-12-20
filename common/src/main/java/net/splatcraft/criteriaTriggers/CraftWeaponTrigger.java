@@ -1,53 +1,68 @@
 package net.splatcraft.criteriaTriggers;
 
-import com.google.gson.JsonObject;
-import net.minecraft.advancements.critereon.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.advancement.criterion.AbstractCriterion;
+import net.minecraft.item.ItemStack;
+import net.minecraft.predicate.entity.EntityPredicate;
+import net.minecraft.predicate.entity.LootContextPredicate;
+import net.minecraft.predicate.item.ItemPredicate;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.NotNull;
 
-public class CraftWeaponTrigger extends SimpleCriterionTrigger<CraftWeaponTrigger.TriggerInstance>
-{
-    static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "craft_weapon");
+import java.util.Optional;
 
-    public @NotNull ResourceLocation getId()
+public class CraftWeaponTrigger extends AbstractCriterion<CraftWeaponTrigger.TriggerInstance>
+{
+    static final Identifier ID = Splatcraft.identifierOf("craft_weapon");
+
+    public @NotNull Identifier getId()
     {
         return ID;
     }
 
-    public CraftWeaponTrigger.@NotNull TriggerInstance createInstance(JsonObject json, @NotNull ContextAwarePredicate composite, @NotNull DeserializationContext context)
+    public void trigger(ServerPlayerEntity player, ItemStack stack)
     {
-        ItemPredicate itempredicate = ItemPredicate.fromJson(json.get("item"));
-        return new CraftWeaponTrigger.TriggerInstance(composite, itempredicate);
+        trigger(player, (instance) -> instance.matches(stack));
     }
 
-    public void trigger(ServerPlayer player, ItemStack stack)
+    @Override
+    public Codec<TriggerInstance> getConditionsCodec()
     {
-        this.trigger(player, (instance) -> instance.matches(stack));
+        return TriggerInstance.CODEC;
     }
 
-    public static class TriggerInstance extends AbstractCriterionTriggerInstance
+    public record TriggerInstance(Optional<LootContextPredicate> player,
+                                  Optional<ItemPredicate> item) implements AbstractCriterion.Conditions
     {
-        private final ItemPredicate item;
+        public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(
+            instance ->
+                instance.group(
+                        EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
+                        ItemPredicate.CODEC.optionalFieldOf("item").forGetter(TriggerInstance::item))
+                    .apply(instance, TriggerInstance::new));
 
-        public TriggerInstance(ContextAwarePredicate p_27688_, ItemPredicate item)
+        public TriggerInstance(Optional<LootContextPredicate> player, Optional<ItemPredicate> item)
         {
-            super(CraftWeaponTrigger.ID, p_27688_);
+            this.player = player;
             this.item = item;
         }
 
-        public boolean matches(ItemStack otherItem)
+        public boolean matches(ItemStack stack)
         {
-            return this.item.matches(otherItem);
+            return item.isEmpty() || item.get().test(stack);
         }
 
-        public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
+        public Optional<LootContextPredicate> player()
         {
-            JsonObject jsonobject = super.serializeToJson(context);
-            jsonobject.add("item", this.item.serializeToJson());
-            return jsonobject;
+            return player;
+        }
+
+        public Optional<ItemPredicate> item()
+        {
+            return item;
         }
     }
 }

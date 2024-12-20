@@ -2,49 +2,41 @@ package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.world.entity.animal.Sheep;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
+import net.minecraft.entity.passive.SheepEntity;
+import net.minecraft.util.DyeColor;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.registries.SplatcraftItems;
-import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import java.util.List;
-
-@Mixin(Sheep.class)
+@Mixin(SheepEntity.class)
 public class SheepMixin
 {
-    @WrapOperation(method = "onSheared", remap = false, at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z"))
-    public boolean getWool(List<ItemStack> list, Object stack, Operation<Boolean> original)
+    @WrapOperation(method = "sheared", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/passive/SheepEntity;getColor()Lnet/minecraft/util/DyeColor;"))
+    public DyeColor getWool(SheepEntity sheep, Operation<DyeColor> original)
     {
-        Sheep that = (Sheep) (Object) this;
-        if (InkOverlayCapability.hasCapability(that))
+        if (InkOverlayCapability.hasCapability(sheep))
         {
-            int color = InkOverlayCapability.get(that).getWoolColor();
-            if (color > -1)
+            InkColor color = InkOverlayCapability.get(sheep).getWoolColor();
+            if (color.isValid())
             {
-                return original.call(list, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), color), true));
+                return color.getDyeColor();
             }
         }
-        return original.call(list, stack);
+        return original.call(sheep);
     }
-
-    @WrapOperation(method = "shear", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Sheep;spawnAtLocation(Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/world/entity/item/ItemEntity;"))
-    public ItemEntity spawnAtLocation(Sheep instance, ItemLike iItemProvider, int i, Operation<ItemEntity> original)
-    {
-        if (InkOverlayCapability.hasCapability(instance))
-        {
-            InkOverlayInfo info = InkOverlayCapability.get(instance);
-            if (info.getWoolColor() > -1)
-            {
-                return original.call(instance, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), info.getWoolColor()), true).getItem(), i);
-            }
-        }
-
-        return original.call(instance, iItemProvider, i);
-    }
+//    @WrapOperation(method = "drop", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Sheep;spawnAtLocation(Lnet/minecraft/world/level/ItemLike;I)Lnet/minecraft/world/entity/item/ItemEntity;"))
+//    public ItemEntity spawnAtLocation(Sheep instance, ItemLike iItemProvider, int i, Operation<ItemEntity> original)
+//    {
+//        if (InkOverlayCapability.hasCapability(instance))
+//        {
+//            InkOverlayInfo info = InkOverlayCapability.get(instance);
+//            if (info.getWoolColor() > -1)
+//            {
+//                return original.call(instance, ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get()), info.getWoolColor()), true).getItem(), i);
+//            }
+//        }
+//
+//        return original.call(instance, iItemProvider, i);
+//    }
 }

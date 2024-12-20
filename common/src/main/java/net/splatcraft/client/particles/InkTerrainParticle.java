@@ -26,16 +26,16 @@ public class InkTerrainParticle extends SpriteBillboardParticle
     public InkTerrainParticle(ClientWorld level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, BlockPos blockPos, float r, float g, float b)
     {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        this.pos = blockPos;
-        this.setSprite(MinecraftClient.getInstance().getBlockRenderManager().getModels().getModelParticleSprite(SplatcraftBlocks.inkedBlock.get().defaultBlockState()));
-        this.gravityStrength = 1.0F;
-        this.red = 0.6F * r;
-        this.green = 0.6F * g;
-        this.blue = 0.6F * b;
+        pos = blockPos;
+        setSprite(MinecraftClient.getInstance().getBlockRenderManager().getModels().getModelParticleSprite(SplatcraftBlocks.inkedBlock.get().getDefaultState()));
+        gravityStrength = 1.0F;
+        red = 0.6F * r;
+        green = 0.6F * g;
+        blue = 0.6F * b;
 
-        this.scale /= 2.0F;
-        this.uo = this.random.nextFloat() * 3.0F;
-        this.vo = this.random.nextFloat() * 3.0F;
+        scale /= 2.0F;
+        uo = random.nextFloat() * 3.0F;
+        vo = random.nextFloat() * 3.0F;
     }
 
     public @NotNull ParticleTextureSheet getType()
@@ -43,19 +43,19 @@ public class InkTerrainParticle extends SpriteBillboardParticle
         return ParticleTextureSheet.TERRAIN_SHEET;
     }
 
-    /*protected float getU0()
+    /*protected float getMinU()
     {
         return this.sprite.getFrameU((this.uo + 1.0F) / 4.0F * 16.0F);
     }
-    protected float getU1()
+    protected float getMaxU()
     {
         return this.sprite.getU(this.uo / 4.0F * 16.0F);
     }
-    protected float getV0()
+    protected float getMinV()
     {
         return this.sprite.getV(this.vo / 4.0F * 16.0F);
     }
-    protected float getV1()
+    protected float getMaxV()
     {
         return this.sprite.getV((this.vo + 1.0F) / 4.0F * 16.0F);
     }

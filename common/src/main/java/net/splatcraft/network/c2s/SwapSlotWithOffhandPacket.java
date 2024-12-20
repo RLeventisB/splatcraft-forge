@@ -1,12 +1,15 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.Hand;
+import net.splatcraft.util.CommonUtils;
 
 public class SwapSlotWithOffhandPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SwapSlotWithOffhandPacket.class);
     final int slot;
     final boolean stopUsing;
 
@@ -16,22 +19,28 @@ public class SwapSlotWithOffhandPacket extends PlayC2SPacket
         this.stopUsing = stopUsing;
     }
 
-    public static SwapSlotWithOffhandPacket decode(FriendlyByteBuf buffer)
+    public static SwapSlotWithOffhandPacket decode(RegistryByteBuf buffer)
     {
         return new SwapSlotWithOffhandPacket(buffer.readInt(), buffer.readBoolean());
     }
 
     @Override
-    public void execute(Player player)
+    public Id<? extends CustomPayload> getId()
     {
-        ItemStack stack = player.getOffhandItem();
-        player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
-        player.getInventory().setItem(slot, stack);
+        return ID;
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
+    {
+        ItemStack stack = player.getOffHandStack();
+        player.setStackInHand(Hand.OFF_HAND, player.getInventory().getStack(slot));
+        player.getInventory().setStack(slot, stack);
         player.stopUsingItem();
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeInt(slot);
         buffer.writeBoolean(stopUsing);

@@ -3,15 +3,18 @@ package net.splatcraft.client.particles;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleType;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.dynamic.Codecs;
-import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -36,9 +39,9 @@ public class InkSplashParticleData implements ParticleEffect
     protected final float blue;
     protected final float scale;
 
-    public InkSplashParticleData(Integer color, float scale)
+    public InkSplashParticleData(InkColor color, float scale)
     {
-        this(ColorUtils.hexToRGB(color), scale);
+        this(ColorUtils.getLockedColor(color).getRGB(), scale);
     }
 
     private InkSplashParticleData(float[] rgb, float scale)
@@ -48,14 +51,6 @@ public class InkSplashParticleData implements ParticleEffect
 
     public InkSplashParticleData(float red, float green, float blue, float scale)
     {
-        if (SplatcraftConfig.Client.colorLock.get())
-        {
-            float[] rgb = ColorUtils.hexToRGB(ColorUtils.getLockedColor(ColorUtils.RGBtoHex(new float[]{red, green, blue})));
-            red = rgb[0];
-            green = rgb[1];
-            blue = rgb[2];
-        }
-
         this.red = red;
         this.green = green;
         this.blue = blue;
@@ -69,41 +64,32 @@ public class InkSplashParticleData implements ParticleEffect
     }
 
     @Override
-    public void writeToNetwork(FriendlyByteBuf buffer)
+    public @NotNull String toString()
     {
-        buffer.writeFloat(red);
-        buffer.writeFloat(green);
-        buffer.writeFloat(blue);
-        buffer.writeFloat(scale);
+        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue, scale);
     }
 
-    @Override
-    public @NotNull String writeToString()
-    {
-        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f", ForgeRegistries.PARTICLE_TYPES.getKey(this.getType()), this.red, this.green, this.blue, this.scale);
-    }
-
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public float getRed()
     {
-        return this.red;
+        return red;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public float getGreen()
     {
-        return this.green;
+        return green;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public float getBlue()
     {
-        return this.blue;
+        return blue;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public float getScale()
     {
-        return this.scale;
+        return scale;
     }
 }

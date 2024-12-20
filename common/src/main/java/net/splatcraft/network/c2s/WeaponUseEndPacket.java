@@ -1,13 +1,16 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCooldown;
 
 import java.util.UUID;
 
 public class WeaponUseEndPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WeaponUseEndPacket.class);
     UUID target;
 
     public WeaponUseEndPacket(UUID target)
@@ -15,22 +18,28 @@ public class WeaponUseEndPacket extends PlayC2SPacket
         this.target = target;
     }
 
-    public static WeaponUseEndPacket decode(FriendlyByteBuf buffer)
+    public static WeaponUseEndPacket decode(RegistryByteBuf buffer)
     {
-        return new WeaponUseEndPacket(buffer.readUUID());
+        return new WeaponUseEndPacket(buffer.readUuid());
     }
 
     @Override
-    public void execute(Player player)
+    public Id<? extends CustomPayload> getId()
     {
-        Player target = player.getWorld().getPlayerByUUID(this.target);
+        return ID;
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
+    {
+        PlayerEntity target = player.getWorld().getPlayerByUuid(this.target);
         PlayerCooldown.setCooldownTime(target, 1);
         PlayerCooldown.setPlayerCooldown(player, null);
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
-        buffer.writeUUID(target);
+        buffer.writeUuid(target);
     }
 }

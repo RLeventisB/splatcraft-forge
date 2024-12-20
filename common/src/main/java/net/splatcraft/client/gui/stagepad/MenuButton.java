@@ -1,26 +1,26 @@
 package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.narration.NarratedElementType;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.gui.screen.narration.NarrationPart;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
 import static net.splatcraft.client.gui.stagepad.AbstractStagePadScreen.WIDGETS;
 
-public class MenuButton extends Button
+public class MenuButton extends ButtonWidget
 {
     public static final OnTooltip NO_TOOLTIP = (h, e, l, o, partialTicks) ->
     {
     };
-    public static OnPress DO_NOTHING = (v) ->
+    public static PressAction DO_NOTHING = (v) ->
     {
     };
     final PostDraw draw;
@@ -29,14 +29,14 @@ public class MenuButton extends Button
     int relativeX;
     int relativeY;
 
-    public MenuButton(int x, int y, int width, OnPress onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color)
+    public MenuButton(int x, int y, int width, PressAction onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color)
     {
         this(x, y, width, 12, onPress, onTooltip, draw, color);
     }
 
-    public MenuButton(int x, int y, int width, int height, OnPress onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color)
+    public MenuButton(int x, int y, int width, int height, PressAction onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color)
     {
-        super(Button.builder(Component.empty(), onPress).pos(x, y).size(width, height));
+        super(x, y, width, height, Text.empty(), onPress, DEFAULT_NARRATION_SUPPLIER);
         this.onTooltip = onTooltip;
         this.color = color;
         this.draw = draw;
@@ -45,36 +45,36 @@ public class MenuButton extends Button
     }
 
     @Override
-    public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void renderWidget(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
         if (!visible)
             return;
 
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
         RenderSystem.setShaderTexture(0, WIDGETS);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
-        int i = this.getYImage(this.isHoveredOrFocused());
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+        int i = getYImage(isSelected());
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
-        guiGraphics.blit(WIDGETS, this.getX(), this.getY(), 0, getColor().ordinal() * 36 + i * 12, this.width / 2, this.height);
-        guiGraphics.blit(WIDGETS, this.getX() + this.width / 2, this.getY(), 180 - this.width / 2, getColor().ordinal() * 36 + i * 12, this.width / 2, this.height);
+        guiGraphics.drawTexture(WIDGETS, getX(), getY(), 0, getColor().ordinal() * 36 + i * 12, width / 2, height);
+        guiGraphics.drawTexture(WIDGETS, getX() + width / 2, getY(), 180 - width / 2, getColor().ordinal() * 36 + i * 12, width / 2, height);
         draw.apply(guiGraphics, this);
 
-        if (isHoveredOrFocused())
-            renderTooltip(guiGraphics, mouseX, mouseY, partialTicks);
+        if (isSelected())
+            drawTooltip(guiGraphics, mouseX, mouseY, partialTicks);
     }
 
-    public void renderTooltip(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void drawTooltip(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
         onTooltip.onTooltip(this, guiGraphics, mouseX, mouseY, partialTicks);
     }
 
     @Override
-    public void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput)
+    protected void appendDefaultNarrations(NarrationMessageBuilder builder)
     {
-        defaultButtonNarrationText(narrationElementOutput);
-        this.onTooltip.narrateTooltip(v -> narrationElementOutput.add(NarratedElementType.HINT, v));
+        super.appendDefaultNarrations(builder);
+        onTooltip.narrateTooltip(v -> builder.put(NarrationPart.HINT, v));
     }
 
     protected int getYImage(boolean hovered)
@@ -87,7 +87,6 @@ public class MenuButton extends Button
         return alpha;
     }
 
-    @Override
     public int getFGColor()
     {
         return 0xFFFFFF;
@@ -95,7 +94,7 @@ public class MenuButton extends Button
 
     public void setHovered(boolean hovered)
     {
-        isHovered = hovered;
+        this.hovered = hovered;
     }
 
     public ButtonColor getColor()
@@ -120,15 +119,15 @@ public class MenuButton extends Button
 
     public interface PostDraw
     {
-        void apply(GuiGraphics guiGraphics, MenuButton button);
+        void apply(DrawContext guiGraphics, MenuButton button);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public interface OnTooltip
     {
-        void onTooltip(MenuButton button, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks);
+        void onTooltip(MenuButton button, DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks);
 
-        default void narrateTooltip(Consumer<Component> components)
+        default void narrateTooltip(Consumer<Text> components)
         {
         }
     }

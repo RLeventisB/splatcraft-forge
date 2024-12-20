@@ -1,27 +1,25 @@
 package net.splatcraft.items.weapons;
 
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.core.BlockSource;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Position;
-import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
-import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.DispenserBlock;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.registries.RegistryObject;
-import net.splatcraft.client.SplatcraftItemRenderer;
+import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.block.DispenserBlock;
+import net.minecraft.block.dispenser.ItemDispenserBehavior;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.math.BlockPointer;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Position;
+import net.minecraft.world.World;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
@@ -30,15 +28,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 {
     public static final ArrayList<SubWeaponItem> subs = new ArrayList<>();
-    public final RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType;
+    public final RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType;
     public final SubWeaponAction useTick;
 
-    public SubWeaponItem(RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings, SubWeaponAction useTick)
+    public SubWeaponItem(RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings, SubWeaponAction useTick)
     {
         super(settings);
         this.entityType = entityType;
@@ -48,7 +45,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         DispenserBlock.registerBehavior(this, new SubWeaponItem.DispenseBehavior());
     }
 
-    public SubWeaponItem(RegistryObject<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings)
+    public SubWeaponItem(RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity>> entityType, String settings)
     {
         this(entityType, settings, (level, entity, stack, useTime) ->
         {
@@ -57,7 +54,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 
     public static boolean singleUse(ItemStack stack)
     {
-        return stack.getOrCreateTag().getBoolean("SingleUse");
+        return Boolean.TRUE.equals(stack.get(SplatcraftComponents.SINGLE_USE));
     }
 
     @Override
@@ -67,10 +64,10 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     }
 
     //	@Override
-//	public void fillItemCategory(@NotNull CreativeModeTab group, @NotNull NonNullList<ItemStack> list)
+//	public void fillItemCategory(@NotNull ItemGroup group, @NotNull DefaultedList<ItemStack> list)
 //	{
 //		super.fillItemCategory(group, list);
-//		if (!isSecret && group == CreativeModeTab.TAB_SEARCH)
+//		if (!isSecret && group == ItemGroup.TAB_SEARCH)
 //		{
 //			ItemStack stack = new ItemStack(this);
 //			stack.getOrCreateTag().putBoolean("SingleUse", true);
@@ -78,89 +75,89 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 //		}
 //	}
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
     {
-        if (SubWeaponItem.singleUse(stack))
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.single_use"));
-        super.appendHoverText(stack, level, tooltip, flag);
+        if (singleUse(stack))
+            tooltip.add(Text.translatable("item.splatcraft.tooltip.single_use"));
+        super.appendTooltip(stack, context, tooltip, flag);
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand)
+    public @NotNull TypedActionResult<ItemStack> use(@NotNull World world, PlayerEntity player, @NotNull Hand hand)
     {
         // this !(bool && bool) confuses me
-        if (!(player.isSwimming() && !player.isInWater()) && (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).subDataRecord.inkConsumption(), 0, true, true)))
-            player.startUsingItem(hand);
-        return useSuper(level, player, hand);
+        if (!(player.isSwimming() && !player.isSubmergedInWater()) && (singleUse(player.getStackInHand(hand)) || enoughInk(player, this, getSettings(player.getStackInHand(hand)).subDataRecord.inkConsumption(), 0, true, true)))
+            player.setCurrentHand(hand);
+        return useSuper(world, player, hand);
     }
 
     @Override
-    public int getMaxStackSize(ItemStack stack)
+    public int getMaxCount(ItemStack stack)
     {
-        return SubWeaponItem.singleUse(stack) ? 16 : 1;
+        return singleUse(stack) ? 16 : 1;
     }
 
     @Override
-    public boolean isBarVisible(@NotNull ItemStack stack)
+    public boolean isItemBarVisible(@NotNull ItemStack stack)
     {
-        return !SubWeaponItem.singleUse(stack) && super.isBarVisible(stack);
+        return !singleUse(stack) && super.isItemBarVisible(stack);
     }
 
     @Override
-    public void weaponUseTick(@NotNull Level level, @NotNull LivingEntity entity, @NotNull ItemStack itemStack, int timeLeft)
+    public void weaponUseTick(@NotNull World world, @NotNull LivingEntity entity, @NotNull ItemStack itemStack, int timeLeft)
     {
         SubWeaponSettings settings = getSettings(itemStack);
 
-        int useTime = getUseDuration(itemStack) - timeLeft;
+        int useTime = getMaxUseTime(itemStack, entity) - timeLeft;
         if (useTime == settings.subDataRecord.holdTime())
-            throwSub(itemStack, level, entity);
+            throwSub(itemStack, world, entity);
         else if (useTime < settings.subDataRecord.holdTime())
-            useTick.onUseTick(level, entity, itemStack, timeLeft);
+            useTick.onUseTick(world, entity, itemStack, timeLeft);
     }
 
     @Override
-    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity, int timeLeft)
+    public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
     {
-        super.releaseUsing(stack, level, entity, timeLeft);
-        if (getUseDuration(stack) - timeLeft < getSettings(stack).subDataRecord.holdTime())
-            throwSub(stack, level, entity);
+        super.onStoppedUsing(stack, world, entity, timeLeft);
+        if (getMaxUseTime(stack, entity) - timeLeft < getSettings(stack).subDataRecord.holdTime())
+            throwSub(stack, world, entity);
     }
 
-    protected void throwSub(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity)
+    protected void throwSub(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity)
     {
-        entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
+        entity.swingHand(entity.getOffHandStack().equals(stack) ? Hand.OFF_HAND : Hand.MAIN_HAND, false);
 
         SubWeaponSettings settings = getSettings(stack);
-        if (!level.isClientSide())
+        if (!world.isClient())
         {
-            AbstractSubWeaponEntity proj = AbstractSubWeaponEntity.create(entityType.get(), level, entity, stack.copy());
+            AbstractSubWeaponEntity proj = AbstractSubWeaponEntity.create(entityType.get(), world, entity, stack.copy());
 
-            stack.getOrCreateTag().remove("EntityData");
+            stack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
 
             proj.setItem(stack.copy());
-            proj.shoot(entity, entity.getXRot(), entity.getYRot(), settings.subDataRecord.throwAngle(), settings.subDataRecord.throwVelocity(), 0);
-            proj.setDeltaMovement(proj.getDeltaMovement().add(entity.getDeltaMovement().multiply(1, 0, 1)));
-            level.addFreshEntity(proj);
+            proj.shoot(entity, entity.getPitch(), entity.getYaw(), settings.subDataRecord.throwAngle(), settings.subDataRecord.throwVelocity(), 0);
+            proj.setVelocity(proj.getVelocity().add(entity.getVelocity().multiply(1, 0, 1)));
+            world.spawnEntity(proj);
         }
-        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
-        if (SubWeaponItem.singleUse(stack))
+        world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundCategory.PLAYERS, 0.7F, 1);
+        if (singleUse(stack))
         {
-            if (entity instanceof Player && !((Player) entity).isCreative())
-                stack.shrink(1);
+            if (entity instanceof PlayerEntity player && !player.isCreative())
+                stack.decrement(1);
         }
         else
             reduceInk(entity, this, settings.subDataRecord.inkConsumption(), settings.subDataRecord.inkRecoveryCooldown(), false);
     }
 
-    @Override
+    /*@Override
     public void initializeClient(@NotNull Consumer<IClientItemExtensions> consumer)
     {
         super.initializeClient(consumer);
         consumer.accept(new SubWeaponClientItemExtensions());
-    }
+    }*/
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.SUB_HOLD;
     }
@@ -168,15 +165,15 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
     @Override
     public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
     {
-        if (oldStack.hasTag() && newStack.hasTag())
+        if (oldStack.contains(SplatcraftComponents.SUB_WEAPON_DATA) && newStack.contains(SplatcraftComponents.SUB_WEAPON_DATA))
         {
             oldStack = oldStack.copy();
             newStack = newStack.copy();
 
-            oldStack.getTag().remove("EntityData");
-            newStack.getTag().remove("EntityData");
+            oldStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
+            newStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
 
-            return !ItemStack.isSameItem(oldStack, newStack);
+            return !ItemStack.areItemsEqual(oldStack, newStack);
         }
 
         return super.shouldCauseReequipAnimation(oldStack, newStack, slotChanged);
@@ -184,50 +181,50 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 
     public interface SubWeaponAction
     {
-        void onUseTick(Level level, LivingEntity entity, ItemStack stack, int useTime);
+        void onUseTick(World world, LivingEntity entity, ItemStack stack, int useTime);
     }
 
-    public static class DispenseBehavior extends DefaultDispenseItemBehavior
+    public static class DispenseBehavior extends ItemDispenserBehavior
     {
         @Override
-        public @NotNull ItemStack execute(@NotNull BlockSource source, @NotNull ItemStack stack)
+        public @NotNull ItemStack dispenseSilently(@NotNull BlockPointer source, @NotNull ItemStack stack)
         {
-            if (SubWeaponItem.singleUse(stack))
+            if (singleUse(stack))
             {
                 ItemStack thrownStack = stack.copy();
-                thrownStack.getOrCreateTag().remove("EntityData");
+                thrownStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
 
-                Level world = source.getLevel();
-                Position iposition = DispenserBlock.getDispensePosition(source);
-                Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
-                AbstractSubWeaponEntity projectileentity = this.getProjectile(world, iposition, thrownStack);
-                projectileentity.shoot(direction.getStepX(), (float) direction.getStepY() + 0.1F, direction.getStepZ(), this.getPower(), this.getUncertainty());
-                world.addFreshEntity(projectileentity);
-                stack.shrink(1);
+                World world = source.world();
+                Position iposition = DispenserBlock.getOutputLocation(source);
+                Direction direction = source.state().get(DispenserBlock.FACING);
+                AbstractSubWeaponEntity projectileentity = getProjectile(world, iposition, thrownStack);
+                projectileentity.shoot(direction.getOffsetX(), direction.getOffsetY() + 0.1F, direction.getOffsetZ(), getPower(), getUncertainty());
+                world.spawnEntity(projectileentity);
+                stack.decrement(1);
 
-                source.getLevel().playSound(null, source.x(), source.y(), source.z(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
+                source.world().playSound(null, source.pos(), SplatcraftSounds.subThrow, SoundCategory.PLAYERS, 0.7F, 1);
 
                 return stack;
             }
 
-            Direction direction = source.getBlockState().getValue(DispenserBlock.FACING);
-            Position iposition = DispenserBlock.getDispensePosition(source);
+            Direction direction = source.state().get(DispenserBlock.FACING);
+            Position iposition = DispenserBlock.getOutputLocation(source);
             ItemStack itemstack = stack.split(1);
-            spawnItem(source.getLevel(), itemstack, 6, direction, iposition);
+            spawnItem(source.world(), itemstack, 6, direction, iposition);
             return stack;
-        }
-
-        protected AbstractSubWeaponEntity getProjectile(Level levelIn, Position position, ItemStack stackIn)
-        {
-            if (!(stackIn.getItem() instanceof SubWeaponItem))
-                return null;
-
-            return AbstractSubWeaponEntity.create(((SubWeaponItem) stackIn.getItem()).entityType.get(), levelIn, position.x(), position.y(), position.z(), ColorUtils.getInkColor(stackIn), InkBlockUtils.InkType.NORMAL, stackIn);
         }
 
         protected float getPower()
         {
             return 0.7f;
+        }
+
+        protected AbstractSubWeaponEntity getProjectile(World levelIn, Position position, ItemStack stackIn)
+        {
+            if (!(stackIn.getItem() instanceof SubWeaponItem subWeaponItem))
+                return null;
+
+            return AbstractSubWeaponEntity.create(subWeaponItem.entityType.get(), levelIn, position.getX(), position.getY(), position.getZ(), ColorUtils.getInkColor(stackIn), InkBlockUtils.InkType.NORMAL, stackIn);
         }
 
         protected float getUncertainty()
@@ -236,12 +233,12 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
         }
     }
 
-    private static class SubWeaponClientItemExtensions implements IClientItemExtensions
+    /*private static class SubWeaponClientItemExtensions implements IClientItemExtensions
     {
         @Override
         public BlockEntityWithoutLevelRenderer getCustomRenderer()
         {
             return SplatcraftItemRenderer.INSTANCE;
         }
-    }
+    }*/
 }

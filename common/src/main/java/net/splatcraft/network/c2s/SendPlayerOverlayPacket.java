@@ -1,13 +1,14 @@
 package net.splatcraft.network.c2s;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.ReceivePlayerOverlayPacket;
+import net.splatcraft.util.CommonUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,14 +17,14 @@ import java.util.UUID;
 
 public class SendPlayerOverlayPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendPlayerOverlayPacket.class);
     final UUID player;
     final byte[] imageBytes;
-
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public SendPlayerOverlayPacket(UUID player, File file) throws IOException
     {
         this.player = player;
-        imageBytes = NativeImage.read(new FileInputStream(file)).asByteArray();
+        imageBytes = net.minecraft.client.texture.NativeImage.read(new FileInputStream(file)).getBytes();
     }
 
     public SendPlayerOverlayPacket(UUID player, byte[] imageBytes)
@@ -32,20 +33,26 @@ public class SendPlayerOverlayPacket extends PlayC2SPacket
         this.player = player;
     }
 
-    public static SendPlayerOverlayPacket decode(FriendlyByteBuf buffer)
+    public static SendPlayerOverlayPacket decode(RegistryByteBuf buffer)
     {
-        return new SendPlayerOverlayPacket(buffer.readUUID(), buffer.readByteArray());
+        return new SendPlayerOverlayPacket(buffer.readUuid(), buffer.readByteArray());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeUUID(player);
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
+    {
+        buffer.writeUuid(player);
         buffer.writeByteArray(imageBytes);
     }
 
     @Override
-    public void execute(Player player)
+    public void execute(PlayerEntity player)
     {
         if (imageBytes.length > 0)
             SplatcraftCommonHandler.COLOR_SKIN_OVERLAY_SERVER_CACHE.put(this.player, imageBytes);

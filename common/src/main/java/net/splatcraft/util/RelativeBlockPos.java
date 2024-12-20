@@ -1,11 +1,11 @@
 package net.splatcraft.util;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.ChunkSectionPos;
+import net.minecraft.util.math.Vec3i;
 
 /**
  * A block position whose X and Z are relative to a chunk position. Y is kept absolute.
@@ -25,9 +25,9 @@ public class RelativeBlockPos extends Vec3i
     public static RelativeBlockPos fromAbsolute(BlockPos pos)
     {
         return new RelativeBlockPos(
-            (byte) SectionPos.sectionRelative(pos.getX()),
+            (byte) ChunkSectionPos.getSectionCoord(pos.getX()),
             pos.getY(),
-            (byte) SectionPos.sectionRelative(pos.getZ())
+            (byte) ChunkSectionPos.getSectionCoord(pos.getZ())
         );
     }
 
@@ -52,7 +52,7 @@ public class RelativeBlockPos extends Vec3i
      * @param buf The packet buffer to read from.
      * @apiNote The buffer must have three integers in a row for construction to be successful.
      */
-    public static RelativeBlockPos fromBuf(FriendlyByteBuf buf)
+    public static RelativeBlockPos fromBuf(PacketByteBuf buf)
     {
         return new RelativeBlockPos(
             buf.readByte(),
@@ -69,7 +69,7 @@ public class RelativeBlockPos extends Vec3i
      */
     public BlockPos toAbsolute(ChunkPos pos)
     {
-        return new BlockPos(this.offset(pos.x * 16, 0, pos.z * 16));
+        return new BlockPos(add(pos.x * 16, 0, pos.z * 16));
     }
 
     /**
@@ -93,7 +93,7 @@ public class RelativeBlockPos extends Vec3i
      * @param buf The packet buffer to write to
      * @return The modified buffer
      */
-    public FriendlyByteBuf writeBuf(FriendlyByteBuf buf)
+    public PacketByteBuf writeBuf(PacketByteBuf buf)
     {
         buf.writeByte(getX());
         buf.writeInt(getY());

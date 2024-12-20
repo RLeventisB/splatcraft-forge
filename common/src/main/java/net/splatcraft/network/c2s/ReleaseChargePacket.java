@@ -1,17 +1,19 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
 
 public class ReleaseChargePacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(ReleaseChargePacket.class);
     private final float charge;
     private final ItemStack stack;
     private final boolean resetCharge;
-
     public ReleaseChargePacket(float charge, ItemStack stack)
     {
         this(charge, stack, true);
@@ -24,13 +26,19 @@ public class ReleaseChargePacket extends PlayC2SPacket
         this.resetCharge = resetCharge;
     }
 
-    public static ReleaseChargePacket decode(FriendlyByteBuf buffer)
+    public static ReleaseChargePacket decode(RegistryByteBuf buffer)
     {
-        return new ReleaseChargePacket(buffer.readFloat(), buffer.readItem(), buffer.readBoolean());
+        return new ReleaseChargePacket(buffer.readFloat(), ItemStack.PACKET_CODEC.decode(buffer), buffer.readBoolean());
     }
 
     @Override
-    public void execute(Player player)
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
     {
         if (!PlayerCharge.hasCharge(player))
         {
@@ -49,10 +57,10 @@ public class ReleaseChargePacket extends PlayC2SPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeFloat(charge);
-        buffer.writeItem(stack);
+        ItemStack.PACKET_CODEC.encode(buffer, stack);
         buffer.writeBoolean(resetCharge);
     }
 }

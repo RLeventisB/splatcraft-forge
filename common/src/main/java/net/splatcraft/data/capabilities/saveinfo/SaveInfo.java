@@ -1,36 +1,30 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
-import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
+import net.splatcraft.util.InkColor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class SaveInfo
+public record SaveInfo(Map<String, PlaySession> playSessions, Map<String, Stage> stages, List<InkColor> colorScores)
 {
-    public final HashMap<String, PlaySession> playSessions = new HashMap<>();
-    private final HashMap<String, Stage> stages = new HashMap<>();
-    boolean stagesLoaded = false;
-    private ArrayList<Integer> colorScores = new ArrayList<>();
+    public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+        Codec.unboundedMap(Codec.STRING, PlaySession.CODEC).fieldOf("PlaySessions").forGetter(SaveInfo::playSessions),
+        Codec.unboundedMap(Codec.STRING, Stage.CODEC.codec()).fieldOf("Stages").forGetter(SaveInfo::stages),
+        Codec.list(InkColor.CODEC).fieldOf("Stages").forGetter(SaveInfo::colorScores)
+    ).apply(inst, SaveInfo::new));
 
-    public Collection<Integer> getInitializedColorScores()
+    public void addInitializedColorScores(InkColor... colors)
     {
-        return colorScores;
-    }
-
-    public void addInitializedColorScores(Integer... colors)
-    {
-        for (Integer color : colors)
+        for (InkColor color : colors)
         {
             if (!colorScores.contains(color))
             {
@@ -39,19 +33,19 @@ public class SaveInfo
         }
     }
 
-    public void removeColorScore(Integer color)
+    public void removeColorScore(InkColor color)
     {
         colorScores.remove(color);
     }
 
-    public HashMap<String, Stage> getStages()
+    public Map<String, Stage> getStages()
     {
         return stages;
     }
 
-    public boolean createOrEditStage(Level stageLevel, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
+    public boolean createOrEditStage(World stageLevel, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
     {
-        if (stageLevel.isClientSide())
+        if (stageLevel.isClient())
             return false;
 
         if (stages.containsKey(stageId))
@@ -59,7 +53,7 @@ public class SaveInfo
             Stage stage = stages.get(stageId);
             stage.seStagetName(stageName);
             stage.updateBounds(stageLevel, corner1, corner2);
-            stage.dimID = stageLevel.dimension().location();
+            stage.dimID = stageLevel.getDimension().effects();
         }
         else
             stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
@@ -68,68 +62,21 @@ public class SaveInfo
         return true;
     }
 
-    public boolean createStage(Level level, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
+    public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
     {
-        if (level.isClientSide())
+        if (world.isClient())
             return false;
 
         if (stages.containsKey(stageId))
             return false;
 
-        stages.put(stageId, new Stage(level, corner1, corner2, stageId, stageName));
+        stages.put(stageId, new Stage(world, corner1, corner2, stageId, stageName));
         SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
         return true;
     }
 
-    public boolean createStage(Level level, String stageId, BlockPos corner1, BlockPos corner2)
+    public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2)
     {
-        return createStage(level, stageId, corner1, corner2, Component.literal(stageId));
-    }
-
-    public NbtCompound writeNBT(NbtCompound nbt)
-    {
-        int[] arr = new int[colorScores.size()];
-        for (int i = 0; i < colorScores.size(); i++)
-        {
-            arr[i] = colorScores.get(i);
-        }
-
-        nbt.putIntArray("StoredCriteria", arr);
-
-        NbtCompound stageNbt = new NbtCompound();
-
-        for (Map.Entry<String, Stage> e : stages.entrySet())
-            stageNbt.put(e.getKey(), e.getValue().writeData());
-
-        nbt.put("Stages", stageNbt);
-
-        NbtCompound playSessions = new NbtCompound();
-
-        for (Map.Entry<String, PlaySession> e : this.playSessions.entrySet())
-            playSessions.put(e.getKey(), e.getValue().saveTag());
-
-        nbt.put("PlaySessions", playSessions);
-
-        return nbt;
-    }
-
-    public void readNBT(NbtCompound nbt)
-    {
-        colorScores = new ArrayList<>();
-        ScoreboardHandler.clearColorCriteria();
-
-        for (int i : nbt.getIntArray("StoredCriteria"))
-        {
-            colorScores.add(i);
-            ScoreboardHandler.createColorCriterion(i);
-        }
-
-        stages.clear();
-        for (String key : nbt.getCompound("Stages").getAllKeys())
-            stages.put(key, new Stage(nbt.getCompound("Stages").getCompound(key), key));
-
-        playSessions.clear();
-        for (String key : nbt.getCompound("PlaySessions").getAllKeys())
-            playSessions.put(key, PlaySession.fromTag(Minecraft.getInstance().getSingleplayerServer(), nbt.getCompound("PlaySessions").getCompound(key)));
+        return createStage(world, stageId, corner1, corner2, Text.literal(stageId));
     }
 }

@@ -1,14 +1,14 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3d;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.Item;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftItems;
@@ -20,25 +20,24 @@ import net.splatcraft.util.InkExplosion;
 
 public class BurstBombEntity extends AbstractSubWeaponEntity
 {
-    public BurstBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
+    public BurstBombEntity(EntityType<? extends AbstractSubWeaponEntity> type, World world)
     {
-        super(type, level);
+        super(type, world);
     }
 
-    @Override
-    protected void onHitEntity(EntityHitResult result)
+    protected void onEntityHit(EntityHitResult result)
     {
-        super.onHitEntity(result);
+        super.onEntityHit(result);
 
         SubWeaponSettings settings = getSettings();
 
         if (result.getEntity() instanceof LivingEntity target)
             InkDamageUtils.doDamage(target, settings.subDataRecord.directDamage(), getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
-        InkExplosion.createInkExplosion(getOwner(), result.getLocation(), settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
+        InkExplosion.createInkExplosion(getOwner(), result.getPos(), settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
 
-        level().broadcastEntityEvent(this, (byte) 1);
-        level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
-        if (!level().isClientSide())
+        getWorld().sendEntityStatus(this, (byte) 1);
+        getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
+        if (!getWorld().isClient())
             discard();
     }
 
@@ -46,31 +45,31 @@ public class BurstBombEntity extends AbstractSubWeaponEntity
     protected void onBlockHit(BlockHitResult result)
     {
         SubWeaponSettings settings = getSettings();
-        Vec3d impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection().getNormal());
+        Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector());
         InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
-        level().broadcastEntityEvent(this, (byte) 1);
-        level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.triangle(level().getRandom(), 0.95F, 0.095F));
+        getWorld().sendEntityStatus(this, (byte) 1);
+        getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
         discard();
     }
 
     @Override
-    public void handleEntityEvent(byte id)
+    public void handleStatus(byte id)
     {
-        super.handleEntityEvent(id);
+        super.handleStatus(id);
         if (id == 1)
         {
-            level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
         }
     }
 
     @Override
     public void updateRotation()
     {
-        float angle = -tickCount * MathHelper.RAD_TO_DEG * 0.4f;
-        Vec3d vec3 = this.getDeltaMovement();
-        double d0 = vec3.horizontalDistance();
-        this.setXRot(angle);
-        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG)));
+        float angle = -age * MathHelper.DEGREES_PER_RADIAN * 0.4f;
+        Vec3d vec3 = getVelocity();
+        double d0 = vec3.horizontalLength();
+        setPitch(angle);
+        setYaw(CommonUtils.lerpRotation(0.2f, prevYaw, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN)));
     }
 
     @Override

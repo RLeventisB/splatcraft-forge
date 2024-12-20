@@ -1,26 +1,33 @@
 package net.splatcraft.handlers;
 
 import com.google.common.collect.Maps;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.scores.criteria.ObjectiveCriteria;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.scoreboard.ScoreHolder;
+import net.minecraft.scoreboard.ScoreboardCriterion;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorAliases;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.InkColor;
 
 import java.util.*;
 
 public class ScoreboardHandler
 {
-    public static final ObjectiveCriteria COLOR = new ObjectiveCriteria(Splatcraft.MODID + ".inkColor");
-    public static final ObjectiveCriteria TURF_WAR_SCORE = new ObjectiveCriteria(Splatcraft.MODID + ".turfWarScore");
-    protected static final Map<Integer, CriteriaInkColor[]> COLOR_CRITERIA = Maps.newHashMap();
+    public static final ScoreboardCriterion COLOR = ScoreboardCriterion.getOrCreateStatCriterion(Splatcraft.MODID + ".inkColor").get();
+    public static final ScoreboardCriterion TURF_WAR_SCORE = ScoreboardCriterion.getOrCreateStatCriterion(Splatcraft.MODID + ".turfWarScore").get();
+    protected static final Map<InkColor, CriteriaInkColor[]> COLOR_CRITERIA = Maps.newHashMap();
 
-    public static void updatePlayerScore(ObjectiveCriteria criteria, Player player, int color)
+    //this method is WEIRD why is the third parameter called "color" which sets the score as the color value, which is fine, until you get to TurfScannerItem putting something that isnt a color here????
+    public static void updatePlayerScore(ScoreboardCriterion criteria, PlayerEntity player, InkColor color)
     {
-        player.getScoreboard().forAllObjectives(criteria, player.getScoreboardName(), p_195397_1_ -> p_195397_1_.setScore(color));
+        player.getScoreboard().forEachScore(criteria, ScoreHolder.fromProfile(player.getGameProfile()), scoreAccess -> scoreAccess.setScore(color.getColor()));
     }
 
-    public static void createColorCriterion(int color)
+    public static void updatePlayerScore(ScoreboardCriterion criteria, PlayerEntity player, int score)
+    {
+        player.getScoreboard().forEachScore(criteria, ScoreHolder.fromProfile(player.getGameProfile()), scoreAccess -> scoreAccess.setScore(score));
+    }
+
+    public static void createColorCriterion(InkColor color)
     {
         COLOR_CRITERIA.put(color, new CriteriaInkColor[]
             {
@@ -34,7 +41,7 @@ public class ScoreboardHandler
 
     public static void clearColorCriteria()
     {
-        for (int color : COLOR_CRITERIA.keySet())
+        for (InkColor color : COLOR_CRITERIA.keySet())
         {
             for (CriteriaInkColor c : COLOR_CRITERIA.get(color))
             {
@@ -44,7 +51,7 @@ public class ScoreboardHandler
         COLOR_CRITERIA.clear();
     }
 
-    public static void removeColorCriterion(int color)
+    public static void removeColorCriterion(InkColor color)
     {
         if (hasColorCriterion(color))
         {
@@ -56,7 +63,7 @@ public class ScoreboardHandler
         }
     }
 
-    public static boolean hasColorCriterion(int color)
+    public static boolean hasColorCriterion(InkColor color)
     {
         return COLOR_CRITERIA.containsKey(color);
     }
@@ -67,52 +74,43 @@ public class ScoreboardHandler
 
         COLOR_CRITERIA.keySet().forEach(key ->
         {
-            InkColor colorObj = InkColor.getByHex(key);
-
-            if (colorObj != null)
-            {
-                suggestions.add(Objects.requireNonNull(InkColorAliases.getAliasesForColor(key)).toString());
-            }
-            else
-            {
-                suggestions.add(InkColorAliases.getAliasesForColor(key).toString());
-            }
+            suggestions.add(key.toString());
         });
 
         return suggestions;
     }
 
-    public static Set<Integer> getCriteriaKeySet()
+    public static Set<InkColor> getCriteriaKeySet()
     {
         return COLOR_CRITERIA.keySet();
     }
 
-    public static CriteriaInkColor getColorKills(int color)
+    public static CriteriaInkColor getColorKills(InkColor color)
     {
         return COLOR_CRITERIA.get(color)[0];
     }
 
-    public static CriteriaInkColor getDeathsAsColor(int color)
+    public static CriteriaInkColor getDeathsAsColor(InkColor color)
     {
         return COLOR_CRITERIA.get(color)[1];
     }
 
-    public static CriteriaInkColor getKillsAsColor(int color)
+    public static CriteriaInkColor getKillsAsColor(InkColor color)
     {
         return COLOR_CRITERIA.get(color)[2];
     }
 
-    public static CriteriaInkColor getColorWins(int color)
+    public static CriteriaInkColor getColorWins(InkColor color)
     {
         return COLOR_CRITERIA.get(color)[3];
     }
 
-    public static CriteriaInkColor getColorLosses(int color)
+    public static CriteriaInkColor getColorLosses(InkColor color)
     {
         return COLOR_CRITERIA.get(color)[4];
     }
 
-    public static CriteriaInkColor[] getAllFromColor(int color)
+    public static CriteriaInkColor[] getAllFromColor(InkColor color)
     {
         return COLOR_CRITERIA.get(color);
     }
@@ -121,26 +119,26 @@ public class ScoreboardHandler
     {
     }
 
-    public static String getColorIdentifier(int color)
+    public static String getColorIdentifier(InkColor color)
     {
-        return InkColor.getByHex(color) == null ? String.format("%06X", color).toLowerCase() : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getPath();
+        return Objects.requireNonNull(InkColorRegistry.getColorAlias(color)).getPath();
     }
 
-    public static class CriteriaInkColor extends ObjectiveCriteria
+    public static class CriteriaInkColor extends ScoreboardCriterion
     {
         private final String name;
 
-        public CriteriaInkColor(String name, int color)
+        public CriteriaInkColor(String name, InkColor color)
         {
-            super((InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
+            super((Objects.requireNonNull(InkColorRegistry.getColorAlias(color)).getNamespace())
                 + "." + name + "." + getColorIdentifier(color));
-            this.name = (InkColor.getByHex(color) == null ? Splatcraft.MODID : Objects.requireNonNull(InkColorAliases.getFirstAliasForColor(color)).getNamespace())
+            this.name = (Objects.requireNonNull(InkColorRegistry.getColorAlias(color)).getNamespace())
                 + "." + name + "." + getColorIdentifier(color);
         }
 
         public void remove()
         {
-            ObjectiveCriteria.CRITERIA_CACHE.remove(name);
+            CRITERIA.remove(name);
         }
     }
 }

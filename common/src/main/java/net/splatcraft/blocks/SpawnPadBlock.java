@@ -1,108 +1,104 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.DismountHelper;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.Dismounting;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.ai.pathing.NavigationType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock
+public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable, BlockEntityProvider, ISplatcraftForgeBlockDummy
 {
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    public static final DirectionProperty DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
-    private static final VoxelShape SHAPE = box(0, 0, 0, 16, 6.1, 16);
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
+    public static final DirectionProperty DIRECTION = Properties.HORIZONTAL_FACING;
+    private static final VoxelShape SHAPE = createCuboidShape(0, 0, 0, 16, 6.1, 16);
     private Aux auxBlock;
 
     public SpawnPadBlock()
     {
-        super(Properties.of().mapColor(MapColor.METAL).strength(2.0f).requiresCorrectToolForDrops());
-        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
+        super(AbstractBlock.Settings.create().mapColor(MapColor.IRON_GRAY).strength(2.0f).requiresTool());
+        setDefaultState(getStateManager().getDefaultState().with(WATERLOGGED, false).with(DIRECTION, Direction.NORTH));
 
         SplatcraftBlocks.inkColoredBlocks.add(this);
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+    public BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
     {
-        return SplatcraftTileEntities.spawnPadTileEntity.get().create(pos, state);
+        return SplatcraftTileEntities.spawnPadTileEntity.get().instantiate(pos, state);
     }
 
     @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    public @NotNull VoxelShape getOutlineShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
     {
         return SHAPE;
     }
 
     @Override
-    public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader levelReader, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+    public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, WorldView WorldView, BlockPos pos, float orientation, @Nullable LivingEntity entity)
     {
-        if (entity != null && !ColorUtils.colorEquals(entity, levelReader.getBlockEntity(pos)))
+        if (entity != null && !ColorUtils.colorEquals(entity, WorldView.getBlockEntity(pos)))
             return Optional.empty();
 
-        Vec3d vec = DismountHelper.findSafeDismountLocation(type, levelReader, pos, false);
+        Vec3d vec = Dismounting.findRespawnPos(type, WorldView, pos, false);
 
         return vec == null ? Optional.empty() : Optional.of(vec);
     }
 
-    @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player)
-    {
-        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getCloneItemStack(state, target, level, pos, player), getColor((Level) level, pos)), true);
-    }
+//    @Override
+//    public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
+//    {
+//        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getPickStack(level, pos, state), getColor((World) level, pos)), true);
+//    }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
+    public BlockState getPlacementState(@NotNull ItemPlacementContext context)
     {
         for (Direction dir : Direction.values())
         {
-            if (dir.get2DDataValue() < 0)
+            if (dir.getHorizontal() < 0)
                 continue;
 
             for (int i = 0; i <= 1; i++)
-                if (!context.getLevel().getBlockState(context.getClickedPos().relative(dir).relative(dir.getCounterClockWise(), i)).canBeReplaced(context))
+                if (!context.getWorld().getBlockState(context.getBlockPos().offset(dir).offset(dir.rotateYCounterclockwise(), i)).canReplace(context))
                     return null;
         }
-        return defaultBlockState().setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER).setValue(DIRECTION, context.getHorizontalDirection());
+        return getDefaultState().with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER).with(DIRECTION, context.getHorizontalPlayerFacing());
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
     {
         builder.add(WATERLOGGED).add(DIRECTION);
     }
@@ -110,28 +106,28 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
     @Override
     public @NotNull FluidState getFluidState(BlockState state)
     {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (stateIn.getValue(WATERLOGGED))
+        if (stateIn.get(WATERLOGGED))
         {
-            levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+            levelIn.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(levelIn));
         }
 
-        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+        return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
     }
 
-    @Override
-    public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
+    /*@Override
+    public @NotNull PistonBehavior getPistonBehavior(@NotNull BlockState state)
     {
-        return PushReaction.BLOCK;
-    }
+        return PistonBehavior.BLOCK;
+    }*/
 
     @Override
-    public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter reader, @NotNull BlockPos pos, @NotNull BlockState state)
+    public @NotNull ItemStack getPickStack(@NotNull WorldView reader, @NotNull BlockPos pos, @NotNull BlockState state)
     {
         ItemStack stack = new ItemStack(this);
 
@@ -142,54 +138,54 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
     }
 
     @Override
-    public boolean isPathfindable(@NotNull BlockState p_196266_1_, @NotNull BlockGetter p_196266_2_, @NotNull BlockPos p_196266_3_, @NotNull PathComputationType p_196266_4_)
+    public boolean canPathfindThrough(@NotNull BlockState p_196266_1_, NavigationType type)
     {
         return false;
     }
 
     @Override
-    public boolean isPossibleToRespawnInThis(@NotNull BlockState state)
+    public boolean canMobSpawnInside(@NotNull BlockState state)
     {
         return true;
     }
 
     @Override
-    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+    public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
     {
-        if (stack.getTag() != null && level.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
+        if (!stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
         {
-            ColorUtils.setInkColor(level.getBlockEntity(pos), ColorUtils.getInkColor(stack));
+            ColorUtils.setInkColor(world.getBlockEntity(pos), ColorUtils.getInkColor(stack));
 
-            SpawnShieldEntity shield = new SpawnShieldEntity(level, pos, ColorUtils.getInkColorOrInverted(stack));
+            SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getInkColorOrInverted(stack));
             spawnPadTile.setSpawnShield(shield);
 
-            level.addFreshEntity(shield);
+            world.spawnEntity(shield);
         }
 
         for (Direction dir : Direction.values())
         {
-            if (dir.get2DDataValue() < 0)
+            if (dir.getHorizontal() < 0)
                 continue;
 
             for (int i = 0; i <= 1; i++)
             {
-                BlockPos auxPos = pos.relative(dir).relative(dir.getCounterClockWise(), i);
-                level.setBlock(auxPos, auxBlock.defaultBlockState()
-                    .setValue(WATERLOGGED, level.getFluidState(auxPos).getType() == Fluids.WATER)
-                    .setValue(DIRECTION, dir)
-                    .setValue(Aux.IS_CORNER, i == 1), 3);
+                BlockPos auxPos = pos.offset(dir).offset(dir.rotateYCounterclockwise(), i);
+                world.setBlockState(auxPos, auxBlock.getDefaultState()
+                    .with(WATERLOGGED, world.getFluidState(auxPos).getRegistryEntry() == Fluids.WATER)
+                    .with(DIRECTION, dir)
+                    .with(Aux.IS_CORNER, i == 1), 3);
             }
         }
-        level.blockUpdated(pos, Blocks.AIR);
-        state.updateNeighbourShapes(level, pos, 3);
+        world.updateNeighbors(pos, Blocks.AIR);
+        state.updateNeighbors(world, pos, 3);
 
-        super.setPlacedBy(level, pos, state, entity, stack);
+        super.onPlaced(world, pos, state, entity, stack);
     }
 
     @Override
-    public void playerWillDestroy(@NotNull Level p_176208_1_, @NotNull BlockPos p_176208_2_, @NotNull BlockState p_176208_3_, @NotNull Player p_176208_4_)
+    public BlockState onBreak(@NotNull World p_176208_1_, @NotNull BlockPos p_176208_2_, @NotNull BlockState p_176208_3_, @NotNull PlayerEntity p_176208_4_)
     {
-        super.playerWillDestroy(p_176208_1_, p_176208_2_, p_176208_3_, p_176208_4_);
+        return super.onBreak(p_176208_1_, p_176208_2_, p_176208_3_, p_176208_4_);
     }
 
     @Override
@@ -211,86 +207,86 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
     }
 
     @Override
-    public int getColor(Level level, BlockPos pos)
+    public InkColor getColor(WorldView world, BlockPos pos)
     {
-        if (level.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
+        if (world.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
         {
-            return tileEntity.getColor();
+            return tileEntity.getInkColor();
         }
-        return -1;
+        return InkColor.INVALID;
     }
 
     @Override
-    public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
+    public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
     {
-        BlockState state = level.getBlockState(pos);
-        if (level.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad && spawnPad.getColor() != newColor)
+        BlockState state = world.getBlockState(pos);
+        if (world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad && spawnPad.getInkColor() != newColor)
         {
             spawnPad.setColor(newColor);
             SpawnShieldEntity shield = spawnPad.getSpawnShield();
             if (shield != null)
-                shield.setColor(ColorUtils.getInkColorOrInverted(level, pos));
-            level.sendBlockUpdated(pos, state, state, 3);
-            state.updateNeighbourShapes(level, pos, 3);
+                shield.setColor(ColorUtils.getInkColorOrInverted(world, pos));
+            world.updateListeners(pos, state, state, 3);
+            state.updateNeighbors(world, pos, 3);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean remoteInkClear(Level level, BlockPos pos)
+    public boolean remoteInkClear(World world, BlockPos pos)
     {
         return false;
     }
 
-    public static class Aux extends Block implements IColoredBlock, SimpleWaterloggedBlock
+    public static class Aux extends Block implements IColoredBlock, Waterloggable, ISplatcraftForgeBlockDummy
     {
-        public static final BooleanProperty IS_CORNER = BooleanProperty.create("corner");
+        public static final BooleanProperty IS_CORNER = BooleanProperty.of("corner");
         private static final VoxelShape[] SHAPES = new VoxelShape[8];
         final SpawnPadBlock parent;
 
         public Aux(SpawnPadBlock parent)
         {
-            super(parent.properties);
+            super(parent.settings);
             this.parent = parent;
 
             parent.auxBlock = this;
 
-            this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH).setValue(IS_CORNER, false));
+            setDefaultState(getStateManager().getDefaultState().with(WATERLOGGED, false).with(DIRECTION, Direction.NORTH).with(IS_CORNER, false));
         }
 
         @Override
-        public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter reader, @NotNull BlockPos pos, @NotNull CollisionContext context)
+        public VoxelShape getOutlineShape(BlockState state, @NotNull BlockView reader, @NotNull BlockPos pos, @NotNull ShapeContext context)
         {
-            int i = state.getValue(DIRECTION).get2DDataValue() * 2 + (state.getValue(IS_CORNER) ? 1 : 0);
+            int i = state.get(DIRECTION).getHorizontal() * 2 + (state.get(IS_CORNER) ? 1 : 0);
 
             if (i < 0)
-                return Shapes.empty();
+                return VoxelShapes.empty();
 
             if (SHAPES[i] == null)
-                SHAPES[i] = Shapes.or(
-                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 8 : 0, 0, 8, 16, 6, 16)),
-                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION).getOpposite(), Block.box(0, 6, 6, state.getValue(IS_CORNER) ? 7 : 16, 7, 7)),
-                    BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(state.getValue(IS_CORNER) ? 10 : 0, 0, 10, 16, 6.1, 16)),
-                    state.getValue(IS_CORNER) ? BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), Block.box(9, 6, 10, 10, 7, 16)) : Shapes.empty());
+                SHAPES[i] = VoxelShapes.union(
+                    BarrierBarBlock.modifyShapeForDirection(state.get(DIRECTION), createCuboidShape(state.get(IS_CORNER) ? 8 : 0, 0, 8, 16, 6, 16)),
+                    BarrierBarBlock.modifyShapeForDirection(state.get(DIRECTION).getOpposite(), createCuboidShape(0, 6, 6, state.get(IS_CORNER) ? 7 : 16, 7, 7)),
+                    BarrierBarBlock.modifyShapeForDirection(state.get(DIRECTION), createCuboidShape(state.get(IS_CORNER) ? 10 : 0, 0, 10, 16, 6.1, 16)),
+                    state.get(IS_CORNER) ? BarrierBarBlock.modifyShapeForDirection(state.get(DIRECTION), createCuboidShape(9, 6, 10, 10, 7, 16)) : VoxelShapes.empty());
 
             return SHAPES[i];
         }
 
         public BlockPos getParentPos(BlockState state, BlockPos pos)
         {
-            return pos.relative(state.getValue(DIRECTION).getOpposite()).relative(state.getValue(DIRECTION).getClockWise(), state.getValue(IS_CORNER) ? 1 : 0);
+            return pos.offset(state.get(DIRECTION).getOpposite()).offset(state.get(DIRECTION).rotateYClockwise(), state.get(IS_CORNER) ? 1 : 0);
         }
 
         @Nullable
         @Override
-        public BlockState getStateForPlacement(BlockPlaceContext context)
+        public BlockState getPlacementState(ItemPlacementContext context)
         {
-            return defaultBlockState().setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+            return getDefaultState().with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER);
         }
 
         @Override
-        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+        protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
         {
             builder.add(WATERLOGGED).add(DIRECTION).add(IS_CORNER);
         }
@@ -298,37 +294,38 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
         @Override
         public @NotNull FluidState getFluidState(BlockState state)
         {
-            return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+            return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
         }
 
         @Override
-        public @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+        public @NotNull BlockState getStateForNeighborUpdate(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
         {
             if (levelIn.getBlockState(getParentPos(stateIn, currentPos)).getBlock() != parent)
-                return Blocks.AIR.defaultBlockState();
+                return Blocks.AIR.getDefaultState();
 
-            if (stateIn.getValue(WATERLOGGED))
+            if (stateIn.get(WATERLOGGED))
             {
-                levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+                levelIn.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(levelIn));
             }
 
-            return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+            return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
         }
 
-        @Override
-        public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid)
+        // todo: forge
+        /*@Override
+        public boolean onDestroyedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid)
         {
             BlockPos parentPos = getParentPos(state, pos);
-            if (level.getBlockState(parentPos).getBlock() == parent)
-                level.destroyBlock(parentPos, willHarvest);
+            if (world.getBlockState(parentPos).getBlock() == parent)
+                world.removeBlock(parentPos, willHarvest);
             return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
-        }
+        }*/
 
-        @Override
+        /*@Override
         public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
         {
             return PushReaction.BLOCK;
-        }
+        }*/
 
         @Override
         public boolean canClimb()
@@ -349,41 +346,41 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
         }
 
         @Override
-        public boolean remoteColorChange(Level level, BlockPos pos, int newColor)
+        public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
         {
-            return parent.remoteColorChange(level, getParentPos(level.getBlockState(pos), pos), newColor);
+            return parent.remoteColorChange(world, getParentPos(world.getBlockState(pos), pos), newColor);
         }
 
         @Override
-        public boolean remoteInkClear(Level level, BlockPos pos)
-        {
-            return false;
-        }
-
-        @Override
-        public boolean isPathfindable(@NotNull BlockState p_196266_1_, @NotNull BlockGetter p_196266_2_, @NotNull BlockPos p_196266_3_, @NotNull PathComputationType p_196266_4_)
+        public boolean remoteInkClear(World world, BlockPos pos)
         {
             return false;
         }
 
         @Override
-        public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, LevelReader world, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+        public boolean canPathfindThrough(@NotNull BlockState p_196266_1_, @NotNull NavigationType p_196266_4_)
+        {
+            return false;
+        }
+
+        @Override
+        public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, WorldView world, BlockPos pos, float orientation, @Nullable LivingEntity entity)
         {
             BlockPos parentPos = getParentPos(state, pos);
             return parent.getRespawnPosition(world.getBlockState(parentPos), type, world, parentPos, orientation, entity);
         }
 
         @Override
-        public @NotNull ItemStack getCloneItemStack(@NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state)
+        public @NotNull ItemStack getPickStack(@NotNull WorldView level, @NotNull BlockPos pos, @NotNull BlockState state)
         {
             BlockPos parentPos = getParentPos(state, pos);
-            return parent.getCloneItemStack(level, parentPos, level.getBlockState(parentPos));
+            return parent.getPickStack(level, parentPos, level.getBlockState(parentPos));
         }
 
         @Override
-        public @NotNull RenderShape getRenderShape(@NotNull BlockState state)
+        public @NotNull BlockRenderType getRenderType(@NotNull BlockState state)
         {
-            return RenderShape.INVISIBLE;
+            return BlockRenderType.INVISIBLE;
         }
     }
 }

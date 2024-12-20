@@ -1,11 +1,14 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
 
 public class UpdateChargeStatePacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateChargeStatePacket.class);
     private final boolean hasCharge;
 
     public UpdateChargeStatePacket(boolean hasCharge)
@@ -13,19 +16,25 @@ public class UpdateChargeStatePacket extends PlayC2SPacket
         this.hasCharge = hasCharge;
     }
 
-    public static UpdateChargeStatePacket decode(FriendlyByteBuf buffer)
+    public static UpdateChargeStatePacket decode(RegistryByteBuf buffer)
     {
         return new UpdateChargeStatePacket(buffer.readBoolean());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeBoolean(hasCharge);
     }
 
     @Override
-    public void execute(Player player)
+    public void execute(PlayerEntity player)
     {
         PlayerCharge.updateServerMap(player, hasCharge);
     }

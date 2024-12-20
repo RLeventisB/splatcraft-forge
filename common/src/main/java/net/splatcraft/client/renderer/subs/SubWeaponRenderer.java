@@ -1,72 +1,80 @@
 package net.splatcraft.client.renderer.subs;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.CustomModelDataComponent;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.AbstractSubWeaponModel;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SubWeaponRenderer<E extends AbstractSubWeaponEntity, M extends AbstractSubWeaponModel<E>> extends EntityRenderer<E>
 {
-    protected SubWeaponRenderer(EntityRendererProvider.Context context)
+    protected SubWeaponRenderer(EntityRendererFactory.Context context)
     {
         super(context);
     }
 
     @Override
-    public void render(E entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+    public void render(E entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
     {
-        int color = entityIn.getColor();
-        if (SplatcraftConfig.Client.colorLock.get())
+
+        InkColor color = entityIn.getColor();
+        if (SplatcraftConfig.get("splatcraft.colorLock"))
             color = ColorUtils.getLockedColor(color);
 
-        float r = (float) (Math.floor((float) color / (256 * 256)) / 255f);
-        float g = (float) (Math.floor((float) color / 256) % 256 / 255f);
-        float b = (color % 256) / 255f;
+        int rgba = color.getColor();
 
         M model = getModel();
-        ResourceLocation texture = getTextureLocation(entityIn);
-        ResourceLocation inkTexture = getInkTextureLocation(entityIn);
-        ResourceLocation overlay = getOverlayTextureLocation(entityIn);
+        Identifier texture = getTexture(entityIn);
+        Identifier inkTexture = getInkTextureLocation(entityIn);
+        Identifier overlay = getOverlayTexture(entityIn);
 
         ItemStack stack = entityIn.getItem();
         if (stack.getItem() instanceof SubWeaponItem sub && entityIn.getType().equals(sub.entityType.get()))
         {
-            ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(sub);
+            Identifier registryName = Registries.ITEM.getId(sub);
             String customModelData = "";
 
-            if (stack.hasTag() && stack.getTag().contains("CustomModelData") && Minecraft.getInstance().getResourceManager().getResource(new ResourceLocation(registryName.getNamespace(),
-                "textures/models/" + registryName.getPath() + "_" + stack.getTag().getInt("CustomModelData") + ".png")).isPresent())
-                customModelData = "_" + stack.getTag().getInt("CustomModelData");
+            if (stack.contains(DataComponentTypes.CUSTOM_MODEL_DATA))
+            {
+                CustomModelDataComponent modelData = stack.get(DataComponentTypes.CUSTOM_MODEL_DATA);
+                if (MinecraftClient.getInstance().getResourceManager().getResource(Identifier.of(registryName.getNamespace(),
+                    "textures/models/" + registryName.getPath() + "_" + modelData.value() + ".png")).isPresent())
+                {
+                    customModelData = "_" + modelData.value();
+                }
+            }
 
-            texture = new ResourceLocation(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + ".png");
-            inkTexture = new ResourceLocation(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_ink.png");
+            texture = Identifier.of(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + ".png");
+            inkTexture = Identifier.of(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_ink.png");
 
             if (overlay != null)
-                overlay = new ResourceLocation(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_overlay.png");
+                overlay = Identifier.of(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_overlay.png");
         }
 
-        model.setupAnim(entityIn, 0, 0, this.handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
-        model.prepareMobModel(entityIn, 0, 0, partialTicks);
-        int i = OverlayTexture.pack(OverlayTexture.u(getOverlayProgress(entityIn, partialTicks)), OverlayTexture.v(false));
-        model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(inkTexture)), packedLightIn, i, r, g, b, 1);
-        model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(texture)), packedLightIn, i, 1, 1, 1, 1);
+        model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
+        model.animateModel(entityIn, 0, 0, partialTicks);
+        int i = OverlayTexture.packUv(OverlayTexture.getU(getOverlayProgress(entityIn, partialTicks)), OverlayTexture.getV(false));
+        model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(inkTexture)), packedLightIn, i, 0xFF000000 | rgba);
+        model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(texture)), packedLightIn, i, 0xFFFFFF);
 
         if (overlay != null)
         {
-            float[] overlayRgb = getOverlayColor(entityIn, partialTicks);
-            model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(overlay)), packedLightIn, i, overlayRgb[0], overlayRgb[1], overlayRgb[2], 1);
+            int overlayRgb = getOverlayColor(entityIn, partialTicks);
+            model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(overlay)), packedLightIn, i, overlayRgb);
         }
 
         super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
@@ -79,21 +87,21 @@ public abstract class SubWeaponRenderer<E extends AbstractSubWeaponEntity, M ext
 
     public abstract M getModel();
 
-    public abstract ResourceLocation getInkTextureLocation(E entity);
+    public abstract Identifier getInkTextureLocation(E entity);
 
     @Nullable
-    public ResourceLocation getOverlayTextureLocation(E entity)
+    public Identifier getOverlayTexture(E entity)
     {
         return null;
     }
 
-    public float[] getOverlayColor(E entity, float partialTicks)
+    public int getOverlayColor(E entity, float partialTicks)
     {
-        return new float[]{1, 1, 1};
+        return 0xFFFFFFFF;
     }
 
     protected float handleRotationFloat(E livingBase, float partialTicks)
     {
-        return (float) livingBase.tickCount + partialTicks;
+        return (float) livingBase.age + partialTicks;
     }
 }

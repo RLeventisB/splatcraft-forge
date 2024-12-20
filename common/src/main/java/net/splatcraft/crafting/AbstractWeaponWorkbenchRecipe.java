@@ -1,60 +1,41 @@
 package net.splatcraft.crafting;
 
-import com.google.gson.JsonArray;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
+import net.minecraft.item.ItemStack;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.input.SingleStackRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.text.Text;
+import net.minecraft.world.World;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
+public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<SingleStackRecipeInput>
 {
-    protected final ResourceLocation id;
     protected final ItemStack recipeOutput;
-    protected final NonNullList<StackedIngredient> recipeItems;
-    protected final Component name;
+    protected final List<StackedIngredient> recipeItems;
+    protected final Text name;
 
-    public AbstractWeaponWorkbenchRecipe(ResourceLocation id, Component name, ItemStack recipeOutput, NonNullList<StackedIngredient> recipeItems)
+    public AbstractWeaponWorkbenchRecipe(Text name, ItemStack recipeOutput, List<StackedIngredient> recipeItems)
     {
-        this.id = id;
         this.recipeOutput = recipeOutput;
         this.recipeItems = recipeItems;
         this.name = name;
     }
 
-    protected static NonNullList<StackedIngredient> readIngredients(JsonArray p_199568_0_)
-    {
-        NonNullList<StackedIngredient> nonnulllist = NonNullList.create();
-
-        for (int i = 0; i < p_199568_0_.size(); ++i)
-        {
-            StackedIngredient ingredient = StackedIngredient.deserialize(p_199568_0_.get(i));
-            if (!ingredient.getIngredient().isEmpty() && ingredient.getCount() > 0)
-            {
-                nonnulllist.add(ingredient);
-            }
-        }
-
-        return nonnulllist;
-    }
-
     @Override
-    public boolean matches(Container inv, @NotNull Level levelIn)
+    public boolean matches(SingleStackRecipeInput inv, @NotNull World world)
     {
-        List<ItemStack> inputs = new java.util.ArrayList<>();
+        List<ItemStack> inputs = new ArrayList<>();
         int i = 0;
 
-        for (int j = 0; j < inv.getContainerSize(); ++j)
+        for (int j = 0; j < inv.getSize(); ++j)
         {
-            ItemStack itemstack = inv.getItem(j);
+            ItemStack itemstack = inv.getStackInSlot(j);
             if (!itemstack.isEmpty())
             {
                 ++i;
@@ -62,36 +43,30 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
             }
         }
 
-        return i == this.recipeItems.size() && net.minecraftforge.common.util.RecipeMatcher.findMatches(inputs, this.recipeItems) != null;
+        return i == recipeItems.size() && CommonUtils.findMatches(inputs, recipeItems) != null;
     }
 
-    public Component getName()
+    public Text getName()
     {
         return name;
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull Container inv, @NotNull RegistryAccess access)
+    public @NotNull ItemStack craft(@NotNull SingleStackRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
     {
         return recipeOutput;
     }
 
     @Override
-    public boolean canCraftInDimensions(int width, int height)
+    public boolean fits(int width, int height)
     {
         return false;
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess access)
+    public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
     {
         return recipeOutput;
-    }
-
-    @Override
-    public @NotNull ResourceLocation getId()
-    {
-        return id;
     }
 
     @Override
@@ -111,7 +86,7 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<Container>
         return recipeOutput;
     }
 
-    public NonNullList<StackedIngredient> getInput()
+    public List<StackedIngredient> getInput()
     {
         return recipeItems;
     }

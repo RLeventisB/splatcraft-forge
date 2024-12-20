@@ -2,17 +2,14 @@ package net.splatcraft.client.models.inktanks;// Made with Blockbench 4.8.3
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
-import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.model.*;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
 import net.splatcraft.Splatcraft;
 
 public class ArmoredInkTankModel extends AbstractInkTankModel
 {
-    // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Splatcraft.MODID, "armoredinktankmodel"), "main");
+    // This layer location should be baked with EntityRendererFactory.Context in the entity renderer and passed into this model's constructor
+    public static final EntityModelLayer LAYER_LOCATION = new EntityModelLayer(Splatcraft.identifierOf("armoredinktankmodel"), "main");
 
     public ArmoredInkTankModel(ModelPart root)
     {
@@ -23,33 +20,33 @@ public class ArmoredInkTankModel extends AbstractInkTankModel
             inkPieces.add(Ink_Tank.getChild("InkPiece_" + i));
     }
 
-    public static LayerDefinition createBodyLayer()
+    public static TexturedModelData createBodyLayer()
     {
-        MeshDefinition meshdefinition = new MeshDefinition();
-        PartDefinition partdefinition = meshdefinition.getRoot();
+        ModelData meshdefinition = new ModelData();
+        ModelPartData partdefinition = meshdefinition.getRoot();
 
         createEmptyMesh(partdefinition);
 
-        CubeDeformation deformation = new CubeDeformation(1);
-        PartDefinition body = partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(16, 0).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, deformation), PartPose.offset(0.0F, 0.0F, 0.0F));
-        partdefinition.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(40, 0).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), PartPose.offset(-5.0F, 2.0F, 0.0F));
-        partdefinition.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), PartPose.offset(5.0F, 2.0F, 0.0F));
+        Dilation deformation = new Dilation(1);
+        ModelPartData body = partdefinition.addChild("body", ModelPartBuilder.create().uv(16, 0).cuboid(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, deformation), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        partdefinition.addChild("right_arm", ModelPartBuilder.create().uv(40, 0).cuboid(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), ModelTransform.pivot(-5.0F, 2.0F, 0.0F));
+        partdefinition.addChild("left_arm", ModelPartBuilder.create().uv(40, 0).mirrored().cuboid(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), ModelTransform.pivot(5.0F, 2.0F, 0.0F));
 
-        PartDefinition Torso = body.addOrReplaceChild("Torso", CubeListBuilder.create(), PartPose.offset(0.0F, -0.25F, 0.0F));
+        ModelPartData Torso = body.addChild("Torso", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, -0.25F, 0.0F));
 
-        PartDefinition Ink_Tank = Torso.addOrReplaceChild("Ink_Tank", CubeListBuilder.create().texOffs(0, 19).addBox(-2.0F, 3.25F, 3.25F, 4.0F, 1.0F, 4.0F, new CubeDeformation(0.0F))
-            .texOffs(16, 19).addBox(-2.0F, 10.25F, 3.25F, 4.0F, 1.0F, 4.0F, new CubeDeformation(0.0F))
-            .texOffs(0, 24).addBox(1.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
-            .texOffs(6, 24).addBox(1.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
-            .texOffs(10, 24).addBox(-2.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
-            .texOffs(14, 24).addBox(-2.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -2.25F, -1.225F));
+        ModelPartData Ink_Tank = Torso.addChild("Ink_Tank", ModelPartBuilder.create().uv(0, 19).cuboid(-2.0F, 3.25F, 3.25F, 4.0F, 1.0F, 4.0F, new Dilation(0.0F))
+            .uv(16, 19).cuboid(-2.0F, 10.25F, 3.25F, 4.0F, 1.0F, 4.0F, new Dilation(0.0F))
+            .uv(0, 24).cuboid(1.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new Dilation(0.0F))
+            .uv(6, 24).cuboid(1.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new Dilation(0.0F))
+            .uv(10, 24).cuboid(-2.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new Dilation(0.0F))
+            .uv(14, 24).cuboid(-2.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -2.25F, -1.225F));
 
         for (int i = 0; i < 6; i++)
         {
-            Ink_Tank.addOrReplaceChild("InkPiece_" + i, CubeListBuilder.create().texOffs(116, 0)
-                .addBox(-1.5F, -13.0F, 4.5F, 3, 1, 3, new CubeDeformation(0f)), PartPose.offset(0.0F, 23.25f, -0.75F));
+            Ink_Tank.addChild("InkPiece_" + i, ModelPartBuilder.create().uv(116, 0)
+                .cuboid(-1.5F, -13.0F, 4.5F, 3, 1, 3, new Dilation(0f)), ModelTransform.pivot(0.0F, 23.25f, -0.75F));
         }
 
-        return LayerDefinition.create(meshdefinition, 128, 128);
+        return TexturedModelData.of(meshdefinition, 128, 128);
     }
 }

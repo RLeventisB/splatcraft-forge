@@ -1,13 +1,12 @@
 package net.splatcraft.network;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import dev.architectury.networking.NetworkManager;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 
-import java.util.function.Supplier;
-
-public abstract class SplatcraftPacket
+public abstract class SplatcraftPacket implements CustomPayload
 {
-    public abstract void encode(FriendlyByteBuf buffer);
+    public abstract void encode(RegistryByteBuf buffer);
 
-    public abstract void consume(Supplier<NetworkEvent.Context> ctx);
+    public abstract void consume(NetworkManager.PacketContext ctx);
 }

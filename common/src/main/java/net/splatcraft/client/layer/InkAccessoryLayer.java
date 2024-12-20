@@ -1,87 +1,81 @@
 package net.splatcraft.client.layer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.feature.FeatureRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+import net.minecraft.client.render.entity.model.BipedEntityModel;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Arm;
+import net.minecraft.util.Identifier;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>
+public class InkAccessoryLayer extends FeatureRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>
 {
-    HumanoidModel<AbstractClientPlayer> MODEL;
+    BipedEntityModel<AbstractClientPlayerEntity> MODEL;
 
-    public InkAccessoryLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer, HumanoidModel<AbstractClientPlayer> model)
+    public InkAccessoryLayer(FeatureRendererContext<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> renderer, BipedEntityModel<AbstractClientPlayerEntity> model)
     {
         super(renderer);
-        this.MODEL = model;
+        MODEL = model;
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, @NotNull AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+    public void render(@NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider iRenderTypeBuffer, int i, @NotNull AbstractClientPlayerEntity entity, float v, float v1, float v2, float v3, float v4, float v5)
     {
-        if (!PlayerInfoCapability.hasCapability(entity))
+        if (!EntityInfoCapability.hasCapability(entity))
             return;
-        PlayerInfo info = PlayerInfoCapability.get(entity);
+        EntityInfo info = EntityInfoCapability.get(entity);
         ItemStack inkBand = info.getInkBand();
 
-        if (!inkBand.isEmpty() && ((entity.getMainHandItem().equals(inkBand, false) || entity.getOffhandItem().equals(inkBand, false))))
+        if (!inkBand.isEmpty() && (ItemStack.areItemsEqual(entity.getMainHandStack(), inkBand) || ItemStack.areItemsEqual(entity.getOffHandStack(), inkBand)))
             return;
 
-        boolean isFoil = inkBand.hasFoil();
-        ResourceLocation stackLoc = ForgeRegistries.ITEMS.getKey(inkBand.getItem());
+        boolean isFoil = inkBand.hasGlint();
+        Identifier stackLoc = Registries.ITEM.getId(inkBand.getItem());
 
         String customModelData = "";
 
-        if (inkBand.getOrCreateTag().contains("CustomModelData") && Minecraft.getInstance().getResourceManager().getResource(new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + "_" + inkBand.getOrCreateTag().getInt("CustomModelData") + ".png")).isPresent())
+        if (inkBand.contains(DataComponentTypes.CUSTOM_MODEL_DATA) && MinecraftClient.getInstance().getResourceManager().getResource(Identifier.of(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + "_" + inkBand.get(DataComponentTypes.CUSTOM_MODEL_DATA) + ".png")).isPresent())
         {
-            customModelData = "_" + inkBand.getOrCreateTag().getInt("CustomModelData");
+            customModelData = "_" + inkBand.get(DataComponentTypes.CUSTOM_MODEL_DATA);
         }
 
-        ResourceLocation texture = new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + ".png");
-        ResourceLocation coloredTexture = new ResourceLocation(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + "_colored.png");
+        Identifier texture = Identifier.of(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + ".png");
+        Identifier coloredTexture = Identifier.of(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + "_colored.png");
 
-        MODEL.leftArm.visible = entity.getMainArm() == HumanoidArm.LEFT;
-        MODEL.leftLeg.visible = entity.getMainArm() == HumanoidArm.LEFT;
-        MODEL.rightArm.visible = entity.getMainArm() == HumanoidArm.RIGHT;
-        MODEL.rightLeg.visible = entity.getMainArm() == HumanoidArm.RIGHT;
+        MODEL.leftArm.visible = entity.getMainArm() == Arm.LEFT;
+        MODEL.leftLeg.visible = entity.getMainArm() == Arm.LEFT;
+        MODEL.rightArm.visible = entity.getMainArm() == Arm.RIGHT;
+        MODEL.rightLeg.visible = entity.getMainArm() == Arm.RIGHT;
 
-        int color = ColorUtils.getPlayerColor(entity);
-        if (SplatcraftConfig.Client.colorLock.get())
+        InkColor color = ColorUtils.getColorLockedIfConfig(ColorUtils.getEntityColor(entity));
+
+        if (MinecraftClient.getInstance().getResourceManager().getResource(texture).isPresent())
         {
-            color = ColorUtils.getLockedColor(color);
-        }
-        float r = ((color & 0xff0000) >> 16) / 255.0f;
-        float g = ((color & 0x00FF00) >> 8) / 255.0f;
-        float b = (color & 0x0000ff) / 255.0f;
-
-        if (Minecraft.getInstance().getResourceManager().getResource(texture).isPresent())
-        {
-            this.getParentModel().copyPropertiesTo(MODEL);
-            this.render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, 1.0F, 1.0F, 1.0F, texture);
-            if (Minecraft.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
-                this.render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, r, g, b, coloredTexture);
+            getContextModel().copyStateTo(MODEL);
+            render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, InkColor.constructOrReuse(0xFFFFFF), texture);
+            if (MinecraftClient.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
+                render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, color, coloredTexture);
         }
     }
 
-    private void render(PoseStack p_241738_1_, MultiBufferSource p_241738_2_, int p_241738_3_, boolean isFoil, HumanoidModel<AbstractClientPlayer> p_241738_6_, float p_241738_8_, float p_241738_9_, float p_241738_10_, ResourceLocation armorResource)
+    private void render(MatrixStack p_241738_1_, VertexConsumerProvider p_241738_2_, int p_241738_3_, boolean isFoil, BipedEntityModel<AbstractClientPlayerEntity> p_241738_6_, InkColor color, Identifier armorResource)
     {
-        VertexConsumer ivertexbuilder = ItemRenderer.getArmorFoilBuffer(p_241738_2_, RenderType.armorCutoutNoCull(armorResource), false, isFoil);
-        p_241738_6_.renderToBuffer(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.NO_OVERLAY, p_241738_8_, p_241738_9_, p_241738_10_, 1.0F);
+        VertexConsumer ivertexbuilder = ItemRenderer.getArmorGlintConsumer(p_241738_2_, RenderLayer.getArmorCutoutNoCull(armorResource), isFoil);
+        p_241738_6_.render(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
     }
 }

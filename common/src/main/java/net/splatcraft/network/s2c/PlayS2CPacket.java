@@ -1,21 +1,19 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import dev.architectury.networking.NetworkManager;
+import dev.architectury.utils.Env;
 import net.splatcraft.network.SplatcraftPacket;
-
-import java.util.function.Supplier;
 
 public abstract class PlayS2CPacket extends SplatcraftPacket
 {
     @Override
-    public void consume(Supplier<NetworkEvent.Context> ctx)
+    public void consume(NetworkManager.PacketContext ctx)
     {
-        if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT)
+        if (ctx.getEnvironment() == Env.SERVER)
         {
-            ctx.get().enqueueWork(this::execute);
+            ctx.queue(this::execute);
         }
-        ctx.get().setPacketHandled(true);
+//        ctx.get().setPacketHandled(true);
     }
 
     public abstract void execute();

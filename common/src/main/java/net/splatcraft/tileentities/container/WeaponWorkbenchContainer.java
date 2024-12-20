@@ -1,18 +1,18 @@
 package net.splatcraft.tileentities.container;
 
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.screen.ScreenHandlerContext;
 import net.splatcraft.registries.SplatcraftTileEntities;
 
 public class WeaponWorkbenchContainer extends PlayerInventoryContainer<WeaponWorkbenchContainer>
 {
-    public WeaponWorkbenchContainer(Inventory player, ContainerLevelAccess callable, int id)
+    public WeaponWorkbenchContainer(PlayerInventory player, ScreenHandlerContext callable, int id)
     {
         super(SplatcraftTileEntities.weaponWorkbenchContainer.get(), player, callable, 8, 144, id);
     }
 
-    public WeaponWorkbenchContainer(int id, Inventory playerInventory)
+    public WeaponWorkbenchContainer(int id, PlayerInventory playerInventory)
     {
-        this(playerInventory, ContainerLevelAccess.NULL, id);
+        this(playerInventory, ScreenHandlerContext.EMPTY, id);
     }
 }

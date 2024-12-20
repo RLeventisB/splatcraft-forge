@@ -314,11 +314,11 @@
     "weaponTab.description.splatcraft:weapon_workbench_tabs/ink_tanks": "Portatene dietro non più di 5 alla volta, come una persona sana di mente",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rare": "Riservata ai migliori dei migliori",
 
-    "weaponRecipe.splatcraft:weapon_workbench/aerospray": "Aerografo",
-    "weaponRecipe.splatcraft:weapon_workbench/n-zap": "N-ZAP",
-    "weaponRecipe.splatcraft:weapon_workbench/e_liter": "Tinter a carica",
-    "weaponRecipe.splatcraft:weapon_workbench/bamboozler_14": "Bimbamboom 14",
-    "weaponRecipe.splatcraft:weapon_workbench/nautilus": "Nautilus",
+    "weaponRecipe.splatcraft:aerospray": "Aerografo",
+    "weaponRecipe.splatcraft:n-zap": "N-ZAP",
+    "weaponRecipe.splatcraft:e_liter": "Tinter a carica",
+    "weaponRecipe.splatcraft:bamboozler_14": "Bimbamboom 14",
+    "weaponRecipe.splatcraft:nautilus": "Nautilus",
 
     "weaponType.original": "originale",
     "weaponType.classic": "classico",

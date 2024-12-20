@@ -6,12 +6,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.selector.EntitySelectorParser;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.EntitySelectorReader;
+import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.command.ServerCommandSource;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.registries.SplatcraftGameRules;
@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class JumpTargetArgument extends EntityArgument
+public class JumpTargetArgument extends EntityArgumentType
 {
     protected JumpTargetArgument()
     {
@@ -35,36 +35,36 @@ public class JumpTargetArgument extends EntityArgument
 
     public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> command, @NotNull SuggestionsBuilder suggestionsBuilder)
     {
-        if (command.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider)
+        if (command.getSource() instanceof CommandSource sharedsuggestionprovider)
         {
             StringReader stringreader = new StringReader(suggestionsBuilder.getInput());
             stringreader.setCursor(suggestionsBuilder.getStart());
-            EntitySelectorParser entityselectorparser = new EntitySelectorParser(stringreader, sharedsuggestionprovider.hasPermission(2));
+            EntitySelectorReader entityselectorparser = new EntitySelectorReader(stringreader, sharedsuggestionprovider.hasPermissionLevel(2));
 
             try
             {
-                entityselectorparser.parse();
+                entityselectorparser.read();
             }
             catch (CommandSyntaxException commandsyntaxexception)
             {
             }
 
-            return entityselectorparser.fillSuggestions(suggestionsBuilder, (p_91457_) ->
+            return entityselectorparser.listSuggestions(suggestionsBuilder, (p_91457_) ->
             {
-                Collection<String> collection = sharedsuggestionprovider.getOnlinePlayerNames();
-                Entity source = ((CommandSourceStack) command.getSource()).getEntity();
-                List<Stage> validStages = SaveInfoCapability.get(source.getServer()).getStages().values().stream().filter(stage -> stage.getBounds().contains(source.position())).toList();
+                Collection<String> collection = sharedsuggestionprovider.getPlayerNames();
+                Entity source = ((ServerCommandSource) command.getSource()).getEntity();
+                List<Stage> validStages = SaveInfoCapability.get().getStages().values().stream().filter(stage -> stage.getBounds().contains(source.getPos())).toList();
 
-                if (!SplatcraftGameRules.getLocalizedRule(source.getWorld(), source.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+                if (!SplatcraftGameRules.getLocalizedRule(source.getWorld(), source.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
                     collection.removeIf((str) ->
                     {
-                        Player player = ((CommandSourceStack) command.getSource()).getServer().getPlayerList().getPlayerByName(str);
+                        PlayerEntity player = ((ServerCommandSource) command.getSource()).getServer().getPlayerManager().getPlayer(str);
 
-                        return validStages.stream().filter(stage -> stage.getBounds().contains(player.position())).toList().isEmpty();
+                        return validStages.stream().filter(stage -> stage.getBounds().contains(player.getPos())).toList().isEmpty();
                     });
 
-                Iterable<String> iterable = Iterables.concat(collection, sharedsuggestionprovider.getSelectedEntities());
-                SharedSuggestionProvider.suggest(iterable, p_91457_);
+                Iterable<String> iterable = Iterables.concat(collection, sharedsuggestionprovider.getEntitySuggestions());
+                CommandSource.suggestMatching(iterable, p_91457_);
             });
         }
         else

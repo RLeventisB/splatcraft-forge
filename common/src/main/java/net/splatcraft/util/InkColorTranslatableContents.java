@@ -1,58 +1,37 @@
 package net.splatcraft.util;
 
-import net.minecraft.locale.Language;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.data.InkColorAliases;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.text.StringVisitable;
+import net.minecraft.text.TranslatableTextContent;
+import net.minecraft.util.Language;
+import net.splatcraft.data.InkColorRegistry;
 
-import java.util.List;
 import java.util.Optional;
 
-public class InkColorTranslatableContents extends TranslatableContents
+public class InkColorTranslatableContents extends TranslatableTextContent
 {
-    private final TranslatableContents inverted;
-    private int color;
+    private final TranslatableTextContent inverted;
+    private InkColor color;
     private Language decomposedWith;
 
-    public InkColorTranslatableContents(int color, Object... pArgs)
+    public InkColorTranslatableContents(InkColor color, Object... pArgs)
     {
-        super(getKeyForColor(color), "#" + String.format("%06X", color).toUpperCase(), pArgs);
-        inverted = new TranslatableContents("ink_color.invert", null, new TranslatableContents[]{new TranslatableContents(getKeyForColor(0xFFFFFF - color), getFallback(), pArgs)});
+        super(getKeyForColor(color), "#" + String.format("%06X", color.getColor()).toUpperCase(), pArgs);
+        inverted = new TranslatableTextContent("ink_color.invert", null, new TranslatableTextContent[]{new TranslatableTextContent(InkColorRegistry.getFirstAliasForColor(0xFFFFFF - color.getColor()).toTranslationKey(), getFallback(), pArgs)});
     }
 
-    private static String getKeyForColor(int color)
+    private static String getKeyForColor(InkColor color)
     {
-        String hex = "ink_color." + String.format("%06X", color).toLowerCase();
-        Language language = Language.getInstance();
-        if (!language.has(hex))
-        {
-            List<ResourceLocation> aliases = InkColorAliases.getAliasesForColor(color);
-            for (ResourceLocation alias : aliases)
-            {
-                String key = "ink_color." + alias.getNamespace() + "." + alias.getPath();
-                if (language.has(key))
-                    return key;
-            }
-        }
-        return hex;
+        return color.getTranslationKey();
     }
 
     @Override
-    public <T> @NotNull Optional<T> visit(FormattedText.@NotNull ContentConsumer<T> pContentConsumer)
+    public <T> Optional<T> visit(StringVisitable.Visitor<T> visitor)
     {
         Language language = Language.getInstance();
 
-        if (!language.has(getKey()) && language.has(getKeyForColor(0xFFFFFF - color)))
-            return inverted.visit(pContentConsumer);
+        if (!language.hasTranslation(getKey()) && language.hasTranslation(InkColorRegistry.getFirstAliasForColor(0xFFFFFF - color.getColor()).toTranslationKey()))
+            return inverted.visit(visitor);
 
-        return super.visit(pContentConsumer);
-    }
-
-    @Override
-    public @NotNull String getKey()
-    {
-        return super.getKey();
+        return super.visit(visitor);
     }
 }

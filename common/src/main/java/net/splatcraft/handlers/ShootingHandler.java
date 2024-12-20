@@ -2,16 +2,16 @@ package net.splatcraft.handlers;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.splatcraft.Splatcraft;
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.EntityEvent;
+import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Hand;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -20,14 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@Mod.EventBusSubscriber(modid = Splatcraft.MODID)
 public class ShootingHandler
 {
     public static Map<LivingEntity, EntityData> shootingData = new HashMap<>();
 
     public static boolean notifyStartShooting(LivingEntity entity)
     {
-        if (entity.getWorld().isClientSide())
+        if (entity.getWorld().isClient())
         {
             return false;
         }
@@ -49,7 +48,7 @@ public class ShootingHandler
 
     public static boolean notifyForceEndShooting(LivingEntity entity)
     {
-        if (entity.getWorld().isClientSide())
+        if (entity.getWorld().isClient())
         {
             return false;
         }
@@ -69,12 +68,15 @@ public class ShootingHandler
         return shootingData.containsKey(entity) && shootingData.get(entity).usedThisTick;
     }
 
-    @SubscribeEvent
-    public static void update(TickEvent.ServerTickEvent event)
+    public static void registerEvents()
     {
-        if (event.phase == TickEvent.Phase.START)
-            return;
+        TickEvent.SERVER_POST.register(ShootingHandler::update);
+        PlayerEvent.PLAYER_QUIT.register(player -> shootingData.remove(player));
+        EntityEvent.LIVING_DEATH.register(ShootingHandler::onEntityDie);
+    }
 
+    public static void update(MinecraftServer server)
+    {
         for (Map.Entry<LivingEntity, EntityData> entry : shootingData.entrySet())
         {
             entry.getValue().usedThisTick = false;
@@ -82,17 +84,10 @@ public class ShootingHandler
         }
     }
 
-    @SubscribeEvent
-    public static void onEntityDie(EntityLeaveLevelEvent event)
+    public static EventResult onEntityDie(LivingEntity entity, DamageSource source)
     {
-        if (event.getEntity() instanceof LivingEntity livingEntity)
-            shootingData.remove(livingEntity);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerDisconnect(PlayerEvent.PlayerLoggedOutEvent event)
-    {
-        shootingData.remove(event.getEntity());
+        shootingData.remove(entity);
+        return EventResult.pass();
     }
 
     public interface EndlagConsumer
@@ -113,7 +108,7 @@ public class ShootingHandler
     public static class EntityData
     {
         public final boolean isPlayer;
-        public final Player player;
+        public final PlayerEntity player;
         public final LivingEntity entity;
         public final WeaponShootingData mainHandData;
         public final WeaponShootingData offHandData;
@@ -122,11 +117,11 @@ public class ShootingHandler
 
         public EntityData(LivingEntity entity)
         {
-            isPlayer = entity instanceof Player;
-            player = isPlayer ? (Player) entity : null;
+            isPlayer = entity instanceof PlayerEntity;
+            player = isPlayer ? (PlayerEntity) entity : null;
             this.entity = entity;
-            mainHandData = new WeaponShootingData(this, InteractionHand.MAIN_HAND);
-            offHandData = new WeaponShootingData(this, InteractionHand.OFF_HAND);
+            mainHandData = new WeaponShootingData(this, Hand.MAIN_HAND);
+            offHandData = new WeaponShootingData(this, Hand.OFF_HAND);
         }
 
         public boolean isDualFire()
@@ -140,7 +135,7 @@ public class ShootingHandler
             {
                 if (isPlayer)
                 {
-                    player.getInventory().selected = selected;
+                    player.getInventory().selectedSlot = selected;
                 }
                 if (mainHandData.active)
                 {
@@ -166,15 +161,15 @@ public class ShootingHandler
                 return;
 
             if (isPlayer)
-                selected = player.getInventory().selected;
-            ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
+                selected = player.getInventory().selectedSlot;
+            ItemStack mainHand = entity.getStackInHand(Hand.MAIN_HAND);
             FiringStatData weaponFireData = null;
             if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
             {
                 weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
                 mainHandData.start(mainHand, weaponFireData);
             }
-            ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
+            ItemStack offHand = entity.getStackInHand(Hand.OFF_HAND);
             if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
             {
                 FiringStatData offHandFireData = offHandWeapon.getWeaponFireData(offHand, entity);
@@ -196,13 +191,13 @@ public class ShootingHandler
 
         public void recalculateFiringData()
         {
-            ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
+            ItemStack mainHand = entity.getStackInHand(Hand.MAIN_HAND);
             if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
             {
                 FiringStatData weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
                 mainHandData.modifyFiringData(weaponFireData);
             }
-            ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
+            ItemStack offHand = entity.getStackInHand(Hand.OFF_HAND);
             if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
             {
                 FiringStatData weaponFireData = offHandWeapon.getWeaponFireData(mainHand, entity);
@@ -213,7 +208,7 @@ public class ShootingHandler
 
     public static class WeaponShootingData
     {
-        public final InteractionHand hand;
+        public final Hand hand;
         public final EntityData entityData;
         public boolean doingEndlag, active;
         public float timer, offHandTimeout;
@@ -221,9 +216,9 @@ public class ShootingHandler
         public FiringStatData firingData;
 
         //        public static long milli;
-        public WeaponShootingData(EntityData data, InteractionHand hand)
+        public WeaponShootingData(EntityData data, Hand hand)
         {
-            this.entityData = data;
+            entityData = data;
             this.hand = hand;
         }
 
@@ -247,9 +242,9 @@ public class ShootingHandler
                 return;
 
             this.firingData = firingData;
-            this.timer = initialTimer;
+            timer = initialTimer;
             doingEndlag = false;
-            this.useItem = item.copy();
+            useItem = item.copy();
             this.offHandTimeout = offHandTimeout;
             active = true;
         }
@@ -320,7 +315,7 @@ public class ShootingHandler
 
         public boolean isUsingWeaponEqualToStoredWeapon(@NotNull LivingEntity entity)
         {
-            return entity.getItemInHand(hand).is(useItem.getItem());
+            return entity.getStackInHand(hand).isOf(useItem.getItem());
         }
 
         @Override

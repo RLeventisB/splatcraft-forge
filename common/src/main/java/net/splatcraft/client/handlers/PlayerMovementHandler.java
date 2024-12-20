@@ -1,24 +1,22 @@
 package net.splatcraft.client.handlers;
 
-import net.minecraft.client.player.Input;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Direction;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.ForgeMod;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import dev.architectury.event.events.common.TickEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.input.Input;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.attribute.EntityAttributeInstance;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -31,132 +29,126 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.PlayerCooldown;
 
 import java.util.HashMap;
-import java.util.UUID;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class PlayerMovementHandler
 {
-    public static final HashMap<LocalPlayer, Input> unmodifiedInput = new HashMap<>();
-    private static final AttributeModifier INK_SWIM_SPEED = new AttributeModifier("Ink swimming speed boost", 0D, AttributeModifier.Operation.ADDITION);
-    private static final AttributeModifier SQUID_SWIM_SPEED = new AttributeModifier("Squid swim speed boost", 0.2D, AttributeModifier.Operation.MULTIPLY_TOTAL);
-    private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier("Enemy ink speed penalty", -0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL);
-    private static final AttributeModifier SLOW_FALLING = new AttributeModifier(UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA"), "Slow falling acceleration reduction", -0.07, AttributeModifier.Operation.ADDITION); // Add -0.07 to 0.08 so we get the vanilla default of 0.01
+    public static final HashMap<ClientPlayerEntity, Input> unmodifiedInput = new HashMap<>();
+    private static final EntityAttributeModifier INK_SWIM_SPEED = new EntityAttributeModifier(Identifier.of("Ink swimming speed boost"), 0D, EntityAttributeModifier.Operation.ADD_VALUE);
+    private static final EntityAttributeModifier SQUID_SWIM_SPEED = new EntityAttributeModifier(Identifier.of("Squid swim speed boost"), 0.2D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+    private static final EntityAttributeModifier ENEMY_INK_SPEED = new EntityAttributeModifier(Identifier.of("Enemy ink speed penalty"), -0.5D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-    @OnlyIn(Dist.CLIENT)
-    @SubscribeEvent
-    public static void playerMovement(TickEvent.PlayerTickEvent event)
+    public static void registerEvents()
     {
-        if (event.phase == TickEvent.Phase.END)
-        {
-            Vec3d deltaMovement = event.player.getDeltaMovement();
-            if (SplatcraftConfig.Server.limitFallSpeed.get() && deltaMovement.y < -0.5)
+        TickEvent.PLAYER_POST.register((player) -> {
+            Vec3d deltaMovement = player.getVelocity();
+            if (SplatcraftConfig.<Boolean>get("splatcraft.limitFallSpeed") && deltaMovement.y < -0.5)
             {
-                event.player.setDeltaMovement(deltaMovement.x, -0.5, deltaMovement.z);
+                player.setVelocity(deltaMovement.x, -0.5, deltaMovement.z);
             }
-        }
-        else if (event.phase == TickEvent.Phase.START && event.player instanceof LocalPlayer player)
-        {
-            PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-            if (playerInfo == null)
-                playerInfo = new PlayerInfo();
-
-            boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
-            PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
-
-            AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
-            AttributeInstance swimAttribute = player.getAttribute(ForgeMod.SWIM_SPEED.get());
-
-            if (speedAttribute.hasModifier(INK_SWIM_SPEED))
-                speedAttribute.removeModifier(INK_SWIM_SPEED);
-            if (speedAttribute.hasModifier(ENEMY_INK_SPEED))
-                speedAttribute.removeModifier(ENEMY_INK_SPEED);
-            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED))
-                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
-
-            if (speedAttribute.getModifier(SplatcraftItems.SPEED_MOD_UUID) != null)
-                speedAttribute.removeModifier(SplatcraftItems.SPEED_MOD_UUID);
-
-            if (InkBlockUtils.onEnemyInk(player))
-            {
-                //player.setDeltaMovement(player.getDeltaMovement().x, Math.min(player.getDeltaMovement().y, 0.05f), player.getDeltaMovement().z);
-                if (!speedAttribute.hasModifier(ENEMY_INK_SPEED))
-                    speedAttribute.addTransientModifier(ENEMY_INK_SPEED);
-            }
-
-            ItemStack useStack = player.getUseItem();
-            if (hasCooldown)
-                useStack = cooldown.storedStack;
-            else if (useStack.isEmpty())
-                useStack = player.getCooldowns().isOnCooldown(player.getMainHandItem().getItem()) ? player.getMainHandItem() :
-                    player.getCooldowns().isOnCooldown(player.getOffhandItem().getItem()) ? player.getOffhandItem() : ItemStack.EMPTY;
-
-            if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(player, useStack))
-            {
-                AttributeModifier mod = weapon.getSpeedModifier(player, useStack);
-                if (!speedAttribute.hasModifier(mod))
-                    speedAttribute.addTransientModifier(mod);
-            }
-
-            if (playerInfo.isSquid())
-            {
-                if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED) && player.onGround())
-                    speedAttribute.addTransientModifier(INK_SWIM_SPEED);
-                if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED))
-                    swimAttribute.addTransientModifier(SQUID_SWIM_SPEED);
-            }
-
-            if (hasCooldown && cooldown.getSlotIndex() >= 0)
-                player.getInventory().selected = cooldown.getSlotIndex();
-
-            if (!player.getAbilities().flying)
-                if (speedAttribute.hasModifier(INK_SWIM_SPEED))
-                    player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed.get()) * (player.onGround() ? 1 : 0.75f), new Vec3d(player.xxa, 0.0f, player.zza).normalize());
-        }
+        });
+        TickEvent.PLAYER_PRE.register(PlayerMovementHandler::playerMovement);
     }
 
-    @SubscribeEvent
-    public static void onInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event)
+    @Environment(EnvType.CLIENT)
+    public static void playerMovement(PlayerEntity player)
     {
-        Input input = event.getInput();
-        LocalPlayer player = (LocalPlayer) event.getEntity();
-        PlayerInfo playerInfo = PlayerInfoCapability.get(player);
+        EntityInfo playerInfo = EntityInfoCapability.get(player);
         if (playerInfo == null)
-            playerInfo = new PlayerInfo();
+            playerInfo = new EntityInfo();
+
+        boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
+        PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
+
+        EntityAttributeInstance speedAttribute = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+//            EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
+
+        if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
+            speedAttribute.removeModifier(INK_SWIM_SPEED);
+        if (speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
+            speedAttribute.removeModifier(ENEMY_INK_SPEED);
+//            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
+//                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
+
+        if (speedAttribute.getModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER) != null)
+            speedAttribute.removeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER);
+
+        if (InkBlockUtils.onEnemyInk(player))
+        {
+            //player.setVelocity(player.getVelocity().x, Math.min(player.getVelocity().y, 0.05f), player.getVelocity().z);
+            if (!speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
+                speedAttribute.addTemporaryModifier(ENEMY_INK_SPEED);
+        }
+
+        ItemStack useStack = player.getActiveItem();
+        if (hasCooldown)
+            useStack = cooldown.storedStack;
+        else if (useStack.isEmpty())
+            useStack = player.getItemCooldownManager().isCoolingDown(player.getMainHandStack().getItem()) ? player.getMainHandStack() :
+                player.getItemCooldownManager().isCoolingDown(player.getOffHandStack().getItem()) ? player.getOffHandStack() : ItemStack.EMPTY;
+
+        if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(player, useStack))
+        {
+            EntityAttributeModifier mod = weapon.getSpeedModifier(player, useStack);
+            if (!speedAttribute.hasModifier(mod.id()))
+                speedAttribute.addTemporaryModifier(mod);
+        }
+
+        if (playerInfo.isSquid())
+        {
+            if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.isOnGround())
+                speedAttribute.addTemporaryModifier(INK_SWIM_SPEED);
+//                if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
+//                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
+        }
+
+        if (hasCooldown && cooldown.getSlotIndex() >= 0)
+            player.getInventory().selectedSlot = cooldown.getSlotIndex();
+
+        if (!player.getAbilities().flying)
+            if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
+                player.updateVelocity((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.isOnGround() ? 1 : 0.75f), new Vec3d(player.sidewaysSpeed, 0.0f, player.forwardSpeed).normalize());
+    }
+
+    public static void onInputUpdate(ClientPlayerEntity player, Input input)
+    {
+        EntityInfo playerInfo = EntityInfoCapability.get(player);
+        if (playerInfo == null)
+            playerInfo = new EntityInfo();
 
         Input clonedInput = new Input();
-        clonedInput.leftImpulse = input.leftImpulse;
-        clonedInput.forwardImpulse = input.forwardImpulse;
-        clonedInput.up = input.up;
-        clonedInput.down = input.down;
-        clonedInput.left = input.left;
-        clonedInput.right = input.right;
+        clonedInput.movementSideways = input.movementSideways;
+        clonedInput.movementForward = input.movementForward;
+        clonedInput.pressingForward = input.pressingForward;
+        clonedInput.pressingBack = input.pressingBack;
+        clonedInput.pressingLeft = input.pressingLeft;
+        clonedInput.pressingRight = input.pressingRight;
         clonedInput.jumping = input.jumping;
-        clonedInput.shiftKeyDown = input.shiftKeyDown;
+        clonedInput.sneaking = input.sneaking;
         unmodifiedInput.put(player, clonedInput);
 
-        float speedMod = !input.shiftKeyDown ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
+        float speedMod = !input.sneaking ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
 
-        input.forwardImpulse *= speedMod;
+        input.movementForward *= speedMod;
         //input = player.movementInput;
-        input.leftImpulse *= speedMod;
+        input.movementSideways *= speedMod;
         //input = player.movementInput;
 
         if (playerInfo.isSquid())
         {
-            handleSquidMovement(playerInfo, player, input.leftImpulse, input.forwardImpulse, input.jumping, input.shiftKeyDown, input);
+            handleSquidMovement(playerInfo, player, input.movementSideways, input.movementForward, input.jumping, input.sneaking, input);
         }
 
         if (player.isUsingItem())
         {
-            ItemStack stack = player.getUseItem();
+            ItemStack stack = player.getActiveItem();
             if (!stack.isEmpty())
             {
                 if (stack.getItem() instanceof WeaponBaseItem)
                 {
-                    input.leftImpulse *= 5.0F;
-                    input.forwardImpulse *= 5.0F;
+                    input.movementSideways *= 5.0F;
+                    input.movementForward *= 5.0F;
 
-                    if (stack.getItem() instanceof DualieItem && (input.leftImpulse != 0 || input.forwardImpulse != 0))
+                    if (stack.getItem() instanceof DualieItem && (input.movementSideways != 0 || input.movementForward != 0))
                     {
                         input.jumping = false;
                     }
@@ -170,49 +162,49 @@ public class PlayerMovementHandler
 
             if (!cooldown.canMove())
             {
-                input.forwardImpulse = 0;
-                input.leftImpulse = 0;
+                input.movementForward = 0;
+                input.movementSideways = 0;
                 input.jumping = false;
             }
             else if (cooldown.storedStack.getItem() instanceof RollerItem rollerItem)
             {
-                input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
-                input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
+                input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
+                input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
             }
             if (cooldown.forceCrouch() && cooldown.getTime() >= 1)
             {
-                input.shiftKeyDown = !player.getAbilities().flying;
+                input.sneaking = !player.getAbilities().flying;
             }
         }
     }
 
-    private static void handleSquidMovement(PlayerInfo playerInfo, Player player, float leftImpulse, float forwardImpulse, boolean jumping, boolean shiftKeyDown, Input input)
+    private static void handleSquidMovement(EntityInfo playerInfo, PlayerEntity player, float movementSideways, float movementForward, boolean jumping, boolean sneaking, Input input)
     {
         if (playerInfo.getClimbedDirection().isPresent())
         {
             Direction oldClimbedDirection = playerInfo.getClimbedDirection().get();
-            Direction climbedDirection = InkBlockUtils.getSquidClimbingDirection(player, leftImpulse, forwardImpulse, oldClimbedDirection);
+            Direction climbedDirection = InkBlockUtils.getSquidClimbingDirection(player, movementSideways, movementForward, oldClimbedDirection);
 
-            if (climbedDirection != null && !player.onGround()) // if player is still swimming on a wall
+            if (climbedDirection != null && !player.isOnGround()) // if player is still swimming on a wall
             {
                 playerInfo.setClimbedDirection(climbedDirection);
-                Vec3d deltaMovement = player.getDeltaMovement();
-                if (deltaMovement.y() < 0.4f && (forwardImpulse != 0 || leftImpulse != 0)) // handle input on wall
+                Vec3d deltaMovement = player.getVelocity();
+                if (deltaMovement.y < 0.4f && (movementForward != 0 || movementSideways != 0)) // handle input on wall
                 {
-                    float yRot = player.getYHeadRot();
+                    float yaw = player.getHeadYaw();
                     Vec3d vec3 =
-                        EntityAccessor.invokeGetInputVector(new Vec3d(0f, forwardImpulse, 0f), 0.12f, yRot).add(
-                            EntityAccessor.invokeGetInputVector(new Vec3d(leftImpulse, 0f, 0f), 0.02f, yRot)
+                        EntityAccessor.invokeMovementInputToVelocity(new Vec3d(0f, movementForward, 0f), 0.12f, yaw).add(
+                            EntityAccessor.invokeMovementInputToVelocity(new Vec3d(movementSideways, 0f, 0f), 0.02f, yaw)
                         );
 
                     deltaMovement = deltaMovement.add(vec3);
                 }
-                if (shiftKeyDown) // set minimum y velocity to 0 if shifting
-                    deltaMovement = new Vec3d(deltaMovement.x, Math.max(0, deltaMovement.y()), deltaMovement.z);
+                if (sneaking) // set minimum y velocity to 0 if shifting
+                    deltaMovement = new Vec3d(deltaMovement.x, Math.max(0, deltaMovement.y), deltaMovement.z);
 
                 if (climbedDirection.getAxis() != oldClimbedDirection.getAxis()) // if player swam to another wall, rotate velocity
                 {
-                    deltaMovement = deltaMovement.yRot(MathHelper.DEG_TO_RAD * (climbedDirection.toYRot() - oldClimbedDirection.toYRot()));
+                    deltaMovement = deltaMovement.rotateY(MathHelper.RADIANS_PER_DEGREE * (climbedDirection.asRotation() - oldClimbedDirection.asRotation()));
                 }
 
                 if (climbedDirection.getAxis() == Direction.Axis.X) // set velocity perpendicular to the wall to 0 because YOU CANNOT ESCAPE THE WALL (unless you press back).
@@ -235,7 +227,7 @@ public class PlayerMovementHandler
 
                 if (jumping) // squid surge
                 {
-                    deltaMovement = deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f));
+                    deltaMovement = deltaMovement.multiply(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f));
 
                     if (playerInfo.getSquidSurgeCharge() < 30)
                         playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
@@ -251,12 +243,12 @@ public class PlayerMovementHandler
 
                 if (input != null) // set input as 0 because movement was handled!! i think i should've used the event thingy though
                 {
-                    input.forwardImpulse = 0;
-                    input.leftImpulse = 0;
+                    input.movementForward = 0;
+                    input.movementSideways = 0;
                 }
 
                 player.fallDistance = 0.0F;
-                player.setDeltaMovement(deltaMovement);
+                player.setVelocity(deltaMovement);
             }
             else
             {
@@ -267,10 +259,10 @@ public class PlayerMovementHandler
         if (playerInfo.getClimbedDirection().isEmpty())
         {
             playerInfo.setSquidSurgeCharge(0f);
-            Direction newDirection = InkBlockUtils.canSquidClimb(player, leftImpulse, forwardImpulse, player.getYRot());
+            Direction newDirection = InkBlockUtils.canSquidClimb(player, movementSideways, movementForward, player.getYaw());
             if (newDirection != null)
             {
-                player.teleportRelative(0, 0.01, 0);
+                player.requestTeleportOffset(0, 0.01, 0);
                 player.setOnGround(false);
                 playerInfo.setClimbedDirection(newDirection);
             }

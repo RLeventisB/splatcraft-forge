@@ -1,14 +1,14 @@
 package net.splatcraft.items.weapons;
 
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.world.World;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
@@ -25,17 +25,17 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
         super(settings);
     }
 
-    public static RegistryObject<ShooterItem> create(DeferredRegister<Item> registry, String settings, String name)
+    public static RegistrySupplier<ShooterItem> create(DeferredRegister<Item> registry, String settings, String name)
     {
         return registry.register(name, () -> new ShooterItem(settings));
     }
 
-    public static RegistryObject<ShooterItem> create(DeferredRegister<Item> registry, RegistryObject<ShooterItem> parent, String name)
+    public static RegistrySupplier<ShooterItem> create(DeferredRegister<Item> registry, RegistrySupplier<ShooterItem> parent, String name)
     {
         return create(registry, parent, name, false);
     }
 
-    public static RegistryObject<ShooterItem> create(DeferredRegister<Item> registry, RegistryObject<ShooterItem> parent, String name, boolean secret)
+    public static RegistrySupplier<ShooterItem> create(DeferredRegister<Item> registry, RegistrySupplier<ShooterItem> parent, String name, boolean secret)
     {
         return registry.register(name, () -> new ShooterItem(parent.get().settingsId.toString()).setSecret(secret));
     }
@@ -47,13 +47,13 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
     }
 
     @Override
-    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
+    public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
     {
         ShootingHandler.notifyStartShooting(entity);
     }
@@ -66,29 +66,29 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
             null,
             (data, accumulatedTime, entity1) ->
             {
-                Level level = entity1.getWorld();
-                if (!level.isClientSide())
+                World world = entity1.getWorld();
+                if (!world.isClient())
                 {
                     if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
                     {
-                        float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, entity));
+                        float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), settings.getShotDeviationData(stack, entity));
                         for (int i = 0; i < settings.shotData.projectileCount(); i++)
                         {
-                            InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-                            proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy, accumulatedTime);
+                            InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+                            proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy, accumulatedTime);
                             proj.setShooterStats(settings);
                             proj.tick(accumulatedTime);
-                            level.addFreshEntity(proj);
+                            world.spawnEntity(proj);
                         }
 
-                        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                        world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, ((world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
                     }
                 }
             }, null);
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
     {
         return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
     }

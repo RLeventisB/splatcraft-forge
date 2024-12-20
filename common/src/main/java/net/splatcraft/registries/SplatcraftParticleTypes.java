@@ -4,15 +4,11 @@ import com.mojang.serialization.MapCodec;
 import dev.architectury.registry.client.particle.ParticleProviderRegistry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.model.SpriteAtlasManager;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.texture.SpriteLoader;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.screen.PlayerScreenHandler;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.particles.*;
 
@@ -86,11 +82,11 @@ public class SplatcraftParticleTypes
     @Environment(EnvType.CLIENT)
     public static void registerClientFactories()
     {
-        SpriteLoader.fromAtlas(new SpriteAtlasTexture(Splatcraft.identifierOf("")))
-        ClientSpriteRegistryCallback.event(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).register(((atlasTexture, registry) ->
-        {
-            registry.register(new Identifier("modid", "particle/green_flame"));
-        }));
+//        SpriteLoader.fromAtlas(new SpriteAtlasTexture(Splatcraft.identifierOf("")))
+//        ClientSpriteRegistryCallback.event(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).register(((atlasTexture, registry) ->
+//        {
+//            registry.register(Identifier.of("modid", "particle/green_flame"));
+//        }));
 
         /* Registers our particle client-side.
          * First argument is our particle's instance, created previously on ExampleMod.

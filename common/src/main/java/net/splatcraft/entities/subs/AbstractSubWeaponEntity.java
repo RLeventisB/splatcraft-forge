@@ -1,45 +1,43 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.Util;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageType;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileUtil;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.TheEndGatewayBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +45,9 @@ import java.util.UUID;
 
 public abstract class AbstractSubWeaponEntity extends Entity implements IColoredEntity
 {
-    protected static final ResourceKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
-    private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<ItemStack> DATA_ITEM_STACK = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.ITEM_STACK);
+    protected static final RegistryKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
+    private static final TrackedData<InkColor> COLOR = DataTracker.registerData(AbstractSubWeaponEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+    private static final TrackedData<ItemStack> DATA_ITEM_STACK = DataTracker.registerData(AbstractSubWeaponEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
     public boolean isItem = false;
     public boolean bypassMobDamageMultiplier = false;
     public InkBlockUtils.InkType inkType;
@@ -60,34 +58,34 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
     //	@Deprecated //use AbstractWeaponEntity.create
 //	no
-    public AbstractSubWeaponEntity(EntityType<? extends AbstractSubWeaponEntity> type, Level level)
+    public AbstractSubWeaponEntity(EntityType<? extends AbstractSubWeaponEntity> type, World world)
     {
-        super(type, level);
+        super(type, world);
     }
 
-    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, Level level, @NotNull LivingEntity thrower, ItemStack sourceWeapon)
+    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, World world, @NotNull LivingEntity thrower, ItemStack sourceWeapon)
     {
-        return create(type, level, thrower, ColorUtils.getInkColor(sourceWeapon), InkBlockUtils.getInkType(thrower), sourceWeapon);
+        return create(type, world, thrower, ColorUtils.getInkColor(sourceWeapon), InkBlockUtils.getInkType(thrower), sourceWeapon);
     }
 
-    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, Level level, LivingEntity thrower, int color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
+    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, World world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
     {
-        A result = create(type, level, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
+        A result = create(type, world, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
         result.setOwner(thrower);
 
         return result;
     }
 
-    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, Level level, double x, double y, double z, int color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
+    public static <A extends AbstractSubWeaponEntity> A create(EntityType<A> type, World world, double x, double y, double z, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
     {
-        A result = type.create(level);
+        A result = type.create(world);
         result.setPos(x, y, z);
         result.setColor(color);
         result.inkType = inkType;
         result.sourceWeapon = sourceWeapon;
         result.setItem(sourceWeapon);
 
-        result.readItemData(sourceWeapon.getOrCreateTag().getCompound("EntityData"));
+        result.readItemData(sourceWeapon.get(SplatcraftComponents.SUB_WEAPON_DATA));
 
         return result;
     }
@@ -100,75 +98,65 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     @Override
     public void tick()
     {
-        if (!this.leftOwner)
+        if (!leftOwner)
         {
-            this.leftOwner = this.checkLeftOwner();
+            leftOwner = checkLeftOwner();
         }
 
         super.tick();
 
-        if (isInWater())
+        if (isSubmergedInWater())
         {
-            level().broadcastEntityEvent(this, (byte) -1);
+            getWorld().sendEntityStatus(this, (byte) -1);
             discard();
         }
 
-        Vec3d raytraceOffset = new Vec3d(getBbWidth() / 2f * Math.signum(getDeltaMovement().x), getBbHeight() * Math.max(0, Math.signum(getDeltaMovement().y)), getBbWidth() / 2f * Math.signum(getDeltaMovement().z));
+        Vec3d raytraceOffset = new Vec3d(getWidth() / 2f * Math.signum(getVelocity().x), getHeight() * Math.max(0, Math.signum(getVelocity().y)), getWidth() / 2f * Math.signum(getVelocity().z));
 
-        setDeltaMovement(getDeltaMovement().add(raytraceOffset));
-        HitResult raytraceresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-        setDeltaMovement(getDeltaMovement().subtract(raytraceOffset));
+        setVelocity(getVelocity().add(raytraceOffset));
+        HitResult raytraceresult = ProjectileUtil.getCollision(this, this::canHitEntity);
+        setVelocity(getVelocity().subtract(raytraceOffset));
 
+        // todo: adapt this code better
         boolean flag = false;
         if (raytraceresult.getType() == HitResult.Type.BLOCK)
         {
-            BlockPos blockpos = ((BlockHitResult) raytraceresult).getBlockPos();
-            BlockState blockstate = this.getWorld().getBlockState(blockpos);
-            if (blockstate.is(Blocks.NETHER_PORTAL))
-            {
-                this.handleInsidePortal(blockpos);
-                flag = true;
-            }
-            else if (blockstate.is(Blocks.END_GATEWAY))
-            {
-                if (this.getWorld().getBlockEntity(blockpos) instanceof TheEndGatewayBlockEntity gate && TheEndGatewayBlockEntity.canEntityTeleport(this))
-                {
-                    TheEndGatewayBlockEntity.teleportEntity(level(), blockpos, blockstate, this, gate);
-                }
-                flag = true;
-            }
+            BlockHitResult blockHitResult = (BlockHitResult) raytraceresult;
+            onBlockHit(blockHitResult);
+            BlockPos blockPos = blockHitResult.getBlockPos();
+            getWorld().emitGameEvent(GameEvent.PROJECTILE_LAND, blockPos, GameEvent.Emitter.of(this, getWorld().getBlockState(blockPos)));
         }
 
         if (raytraceresult.getType() != HitResult.Type.MISS && !flag)
         {
-            this.onHit(raytraceresult);
+            onHit(raytraceresult);
         }
 
-        this.checkInsideBlocks();
-        Vec3d deltaMovement = this.getDeltaMovement();
+        checkBlockCollision();
+        Vec3d deltaMovement = getVelocity();
 
-        Vec3d newPos = new Vec3d(getX() + getDeltaMovement().x, getY() + getDeltaMovement().y, getZ() + getDeltaMovement().z);
+        Vec3d newPos = new Vec3d(getX() + getVelocity().x, getY() + getVelocity().y, getZ() + getVelocity().z);
 
-        double newX = this.getX() + deltaMovement.x;
-        double newY = this.getY() + deltaMovement.y;
-        double newZ = this.getZ() + deltaMovement.z;
-        this.updateRotation();
+        double newX = getX() + deltaMovement.x;
+        double newY = getY() + deltaMovement.y;
+        double newZ = getZ() + deltaMovement.z;
+        updateRotation();
         float f = 0.941192F;
-        if (this.isInWater())
+        if (isSubmergedInWater())
         {
             for (int i = 0; i < 4; ++i)
             {
-                this.getWorld().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25D, newY - deltaMovement.y * 0.25D, newZ - deltaMovement.z * 0.25D, deltaMovement.x, deltaMovement.y, deltaMovement.z);
+                getWorld().addParticle(ParticleTypes.BUBBLE, newX - deltaMovement.x * 0.25D, newY - deltaMovement.y * 0.25D, newZ - deltaMovement.z * 0.25D, deltaMovement.x, deltaMovement.y, deltaMovement.z);
             }
 
             f = 0.8F;
         }
 
-        this.setDeltaMovement(deltaMovement.scale(f));
-        if (!this.isNoGravity())
+        setVelocity(deltaMovement.multiply(f));
+        if (!hasNoGravity())
         {
-            Vec3d vector3d1 = this.getDeltaMovement();
-            this.setDeltaMovement(vector3d1.x, vector3d1.y - (double) this.getGravity(), vector3d1.z);
+            Vec3d vector3d1 = getVelocity();
+            setVelocity(vector3d1.x, vector3d1.y - getGravity(), vector3d1.z);
         }
 
         if (handleMovement())
@@ -176,13 +164,13 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     @Override
-    public void handleEntityEvent(byte id)
+    public void handleStatus(byte id)
     {
-        super.handleEntityEvent(id);
+        super.handleStatus(id);
 
         if (id == -1)
         {
-            level().addParticle(new InkExplosionParticleData(getColor(), .5f), this.getX(), this.getY(), this.getZ(), 0, 0, 0);
+            getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
         }
     }
 
@@ -192,12 +180,12 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
         Vec3d posDiff = new Vec3d(0, 0, 0);
 
-        if (thrower instanceof Player player)
+        if (thrower instanceof PlayerEntity player)
         {
             try
             {
-                posDiff = thrower.position().subtract(player.getPosition(0));
-                if (thrower.onGround())
+                posDiff = thrower.getPos().subtract(player.getLerpedPos(0));
+                if (thrower.isOnGround())
                     posDiff.multiply(1, 0, 1);
             }
             catch (NullPointerException ignored)
@@ -205,13 +193,13 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
             }
         }
 
-        moveTo(getX() + posDiff.x(), getY() + posDiff.y(), getZ() + posDiff.z());
-        setDeltaMovement(getDeltaMovement().add(posDiff.multiply(0.8, 0.8, 0.8)));
+        refreshPositionAfterTeleport(getX() + posDiff.x, getY() + posDiff.y, getZ() + posDiff.z);
+        setVelocity(getVelocity().add(posDiff.multiply(0.8, 0.8, 0.8)));
     }
 
-    public float getGravity()
+    public double getGravity()
     {
-        return 0.09f;
+        return 0.09;
     }
 
     protected boolean handleMovement()
@@ -229,47 +217,47 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     @Override
-    public void addAdditionalSaveData(NbtCompound nbt)
+    public void writeCustomDataToNbt(NbtCompound nbt)
     {
-        nbt.putInt("Color", getColor());
+        nbt.put("Color", getColor().getNbt());
         nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
         nbt.putString("InkType", inkType.getSerializedName());
-        nbt.put("SourceWeapon", sourceWeapon.save(new NbtCompound()));
+        nbt.put("SourceWeapon", sourceWeapon.encode(getRegistryManager()));
 
-        if (this.ownerUUID != null)
-            nbt.putUUID("Owner", this.ownerUUID);
+        if (ownerUUID != null)
+            nbt.putUuid("Owner", ownerUUID);
 
-        if (this.leftOwner)
+        if (leftOwner)
             nbt.putBoolean("LeftOwner", true);
 
-        ItemStack itemstack = this.getItemRaw();
+        ItemStack itemstack = getItemRaw();
         if (!itemstack.isEmpty())
-            nbt.put("Item", itemstack.save(new NbtCompound()));
+            nbt.put("Item", itemstack.encode(getWorld().getRegistryManager()));
     }
 
     @Override
-    public void readAdditionalSaveData(NbtCompound nbt)
+    public void readCustomDataFromNbt(NbtCompound nbt)
     {
         if (nbt.contains("Color"))
-            setColor(ColorUtils.getColorFromNbt(nbt));
+            setColor(InkColor.getFromNbt(nbt.get("Color")));
         bypassMobDamageMultiplier = nbt.getBoolean("DypassMobDamageMultiplier");
-        inkType = InkBlockUtils.InkType.values.getOrDefault(new ResourceLocation(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
-        sourceWeapon = ItemStack.of(nbt.getCompound("SourceWeapon"));
+        inkType = InkBlockUtils.InkType.values.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
+        sourceWeapon = ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("SourceWeapon")).getOrThrow().getFirst();
 
-        if (nbt.hasUUID("Owner"))
-            this.ownerUUID = nbt.getUUID("Owner");
+        if (nbt.contains("Owner"))
+            ownerUUID = nbt.getUuid("Owner");
 
-        this.leftOwner = nbt.getBoolean("LeftOwner");
+        leftOwner = nbt.getBoolean("LeftOwner");
 
-        ItemStack itemstack = ItemStack.of(nbt.getCompound("Item"));
-        this.setItem(itemstack);
+        ItemStack itemstack = ItemStack.fromNbtOrEmpty(getRegistryManager(), nbt.getCompound("Item"));
+        setItem(itemstack);
     }
 
     protected void onBlockHit(BlockHitResult result)
     {
     }
 
-    protected void onHitEntity(EntityHitResult result)
+    protected void onEntityHit(EntityHitResult result)
     {
     }
 
@@ -278,7 +266,7 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         HitResult.Type rayType = result.getType();
         if (rayType == HitResult.Type.ENTITY)
         {
-            this.onHitEntity((EntityHitResult) result);
+            onEntityHit((EntityHitResult) result);
         }
         else if (rayType == HitResult.Type.BLOCK)
         {
@@ -287,56 +275,56 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     }
 
     @Override
-    protected void defineSynchedData()
+    protected void initDataTracker(DataTracker.Builder builder)
     {
-        entityData.define(DATA_ITEM_STACK, ItemStack.EMPTY);
-        entityData.define(COLOR, ColorUtils.DEFAULT);
+        builder.add(DATA_ITEM_STACK, ItemStack.EMPTY);
+        builder.add(COLOR, ColorUtils.getDefaultColor());
     }
 
     @Override
-    public int getColor()
+    public InkColor getColor()
     {
-        return entityData.get(COLOR);
+        return dataTracker.get(COLOR);
     }
 
     @Override
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
-        entityData.set(COLOR, color);
+        dataTracker.set(COLOR, color);
     }
 
     protected abstract Item getDefaultItem();
 
     protected ItemStack getItemRaw()
     {
-        return this.getEntityData().get(DATA_ITEM_STACK);
+        return getDataTracker().get(DATA_ITEM_STACK);
     }
 
     public ItemStack getItem()
     {
-        ItemStack itemstack = this.getItemRaw();
-        return itemstack.isEmpty() ? new ItemStack(this.getDefaultItem()) : itemstack;
+        ItemStack itemstack = getItemRaw();
+        return itemstack.isEmpty() ? new ItemStack(getDefaultItem()) : itemstack;
     }
 
     public void setItem(ItemStack item)
     {
-        if (item.getItem() != this.getDefaultItem() || item.hasTag())
+        if (item.getItem() != getDefaultItem())
         {
-            this.getEntityData().set(DATA_ITEM_STACK, Util.make(item.copy(), (p_213883_0_) ->
-                p_213883_0_.setCount(1)));
+            getDataTracker().set(DATA_ITEM_STACK, Util.make(item.copy(), (itemStack) ->
+                itemStack.setCount(1)));
         }
     }
 
     @Nullable
     public Entity getOwner()
     {
-        if (this.ownerUUID != null && this.getWorld() instanceof ServerWorld serverLevel)
+        if (ownerUUID != null && getWorld() instanceof ServerWorld serverLevel)
         {
-            return serverLevel.getEntity(this.ownerUUID);
+            return serverLevel.getEntity(ownerUUID);
         }
         else
         {
-            return this.ownerNetworkId != 0 ? this.getWorld().getEntity(this.ownerNetworkId) : null;
+            return ownerNetworkId != 0 ? getWorld().getEntityById(ownerNetworkId) : null;
         }
     }
 
@@ -344,24 +332,18 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
     {
         if (p_212361_1_ != null)
         {
-            this.ownerUUID = p_212361_1_.getUUID();
-            this.ownerNetworkId = p_212361_1_.getId();
+            ownerUUID = p_212361_1_.getUuid();
+            ownerNetworkId = p_212361_1_.getId();
         }
-    }
-
-    @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket()
-    {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
     private boolean checkLeftOwner()
     {
-        Entity entity = this.getOwner();
+        Entity entity = getOwner();
         if (entity != null)
         {
-            for (Entity entity1 : this.getWorld().getEntities(this, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0D), (p_234613_0_) ->
-                !p_234613_0_.isSpectator() && p_234613_0_.isPickable()))
+            for (Entity entity1 : getWorld().getOtherEntities(this, getBoundingBox().stretch(getVelocity()).expand(1.0D), (entity1) ->
+                !entity1.isSpectator() && entity1.canHit()))
             {
                 if (entity1.getRootVehicle() == entity.getRootVehicle())
                 {
@@ -373,48 +355,48 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
         return true;
     }
 
-    public void shoot(double p_37266_, double p_37267_, double p_37268_, float p_37269_, float p_37270_)
+    public void shoot(double x, double y, double z, float speed, float inaccuracy)
     {
-        Vec3d vec3 = (new Vec3d(p_37266_, p_37267_, p_37268_)).normalize().add(this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_, this.random.nextGaussian() * (double) 0.0075F * (double) p_37270_).scale(p_37269_);
-        this.setDeltaMovement(vec3);
-        double d0 = vec3.horizontalDistance();
-        this.setYRot((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG));
-        this.setXRot((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG));
-        this.yRotO = this.getYRot();
-        this.xRotO = this.getXRot();
+        Vec3d vec3 = (new Vec3d(x, y, z)).normalize().add(random.nextGaussian() * (double) 0.0075F * (double) inaccuracy, random.nextGaussian() * (double) 0.0075F * (double) inaccuracy, random.nextGaussian() * (double) 0.0075F * (double) inaccuracy).multiply(speed);
+        setVelocity(vec3);
+        double d0 = vec3.horizontalLength();
+        setYaw((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN));
+        setPitch((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN));
+        prevYaw = getYaw();
+        prevPitch = getPitch();
     }
 
     public void shootFromRotation(Entity p_234612_1_, float p_234612_2_, float p_234612_3_, float p_234612_4_, float p_234612_5_, float p_234612_6_)
     {
-        float f = -MathHelper.sin(p_234612_3_ * (MathHelper.DEG_TO_RAD)) * MathHelper.cos(p_234612_2_ * (MathHelper.DEG_TO_RAD));
-        float f1 = -MathHelper.sin((p_234612_2_ + p_234612_4_) * (MathHelper.DEG_TO_RAD));
-        float f2 = MathHelper.cos(p_234612_3_ * (MathHelper.DEG_TO_RAD)) * MathHelper.cos(p_234612_2_ * (MathHelper.DEG_TO_RAD));
-        this.shoot(f, f1, f2, p_234612_5_, p_234612_6_);
-        Vec3d vector3d = p_234612_1_.getDeltaMovement();
-        this.setDeltaMovement(this.getDeltaMovement().add(vector3d.x, p_234612_1_.onGround() ? 0.0D : vector3d.y, vector3d.z));
+        float f = -MathHelper.sin(p_234612_3_ * (MathHelper.RADIANS_PER_DEGREE)) * MathHelper.cos(p_234612_2_ * (MathHelper.RADIANS_PER_DEGREE));
+        float f1 = -MathHelper.sin((p_234612_2_ + p_234612_4_) * (MathHelper.RADIANS_PER_DEGREE));
+        float f2 = MathHelper.cos(p_234612_3_ * (MathHelper.RADIANS_PER_DEGREE)) * MathHelper.cos(p_234612_2_ * (MathHelper.RADIANS_PER_DEGREE));
+        shoot(f, f1, f2, p_234612_5_, p_234612_6_);
+        Vec3d vector3d = p_234612_1_.getVelocity();
+        setVelocity(getVelocity().add(vector3d.x, p_234612_1_.isOnGround() ? 0.0D : vector3d.y, vector3d.z));
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public void lerpMotion(double p_70016_1_, double p_70016_3_, double p_70016_5_)
+    @Environment(EnvType.CLIENT)
+    public void lerpMotion(double x, double y, double z)
     {
-        this.setDeltaMovement(p_70016_1_, p_70016_3_, p_70016_5_);
-        if (this.xRotO == 0.0F && this.yRotO == 0.0F)
+        setVelocity(x, y, z);
+        if (prevPitch == 0.0F && prevYaw == 0.0F)
         {
-            float f = MathHelper.sqrt((float) (p_70016_1_ * p_70016_1_ + p_70016_5_ * p_70016_5_));
-            this.setXRot((float) (MathHelper.atan2(p_70016_3_, f) * MathHelper.RAD_TO_DEG));
-            this.setYRot((float) (MathHelper.atan2(p_70016_1_, p_70016_5_) * MathHelper.RAD_TO_DEG));
-            this.xRotO = this.getXRot();
-            this.yRotO = this.getYRot();
-            this.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            float f = MathHelper.sqrt((float) (x * x + z * z));
+            setPitch((float) (MathHelper.atan2(y, f) * MathHelper.DEGREES_PER_RADIAN));
+            setYaw((float) (MathHelper.atan2(x, z) * MathHelper.DEGREES_PER_RADIAN));
+            prevPitch = getPitch();
+            prevYaw = getYaw();
+            refreshPositionAndAngles(getX(), getY(), getZ(), getYaw(), getPitch());
         }
     }
 
-    public boolean canHitEntity(Entity p_230298_1_)
+    public boolean canHitEntity(Entity entity)
     {
-        if (!p_230298_1_.isSpectator() && p_230298_1_.isAlive() && p_230298_1_.isPickable())
+        if (!entity.isSpectator() && entity.isAlive() && entity.canHit())
         {
-            Entity entity = this.getOwner();
-            return entity == null || this.leftOwner || !entity.isPassengerOfSameVehicle(p_230298_1_);
+            Entity owner = getOwner();
+            return owner == null || leftOwner || !owner.isConnectedThroughVehicle(entity);
         }
         else
         {
@@ -424,9 +406,9 @@ public abstract class AbstractSubWeaponEntity extends Entity implements IColored
 
     public void updateRotation()
     {
-        Vec3d vec3 = this.getDeltaMovement();
-        double d0 = vec3.horizontalDistance();
-        this.setXRot(CommonUtils.lerpRotation(0.2f, this.xRotO, (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.RAD_TO_DEG)));
-        this.setYRot(CommonUtils.lerpRotation(0.2f, this.yRotO, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.RAD_TO_DEG)));
+        Vec3d vec3 = getVelocity();
+        double d0 = vec3.horizontalLength();
+        setPitch(CommonUtils.lerpRotation(0.2f, prevPitch, (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN)));
+        setYaw(CommonUtils.lerpRotation(0.2f, prevYaw, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN)));
     }
 }

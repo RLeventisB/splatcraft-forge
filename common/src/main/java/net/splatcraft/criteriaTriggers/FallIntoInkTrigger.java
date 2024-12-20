@@ -1,52 +1,40 @@
 package net.splatcraft.criteriaTriggers;
 
-import com.google.gson.JsonObject;
-import net.minecraft.advancements.critereon.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
-import net.splatcraft.Splatcraft;
-import org.jetbrains.annotations.NotNull;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.advancement.criterion.AbstractCriterion;
+import net.minecraft.predicate.entity.EntityPredicate;
+import net.minecraft.predicate.entity.LootContextPredicate;
+import net.minecraft.server.network.ServerPlayerEntity;
 
-public class FallIntoInkTrigger extends SimpleCriterionTrigger<FallIntoInkTrigger.TriggerInstance>
+import java.util.Optional;
+
+public class FallIntoInkTrigger extends AbstractCriterion<FallIntoInkTrigger.TriggerInstance>
 {
-    static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "fall_into_ink");
-
-    public @NotNull ResourceLocation getId()
+    public void trigger(ServerPlayerEntity player, float distance)
     {
-        return ID;
+        trigger(player, (instance) -> instance.matches(distance));
     }
 
-    public FallIntoInkTrigger.@NotNull TriggerInstance createInstance(@NotNull JsonObject json, @NotNull ContextAwarePredicate composite, @NotNull DeserializationContext context)
+    @Override
+    public Codec<TriggerInstance> getConditionsCodec()
     {
-        return new FallIntoInkTrigger.TriggerInstance(composite, GsonHelper.getAsFloat(json, "distance", 0));
+        return TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer player, float distance)
+    public record TriggerInstance(Optional<LootContextPredicate> player,
+                                  float distanceFallen) implements Conditions
     {
-        this.trigger(player, (instance) -> instance.matches(distance));
-    }
-
-    public static class TriggerInstance extends AbstractCriterionTriggerInstance
-    {
-        private final float distance;
-
-        public TriggerInstance(ContextAwarePredicate p_27688_, float distance)
-        {
-            super(FallIntoInkTrigger.ID, p_27688_);
-            this.distance = distance;
-        }
+        public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(
+            inst -> inst.group(
+                EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
+                Codec.FLOAT.optionalFieldOf("distance", 0f).forGetter(TriggerInstance::distanceFallen)
+            ).apply(inst, TriggerInstance::new)
+        );
 
         public boolean matches(float distance)
         {
-            return distance >= this.distance;
-        }
-
-        public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
-        {
-            JsonObject jsonobject = super.serializeToJson(context);
-            jsonobject.addProperty("distance", distance);
-            return jsonobject;
+            return distance >= distanceFallen;
         }
     }
 }

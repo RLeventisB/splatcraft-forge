@@ -1,25 +1,37 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.FriendlyByteBuf;
+import it.unimi.dsi.fastutil.ints.IntList;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkColor;
+
+import java.util.Arrays;
 
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {
-    int[] colors;
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
+    InkColor[] colors;
     boolean add;
     boolean clear;
-
-    public UpdateColorScoresPacket(boolean clear, boolean add, int[] color)
+    public UpdateColorScoresPacket(boolean clear, boolean add, InkColor[] color)
     {
         this.clear = clear;
-        this.colors = color;
+        colors = color;
         this.add = add;
     }
 
-    public static UpdateColorScoresPacket decode(FriendlyByteBuf buffer)
+    public static UpdateColorScoresPacket decode(RegistryByteBuf buffer)
     {
-        return new UpdateColorScoresPacket(buffer.readBoolean(), buffer.readBoolean(), buffer.readVarIntArray());
+        return new UpdateColorScoresPacket(buffer.readBoolean(), buffer.readBoolean(), buffer.readIntList().stream().map(InkColor::constructOrReuse).toList().toArray(new InkColor[0]));
+    }
+
+    @Override
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
     }
 
     @Override
@@ -33,14 +45,14 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 
         if (add)
         {
-            for (int color : colors)
+            for (InkColor color : colors)
             {
                 ScoreboardHandler.createColorCriterion(color);
             }
         }
         else
         {
-            for (int color : colors)
+            for (InkColor color : colors)
             {
                 ScoreboardHandler.removeColorCriterion(color);
             }
@@ -48,10 +60,10 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeBoolean(clear);
         buffer.writeBoolean(add);
-        buffer.writeVarIntArray(colors);
+        buffer.writeIntList((IntList) Arrays.stream(colors).map(InkColor::getColor).toList());
     }
 }

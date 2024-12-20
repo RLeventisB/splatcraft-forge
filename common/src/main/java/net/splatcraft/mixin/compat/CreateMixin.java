@@ -1,8 +1,8 @@
-package net.splatcraft.mixin.compat;
+/*package net.splatcraft.mixin.compat;
 
 import com.simibubi.create.content.contraptions.Contraption;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,3 +36,4 @@ public class CreateMixin
         splatcraft$mapId.put(contraption, splatcraft$nextId++);
     }
 }
+*/

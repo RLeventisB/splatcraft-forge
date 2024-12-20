@@ -1,36 +1,41 @@
 package net.splatcraft.registries;
 
-import com.mojang.serialization.Codec;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
-import net.minecraftforge.common.loot.IGlobalLootModifier;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.loot.LootTable;
+import net.minecraft.loot.function.LootFunctionType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.loot.BlueprintLootFunction;
-import net.splatcraft.loot.ChestLootModifier;
-import net.splatcraft.loot.FishingLootModifier;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = Splatcraft.MODID)
 public class SplatcraftLoot
 {
-    public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> REGISTRY = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, Splatcraft.MODID);
-    public static final DeferredRegister<LootItemFunctionType> REGISTRY2 = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, Splatcraft.MODID);
-    public static final RegistryObject<LootItemFunctionType> BLUEPRINT = REGISTRY2.register("blueprint_pool", () -> new LootItemFunctionType(new BlueprintLootFunction.Serializer()));
+    public static final DeferredRegister<LootFunctionType<?>> REGISTRY = Splatcraft.deferredRegistryOf(Registries.LOOT_FUNCTION_TYPE);
+    public static final RegistrySupplier<LootFunctionType<?>> BLUEPRINT = REGISTRY.register("blueprint_pool", () -> new LootFunctionType<>(BlueprintLootFunction.CODEC));
+    public static final RegistryKey<LootTable> STORAGE_SUNKEN_CRATE, STORAGE_EGG_CRATE;
 
     static
     {
-        REGISTRY.register("fishing", FishingLootModifier.CODEC);
-        REGISTRY.register("chest_loot", ChestLootModifier.CODEC);
+        STORAGE_SUNKEN_CRATE = createKey("storage/sunken_crate");
+        STORAGE_EGG_CRATE = createKey("storage/egg_crate");
     }
-//	@SubscribeEvent
+
+    private static RegistryKey<LootTable> createKey(String path)
+    {
+//        return LootTables.registerLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, Splatcraft.identifierOf(path)));
+        return RegistryKey.of(RegistryKeys.LOOT_TABLE, Splatcraft.identifierOf(path));
+    }
+//    public static final RegistrySupplier<LootFunctionType<? extends LootFunction>> FISHING = REGISTRY.register("fishing", () -> new LootFunctionType<>(FishingLootModifier.CODEC));
+//    public static final RegistrySupplier<LootFunctionType<? extends LootFunction>> CHEST_LOOT = REGISTRY.register("chest_loot", () -> new LootFunctionType<>(ChestLootModifier.CODEC));
+
+    //	@SubscribeEvent
 //	public static void registerGLM(NewRegistryEvent event)
 //	{
-//		IForgeRegistry<Codec<? extends IGlobalLootModifier>> registry = ForgeRegistries.GLOBAL_LOOT_MODIFIER_SERIALIZERS.get();
+//		IForgeRegistry<Codec<? extends IGlobalLootModifier>> registry = Registries.GLOBAL_LOOT_MODIFIER_SERIALIZERS.get();
 //
-//		registry.register(new ResourceLocation(Splatcraft.MODID, "fishing"), new FishingLootModifier.Serializer());
-//		registry.register(new ChestLootModifier.Serializer().setRegistryName(new ResourceLocation(Splatcraft.MODID, "chest_loot")));
+//		registry.register(Splatcraft.identifierOf("fishing"), new FishingLootModifier.Serializer());
+//		registry.register(new ChestLootModifier.Serializer().setRegistryName(Splatcraft.identifierOf("chest_loot")));
 //	}
 }

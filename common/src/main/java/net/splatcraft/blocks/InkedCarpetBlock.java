@@ -1,39 +1,37 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.WorldView;
 import org.jetbrains.annotations.NotNull;
 
 public class InkedCarpetBlock extends InkStainedBlock
 {
-    protected static final VoxelShape SHAPE = box(0.0D, 0.0D, 0.0D, 16.0D, 1.0D, 16.0D);
+    protected static final VoxelShape SHAPE = createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 1.0D, 16.0D);
 
     public InkedCarpetBlock(String name)
     {
-        super(Properties.of().isRedstoneConductor((state, getter, pos) -> false).mapColor(MapColor.WOOL).ignitedByLava().strength(0.1F).sound(SoundType.WOOL));
+        super(AbstractBlock.Settings.create().solidBlock((state, getter, pos) -> false).mapColor(MapColor.WHITE_GRAY).burnable().strength(0.1F).sounds(BlockSoundGroup.WOOL));
     }
 
-    public @NotNull VoxelShape getShape(@NotNull BlockState st, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    @Override
+    public VoxelShape getOutlineShape(@NotNull BlockState st, @NotNull BlockView level, @NotNull BlockPos pos, @NotNull ShapeContext context)
     {
         return SHAPE;
     }
 
-    public @NotNull BlockState updateShape(BlockState state, @NotNull Direction direction, @NotNull BlockState facingState, @NotNull LevelAccessor level, @NotNull BlockPos pos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(BlockState state, @NotNull Direction direction, @NotNull BlockState facingState, @NotNull WorldAccess level, @NotNull BlockPos pos, @NotNull BlockPos facingPos)
     {
-        return !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, facingState, level, pos, facingPos);
+        return !state.canPlaceAt(level, pos) ? Blocks.AIR.getDefaultState() : super.getStateForNeighborUpdate(state, direction, facingState, level, pos, facingPos);
     }
 
-    public boolean isValidPosition(BlockState p_196260_1_, LevelReader p_196260_2_, BlockPos p_196260_3_)
+    public boolean isValidPosition(BlockState p_196260_1_, WorldView p_196260_2_, BlockPos p_196260_3_)
     {
-        return !p_196260_2_.isEmptyBlock(p_196260_3_.below());
+        return !p_196260_2_.isAir(p_196260_3_.down());
     }
 }

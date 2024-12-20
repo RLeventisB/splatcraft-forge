@@ -1,9 +1,9 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Hand;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,26 +12,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 public class WeaponHotkeyMixin
 {
-    @Mixin(MultiPlayerGameMode.class)
+    @Mixin(ClientPlayerInteractionManager.class)
     public static abstract class PlayerControllerMix
     {
-        @Inject(method = "releaseUsingItem", at = @At("HEAD"), cancellable = true)
-        private void splatcraft$releaseUsingItem(Player player, CallbackInfo callbackInfo)
+        @Inject(method = "stopUsingItem", at = @At("HEAD"), cancellable = true)
+        private void splatcraft$releaseUsingItem(PlayerEntity player, CallbackInfo callbackInfo)
         {
-            if (SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getUsedItemHand() == InteractionHand.OFF_HAND)
+            if (SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getActiveHand() == Hand.OFF_HAND)
                 callbackInfo.cancel();
         }
     }
 
-    @Mixin(Minecraft.class)
+    @Mixin(MinecraftClient.class)
     public static abstract class MinecraftInstance
     {
-        @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
+        @Inject(method = "doItemUse", at = @At("HEAD"), cancellable = true)
         private void splatcraft$startUseItem(CallbackInfo ci)
         {
             if (SplatcraftKeyHandler.isSubWeaponHotkeyDown())
             {
-                SplatcraftKeyHandler.startUsingItemInHand(InteractionHand.OFF_HAND);
+                SplatcraftKeyHandler.startUsingItemInHand(Hand.OFF_HAND);
                 ci.cancel();
             }
         }

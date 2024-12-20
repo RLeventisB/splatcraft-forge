@@ -1,40 +1,41 @@
 package net.splatcraft.worldgen.features;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.WorldAccess;
+import net.minecraft.world.gen.feature.DefaultFeatureConfig;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.util.FeatureContext;
 import net.splatcraft.registries.SplatcraftBlocks;
 
-public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
+public class SardiniumDepositFeature extends Feature<DefaultFeatureConfig>
 {
-    public SardiniumDepositFeature(Codec<NoneFeatureConfiguration> codec)
+    public SardiniumDepositFeature(Codec<DefaultFeatureConfig> codec)
     {
         super(codec);
     }
 
-    private static boolean isIcebergState(BlockState p_159886_)
+    private static boolean isIcebergState(BlockState state)
     {
-        return p_159886_.is(SplatcraftBlocks.coralite.get()) || p_159886_.is(SplatcraftBlocks.sardiniumOre.get()) || p_159886_.is(SplatcraftBlocks.rawSardiniumBlock.get());
+        return state.isOf(SplatcraftBlocks.coralite.get()) || state.isOf(SplatcraftBlocks.sardiniumOre.get()) || state.isOf(SplatcraftBlocks.rawSardiniumBlock.get());
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context)
+    public boolean generate(FeatureContext<DefaultFeatureConfig> context)
     {
-        RandomSource random = context.random();
-        BlockPos centerPos = context.origin();
+        Random random = context.getRandom();
+        BlockPos centerPos = context.getOrigin();
 
-        WorldGenLevel worldgenlevel = context.getWorld();
-        centerPos = new BlockPos(centerPos.getX(), worldgenlevel.getHeight(Heightmap.Types.OCEAN_FLOOR, centerPos.getX(), centerPos.getZ()), centerPos.getZ());
+        // what do these meannnnnnnn did this mod get obfuscated and recovered or what
+        StructureWorldAccess worldAccess = context.getWorld();
+        centerPos = new BlockPos(centerPos.getX(), worldAccess.getTopY(Heightmap.Type.OCEAN_FLOOR, centerPos.getX(), centerPos.getZ()), centerPos.getZ());
         boolean flag = random.nextDouble() > 0.7D;
         double d0 = random.nextDouble() * 2.0D * Math.PI;
         int i = 11 - random.nextInt(5);
@@ -59,10 +60,10 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
             {
                 for (int j2 = 0; j2 < l; ++j2)
                 {
-                    int k2 = flag1 ? this.heightDependentRadiusEllipse(j2, l, j1) : this.heightDependentRadiusRound(random, j2, l, j1);
+                    int k2 = flag1 ? heightDependentRadiusEllipse(j2, l, j1) : heightDependentRadiusRound(random, j2, l, j1);
                     if (flag1 || l1 < k2)
                     {
-                        this.generateIcebergBlock(worldgenlevel, random, centerPos, l, l1, j2, i2, k2, k1, flag1, j, d0, random.nextFloat() < 0.2f ? SplatcraftBlocks.sardiniumOre.get().defaultBlockState() : SplatcraftBlocks.coralite.get().defaultBlockState());
+                        generateIcebergBlock(worldAccess, random, centerPos, l, l1, j2, i2, k2, k1, flag1, j, d0, random.nextFloat() < 0.2f ? SplatcraftBlocks.sardiniumOre.get().getDefaultState() : SplatcraftBlocks.coralite.get().getDefaultState());
                     }
                 }
             }
@@ -75,11 +76,11 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
                 for (int k3 = -1; k3 > -i1; --k3)
                 {
                     int l3 = flag1 ? MathHelper.ceil((float) k1 * (1.0F - (float) Math.pow(k3, 2.0D) / ((float) i1 * 8.0F))) : k1;
-                    int l2 = this.heightDependentRadiusSteep(random, -k3, i1, j1);
+                    int l2 = heightDependentRadiusSteep(random, -k3, i1, j1);
                     if (i3 < l2)
                     {
-                        this.generateIcebergBlock(context.getWorld(), random, centerPos, i1, i3, k3, j3, l2, l3, flag1, j, d0,
-                            random.nextFloat() < 0.05f ? SplatcraftBlocks.rawSardiniumBlock.get().defaultBlockState() : random.nextFloat() < 0.3f ? SplatcraftBlocks.sardiniumOre.get().defaultBlockState() : SplatcraftBlocks.coralite.get().defaultBlockState());
+                        generateIcebergBlock(context.getWorld(), random, centerPos, i1, i3, k3, j3, l2, l3, flag1, j, d0,
+                            random.nextFloat() < 0.05f ? SplatcraftBlocks.rawSardiniumBlock.get().getDefaultState() : random.nextFloat() < 0.3f ? SplatcraftBlocks.sardiniumOre.get().getDefaultState() : SplatcraftBlocks.coralite.get().getDefaultState());
                     }
                 }
             }
@@ -101,19 +102,19 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         return true;
     }
 
-    private void generateIcebergBlock(LevelAccessor level, RandomSource p_66060_, BlockPos p_66061_, int p_66062_, int p_66063_, int p_66064_, int p_66065_, int p_66066_, int p_66067_, boolean p_66068_, int p_66069_, double p_66070_, BlockState state)
+    private void generateIcebergBlock(WorldAccess level, Random raqndom, BlockPos p_66061_, int p_66062_, int p_66063_, int p_66064_, int p_66065_, int p_66066_, int p_66067_, boolean p_66068_, int p_66069_, double p_66070_, BlockState state)
     {
-        double d0 = p_66068_ ? this.signedDistanceEllipse(p_66063_, p_66065_, BlockPos.ZERO, p_66067_, this.getEllipseC(p_66064_, p_66062_, p_66069_), p_66070_) : this.signedDistanceCircle(p_66063_, p_66065_, BlockPos.ZERO, p_66066_, p_66060_);
+        double d0 = p_66068_ ? signedDistanceEllipse(p_66063_, p_66065_, new BlockPos(BlockPos.ZERO), p_66067_, getEllipseC(p_66064_, p_66062_, p_66069_), p_66070_) : signedDistanceCircle(p_66063_, p_66065_, new BlockPos(BlockPos.ZERO), p_66066_, raqndom);
         if (d0 < 0.0D)
         {
-            BlockPos blockpos = p_66061_.offset(p_66063_, p_66064_, p_66065_);
-            double d1 = p_66068_ ? -0.5D : (double) (-6 - p_66060_.nextInt(3));
-            if (d0 > d1 && p_66060_.nextDouble() > 0.9D)
+            BlockPos blockpos = p_66061_.add(p_66063_, p_66064_, p_66065_);
+            double d1 = p_66068_ ? -0.5D : (double) (-6 - raqndom.nextInt(3));
+            if (d0 > d1 && raqndom.nextDouble() > 0.9D)
             {
                 return;
             }
 
-            level.setBlock(blockpos, state, 2);
+            level.setBlockState(blockpos, state, 2);
         }
     }
 
@@ -128,7 +129,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         return i;
     }
 
-    private double signedDistanceCircle(int p_66030_, int p_66031_, BlockPos p_66032_, int p_66033_, RandomSource p_66034_)
+    private double signedDistanceCircle(int p_66030_, int p_66031_, BlockPos p_66032_, int p_66033_, Random p_66034_)
     {
         float f = 10.0F * MathHelper.clamp(p_66034_.nextFloat(), 0.2F, 0.8F) / (float) p_66033_;
         return (double) f + Math.pow(p_66030_ - p_66032_.getX(), 2.0D) + Math.pow(p_66031_ - p_66032_.getZ(), 2.0D) - Math.pow(p_66033_, 2.0D);
@@ -139,14 +140,14 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         return Math.pow(((double) (p_66023_ - p_66025_.getX()) * Math.cos(p_66028_) - (double) (p_66024_ - p_66025_.getZ()) * Math.sin(p_66028_)) / (double) p_66026_, 2.0D) + Math.pow(((double) (p_66023_ - p_66025_.getX()) * Math.sin(p_66028_) + (double) (p_66024_ - p_66025_.getZ()) * Math.cos(p_66028_)) / (double) p_66027_, 2.0D) - 1.0D;
     }
 
-    private int heightDependentRadiusSteep(RandomSource p_66114_, int p_66115_, int p_66116_, int p_66117_)
+    private int heightDependentRadiusSteep(Random p_66114_, int p_66115_, int p_66116_, int p_66117_)
     {
         float f = 1.0F + p_66114_.nextFloat() / 2.0F;
         float f1 = (1.0F - (float) p_66115_ / ((float) p_66116_ * f)) * (float) p_66117_;
         return MathHelper.ceil(f1 / 2.0F);
     }
 
-    private int heightDependentRadiusRound(RandomSource p_66095_, int p_66096_, int p_66097_, int p_66098_)
+    private int heightDependentRadiusRound(Random p_66095_, int p_66096_, int p_66097_, int p_66098_)
     {
         float f = 3.5F - p_66095_.nextFloat();
         float f1 = (1.0F - (float) Math.pow(p_66096_, 2.0D) / ((float) p_66097_ * f)) * (float) p_66098_;
@@ -166,7 +167,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         return MathHelper.ceil(f1 / 2.0F);
     }
 
-    private void smooth(LevelAccessor p_66052_, BlockPos p_66053_, int p_66054_, int p_66055_, boolean p_66056_, int p_66057_)
+    private void smooth(WorldAccess access, BlockPos pos, int p_66054_, int p_66055_, boolean p_66056_, int p_66057_)
     {
         int i = p_66056_ ? p_66057_ : p_66054_ / 2;
 
@@ -176,18 +177,18 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
             {
                 for (int l = 0; l <= p_66055_; ++l)
                 {
-                    BlockPos blockpos = p_66053_.offset(j, l, k);
-                    BlockState blockstate = p_66052_.getBlockState(blockpos);
-                    if (isIcebergState(blockstate) || blockstate.is(Blocks.SNOW))
+                    BlockPos blockpos = pos.add(j, l, k);
+                    BlockState blockstate = access.getBlockState(blockpos);
+                    if (isIcebergState(blockstate) || blockstate.isOf(Blocks.SNOW))
                     {
-                        if (this.belowIsAir(p_66052_, blockpos))
+                        if (belowIsAir(access, blockpos))
                         {
-                            this.setBlock(p_66052_, blockpos, Blocks.AIR.defaultBlockState());
-                            this.setBlock(p_66052_, blockpos.above(), Blocks.AIR.defaultBlockState());
+                            setBlockState(access, blockpos, Blocks.AIR.getDefaultState());
+                            setBlockState(access, blockpos.up(), Blocks.AIR.getDefaultState());
                         }
                         else if (isIcebergState(blockstate))
                         {
-                            BlockState[] ablockstate = new BlockState[]{p_66052_.getBlockState(blockpos.west()), p_66052_.getBlockState(blockpos.east()), p_66052_.getBlockState(blockpos.north()), p_66052_.getBlockState(blockpos.south())};
+                            BlockState[] ablockstate = new BlockState[]{access.getBlockState(blockpos.west()), access.getBlockState(blockpos.east()), access.getBlockState(blockpos.north()), access.getBlockState(blockpos.south())};
                             int i1 = 0;
 
                             for (BlockState blockstate1 : ablockstate)
@@ -200,7 +201,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 
                             if (i1 >= 3)
                             {
-                                this.setBlock(p_66052_, blockpos, Blocks.AIR.defaultBlockState());
+                                setBlockState(access, blockpos, Blocks.AIR.getDefaultState());
                             }
                         }
                     }
@@ -209,8 +210,8 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
         }
     }
 
-    private boolean belowIsAir(BlockGetter p_66046_, BlockPos p_66047_)
+    private boolean belowIsAir(BlockView access, BlockPos pos)
     {
-        return p_66046_.getBlockState(p_66047_.below()).isAir();
+        return access.getBlockState(pos.down()).isAir();
     }
 }

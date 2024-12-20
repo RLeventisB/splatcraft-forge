@@ -1,12 +1,13 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientWorld;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 public class UpdateInkPacket extends IncrementalChunkBasedPacket
 {
+    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_ink_packet"));
     protected final HashMap<BlockPos, ChunkInk.BlockEntry> dirty;
 
     public UpdateInkPacket(ChunkPos chunkPos)
@@ -31,7 +33,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
         this.dirty = dirty;
     }
 
-    public static UpdateInkPacket decode(FriendlyByteBuf buffer)
+    public static UpdateInkPacket decode(RegistryByteBuf buffer)
     {
         ChunkPos chunkPos = buffer.readChunkPos();
         int changedBlocks = buffer.readInt();
@@ -48,9 +50,15 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
     }
 
     @Override
-    public void add(Level level, BlockPos pos)
+    public Id<? extends CustomPayload> getId()
     {
-        add(pos, InkBlockUtils.getInkBlock(level, pos));
+        return ID;
+    }
+
+    @Override
+    public void add(World world, BlockPos pos)
+    {
+        add(pos, InkBlockUtils.getInkBlock(world, pos));
     }
 
     public void add(BlockPos pos, ChunkInk.BlockEntry inkBlock)
@@ -62,7 +70,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeChunkPos(chunkPos);
         buffer.writeInt(dirty.size());
@@ -78,20 +86,20 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
     @Override
     public void execute()
     {
-        ClientWorld level = Minecraft.getInstance().level;
+        ClientWorld level = MinecraftClient.getInstance().world;
 
         if (level != null)
         {
             // the dedicated server will crash if you pass the level and pos directly. wow.
             // yes i will keep this comment in case i test on a dedicated server
-            ChunkInk chunkInk = ChunkInkCapability.get(level.getChunk(chunkPos.x, chunkPos.z));
+            ChunkInk chunkInk = ChunkInkCapability.get(level, level.getChunk(chunkPos.x, chunkPos.z));
 
             for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
             {
                 BlockPos pos = entry.getKey();
                 entry.getValue().apply(chunkInk, RelativeBlockPos.fromAbsolute(pos));
                 BlockState state = level.getBlockState(pos);
-                level.sendBlockUpdated(pos, state, state, 0);
+                level.setBlockState(pos, state, 0);
             }
         }
     }

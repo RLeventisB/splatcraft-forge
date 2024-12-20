@@ -1,13 +1,12 @@
 package net.splatcraft.util;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.MathHelper;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.UpdateChargeStatePacket;
@@ -35,65 +34,65 @@ public class PlayerCharge
 
     public PlayerCharge(ItemStack stack, float charge, boolean chargeDecay, int totalCharges)
     {
-        this.chargedWeapon = stack;
+        chargedWeapon = stack;
         this.charge = charge;
-        this.maxCharge = charge;
+        maxCharge = charge;
         this.totalCharges = totalCharges;
-        this.storePartial = chargeDecay;
+        storePartial = chargeDecay;
     }
 
-    public static PlayerCharge getCharge(Player player)
+    public static PlayerCharge getCharge(PlayerEntity player)
     {
-        return PlayerInfoCapability.get(player).getPlayerCharge();
+        return EntityInfoCapability.get(player).getPlayerCharge();
     }
 
-    public static void setCharge(Player player, PlayerCharge charge)
+    public static void setCharge(PlayerEntity player, PlayerCharge charge)
     {
-        PlayerInfoCapability.get(player).setPlayerCharge(charge);
+        EntityInfoCapability.get(player).setPlayerCharge(charge);
     }
 
-    public static boolean hasCharge(Player player)
+    public static boolean hasCharge(PlayerEntity player)
     {
         if (player == null)
         {
             throw new IllegalArgumentException("Attempted to retrieve charge for a null player");
         }
 
-        if (player instanceof ServerPlayer serverPlayer)
+        if (player instanceof ServerPlayerEntity serverPlayer)
         {
-            return hasChargeServerPlayerMap.getOrDefault(serverPlayer.getUUID(), false);
+            return hasChargeServerPlayerMap.getOrDefault(serverPlayer.getUuid(), false);
         }
 
-        if (!PlayerInfoCapability.hasCapability(player))
+        if (!EntityInfoCapability.hasCapability(player))
         {
             return false;
         }
 
-        PlayerInfo capability = PlayerInfoCapability.get(player);
+        EntityInfo capability = EntityInfoCapability.get(player);
         return capability.getPlayerCharge() != null && capability.getPlayerCharge().charge > 0;
     }
 
-    public static boolean shouldCreateCharge(Player player)
+    public static boolean shouldCreateCharge(PlayerEntity player)
     {
         if (player == null)
         {
             return false;
         }
-        PlayerInfo capability = PlayerInfoCapability.get(player);
+        EntityInfo capability = EntityInfoCapability.get(player);
         return capability.getPlayerCharge() == null;
     }
 
-    public static boolean chargeMatches(Player player, ItemStack stack)
+    public static boolean chargeMatches(PlayerEntity player, ItemStack stack)
     {
-        return hasCharge(player) && ItemStack.isSameItem(getCharge(player).chargedWeapon, stack);
+        return hasCharge(player) && ItemStack.areEqual(getCharge(player).chargedWeapon, stack);
     }
 
-    public static void addChargeValue(Player player, ItemStack stack, float value, boolean storePartial)
+    public static void addChargeValue(PlayerEntity player, ItemStack stack, float value, boolean storePartial)
     {
         addChargeValue(player, stack, value, storePartial, 1);
     }
 
-    public static void addChargeValue(Player player, ItemStack stack, float value, boolean storePartial, int totalCharges)
+    public static void addChargeValue(PlayerEntity player, ItemStack stack, float value, boolean storePartial, int totalCharges)
     {
         if (value < 0.0f)
         {
@@ -105,7 +104,7 @@ public class PlayerCharge
         }
 
         PlayerCharge charge = getCharge(player);
-        if (charge.charge <= 0.0f && value > 0.0f && player.equals(Minecraft.getInstance().player))
+        if (charge.charge <= 0.0f && value > 0.0f && player.equals(ClientUtils.getClientPlayer()))
         {
             SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(true));
         }
@@ -125,12 +124,12 @@ public class PlayerCharge
         }
     }
 
-    public static float getChargeValue(Player player, ItemStack stack)
+    public static float getChargeValue(PlayerEntity player, ItemStack stack)
     {
         return chargeMatches(player, stack) ? getCharge(player).charge : 0;
     }
 
-    public static void dischargeWeapon(Player player)
+    public static void dischargeWeapon(PlayerEntity player)
     {
         if (!player.getWorld().isClient() || !hasCharge(player))
             return;
@@ -143,7 +142,7 @@ public class PlayerCharge
 
         if (dischargeItem instanceof IChargeableWeapon chargeable)
         {
-            if (!PlayerInfoCapability.isSquid(player))
+            if (!EntityInfoCapability.isSquid(player))
             {
                 int decayTicks = chargeable.getDecayTicks(charge.chargedWeapon);
                 if (decayTicks > 0)
@@ -164,24 +163,24 @@ public class PlayerCharge
         charge.prevCharge = 0;
         charge.dischargedTicks = 0;
 
-        if (player.equals(Minecraft.getInstance().player))
+        if (player.equals(ClientUtils.getClientPlayer()))
             SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
     }
 
-    public static void updateServerMap(Player player, boolean hasCharge)
+    public static void updateServerMap(PlayerEntity player, boolean hasCharge)
     {
-        if (!(player instanceof ServerPlayer serverPlayer))
+        if (!(player instanceof ServerPlayerEntity serverPlayer))
         {
             throw new IllegalStateException("Client attempted to modify server charge map");
         }
 
-        if (hasChargeServerPlayerMap.containsKey(serverPlayer.getUUID()) && hasChargeServerPlayerMap.get(serverPlayer.getUUID()) == hasCharge)
+        if (hasChargeServerPlayerMap.containsKey(serverPlayer.getUuid()) && hasChargeServerPlayerMap.get(serverPlayer.getUuid()) == hasCharge)
         {
             throw new IllegalStateException("Charge state did not change: " + hasCharge);
             //return;
         }
 
-        hasChargeServerPlayerMap.put(serverPlayer.getUUID(), hasCharge);
+        hasChargeServerPlayerMap.put(serverPlayer.getUuid(), hasCharge);
     }
 
     public float getDischargeValue(float partialTicks)

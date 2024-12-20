@@ -2,13 +2,10 @@ package net.splatcraft.client.models.subs;// Made with Blockbench 4.7.2
 // Exported for Minecraft version 1.17 or later with Mojang mappings
 // Paste this class into your mod and generate all required imports
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.model.*;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
+import net.minecraft.client.util.math.MatrixStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.AbstractSubWeaponModel;
 import net.splatcraft.entities.subs.SplatBombEntity;
@@ -16,86 +13,86 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplatBombModel extends AbstractSubWeaponModel<SplatBombEntity>
 {
-    // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
-    public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Splatcraft.MODID, "splatbombmodel"), "main");
+    // This layer location should be baked with EntityRendererFactory.Context in the entity renderer and passed into this model's constructor
+    public static final EntityModelLayer LAYER_LOCATION = new EntityModelLayer(Splatcraft.identifierOf("splatbombmodel"), "main");
     private final ModelPart Main;
 
     public SplatBombModel(ModelPart root)
     {
-        this.Main = root.getChild("Main");
+        Main = root.getChild("Main");
     }
 
-    public static LayerDefinition createBodyLayer()
+    public static TexturedModelData createBodyLayer()
     {
-        MeshDefinition meshdefinition = new MeshDefinition();
-        PartDefinition partdefinition = meshdefinition.getRoot();
+        ModelData meshdefinition = new ModelData();
+        ModelPartData partdefinition = meshdefinition.getRoot();
 
-        PartDefinition Main = partdefinition.addOrReplaceChild("Main", CubeListBuilder.create(), PartPose.offset(0.0F, -4.0F, 0.0F));
+        ModelPartData Main = partdefinition.addChild("Main", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, -4.0F, 0.0F));
 
-        PartDefinition bone13 = Main.addOrReplaceChild("bone13", CubeListBuilder.create(), PartPose.offset(0.0F, 3.4F, 0.3F));
+        ModelPartData bone13 = Main.addChild("bone13", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 3.4F, 0.3F));
 
-        PartDefinition bone = bone13.addOrReplaceChild("bone", CubeListBuilder.create().texOffs(18, 2).addBox(-3.0F, -1.0F, 3.0F, 6.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -1.0F));
+        ModelPartData bone = bone13.addChild("bone", ModelPartBuilder.create().uv(18, 2).cuboid(-3.0F, -1.0F, 3.0F, 6.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, -1.0F));
 
-        PartDefinition bone2 = bone13.addOrReplaceChild("bone2", CubeListBuilder.create().texOffs(18, 0).addBox(0.0F, -0.5F, -1.0F, 6.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-3.0F, -0.5F, 2.0F, 0.0F, 1.0472F, 0.0F));
+        ModelPartData bone2 = bone13.addChild("bone2", ModelPartBuilder.create().uv(18, 0).cuboid(0.0F, -0.5F, -1.0F, 6.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-3.0F, -0.5F, 2.0F, 0.0F, 1.0472F, 0.0F));
 
-        PartDefinition bone3 = bone13.addOrReplaceChild("bone3", CubeListBuilder.create().texOffs(0, 18).addBox(-6.0F, -0.5F, -1.0F, 6.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(3.0F, -0.5F, 2.0F, 0.0F, -1.0472F, 0.0F));
+        ModelPartData bone3 = bone13.addChild("bone3", ModelPartBuilder.create().uv(0, 18).cuboid(-6.0F, -0.5F, -1.0F, 6.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(3.0F, -0.5F, 2.0F, 0.0F, -1.0472F, 0.0F));
 
-        PartDefinition bone7 = Main.addOrReplaceChild("bone7", CubeListBuilder.create(), PartPose.offset(-0.25F, 3.65F, -0.7F));
+        ModelPartData bone7 = Main.addChild("bone7", ModelPartBuilder.create(), ModelTransform.pivot(-0.25F, 3.65F, -0.7F));
 
-        PartDefinition bone6 = bone7.addOrReplaceChild("bone6", CubeListBuilder.create(), PartPose.offsetAndRotation(3.0F, -0.75F, 3.0F, 0.0F, 1.5708F, 0.0F));
+        ModelPartData bone6 = bone7.addChild("bone6", ModelPartBuilder.create(), ModelTransform.of(3.0F, -0.75F, 3.0F, 0.0F, 1.5708F, 0.0F));
 
-        PartDefinition cube_r1 = bone6.addOrReplaceChild("cube_r1", CubeListBuilder.create().texOffs(12, 12).addBox(-6.75F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(4.8754F, -0.5F, -2.8148F, 0.0F, 0.0F, 1.0472F));
+        ModelPartData cube_r1 = bone6.addChild("cube_r1", ModelPartBuilder.create().uv(12, 12).cuboid(-6.75F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(4.8754F, -0.5F, -2.8148F, 0.0F, 0.0F, 1.0472F));
 
-        PartDefinition bone5 = bone7.addOrReplaceChild("bone5", CubeListBuilder.create(), PartPose.offsetAndRotation(-3.0F, -0.75F, 3.0F, 0.0F, 0.5236F, 0.0F));
+        ModelPartData bone5 = bone7.addChild("bone5", ModelPartBuilder.create(), ModelTransform.of(-3.0F, -0.75F, 3.0F, 0.0F, 0.5236F, 0.0F));
 
-        PartDefinition cube_r2 = bone5.addOrReplaceChild("cube_r2", CubeListBuilder.create().texOffs(12, 14).addBox(-0.25F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -1.0472F));
+        ModelPartData cube_r2 = bone5.addChild("cube_r2", ModelPartBuilder.create().uv(12, 14).cuboid(-0.25F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -1.0472F));
 
-        PartDefinition bone4 = bone7.addOrReplaceChild("bone4", CubeListBuilder.create(), PartPose.offsetAndRotation(3.0F, -0.75F, 3.0F, 0.0F, -0.5236F, 0.0F));
+        ModelPartData bone4 = bone7.addChild("bone4", ModelPartBuilder.create(), ModelTransform.of(3.0F, -0.75F, 3.0F, 0.0F, -0.5236F, 0.0F));
 
-        PartDefinition cube_r3 = bone4.addOrReplaceChild("cube_r3", CubeListBuilder.create().texOffs(12, 16).addBox(-6.75F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, -0.5F, 0.0F, 0.0F, 0.0F, 1.0472F));
+        ModelPartData cube_r3 = bone4.addChild("cube_r3", ModelPartBuilder.create().uv(12, 16).cuboid(-6.75F, -0.9F, -0.5F, 7.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, -0.5F, 0.0F, 0.0F, 0.0F, 1.0472F));
 
-        PartDefinition bone8 = bone7.addOrReplaceChild("bone8", CubeListBuilder.create(), PartPose.offsetAndRotation(-3.0F, -0.75F, 3.0F, 0.0F, 0.5236F, 0.0F));
+        ModelPartData bone8 = bone7.addChild("bone8", ModelPartBuilder.create(), ModelTransform.of(-3.0F, -0.75F, 3.0F, 0.0F, 0.5236F, 0.0F));
 
-        PartDefinition cube_r4 = bone8.addOrReplaceChild("cube_r4", CubeListBuilder.create().texOffs(6, 22).addBox(-1.9F, -0.95F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(-0.1F)), PartPose.offsetAndRotation(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -0.5236F));
+        ModelPartData cube_r4 = bone8.addChild("cube_r4", ModelPartBuilder.create().uv(6, 22).cuboid(-1.9F, -0.95F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(-0.1F)), ModelTransform.of(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -0.5236F));
 
-        PartDefinition bone9 = bone7.addOrReplaceChild("bone9", CubeListBuilder.create(), PartPose.offsetAndRotation(3.5F, -0.75F, 3.0F, 0.0F, -0.5236F, 0.0F));
+        ModelPartData bone9 = bone7.addChild("bone9", ModelPartBuilder.create(), ModelTransform.of(3.5F, -0.75F, 3.0F, 0.0F, -0.5236F, 0.0F));
 
-        PartDefinition cube_r5 = bone9.addOrReplaceChild("cube_r5", CubeListBuilder.create().texOffs(18, 20).addBox(-0.1433F, -0.925F, -0.9352F, 2.0F, 2.0F, 2.0F, new CubeDeformation(-0.1F)), PartPose.offsetAndRotation(-0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, 0.5236F));
+        ModelPartData cube_r5 = bone9.addChild("cube_r5", ModelPartBuilder.create().uv(18, 20).cuboid(-0.1433F, -0.925F, -0.9352F, 2.0F, 2.0F, 2.0F, new Dilation(-0.1F)), ModelTransform.of(-0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, 0.5236F));
 
-        PartDefinition bone10 = bone7.addOrReplaceChild("bone10", CubeListBuilder.create(), PartPose.offsetAndRotation(0.275F, -0.75F, -2.3F, 0.0F, -1.5708F, 0.0F));
+        ModelPartData bone10 = bone7.addChild("bone10", ModelPartBuilder.create(), ModelTransform.of(0.275F, -0.75F, -2.3F, 0.0F, -1.5708F, 0.0F));
 
-        PartDefinition cube_r6 = bone10.addOrReplaceChild("cube_r6", CubeListBuilder.create().texOffs(0, 20).addBox(-1.9084F, -0.95F, -1.1F, 2.0F, 2.0F, 2.0F, new CubeDeformation(-0.1F)), PartPose.offsetAndRotation(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -0.5236F));
+        ModelPartData cube_r6 = bone10.addChild("cube_r6", ModelPartBuilder.create().uv(0, 20).cuboid(-1.9084F, -0.95F, -1.1F, 2.0F, 2.0F, 2.0F, new Dilation(-0.1F)), ModelTransform.of(0.3207F, -0.5F, 0.1852F, 0.0F, 0.0F, -0.5236F));
 
-        PartDefinition bone11 = bone7.addOrReplaceChild("bone11", CubeListBuilder.create().texOffs(12, 18).addBox(-0.825F, -8.2F, 0.35F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
+        ModelPartData bone11 = bone7.addChild("bone11", ModelPartBuilder.create().uv(12, 18).cuboid(-0.825F, -8.2F, 0.35F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-        PartDefinition bone17 = Main.addOrReplaceChild("bone17", CubeListBuilder.create(), PartPose.offset(0.0F, 4.0F, 0.0F));
+        ModelPartData bone17 = Main.addChild("bone17", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 4.0F, 0.0F));
 
-        PartDefinition bone14 = bone17.addOrReplaceChild("bone14", CubeListBuilder.create(), PartPose.offsetAndRotation(0.0F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
+        ModelPartData bone14 = bone17.addChild("bone14", ModelPartBuilder.create(), ModelTransform.of(0.0F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
 
-        PartDefinition cube_r7 = bone14.addOrReplaceChild("cube_r7", CubeListBuilder.create().texOffs(12, 6).addBox(-3.05F, -6.5981F, -0.434F, 6.0F, 6.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.4919F, 0.2349F, -1.1981F, -0.2618F, 0.0F, 0.0F));
+        ModelPartData cube_r7 = bone14.addChild("cube_r7", ModelPartBuilder.create().uv(12, 6).cuboid(-3.05F, -6.5981F, -0.434F, 6.0F, 6.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(0.4919F, 0.2349F, -1.1981F, -0.2618F, 0.0F, 0.0F));
 
-        PartDefinition bone15 = bone17.addOrReplaceChild("bone15", CubeListBuilder.create(), PartPose.offsetAndRotation(-2.8F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
+        ModelPartData bone15 = bone17.addChild("bone15", ModelPartBuilder.create(), ModelTransform.of(-2.8F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
 
-        PartDefinition cube_r8 = bone15.addOrReplaceChild("cube_r8", CubeListBuilder.create().texOffs(0, 12).addBox(-3.0F, -6.4731F, -0.434F, 6.0F, 6.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.4919F, 0.2349F, -1.1981F, -0.2618F, 2.0944F, 0.0F));
+        ModelPartData cube_r8 = bone15.addChild("cube_r8", ModelPartBuilder.create().uv(0, 12).cuboid(-3.0F, -6.4731F, -0.434F, 6.0F, 6.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(0.4919F, 0.2349F, -1.1981F, -0.2618F, 2.0944F, 0.0F));
 
-        PartDefinition bone16 = bone17.addOrReplaceChild("bone16", CubeListBuilder.create(), PartPose.offsetAndRotation(-2.8F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
+        ModelPartData bone16 = bone17.addChild("bone16", ModelPartBuilder.create(), ModelTransform.of(-2.8F, -1.0F, 0.0F, 0.0F, -1.0472F, 0.0F));
 
-        PartDefinition cube_r9 = bone16.addOrReplaceChild("cube_r9", CubeListBuilder.create().texOffs(0, 6).addBox(-4.45F, -5.7981F, -2.884F, 6.0F, 6.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.4919F, 0.2349F, -1.1981F, -0.2618F, -2.0944F, 0.0F));
+        ModelPartData cube_r9 = bone16.addChild("cube_r9", ModelPartBuilder.create().uv(0, 6).cuboid(-4.45F, -5.7981F, -2.884F, 6.0F, 6.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(0.4919F, 0.2349F, -1.1981F, -0.2618F, -2.0944F, 0.0F));
 
-        PartDefinition bone18 = bone17.addOrReplaceChild("bone18", CubeListBuilder.create().texOffs(0, 0).addBox(-3.0F, -0.1F, -3.4F, 6.0F, 0.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -0.7F, 0.0F));
+        ModelPartData bone18 = bone17.addChild("bone18", ModelPartBuilder.create().uv(0, 0).cuboid(-3.0F, -0.1F, -3.4F, 6.0F, 0.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -0.7F, 0.0F));
 
-        return LayerDefinition.create(meshdefinition, 32, 32);
-    }
-
-    @Override
-    public void setupAnim(@NotNull SplatBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
-    {
-
+        return TexturedModelData.of(meshdefinition, 32, 32);
     }
 
     @Override
-    public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha)
+    public void setAngles(@NotNull SplatBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
     {
-        Main.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+
+    }
+
+    @Override
+    public void render(@NotNull MatrixStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
+    {
+        Main.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
     }
 }

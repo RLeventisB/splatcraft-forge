@@ -1,15 +1,18 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCooldown;
 
 import java.util.UUID;
 
 public class DodgeRollEndPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(DodgeRollEndPacket.class);
     UUID target;
 
     public DodgeRollEndPacket(UUID target)
@@ -17,18 +20,24 @@ public class DodgeRollEndPacket extends PlayC2SPacket
         this.target = target;
     }
 
-    public static DodgeRollEndPacket decode(FriendlyByteBuf buffer)
+    public static DodgeRollEndPacket decode(RegistryByteBuf buffer)
     {
-        return new DodgeRollEndPacket(buffer.readUUID());
+        return new DodgeRollEndPacket(buffer.readUuid());
     }
 
     @Override
-    public void execute(Player player)
+    public Id<? extends CustomPayload> getId()
     {
-        Player target = player.getWorld().getPlayerByUUID(this.target);
+        return ID;
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
+    {
+        PlayerEntity target = player.getWorld().getPlayerByUuid(this.target);
         PlayerCooldown.setCooldownTime(target, 1);
         PlayerCooldown.setPlayerCooldown(player, null);
-        PlayerInfoCapability.get(player).setDodgeCount(0);
+        EntityInfoCapability.get(player).setDodgeCount(0);
 
         if (ShootingHandler.isDoingShootingAction(player))
         {
@@ -38,8 +47,8 @@ public class DodgeRollEndPacket extends PlayC2SPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
-        buffer.writeUUID(target);
+        buffer.writeUuid(target);
     }
 }

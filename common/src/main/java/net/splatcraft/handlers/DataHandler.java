@@ -1,53 +1,41 @@
 package net.splatcraft.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.storage.loot.Deserializers;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.OnDatapackSyncEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import dev.architectury.registry.ReloadListenerRegistry;
+import net.minecraft.resource.JsonDataLoader;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.profiler.Profiler;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorAliases;
-import net.splatcraft.data.InkColorTags;
+import net.splatcraft.data.InkColorGroups;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.weapons.settings.*;
-import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.s2c.UpdateWeaponSettingsPacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Mod.EventBusSubscriber
 public class DataHandler
 {
     public static final WeaponStatsListener WEAPON_STATS_LISTENER = new WeaponStatsListener();
-    public static final InkColorTags.Listener INK_COLOR_TAGS_LISTENER = new InkColorTags.Listener();
-    public static final InkColorAliases.Listener INK_COLOR_ALIASES_LISTENER = new InkColorAliases.Listener();
+    public static final InkColorGroups.Listener INK_COLOR_TAGS_LISTENER = new InkColorGroups.Listener();
+    public static final InkColorRegistry.Listener INK_COLOR_ALIASES_LISTENER = new InkColorRegistry.Listener();
 
-    @SubscribeEvent
-    public static void addReloadListener(AddReloadListenerEvent event)
+    public static void addReloadListeners()
     {
-        event.addListener(WEAPON_STATS_LISTENER);
-        event.addListener(INK_COLOR_TAGS_LISTENER);
-        event.addListener(INK_COLOR_ALIASES_LISTENER);
+        ReloadListenerRegistry.register(ResourceType.SERVER_DATA, WEAPON_STATS_LISTENER);
+        ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INK_COLOR_TAGS_LISTENER);
+        ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INK_COLOR_ALIASES_LISTENER);
     }
 
-    @SubscribeEvent
-    public static void onDataSync(OnDatapackSyncEvent event)
-    {
-        SplatcraftPacketHandler.sendToAll(new UpdateWeaponSettingsPacket());
-    }
-
-    public static class WeaponStatsListener extends SimpleJsonResourceReloadListener
+    public static class WeaponStatsListener extends JsonDataLoader
     {
         public static final HashMap<String, Class<? extends AbstractWeaponSettings<?, ?>>> SETTING_TYPES = new HashMap<>()
         {{
@@ -60,8 +48,8 @@ public class DataHandler
             put(Splatcraft.MODID + ":splatling", SplatlingWeaponSettings.class);
             put(Splatcraft.MODID + ":sub_weapon", SubWeaponSettings.class);
         }}; //TODO make better registry probably
-        public static final HashMap<ResourceLocation, AbstractWeaponSettings<?, ?>> SETTINGS = new HashMap<>();
-        private static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
+        public static final HashMap<Identifier, AbstractWeaponSettings<?, ?>> SETTINGS = new HashMap<>();
+        private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
         private static final String folder = "weapon_settings";
 
         public WeaponStatsListener()
@@ -70,7 +58,7 @@ public class DataHandler
         }
 
         @Override
-        protected void apply(Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
+        protected void apply(Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager manager, @NotNull Profiler profilerIn)
         {
             SETTINGS.clear();
 
@@ -79,7 +67,7 @@ public class DataHandler
                 JsonObject json = element.getAsJsonObject();
                 try
                 {
-                    String type = GsonHelper.getAsString(json, "type");
+                    String type = JsonHelper.getString(json, "type");
 
                     if (!SETTING_TYPES.containsKey(type))
                         return;

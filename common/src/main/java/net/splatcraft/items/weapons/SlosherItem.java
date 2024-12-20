@@ -1,19 +1,20 @@
 package net.splatcraft.items.weapons;
 
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.ItemCooldownManager;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemCooldowns;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -39,12 +40,12 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         super(settings);
     }
 
-    public static RegistryObject<SlosherItem> create(DeferredRegister<Item> register, String settings, String name, Type slosherType)
+    public static RegistrySupplier<SlosherItem> create(DeferredRegister<Item> register, String settings, String name, Type slosherType)
     {
         return register.register(name, () -> new SlosherItem(settings).setSlosherType(slosherType));
     }
 
-    public static RegistryObject<SlosherItem> create(DeferredRegister<Item> register, RegistryObject<SlosherItem> parent, String name)
+    public static RegistrySupplier<SlosherItem> create(DeferredRegister<Item> register, RegistrySupplier<SlosherItem> parent, String name)
     {
         return register.register(name, () -> new SlosherItem(parent.get().settingsId.toString()).setSlosherType(parent.get().slosherType));
     }
@@ -57,34 +58,34 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
     public SlosherItem setSlosherType(Type type)
     {
-        this.slosherType = type;
+        slosherType = type;
         return this;
     }
 
     @Override
-    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
+    public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
     {
-        if (level.isClientSide)
+        if (world.isClient)
             return;
 
         SlosherWeaponSettings settings = getSettings(stack);
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
         {
-            ItemCooldowns cooldownTracker = player.getCooldowns();
-            if (cooldownTracker.isOnCooldown(this))
+            ItemCooldownManager cooldownTracker = player.getItemCooldownManager();
+            if (cooldownTracker.isCoolingDown(this))
             {
                 return;
             }
-            PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks()));
+            PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selectedSlot, entity.getActiveHand(), settings, settings.shotData.endlagTicks()));
             if (settings.shotData.endlagTicks() > 0)
             {
-                cooldownTracker.addCooldown(this, settings.shotData.endlagTicks());
+                cooldownTracker.set(this, settings.shotData.endlagTicks());
             }
         }
     }
 
     @Override
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.BUCKET_SWING;
     }
@@ -103,12 +104,13 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         public List<CalculatedSloshData> sloshes = new ArrayList<>();
         public boolean didSound;
         public AttackId attackId;
-        public float xRot, xDelta, yRot, yDelta, xRotOld, yRotOld;
-        public SloshCooldown(Player player, ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, int duration)
+        public float pitch, xDelta, yaw, yDelta, xRotOld, prevYawld;
+
+        public SloshCooldown(PlayerEntity player, ItemStack stack, int slotIndex, Hand hand, SlosherWeaponSettings sloshData, int duration)
         {
             super(stack, duration, slotIndex, hand, true, false, true, false);
-            xRot = xRotOld = player.getXRot();
-            yRot = yRotOld = player.getYRot();
+            pitch = xRotOld = player.getPitch();
+            yaw = prevYawld = player.getYaw();
             this.sloshData = sloshData;
             for (int i = 0; i < sloshData.shotData.sloshes().size(); i++)
             {
@@ -121,20 +123,20 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
             attackId = AttackId.registerAttack().countProjectile(sloshes.size());
         }
 
-        public SloshCooldown(NbtCompound nbt)
+        public SloshCooldown(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
         {
-            super(ItemStack.of(nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true, false, true, false);
+            super(ItemStack.fromNbtOrEmpty(wrapperLookup, nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("MainHand") ? Hand.MAIN_HAND : Hand.OFF_HAND, true, false, true, false);
             setTime(nbt.getFloat("Time"));
             didSound = nbt.getBoolean("DidSound");
-            fromNbt(nbt);
+            fromNbt(wrapperLookup, nbt);
         }
 
         @Override
-        public void tick(Player player)
+        public void tick(LivingEntity player)
         {
-            Level level = player.getWorld();
+            World world = player.getWorld();
 
-            if (level.isClientSide || sloshData == null)
+            if (world.isClient || sloshData == null)
                 return;
 
             float frame = getMaxTime() - getTime();
@@ -143,20 +145,20 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
             if (shotSetting.allowFlicking())
             {
-                xDelta = xDelta * 0.7f + (MathHelper.degreesDifference(xRot, player.getXRot())) * 0.12f;
-                yDelta = yDelta * 0.7f + (MathHelper.degreesDifference(yRot, player.getYRot())) * 0.12f;
-                xRotOld = xRot;
-                yRotOld = yRot;
+                xDelta = xDelta * 0.7f + (MathHelper.subtractAngles(pitch, player.getPitch())) * 0.12f;
+                yDelta = yDelta * 0.7f + (MathHelper.subtractAngles(yaw, player.getYaw())) * 0.12f;
+                xRotOld = pitch;
+                prevYawld = yaw;
 
-                xRot += xDelta * (didSound ? 1 : 0.4f);
-                yRot += yDelta * (didSound ? 1 : 0.4f);
+                pitch += xDelta * (didSound ? 1 : 0.4f);
+                yaw += yDelta * (didSound ? 1 : 0.4f);
             }
             else
             {
-                xRotOld = xRot;
-                yRotOld = yRot;
-                xRot = player.getXRot();
-                yRot = player.getYRot();
+                xRotOld = pitch;
+                prevYawld = yaw;
+                pitch = player.getPitch();
+                yaw = player.getYaw();
             }
 
             for (int i = 0; i < sloshes.size(); i++)
@@ -172,13 +174,13 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                         SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(calculatedSloshData.sloshDataIndex);
                         CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
 
-                        InkProjectileEntity proj = new InkProjectileEntity(level, player, storedStack, InkBlockUtils.getInkType(player), projectileData.size(), sloshData);
+                        InkProjectileEntity proj = new InkProjectileEntity(world, player, storedStack, InkBlockUtils.getInkType(player), projectileData.size(), sloshData);
                         proj.setSlosherStats(projectileData);
 
-                        float xRotation = MathHelper.lerp(partialTick, yRotOld, yRot);
-                        proj.shootFromRotation(
+                        float xRotation = MathHelper.lerp(partialTick, prevYawld, yaw);
+                        proj.setVelocity(
                             null,
-                            MathHelper.lerp(partialTick, xRotOld, xRot),
+                            MathHelper.lerp(partialTick, xRotOld, pitch),
                             xRotation + projectileSetting.offsetAngle() - 3,
                             shotSetting.pitchCompensation(),
                             projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
@@ -186,7 +188,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                             partialTick);
                         proj.setAttackId(attackId);
 
-                        proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3d(-0.4, -1, 0), 1, xRotation)));
+                        proj.refreshPositionAfterTeleport(proj.getPos().add(EntityAccessor.invokeMovementInputToVelocity(new Vec3d(-0.4, -1, 0), 1, xRotation)));
 
                         switch (slosherItem.slosherType)
                         {
@@ -203,13 +205,13 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
                                 proj.canPierce = true;
                         }
                         proj.addExtraData(new ExtraSaveData.SloshExtraData(calculatedSloshData.sloshDataIndex, proj.getY()));
-                        level.addFreshEntity(proj);
+                        world.spawnEntity(proj);
 
                         proj.tick(extraTime);
 
                         if (!didSound)
                         {
-                            level.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, ((level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+                            world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.slosherShot, SoundCategory.PLAYERS, 0.7F, ((world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
                             didSound = true;
                         }
                     }
@@ -226,16 +228,16 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
         }
 
         @Override
-        public NbtCompound writeNBT(NbtCompound nbt)
+        public NbtCompound writeNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)
         {
             nbt.putFloat("Time", getTime());
             nbt.putFloat("MaxTime", getMaxTime());
             nbt.putInt("SlotIndex", getSlotIndex());
             nbt.putBoolean("DidSound", didSound);
-            nbt.putBoolean("MainHand", getHand().equals(InteractionHand.MAIN_HAND));
+            nbt.putBoolean("MainHand", getHand().equals(Hand.MAIN_HAND));
             if (storedStack.getItem() != Items.AIR)
             {
-                nbt.put("StoredStack", storedStack.serializeNBT());
+                nbt.put("StoredStack", storedStack.encode(wrapperLookup));
             }
 
             nbt.putBoolean("SloshCooldown", true);

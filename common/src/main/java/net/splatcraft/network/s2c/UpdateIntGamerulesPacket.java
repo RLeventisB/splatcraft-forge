@@ -1,8 +1,10 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.world.GameRules;
 import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.util.CommonUtils;
 
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +12,7 @@ import java.util.TreeMap;
 
 public class UpdateIntGamerulesPacket extends PlayS2CPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
     public TreeMap<Integer, Integer> intRules;
 
     public UpdateIntGamerulesPacket(TreeMap<Integer, Integer> intRules)
@@ -17,13 +20,13 @@ public class UpdateIntGamerulesPacket extends PlayS2CPacket
         this.intRules = intRules;
     }
 
-    public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntegerRule> rule, int value)
+    public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntRule> rule, int value)
     {
-        this.intRules = new TreeMap<>();
+        intRules = new TreeMap<>();
         intRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
     }
 
-    public static UpdateIntGamerulesPacket decode(FriendlyByteBuf buffer)
+    public static UpdateIntGamerulesPacket decode(RegistryByteBuf buffer)
     {
         TreeMap<Integer, Integer> intRules = new TreeMap<>();
         int entrySize = buffer.readInt();
@@ -37,7 +40,13 @@ public class UpdateIntGamerulesPacket extends PlayS2CPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
     {
         Set<Map.Entry<Integer, Integer>> entrySet = intRules.entrySet();
 

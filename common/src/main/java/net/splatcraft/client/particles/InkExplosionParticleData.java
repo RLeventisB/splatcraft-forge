@@ -9,6 +9,7 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.particle.ParticleType;
 import net.minecraft.util.dynamic.Codecs;
 import net.splatcraft.registries.SplatcraftParticleTypes;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class InkExplosionParticleData extends InkSplashParticleData
@@ -27,7 +28,7 @@ public class InkExplosionParticleData extends InkSplashParticleData
         PacketCodecs.FLOAT, InkSplashParticleData::getScale,
         InkExplosionParticleData::new);
 
-    public InkExplosionParticleData(Integer color, float scale)
+    public InkExplosionParticleData(InkColor color, float scale)
     {
         super(color, scale);
     }

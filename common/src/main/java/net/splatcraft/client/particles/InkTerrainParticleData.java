@@ -9,9 +9,9 @@ import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleType;
 import net.minecraft.registry.Registries;
-import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -33,9 +33,9 @@ public class InkTerrainParticleData implements ParticleEffect
     protected final float green;
     protected final float blue;
 
-    public InkTerrainParticleData(int color)
+    public InkTerrainParticleData(InkColor color)
     {
-        this(ColorUtils.hexToRGB(color));
+        this(ColorUtils.getLockedColor(color).getRGB());
     }
 
     private InkTerrainParticleData(float[] rgb)
@@ -45,14 +45,6 @@ public class InkTerrainParticleData implements ParticleEffect
 
     public InkTerrainParticleData(float red, float green, float blue)
     {
-        if (SplatcraftConfig.Client.colorLock.get())
-        {
-            float[] rgb = ColorUtils.hexToRGB(ColorUtils.getLockedColor(ColorUtils.RGBtoHex(new float[]{red, green, blue})));
-            red = rgb[0];
-            green = rgb[1];
-            blue = rgb[2];
-        }
-
         this.red = red;
         this.green = green;
         this.blue = blue;
@@ -67,21 +59,21 @@ public class InkTerrainParticleData implements ParticleEffect
     @Override
     public @NotNull String toString()
     {
-        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), this.red, this.green, this.blue);
+        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue);
     }
 
     public float getRed()
     {
-        return this.red;
+        return red;
     }
 
     public float getGreen()
     {
-        return this.green;
+        return green;
     }
 
     public float getBlue()
     {
-        return this.blue;
+        return blue;
     }
 }

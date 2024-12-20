@@ -1,59 +1,61 @@
 package net.splatcraft.crafting;
 
-import com.google.gson.JsonObject;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.level.Level;
+import net.minecraft.item.ItemStack;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.RawShapedRecipe;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.ShapedRecipe;
+import net.minecraft.recipe.book.CraftingRecipeCategory;
+import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.World;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public class ColoredShapedRecipe extends ShapedRecipe
 {
-    public ColoredShapedRecipe(ResourceLocation p_i48162_1_, String p_i48162_2_, int p_i48162_3_, int p_i48162_4_, NonNullList<Ingredient> p_i48162_5_, ItemStack p_i48162_6_)
+    public ColoredShapedRecipe(String group, int width, int height, DefaultedList<Ingredient> ingredients, ItemStack result)
     {
-        super(p_i48162_1_, p_i48162_2_, CraftingBookCategory.MISC, p_i48162_3_, p_i48162_4_, p_i48162_5_, p_i48162_6_);
+        super(group, CraftingRecipeCategory.MISC, new RawShapedRecipe(width, height, ingredients, Optional.empty()), result);
     }
 
     @Override
-    public @NotNull ItemStack assemble(CraftingContainer inventory, @NotNull RegistryAccess access)
+    public @NotNull ItemStack craft(CraftingRecipeInput inventory, @NotNull RegistryWrapper.WrapperLookup access)
     {
         int color = 0, j = 0, curColor = 0;
         boolean colorLock = false;
 
-        for (int i = 0; i < inventory.getContainerSize(); i++)
+        for (int i = 0; i < inventory.getSize(); i++)
         {
-            ItemStack stack = inventory.getItem(i);
+            ItemStack stack = inventory.getStackInSlot(i);
 
-            if (stack.getItem() == SplatcraftItems.inkwell.get() && ColorUtils.getInkColor(stack) != -1)
+            if (stack.getItem() == SplatcraftItems.inkwell.get() && ColorUtils.getInkColor(stack).isValid())
             {
-                color += ColorUtils.getInkColor(stack);
+                color += ColorUtils.getInkColor(stack).getColor();
                 j++;
 
                 if (ColorUtils.isColorLocked(stack))
                     colorLock = true;
-                else curColor = ColorUtils.getInkColor(stack);
+                else
+                    curColor = ColorUtils.getInkColor(stack).getColor();
             }
         }
 
         if (!colorLock)
             color = curColor;
 
-        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.assemble(inventory, access), j == 0 ? -1 : color / j), colorLock);
+        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.craft(inventory, access), j == 0 ? InkColor.INVALID : InkColor.constructOrReuse(color / j)), colorLock);
     }
 
     @Override
-    public boolean matches(@NotNull CraftingContainer p_77569_1_, @NotNull Level p_77569_2_)
+    public boolean matches(@NotNull CraftingRecipeInput recipe, @NotNull World world)
     {
-        return super.matches(p_77569_1_, p_77569_2_);
+        return super.matches(recipe, world);
     }
 
     @Override
@@ -64,23 +66,9 @@ public class ColoredShapedRecipe extends ShapedRecipe
 
     public static class Serializer extends ShapedRecipe.Serializer
     {
-        public Serializer(String name)
+        public Serializer()
         {
             super();
-        }
-
-        @Override
-        public @NotNull ShapedRecipe fromJson(@NotNull ResourceLocation p_199425_1_, @NotNull JsonObject p_199425_2_)
-        {
-            ShapedRecipe recipe = super.fromJson(p_199425_1_, p_199425_2_);
-            return new ColoredShapedRecipe(recipe.getId(), recipe.getGroup(), recipe.getRecipeWidth(), recipe.getRecipeHeight(), recipe.getIngredients(), recipe.getResultItem(RegistryAccess.EMPTY).copy());
-        }
-
-        @Override
-        public ShapedRecipe fromNetwork(@NotNull ResourceLocation p_199426_1_, @NotNull FriendlyByteBuf p_199426_2_)
-        {
-            ShapedRecipe recipe = super.fromNetwork(p_199426_1_, p_199426_2_);
-            return new ColoredShapedRecipe(recipe.getId(), recipe.getGroup(), recipe.getRecipeWidth(), recipe.getRecipeHeight(), recipe.getIngredients(), recipe.getResultItem(RegistryAccess.EMPTY).copy());
         }
     }
 }

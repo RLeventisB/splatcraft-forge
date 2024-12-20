@@ -1,15 +1,17 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.InkDisruptorItem;
+import net.splatcraft.util.CommonUtils;
 
 public class RequestClearInkPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestClearInkPacket.class);
     final String stageId;
 
     public RequestClearInkPacket(String stageId)
@@ -17,22 +19,28 @@ public class RequestClearInkPacket extends PlayC2SPacket
         this.stageId = stageId;
     }
 
-    public static RequestClearInkPacket decode(FriendlyByteBuf buffer)
+    public static RequestClearInkPacket decode(RegistryByteBuf buffer)
     {
-        return new RequestClearInkPacket(buffer.readUtf());
+        return new RequestClearInkPacket(buffer.readString());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeUtf(stageId);
+        return ID;
     }
 
     @Override
-    public void execute(Player player)
+    public void encode(RegistryByteBuf buffer)
+    {
+        buffer.writeString(stageId);
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
     {
         Stage stage = Stage.getStage(player.getWorld(), stageId);
-        ServerWorld stageLevel = player.getWorld().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, stage.dimID));
-        player.displayClientMessage(InkDisruptorItem.clearInk(stageLevel, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
+        net.minecraft.server.world.ServerWorld stageLevel = player.getWorld().getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, stage.dimID)));
+        player.sendMessage(InkDisruptorItem.clearInk(stageLevel, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
     }
 }

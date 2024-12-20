@@ -1,23 +1,21 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import dev.architectury.networking.NetworkManager;
+import dev.architectury.utils.Env;
+import net.minecraft.entity.player.PlayerEntity;
 import net.splatcraft.network.SplatcraftPacket;
-
-import java.util.function.Supplier;
 
 public abstract class PlayC2SPacket extends SplatcraftPacket
 {
     @Override
-    public void consume(Supplier<NetworkEvent.Context> ctx)
+    public void consume(NetworkManager.PacketContext ctx)
     {
-        if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_SERVER)
+        if (ctx.getEnvironment() == Env.CLIENT)
         {
-            ctx.get().enqueueWork(() -> this.execute(ctx.get().getSender()));
+            ctx.queue(() -> execute(ctx.getPlayer()));
         }
-        ctx.get().setPacketHandled(true);
+//        ctx.get().setPacketHandled(true);
     }
 
-    public abstract void execute(Player player);
+    public abstract void execute(PlayerEntity player);
 }

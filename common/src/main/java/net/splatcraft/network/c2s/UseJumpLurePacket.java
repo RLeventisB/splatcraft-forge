@@ -1,42 +1,52 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.splatcraft.items.JumpLureItem;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
 public class UseJumpLurePacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UseJumpLurePacket.class);
     @Nullable
     final UUID targetUUID;
-    final int color;
-
-    public UseJumpLurePacket(int color, @Nullable UUID targetUUID)
+    final InkColor color;
+    public UseJumpLurePacket(InkColor color, @Nullable UUID targetUUID)
     {
         this.targetUUID = targetUUID;
         this.color = color;
     }
 
-    public static UseJumpLurePacket decode(FriendlyByteBuf buf)
+    public static UseJumpLurePacket decode(PacketByteBuf buf)
     {
-        return new UseJumpLurePacket(buf.readInt(), buf.readBoolean() ? null : buf.readUUID());
+        return new UseJumpLurePacket(InkColor.constructOrReuse(buf.readInt()), buf.readBoolean() ? null : buf.readUuid());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeInt(color);
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
+    {
+        buffer.writeInt(color.getColor());
         buffer.writeBoolean(targetUUID == null);
         if (targetUUID != null)
-            buffer.writeUUID(targetUUID);
+            buffer.writeUuid(targetUUID);
     }
 
     @Override
-    public void execute(Player player)
+    public void execute(PlayerEntity player)
     {
-        JumpLureItem.activate((ServerPlayer) player, targetUUID, color);
+        JumpLureItem.activate((ServerPlayerEntity) player, targetUUID, color);
     }
 }

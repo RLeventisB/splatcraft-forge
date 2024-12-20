@@ -1,12 +1,16 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.splatcraft.data.Stage;
+import net.splatcraft.util.CommonUtils;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
     final String stageId;
 
     public SuperJumpToStagePacket(String stageId)
@@ -14,20 +18,26 @@ public class SuperJumpToStagePacket extends PlayC2SPacket
         this.stageId = stageId;
     }
 
-    public static SuperJumpToStagePacket decode(FriendlyByteBuf buf)
+    public static SuperJumpToStagePacket decode(PacketByteBuf buf)
     {
-        return new SuperJumpToStagePacket(buf.readUtf());
+        return new SuperJumpToStagePacket(buf.readString());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeUtf(stageId);
+        return ID;
     }
 
     @Override
-    public void execute(Player player)
+    public void encode(RegistryByteBuf buffer)
     {
-        Stage.getStage(player.getWorld(), stageId).superJumpToStage((ServerPlayer) player);
+        buffer.writeString(stageId);
+    }
+
+    @Override
+    public void execute(PlayerEntity player)
+    {
+        Stage.getStage(player.getWorld(), stageId).superJumpToStage((ServerPlayerEntity) player);
     }
 }

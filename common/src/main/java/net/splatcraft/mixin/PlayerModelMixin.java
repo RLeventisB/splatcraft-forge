@@ -1,11 +1,11 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.entity.model.BipedEntityModel;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Author: MrCrayfish, from Obfuscate 1.17 <a href="https://github.com/MrCrayfish/Obfuscate/blob/1.17.X/src/main/java/com/mrcrayfish/obfuscate/client/event/PlayerModelEvent.java">...</a>
  */
-@Mixin(PlayerModel.class)
-public class PlayerModelMixin<T extends LivingEntity> extends HumanoidModel<T>
+@Mixin(PlayerEntityModel.class)
+public class PlayerModelMixin<T extends LivingEntity> extends BipedEntityModel<T>
 {
     @Shadow
     @Final
@@ -38,44 +38,44 @@ public class PlayerModelMixin<T extends LivingEntity> extends HumanoidModel<T>
     public ModelPart jacket;
     @Shadow
     @Final
-    private boolean slim;
+    private boolean thinArms;
 
     public PlayerModelMixin(ModelPart part)
     {
         super(part);
     }
 
-    @Inject(method = "setupAnim*", at = @At(value = "HEAD"))
+    @Inject(method = "setAngles*", at = @At(value = "HEAD"))
     private void setRotationAnglesHead(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci)
     {
-        if (!(entityIn instanceof Player))
+        if (!(entityIn instanceof PlayerEntity))
             return;
 
-        this.splatcraft$resetRotationAngles();
-        this.splatcraft$resetVisibilities();
+        splatcraft$resetRotationAngles();
+        splatcraft$resetVisibilities();
     }
 
-    @Inject(method = "setupAnim*", at = @At(value = "TAIL"))
+    @Inject(method = "setAngles*", at = @At(value = "TAIL"))
     private void setRotationAnglesTail(T entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci)
     {
-        if (!(entityIn instanceof Player player))
+        if (!(entityIn instanceof PlayerEntity player))
             return;
 
-        PlayerModel<T> model = (PlayerModel<T>) (Object) this;
-        PlayerPosingHandler.setupPlayerAngles(player, model, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, Minecraft.getInstance().getDeltaFrameTime());
+        PlayerEntityModel<T> model = (PlayerEntityModel<T>) (Object) this;
+        PlayerPosingHandler.setupPlayerAngles(player, model, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true));
 
-        this.splatcraft$setupRotationAngles();
+        splatcraft$setupRotationAngles();
     }
 
     @Unique
     private void splatcraft$setupRotationAngles()
     {
-        this.rightSleeve.copyFrom(this.rightArm);
-        this.leftSleeve.copyFrom(this.leftArm);
-        this.rightPants.copyFrom(this.rightLeg);
-        this.leftPants.copyFrom(this.leftLeg);
-        this.jacket.copyFrom(this.body);
-        this.hat.copyFrom(this.head);
+        rightSleeve.copyTransform(rightArm);
+        leftSleeve.copyTransform(leftArm);
+        rightPants.copyTransform(rightLeg);
+        leftPants.copyTransform(leftLeg);
+        jacket.copyTransform(body);
+        hat.copyTransform(head);
     }
 
     /**
@@ -85,46 +85,46 @@ public class PlayerModelMixin<T extends LivingEntity> extends HumanoidModel<T>
     @Unique
     private void splatcraft$resetRotationAngles()
     {
-        this.splatcraft$resetAll(this.head);
-        this.splatcraft$resetAll(this.hat);
-        this.splatcraft$resetAll(this.body);
-        this.splatcraft$resetAll(this.jacket);
+        splatcraft$resetAll(head);
+        splatcraft$resetAll(hat);
+        splatcraft$resetAll(body);
+        splatcraft$resetAll(jacket);
 
-        this.splatcraft$resetAll(this.rightArm);
-        this.rightArm.x = -5.0F;
-        this.rightArm.y = this.slim ? 2.5F : 2.0F;
-        this.rightArm.z = 0.0F;
+        splatcraft$resetAll(rightArm);
+        rightArm.pivotX = -5.0F;
+        rightArm.pivotY = thinArms ? 2.5F : 2.0F;
+        rightArm.pivotZ = 0.0F;
 
-        this.splatcraft$resetAll(this.rightSleeve);
-        this.rightSleeve.x = -5.0F;
-        this.rightSleeve.y = this.slim ? 2.5F : 2.0F;
-        this.rightSleeve.z = 10.0F;
+        splatcraft$resetAll(rightSleeve);
+        rightSleeve.pivotX = -5.0F;
+        rightSleeve.pivotY = thinArms ? 2.5F : 2.0F;
+        rightSleeve.pivotZ = 10.0F;
 
-        this.splatcraft$resetAll(this.leftArm);
-        this.leftArm.x = 5.0F;
-        this.leftArm.y = this.slim ? 2.5F : 2.0F;
-        this.leftArm.z = 0.0F;
+        splatcraft$resetAll(leftArm);
+        leftArm.pivotX = 5.0F;
+        leftArm.pivotY = thinArms ? 2.5F : 2.0F;
+        leftArm.pivotZ = 0.0F;
 
-        this.splatcraft$resetAll(this.leftSleeve);
-        this.leftSleeve.x = 5.0F;
-        this.leftSleeve.y = this.slim ? 2.5F : 2.0F;
-        this.leftSleeve.z = 0.0F;
+        splatcraft$resetAll(leftSleeve);
+        leftSleeve.pivotX = 5.0F;
+        leftSleeve.pivotY = thinArms ? 2.5F : 2.0F;
+        leftSleeve.pivotZ = 0.0F;
 
-        this.splatcraft$resetAll(this.leftLeg);
-        this.leftLeg.x = 1.9F;
-        this.leftLeg.y = 12.0F;
-        this.leftLeg.z = 0.0F;
+        splatcraft$resetAll(leftLeg);
+        leftLeg.pivotX = 1.9F;
+        leftLeg.pivotY = 12.0F;
+        leftLeg.pivotZ = 0.0F;
 
-        this.splatcraft$resetAll(this.leftPants);
-        this.leftPants.copyFrom(this.leftLeg);
+        splatcraft$resetAll(leftPants);
+        leftPants.copyTransform(leftLeg);
 
-        this.splatcraft$resetAll(this.rightLeg);
-        this.rightLeg.x = -1.9F;
-        this.rightLeg.y = 12.0F;
-        this.rightLeg.z = 0.0F;
+        splatcraft$resetAll(rightLeg);
+        rightLeg.pivotX = -1.9F;
+        rightLeg.pivotY = 12.0F;
+        rightLeg.pivotZ = 0.0F;
 
-        this.splatcraft$resetAll(this.rightPants);
-        this.rightPants.copyFrom(this.rightLeg);
+        splatcraft$resetAll(rightPants);
+        rightPants.copyTransform(rightLeg);
     }
 
     /**
@@ -135,22 +135,22 @@ public class PlayerModelMixin<T extends LivingEntity> extends HumanoidModel<T>
     @Unique
     private void splatcraft$resetAll(ModelPart part)
     {
-        part.xRot = 0.0F;
-        part.yRot = 0.0F;
-        part.zRot = 0.0F;
-        part.x = 0.0F;
-        part.y = 0.0F;
-        part.z = 0.0F;
+        part.pitch = 0.0F;
+        part.yaw = 0.0F;
+        part.roll = 0.0F;
+        part.pivotX = 0.0F;
+        part.pivotY = 0.0F;
+        part.pivotZ = 0.0F;
     }
 
     @Unique
     private void splatcraft$resetVisibilities()
     {
-        this.head.visible = true;
-        this.body.visible = true;
-        this.rightArm.visible = true;
-        this.leftArm.visible = true;
-        this.rightLeg.visible = true;
-        this.leftLeg.visible = true;
+        head.visible = true;
+        body.visible = true;
+        rightArm.visible = true;
+        leftArm.visible = true;
+        rightLeg.visible = true;
+        leftLeg.visible = true;
     }
 }

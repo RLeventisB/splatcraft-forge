@@ -1,11 +1,11 @@
 package net.splatcraft.client.renderer.subs;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.subs.SplatBombModel;
 import net.splatcraft.entities.subs.SplatBombEntity;
@@ -13,27 +13,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatBombModel>
 {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/splat_bomb.png");
-    private static final ResourceLocation OVERLAY_TEXTURE = new ResourceLocation(Splatcraft.MODID, "textures/item/weapons/sub/splat_bomb_ink.png");
+    private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/splat_bomb.png");
+    private static final Identifier OVERLAY_TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/splat_bomb_ink.png");
     private final SplatBombModel MODEL;
 
-    public SplatBombRenderer(EntityRendererProvider.Context context)
+    public SplatBombRenderer(EntityRendererFactory.Context context)
     {
         super(context);
-        MODEL = new SplatBombModel(context.bakeLayer(SplatBombModel.LAYER_LOCATION));
+        MODEL = new SplatBombModel(context.getPart(SplatBombModel.LAYER_LOCATION));
     }
 
     @Override
-    public void render(SplatBombEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+    public void render(SplatBombEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack poseStack, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
     {
 
-        poseStack.pushPose();
+        poseStack.push();
 
         if (!entityIn.isItem)
         {
             poseStack.translate(0.0D, 0.2, 0.0D);
-            poseStack.mulPose(Axis.YP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) * 2 - 90f));
-            poseStack.mulPose(Axis.XP.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot()) * 2 - 180f));
+            poseStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) *
+                2 - 90f));
+            poseStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch()) * 2 - 180f));
 
             float f = entityIn.getFlashIntensity(partialTicks);
             float f1 = 1.0F + MathHelper.sin(f * 100.0F) * f * 0.01F;
@@ -46,7 +47,7 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
         }
 
         super.render(entityIn, entityYaw, partialTicks, poseStack, bufferIn, packedLightIn);
-        poseStack.popPose();
+        poseStack.pop();
     }
 
     @Override
@@ -63,13 +64,13 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
     }
 
     @Override
-    public ResourceLocation getInkTextureLocation(SplatBombEntity entity)
+    public Identifier getInkTextureLocation(SplatBombEntity entity)
     {
         return OVERLAY_TEXTURE;
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull SplatBombEntity entity)
+    public @NotNull Identifier getTexture(@NotNull SplatBombEntity entity)
     {
         return TEXTURE;
     }

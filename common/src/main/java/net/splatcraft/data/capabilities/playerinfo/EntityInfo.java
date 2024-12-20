@@ -1,26 +1,24 @@
 package net.splatcraft.data.capabilities.playerinfo;
 
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.item.ItemStack;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.PlayerCharge;
-import net.splatcraft.util.PlayerCooldown;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.Direction;
+import net.splatcraft.util.*;
 
 import java.util.Optional;
 
-public class PlayerInfo
+public class EntityInfo
 {
     private int dodgeCount;
-    private int color;
+    private InkColor color;
     private boolean isSquid = false;
     private boolean initialized = false;
     private Optional<Direction> climbedDirection = Optional.empty();
-    private NonNullList<ItemStack> matchInventory = NonNullList.create();
+    private DefaultedList<ItemStack> matchInventory = DefaultedList.of();
     private PlayerCooldown playerCooldown = null;
     private PlayerCharge playerCharge = null;
     private ItemStack inkBand = ItemStack.EMPTY;
@@ -28,12 +26,12 @@ public class PlayerInfo
     private boolean isPlaying;
     private boolean didSquidCancelThisTick;
 
-    public PlayerInfo(int defaultColor)
+    public EntityInfo(InkColor defaultColor)
     {
         color = defaultColor;
     }
 
-    public PlayerInfo()
+    public EntityInfo()
     {
         this(ColorUtils.getRandomStarterColor());
     }
@@ -48,12 +46,12 @@ public class PlayerInfo
         initialized = init;
     }
 
-    public int getColor()
+    public InkColor getColor()
     {
         return color;
     }
 
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
         this.color = color;
     }
@@ -93,14 +91,14 @@ public class PlayerInfo
         return InkBlockUtils.getInkTypeFromStack(inkBand);
     }
 
-    public NonNullList<ItemStack> getMatchInventory()
+    public DefaultedList<ItemStack> getMatchInventory()
     {
         return matchInventory;
     }
 
-    public void setMatchInventory(NonNullList<ItemStack> inventory)
+    public void setMatchInventory(DefaultedList<ItemStack> inventory)
     {
-        this.matchInventory = inventory;
+        matchInventory = inventory;
     }
 
     public PlayerCooldown getPlayerCooldown()
@@ -110,7 +108,7 @@ public class PlayerInfo
 
     public void setPlayerCooldown(PlayerCooldown cooldown)
     {
-        this.playerCooldown = cooldown;
+        playerCooldown = cooldown;
     }
 
     public boolean hasPlayerCooldown()
@@ -158,35 +156,35 @@ public class PlayerInfo
         isPlaying = playing;
     }
 
-    public NbtCompound writeNBT(NbtCompound nbt)
+    public NbtCompound writeNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
     {
         nbt.putInt("DodgeCount", getDodgeCount());
-        nbt.putInt("Color", getColor());
+        nbt.put("Color", getColor().getNbt());
         nbt.putBoolean("IsSquid", isSquid());
         nbt.putBoolean("SquidCancel", didSquidCancelThisTick);
         nbt.putString("InkType", getInkType().getSerializedName());
         nbt.putBoolean("Initialized", initialized);
         nbt.putFloat("SquidSurgeCharge", getSquidSurgeCharge());
-        climbedDirection.ifPresent(direction -> nbt.putInt("ClimbedDirection", direction.get3DDataValue()));
+        climbedDirection.ifPresent(direction -> nbt.putInt("ClimbedDirection", direction.getId()));
 
         if (!inkBand.isEmpty())
-            nbt.put("InkBand", getInkBand().serializeNBT());
+            nbt.put("InkBand", getInkBand().encode(registryLookup));
 
         if (!matchInventory.isEmpty())
         {
             NbtCompound invNBT = new NbtCompound();
-            ContainerHelper.saveAllItems(invNBT, matchInventory);
+            Inventories.writeNbt(invNBT, matchInventory, registryLookup);
             nbt.put("MatchInventory", invNBT);
         }
 
         if (playerCooldown != null)
         {
             NbtCompound cooldownNBT = new NbtCompound();
-            playerCooldown.writeNBT(cooldownNBT);
+            playerCooldown.writeNBT(cooldownNBT, registryLookup);
 
             if (playerCooldown.getClass() != PlayerCooldown.class)
             {
-                ResourceLocation key = PlayerCooldown.REGISTRY.get().getKey(playerCooldown.getClass());
+                Identifier key = PlayerCooldown.REGISTRY.getId(playerCooldown.getClass());
                 if (key != null)
                 {
                     cooldownNBT.putString("CooldownClass", key.toString());
@@ -200,33 +198,33 @@ public class PlayerInfo
         return nbt;
     }
 
-    public void readNBT(NbtCompound nbt)
+    public void readNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
     {
         setDodgeCount(nbt.getInt("DodgeCount"));
-        setColor(ColorUtils.getColorFromNbt(nbt));
+        setColor(InkColor.getFromNbt(nbt.get("Color")));
         setIsSquid(nbt.getBoolean("IsSquid"));
         didSquidCancelThisTick = nbt.getBoolean("SquidCancel");
         setInitialized(nbt.getBoolean("Initialized"));
         setSquidSurgeCharge(nbt.getFloat("SquidSurgeCharge"));
 
         if (nbt.contains("InkBand"))
-            setInkBand(ItemStack.of(nbt.getCompound("InkBand")));
+            setInkBand(ItemStack.fromNbtOrEmpty(registryLookup, nbt.getCompound("InkBand")));
         else setInkBand(ItemStack.EMPTY);
 
         if (nbt.contains("MatchInventory"))
         {
-            NonNullList<ItemStack> nbtInv = NonNullList.withSize(41, ItemStack.EMPTY);
-            ContainerHelper.loadAllItems(nbt.getCompound("MatchInventory"), nbtInv);
+            DefaultedList<ItemStack> nbtInv = DefaultedList.ofSize(41, ItemStack.EMPTY);
+            Inventories.readNbt(nbt.getCompound("MatchInventory"), nbtInv, registryLookup);
             setMatchInventory(nbtInv);
         }
 
         if (nbt.contains("PlayerCooldown"))
         {
-            setPlayerCooldown(PlayerCooldown.readNBT(nbt.getCompound("PlayerCooldown")));
+            setPlayerCooldown(PlayerCooldown.readNBT(registryLookup, nbt.getCompound("PlayerCooldown")));
         }
 
         isPlaying = nbt.getBoolean("Playing");
-        climbedDirection = nbt.contains("ClimbedDirection") ? Optional.of(Direction.from3DDataValue(nbt.getInt("ClimbedDirection"))) : Optional.empty();
+        climbedDirection = nbt.contains("ClimbedDirection") ? Optional.of(Direction.byId(nbt.getInt("ClimbedDirection"))) : Optional.empty();
     }
 
     public void flagSquidCancel()

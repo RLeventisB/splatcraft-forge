@@ -1,15 +1,15 @@
 package net.splatcraft.items;
 
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
 
-public class BlockItem extends net.minecraft.world.item.BlockItem
+public class BlockItem extends net.minecraft.item.BlockItem
 {
     public BlockItem(Block block)
     {
-        super(block, new Properties());
+        super(block, new Settings());
     }
 
-    public BlockItem(Block block, Properties properties)
+    public BlockItem(Block block, Settings properties)
     {
         super(block, properties);
     }

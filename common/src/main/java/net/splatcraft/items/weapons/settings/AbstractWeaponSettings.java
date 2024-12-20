@@ -1,15 +1,15 @@
 package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.text.Text;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
     public String name;
     public float moveSpeed = 1;
     public boolean isSecret = false;
-    private AttributeModifier SPEED_MODIFIER;
+    private EntityAttributeModifier SPEED_MODIFIER;
 
     public AbstractWeaponSettings(String name)
     {
@@ -44,16 +44,16 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 
     public abstract float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list);
 
-    public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
+    public void addStatsToTooltip(List<Text> tooltip, TooltipType flag)
     {
         for (WeaponTooltip<SELF> stat : statTooltips)
             tooltip.add(stat.getTextComponent((SELF) this, flag.isAdvanced()));
     }
 
-    public AttributeModifier getSpeedModifier()
+    public EntityAttributeModifier getSpeedModifier()
     {
         if (SPEED_MODIFIER == null)
-            SPEED_MODIFIER = new AttributeModifier(SplatcraftItems.SPEED_MOD_UUID, name + " mobility", moveSpeed - 1, AttributeModifier.Operation.MULTIPLY_TOTAL);
+            SPEED_MODIFIER = new EntityAttributeModifier(Splatcraft.identifierOf(name + ".mobility"), moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
         return SPEED_MODIFIER;
     }
@@ -96,10 +96,10 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 
     public abstract CODEC serialize();
 
-    public void serializeToBuffer(FriendlyByteBuf buffer)
+    public void serializeToBuffer(RegistryByteBuf buffer)
     {
-        buffer.writeJsonWithCodec(getCodec(), serialize());
+        buffer.encodeAsJson(getCodec(), serialize());
     }
 
-    public abstract float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem);
+    public abstract float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem);
 }

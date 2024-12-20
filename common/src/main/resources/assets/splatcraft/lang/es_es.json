@@ -310,11 +310,11 @@
     "weaponTab.description.splatcraft:weapon_workbench_tabs/ink_tanks": "Lleva no menos de 5 a la vez, como persona sensata",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rare": "Reservado para lo mejor de lo mejor.",
 
-    "weaponRecipe.splatcraft:weapon_workbench/aerospray": "Aerógrafo",
-    "weaponRecipe.splatcraft:weapon_workbench/n-zap": "N-ZAP",
-    "weaponRecipe.splatcraft:weapon_workbench/e_liter": "Entintador",
-    "weaponRecipe.splatcraft:weapon_workbench/bamboozler_14": "Bambufusil 14",
-    "weaponRecipe.splatcraft:weapon_workbench/nautilus": "Nautilo",
+    "weaponRecipe.splatcraft:aerospray": "Aerógrafo",
+    "weaponRecipe.splatcraft:n-zap": "N-ZAP",
+    "weaponRecipe.splatcraft:e_liter": "Entintador",
+    "weaponRecipe.splatcraft:bamboozler_14": "Bambufusil 14",
+    "weaponRecipe.splatcraft:nautilus": "Nautilo",
 
     "weaponType.original": "Original",
     "weaponType.classic": "Clasico",

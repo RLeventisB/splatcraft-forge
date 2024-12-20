@@ -1,112 +1,86 @@
 package net.splatcraft.items;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.cauldron.CauldronInteraction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.*;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
+import net.minecraft.block.cauldron.CauldronBehavior;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.DyedColorComponent;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ArmorItem;
+import net.minecraft.item.ArmorMaterial;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ColoredArmorItem extends DyeableArmorItem implements IColoredItem
+public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatcraftForgeItemDummy
 {
-    public ColoredArmorItem(ArmorMaterial material, ArmorItem.Type armorType, Properties properties)
+    public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType, Item.Settings settings)
     {
-        super(material, armorType, properties);
+        super(material, armorType, settings);
         SplatcraftItems.inkColoredItems.add(this);
 
-        CauldronInteraction.WATER.put(this, CauldronInteraction.DYED_ITEM);
+        CauldronBehavior.registerBehavior();
+        CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, CauldronBehavior.CLEAN_DYEABLE_ITEM);
     }
 
-    public ColoredArmorItem(ArmorMaterial material, ArmorItem.Type armorType)
+    public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType)
     {
-        this(material, armorType, new Properties().stacksTo(1));
+        this(material, armorType, new Item.Settings().maxCount(1).component(DataComponentTypes.DYED_COLOR, new DyedColorComponent(0, false)));
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
     {
-        super.appendHoverText(stack, level, tooltip, flag);
+        super.appendTooltip(stack, context, tooltip, flag);
 
-        if (I18n.exists(getDescriptionId() + ".tooltip"))
-            tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
+        if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
+            tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
 
         if (ColorUtils.isColorLocked(stack))
             tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
         else
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color").formatted(Formatting.GRAY));
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-            && PlayerInfoCapability.hasCapability(player))
+        if (entity instanceof LivingEntity player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+            && EntityInfoCapability.hasCapability(player))
         {
-            ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
+            ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
         }
     }
 
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition().below();
+        BlockPos pos = entity.getBlockPos().down();
 
         if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
             if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
 
         return false;
-    }
-
-    @Override
-    public @NotNull InteractionResult useOn(@NotNull UseOnContext context)
-    {
-        return super.useOn(context);
-    }
-
-    @Override
-    public boolean hasCustomColor(@NotNull ItemStack stack)
-    {
-        return true;
-    }
-
-    @Override
-    public int getColor(@NotNull ItemStack stack)
-    {
-        return ColorUtils.getInkColor(stack);
-    }
-
-    @Override
-    public void setColor(@NotNull ItemStack stack, int color)
-    {
-        ColorUtils.setInkColor(stack, color);
-    }
-
-    @Override
-    public void clearColor(@NotNull ItemStack stack)
-    {
-        ColorUtils.setInkColor(stack, -1);
-        ColorUtils.setColorLocked(stack, false);
     }
 }

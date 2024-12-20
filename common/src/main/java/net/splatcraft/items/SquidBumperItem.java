@@ -1,61 +1,55 @@
 package net.splatcraft.items;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3d;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.math.*;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SquidBumperItem extends Item implements IColoredItem
+public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
     public SquidBumperItem()
     {
-        super(new Properties().stacksTo(16));
+        super(new Settings().maxCount(16));
         SplatcraftItems.inkColoredItems.add(this);
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type)
     {
-        super.appendHoverText(stack, level, tooltip, flag);
+        super.appendTooltip(stack, context, tooltip, type);
 
-        boolean inverted = ColorUtils.isInverted(stack);
         if (ColorUtils.isColorLocked(stack))
-            tooltip.add(ColorUtils.getFormatedColorName(inverted ? 0xFFFFFF - ColorUtils.getInkColor(stack) : ColorUtils.getInkColor(stack), true));
+            tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColorOrInverted(stack), true));
         else
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color" + (ColorUtils.isInverted(stack) ? ".inverted" : "")).formatted(Formatting.GRAY));
     }
 
     //	@Override
-//	public void fillItemCategory(@NotNull CreativeModeTab group, @NotNull NonNullList<ItemStack> items)
+//	public void fillItemCategory(@NotNull ItemGroup group, @NotNull DefaultedList<ItemStack> items)
 //	{
 //		if (allowdedIn(group))
 //		{
@@ -64,33 +58,33 @@ public class SquidBumperItem extends Item implements IColoredItem
 //		}
 //	}
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor((Player) entity)
-            && PlayerInfoCapability.hasCapability((LivingEntity) entity))
+        if (entity instanceof LivingEntity livingEntity && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(livingEntity)
+            && EntityInfoCapability.hasCapability(livingEntity))
         {
-            ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor((Player) entity));
+            ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(livingEntity));
         }
     }
 
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition().below();
+        BlockPos pos = entity.getBlockPos().down();
 
         if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
             if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
         else if (InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.isColorLocked(stack))
         {
-            ColorUtils.setInkColor(stack, 0xFFFFFF);
+            ColorUtils.setInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
             ColorUtils.setColorLocked(stack, false);
         }
 
@@ -98,37 +92,37 @@ public class SquidBumperItem extends Item implements IColoredItem
     }
 
     @Override
-    public @NotNull InteractionResult useOn(UseOnContext context)
+    public @NotNull ActionResult useOnBlock(ItemUsageContext context)
     {
-        if (context.getClickedFace() == Direction.DOWN)
-            return InteractionResult.FAIL;
+        if (context.getSide() == Direction.DOWN)
+            return ActionResult.FAIL;
 
-        Level level = context.getLevel();
-        BlockPos pos = new BlockPlaceContext(context).getClickedPos();
-        ItemStack stack = context.getItemInHand();
+        World world = context.getWorld();
+        BlockPos pos = new ItemPlacementContext(context).getBlockPos();
+        ItemStack stack = context.getStack();
 
-        Vec3d vector3d = Vec3d.atBottomCenterOf(pos);
-        AABB axisalignedbb = SplatcraftEntities.SQUID_BUMPER.get().getDimensions().makeBoundingBox(vector3d.x(), vector3d.y(), vector3d.z());
-        if (level.noCollision(null, axisalignedbb) && level.getEntities(null, axisalignedbb).isEmpty())
+        Vec3d vector3d = Vec3d.ofBottomCenter(pos);
+        Box axisalignedbb = SplatcraftEntities.SQUID_BUMPER.get().getDimensions().getBoxAt(vector3d);
+        if (world.isSpaceEmpty(null, axisalignedbb) && world.getOtherEntities(null, axisalignedbb).isEmpty())
         {
-            if (level instanceof ServerWorld serverLevel)
+            if (world instanceof ServerWorld serverLevel)
             {
-                SquidBumperEntity bumper = SplatcraftEntities.SQUID_BUMPER.get().create(serverLevel, stack.getTag(), null, pos, MobSpawnType.SPAWN_EGG, true, true);
+                SquidBumperEntity bumper = SplatcraftEntities.SQUID_BUMPER.get().create(serverLevel, null, pos, SpawnReason.SPAWN_EGG, true, true);
                 if (bumper != null)
                 {
                     bumper.setColor(ColorUtils.getInkColorOrInverted(stack));
-                    float f = (float) MathHelper.floor((MathHelper.wrapDegrees(context.getRotation() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
-                    bumper.moveTo(bumper.getX(), bumper.getY(), bumper.getZ(), f, 0);
-                    bumper.setYHeadRot(f);
-                    bumper.yHeadRotO = f;
-                    level.addFreshEntity(bumper);
-                    level.playSound(null, bumper.getX(), bumper.getY(), bumper.getZ(), SplatcraftSounds.squidBumperPlace, SoundSource.BLOCKS, 0.75F, 0.8F);
+                    float f = (float) MathHelper.floor((MathHelper.wrapDegrees(context.getPlayerYaw() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
+                    bumper.refreshPositionAndAngles(bumper.getX(), bumper.getY(), bumper.getZ(), f, 0);
+                    bumper.setHeadYaw(f);
+                    bumper.prevHeadYaw = f;
+                    world.spawnEntity(bumper);
+                    world.playSound(null, bumper.getX(), bumper.getY(), bumper.getZ(), SplatcraftSounds.squidBumperPlace, SoundCategory.BLOCKS, 0.75F, 0.8F);
                 }
             }
-            stack.shrink(1);
-            return InteractionResult.sidedSuccess(level.isClientSide());
+            stack.decrement(1);
+            return ActionResult.success(world.isClient());
         }
 
-        return InteractionResult.FAIL;
+        return ActionResult.FAIL;
     }
 }

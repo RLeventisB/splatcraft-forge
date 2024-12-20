@@ -1,11 +1,11 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.client.ClientRecipeBook;
-import net.minecraft.client.RecipeBookCategories;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.recipebook.ClientRecipeBook;
+import net.minecraft.client.recipebook.RecipeBookGroup;
+import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.RecipeType;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,15 +15,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientRecipeBook.class)
 public class RecipeCategoryMixin
 {
-    @OnlyIn(Dist.CLIENT)
-    @Inject(method = "getCategory", at = @At("HEAD"), cancellable = true)
-    private static void getCategory(Recipe<?> itemstack, CallbackInfoReturnable<RecipeBookCategories> cir)
+    @Environment(EnvType.CLIENT)
+    @Inject(method = "getGroupForRecipe", at = @At("HEAD"), cancellable = true)
+    private static void getCategory(RecipeEntry<?> recipe, CallbackInfoReturnable<RecipeBookGroup> cir)
     {
-        RecipeType<?> type = itemstack.getType();
+        RecipeType<?> type = recipe.value().getType();
         if (type == SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE || type == SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE
             || type == SplatcraftRecipeTypes.WEAPON_STATION_TYPE)
         {
-            cir.setReturnValue(RecipeBookCategories.UNKNOWN);
+            cir.setReturnValue(RecipeBookGroup.UNKNOWN);
         }
     }
 }

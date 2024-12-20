@@ -2,9 +2,9 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.DamageRangesRecord;
@@ -31,7 +31,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
     {
         ExtraSaveData.RollerDistanceExtraData data = list.getFirstExtraData(ExtraSaveData.RollerDistanceExtraData.class);
-        float distance = data == null ? 0 : data.spawnPos.distance(projectile.position().toVector3f());
+        float distance = data == null ? 0 : data.spawnPos.distance(projectile.getPos().toVector3f());
 
         RollerProjectileDataRecord projectileData = projectile.throwerAirborne ? flingData.projectileData : swingData.projectileData;
         float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
@@ -81,7 +81,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
     }
 
     @Override
-    public float getSpeedForRender(LocalPlayer player, ItemStack mainHandItem)
+    public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
     {
         return swingData.attackData().maxSpeed;
     }
@@ -94,7 +94,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 
     public RollerWeaponSettings setBrush(boolean brush)
     {
-        this.isBrush = brush;
+        isBrush = brush;
         return this;
     }
 

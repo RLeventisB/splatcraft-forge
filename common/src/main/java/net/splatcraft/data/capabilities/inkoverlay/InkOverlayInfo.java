@@ -2,12 +2,13 @@ package net.splatcraft.data.capabilities.inkoverlay;
 
 import net.minecraft.nbt.NbtCompound;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 
 public class InkOverlayInfo
 {
-    private int color = ColorUtils.DEFAULT;
+    private InkColor color = ColorUtils.getDefaultColor();
     private float amount = 0;
-    private int woolColor = -1;
+    private InkColor woolColor = InkColor.INVALID;
     private boolean inkproof = false;
     private double squidRot;
     private double squidRotO;
@@ -16,12 +17,12 @@ public class InkOverlayInfo
     {
     }
 
-    public int getColor()
+    public InkColor getColor()
     {
         return color;
     }
 
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
         this.color = color;
     }
@@ -41,14 +42,14 @@ public class InkOverlayInfo
         setAmount(amount + v);
     }
 
-    public int getWoolColor()
+    public InkColor getWoolColor()
     {
         return woolColor;
     }
 
-    public void setWoolColor(int v)
+    public void setWoolColor(InkColor v)
     {
-        this.woolColor = v;
+        woolColor = v;
     }
 
     public double getSquidRot()
@@ -69,24 +70,24 @@ public class InkOverlayInfo
 
     public NbtCompound writeNBT(NbtCompound nbt)
     {
-        nbt.putInt("Color", getColor());
+        nbt.put("Color", getColor().getNbt());
         nbt.putFloat("Amount", getAmount());
         nbt.putBoolean("Inkproof", isInkproof());
 
-        if (getWoolColor() != -1)
-            nbt.putInt("WoolColor", getWoolColor());
+        if (getWoolColor().isValid())
+            nbt.put("WoolColor", getWoolColor().getNbt());
 
         return nbt;
     }
 
     public void readNBT(NbtCompound nbt)
     {
-        setColor(ColorUtils.getColorFromNbt(nbt));
+        setColor(InkColor.getFromNbt(nbt.get("Color")));
         setAmount(nbt.getFloat("Amount"));
         setInkproof(nbt.getBoolean("Inkproof"));
 
         if (nbt.contains("WoolColor"))
-            setWoolColor(nbt.getInt("WoolColor"));
+            setWoolColor(InkColor.getFromNbt(nbt.get("WoolColor")));
     }
 
     public String toString()

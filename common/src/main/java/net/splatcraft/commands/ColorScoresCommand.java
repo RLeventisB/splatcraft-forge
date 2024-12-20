@@ -4,83 +4,84 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.splatcraft.commands.arguments.ColorCriterionArgument;
 import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateColorScoresPacket;
+import net.splatcraft.util.InkColor;
 
 import java.util.Collection;
 
 public class ColorScoresCommand
 {
-    private static final SimpleCommandExceptionType CRITERION_ALREADY_EXISTS_EXCEPTION = new SimpleCommandExceptionType(Component.translatable("commands.colorscores.add.duplicate"));
+    private static final SimpleCommandExceptionType CRITERION_ALREADY_EXISTS_EXCEPTION = new SimpleCommandExceptionType(Text.translatable("commands.colorscores.add.duplicate"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
     {
-        dispatcher.register(Commands.literal("colorscores").requires(commandSource -> commandSource.hasPermission(2))
-            .then(Commands.literal("add").then(Commands.argument("color", InkColorArgument.inkColor()).executes(ColorScoresCommand::add)))
-            .then(Commands.literal("remove").then(Commands.argument("color", ColorCriterionArgument.colorCriterion()).executes(ColorScoresCommand::remove)))
-            .then(Commands.literal("list").executes(ColorScoresCommand::list))
+        dispatcher.register(CommandManager.literal("colorscores").requires(commandSource -> commandSource.hasPermissionLevel(2))
+            .then(CommandManager.literal("add").then(CommandManager.argument("color", InkColorArgument.inkColor()).executes(ColorScoresCommand::add)))
+            .then(CommandManager.literal("remove").then(CommandManager.argument("color", ColorCriterionArgument.colorCriterion()).executes(ColorScoresCommand::remove)))
+            .then(CommandManager.literal("list").executes(ColorScoresCommand::list))
         );
     }
 
     protected static void update()
     {
-        int[] colors = new int[ScoreboardHandler.getCriteriaKeySet().size()];
+        InkColor[] colors = new InkColor[ScoreboardHandler.getCriteriaKeySet().size()];
         int i = 0;
-        for (int c : ScoreboardHandler.getCriteriaKeySet())
+        for (InkColor c : ScoreboardHandler.getCriteriaKeySet())
             colors[i++] = c;
         SplatcraftPacketHandler.sendToAll(new UpdateColorScoresPacket(true, true, colors));
     }
 
-    protected static int add(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
+    protected static int add(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
     {
-        int color = InkColorArgument.getInkColor(context, "color");
-        CommandSourceStack source = context.getSource();
+        InkColor color = InkColorArgument.getInkColor(context, "color");
+        ServerCommandSource source = context.getSource();
 
         if (ScoreboardHandler.hasColorCriterion(color))
         {
             throw CRITERION_ALREADY_EXISTS_EXCEPTION.create();
         }
         ScoreboardHandler.createColorCriterion(color);
-        SaveInfoCapability.get(context.getSource().getServer()).addInitializedColorScores(color);
+        SaveInfoCapability.get().addInitializedColorScores(color);
         update();
 
-        source.sendSuccess(() -> Component.translatable("commands.colorscores.add.success", InkColorCommand.getColorName(color)), true);
+        source.sendFeedback(() -> Text.translatable("commands.colorscores.add.success", InkColorCommand.getColorName(color)), true);
 
-        return color;
+        return color.getColor();
     }
 
-    protected static int remove(CommandContext<CommandSourceStack> context)
+    protected static int remove(CommandContext<ServerCommandSource> context)
     {
-        int color = ColorCriterionArgument.getInkColor(context, "color");
+        InkColor color = ColorCriterionArgument.getInkColor(context, "color");
         ScoreboardHandler.removeColorCriterion(color);
-        SaveInfoCapability.get(context.getSource().getServer()).removeColorScore(color);
+        SaveInfoCapability.get().removeColorScore(color);
         update();
 
-        context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.remove.success", InkColorCommand.getColorName(color)), true);
+        context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.remove.success", InkColorCommand.getColorName(color)), true);
 
-        return color;
+        return color.getColor();
     }
 
-    protected static int list(CommandContext<CommandSourceStack> context)
+    protected static int list(CommandContext<ServerCommandSource> context)
     {
-        Collection<Integer> collection = ScoreboardHandler.getCriteriaKeySet();
+        Collection<InkColor> collection = ScoreboardHandler.getCriteriaKeySet();
 
         if (collection.isEmpty())
         {
-            context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.list.empty"), false);
+            context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.empty"), false);
         }
         else
         {
-            context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.list.count", collection.size()), false);
+            context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.count", collection.size()), false);
             collection.forEach(color ->
-                context.getSource().sendSuccess(() -> Component.translatable("commands.colorscores.list.entry", ScoreboardHandler.getColorIdentifier(color), InkColorCommand.getColorName(color)), false));
+                context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.entry", color, InkColorCommand.getColorName(color)), false));
         }
 
         return collection.size();

@@ -1,18 +1,21 @@
 package net.splatcraft.network.s2c;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3d;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
+import net.splatcraft.util.CommonUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SendStageWarpDataToPadPacket extends PlayS2CPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendStageWarpDataToPadPacket.class);
     final List<String> validStages;
     final List<String> outOfReachStages;
     final List<String> needsUpdate;
@@ -24,9 +27,9 @@ public class SendStageWarpDataToPadPacket extends PlayS2CPacket
         this.needsUpdate = needsUpdate;
     }
 
-    public static SendStageWarpDataToPadPacket compile(Player player)
+    public static SendStageWarpDataToPadPacket compile(PlayerEntity player)
     {
-        ArrayList<Stage> stages = Stage.getAllStages(player.level());
+        ArrayList<Stage> stages = Stage.getAllStages(player.getWorld());
 
         ArrayList<Stage> needsUpdate = new ArrayList<>();
         for (Stage stage : stages)
@@ -56,43 +59,49 @@ public class SendStageWarpDataToPadPacket extends PlayS2CPacket
             needsUpdate.stream().map(stage -> stage.id).toList());
     }
 
-    public static SendStageWarpDataToPadPacket decode(FriendlyByteBuf buffer)
+    public static SendStageWarpDataToPadPacket decode(RegistryByteBuf buffer)
     {
         int validStageCount = buffer.readInt();
         ArrayList<String> validStages = new ArrayList<>();
         for (int i = 0; i < validStageCount; i++)
-            validStages.add(buffer.readUtf());
+            validStages.add(buffer.readString());
 
         int outOfReachStageCount = buffer.readInt();
         ArrayList<String> outOfReachStages = new ArrayList<>();
         for (int i = 0; i < outOfReachStageCount; i++)
-            outOfReachStages.add(buffer.readUtf());
+            outOfReachStages.add(buffer.readString());
 
         int needsUpdateCount = buffer.readInt();
         ArrayList<String> needsUpdateStages = new ArrayList<>();
         for (int i = 0; i < needsUpdateCount; i++)
-            needsUpdateStages.add(buffer.readUtf());
+            needsUpdateStages.add(buffer.readString());
 
         return new SendStageWarpDataToPadPacket(validStages, outOfReachStages, needsUpdateStages);
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeInt(validStages.size());
         for (String stageId : validStages)
         {
-            buffer.writeUtf(stageId);
+            buffer.writeString(stageId);
         }
         buffer.writeInt(outOfReachStages.size());
         for (String stageId : outOfReachStages)
         {
-            buffer.writeUtf(stageId);
+            buffer.writeString(stageId);
         }
         buffer.writeInt(needsUpdate.size());
         for (String stageId : needsUpdate)
         {
-            buffer.writeUtf(stageId);
+            buffer.writeString(stageId);
         }
     }
 

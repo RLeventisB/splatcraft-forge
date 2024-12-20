@@ -1,9 +1,14 @@
 package net.splatcraft.data;
 
+import com.mojang.serialization.Codec;
+import net.minecraft.command.argument.EnumArgumentType;
+import net.minecraft.util.StringIdentifiable;
+
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
-public enum StageGameMode
+public enum StageGameMode implements StringIdentifiable
 {
     RECON(-1, stage -> true, session -> false, session ->
     {
@@ -36,5 +41,26 @@ public enum StageGameMode
     public boolean canDoOn(Stage stage)
     {
         return playChecker.apply(stage);
+    }
+
+    @Override
+    public String asString()
+    {
+        return toString();
+    }
+
+    public static class ArgumentType extends EnumArgumentType<StageGameMode>
+    {
+        public static final Codec<StageGameMode> CODEC = StringIdentifiable.createCodec(StageGameMode::values);
+
+        protected ArgumentType(Codec<StageGameMode> codec, Supplier<StageGameMode[]> valuesSupplier)
+        {
+            super(codec, valuesSupplier);
+        }
+
+        public static ArgumentType argument()
+        {
+            return new ArgumentType(CODEC, StageGameMode::values);
+        }
     }
 }

@@ -1,11 +1,11 @@
 package net.splatcraft.client.renderer.tileentity;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.item.ItemStack;
 import net.splatcraft.tileentities.RemotePedestalTileEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,17 +17,17 @@ public class RemotePedestalTileEntityRenderer implements BlockEntityRenderer<Rem
     }
 
     @Override
-    public void render(RemotePedestalTileEntity remotePedestalTileEntity, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int combinedLight, int combinedOverlay)
+    public void render(RemotePedestalTileEntity remotePedestalTileEntity, float partialTicks, @NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider buffer, int combinedLight, int combinedOverlay)
     {
-        ItemStack stack = remotePedestalTileEntity.getItem(0);
+        ItemStack stack = remotePedestalTileEntity.getStack(0);
 
         if (!stack.isEmpty())
         {
-            matrixStack.pushPose();
+            matrixStack.push();
             matrixStack.translate(0.5F, 1F, 0.5F);
-            //matrixStack.rotate(Vector3f.YP.rotation(f);
-            Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.GROUND, combinedLight, combinedOverlay, matrixStack, buffer, remotePedestalTileEntity.getLevel(), (int) remotePedestalTileEntity.getBlockPos().asLong());
-            matrixStack.popPose();
+            //matrixStack.rotate(Vector3f.POSITIVE_Y.rotation(f);
+            MinecraftClient.getInstance().getItemRenderer().renderItem(stack, ModelTransformationMode.GROUND, combinedLight, combinedOverlay, matrixStack, buffer, remotePedestalTileEntity.getWorld(), (int) remotePedestalTileEntity.getPos().asLong());
+            matrixStack.pop();
         }
     }
 }

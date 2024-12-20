@@ -16,35 +16,35 @@ public class InkExplosionParticle extends SpriteBillboardParticle
     {
         super(level, x, y, z, motionX, motionY, motionZ);
 
-        this.velocityX = motionX;
-        this.velocityY = motionY;
-        this.velocityZ = motionZ;
+        velocityX = motionX;
+        velocityY = motionY;
+        velocityZ = motionZ;
 
-        this.setColor(Math.max(0.018f, data.getRed() - 0.018f),
+        setColor(Math.max(0.018f, data.getRed() - 0.018f),
             Math.max(0.018f, data.getGreen() - 0.018f),
             Math.max(0.018f, data.getBlue() - 0.018f));
 
-        this.scale = 0.33F * (this.random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
-        this.gravityStrength = 0;
-        this.maxAge = 6 + this.random.nextInt(4);
+        scale = 0.33F * (random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
+        gravityStrength = 0;
+        maxAge = 6 + random.nextInt(4);
 
         spriteProvider = provider;
-        this.setSpriteForAge(provider);
+        setSpriteForAge(provider);
     }
 
     @Override
     public void tick()
     {
-        this.prevPosX = this.x;
-        this.prevPosY = this.y;
-        this.prevPosZ = this.z;
-        if (this.age++ >= this.maxAge || world.getBlockState(new BlockPos((int) this.x, (int) this.y, (int) this.z)).isLiquid())
+        prevPosX = x;
+        prevPosY = y;
+        prevPosZ = z;
+        if (age++ >= maxAge || world.getBlockState(new BlockPos((int) x, (int) y, (int) z)).isLiquid())
         {
-            this.markDead();
+            markDead();
         }
         else
         {
-            this.setSpriteForAge(this.spriteProvider);
+            setSpriteForAge(spriteProvider);
         }
     }
 
@@ -61,14 +61,14 @@ public class InkExplosionParticle extends SpriteBillboardParticle
 
         public Factory(SpriteProvider sprite)
         {
-            this.provider = sprite;
+            provider = sprite;
         }
 
         @Nullable
         @Override
         public Particle createParticle(@NotNull InkExplosionParticleData typeIn, @NotNull ClientWorld levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
         {
-            return new InkExplosionParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, this.provider);
+            return new InkExplosionParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, provider);
         }
     }
 }

@@ -1,36 +1,36 @@
 package net.splatcraft.worldgen.features;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.CountConfiguration;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.gen.CountConfig;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.util.FeatureContext;
 import net.splatcraft.blocks.CrateBlock;
 import net.splatcraft.blocks.DebrisBlock;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.tileentities.CrateTileEntity;
 
-public class CrateFeature extends Feature<CountConfiguration>
+public class CrateFeature extends Feature<CountConfig>
 {
-    public CrateFeature(Codec<CountConfiguration> codec)
+    public CrateFeature(Codec<CountConfig> codec)
     {
         super(codec);
     }
 
     @Override
-    public boolean place(FeaturePlaceContext<CountConfiguration> context)
+    public boolean generate(FeatureContext<CountConfig> context)
     {
         int i = 0;
-        RandomSource random = context.random();
-        WorldGenLevel worldgenlevel = context.getWorld();
-        BlockPos blockpos = context.origin();
-        int j = context.config().count().sample(random);
+        Random random = context.getRandom();
+        StructureWorldAccess worldAccess = context.getWorld();
+        BlockPos blockpos = context.getOrigin();
+        int j = context.getConfig().getCount().get(random);
 
         int area = 8;
 
@@ -38,17 +38,17 @@ public class CrateFeature extends Feature<CountConfiguration>
         {
             int l = random.nextInt(area) - random.nextInt(area);
             int i1 = random.nextInt(area) - random.nextInt(area);
-            int j1 = worldgenlevel.getHeight(Heightmap.Types.OCEAN_FLOOR, blockpos.getX() + l, blockpos.getZ() + i1);
+            int j1 = worldAccess.getTopY(Heightmap.Type.OCEAN_FLOOR, blockpos.getX() + l, blockpos.getZ() + i1);
             BlockPos blockpos1 = new BlockPos(blockpos.getX() + l, j1, blockpos.getZ() + i1);
 
             boolean isSunken = random.nextFloat() <= 0.05f;
 
-            BlockState state = isSunken ? SplatcraftBlocks.sunkenCrate.get().defaultBlockState() : SplatcraftBlocks.crate.get().defaultBlockState();
-            worldgenlevel.setBlock(blockpos1, state, 2);
+            BlockState state = isSunken ? SplatcraftBlocks.sunkenCrate.get().getDefaultState() : SplatcraftBlocks.crate.get().getDefaultState();
+            worldAccess.setBlockState(blockpos1, state, 2);
 
             if (!isSunken)
             {
-                if (worldgenlevel.getBlockEntity(blockpos1) instanceof CrateTileEntity crate)
+                if (worldAccess.getBlockEntity(blockpos1) instanceof CrateTileEntity crate)
                     crate.setLootTable(CrateBlock.STORAGE_EGG_CRATE);
             }
 
@@ -59,13 +59,13 @@ public class CrateFeature extends Feature<CountConfiguration>
         {
             int l = random.nextInt(area) - random.nextInt(area);
             int i1 = random.nextInt(area) - random.nextInt(area);
-            int j1 = worldgenlevel.getHeight(Heightmap.Types.OCEAN_FLOOR, blockpos.getX() + l, blockpos.getZ() + i1);
+            int j1 = worldAccess.getTopY(Heightmap.Type.OCEAN_FLOOR, blockpos.getX() + l, blockpos.getZ() + i1);
             BlockPos blockpos1 = new BlockPos(blockpos.getX() + l, j1, blockpos.getZ() + i1);
-            BlockState state = SplatcraftBlocks.ammoKnightsDebris.get().defaultBlockState().setValue(DebrisBlock.DIRECTION, Direction.from2DDataValue(random.nextInt(4)));
+            BlockState state = SplatcraftBlocks.ammoKnightsDebris.get().getDefaultState().with(DebrisBlock.DIRECTION, Direction.fromHorizontal(random.nextInt(4)));
 
-            if (state.canSurvive(worldgenlevel, blockpos1))
+            if (state.canPlaceAt(worldAccess, blockpos1))
             {
-                worldgenlevel.setBlock(blockpos1, state.setValue(DebrisBlock.WATERLOGGED, worldgenlevel.getFluidState(blockpos1).is(Fluids.WATER)), 2);
+                worldAccess.setBlockState(blockpos1, state.with(DebrisBlock.WATERLOGGED, worldAccess.getFluidState(blockpos1).isOf(Fluids.WATER)), 2);
                 ++i;
             }
         }

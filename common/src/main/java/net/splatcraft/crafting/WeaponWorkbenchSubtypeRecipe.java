@@ -1,72 +1,67 @@
 package net.splatcraft.crafting;
 
-import com.google.gson.JsonObject;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.util.JsonUtils;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.advancement.AdvancementEntry;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.collection.DefaultedList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 {
-    public final List<WeaponWorkbenchSubtypeRecipe> siblings = new ArrayList<>();
-    private final ResourceLocation advancement;
+    public static final Codec<WeaponWorkbenchSubtypeRecipe> CODEC = RecordCodecBuilder.create(inst ->
+        inst.group(
+            TextCodecs.CODEC.optionalFieldOf("name", Text.literal("null")).forGetter(v -> v.name),
+            ItemStack.CODEC.fieldOf("result").forGetter(v -> v.recipeOutput),
+            StackedIngredient.CODEC.listOf().fieldOf("ingredients").forGetter(v -> v.recipeItems),
+            Identifier.CODEC.optionalFieldOf("advancement", null).forGetter(v -> v.advancement),
+            Codec.BOOL.optionalFieldOf("require_other", false).forGetter(v -> v.requireOther)
+        ).apply(inst, WeaponWorkbenchSubtypeRecipe::new)
+    );
+    public static final PacketCodec<RegistryByteBuf, WeaponWorkbenchSubtypeRecipe> PACKET_CODEC = PacketCodec.ofStatic(
+        (buffer, recipe) ->
+        {
+            TextCodecs.PACKET_CODEC.encode(buffer, recipe.name);
+            ItemStack.PACKET_CODEC.encode(buffer, recipe.recipeOutput);
+            StackedIngredient.LIST_PACKET_CODEC.encode(buffer, recipe.recipeItems);
+            Identifier.PACKET_CODEC.encode(buffer, recipe.advancement);
+            PacketCodecs.BOOL.encode(buffer, recipe.requireOther);
+        },
+        (buffer) ->
+            new WeaponWorkbenchSubtypeRecipe(
+                TextCodecs.PACKET_CODEC.decode(buffer),
+                ItemStack.PACKET_CODEC.decode(buffer),
+                StackedIngredient.LIST_PACKET_CODEC.decode(buffer),
+                Identifier.PACKET_CODEC.decode(buffer),
+                PacketCodecs.BOOL.decode(buffer)
+            )
+    );
+    public static final PacketCodec<RegistryByteBuf, List<WeaponWorkbenchSubtypeRecipe>> LIST_PACKET_CODEC = PACKET_CODEC.collect(PacketCodecs.toList());
+
+    public final DefaultedList<WeaponWorkbenchSubtypeRecipe> siblings = DefaultedList.of();
+    private final Identifier advancement;
     private final boolean requireOther;
 
-    public WeaponWorkbenchSubtypeRecipe(ResourceLocation id, Component name, ItemStack recipeOutput, NonNullList<StackedIngredient> recipeItems, ResourceLocation advancement, boolean requireOther)
+    public WeaponWorkbenchSubtypeRecipe(Text name, ItemStack recipeOutput, List<StackedIngredient> recipeItems, Identifier advancement, boolean requireOther)
     {
-        super(id, name, recipeOutput, recipeItems);
+        super(name, recipeOutput, recipeItems);
         this.advancement = advancement;
         this.requireOther = requireOther;
     }
 
-    public static WeaponWorkbenchSubtypeRecipe fromJson(ResourceLocation recipeId, JsonObject json)
-    {
-        JsonObject resultJson = GsonHelper.getAsJsonObject(json, "result");
-        ItemStack output = ShapedRecipe.itemStackFromJson(resultJson);
-
-        if (resultJson.has("nbt"))
-            output.setTag(JsonUtils.readNBT(resultJson, "nbt"));
-
-        NonNullList<StackedIngredient> input = readIngredients(json.getAsJsonArray("ingredients"));
-
-        Component displayComponent;
-
-        if (GsonHelper.isStringValue(json, "name"))
-            displayComponent = Component.translatable(GsonHelper.getAsString(json, "name"));
-        else
-            displayComponent = json.has("name") ? Component.Serializer.fromJson(json.getAsJsonObject("name")) : Component.literal("null");
-
-        ResourceLocation advancement = json.has("advancement") && !GsonHelper.getAsString(json, "advancement").isEmpty()
-            ? new ResourceLocation(GsonHelper.getAsString(json, "advancement")) : null;
-
-        return new WeaponWorkbenchSubtypeRecipe(recipeId, displayComponent, output, input, advancement, GsonHelper.getAsBoolean(json, "requires_other", false));
-    }
-
-    public static WeaponWorkbenchSubtypeRecipe fromBuffer(ResourceLocation recipeId, FriendlyByteBuf buffer)
-    {
-        int i = buffer.readVarInt();
-        NonNullList<StackedIngredient> input = NonNullList.withSize(i, StackedIngredient.EMPTY);
-
-        input.replaceAll(ignored -> new StackedIngredient(Ingredient.fromNetwork(buffer), buffer.readInt()));
-
-        return new WeaponWorkbenchSubtypeRecipe(recipeId, buffer.readComponent(), buffer.readItem(), input, buffer.readBoolean() ? new ResourceLocation(buffer.readUtf()) : null, buffer.readBoolean());
-    }
-
-    public boolean isAvailable(Player player)
+    public boolean isAvailable(PlayerEntity player)
     {
         if (requireOther)
             for (WeaponWorkbenchSubtypeRecipe sibling : siblings)
@@ -75,39 +70,25 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 
         if (advancement == null)
             return true;
-        if (player.getWorld().isClientSide())
+        if (player.getWorld().isClient())
             return isAvailableOnClient(player);
-        if (player instanceof ServerPlayer serverPlayer && serverPlayer.getServer().getAdvancements().getAdvancement(advancement) != null)
-            return serverPlayer.getAdvancements().getOrStartProgress(serverPlayer.getServer().getAdvancements().getAdvancement(advancement)).isDone();
+        if (player instanceof ServerPlayerEntity serverPlayer)
+        {
+            AdvancementEntry advancementEntry = serverPlayer.getServer().getAdvancementLoader().get(advancement);
+            if (advancementEntry != null)
+                return serverPlayer.getAdvancementTracker().getProgress(advancementEntry).isDone();
+        }
 
         return true;
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private boolean isAvailableOnClient(Player player)
+    @Environment(EnvType.CLIENT)
+    private boolean isAvailableOnClient(PlayerEntity player)
     {
-        if (!(player instanceof LocalPlayer clientPlayer))
+        if (!(player instanceof ClientPlayerEntity clientPlayer))
             return true;
 
-        Advancement advancement = clientPlayer.connection.getAdvancements().getAdvancements().get(this.advancement);
-        return clientPlayer.connection.getAdvancements().progress.containsKey(advancement) && clientPlayer.connection.getAdvancements().progress.get(advancement).isDone();
-    }
-
-    public void toBuffer(FriendlyByteBuf buffer)
-    {
-        buffer.writeVarInt(this.recipeItems.size());
-        for (StackedIngredient ingredient : this.recipeItems)
-        {
-            ingredient.getIngredient().toNetwork(buffer);
-            buffer.writeInt(ingredient.getCount());
-        }
-        buffer.writeComponent(this.name);
-        buffer.writeItem(this.recipeOutput);
-
-        buffer.writeBoolean(advancement != null);
-        if (advancement != null)
-            buffer.writeUtf(advancement.toString());
-
-        buffer.writeBoolean(requireOther);
+        AdvancementEntry advancement = clientPlayer.networkHandler.getAdvancementHandler().get(this.advancement);
+        return clientPlayer.networkHandler.getAdvancementHandler().advancementProgresses.containsKey(advancement) && clientPlayer.networkHandler.getAdvancementHandler().advancementProgresses.get(advancement).isDone();
     }
 }

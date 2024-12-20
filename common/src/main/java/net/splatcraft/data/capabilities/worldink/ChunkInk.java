@@ -1,12 +1,13 @@
 package net.splatcraft.data.capabilities.worldink;
 
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Direction;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
 import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public class ChunkInk
 
     public boolean isInked(RelativeBlockPos pos, Direction direction)
     {
-        return isInked(pos, direction.get3DDataValue());
+        return isInked(pos, direction.getId());
     }
 
     public boolean isInked(RelativeBlockPos pos, int index)
@@ -48,12 +49,12 @@ public class ChunkInk
         return entry != null && entry.isInked(index);
     }
 
-    public void ink(RelativeBlockPos pos, Direction direction, int color, InkBlockUtils.InkType type)
+    public void ink(RelativeBlockPos pos, Direction direction, InkColor color, InkBlockUtils.InkType type)
     {
-        ink(pos, direction.get3DDataValue(), color, type);
+        ink(pos, direction.getId(), color, type);
     }
 
-    public void ink(RelativeBlockPos pos, int index, int color, InkBlockUtils.InkType type)
+    public void ink(RelativeBlockPos pos, int index, InkColor color, InkBlockUtils.InkType type)
     {
         BlockEntry entry = INK_MAP.getOrDefault(pos, new BlockEntry());
         entry.paint(index, color, type);
@@ -72,7 +73,7 @@ public class ChunkInk
 
     public boolean clearInk(RelativeBlockPos pos, Direction direction, boolean removeInmutable)
     {
-        return clearInk(pos, direction.get3DDataValue(), removeInmutable);
+        return clearInk(pos, direction.getId(), removeInmutable);
     }
 
     public boolean clearInk(RelativeBlockPos pos, int index, boolean removeInmutable)
@@ -121,7 +122,7 @@ public class ChunkInk
 
     public NbtCompound writeNBT(NbtCompound nbt)
     {
-        ListTag inkMapList = new ListTag();
+        NbtList inkMapList = new NbtList();
 
         for (Map.Entry<RelativeBlockPos, BlockEntry> pair : INK_MAP.entrySet())
         {
@@ -137,8 +138,8 @@ public class ChunkInk
             for (byte index : entry.getActiveIndices())
             {
                 InkEntry inkEntry = entry.get(index);
-                Direction direction = Direction.from3DDataValue(index);
-                element.putInt("Color" + direction.name(), inkEntry.color());
+                Direction direction = Direction.byId(index);
+                element.putInt("Color" + direction.name(), inkEntry.color().getColor());
                 element.putString("Type" + direction.name(), inkEntry.type().getName().toString());
             }
 
@@ -158,12 +159,12 @@ public class ChunkInk
         if (oldFormat)
         {
             INK_MAP.clear();
-            for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
+            for (NbtElement tag : nbt.getList("Ink", NbtElement.COMPOUND_TYPE))
             {
                 NbtCompound element = (NbtCompound) tag;
                 RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
-                int color = element.getInt("Color");
-                InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type")));
+                InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
+                InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type")));
 
                 for (byte i = 0; i < 6; i++)
                 {
@@ -176,12 +177,12 @@ public class ChunkInk
                 }
             }
 
-            for (Tag tag : nbt.getList("PermanentInk", Tag.TAG_COMPOUND))
+            for (NbtElement tag : nbt.getList("PermanentInk", NbtCompound.COMPOUND_TYPE))
             {
                 NbtCompound element = (NbtCompound) tag;
                 RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
-                int color = element.getInt("Color");
-                InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type")));
+                InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
+                InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type")));
 
                 BlockEntry entry = getInk(pos);
 
@@ -200,7 +201,7 @@ public class ChunkInk
         }
         else
         {
-            for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
+            for (NbtElement tag : nbt.getList("Ink", NbtCompound.COMPOUND_TYPE))
             {
                 NbtCompound element = (NbtCompound) tag;
                 boolean isPermanent = element.getBoolean("IsPermanent");
@@ -210,12 +211,12 @@ public class ChunkInk
                     Byte[] activeIndices = BlockEntry.getIndicesFromActiveFlag(element.getByte("Faces"));
                     for (Byte activeIndex : activeIndices)
                     {
-                        Direction direction = Direction.from3DDataValue(activeIndex);
+                        Direction direction = Direction.byId(activeIndex);
 
                         ink(pos,
                             activeIndex,
-                            element.getInt("Color" + direction.name()),
-                            InkBlockUtils.InkType.values.get(new ResourceLocation(element.getString("Type" + direction.name())))
+                            InkColor.constructOrReuse(element.getInt("Color" + direction.name())),
+                            InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type" + direction.name())))
                         );
                         if (isPermanent)
                             markInmutable(pos);
@@ -251,7 +252,7 @@ public class ChunkInk
 
         public BlockEntry()
         {
-            this.inmutable = false;
+            inmutable = false;
         }
 
         public static Byte[] getIndicesFromActiveFlag(byte flag)
@@ -278,7 +279,7 @@ public class ChunkInk
             return new Boolean[]{(flag & 1) == 1, (flag & 2) == 2, (flag & 4) == 4, (flag & 8) == 8, (flag & 16) == 16, (flag & 32) == 32};
         }
 
-        public static BlockEntry readFromBuffer(FriendlyByteBuf buffer)
+        public static BlockEntry readFromBuffer(PacketByteBuf buffer)
         {
             BlockEntry entry = new BlockEntry();
             byte state = buffer.readByte();
@@ -292,7 +293,7 @@ public class ChunkInk
                     {
                         int color = buffer.readInt();
                         InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
-                        entry.paint(i, color, type);
+                        entry.paint(i, InkColor.constructOrReuse(color), type);
                     }
                     else
                     {
@@ -309,7 +310,7 @@ public class ChunkInk
             return entries[index];
         }
 
-        public int color(int index)
+        public InkColor color(int index)
         {
             return get(index).color();
         }
@@ -319,7 +320,7 @@ public class ChunkInk
             return get(index).type();
         }
 
-        public BlockEntry paint(int index, int color, InkBlockUtils.InkType type)
+        public BlockEntry paint(int index, InkColor color, InkBlockUtils.InkType type)
         {
             entries[index] = new InkEntry(color, type);
             return this;
@@ -374,7 +375,7 @@ public class ChunkInk
             return list.toArray(new Byte[0]);
         }
 
-        public void writeToBuffer(FriendlyByteBuf buffer)
+        public void writeToBuffer(PacketByteBuf buffer)
         {
             // format:
             // first bit = whether there's any ink in the block
@@ -385,7 +386,7 @@ public class ChunkInk
             {
                 if (isInked(i))
                 {
-                    buffer.writeInt(color(i));
+                    buffer.writeInt(color(i).getColor());
                     buffer.writeByte(type(i).getId());
                 }
             }
@@ -412,7 +413,7 @@ public class ChunkInk
         }
     }
 
-    public record InkEntry(int color, InkBlockUtils.InkType type)
+    public record InkEntry(InkColor color, InkBlockUtils.InkType type)
     {
     }
 }

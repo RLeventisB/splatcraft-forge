@@ -1,13 +1,14 @@
 package net.splatcraft.items.remotes;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.world.World;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,13 +17,13 @@ public class InkDisruptorItem extends RemoteItem
 {
     public InkDisruptorItem()
     {
-        super(new Properties().stacksTo(1));
+        super(new Settings().maxCount(1));
     }
 
-    public static RemoteResult clearInk(Level level, BlockPos from, BlockPos to, boolean removePermanent)
+    public static RemoteResult clearInk(World world, BlockPos from, BlockPos to, boolean removePermanent)
     {
-        if (!level.isInWorldBounds(from) || !level.isInWorldBounds(to))
-            return createResult(false, Component.translatable("status.clear_ink.out_of_world"));
+        if (!world.isInBuildLimit(from) || !world.isInBuildLimit(to))
+            return createResult(false, Text.translatable("status.clear_ink.out_of_world"));
 
         /*
         for (int j = blockpos2.getZ(); j <= blockpos3.getZ(); j += 16)
@@ -31,32 +32,32 @@ public class InkDisruptorItem extends RemoteItem
             {
                 if (!level.isLoaded(new BlockPos(k, blockpos3.getY() - blockpos2.getY(), j)))
                 {
-                    return createResult(false, Component.translatable("status.clear_ink.out_of_world"));
+                    return createResult(false, Text.translatable("status.clear_ink.out_of_world"));
                 }
             }
         }
         */
-        AABB bounds = new AABB(from, to).expandTowards(1, 1, 1);
+        Box bounds = Box.enclosing(from, to).stretch(1, 1, 1);
         AtomicInteger count = new AtomicInteger();
-        int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
+        int blockTotal = (int) (bounds.getLengthX() * bounds.getLengthY() * bounds.getLengthZ());
 
-        InkBlockUtils.forEachInkedBlockInBounds(level, bounds, ((pos, ink) ->
+        InkBlockUtils.forEachInkedBlockInBounds(world, bounds, ((pos, ink) ->
         {
-            if (InkBlockUtils.clearBlock(level, pos, removePermanent))
+            if (InkBlockUtils.clearBlock(world, pos, removePermanent))
                 count.incrementAndGet();
         }));
-        ColorUtils.forEachColoredBlockInBounds(level, bounds, ((pos, coloredBlock, blockEntity) ->
+        ColorUtils.forEachColoredBlockInBounds(world, bounds, ((pos, coloredBlock, blockEntity) ->
         {
-            if (coloredBlock.remoteInkClear(level, pos))
+            if (coloredBlock.remoteInkClear(world, pos))
                 count.incrementAndGet();
         }));
 
-        return createResult(true, Component.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
+        return createResult(true, Text.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
     }
 
     @Override
-    public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, int colorIn, int mode, Collection<ServerPlayer> targets)
+    public RemoteResult onRemoteUse(World world, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayerEntity> targets)
     {
-        return clearInk(getLevel(usedOnWorld, stack), posA, posB, false);
+        return clearInk(getLevel(world, stack), posA, posB, false);
     }
 }

@@ -1,34 +1,38 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.NotifyStageCreatePacket;
+import net.splatcraft.util.CommonUtils;
 
 import java.util.Objects;
 
 public class CreateOrEditStagePacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CreateOrEditStagePacket.class);
     final String stageId;
-    final Component stageName;
+    final Text stageName;
     final BlockPos corner1;
     final BlockPos corner2;
-    final ResourceLocation dimension;
+    final Identifier dimension;
 
-    public CreateOrEditStagePacket(String stageId, Component stageName, BlockPos corner1, BlockPos corner2, Level dimension)
+    public CreateOrEditStagePacket(String stageId, Text stageName, BlockPos corner1, BlockPos corner2, World dimension)
     {
-        this(stageId, stageName, corner1, corner2, dimension.dimension().location());
+        this(stageId, stageName, corner1, corner2, dimension.getDimension().effects());
     }
 
-    public CreateOrEditStagePacket(String stageId, Component stageName, BlockPos corner1, BlockPos corner2, ResourceLocation dimension)
+    public CreateOrEditStagePacket(String stageId, Text stageName, BlockPos corner1, BlockPos corner2, Identifier dimension)
     {
         this.stageId = stageId;
         this.stageName = stageName;
@@ -37,25 +41,31 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
         this.dimension = dimension;
     }
 
-    public static CreateOrEditStagePacket decode(FriendlyByteBuf buf)
+    public static CreateOrEditStagePacket decode(RegistryByteBuf buf)
     {
-        return new CreateOrEditStagePacket(buf.readUtf(), buf.readComponent(), buf.readBlockPos(), buf.readBlockPos(), buf.readResourceLocation());
+        return new CreateOrEditStagePacket(buf.readString(), TextCodecs.PACKET_CODEC.decode(buf), buf.readBlockPos(), buf.readBlockPos(), buf.readIdentifier());
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public Id<? extends CustomPayload> getId()
     {
-        buffer.writeUtf(stageId);
-        buffer.writeComponent(stageName);
+        return ID;
+    }
+
+    @Override
+    public void encode(RegistryByteBuf buffer)
+    {
+        buffer.writeString(stageId);
+        TextCodecs.PACKET_CODEC.encode(buffer, stageName);
         buffer.writeBlockPos(corner1);
         buffer.writeBlockPos(corner2);
-        buffer.writeResourceLocation(dimension);
+        buffer.writeIdentifier(dimension);
     }
 
     @Override
-    public void execute(Player player)
+    public void execute(PlayerEntity player)
     {
-        SaveInfoCapability.get(Objects.requireNonNull(player.getServer())).createOrEditStage(Objects.requireNonNull(player.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimension))), stageId, corner1, corner2, stageName);
-        SplatcraftPacketHandler.sendToPlayer(new NotifyStageCreatePacket(stageId), (ServerPlayer) player);
+        SaveInfoCapability.get().createOrEditStage(Objects.requireNonNull(player.getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD, dimension))), stageId, corner1, corner2, stageName);
+        SplatcraftPacketHandler.sendToPlayer(new NotifyStageCreatePacket(stageId), (ServerPlayerEntity) player);
     }
 }

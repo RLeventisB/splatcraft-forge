@@ -1,5 +1,5 @@
 plugins {
-    id 'dev.architectury.loom' version '1.7.414' apply false
+    id 'dev.architectury.loom' version '1.9.420' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
 }
@@ -17,7 +17,6 @@ subprojects {
     apply plugin: 'dev.architectury.loom'
     apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
-
 
     base {
         // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
@@ -46,11 +45,11 @@ subprojects {
     }
 
     dependencies {
-        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
         mappings loom.layered {
             it.mappings("net.fabricmc:yarn:$rootProject.yarn_mappings:v2")
             it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$rootProject.yarn_mappings_patch_neoforge_version")
         }
+        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
 
         implementation 'org.jetbrains:annotations:23.0.0'
     }

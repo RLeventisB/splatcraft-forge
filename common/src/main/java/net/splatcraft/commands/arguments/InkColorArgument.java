@@ -7,24 +7,21 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorAliases;
+import net.minecraft.command.CommandSource;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.InkColor;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
-public class InkColorArgument implements ArgumentType<Integer>
+public class InkColorArgument implements ArgumentType<InkColor>
 {
-    public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.inkColor.notFound", p_208663_0_));
+    public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Text.translatable("arg.inkColor.notFound", p_208663_0_));
     public static final int max = 0xFFFFFF;
     private static final Collection<String> EXAMPLES = Arrays.asList("splatcraft:orange", "blue", "#C83D79", "4234555");
 
@@ -38,102 +35,48 @@ public class InkColorArgument implements ArgumentType<Integer>
         return new InkColorArgument();
     }
 
-    public static int getInkColor(CommandContext<CommandSourceStack> context, String name)
+    public static InkColor getInkColor(CommandContext<ServerCommandSource> context, String name)
     {
-        return context.getArgument(name, Integer.class);
+        return context.getArgument(name, InkColor.class);
     }
 
-    public static Integer parseStatic(StringReader reader) throws CommandSyntaxException
+    public static InkColor parseStatic(StringReader reader) throws CommandSyntaxException
     {
         final int start = reader.getCursor();
-        boolean hasInt = false;
-        Integer result = null;
 
-        try
+        Identifier resourceLocation = Identifier.fromCommandInputNonEmpty(reader);
+        if (!InkColorRegistry.containsAlias(resourceLocation))
         {
-            result = Integer.parseInt(reader.readString());
-            hasInt = true;
-
-            if (result < 0)
+            try
             {
                 reader.setCursor(start);
-                throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooLow().createWithContext(reader, result, 0);
+                int hexCode = parseNum(reader.readString().toLowerCase(), reader);
+                if (hexCode < 0)
+                {
+                    reader.setCursor(start);
+                    throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooLow().createWithContext(reader, hexCode, 0);
+                }
+                if (hexCode > max)
+                {
+                    reader.setCursor(start);
+                    throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooHigh().createWithContext(reader, hexCode, max);
+                }
+                return InkColor.constructOrReuse(hexCode);
             }
-            if (result > max)
-            {
-                reader.setCursor(start);
-                throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooHigh().createWithContext(reader, result, max);
-            }
-            return result;
-        }
-        catch (NumberFormatException ignored)
-        {
-        }
-
-        reader.setCursor(start);
-
-        if (!hasInt)
-        {
-            if (reader.read() == '#')
-            {
-                return parseHex(reader.readString().toLowerCase(), reader);
-            }
-
-            reader.setCursor(start);
-            ResourceLocation resourceLocation = ResourceLocation.read(reader);
-            InkColor color = InkColor.getByHex(InkColorAliases.getColorByAlias(resourceLocation));
-
-            if (color == null)
+            catch (CommandSyntaxException e)
             {
                 throw COLOR_NOT_FOUND.create(resourceLocation);
             }
-
-            return color.getColor();
         }
 
-        if (result < 0)
-        {
-            reader.setCursor(start);
-            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooLow().createWithContext(reader, result, 0);
-        }
-        reader.setCursor(start);
-        throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooHigh().createWithContext(reader, result, max);
+        return InkColorRegistry.getInkColorByAlias(resourceLocation);
     }
 
-    static CompletableFuture<Suggestions> suggestIterable(Iterable<ResourceLocation> p_197014_0_, SuggestionsBuilder builder)
-    {
-        String s = builder.getRemaining().toLowerCase(Locale.ROOT);
-        func_210512_a(p_197014_0_, s, p_210517_0_ -> p_210517_0_, p_210513_1_ -> builder.suggest(p_210513_1_.toString()));
-        return builder.buildFuture();
-    }
-
-    static <T> void func_210512_a(Iterable<T> p_210512_0_, String p_210512_1_, Function<T, ResourceLocation> p_210512_2_, Consumer<T> p_210512_3_)
-    {
-        boolean flag = p_210512_1_.indexOf(58) > -1;
-
-        for (T t : p_210512_0_)
-        {
-            ResourceLocation resourcelocation = p_210512_2_.apply(t);
-            if (flag)
-            {
-                String s = resourcelocation.toString();
-                if (SharedSuggestionProvider.matchesSubStr(p_210512_1_, s))
-                {
-                    p_210512_3_.accept(t);
-                }
-            }
-            else if (SharedSuggestionProvider.matchesSubStr(p_210512_1_, resourcelocation.getNamespace()) || resourcelocation.getNamespace().equals(Splatcraft.MODID) && SharedSuggestionProvider.matchesSubStr(p_210512_1_, resourcelocation.getPath()))
-            {
-                p_210512_3_.accept(t);
-            }
-        }
-    }
-
-    public static int parseHex(String input, StringReader reader) throws CommandSyntaxException
+    public static int parseNum(String input, StringReader reader) throws CommandSyntaxException
     {
         try
         {
-            return Integer.parseInt(input, 16);
+            return Integer.decode(input);
         }
         catch (NumberFormatException var2)
         {
@@ -142,7 +85,7 @@ public class InkColorArgument implements ArgumentType<Integer>
     }
 
     @Override
-    public Integer parse(StringReader reader) throws CommandSyntaxException
+    public InkColor parse(StringReader reader) throws CommandSyntaxException
     {
         return parseStatic(reader);
     }
@@ -150,7 +93,8 @@ public class InkColorArgument implements ArgumentType<Integer>
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
     {
-        return suggestIterable(InkColorAliases.getAllAliases(), builder);
+//        CommandSource.suggestMatching() what
+        return CommandSource.suggestMatching(InkColorRegistry.getAllAliases().stream().map(Identifier::toString).collect(Collectors.toSet()), builder);
     }
 
     @Override

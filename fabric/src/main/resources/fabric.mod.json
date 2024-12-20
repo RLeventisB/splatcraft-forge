@@ -17,12 +17,6 @@
     "entrypoints": {
         "main": [
             "net.splatcraft.fabric.SplatcraftFabric"
-        ],
-        "client": [
-            "net.splatcraft.fabric.client.SplatcraftFabricClient"
-        ],
-        "server": [
-            "net.splatcraft.fabric.client.SplatcraftFabricServer"
         ]
     },
     "mixins": [
@@ -30,12 +24,9 @@
     ],
     "depends": {
         "fabricloader": ">=0.16.9",
-        "minecraft": "~1.21",
+        "minecraft": "~1.21.1",
         "java": ">=21",
         "architectury": ">=13.0.2",
         "fabric-api": "*"
-    },
-    "suggests": {
-        "another-mod": "*"
     }
 }

@@ -1,75 +1,47 @@
 package net.splatcraft.criteriaTriggers;
 
-import com.google.gson.JsonObject;
-import net.minecraft.advancements.critereon.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.util.MathHelper;
-import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorAliases;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.advancement.criterion.AbstractCriterion;
+import net.minecraft.predicate.entity.EntityPredicate;
+import net.minecraft.predicate.entity.LootContextPredicate;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
-import org.jetbrains.annotations.NotNull;
 
-public class ChangeInkColorTrigger extends SimpleCriterionTrigger<ChangeInkColorTrigger.TriggerInstance>
+import java.util.Optional;
+
+public class ChangeInkColorTrigger extends AbstractCriterion<ChangeInkColorTrigger.Conditions>
 {
-    static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "change_ink_color");
-
-    public @NotNull ResourceLocation getId()
+    public void trigger(ServerPlayerEntity player)
     {
-        return ID;
+        trigger(player, (instance) -> instance.matches(player));
     }
 
-    public ChangeInkColorTrigger.@NotNull TriggerInstance createInstance(JsonObject json, @NotNull ContextAwarePredicate composite, @NotNull DeserializationContext context)
+    @Override
+    public Codec<Conditions> getConditionsCodec()
     {
-        int color = -1;
+        return Conditions.CODEC;
+    }
 
-        if (json.has("color"))
+    public record Conditions(Optional<LootContextPredicate> player,
+                             Optional<InkColor> color) implements AbstractCriterion.Conditions
+    {
+        public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(
+            (instance) -> instance.group(
+                EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player),
+                InkColor.CODEC.optionalFieldOf("color").forGetter(Conditions::color)
+            ).apply(instance, Conditions::new));
+
+        public Conditions(Optional<LootContextPredicate> player, Optional<InkColor> color)
         {
-            if (GsonHelper.isStringValue(json, "color"))
-            {
-                String str = GsonHelper.getAsString(json, "color");
-                if (str.indexOf('#') == 0)
-                    color = Integer.parseInt(str.substring(1), 16);
-                else
-                {
-                    InkColor colorObj = InkColor.getByHex(InkColorAliases.getColorByAlias(new ResourceLocation(str)));
-                    if (colorObj != null)
-                        color = colorObj.getColor();
-                }
-            }
-            else
-                color = MathHelper.clamp(GsonHelper.getAsInt(json, "color"), 0, 0xFFFFFF);
-        }
-        return new ChangeInkColorTrigger.TriggerInstance(composite, color);
-    }
-
-    public void trigger(ServerPlayer player)
-    {
-        this.trigger(player, (instance) -> instance.matches(player));
-    }
-
-    public static class TriggerInstance extends AbstractCriterionTriggerInstance
-    {
-        private final int color;
-
-        public TriggerInstance(ContextAwarePredicate p_27688_, int color)
-        {
-            super(ChangeInkColorTrigger.ID, p_27688_);
+            this.player = player;
             this.color = color;
         }
 
-        public boolean matches(ServerPlayer player)
+        public boolean matches(ServerPlayerEntity player)
         {
-            return color == -1 || ColorUtils.getPlayerColor(player) == color;
-        }
-
-        public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
-        {
-            JsonObject jsonobject = super.serializeToJson(context);
-            jsonobject.addProperty("color", color);
-            return jsonobject;
+            return color.isPresent() && ColorUtils.getEntityColor(player) == color.get();
         }
     }
 }

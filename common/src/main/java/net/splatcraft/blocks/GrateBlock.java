@@ -1,80 +1,69 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SimpleWaterloggedBlock;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.MapColor;
-import net.minecraft.world.level.pathfinder.PathComputationType;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
-public class GrateBlock extends Block implements SimpleWaterloggedBlock
+public class GrateBlock extends Block implements Waterloggable
 {
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    public static final Properties PROPERTIES = Properties.of().mapColor(MapColor.METAL).noOcclusion().requiresCorrectToolForDrops().strength(4.0f).sound(SoundType.METAL);
+    public static final DirectionProperty FACING = Properties.FACING;
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
+    public static final Settings PROPERTIES = Settings.create().mapColor(MapColor.IRON_GRAY).nonOpaque().requiresTool().strength(4.0f).sounds(BlockSoundGroup.METAL);
     protected static final HashMap<Direction, VoxelShape> AABBS = new HashMap<>()
     {{
-        put(Direction.NORTH, Block.box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D));
-        put(Direction.SOUTH, Block.box(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D));
-        put(Direction.WEST, Block.box(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D));
-        put(Direction.EAST, Block.box(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D));
-        put(Direction.DOWN, Block.box(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D));
-        put(Direction.UP, Block.box(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D));
+        put(Direction.NORTH, createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D));
+        put(Direction.SOUTH, createCuboidShape(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D));
+        put(Direction.WEST, createCuboidShape(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D));
+        put(Direction.EAST, createCuboidShape(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D));
+        put(Direction.DOWN, createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D));
+        put(Direction.UP, createCuboidShape(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D));
     }};
 
     public GrateBlock()
     {
         super(PROPERTIES);
-        this.registerDefaultState(this.getStateDefinition().any().setValue(FACING, Direction.DOWN).setValue(WATERLOGGED, false));
+        setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.DOWN).with(WATERLOGGED, false));
     }
 
     @Override
-    public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    public VoxelShape getOutlineShape(BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
     {
-        return AABBS.get(state.getValue(FACING));
-    }
-
-    public boolean isPathfindable(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull PathComputationType type)
-    {
-        return type == PathComputationType.WATER && levelIn.getFluidState(pos).is(FluidTags.WATER);
+        return AABBS.get(state.get(FACING));
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getPlacementState(ItemPlacementContext context)
     {
-        BlockState blockstate = this.defaultBlockState();
-        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
-        Direction direction = context.getClickedFace();
+        BlockState blockstate = getDefaultState();
+        FluidState fluidstate = context.getWorld().getFluidState(context.getBlockPos());
+        Direction direction = context.getSide();
 
-        if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown())
-            blockstate = blockstate.setValue(FACING, direction.getOpposite());
-        else if (!context.replacingClickedOnBlock() && direction.getAxis().isHorizontal())
-            blockstate = blockstate.setValue(FACING, context.getClickLocation().y - (double) context.getClickedPos().getY() > 0.5D ? Direction.UP : Direction.DOWN);
+        if (context.getPlayer() != null && context.getPlayer().isSneaking())
+            blockstate = blockstate.with(FACING, direction.getOpposite());
+        else if (!context.canReplaceExisting() && direction.getAxis().isHorizontal())
+            blockstate = blockstate.with(FACING, context.getHitPos().y - (double) context.getBlockPos().getY() > 0.5D ? Direction.UP : Direction.DOWN);
         else
-            blockstate = blockstate.setValue(FACING, direction == Direction.UP ? Direction.DOWN : Direction.UP);
+            blockstate = blockstate.with(FACING, direction == Direction.UP ? Direction.DOWN : Direction.UP);
 
-        return blockstate.setValue(WATERLOGGED, fluidstate.getType() == Fluids.WATER);
+        return blockstate.with(WATERLOGGED, fluidstate.getRegistryEntry() == Fluids.WATER);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
     {
         builder.add(FACING, WATERLOGGED);
     }
@@ -82,7 +71,7 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
     @Override
     public @NotNull FluidState getFluidState(BlockState state)
     {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     /**
@@ -92,13 +81,13 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
      * Note that this method should ideally consider only the specific face passed in.
      */
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (stateIn.getValue(WATERLOGGED))
+        if (stateIn.get(WATERLOGGED))
         {
-            levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+            levelIn.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(levelIn));
         }
 
-        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+        return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
     }
 }

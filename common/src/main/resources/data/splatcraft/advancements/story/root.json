@@ -2,7 +2,7 @@
     "display": {
         "icon": {
             "item": "splatcraft:splattershot",
-            "nbt": "{Color:\"splatcraft:orange\"}"
+            "components": "{item_color_data:{ink_color:\"splatcraft:orange\"}}"
         },
         "title": {
             "translate": "advancements.splatcraft.story.root.name"

@@ -1,23 +1,30 @@
 package net.splatcraft.data;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
@@ -26,13 +33,44 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class Stage implements Comparable<Stage>
 {
-    public static final TreeMap<String, GameRules.Key<GameRules.BooleanValue>> VALID_SETTINGS = new TreeMap<>();
+    public static final TreeMap<String, GameRules.Key<GameRules.BooleanRule>> VALID_SETTINGS = new TreeMap<>();
+    public static MapCodec<Stage> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+        BlockPos.CODEC.fieldOf("CornerA").forGetter(v -> v.cornerA),
+        BlockPos.CODEC.fieldOf("CornerB").forGetter(v -> v.cornerB),
+        Identifier.CODEC.fieldOf("Dimension").forGetter(v -> v.dimID),
+        Codec.unboundedMap(Codec.STRING, Codec.BOOL).fieldOf("Settings").forGetter(v -> v.settings),
+        Codec.unboundedMap(Codec.STRING, InkColor.CODEC).fieldOf("Teams").forGetter(v -> v.teams),
+        Codec.list(BlockPos.CODEC).fieldOf("SpawnPads").forGetter(v -> v.spawnPadPositions),
+        TextCodecs.CODEC.fieldOf("Name").forGetter(v -> v.name),
+        Codec.STRING.fieldOf("Id").forGetter(v -> v.id)
+    ).apply(inst, Stage::new));
+    public static PacketCodec<RegistryByteBuf, Stage> PACKET_CODEC = new PacketCodec<>()
+    {
+        @Override
+        public Stage decode(RegistryByteBuf buf)
+        {
+            return null;
+        }
+
+        @Override
+        public void encode(RegistryByteBuf buf, Stage value)
+        {
+            BlockPos.PACKET_CODEC.encode(buf, value.cornerA);
+            BlockPos.PACKET_CODEC.encode(buf, value.cornerB);
+            Identifier.PACKET_CODEC.encode(buf, value.dimID);
+            PacketCodecs.map(HashMap::new, PacketCodecs.STRING, PacketCodecs.BOOL).encode(buf, (HashMap<String, Boolean>) value.settings);
+            PacketCodecs.map(HashMap::new, PacketCodecs.STRING, InkColor.PACKET_CODEC).encode(buf, (HashMap<String, InkColor>) value.teams);
+            BlockPos.PACKET_CODEC.collect(PacketCodecs.toList()).encode(buf, value.spawnPadPositions);
+            TextCodecs.PACKET_CODEC.encode(buf, value.name);
+        }
+    };
 
     static
     {
@@ -52,76 +90,75 @@ public class Stage implements Comparable<Stage>
     }
 
     public final String id;
-    private final HashMap<String, Boolean> settings = new HashMap<>();
-    private final HashMap<String, Integer> teams = new HashMap<>();
-    private final ArrayList<BlockPos> spawnPadPositions = new ArrayList<>();
+    private final Map<String, Boolean> settings;
+    private final Map<String, InkColor> teams;
+    private final List<BlockPos> spawnPadPositions;
     public BlockPos cornerA;
     public BlockPos cornerB;
-    public ResourceLocation dimID;
-    private Component name;
+    public Identifier dimID;
+    private Text name;
     private boolean needsSpawnPadUpdate = false;
 
-    public Stage(NbtCompound nbt, String id)
+    public Stage(World world, BlockPos posA, BlockPos posB, String id, Text name)
     {
-        this.id = id;
-        dimID = new ResourceLocation(nbt.getString("Dimension"));
-
-        updateBounds(null, NbtUtils.readBlockPos(nbt.getCompound("CornerA")), NbtUtils.readBlockPos(nbt.getCompound("CornerB")));
-
-        settings.clear();
-
-        NbtCompound settingsNbt = nbt.getCompound("Settings");
-        for (String key : settingsNbt.getAllKeys())
-            settings.put(key, settingsNbt.getBoolean(key));
-
-        NbtCompound teamsNbt = nbt.getCompound("Teams");
-        for (String key : teamsNbt.getAllKeys())
-            teams.put(key, teamsNbt.getInt(key));
-
-        spawnPadPositions.clear();
-
-        needsSpawnPadUpdate = !nbt.contains("SpawnPads", Tag.TAG_LIST);
-
-        ListTag list = nbt.getList("SpawnPads", Tag.TAG_COMPOUND);
-        for (Tag tag : list)
-            spawnPadPositions.add(NbtUtils.readBlockPos((NbtCompound) tag));
-
-        name = nbt.contains("Name") ? Component.Serializer.fromJson(nbt.getString("Name")) : Component.literal(id);
-    }
-
-    public Stage(Level level, BlockPos posA, BlockPos posB, String id, Component name)
-    {
-        dimID = level.dimension().location();
+        dimID = world.getDimension().effects();
         this.id = id;
         this.name = name;
+        settings = new HashMap<>();
+        teams = new HashMap<>();
+        spawnPadPositions = new ArrayList<>();
 
-        updateBounds(level, posA, posB);
+        updateBounds(world, posA, posB);
     }
 
-    public static void registerGameruleSetting(GameRules.Key<GameRules.BooleanValue> rule)
+    public Stage(Stage stage, String id)
+    {
+        dimID = stage.dimID;
+        settings = stage.settings;
+        teams = stage.teams;
+        spawnPadPositions = stage.spawnPadPositions;
+        name = stage.name;
+        cornerA = stage.cornerA;
+        cornerB = stage.cornerB;
+        this.id = id;
+    }
+
+    public Stage(BlockPos cornerA, BlockPos cornerB, Identifier dimID, Map<String, Boolean> settings, Map<String, InkColor> teams, List<BlockPos> spawnPadPos, Text name, String id)
+    {
+        this.dimID = dimID;
+        this.settings = settings;
+        this.teams = teams;
+        spawnPadPositions = spawnPadPos;
+        this.name = name;
+        this.cornerA = cornerA;
+        this.cornerB = cornerB;
+        this.id = id;
+    }
+
+    public static void registerGameruleSetting(GameRules.Key<GameRules.BooleanRule> rule)
     {
         VALID_SETTINGS.put(rule.toString().replace(Splatcraft.MODID + ".", ""), rule);
     }
 
-    public static boolean targetsOnSameStage(Level level, Vec3d targetA, Vec3d targetB)
+    public static boolean targetsOnSameStage(World world, Vec3d targetA, Vec3d targetB)
     {
-        return !getStagesForPosition(level, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
+        return !getStagesForPosition(world, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
     }
 
-    public static ArrayList<Stage> getAllStages(Level level)
+    public static ArrayList<Stage> getAllStages(World world)
     {
-        return new ArrayList<>(level.isClientSide() ? ClientUtils.clientStages.values() : SaveInfoCapability.get(level.getServer()).getStages().values());
+        return new ArrayList<>(world.isClient() ? ClientUtils.clientStages.values() : SaveInfoCapability.get().getStages().values());
     }
 
-    public static Stage getStage(Level level, String id)
+    public static Stage getStage(World world, String id)
     {
-        return (level.isClientSide() ? ClientUtils.clientStages : SaveInfoCapability.get(level.getServer()).getStages()).get(id);
+        return (world.isClient() ? ClientUtils.clientStages : SaveInfoCapability.get().getStages()).get(id);
     }
 
-    public static ArrayList<Stage> getStagesForPosition(Level level, Vec3d pos)
+    public static ArrayList<Stage> getStagesForPosition(World world, Vec3d pos)
     {
-        ArrayList<Stage> stages = getAllStages(level);
-        stages.removeIf(stage -> !stage.dimID.equals(level.dimension().location()) || !stage.getBounds().contains(pos));
+        ArrayList<Stage> stages = getAllStages(world);
+        stages.removeIf(stage -> !stage.dimID.equals(world.getDimension().effects()) || !stage.getBounds().contains(pos));
         return stages;
     }
 
@@ -130,7 +167,7 @@ public class Stage implements Comparable<Stage>
         return settings.containsKey(key);
     }
 
-    public boolean hasSetting(GameRules.Key<GameRules.BooleanValue> rule)
+    public boolean hasSetting(GameRules.Key<GameRules.BooleanRule> rule)
     {
         return hasSetting(rule.toString().replace("splatcraft.", ""));
     }
@@ -141,7 +178,7 @@ public class Stage implements Comparable<Stage>
         return settings.getOrDefault(key, null);
     }
 
-    public Boolean getSetting(GameRules.Key<GameRules.BooleanValue> rule)
+    public Boolean getSetting(GameRules.Key<GameRules.BooleanRule> rule)
     {
         return getSetting(rule.toString().replace("splatcraft.", ""));
     }
@@ -158,12 +195,12 @@ public class Stage implements Comparable<Stage>
         return teams.containsKey(teamId);
     }
 
-    public int getTeamColor(String teamId)
+    public InkColor getTeamColor(String teamId)
     {
-        return hasTeam(teamId) ? teams.get(teamId) : -1;
+        return hasTeam(teamId) ? teams.get(teamId) : InkColor.INVALID;
     }
 
-    public void setTeamColor(String teamId, int teamColor)
+    public void setTeamColor(String teamId, InkColor teamColor)
     {
         teams.put(teamId, teamColor);
     }
@@ -178,17 +215,17 @@ public class Stage implements Comparable<Stage>
         return teams.keySet();
     }
 
-    public AABB getBounds()
+    public Box getBounds()
     {
-        return new AABB(cornerA, cornerB);
+        return Box.enclosing(cornerA, cornerB);
     }
 
-    public Component getStageName()
+    public Text getStageName()
     {
         return name;
     }
 
-    public void seStagetName(Component name)
+    public void seStagetName(Text name)
     {
         this.name = name;
     }
@@ -203,20 +240,20 @@ public class Stage implements Comparable<Stage>
         return cornerB;
     }
 
-    public void updateBounds(@Nullable Level level, BlockPos cornerA, BlockPos cornerB)
+    public void updateBounds(@Nullable World world, BlockPos cornerA, BlockPos cornerB)
     {
         this.cornerA = cornerA;
         this.cornerB = cornerB;
-        if (level != null)
-            updateSpawnPads(level);
+        if (world != null)
+            updateSpawnPads(world);
     }
 
     public NbtCompound writeData()
     {
         NbtCompound nbt = new NbtCompound();
 
-        nbt.put("CornerA", NbtUtils.writeBlockPos(cornerA));
-        nbt.put("CornerB", NbtUtils.writeBlockPos(cornerB));
+        nbt.put("CornerA", NbtHelper.fromBlockPos(cornerA));
+        nbt.put("CornerB", NbtHelper.fromBlockPos(cornerB));
         nbt.putString("Dimension", dimID.toString());
 
         NbtCompound settingsNbt = new NbtCompound();
@@ -226,20 +263,20 @@ public class Stage implements Comparable<Stage>
             settingsNbt.putBoolean(setting.getKey(), setting.getValue());
         nbt.put("Settings", settingsNbt);
 
-        for (Map.Entry<String, Integer> team : teams.entrySet())
-            teamsNbt.putInt(team.getKey(), team.getValue());
+        for (Map.Entry<String, InkColor> team : teams.entrySet())
+            teamsNbt.put(team.getKey(), team.getValue().getNbt());
         nbt.put("Teams", teamsNbt);
 
         if (!needsSpawnPadUpdate)
         {
-            ListTag list = new ListTag();
+            NbtList list = new NbtList();
             for (BlockPos spawnPadPos : spawnPadPositions)
-                list.add(NbtUtils.writeBlockPos(spawnPadPos));
+                list.add(NbtHelper.fromBlockPos(spawnPadPos));
 
             nbt.put("SpawnPads", list);
         }
 
-        nbt.putString("Name", Component.Serializer.toJson(name));
+        nbt.putString("Name", Text.Serialization.toJsonString(name, MinecraftClient.getInstance().getServer().getRegistryManager()));
 
         return nbt;
     }
@@ -249,10 +286,10 @@ public class Stage implements Comparable<Stage>
         return needsSpawnPadUpdate;
     }
 
-    public void updateSpawnPads(Level level)
+    public void updateSpawnPads(World world)
     {
         spawnPadPositions.clear();
-        Level stageLevel = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
+        World stageLevel = getWorld(world);
 
         BlockPos blockpos2 = new BlockPos(Math.min(cornerA.getX(), cornerB.getX()), Math.min(cornerB.getY(), cornerA.getY()), Math.min(cornerA.getZ(), cornerB.getZ()));
         BlockPos blockpos3 = new BlockPos(Math.max(cornerA.getX(), cornerB.getX()), Math.max(cornerB.getY(), cornerA.getY()), Math.max(cornerA.getZ(), cornerB.getZ()));
@@ -271,13 +308,13 @@ public class Stage implements Comparable<Stage>
 
     public void addSpawnPad(SpawnPadTileEntity spawnPad)
     {
-        if (!spawnPadPositions.contains(spawnPad.getBlockPos()))
-            spawnPadPositions.add(spawnPad.getBlockPos());
+        if (!spawnPadPositions.contains(spawnPad.getPos()))
+            spawnPadPositions.add(spawnPad.getPos());
     }
 
     public void removeSpawnPad(SpawnPadTileEntity spawnPad)
     {
-        spawnPadPositions.remove(spawnPad.getBlockPos());
+        spawnPadPositions.remove(spawnPad.getPos());
     }
 
     public boolean hasSpawnPads()
@@ -285,71 +322,76 @@ public class Stage implements Comparable<Stage>
         return !spawnPadPositions.isEmpty();
     }
 
-    public ArrayList<BlockPos> getSpawnPadPositions()
+    public List<BlockPos> getSpawnPadPositions()
     {
         return spawnPadPositions;
     }
 
-    public HashMap<Integer, ArrayList<SpawnPadTileEntity>> getSpawnPads(Level level)
+    public HashMap<InkColor, ArrayList<SpawnPadTileEntity>> getSpawnPads(World world)
     {
-        HashMap<Integer, ArrayList<SpawnPadTileEntity>> result = new HashMap<>();
-        Level stageLevel = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
+        HashMap<InkColor, ArrayList<SpawnPadTileEntity>> result = new HashMap<>();
+        World stageWorld = getWorld(world);
 
         for (BlockPos pos : spawnPadPositions)
-            if (stageLevel.getBlockEntity(pos) instanceof SpawnPadTileEntity pad)
+            if (stageWorld.getBlockEntity(pos) instanceof SpawnPadTileEntity pad)
             {
-                if (!result.containsKey(pad.getColor()))
-                    result.put(pad.getColor(), new ArrayList<>());
-                result.get(pad.getColor()).add(pad);
+                if (!result.containsKey(pad.getInkColor()))
+                    result.put(pad.getInkColor(), new ArrayList<>());
+                result.get(pad.getInkColor()).add(pad);
             }
 
         return result;
     }
 
-    public List<SpawnPadTileEntity> getAllSpawnPads(Level level)
+    private @Nullable ServerWorld getWorld(World world)
     {
-        Level stageLevel = level.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
+        return world.getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, dimID)));
+    }
+
+    public List<SpawnPadTileEntity> getAllSpawnPads(World world)
+    {
+        World stageLevel = getWorld(world);
         return spawnPadPositions.stream().map(pos -> stageLevel.getBlockEntity(pos)).filter(te -> te instanceof SpawnPadTileEntity).map(te -> (SpawnPadTileEntity) te).toList();
     }
 
-    public boolean superJumpToStage(ServerPlayer player)
+    public boolean superJumpToStage(ServerPlayerEntity player)
     {
-        if (!player.getWorld().dimension().location().equals(dimID) || getSpawnPadPositions().isEmpty())
+        if (!player.getWorld().getDimension().effects().equals(dimID) || getSpawnPadPositions().isEmpty())
             return false;
 
-        int playerColor = ColorUtils.getPlayerColor(player);
-        HashMap<Integer, ArrayList<SpawnPadTileEntity>> spawnPads = getSpawnPads(player.level());
+        InkColor playerColor = ColorUtils.getEntityColor(player);
+        HashMap<InkColor, ArrayList<SpawnPadTileEntity>> spawnPads = getSpawnPads(player.getWorld());
 
         if (!spawnPads.containsKey(playerColor))
         {
-            playerColor = spawnPads.keySet().toArray(new Integer[0])[player.getRandom().nextInt(spawnPadPositions.size())];
+            playerColor = spawnPads.keySet().toArray(new InkColor[0])[player.getRandom().nextInt(spawnPadPositions.size())];
             ColorUtils.setPlayerColor(player, playerColor);
         }
 
-        BlockPos targetPos = spawnPads.get(playerColor).get(player.getRandom().nextInt(spawnPads.get(playerColor).size())).getBlockPos();
+        BlockPos targetPos = spawnPads.get(playerColor).get(player.getRandom().nextInt(spawnPads.get(playerColor).size())).getPos();
 
-        return SuperJumpCommand.superJump(player, new Vec3d(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.level()), targetPos.getZ() + 0.5));
+        return SuperJumpCommand.superJump(player, new Vec3d(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.getWorld()), targetPos.getZ() + 0.5));
     }
 
-    @OnlyIn(Dist.DEDICATED_SERVER)
-    public boolean play(Level level, Collection<ServerPlayer> players, StageGameMode gameMode)
+    @Environment(EnvType.SERVER)
+    public boolean play(World world, Collection<ServerPlayerEntity> players, StageGameMode gameMode)
     {
-        SaveInfo saveInfo = SaveInfoCapability.get(Objects.requireNonNull(level.getServer()));
-        if (saveInfo.playSessions.containsKey(id))
+        SaveInfo saveInfo = SaveInfoCapability.get();
+        if (saveInfo.playSessions().containsKey(id))
             return false;
 
         if (!gameMode.canDoOn(this))
             return false;
 
-        PlaySession playSession = new PlaySession(level, players, this, gameMode);
-        saveInfo.playSessions.put(id, playSession);
+        PlaySession playSession = new PlaySession(world, players, this, gameMode);
+        saveInfo.playSessions().put(id, playSession);
 
         return true;
     }
 
     public ServerWorld getStageLevel(MinecraftServer server)
     {
-        return server.getLevel(ResourceKey.create(Registries.DIMENSION, dimID));
+        return server.getWorld(RegistryKey.of(RegistryKeys.WORLD, dimID));
     }
 
     @Override
@@ -362,5 +404,10 @@ public class Stage implements Comparable<Stage>
     public boolean equals(Object obj)
     {
         return obj instanceof Stage oStage && id.equals(oStage.id);
+    }
+
+    public Stage withId(String key)
+    {
+        return new Stage(this, key);
     }
 }

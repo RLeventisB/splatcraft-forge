@@ -1,13 +1,14 @@
 package net.splatcraft.entities;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.NewRegistryEvent;
-import net.minecraftforge.registries.RegistryBuilder;
+import com.mojang.serialization.Lifecycle;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandler;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.SimpleRegistry;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
@@ -15,46 +16,57 @@ import org.joml.Vector3f;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 
-import static net.splatcraft.Splatcraft.MODID;
-
-@Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public abstract class ExtraSaveData
 {
-    public static Supplier<IForgeRegistry<Class<? extends ExtraSaveData>>> REGISTRY;
-    public static final EntityDataSerializer<InkProjectileEntity.ExtraDataList> SERIALIZER = new EntityDataSerializer<>()
+    public static SimpleRegistry<Class<? extends ExtraSaveData>> REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("extra_save_data")), Lifecycle.stable());
+    public static final TrackedDataHandler<InkProjectileEntity.ExtraDataList> SERIALIZER = new TrackedDataHandler<InkProjectileEntity.ExtraDataList>()
     {
-        @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull InkProjectileEntity.ExtraDataList saveData)
+        private static final PacketCodec<? super RegistryByteBuf, InkProjectileEntity.ExtraDataList> PACKET_CODEC = new PacketCodec<RegistryByteBuf, InkProjectileEntity.ExtraDataList>()
         {
-            buf.writeInt(saveData.size());
-            for (ExtraSaveData data : saveData)
+            @Override
+            public InkProjectileEntity.ExtraDataList decode(RegistryByteBuf buf)
             {
-                buf.writeResourceLocation(REGISTRY.get().getKey(data.getClass()));
-                data.save(buf);
+                int count = buf.readInt();
+                InkProjectileEntity.ExtraDataList saveDatas = new InkProjectileEntity.ExtraDataList(count);
+                for (int i = 0; i < count; i++)
+                {
+                    Class<? extends ExtraSaveData> saveData = REGISTRY.get(buf.readIdentifier());
+                    try
+                    {
+                        saveDatas.add((ExtraSaveData) saveData.getDeclaredMethod("load", RegistryByteBuf.class).invoke(null, buf));
+                    }
+                    catch (IllegalAccessException | NoSuchMethodException |
+                           InvocationTargetException e)
+                    {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return saveDatas;
             }
+
+            @Override
+            public void encode(RegistryByteBuf buf, InkProjectileEntity.ExtraDataList saveData)
+            {
+                buf.writeInt(saveData.size());
+                for (ExtraSaveData data : saveData)
+                {
+                    buf.writeInt(REGISTRY.getRawId(data.getClass()));
+                    data.save(buf);
+                }
+            }
+        };
+
+        @Override
+        public PacketCodec<? super RegistryByteBuf, InkProjectileEntity.ExtraDataList> codec()
+        {
+            return PACKET_CODEC;
         }
 
         @Override
-        public @NotNull InkProjectileEntity.ExtraDataList read(@NotNull FriendlyByteBuf buf)
+        public TrackedData<InkProjectileEntity.ExtraDataList> create(int id)
         {
-            int count = buf.readInt();
-            InkProjectileEntity.ExtraDataList saveDatas = new InkProjectileEntity.ExtraDataList(count);
-            for (int i = 0; i < count; i++)
-            {
-                Class<? extends ExtraSaveData> saveData = REGISTRY.get().getValue(buf.readResourceLocation());
-                try
-                {
-                    saveDatas.add((ExtraSaveData) saveData.getDeclaredMethod("load", FriendlyByteBuf.class).invoke(null, buf));
-                }
-                catch (IllegalAccessException | NoSuchMethodException |
-                       InvocationTargetException e)
-                {
-                    throw new RuntimeException(e);
-                }
-            }
-            return saveDatas;
+            return TrackedDataHandler.super.create(id);
         }
 
         @Override
@@ -64,23 +76,17 @@ public abstract class ExtraSaveData
         }
     };
 
-    @SubscribeEvent
-    public static void registerRegistry(final NewRegistryEvent event)
+    static
     {
-        RegistryBuilder<Class<? extends ExtraSaveData>> registryBuilder = new RegistryBuilder<>();
-        registryBuilder.setName(new ResourceLocation(MODID, "extra_save_data"));
-        REGISTRY = event.create(registryBuilder, (registry) ->
-        {
-            registry.register(new ResourceLocation(MODID, "charge_data"), ChargeExtraData.class);
-            registry.register(new ResourceLocation(MODID, "blaster_explosion_data"), ExplosionExtraData.class);
-            registry.register(new ResourceLocation(MODID, "slosher_data"), SloshExtraData.class);
-            registry.register(new ResourceLocation(MODID, "dualie_data"), DualieExtraData.class);
-        });
+        Registry.register(REGISTRY, Splatcraft.identifierOf("charge_data"), ChargeExtraData.class);
+        Registry.register(REGISTRY, Splatcraft.identifierOf("blaster_explosion_data"), ExplosionExtraData.class);
+        Registry.register(REGISTRY, Splatcraft.identifierOf("slosher_data"), SloshExtraData.class);
+        Registry.register(REGISTRY, Splatcraft.identifierOf("dualie_data"), DualieExtraData.class);
     }
 
-    public abstract void save(@NotNull FriendlyByteBuf buffer);
+    public abstract void save(@NotNull RegistryByteBuf buffer);
 
-    public abstract ExtraSaveData load(@NotNull FriendlyByteBuf buffer);
+    public abstract ExtraSaveData load(@NotNull RegistryByteBuf buffer);
 
     public abstract ExtraSaveData copy();
 
@@ -92,13 +98,13 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
 
         }
 
         @Override
-        public EmptyExtraData load(@NotNull FriendlyByteBuf buffer)
+        public EmptyExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new EmptyExtraData();
         }
@@ -120,13 +126,13 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
             buffer.writeFloat(charge);
         }
 
         @Override
-        public ChargeExtraData load(@NotNull FriendlyByteBuf buffer)
+        public ChargeExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new ChargeExtraData(buffer.readFloat());
         }
@@ -159,7 +165,7 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
             damageCalculator.writeToBuffer(buffer);
             sparkDamageCalculator.writeToBuffer(buffer);
@@ -173,7 +179,7 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public ExplosionExtraData load(@NotNull FriendlyByteBuf buffer)
+        public ExplosionExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readBoolean());
         }
@@ -198,13 +204,13 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
             buffer.writeBoolean(rollBullet);
         }
 
         @Override
-        public DualieExtraData load(@NotNull FriendlyByteBuf buffer)
+        public DualieExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new DualieExtraData(buffer.readBoolean());
         }
@@ -222,17 +228,17 @@ public abstract class ExtraSaveData
 
         public RollerDistanceExtraData(Vector3f position)
         {
-            this.spawnPos = position;
+            spawnPos = position;
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
             buffer.writeVector3f(spawnPos);
         }
 
         @Override
-        public RollerDistanceExtraData load(@NotNull FriendlyByteBuf buffer)
+        public RollerDistanceExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new RollerDistanceExtraData(buffer.readVector3f());
         }
@@ -256,14 +262,14 @@ public abstract class ExtraSaveData
         }
 
         @Override
-        public void save(@NotNull FriendlyByteBuf buffer)
+        public void save(@NotNull RegistryByteBuf buffer)
         {
             buffer.writeInt(sloshDataIndex);
             buffer.writeDouble(spawnHeight);
         }
 
         @Override
-        public SloshExtraData load(@NotNull FriendlyByteBuf buffer)
+        public SloshExtraData load(@NotNull RegistryByteBuf buffer)
         {
             return new SloshExtraData(buffer.readInt(), buffer.readDouble());
         }

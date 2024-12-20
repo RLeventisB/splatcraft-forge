@@ -1,18 +1,48 @@
 package net.splatcraft.util;
 
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.serialization.DataResult;
+import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.data.TrackedDataHandler;
+import net.minecraft.entity.decoration.DisplayEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.RangedWeaponItem;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.BaseRandom;
+import net.minecraft.util.math.random.Random;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.client.renderer.InkSquidRenderer;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.DualieItem;
@@ -20,71 +50,106 @@ import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class CommonUtils
 {
-    public static final EntityDataSerializer<Vec3d> VEC3SERIALIZER = new EntityDataSerializer<>()
+    public static final TrackedDataHandler<Vector2f> VEC2DATAHANDLER = new TrackedDataHandler<>()
     {
+        public static final PacketCodec<RegistryByteBuf, Vector2f> PACKET_CODEC = PacketCodec.tuple(
+            PacketCodecs.FLOAT, Vector2f::x,
+            PacketCodecs.FLOAT, Vector2f::y,
+            Vector2f::new);
+
         @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec3d vec3)
+        public PacketCodec<? super RegistryByteBuf, Vector2f> codec()
         {
-            buf.writeDouble(vec3.x);
-            buf.writeDouble(vec3.y);
-            buf.writeDouble(vec3.z);
+            return PACKET_CODEC;
         }
 
         @Override
-        public @NotNull Vec3d read(@NotNull FriendlyByteBuf buf)
+        public @NotNull Vector2f copy(@NotNull Vector2f vec2)
         {
-            return new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        }
-
-        @Override
-        public @NotNull Vec3d copy(@NotNull Vec3d vec3)
-        {
-            return new Vec3d(vec3.x, vec3.y, vec3.z);
+            return new Vector2f(vec2.x, vec2.y);
         }
     };
-    public static final EntityDataSerializer<Vec2> VEC2SERIALIZER = new EntityDataSerializer<>()
+
+    public static final TrackedDataHandler<InkColor> INKCOLORDATAHANDLER = new TrackedDataHandler<>()
     {
+        public static final PacketCodec<RegistryByteBuf, InkColor> PACKET_CODEC = PacketCodec.tuple(
+            PacketCodecs.INTEGER, InkColor::getColor,
+            InkColor::new);
+
         @Override
-        public void write(@NotNull FriendlyByteBuf buf, @NotNull Vec2 vec2)
+        public PacketCodec<? super RegistryByteBuf, InkColor> codec()
         {
-            buf.writeFloat(vec2.x);
-            buf.writeFloat(vec2.y);
+            return PACKET_CODEC;
         }
 
         @Override
-        public @NotNull Vec2 read(@NotNull FriendlyByteBuf buf)
+        public @NotNull InkColor copy(@NotNull InkColor color)
         {
-            return new Vec2(buf.readFloat(), buf.readFloat());
-        }
-
-        @Override
-        public @NotNull Vec2 copy(@NotNull Vec2 vec2)
-        {
-            return new Vec2(vec2.x, vec2.y);
+            return InkColor.constructOrReuse(color.getColor());
         }
     };
+
+    public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
+    {
+        StringBuilder builder = new StringBuilder();
+        for (char chr : clazz.getSimpleName().toCharArray())
+        {
+            if (chr == '-' || chr == '_' || chr == '.' || Character.isLetterOrDigit(chr))
+            {
+                if (Character.isUpperCase(chr))
+                {
+                    builder.append('_');
+                    builder.append(Character.toLowerCase(chr));
+                }
+                else builder.append(chr);
+            }
+        }
+        return new CustomPayload.Id<>(Splatcraft.identifierOf(builder.toString()));
+    }
+
+    public static String makeStringIdentifierValid(String text)
+    {
+        StringBuilder builder = new StringBuilder();
+        for (char chr : text.toCharArray())
+        {
+            if (chr == '-' || chr == '_' || chr == '.' || Character.isLetterOrDigit(chr))
+            {
+                if (Character.isUpperCase(chr))
+                {
+                    builder.append('_');
+                    builder.append(Character.toLowerCase(chr));
+                }
+                else builder.append(chr);
+            }
+        }
+        return builder.toString();
+    }
 
     public static void spawnTestParticle(Vec3d pos)
     {
         spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(1, 0, 0), 1), pos);
     }
 
-    public static void spawnTestText(Level level, Vec3d pos, String text)
+    public static void spawnTestText(World world, Vec3d pos, String text)
     {
-        if (level != null)
+        if (world != null)
         {
-            Display.TextDisplay entity = new Display.TextDisplay(EntityType.TEXT_DISPLAY, Minecraft.getInstance().level);
-            entity.setPos(pos);
-            entity.setText(Component.literal(text));
-            entity.setBillboardConstraints(Display.BillboardConstraints.CENTER);
-            level.addFreshEntity(entity);
+            DisplayEntity.TextDisplayEntity entity = new DisplayEntity.TextDisplayEntity(EntityType.TEXT_DISPLAY, MinecraftClient.getInstance().world);
+            entity.setPosition(pos);
+            entity.setText(Text.literal(text));
+            entity.setDisplayFlags(DisplayEntity.BillboardMode.CENTER.getIndex());
+            world.spawnEntity(entity);
         }
     }
 
@@ -97,7 +162,7 @@ public class CommonUtils
 
     public static void spawnTestBlockParticle(Vec3d pos, BlockState state)
     {
-        spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(ParticleTypes.BLOCK_MARKER, state), pos);
+        spawnTestParticle(MinecraftClient.getInstance().world, new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, state), pos);
     }
 
     public static void spawnTestParticle(World world, ParticleEffect options, Vec3d pos)
@@ -123,7 +188,7 @@ public class CommonUtils
             {
                 for (int z = 0; z < 2; z++)
                 {
-                    CommonUtils.spawnTestParticle(world,
+                    spawnTestParticle(world,
                         ParticleTypes.BUBBLE, new Vec3d(
                             x == 0 ? aabb.getMin(Direction.Axis.X) : aabb.getMax(Direction.Axis.X),
                             y == 0 ? aabb.getMin(Direction.Axis.Y) : aabb.getMax(Direction.Axis.Y),
@@ -133,22 +198,22 @@ public class CommonUtils
         }
     }
 
-    public static float nextFloat(BaseRandom random, float min, float max)
+    public static float nextFloat(Random random, float min, float max)
     {
         return min + (max - min) * random.nextFloat();
     }
 
-    public static double nextDouble(RandomSource random, double min, double max)
+    public static double nextDouble(Random random, double min, double max)
     {
         return min + (max - min) * random.nextDouble();
     }
 
-    public static net.minecraft.util.math.Vec3i round(Vec3d vec3)
+    public static Vec3i round(Vec3d vec3)
     {
         return new Vec3i((int) Math.floor(vec3.x), (int) Math.floor(vec3.y), (int) Math.floor(vec3.z));
     }
 
-    public static net.minecraft.util.math.BlockPos createBlockPos(double x, double y, double z)
+    public static BlockPos createBlockPos(double x, double y, double z)
     {
         return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
     }
@@ -163,98 +228,35 @@ public class CommonUtils
         return new BlockPos(round(vec3));
     }
 
-    private static boolean isValidNamespace(String namespaceIn)
+    public static void blockDrop(World world, BlockPos pos, ItemStack stack)
     {
-        for (int i = 0; i < namespaceIn.length(); ++i)
+        if (world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS) /*&& !world.captureBlockSnapshots*/)
+            spawnItem(world, pos, stack);
+    }
+
+    public static void spawnItem(World world, BlockPos pos, ItemStack stack)
+    {
+        if (!world.isClient() && !stack.isEmpty())
         {
-            if (!validateNamespaceChar(namespaceIn.charAt(i)))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static boolean validatePathChar(char charValue)
-    {
-        return charValue == '_' || charValue == '-' || charValue >= 'a' && charValue <= 'z' || charValue >= '0' && charValue <= '9' || charValue == '/' || charValue == '.';
-    }
-
-    private static boolean validateNamespaceChar(char charValue)
-    {
-        return charValue == '_' || charValue == '-' || charValue >= 'a' && charValue <= 'z' || charValue >= '0' && charValue <= '9' || charValue == '.';
-    }
-
-    private static boolean isPathValid(String pathIn)
-    {
-        for (int i = 0; i < pathIn.length(); ++i)
-        {
-            if (!validatePathChar(pathIn.charAt(i)))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static boolean isResourceNameValid(String resourceName)
-    {
-        return isResourceNameValid(resourceName, Splatcraft.MODID);
-    }
-
-    public static boolean isResourceNameValid(String resourceName, String defaultLoc)
-    {
-        String[] astring = decompose(resourceName, ':', defaultLoc);
-        return isValidNamespace(org.apache.commons.lang3.StringUtils.isEmpty(astring[0]) ? defaultLoc : astring[0]) && isPathValid(astring[1]);
-    }
-
-    protected static String[] decompose(String resourceName, char splitOn, String defaultLoc)
-    {
-        String[] astring = new String[]{defaultLoc, resourceName};
-        int i = resourceName.indexOf(splitOn);
-        if (i >= 0)
-        {
-            astring[1] = resourceName.substring(i + 1);
-            if (i >= 1)
-            {
-                astring[0] = resourceName.substring(0, i);
-            }
-        }
-
-        return astring;
-    }
-
-    public static void blockDrop(Level levelIn, BlockPos pos, ItemStack stack)
-    {
-        if (levelIn.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !levelIn.captureBlockSnapshots)
-            spawnItem(levelIn, pos, stack);
-    }
-
-    public static void spawnItem(Level levelIn, BlockPos pos, ItemStack stack)
-    {
-        if (!levelIn.isClientSide() && !stack.isEmpty())
-        {
-            double d0 = (double) (levelIn.random.nextFloat() * 0.5F) + 0.25D;
-            double d1 = (double) (levelIn.random.nextFloat() * 0.5F) + 0.25D;
-            double d2 = (double) (levelIn.random.nextFloat() * 0.5F) + 0.25D;
-            ItemEntity itementity = new ItemEntity(levelIn, (double) pos.getX() + d0, (double) pos.getY() + d1, (double) pos.getZ() + d2, stack);
-            itementity.setDefaultPickUpDelay();
-            levelIn.addFreshEntity(itementity);
+            double d0 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
+            double d1 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
+            double d2 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
+            ItemEntity itementity = new ItemEntity(world, (double) pos.getX() + d0, (double) pos.getY() + d1, (double) pos.getZ() + d2, stack);
+            itementity.setToDefaultPickupDelay();
+            world.spawnEntity(itementity);
         }
     }
 
-    public static ItemStack getItemInInventory(Player entity, Predicate<ItemStack> predicate)
+    public static ItemStack getItemInInventory(PlayerEntity entity, Predicate<ItemStack> predicate)
     {
-        ItemStack itemstack = ProjectileWeaponItem.getHeldProjectile(entity, predicate);
+        ItemStack itemstack = RangedWeaponItem.getHeldProjectile(entity, predicate);
         if (!itemstack.isEmpty())
             return itemstack;
         else
         {
-            for (int i = 0; i < entity.getInventory().getContainerSize(); ++i)
+            for (int i = 0; i < entity.getInventory().size(); ++i)
             {
-                ItemStack itemstack1 = entity.getInventory().getItem(i);
+                ItemStack itemstack1 = entity.getInventory().getStack(i);
                 if (predicate.test(itemstack1))
                     return itemstack1;
             }
@@ -263,10 +265,10 @@ public class CommonUtils
         }
     }
 
-    public static boolean anyWeaponOnCooldown(Player player)
+    public static boolean anyWeaponOnCooldown(PlayerEntity player)
     {
-        boolean isMainOnCooldown = player.getMainHandItem().getItem() instanceof WeaponBaseItem weapon && player.getCooldowns().isOnCooldown(weapon);
-        boolean isOffOnCooldown = player.getOffhandItem().getItem() instanceof WeaponBaseItem weapon && player.getCooldowns().isOnCooldown(weapon);
+        boolean isMainOnCooldown = player.getMainHandStack().getItem() instanceof WeaponBaseItem weapon && player.getItemCooldownManager().isCoolingDown(weapon);
+        boolean isOffOnCooldown = player.getOffHandStack().getItem() instanceof WeaponBaseItem weapon && player.getItemCooldownManager().isCoolingDown(weapon);
         return isMainOnCooldown || isOffOnCooldown;
     }
 
@@ -377,51 +379,111 @@ public class CommonUtils
 
     public static Vec3d getOldPosition(Entity entity, double partialTick)
     {
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
             return WeaponHandler.getPlayerPrevPos(player).getPosition(partialTick);
         throw new NotImplementedException();
     }
 
-    public static <T> T returnValueDependantOnSquidCancel(Player player, T withCancel, T withoutCancel)
+    public static <T> T returnValueDependantOnSquidCancel(LivingEntity player, T withCancel, T withoutCancel)
     {
         boolean didCancel = false;
-        if (PlayerInfoCapability.hasCapability(player))
+        if (EntityInfoCapability.hasCapability(player))
         {
-            didCancel = PlayerInfoCapability.get(player).didSquidCancelThisTick();
+            didCancel = EntityInfoCapability.get(player).didSquidCancelThisTick();
         }
         return didCancel ? withCancel : withoutCancel;
     }
 
     public static float startupSquidSwitch(LivingEntity entity, CommonRecords.ShotDataRecord shotData)
     {
-        if (entity instanceof Player player)
-            return returnValueDependantOnSquidCancel(player, shotData.squidStartupTicks(), shotData.startupTicks());
-        return shotData.startupTicks();
+//        if (entity instanceof PlayerEntity player)
+        return returnValueDependantOnSquidCancel(entity, shotData.squidStartupTicks(), shotData.startupTicks());
+//        return shotData.startupTicks();
     }
 
     public static float startupSquidSwitch(LivingEntity entity, ShootingHandler.FiringStatData firingData)
     {
-        if (entity instanceof Player player)
-            return returnValueDependantOnSquidCancel(player, firingData.squidStartupFrames(), firingData.startupFrames());
-        return firingData.startupFrames();
+//        if (entity instanceof PlayerEntity player)
+        return returnValueDependantOnSquidCancel(entity, firingData.squidStartupFrames(), firingData.startupFrames());
+//        return firingData.startupFrames();
     }
 
-    public static float triangle(RandomSource random, float min, float max)
+    public static float triangle(Random random, float min, float max)
     {
         return min + max * (random.nextFloat() - random.nextFloat());
     }
 
     public static boolean isRolling(LivingEntity entity)
     {
-        return entity instanceof Player player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown;
+        return entity instanceof PlayerEntity player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown;
     }
 
-    public static InteractionHand otherHand(InteractionHand hand)
+    public static Hand otherHand(Hand hand)
     {
-        return hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        return hand == Hand.MAIN_HAND ? Hand.OFF_HAND : Hand.MAIN_HAND;
+    }
+
+    public static <K, V> DataResult<V> getFromMap(Map<K, V> map, K key)
+    {
+        if (map.containsKey(key))
+        {
+            return DataResult.success(map.get(key));
+        }
+        return DataResult.error(() -> "The key " + key + " is not registered in the map.");
+    }
+
+    @ExpectPlatform
+    public static <T> int @Nullable [] findMatches(List<T> inputs, java.util.List<? extends Predicate<T>> tests)
+    {
+        throw new AssertionError();
+    }
+
+    public static RegistryEntry.Reference<Enchantment> getEnchantmentEntry(WorldView world, RegistryKey<Enchantment> enchantment)
+    {
+        return world.getRegistryManager().get(RegistryKeys.ENCHANTMENT).getEntry(enchantment).get();
+    }
+
+    @ExpectPlatform
+    public static void doPlayerSquidForgeEvent(AbstractClientPlayerEntity player, InkSquidRenderer squidRenderer, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i)
+    {
+
+    }
+
+    @ExpectPlatform
+    public static InteractionEventResultDummy doPlayerUseItemForgeEvent(int i, KeyBinding useKey, Hand hand)
+    {
+        return new InteractionEventResultDummy(true, false);
+    }
+
+    @ExpectPlatform
+    public static void doForgeEmptyClickEvent(ClientPlayerEntity player, Hand hand)
+    {
+
     }
 
     public record Result(float delay, float value)
     {
+    }
+
+    public static class InteractionEventResultDummy
+    {
+        private final boolean canceled;
+        private boolean handSwing = true;
+
+        public InteractionEventResultDummy(boolean handSwing, boolean canceled)
+        {
+            this.handSwing = handSwing;
+            this.canceled = canceled;
+        }
+
+        public boolean shouldSwingHand()
+        {
+            return handSwing;
+        }
+
+        public boolean isCanceled()
+        {
+            return canceled;
+        }
     }
 }

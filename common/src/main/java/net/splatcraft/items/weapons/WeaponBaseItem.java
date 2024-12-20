@@ -1,57 +1,53 @@
 package net.splatcraft.items.weapons;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.cauldron.CauldronInteraction;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.stats.Stats;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.LayeredCauldronBlock;
+import com.mojang.serialization.DataResult;
+import net.minecraft.block.LeveledCauldronBlock;
+import net.minecraft.block.cauldron.CauldronBehavior;
+import net.minecraft.component.ComponentMap;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.stat.Stats;
+import net.minecraft.text.Text;
+import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.IColoredItem;
+import net.splatcraft.items.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.WeaponUseEndPacket;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.ClientUtils;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem
+public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
     public static final int USE_DURATION = 72000;
     private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, AbstractWeaponSettings<?, ?>> DEFAULTS = new HashMap<>() // a
@@ -65,30 +61,30 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         put(SubWeaponSettings.class, SubWeaponSettings.DEFAULT);
         put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
     }};
-    public ResourceLocation settingsId;
+    public Identifier settingsId;
     public boolean isSecret;
 
     public WeaponBaseItem(String settingsId)
     {
-        super(new Properties().stacksTo(1));
+        super(new Item.Settings().maxCount(1));
         SplatcraftItems.inkColoredItems.add(this);
         SplatcraftItems.weapons.add(this);
-        this.settingsId = settingsId.contains(":") ? new ResourceLocation(settingsId) : new ResourceLocation(Splatcraft.MODID, settingsId);
+        this.settingsId = settingsId.contains(":") ? Identifier.of(settingsId) : Splatcraft.identifierOf(settingsId);
 
-        CauldronInteraction.WATER.put(this, (state, level, pos, player, hand, stack) ->
+        CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, (state, level, pos, player, hand, stack) ->
         {
-            if (ColorUtils.isColorLocked(stack) && !player.isCrouching())
+            if (ColorUtils.isColorLocked(stack) && !player.isSneaking())
             {
                 ColorUtils.setColorLocked(stack, false);
 
-                player.awardStat(Stats.USE_CAULDRON);
+                player.incrementStat(Stats.USE_CAULDRON);
 
                 if (!player.isCreative())
-                    LayeredCauldronBlock.lowerFillLevel(state, level, pos);
+                    LeveledCauldronBlock.decrementFluidLevel(state, level, pos);
 
-                return InteractionResult.SUCCESS;
+                return ItemActionResult.success(level.isClient);
             }
-            return InteractionResult.PASS;
+            return ItemActionResult.FAIL;
         });
     }
 
@@ -100,7 +96,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage, boolean force)
     {
         if (!force && !enoughInk(player, item, amount, recoveryCooldown, sendMessage, false)) return false;
-        ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
+        ItemStack tank = player.getEquippedStack(EquipmentSlot.CHEST);
         if (tank.getItem() instanceof InkTankItem)
             InkTankItem.setInkAmount(tank, InkTankItem.getInkAmount(tank) - amount);
         return true;
@@ -108,7 +104,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static boolean refundInk(LivingEntity player, float amount)
     {
-        ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
+        ItemStack tank = player.getEquippedStack(EquipmentSlot.CHEST);
         if (tank.getItem() instanceof InkTankItem inkTank)
             InkTankItem.setInkAmount(tank, Math.min(inkTank.capacity, InkTankItem.getInkAmount(tank) + amount));
         return true;
@@ -121,9 +117,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage, boolean sub)
     {
-        ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
-        if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-            || player instanceof Player plr && plr.isCreative()
+        ItemStack tank = player.getEquippedStack(EquipmentSlot.CHEST);
+        if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.REQUIRE_INK_TANK)
+            || player instanceof PlayerEntity plr && plr.isCreative()
             && SplatcraftGameRules.getBooleanRuleValue(player.getWorld(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
@@ -145,9 +141,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static boolean hasInkInTank(LivingEntity livingEntity, Item item)
     {
-        ItemStack tank = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
-        if (!SplatcraftGameRules.getLocalizedRule(livingEntity.getWorld(), livingEntity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-            || livingEntity instanceof Player player && player.isCreative()
+        ItemStack tank = livingEntity.getEquippedStack(EquipmentSlot.CHEST);
+        if (!SplatcraftGameRules.getLocalizedRule(livingEntity.getWorld(), livingEntity.getBlockPos(), SplatcraftGameRules.REQUIRE_INK_TANK)
+            || livingEntity instanceof PlayerEntity player && player.isCreative()
             && SplatcraftGameRules.getBooleanRuleValue(livingEntity.getWorld(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
         {
             return true;
@@ -158,9 +154,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static void sendNoInkMessage(LivingEntity entity, SoundEvent sound)
     {
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
         {
-            player.displayClientMessage(Component.translatable("status.no_ink").withStyle(ChatFormatting.RED), true);
+            player.sendMessage(Text.translatable("status.no_ink").formatted(Formatting.RED), true);
             if (sound != null)
                 playNoInkSound(entity, sound);
         }
@@ -168,7 +164,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public static void playNoInkSound(LivingEntity entity, SoundEvent sound)
     {
-        entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
+        entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundCategory.PLAYERS, 0.8F,
             ((entity.getWorld().getRandom().nextFloat() - entity.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
     }
 
@@ -176,15 +172,25 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 
     public S getSettings(ItemStack stack)
     {
-        ResourceLocation id = stack.hasTag() && stack.getTag().contains("Settings") ? new ResourceLocation(stack.getTag().getString("Settings")) : settingsId;
+        // ok this method was confusing so i rewrote it for now
+        ComponentMap components = stack.getComponents();
+        Identifier id = components.contains(SplatcraftComponents.WEAPON_SETTING_ID) ? components.get(SplatcraftComponents.WEAPON_SETTING_ID) : settingsId;
 
-        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
+        DataResult<AbstractWeaponSettings<?, ?>> result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
+        if (result.isSuccess() && getSettingsClass().isInstance(result.getOrThrow()))
+        {
+            return getSettingsClass().cast(result.getOrThrow());
+        }
+        else
+        {
             id = settingsId;
-
-        if (!(DataHandler.WeaponStatsListener.SETTINGS.containsKey(id) && getSettingsClass().isInstance(DataHandler.WeaponStatsListener.SETTINGS.get(id))))
+            result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
+            if (result.isSuccess() && getSettingsClass().isInstance(result.getOrThrow()))
+            {
+                return getSettingsClass().cast(result.getOrThrow());
+            }
             return (S) DEFAULTS.get(getSettingsClass());
-
-        return getSettingsClass().cast(DataHandler.WeaponStatsListener.SETTINGS.get(id));
+        }
     }
 
     public <T extends WeaponBaseItem<?>> T setSecret(boolean secret)
@@ -194,9 +200,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
     {
-        super.appendHoverText(stack, level, tooltip, flag);
+        super.appendTooltip(stack, context, tooltip, type);
 
         if (ColorUtils.isColorLocked(stack))
         {
@@ -204,17 +210,17 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         }
         else
         {
-            tooltip.add(Component.literal(""));
+            tooltip.add(Text.literal(""));
         }
 
-        if (!stack.getOrCreateTag().getBoolean("HideTooltip"))
-            getSettings(stack).addStatsToTooltip(tooltip, flag);
+        if (stack.contains(DataComponentTypes.HIDE_TOOLTIP))
+            getSettings(stack).addStatsToTooltip(tooltip, type);
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
         if (entity instanceof LivingEntity livingEntity)
         {
@@ -222,37 +228,29 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
             if (deviationData != CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT)
             {
                 ShotDeviationHelper.tickDeviation(stack, deviationData, 1);
-
-                NbtCompound nbt = stack.getOrCreateTag();
-                boolean oldGroundState = nbt.getBoolean("Deviation_Jumping_State");
-                nbt.putBoolean("Deviation_Jumping_State", livingEntity.onGround());
-                if (oldGroundState && !livingEntity.onGround() && livingEntity.getDeltaMovement().y > 0)
-                {
-                    ShotDeviationHelper.registerJumpForShotDeviation(stack, deviationData);
-                }
             }
         }
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
         {
-            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                && PlayerInfoCapability.hasCapability(player))
-                ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
+            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+                && EntityInfoCapability.hasCapability(player))
+                ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
 
-            if (player.getCooldowns().isOnCooldown(stack.getItem()))
+            if (player.getItemCooldownManager().isCoolingDown(stack.getItem()))
             {
-                if (PlayerInfoCapability.isSquid(player))
+                if (EntityInfoCapability.isSquid(player))
                 {
-                    PlayerInfoCapability.get(player).setIsSquid(false);
-                    if (!level.isClientSide())
+                    EntityInfoCapability.get(player).setIsSquid(false);
+                    if (!world.isClient())
                     {
-                        SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), false), player);
+                        SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUuid(), false), player);
                     }
                 }
 
                 player.setSprinting(false);
-                if (Inventory.isHotbarSlot(itemSlot))
+                if (PlayerInventory.isValidHotbarIndex(itemSlot))
                 {
-                    player.getInventory().selected = itemSlot;
+                    player.getInventory().selectedSlot = itemSlot;
                 }
             }
         }
@@ -266,20 +264,20 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition().below();
+        BlockPos pos = entity.getBlockPos().down();
 
         if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
             if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
-        else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+        else if ((!(stack.getItem() instanceof SubWeaponItem) || !SubWeaponItem.singleUse(stack))
+            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != InkColor.constructOrReuse(0xFFFFFF))
         {
-            ColorUtils.setInkColor(stack, 0xFFFFFF);
+            ColorUtils.setInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
             ColorUtils.setColorLocked(stack, false);
         }
 
@@ -287,7 +285,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public int getBarWidth(@NotNull ItemStack stack)
+    public int getItemBarStep(@NotNull ItemStack stack)
     {
         try
         {
@@ -300,13 +298,13 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public int getBarColor(@NotNull ItemStack stack)
+    public int getItemBarColor(@NotNull ItemStack stack)
     {
-        return !SplatcraftConfig.Client.vanillaInkDurability.get() ? ColorUtils.getInkColor(stack) : super.getBarColor(stack);
+        return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getItemBarColor(stack) : ColorUtils.getInkColor(stack).getColorWithAlpha(255);
     }
 
     @Override
-    public boolean isBarVisible(@NotNull ItemStack stack)
+    public boolean isItemBarVisible(@NotNull ItemStack stack)
     {
         try
         {
@@ -319,42 +317,42 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
     }
 
     @Override
-    public int getUseDuration(@NotNull ItemStack stack)
+    public int getMaxUseTime(@NotNull ItemStack stack, LivingEntity entity)
     {
         return USE_DURATION;
     }
 
-    public final InteractionResultHolder<ItemStack> useSuper(Level level, Player player, InteractionHand hand)
+    public final TypedActionResult<ItemStack> useSuper(World world, PlayerEntity player, Hand hand)
     {
-        return super.use(level, player, hand);
+        return super.use(world, player, hand);
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand)
+    public @NotNull TypedActionResult<ItemStack> use(@NotNull World world, PlayerEntity player, @NotNull Hand hand)
     {
-        if (!(player.isSwimming() && !player.isInWater()))
-            player.startUsingItem(hand);
-        return useSuper(level, player, hand);
+        if (!(player.isSwimming() && !player.isSubmergedInWater()))
+            player.setCurrentHand(hand);
+        return useSuper(world, player, hand);
     }
 
     @Override
-    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, LivingEntity entity, int timeLeft)
+    public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
     {
         entity.stopUsingItem();
-        super.releaseUsing(stack, level, entity, timeLeft);
+        super.onStoppedUsing(stack, world, entity, timeLeft);
     }
 
-    public void weaponUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft)
+    public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
     {
 
     }
 
-    public void onPlayerCooldownEnd(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
+    public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
     {
 
     }
 
-    public void onPlayerCooldownTick(Level level, Player player, ItemStack stack, PlayerCooldown cooldown)
+    public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
     {
 
     }
@@ -364,101 +362,13 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
         return getSpeedModifier(entity, stack) != null;
     }
 
-    public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
+    public EntityAttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
     {
         return getSettings(stack).getSpeedModifier();
     }
 
-    public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
+    public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
     {
         return PlayerPosingHandler.WeaponPose.NONE;
-    }
-
-    public static class WeaponFireCooldown<T extends WeaponBaseItem<?>> extends PlayerCooldown
-    {
-        public final float startupFrames, endlagFrames;
-        public float timer;
-        public boolean isDoingEndlag = false;
-
-        public WeaponFireCooldown(ItemStack stack, float initialTimer, float startupFrames, float endlagFrames, int slotIndex, InteractionHand hand, boolean isGrounded)
-        {
-            super(stack, 100, slotIndex, hand, true, false, true, isGrounded);
-            this.timer = initialTimer;
-            this.startupFrames = startupFrames;
-            this.endlagFrames = endlagFrames;
-        }
-
-        public WeaponFireCooldown(NbtCompound nbt)
-        {
-            super(nbt);
-            startupFrames = nbt.getFloat("StartupFrames");
-            endlagFrames = nbt.getFloat("EndlagFrames");
-            timer = nbt.getFloat("Timer");
-            isDoingEndlag = nbt.getBoolean("DoingEndlag");
-        }
-
-        public T getItem()
-        {
-            return (T) storedStack.getItem();
-        }
-
-        @Override
-        public void onStart(Player player)
-        {
-            onEndlagEnd(player, 0, false);
-        }
-
-        @Override
-        public void tick(Player player)
-        {
-            setTime(100);
-
-            boolean stoppedUsing = !player.isUsingItem() || !player.getUseItem().is(Items.AIR);
-            timer--;
-
-            while (timer <= 0)
-            {
-                if (isDoingEndlag)
-                {
-                    onEndlagEnd(player, -timer, stoppedUsing);
-                    if (!stoppedUsing)
-                    {
-                        timer += startupFrames;
-                    }
-                    else
-                    {
-                        setTime(0);
-                        SplatcraftPacketHandler.sendToServer(new WeaponUseEndPacket(player.getUUID()));
-                        break;
-                    }
-                }
-                else
-                {
-                    onFire(player, -timer);
-                    timer += endlagFrames;
-                }
-                isDoingEndlag = !isDoingEndlag;
-            }
-        }
-
-        public void onEndlagEnd(Player player, float accumulatedTime, boolean stoppedUsing)
-        {
-
-        }
-
-        public void onFire(Player player, float accumulatedTime)
-        {
-
-        }
-
-        @Override
-        public NbtCompound writeNBT(NbtCompound nbt)
-        {
-            nbt.putFloat("StartupFrames", startupFrames);
-            nbt.putFloat("EndlagFrames", endlagFrames);
-            nbt.putFloat("Timer", timer);
-            nbt.putBoolean("DoingEndlag", isDoingEndlag);
-            return super.writeNBT(nbt);
-        }
     }
 }

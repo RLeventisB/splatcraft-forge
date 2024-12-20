@@ -1,98 +1,93 @@
 package net.splatcraft.client.layer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.feature.FeatureRenderer;
+import net.minecraft.client.render.entity.feature.FeatureRendererContext;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Identifier;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.UUID;
 
-public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>
+public class PlayerInkColoredSkinLayer extends FeatureRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>
 {
-    public static final HashMap<UUID, ResourceLocation> TEXTURES = new HashMap<>();
+    public static final HashMap<UUID, Identifier> TEXTURES = new HashMap<>();
     public static final String PATH = "config/skins/";
-    PlayerModel<AbstractClientPlayer> MODEL;
+    PlayerEntityModel<AbstractClientPlayerEntity> MODEL;
 
-    public PlayerInkColoredSkinLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer, PlayerModel<AbstractClientPlayer> model)
+    public PlayerInkColoredSkinLayer(FeatureRendererContext<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> renderer, PlayerEntityModel<AbstractClientPlayerEntity> model)
     {
         super(renderer);
-        this.MODEL = model;
+        MODEL = model;
     }
 
-    public static void renderHand(PlayerModel<AbstractClientPlayer> playermodel, PoseStack matrixStack, MultiBufferSource buffer, int packedLight, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve)
+    public static void renderHand(PlayerEntityModel<AbstractClientPlayerEntity> playermodel, MatrixStack matrixStack, VertexConsumerProvider buffer, int packedLight, AbstractClientPlayerEntity player, ModelPart arm, ModelPart sleeve)
     {
-        if (!TEXTURES.containsKey(player.getUUID()) || player.isSpectator() || player.isInvisible() || !PlayerInfoCapability.hasCapability(player))
+        if (!TEXTURES.containsKey(player.getUuid()) || player.isSpectator() || player.isInvisible() || !EntityInfoCapability.hasCapability(player))
         {
             return;
         }
 
-        int color = ColorUtils.getPlayerColor(player);
-        float r = ((color & 16711680) >> 16) / 255.0f;
-        float g = ((color & '\uff00') >> 8) / 255.0f;
-        float b = (color & 255) / 255.0f;
+        InkColor color = ColorUtils.getEntityColor(player);
 
-        VertexConsumer ivertexbuilder = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURES.get(player.getUUID())));
+        VertexConsumer ivertexbuilder = buffer.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURES.get(player.getUuid())));
 
-        //copyPropertiesFrom(getParentModel(), playermodel);
-        playermodel.attackTime = 0.0F;
-        playermodel.crouching = false;
-        playermodel.swimAmount = 0.0F;
-        playermodel.setupAnim(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        //copyPropertiesFrom(getContextModel(), playermodel);
+        playermodel.handSwingProgress = 0.0F;
+        playermodel.sneaking = false;
+        playermodel.leaningPitch = 0.0F;
+        playermodel.setAngles(player, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
 
         matrixStack.scale(1.001f, 1.001f, 1.001f);
 
-        arm.xRot = 0.0F;
-        arm.render(matrixStack, ivertexbuilder, packedLight, OverlayTexture.NO_OVERLAY, r, g, b, 1);
-        sleeve.xRot = 0.0F;
-        sleeve.render(matrixStack, ivertexbuilder, packedLight, OverlayTexture.NO_OVERLAY, r, g, b, 1);
+        arm.pitch = 0.0F;
+        arm.render(matrixStack, ivertexbuilder, packedLight, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
+        sleeve.pitch = 0.0F;
+        sleeve.render(matrixStack, ivertexbuilder, packedLight, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
 
         float f = 1 / 1.001f;
         matrixStack.scale(f, f, f);
     }
 
     @Override
-    public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+    public void render(@NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider iRenderTypeBuffer, int i, AbstractClientPlayerEntity entity, float v, float v1, float v2, float v3, float v4, float v5)
     {
-        if (entity.isSpectator() || entity.isInvisible() || !PlayerInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUUID()))
+        if (entity.isSpectator() || entity.isInvisible() || !EntityInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUuid()))
         {
             return;
         }
 
-        int color = ColorUtils.getPlayerColor(entity);
-        float r = ((color & 16711680) >> 16) / 255.0f;
-        float g = ((color & '\uff00') >> 8) / 255.0f;
-        float b = (color & 255) / 255.0f;
+        InkColor color = ColorUtils.getEntityColor(entity);
 
-        copyPropertiesFrom(getParentModel(), MODEL);
-        this.render(matrixStack, iRenderTypeBuffer, i, MODEL, r, g, b, TEXTURES.get(entity.getUUID()));
+        copyPropertiesFrom(getContextModel(), MODEL);
+        render(matrixStack, iRenderTypeBuffer, i, MODEL, color, TEXTURES.get(entity.getUuid()));
     }
 
-    private void render(PoseStack p_241738_1_, MultiBufferSource buffer, int p_241738_3_, PlayerModel<AbstractClientPlayer> p_241738_6_, float p_241738_8_, float p_241738_9_, float p_241738_10_, ResourceLocation armorResource)
+    private void render(MatrixStack p_241738_1_, VertexConsumerProvider buffer, int p_241738_3_, PlayerEntityModel<AbstractClientPlayerEntity> p_241738_6_, InkColor color, Identifier armorResource)
     {
-        VertexConsumer ivertexbuilder = buffer.getBuffer(RenderType.entityTranslucent(armorResource));
-        p_241738_6_.renderToBuffer(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.NO_OVERLAY, p_241738_8_, p_241738_9_, p_241738_10_, 1.0F);
+        VertexConsumer ivertexbuilder = buffer.getBuffer(RenderLayer.getEntityTranslucent(armorResource));
+        p_241738_6_.render(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
     }
 
-    private void copyPropertiesFrom(PlayerModel<AbstractClientPlayer> from, PlayerModel<AbstractClientPlayer> to)
+    private void copyPropertiesFrom(PlayerEntityModel<AbstractClientPlayerEntity> from, PlayerEntityModel<AbstractClientPlayerEntity> to)
     {
-        from.copyPropertiesTo(to);
+        from.copyStateTo(to);
 
-        to.jacket.copyFrom(from.jacket);
-        to.rightSleeve.copyFrom(from.rightSleeve);
-        to.leftSleeve.copyFrom(from.leftSleeve);
-        to.rightPants.copyFrom(from.rightPants);
-        to.leftPants.copyFrom(from.leftPants);
+        to.jacket.copyTransform(from.jacket);
+        to.rightSleeve.copyTransform(from.rightSleeve);
+        to.leftSleeve.copyTransform(from.leftSleeve);
+        to.rightPants.copyTransform(from.rightPants);
+        to.leftPants.copyTransform(from.leftPants);
 
         to.jacket.visible = from.jacket.visible;
         to.rightSleeve.visible = from.rightSleeve.visible;

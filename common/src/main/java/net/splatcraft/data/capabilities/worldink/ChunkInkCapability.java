@@ -1,70 +1,180 @@
 package net.splatcraft.data.capabilities.worldink;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.Nullable;
 
-public class ChunkInkCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+public class ChunkInkCapability
 {
-    public static Capability<ChunkInk> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
-    {
-    });
-    private ChunkInk worldInk = null;
-    private final LazyOptional<ChunkInk> opt = LazyOptional.of(() ->
-        worldInk == null ? (worldInk = new ChunkInk()) : worldInk);
+    private static final ConcurrentHashMap<World, ConcurrentHashMap<Long, ChunkInk>> inkMap = new ConcurrentHashMap<>();
 
-    public static ChunkInk get(Level level, BlockPos pos) throws NullPointerException
+    public static boolean has(World world, BlockPos pos)
     {
-        return get(level.getChunkAt(pos));
+        return has(world, new ChunkPos(pos));
     }
 
-    public static ChunkInk get(Level level, ChunkPos pos) throws NullPointerException
+    public static boolean has(World world, ChunkPos pos)
     {
-        return get(level.getChunk(pos.x, pos.z));
+        return inkMap.containsKey(world) && inkMap.get(world).containsKey(pos.toLong());
     }
 
-    public static ChunkInk get(LevelChunk chunk) throws NullPointerException
+    public static boolean has(World world, Chunk chunk)
     {
-        return chunk.getCapability(CAPABILITY).orElseThrow(() -> new NullPointerException("Couldn't find WorldInk capability!"));
+        return has(world, chunk.getPos());
     }
 
-    public static ChunkInk getOrNull(Level level, BlockPos pos)
+    public static ChunkInk get(World world, BlockPos pos) throws NullPointerException
     {
-        return getOrNull(level.getChunkAt(pos));
+        return get(world, new ChunkPos(pos));
     }
 
-    public static ChunkInk getOrNull(LevelChunk chunk)
+    public static ChunkInk get(World world, ChunkPos pos) throws NullPointerException
     {
-        return chunk.getCapability(CAPABILITY).resolve().orElse(null);
+        if (inkMap.containsKey(world))
+        {
+            ConcurrentHashMap<Long, ChunkInk> innerMap = inkMap.get(world);
+            if (innerMap.containsKey(pos.toLong()))
+            {
+                return innerMap.get(pos.toLong());
+            }
+            throw new NullPointerException("Couldn't find WorldInk capability!");
+        }
+        throw new NullPointerException("Couldn't find WorldInk capability!");
     }
 
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side)
+    public static ChunkInk get(World world, Chunk chunk) throws NullPointerException
     {
-        return cap == CAPABILITY ? opt.cast() : LazyOptional.empty();
+        return get(world, chunk.getPos());
     }
 
-    @Override
-    public NbtCompound serializeNBT()
+    public static ChunkInk getOrCreate(World world, BlockPos pos)
     {
-        return opt.orElse(null).writeNBT(new NbtCompound());
+        return getOrCreate(world, new ChunkPos(pos));
     }
 
-    @Override
-    public void deserializeNBT(NbtCompound nbt)
+    public static ChunkInk getOrCreate(World world, ChunkPos pos)
     {
-        opt.orElse(null).readNBT(nbt);
+        ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+
+        if (map != null)
+        {
+            return map.computeIfAbsent(pos.toLong(), t -> new ChunkInk());
+        }
+        return null;
+    }
+
+    public static ChunkInk getOrCreate(World world, Chunk chunk)
+    {
+        return getOrCreate(world, chunk.getPos());
+    }
+
+    public static void saveAllChunks(World world, boolean unload, Function<Long, NbtCompound> nbtSupplier)
+    {
+        if (!inkMap.containsKey(world))
+            return;
+
+        ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+        for (var entry : map.entrySet())
+        {
+            entry.getValue().writeNBT(nbtSupplier.apply(entry.getKey()));
+            if (unload)
+            {
+                map.remove(entry.getKey());
+            }
+        }
+        if (unload)
+        {
+            inkMap.remove(world);
+        }
+    }
+
+    public static void loadChunkData(World world, ChunkPos pos, NbtCompound nbt) throws Exception
+    {
+        ConcurrentHashMap<Long, ChunkInk> map = inkMap.computeIfAbsent(world, v -> new ConcurrentHashMap<>());
+        if (map.containsKey(pos.toLong()))
+        {
+            throw new Exception("Chunk " + pos + "is already loaded");
+        }
+        ChunkInk chunkInk = new ChunkInk();
+        chunkInk.readNBT(nbt);
+        map.put(pos.toLong(), chunkInk);
+    }
+
+    public static void saveChunkData(World world, ChunkPos pos, NbtCompound nbt, boolean unload)
+    {
+        ConcurrentHashMap<Long, ChunkInk> map = inkMap.computeIfAbsent(world, v -> new ConcurrentHashMap<>());
+        ChunkInk chunkInk = map.computeIfAbsent(pos.toLong(), v -> new ChunkInk());
+        chunkInk.writeNBT(nbt);
+
+        if (unload)
+        {
+            map.remove(pos.toLong());
+            if (map.isEmpty())
+            {
+                inkMap.remove(world);
+            }
+        }
+    }
+
+    public static void unloadChunkData(World world, ChunkPos pos)
+    {
+        ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+
+        map.remove(pos.toLong());
+        if (map.isEmpty())
+        {
+            inkMap.remove(world);
+        }
+    }
+
+    public static void onChunkDataRead(Chunk chunk, @Nullable ServerWorld world, NbtCompound nbt)
+    {
+        if (nbt.contains("splatcraft_ink_data"))
+        {
+            try
+            {
+                loadChunkData(world, chunk.getPos(), nbt.getCompound("splatcraft_ink_data"));
+            }
+            catch (Exception e)
+            {
+                Splatcraft.LOGGER.error("Error upon loading splatcraft ink data in chunk {}", chunk.getPos());
+                Splatcraft.LOGGER.debug(String.valueOf(e));
+            }
+
+            // just in case!!!
+            // nbt.remove("ForgeCaps");
+        }
+        else if (nbt.contains("ForgeCaps"))
+        {
+            NbtCompound forgeCaps = nbt.getCompound("ForgeCaps");
+            if (forgeCaps.contains("splatcraft:world_ink"))
+            {
+                try
+                {
+                    loadChunkData(world, chunk.getPos(), forgeCaps.getCompound("splatcraft:world_ink"));
+                }
+                catch (Exception e)
+                {
+                    Splatcraft.LOGGER.error("Error upon loading splatcraft legacy ink data in chunk {}", chunk.getPos());
+                    Splatcraft.LOGGER.debug(String.valueOf(e));
+                }
+            }
+        }
+    }
+
+    public static void onChunkDataSave(Chunk chunk, ServerWorld world, NbtCompound nbtCompound)
+    {
+        if (has(world, chunk))
+        {
+            saveChunkData(world, chunk.getPos(), nbtCompound, false);
+        }
     }
 }

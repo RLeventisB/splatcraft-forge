@@ -1,17 +1,14 @@
 package net.splatcraft.registries;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraftforge.common.util.ForgeSoundType;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SplatcraftSounds
 {
     private static final List<SoundEvent> sounds = new ArrayList<>();
@@ -59,8 +56,8 @@ public class SplatcraftSounds
     public static SoundEvent inkedBlockPlace;
     public static SoundEvent inkedBlockHit;
     public static SoundEvent inkedBlockFall;
-    public static final SoundType SOUND_TYPE_INK = new ForgeSoundType(1.0F, 1.0F, () -> SplatcraftSounds.inkedBlockBreak, () -> SplatcraftSounds.inkedBlockStep, () -> SplatcraftSounds.inkedBlockPlace, () -> SplatcraftSounds.inkedBlockHit, () -> SplatcraftSounds.inkedBlockFall);
-    public static final SoundType SOUND_TYPE_SWIMMING = new ForgeSoundType(1.0F, 1.0F, () -> SplatcraftSounds.inkedBlockBreak, () -> SplatcraftSounds.inkedBlockSwim, () -> SplatcraftSounds.inkedBlockPlace, () -> SplatcraftSounds.inkedBlockHit, () -> SplatcraftSounds.inkedBlockFall);
+    public static final BlockSoundGroup SOUND_TYPE_INK = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
+    public static final BlockSoundGroup SOUND_TYPE_SWIMMING = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
     public static SoundEvent superjumpStart;
     public static SoundEvent superjumpLand;
 
@@ -118,18 +115,18 @@ public class SplatcraftSounds
 
     private static SoundEvent createSoundEvent(String id)
     {
-        ResourceLocation loc = new ResourceLocation(Splatcraft.MODID, id);
-        SoundEvent sound = SoundEvent.createVariableRangeEvent(loc);
+        Identifier loc = Splatcraft.identifierOf(id);
+        SoundEvent sound = SoundEvent.of(loc);
         sounds.add(sound);
         return sound;
     }
 
-    public static void register(BiConsumer<ResourceLocation, SoundEvent> func)
+    public static void register(BiConsumer<Identifier, SoundEvent> func)
     {
         initSounds();
         for (SoundEvent sound : sounds)
         {
-            func.accept(sound.getLocation(), sound);
+            func.accept(sound.getId(), sound);
         }
     }
 }

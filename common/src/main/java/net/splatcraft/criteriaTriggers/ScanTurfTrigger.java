@@ -1,40 +1,41 @@
 package net.splatcraft.criteriaTriggers;
 
-import com.google.gson.JsonObject;
-import net.minecraft.advancements.critereon.*;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
-import net.splatcraft.Splatcraft;
-import org.jetbrains.annotations.NotNull;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.advancement.criterion.AbstractCriterion;
+import net.minecraft.predicate.entity.EntityPredicate;
+import net.minecraft.predicate.entity.LootContextPredicate;
+import net.minecraft.server.network.ServerPlayerEntity;
 
-public class ScanTurfTrigger extends SimpleCriterionTrigger<ScanTurfTrigger.TriggerInstance>
+import java.util.Optional;
+
+public class ScanTurfTrigger extends AbstractCriterion<ScanTurfTrigger.Conditions>
 {
-    static final ResourceLocation ID = new ResourceLocation(Splatcraft.MODID, "scan_turf");
-
-    public @NotNull ResourceLocation getId()
+    public void trigger(ServerPlayerEntity player, int blocksInked, boolean winner)
     {
-        return ID;
+        trigger(player, (instance) -> instance.matches(blocksInked, winner));
     }
 
-    public ScanTurfTrigger.@NotNull TriggerInstance createInstance(@NotNull JsonObject json, @NotNull ContextAwarePredicate composite, @NotNull DeserializationContext context)
+    @Override
+    public Codec<Conditions> getConditionsCodec()
     {
-        return new ScanTurfTrigger.TriggerInstance(composite, GsonHelper.getAsInt(json, "blocks_inked", 0), GsonHelper.getAsBoolean(json, "winner", false));
+        return Conditions.CODEC;
     }
 
-    public void trigger(ServerPlayer player, int blocksInked, boolean winner)
+    public record Conditions(Optional<LootContextPredicate> player,
+                             int blocksInked,
+                             boolean winner) implements AbstractCriterion.Conditions
     {
-        this.trigger(player, (instance) -> instance.matches(blocksInked, winner));
-    }
+        public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(
+            (instance) -> instance.group(
+                EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player),
+                Codec.INT.optionalFieldOf("blocks_inked", 0).forGetter(Conditions::blocksInked),
+                Codec.BOOL.optionalFieldOf("winner", false).forGetter(Conditions::winner)
+            ).apply(instance, Conditions::new));
 
-    public static class TriggerInstance extends AbstractCriterionTriggerInstance
-    {
-        private final int blocksInked;
-        private final boolean winner;
-
-        public TriggerInstance(ContextAwarePredicate p_27688_, int blocksInked, boolean winner)
+        public Conditions(Optional<LootContextPredicate> player, int blocksInked, boolean winner)
         {
-            super(ScanTurfTrigger.ID, p_27688_);
+            this.player = player;
             this.blocksInked = blocksInked;
             this.winner = winner;
         }
@@ -42,14 +43,6 @@ public class ScanTurfTrigger extends SimpleCriterionTrigger<ScanTurfTrigger.Trig
         public boolean matches(int blocksInked, boolean winner)
         {
             return blocksInked >= this.blocksInked && (winner || !this.winner);
-        }
-
-        public @NotNull JsonObject serializeToJson(@NotNull SerializationContext context)
-        {
-            JsonObject jsonobject = super.serializeToJson(context);
-            jsonobject.addProperty("blocks_inked", blocksInked);
-            jsonobject.addProperty("winner", winner);
-            return jsonobject;
         }
     }
 }

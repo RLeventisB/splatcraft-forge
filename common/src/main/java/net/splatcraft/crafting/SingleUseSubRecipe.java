@@ -1,47 +1,49 @@
 package net.splatcraft.crafting;
 
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.CustomRecipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
+import net.minecraft.component.ComponentChanges;
+import net.minecraft.item.ItemStack;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.SpecialCraftingRecipe;
+import net.minecraft.recipe.book.CraftingRecipeCategory;
+import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public class SingleUseSubRecipe extends CustomRecipe
+public class SingleUseSubRecipe extends SpecialCraftingRecipe
 {
-    public SingleUseSubRecipe(ResourceLocation idIn, CraftingBookCategory category)
+    public SingleUseSubRecipe(CraftingRecipeCategory category)
     {
-        super(idIn, category);
+        super(category);
     }
 
     @Override
-    public boolean matches(CraftingContainer inv, @NotNull Level levelIn)
+    public boolean matches(CraftingRecipeInput inv, @NotNull World world)
     {
         int sub = 0;
         int inkwell = 0;
         int sardinium = 0;
 
-        for (int k = 0; k < inv.getContainerSize(); ++k)
+        for (int k = 0; k < inv.getSize(); ++k)
         {
-            ItemStack itemstack = inv.getItem(k);
+            ItemStack itemstack = inv.getStackInSlot(k);
             if (!itemstack.isEmpty())
             {
-                if (Block.byItem(itemstack.getItem()) instanceof InkwellBlock)
+                if (Block.getBlockFromItem(itemstack.getItem()) instanceof InkwellBlock)
                     ++inkwell;
                 else if (itemstack.getItem().equals(SplatcraftItems.sardinium.get()))
                     ++sardinium;
                 else
                 {
-                    if (!itemstack.is(SplatcraftTags.Items.SUB_WEAPONS))
+                    if (!itemstack.isIn(SplatcraftTags.Items.SUB_WEAPONS))
                         return false;
                     ++sub;
                 }
@@ -55,42 +57,42 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public @NotNull ItemStack assemble(CraftingContainer inv, @NotNull RegistryAccess access)
+    public @NotNull ItemStack craft(CraftingRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
     {
 
         ItemStack itemstack = ItemStack.EMPTY;
-        int color = 0xFFFFFF;
+        InkColor color = null;
 
-        for (int i = 0; i < inv.getContainerSize(); ++i)
+        for (int i = 0; i < inv.getSize(); ++i)
         {
-            ItemStack itemstack1 = inv.getItem(i);
+            ItemStack itemstack1 = inv.getStackInSlot(i);
             if (!itemstack1.isEmpty())
             {
-                if (itemstack1.is(SplatcraftTags.Items.SUB_WEAPONS))
+                if (itemstack1.isIn(SplatcraftTags.Items.SUB_WEAPONS))
                     itemstack = itemstack1;
-                else if (Block.byItem(itemstack1.getItem()) instanceof InkwellBlock)
+                else if (Block.getBlockFromItem(itemstack1.getItem()) instanceof InkwellBlock)
                     color = ColorUtils.getInkColor(itemstack1);
             }
         }
 
         ItemStack result = ColorUtils.setInkColor(itemstack.copy(), color);
-        ColorUtils.setColorLocked(result, color != -1);
-        result.getOrCreateTag().putBoolean("SingleUse", true);
+        ColorUtils.setColorLocked(result, color != null);
+        result.applyChanges(ComponentChanges.builder().add(SplatcraftComponents.SINGLE_USE, true).build());
 
         return result;
     }
 
     @Override
-    public @NotNull NonNullList<ItemStack> getRemainingItems(CraftingContainer inv)
+    public @NotNull DefaultedList<ItemStack> getRemainder(CraftingRecipeInput inv)
     {
-        NonNullList<ItemStack> restult = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        DefaultedList<ItemStack> restult = DefaultedList.ofSize(inv.getSize(), ItemStack.EMPTY);
 
-        for (int i = 0; i < inv.getContainerSize(); ++i)
+        for (int i = 0; i < inv.getSize(); ++i)
         {
-            ItemStack stack = inv.getItem(i);
-            if (Block.byItem(stack.getItem()) instanceof InkwellBlock)
+            ItemStack stack = inv.getStackInSlot(i);
+            if (Block.getBlockFromItem(stack.getItem()) instanceof InkwellBlock)
                 restult.set(i, new ItemStack(SplatcraftItems.emptyInkwell.get()));
-            else if (stack.is(SplatcraftTags.Items.SUB_WEAPONS))
+            else if (stack.isIn(SplatcraftTags.Items.SUB_WEAPONS))
                 restult.set(i, stack.copy());
         }
 
@@ -98,7 +100,7 @@ public class SingleUseSubRecipe extends CustomRecipe
     }
 
     @Override
-    public boolean canCraftInDimensions(int width, int height)
+    public boolean fits(int width, int height)
     {
         return width * height >= 3;
     }

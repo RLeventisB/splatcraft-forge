@@ -1,11 +1,12 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.core.BlockPos;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.data.SplatcraftTags;
@@ -13,11 +14,12 @@ import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements IHasTeam
 {
-    protected int color = ColorUtils.DEFAULT;
+    protected InkColor color = ColorUtils.getDefaultColor();
     private boolean inverted = false;
     private String team = "";
 
@@ -34,60 +36,57 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
             activeTime--;
         }
 
-        for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05)))
+        for (Entity entity : world.getEntitiesByClass(Entity.class, new Box(getPos()).expand(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
         {
-            if (entity instanceof SpawnShieldEntity)
-                continue;
-
-            if (ColorUtils.getEntityColor(entity) > -1 && (getBlockState().getBlock() instanceof ColoredBarrierBlock &&
-                !((ColoredBarrierBlock) getBlockState().getBlock()).canAllowThrough(getBlockPos(), entity)))
+            if (ColorUtils.getEntityColor(entity).isValid() && (getCachedState().getBlock() instanceof ColoredBarrierBlock block &&
+                !block.canAllowThrough(getPos(), entity)))
                 resetActiveTime();
         }
 
-        if (level.isClientSide && ClientUtils.getClientPlayer().isCreative())
+        if (world.isClient && ClientUtils.getClientPlayer().isCreative())
         {
             boolean canRender = true;
-            Player player = ClientUtils.getClientPlayer();
-            int renderDistance = SplatcraftConfig.Client.barrierRenderDistance.get();
+            PlayerEntity player = ClientUtils.getClientPlayer();
+            int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
 
-            if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
+            if (player.squaredDistanceTo(getPos().toCenterPos()) > renderDistance * renderDistance)
                 canRender = false;
-            else if (SplatcraftConfig.Client.holdBarrierToRender.get())
+            else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
             {
-                canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
-                    player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
+                canRender = player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS) ||
+                    player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);
             }
             if (canRender)
                 resetActiveTime();
         }
     }
 
-    public int getColor()
+    public InkColor getColor()
     {
         return color;
     }
 
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
         this.color = color;
     }
 
     @Override
-    public void load(@NotNull NbtCompound nbt)
+    public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)
     {
-        super.load(nbt);
-        setColor(ColorUtils.getColorFromNbt(nbt));
+        super.readNbt(nbt, wrapperLookup);
+        setColor(InkColor.getFromNbt(nbt.get("Color")));
         setTeam(nbt.getString("Team"));
         setInverted(nbt.getBoolean("Inverted"));
     }
 
     @Override
-    public void saveAdditional(NbtCompound compound)
+    public void writeNbt(NbtCompound compound, RegistryWrapper.WrapperLookup wrapperLookup)
     {
-        compound.putInt("Color", getColor());
+        compound.put("Color", getColor().getNbt());
         compound.putString("Team", getTeam());
         compound.putBoolean("Inverted", inverted);
-        super.saveAdditional(compound);
+        super.writeNbt(compound, wrapperLookup);
     }
 
     public boolean isInverted()

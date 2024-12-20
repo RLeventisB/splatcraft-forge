@@ -1,16 +1,19 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.core.Direction;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.util.math.Direction;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.util.CommonUtils;
 
 import java.util.Optional;
 
 // this is basically ServerboundPlayerInputPacket but it ignores if youre riding a vehicle
 public class SquidInputPacket extends PlayC2SPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SquidInputPacket.class);
     private final Optional<Direction> climbedDirection;
     private final float squidSurgeCharge;
 
@@ -20,27 +23,33 @@ public class SquidInputPacket extends PlayC2SPacket
         this.squidSurgeCharge = squidSurgeCharge;
     }
 
-    public static SquidInputPacket decode(FriendlyByteBuf buffer)
+    public static SquidInputPacket decode(RegistryByteBuf buffer)
     {
         byte index = buffer.readByte();
-        return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.from3DDataValue(index)), buffer.readFloat());
+        return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.byId(index)), buffer.readFloat());
     }
 
     @Override
-    public void execute(Player target)
+    public Id<? extends CustomPayload> getId()
     {
-        PlayerInfo playerInfo = PlayerInfoCapability.get(target);
+        return ID;
+    }
+
+    @Override
+    public void execute(PlayerEntity target)
+    {
+        EntityInfo playerInfo = EntityInfoCapability.get(target);
         playerInfo.setClimbedDirection(climbedDirection.orElse(null));
         playerInfo.setSquidSurgeCharge(squidSurgeCharge);
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         if (climbedDirection.isPresent())
-            buffer.writeByte(this.climbedDirection.get().get3DDataValue());
+            buffer.writeByte(climbedDirection.get().getId());
         else
             buffer.writeByte(Byte.MAX_VALUE);
-        buffer.writeFloat(this.squidSurgeCharge);
+        buffer.writeFloat(squidSurgeCharge);
     }
 }

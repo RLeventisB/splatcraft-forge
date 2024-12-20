@@ -316,11 +316,11 @@
     "weaponTab.description.splatcraft:weapon_workbench_tabs/ink_tanks": "Carry no less than 5 at a time, like a sensible person",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rare": "Reserved for the best of the best",
 
-    "weaponRecipe.splatcraft:weapon_workbench/aerospray": "Aerospray",
-    "weaponRecipe.splatcraft:weapon_workbench/n-zap": "N-ZAP",
-    "weaponRecipe.splatcraft:weapon_workbench/e_liter": "E-Liter",
-    "weaponRecipe.splatcraft:weapon_workbench/bamboozler_14": "Bamboozler 14",
-    "weaponRecipe.splatcraft:weapon_workbench/nautilus": "Nautilus",
+    "weaponRecipe.splatcraft:aerospray": "Aerospray",
+    "weaponRecipe.splatcraft:n-zap": "N-ZAP",
+    "weaponRecipe.splatcraft:e_liter": "E-Liter",
+    "weaponRecipe.splatcraft:bamboozler_14": "Bamboozler 14",
+    "weaponRecipe.splatcraft:nautilus": "Nautilus",
 
     "weaponType.original": "Original",
     "weaponType.classic": "Classic",

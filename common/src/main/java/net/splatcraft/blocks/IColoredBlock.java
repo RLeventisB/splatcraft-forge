@@ -2,9 +2,12 @@ package net.splatcraft.blocks;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.BlockInkedResult;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.Nullable;
 
 public interface IColoredBlock
 {
@@ -25,26 +28,26 @@ public interface IColoredBlock
             colorTileEntity.setInverted(inverted);
     }
 
-    default int getColor(World world, BlockPos pos)
+    default @Nullable InkColor getColor(WorldView world, BlockPos pos)
     {
-        return (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) ? colorTileEntity.getColor() : -1;
+        return (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity) ? colorTileEntity.getInkColor() : null;
     }
 
-    default boolean canRemoteColorChange(World world, BlockPos pos, int color, int newColor)
+    default boolean canRemoteColorChange(World world, BlockPos pos, InkColor color, InkColor newColor)
     {
         return color != newColor;
     }
 
-    boolean remoteColorChange(World world, BlockPos pos, int newColor);
+    boolean remoteColorChange(World world, BlockPos pos, InkColor newColor);
 
     boolean remoteInkClear(World world, BlockPos pos);
 
-    default boolean setColor(World world, BlockPos pos, int color)
+    default boolean setColor(World world, BlockPos pos, InkColor color)
     {
         return false;
     }
 
-    default BlockInkedResult inkBlock(World world, BlockPos pos, int color, float damage, InkBlockUtils.InkType inkType)
+    default BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, float damage, InkBlockUtils.InkType inkType)
     {
         return BlockInkedResult.PASS;
     }

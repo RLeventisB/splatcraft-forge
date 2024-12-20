@@ -1,60 +1,65 @@
 package net.splatcraft.tileentities.container;
 
 import com.google.common.collect.Lists;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerContext;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkVatBlock;
 import net.splatcraft.crafting.InkVatColorRecipe;
+import net.splatcraft.crafting.InkVatRecipeInput;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.UpdateBlockColorPacket;
-import net.splatcraft.registries.*;
+import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftStats;
+import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkVatTileEntity;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
-public class InkVatContainer extends AbstractContainerMenu
+public class InkVatContainer extends ScreenHandler
 {
-    public final InkVatTileEntity te;
-    private final ContainerLevelAccess access;
-    private List<Integer> recipes = Lists.newArrayList();
+    private final InkVatScreenHandlerContext context;
+    private List<InkColor> recipes = Lists.newArrayList();
 
-    public InkVatContainer(final int windowId, final Inventory playerInv, final InkVatTileEntity te, boolean updateSelectedRecipe)
+    public InkVatContainer(final int windowId, final PlayerInventory inventory, InkVatScreenHandlerContext context, boolean updateSelectedRecipe)
     {
         super(SplatcraftTileEntities.inkVatContainer.get(), windowId);
-        this.te = te;
-        this.access = ContainerLevelAccess.create(te.getLevel(), te.getBlockPos());
+        this.context = context;
 
-        addSlot(new SlotInput(new ItemStack(Items.INK_SAC), te, 0, 26, 70));
-        addSlot(new SlotInput(new ItemStack(SplatcraftItems.powerEgg.get()), te, 1, 46, 70));
-        addSlot(new SlotInput(new ItemStack(SplatcraftBlocks.emptyInkwell.get()), te, 2, 92, 82));
-        addSlot(new SlotFilter(te, 3, 36, 89));
-        addSlot(new SlotOutput(playerInv.player, te, 4, 112, 82));
+        addSlot(new SlotInput(new ItemStack(Items.INK_SAC), inventory, 0, 26, 70));
+        addSlot(new SlotInput(new ItemStack(SplatcraftItems.powerEgg.get()), inventory, 1, 46, 70));
+        addSlot(new SlotInput(new ItemStack(SplatcraftBlocks.emptyInkwell.get()), inventory, 2, 92, 82));
+        addSlot(new SlotFilter(inventory, 3, 36, 89));
+        addSlot(new SlotOutput(inventory.player, inventory, 4, 112, 82));
 
         for (int xx = 0; xx < 9; xx++)
         {
             for (int yy = 0; yy < 3; yy++)
             {
-                addSlot(new Slot(playerInv, xx + yy * 9 + 9, 8 + xx * 18, 126 + yy * 18));
+                addSlot(new Slot(inventory, xx + yy * 9 + 9, 8 + xx * 18, 126 + yy * 18));
             }
         }
         for (int xx = 0; xx < 9; xx++)
         {
-            addSlot(new Slot(playerInv, xx, 8 + xx * 18, 184));
+            addSlot(new Slot(inventory, xx, 8 + xx * 18, 184));
         }
 
         if (updateSelectedRecipe)
@@ -63,71 +68,72 @@ public class InkVatContainer extends AbstractContainerMenu
         }
     }
 
-    public InkVatContainer(final int windowId, final Inventory inv, final FriendlyByteBuf buffer)
+    public InkVatContainer(final int windowId, final PlayerInventory inv)
     {
-        this(windowId, inv, getBlockEntity(inv, buffer), true);
+        this(windowId, inv, (InkVatScreenHandlerContext) ScreenHandlerContext.EMPTY, true);
     }
 
-    private static InkVatTileEntity getBlockEntity(Inventory inventory, FriendlyByteBuf buffer)
-    {
-        Objects.requireNonNull(inventory);
-        Objects.requireNonNull(buffer);
+//    private static InkVatTileEntity getBlockEntity(PlayerInventory inventory, RegistryByteBuf buffer)
+//    {
+//        Objects.requireNonNull(inventory);
+//        Objects.requireNonNull(buffer);
+//
+//        final BlockEntity te = inventory.player.getWorld().getBlockEntity(buffer.readBlockPos());
+//
+//        if (te instanceof InkVatTileEntity tileEntity)
+//        {
+//            return tileEntity;
+//        }
+//        throw new IllegalStateException("TileEntity is not correct " + te);
+//    }
 
-        final BlockEntity te = inventory.player.getWorld().getBlockEntity(buffer.readBlockPos());
-
-        if (te instanceof InkVatTileEntity)
-        {
-            return (InkVatTileEntity) te;
-        }
-        throw new IllegalStateException("TileEntity is not correct " + te);
-    }
-
-    public static List<Integer> getRecipeList(InkVatTileEntity te)
+    public static List<InkColor> getRecipeList(InkVatTileEntity te)
     {
         return hasIngredients(te) ? getAvailableRecipes(te) : Collections.emptyList();
     }
 
     public static boolean hasIngredients(InkVatTileEntity te)
     {
-        return !te.getItem(0).isEmpty() && !te.getItem(1).isEmpty() && !te.getItem(2).isEmpty();
+        return !te.getStack(0).isEmpty() && !te.getStack(1).isEmpty() && !te.getStack(2).isEmpty();
     }
 
-    public static List<Integer> sortRecipeList(List<Integer> list)
+    public static List<InkColor> sortRecipeList(List<InkColor> list)
     {
         list.sort((o1, o2) ->
         {
-            if (InkColor.getByHex(o1) != null)
+            if (o1 != null)
             {
-                if (InkColor.getByHex(o2) != null)
+                if (o2 != null)
                 {
-                    return InkColor.getByHex(o1).compareTo(InkColor.getByHex(o2));
+                    return o1.compareTo(o2);
                 }
                 return -1;
             }
-            else if (InkColor.getByHex(o2) != null)
+            else if (o2 != null)
             {
                 return 1;
             }
-            return o1 - o2;
+            return 0;
         });
 
         return list;
     }
 
-    public static List<Integer> getAvailableRecipes(InkVatTileEntity te)
+    public static List<InkColor> getAvailableRecipes(InkVatTileEntity te)
     {
-        List<Integer> recipes = Lists.newArrayList();
+        List<InkColor> recipes = Lists.newArrayList();
         if (te.hasOmniFilter())
         {
             recipes = getOmniList();
         }
         else
         {
-            for (InkVatColorRecipe recipe : te.getLevel().getRecipeManager().getRecipesFor(SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE, te, te.getLevel()))
+            InkVatRecipeInput input = new InkVatRecipeInput(te.getInventory());
+            for (RecipeEntry<InkVatColorRecipe> recipe : te.getWorld().getRecipeManager().getAllMatches(SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE, input, te.getWorld()))
             {
-                if (recipe.matches(te, te.getLevel()))
+                if (recipe.value().matches(input, te.getWorld()))
                 {
-                    recipes.add(recipe.getOutputColor());
+                    recipes.add(recipe.value().getOutputColor());
                 }
             }
         }
@@ -135,14 +141,14 @@ public class InkVatContainer extends AbstractContainerMenu
         return recipes;
     }
 
-    public static List<Integer> getOmniList()
+    public static List<InkColor> getOmniList()
     {
-        List<Integer> list = Lists.newArrayList();
+        List<InkColor> list = Lists.newArrayList();
         list.addAll(InkVatColorRecipe.getOmniList());
 
-        for (InkColor color : SplatcraftInkColors.REGISTRY.get())
+        for (Map.Entry<RegistryKey<InkColor>, InkColor> color : InkColorRegistry.REGISTRY.getEntrySet())
         {
-            int c = color.getColor();
+            InkColor c = color.getValue();
             if (!list.contains(c))
             {
                 list.add(c);
@@ -153,206 +159,218 @@ public class InkVatContainer extends AbstractContainerMenu
     }
 
     @Override
-    public boolean clickMenuButton(@NotNull Player playerIn, int id)
+    public boolean onButtonClick(@NotNull PlayerEntity playerIn, int id)
     {
-        if (this.isIndexInBounds(id))
+        if (isIndexInBounds(id))
         {
-            te.pointer = id;
-            this.updateRecipeResult();
+            getBlock().pointer = id;
+            updateRecipeResult();
         }
 
         return true;
     }
 
-    public void updateSelectedRecipe()
+    private InkVatTileEntity getBlock()
     {
-        int teColor = te.getColor();
-
-        updateInkVatColor(te.pointer, te.pointer == -1 ? -1 : teColor);
+        return (InkVatTileEntity) context.get(World::getBlockEntity).orElse(null);
     }
 
-    public void updateInkVatColor(int pointer, int color)
+    public void updateSelectedRecipe()
     {
-        te.pointer = pointer;
+        InkVatTileEntity block = getBlock();
+        InkColor teColor = block.getColor();
 
-        if (te.getLevel().isClientSide)
+        updateInkVatColor(block.pointer, block.pointer == -1 ? InkColor.INVALID : teColor);
+    }
+
+    public void updateInkVatColor(int pointer, InkColor color)
+    {
+        InkVatTileEntity block = getBlock();
+        block.pointer = pointer;
+
+        if (context.get((World t, BlockPos u) -> t.isClient()).get())
         {
-            SplatcraftPacketHandler.sendToServer(new UpdateBlockColorPacket(te.getBlockPos(), color, pointer));
+            SplatcraftPacketHandler.sendToServer(new UpdateBlockColorPacket(context.pos(), color, pointer));
         }
-        else if (te.getBlockState().getBlock() instanceof InkVatBlock)
+        else if (block.getCachedState().getBlock() instanceof InkVatBlock inkVatBlock)
         {
-            ((InkVatBlock) te.getBlockState().getBlock()).setColor(te.getLevel(), te.getBlockPos(), color);
+            inkVatBlock.setColor(context.world(), context.pos(), color);
         }
     }
 
     public int getSelectedRecipe()
     {
-        return te.pointer;
+        return getBlock().pointer;
     }
 
-    public List<Integer> getRecipeList()
+    public List<InkColor> getRecipeList()
     {
-        return hasIngredients(te) ? this.recipes : Collections.emptyList();
+        return hasIngredients(getBlock()) ? recipes : Collections.emptyList();
     }
 
-    public List<Integer> sortRecipeList()
+    public List<InkColor> sortRecipeList()
     {
         return sortRecipeList(getRecipeList());
     }
 
     private void updateAvailableRecipes()
     {
-        te.pointer = -1;
-        te.setColorAndUpdate(-1);
+        InkVatTileEntity block = getBlock();
+        block.pointer = -1;
+        block.setColorAndUpdate(InkColor.INVALID);
 
-        recipes = getAvailableRecipes(te);
-        te.setRecipeEntries(recipes.size());
+        recipes = getAvailableRecipes(block);
+        block.setRecipeEntries(recipes.size());
     }
 
     private void updateRecipeResult()
     {
-        if (!this.recipes.isEmpty() && this.isIndexInBounds(te.pointer))
+        InkVatTileEntity te = getBlock();
+
+        if (!recipes.isEmpty() && isIndexInBounds(te.pointer))
         {
-            te.setColorAndUpdate(this.recipes.get(te.pointer));
+            te.setColorAndUpdate(recipes.get(te.pointer));
         }
         else
         {
-            te.setColorAndUpdate(-1);
+            te.setColorAndUpdate(InkColor.INVALID);
         }
 
-        this.broadcastChanges();
+        sendContentUpdates();
     }
 
     private boolean isIndexInBounds(int i)
     {
-        return i >= 0 && i < this.recipes.size();
+        return i >= 0 && i < recipes.size();
     }
 
     @Override
-    public boolean stillValid(@NotNull Player playerIn)
+    public boolean canUse(@NotNull PlayerEntity playerIn)
     {
-        return stillValid(access, playerIn, SplatcraftBlocks.inkVat.get());
+        return canUse(context, playerIn, SplatcraftBlocks.inkVat.get());
     }
 
     @Override
-    public @NotNull ItemStack quickMoveStack(@NotNull Player playerIn, int index)
+    public @NotNull ItemStack quickMove(@NotNull PlayerEntity playerIn, int index)
     {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
+        Slot slot = slots.get(index);
 
-        if (slot.hasItem())
+        if (slot.hasStack())
         {
-            ItemStack itemstack1 = slot.getItem();
+            ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
 
             if (index == 4)
             {
-                NonNullList<ItemStack> inv = getItems();
+                DefaultedList<ItemStack> inv = getStacks();
                 int countA = inv.get(0).getCount();
                 int countB = inv.get(1).getCount();
                 int countC = inv.get(2).getCount();
-                int itemCount = Math.min(Math.max(0, Math.min(countA, Math.min(countB, countC))), new ItemStack(SplatcraftBlocks.inkwell.get()).getMaxStackSize());
+                int itemCount = Math.min(Math.max(0, Math.min(countA, Math.min(countB, countC))), new ItemStack(SplatcraftBlocks.inkwell.get()).getMaxCount());
                 itemstack1.setCount(itemCount);
 
-                if (this.moveItemStackTo(itemstack1, 5, this.slots.size(), true) && itemCount > 0)
+                if (insertItem(itemstack1, 5, slots.size(), true) && itemCount > 0)
                 {
-                    te.removeItem(0, itemCount);
-                    te.removeItem(1, itemCount);
-                    te.removeItem(2, itemCount);
-                    playerIn.awardStat(SplatcraftStats.INKWELLS_CRAFTED, itemCount);
+                    InkVatTileEntity te = getBlock();
+
+                    te.removeStack(0, itemCount);
+                    te.removeStack(1, itemCount);
+                    te.removeStack(2, itemCount);
+                    playerIn.increaseStat(SplatcraftStats.INKWELLS_CRAFTED, itemCount);
                 }
                 return ItemStack.EMPTY;
             }
             else if (index < 4)
             {
-                if (!this.moveItemStackTo(itemstack1, 5, this.slots.size(), true))
+                if (!insertItem(itemstack1, 5, slots.size(), true))
                 {
                     return ItemStack.EMPTY;
                 }
             }
-            else if (!this.moveItemStackTo(itemstack1, 0, 5, false))
+            else if (!insertItem(itemstack1, 0, 5, false))
             {
                 return ItemStack.EMPTY;
             }
 
             if (itemstack1.isEmpty())
             {
-                slot.set(ItemStack.EMPTY);
+                slot.setStack(ItemStack.EMPTY);
             }
             else
             {
-                slot.setChanged();
+                slot.markDirty();
             }
         }
 
         return itemstack;
     }
-
+    
     static class SlotInput extends Slot
     {
         final ItemStack validItem;
 
-        public SlotInput(ItemStack validItem, Container inventoryIn, int index, int xPosition, int yPosition)
+        public SlotInput(ItemStack validItem, Inventory inventoryIn, int index, int xPosition, int yPosition)
         {
             super(inventoryIn, index, xPosition, yPosition);
             this.validItem = validItem;
         }
 
         @Override
-        public boolean mayPlace(@NotNull ItemStack stack)
+        public boolean canInsert(@NotNull ItemStack stack)
         {
-            if (!validItem.isDamageableItem())
+            if (!validItem.isDamageable())
             {
-                return ItemStack.isSameItem(validItem, stack);
+                return ItemStack.areEqual(validItem, stack);
             }
             else
             {
-                return !stack.isEmpty() && this.validItem.is(stack.getItem());
+                return !stack.isEmpty() && validItem.isOf(stack.getItem());
             }
         }
     }
 
     static class SlotOutput extends Slot
     {
-        Player player;
+        PlayerEntity player;
 
-        public SlotOutput(Player player, Container inventoryIn, int index, int xPosition, int yPosition)
+        public SlotOutput(PlayerEntity player, Inventory inventoryIn, int index, int xPosition, int yPosition)
         {
             super(inventoryIn, index, xPosition, yPosition);
             this.player = player;
         }
 
         @Override
-        public boolean mayPlace(@NotNull ItemStack stack)
+        public boolean canInsert(@NotNull ItemStack stack)
         {
             return false;
         }
 
         @Override
-        public @NotNull ItemStack remove(int amount)
+        public @NotNull ItemStack takeStack(int amount)
         {
-            player.awardStat(SplatcraftStats.INKWELLS_CRAFTED, amount);
-            return super.remove(amount);
+            player.increaseStat(SplatcraftStats.INKWELLS_CRAFTED, amount);
+            return super.takeStack(amount);
         }
     }
 
     class SlotFilter extends Slot
     {
-        public SlotFilter(Container inventoryIn, int index, int xPosition, int yPosition)
+        public SlotFilter(Inventory inventoryIn, int index, int xPosition, int yPosition)
         {
             super(inventoryIn, index, xPosition, yPosition);
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack)
+        public boolean canInsert(ItemStack stack)
         {
-            return stack.is(SplatcraftTags.Items.FILTERS);
+            return stack.isIn(SplatcraftTags.Items.FILTERS);
         }
 
         @Override
-        public void setChanged()
+        public void markDirty()
         {
-            super.setChanged();
+            super.markDirty();
             updateAvailableRecipes();
         }
     }

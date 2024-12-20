@@ -1,62 +1,58 @@
 package net.splatcraft.data;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.dynamic.Codecs;
+import net.minecraft.world.World;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
 public final class PlaySession
 {
-    public final List<ServerPlayer> players;
+    public static final Codec<PlaySession> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+        Codecs.GAME_PROFILE_WITH_PROPERTIES.listOf().fieldOf("Players").forGetter(v -> v.players),
+        StageGameMode.ArgumentType.CODEC.fieldOf("GameMode").forGetter(v -> v.gameMode),
+        Codec.STRING.fieldOf("StageId").forGetter(v -> v.stageId),
+        Codec.INT.fieldOf("Timer").forGetter(v -> v.timer),
+        RegistryKey.createCodec(RegistryKeys.WORLD).fieldOf("World").forGetter(v -> v.world)
+    ).apply(inst, PlaySession::new));
+    public final List<GameProfile> players;
     public final StageGameMode gameMode;
     private final String stageId;
-    private final Stage stage;
     public int timer; // wahoo world has done irreparable damage to my brain
-    public Level level;
+    public RegistryKey<World> world;
 
-    public PlaySession(Level level, Collection<ServerPlayer> players, Stage stage, StageGameMode gameMode)
+    public PlaySession(World world, Collection<ServerPlayerEntity> players, Stage stage, StageGameMode gameMode)
     {
-        this.players = new ArrayList<>(players.size());
-        for (ServerPlayer player : players)
-        {
-            PlayerInfo playerInfo = PlayerInfoCapability.get(player);
-            if (playerInfo != null) // ya know i didnt like look at the forge documentation a i am scared day 1 that this capability returns null or something
-            {
-                playerInfo.setPlaying(true);
-                players.add(player);
-            }
-        }
+        this.players = players.stream().map(PlayerEntity::getGameProfile).toList();
+        players.forEach((player) -> {
+            EntityInfo playerInfo = EntityInfoCapability.get(player);
+            playerInfo.setPlaying(true);
+            players.add(player);
+        });
 
         this.gameMode = gameMode;
-        this.stageId = stage.id;
-        this.stage = stage;
-        this.level = level;
+        stageId = stage.id;
+        this.world = world.getRegistryKey();
         timer = gameMode.DEFAULT_TIME;
     }
 
-    public static PlaySession fromTag(MinecraftServer server, NbtCompound tag)
+    public PlaySession(List<GameProfile> players, StageGameMode gameMode, String stageId, Integer timer, RegistryKey<World> world)
     {
-        int playerCount = tag.getInt("PlayerCount");
-        List<ServerPlayer> players = new ArrayList<>(playerCount);
-
-        Level level = server.getLevel(ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("LevelId"))));
-        for (int i = 0; i < playerCount; i++)
-        {
-            players.set(i, (ServerPlayer) level.getPlayerByUUID(tag.getUUID("Player[{" + i + "}]")));
-        }
-
-        return new PlaySession(level, players, SaveInfoCapability.get(server).getStages().get(tag.getString("StageId")), StageGameMode.valueOf(tag.getString("GameMode")));
+        this.players = players;
+        this.gameMode = gameMode;
+        this.stageId = stageId;
+        this.timer = timer;
+        this.world = world;
     }
 
     /**
@@ -83,9 +79,9 @@ public final class PlaySession
     public boolean equals(Object obj)
     {
         if (obj == this) return true;
-        return obj instanceof PlaySession that && Objects.equals(this.players, that.players) &&
-            Objects.equals(this.stageId, that.stageId) &&
-            Objects.equals(this.gameMode, that.gameMode);
+        return obj instanceof PlaySession that && Objects.equals(players, that.players) &&
+            Objects.equals(stageId, that.stageId) &&
+            Objects.equals(gameMode, that.gameMode);
     }
 
     @Override
@@ -101,24 +97,5 @@ public final class PlaySession
             "players=" + players + ", " +
             "stageId=" + stageId + ", " +
             "gameMode=" + gameMode + ']';
-    }
-
-    public NbtCompound saveTag()
-    {
-        NbtCompound tag = new NbtCompound();
-
-        tag.putString("LevelId", level.dimensionTypeId().location().toString());
-        tag.putString("StageId", stageId);
-        tag.putString("GameMode", gameMode.name());
-        tag.putString("LevelKey", gameMode.name());
-        tag.putInt("Timer", timer);
-        tag.putInt("PlayerCount", players.size());
-        for (int i = 0; i < players.size(); i++)
-        {
-            var player = players.get(i);
-            tag.putUUID("Player[{" + i + "}]", player.getUUID());
-        }
-
-        return tag;
     }
 }

@@ -1,42 +1,43 @@
 package net.splatcraft.items;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.cauldron.CauldronInteraction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.LeveledCauldronBlock;
+import net.minecraft.block.cauldron.CauldronBehavior;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.stats.Stats;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.LayeredCauldronBlock;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.stat.Stats;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.ItemActionResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ColoredBlockItem extends BlockItem implements IColoredItem
+public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatcraftForgeItemDummy
 {
     private Item clearItem;
     private boolean matchColor = true;
 
-    public ColoredBlockItem(Block block, Properties properties, Item clearItem)
+    public ColoredBlockItem(Block block, Item.Settings properties, Item clearItem)
     {
         super(block, properties);
         SplatcraftItems.inkColoredItems.add(this);
@@ -46,42 +47,42 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
         if (clearItem == null)
             return;
 
-        CauldronInteraction.WATER.put(this, ((state, level, pos, player, hand, stack) ->
+        CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, ((state, level, pos, player, hand, stack) ->
         {
-            if (equals(clearItem) && ColorUtils.getInkColor(stack) < 0)
-                return InteractionResult.PASS;
+            if (equals(clearItem) && !ColorUtils.getInkColor(stack).isValid())
+                return ItemActionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
 
             ItemStack itemstack1 = new ItemStack(clearItem, 1);
 
-            player.awardStat(Stats.USE_CAULDRON);
+            player.incrementStat(Stats.USE_CAULDRON);
 
             if (!player.isCreative())
             {
-                stack.shrink(1);
-                LayeredCauldronBlock.lowerFillLevel(state, level, pos);
+                stack.decrement(1);
+                LeveledCauldronBlock.decrementFluidLevel(state, level, pos);
             }
 
             if (stack.isEmpty())
             {
-                player.setItemInHand(hand, itemstack1);
+                player.setStackInHand(hand, itemstack1);
             }
-            else if (!player.getInventory().add(itemstack1))
+            else if (!player.getInventory().insertStack(itemstack1))
             {
-                player.drop(itemstack1, false);
+                player.dropItem(itemstack1, false);
             }
 
-            return InteractionResult.SUCCESS;
+            return ItemActionResult.SUCCESS;
         }));
     }
 
     public ColoredBlockItem(Block block, int stackSize, @Nullable Item clearItem)
     {
-        this(block, new Properties().stacksTo(stackSize), clearItem);
+        this(block, new Settings().maxCount(stackSize), clearItem);
     }
 
     public ColoredBlockItem(Block block, int stackSize)
     {
-        this(block, new Properties().stacksTo(stackSize), null);
+        this(block, new Settings().maxCount(stackSize), null);
     }
 
     public ColoredBlockItem(Block block)
@@ -101,22 +102,22 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
+    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type)
     {
-        super.appendHoverText(stack, level, tooltip, flag);
+        super.appendTooltip(stack, context, tooltip, type);
 
-        if (I18n.exists(getDescriptionId() + ".tooltip"))
-            tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
+        if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
+            tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
 
         boolean inverted = ColorUtils.isInverted(stack);
         if (ColorUtils.isColorLocked(stack))
         {
             tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
             if (inverted)
-                tooltip.add(Component.translatable("item.splatcraft.tooltip.inverted").withStyle(Style.EMPTY.withItalic(true).withColor(ChatFormatting.DARK_PURPLE)));
+                tooltip.add(Text.translatable("item.splatcraft.tooltip.inverted").fillStyle(Style.EMPTY.withItalic(true).withColor(Formatting.DARK_PURPLE)));
         }
         else if (matchColor)
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).formatted(Formatting.GRAY));
     }
 
     public ColoredBlockItem clearsToSelf()
@@ -126,50 +127,50 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(@NotNull BlockPos pos, Level levelIn, @Nullable Player player, @NotNull ItemStack stack, @NotNull BlockState state)
+    protected boolean postPlacement(@NotNull BlockPos pos, World levelIn, @Nullable PlayerEntity player, @NotNull ItemStack stack, @NotNull BlockState state)
     {
         MinecraftServer server = levelIn.getServer();
         if (server == null)
             return false;
 
-        int color = ColorUtils.getInkColor(stack);
+        InkColor color = ColorUtils.getInkColor(stack);
 
-        if (color != -1)
+        if (color.isValid())
             ColorUtils.setInkColor(levelIn.getBlockEntity(pos), color);
         ColorUtils.setInverted(levelIn, pos, ColorUtils.isInverted(stack));
 
-        return super.updateCustomBlockEntityTag(pos, levelIn, player, stack, state);
+        return super.postPlacement(pos, levelIn, player, stack, state);
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level levelIn, @NotNull Entity entityIn, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entityIn, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, levelIn, entityIn, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entityIn, itemSlot, isSelected);
 
-        if (matchColor && (ColorUtils.getInkColor(stack) == -1 || !ColorUtils.isColorLocked(stack)))
+        if (matchColor && (!ColorUtils.getInkColor(stack).isValid() || !ColorUtils.isColorLocked(stack)))
         {
-            ColorUtils.setInkColor(stack, entityIn instanceof Player && PlayerInfoCapability.hasCapability((LivingEntity) entityIn) ?
-                ColorUtils.getPlayerColor((Player) entityIn) : ColorUtils.DEFAULT);
+            ColorUtils.setInkColor(stack, entityIn instanceof PlayerEntity && EntityInfoCapability.hasCapability((LivingEntity) entityIn) ?
+                ColorUtils.getEntityColor((PlayerEntity) entityIn) : ColorUtils.getDefaultColor());
         }
     }
 
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition();
+        BlockPos pos = entity.getBlockPos();
 
-        if (entity.getWorld().getBlockState(pos.below()).getBlock() instanceof InkwellBlock)
+        if (entity.getWorld().getBlockState(pos.down()).getBlock() instanceof InkwellBlock)
         {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.below()))
+            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.down()))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.below()));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.down()));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
-        else if (!(equals(clearItem) && ColorUtils.getInkColor(stack) < 0) &&
+        else if (!(equals(clearItem) && !ColorUtils.doesStackHaveColorData(stack)) &&
             clearItem != null && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos), Direction.UP))
         {
-            entity.setItem(new ItemStack(clearItem, stack.getCount()));
+            entity.setStack(new ItemStack(clearItem, stack.getCount()));
         }
 
         return false;

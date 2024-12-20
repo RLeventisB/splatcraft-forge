@@ -1,18 +1,20 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.util.CommonUtils;
 
 public class UpdateInkOverlayPacket extends PlayS2CPacket
 {
+    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateInkOverlayPacket.class);
     int entityId;
     NbtCompound nbt;
-
     public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayInfo info)
     {
         this(entity.getId(), info.writeNBT(new NbtCompound()));
@@ -20,19 +22,25 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 
     public UpdateInkOverlayPacket(int entity, NbtCompound info)
     {
-        this.entityId = entity;
-        this.nbt = info;
+        entityId = entity;
+        nbt = info;
     }
 
-    public static UpdateInkOverlayPacket decode(FriendlyByteBuf buffer)
+    public static UpdateInkOverlayPacket decode(RegistryByteBuf buffer)
     {
         return new UpdateInkOverlayPacket(buffer.readInt(), buffer.readNbt());
     }
 
     @Override
+    public Id<? extends CustomPayload> getId()
+    {
+        return ID;
+    }
+
+    @Override
     public void execute()
     {
-        Entity entity = Minecraft.getInstance().level.getEntity(entityId);
+        Entity entity = MinecraftClient.getInstance().world.getEntityById(entityId);
 
         if (!(entity instanceof LivingEntity) || !InkOverlayCapability.hasCapability((LivingEntity) entity))
         {
@@ -42,7 +50,7 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
     }
 
     @Override
-    public void encode(FriendlyByteBuf buffer)
+    public void encode(RegistryByteBuf buffer)
     {
         buffer.writeInt(entityId);
         buffer.writeNbt(nbt);

@@ -1,67 +1,63 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.AbstractGlassBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.*;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.state.StateManager;
+import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
+import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyInkwellBlock extends AbstractGlassBlock
+public class EmptyInkwellBlock extends TransparentBlock
 {
-    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    private static final VoxelShape SHAPE = Shapes.or(
-        box(0, 0, 0, 16, 12, 16),
-        box(1, 12, 1, 14, 13, 14),
-        box(0, 13, 0, 16, 16, 16));
+    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
+    private static final VoxelShape SHAPE = VoxelShapes.union(
+        createCuboidShape(0, 0, 0, 16, 12, 16),
+        createCuboidShape(1, 12, 1, 14, 13, 14),
+        createCuboidShape(0, 13, 0, 16, 16, 16));
 
-    public EmptyInkwellBlock(Properties properties)
+    public EmptyInkwellBlock(AbstractBlock.Settings properties)
     {
-        super(properties.noOcclusion());
-        this.registerDefaultState(this.getStateDefinition().any().setValue(WATERLOGGED, false));
+        super(properties.nonOpaque());
+        setDefaultState(getStateManager().getDefaultState().with(WATERLOGGED, false));
     }
 
     @Override
-    public boolean useShapeForLightOcclusion(@NotNull BlockState state)
-    {
-        return true;
-    }
-
-    @Override
-    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+    public VoxelShape getOutlineShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
     {
         return SHAPE;
     }
 
     @Override
+    public boolean hasSidedTransparency(@NotNull BlockState state)
+    {
+        return true;
+    }
+
+    // todo: not again
+    /*@Override
     public @NotNull PushReaction getPistonPushReaction(@NotNull BlockState state)
     {
         return PushReaction.DESTROY;
-    }
+    }*/
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context)
+    public BlockState getPlacementState(ItemPlacementContext context)
     {
-
-        return defaultBlockState().setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+        return getDefaultState().with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
     {
         builder.add(WATERLOGGED);
     }
@@ -69,17 +65,17 @@ public class EmptyInkwellBlock extends AbstractGlassBlock
     @Override
     public @NotNull FluidState getFluidState(BlockState state)
     {
-        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
     }
 
     @Override
-    public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+    public @NotNull BlockState getStateForNeighborUpdate(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
     {
-        if (stateIn.getValue(WATERLOGGED))
+        if (stateIn.get(WATERLOGGED))
         {
-            levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+            levelIn.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(levelIn));
         }
 
-        return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+        return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
     }
 }

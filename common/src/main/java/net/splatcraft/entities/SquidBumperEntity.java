@@ -1,29 +1,30 @@
 package net.splatcraft.entities;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageTypes;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Arm;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
@@ -36,6 +37,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -44,10 +46,10 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 {
     public static final float maxInkHealth = 20.0F;
     public static final int maxRespawnTime = 60;
-    private static final EntityDataAccessor<Boolean> IMMORTAL = SynchedEntityData.defineId(SquidBumperEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> COLOR = SynchedEntityData.defineId(SquidBumperEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> RESPAWN_TIME = SynchedEntityData.defineId(SquidBumperEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> SPLAT_HEALTH = SynchedEntityData.defineId(SquidBumperEntity.class, EntityDataSerializers.FLOAT);
+    private static final TrackedData<Boolean> IMMORTAL = DataTracker.registerData(SquidBumperEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<InkColor> COLOR = DataTracker.registerData(SquidBumperEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+    private static final TrackedData<Integer> RESPAWN_TIME = DataTracker.registerData(SquidBumperEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Float> SPLAT_HEALTH = DataTracker.registerData(SquidBumperEntity.class, TrackedDataHandlerRegistry.FLOAT);
     public boolean inkproof = false;
     /**
      * After punching the stand, the cooldown before you can punch it again without breaking it.
@@ -56,24 +58,23 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     public long hurtCooldown;
     public int prevRespawnTime = 0;
 
-    public SquidBumperEntity(EntityType<? extends LivingEntity> type, Level levelIn)
+    public SquidBumperEntity(EntityType<? extends LivingEntity> type, World world)
     {
-        super(type, levelIn);
+        super(type, world);
     }
 
-    public static AttributeSupplier.Builder setCustomAttributes()
+    public static DefaultAttributeContainer.Builder setCustomAttributes()
     {
-        return Mob.createLivingAttributes().add(Attributes.MAX_HEALTH, 20).add(Attributes.MOVEMENT_SPEED, 0D);
+        return createLivingAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 20).add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0D);
     }
 
     @Override
-    protected void defineSynchedData()
+    protected void initDataTracker(DataTracker.Builder builder)
     {
-        super.defineSynchedData();
-        entityData.define(COLOR, ColorUtils.DEFAULT);
-        entityData.define(SPLAT_HEALTH, maxInkHealth);
-        entityData.define(RESPAWN_TIME, maxRespawnTime);
-        entityData.define(IMMORTAL, false);
+        builder.add(COLOR, ColorUtils.getDefaultColor());
+        builder.add(SPLAT_HEALTH, maxInkHealth);
+        builder.add(RESPAWN_TIME, maxRespawnTime);
+        builder.add(IMMORTAL, false);
     }
 
     @Override
@@ -89,35 +90,35 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 
         if (getRespawnTime() == 20 && getInkHealth() <= 0)
         {
-            level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.squidBumperRespawning, getSoundSource(), 1, 1);
+            getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.squidBumperRespawning, getSoundCategory(), 1, 1);
         }
         else if (getRespawnTime() == 1)
             respawn();
 
-        BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
+        BlockPos pos = getVelocityAffectingPos();
 
-        if (level().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level().getBlockEntity(pos) instanceof InkColorTileEntity te)
+        if (getWorld().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && getWorld().getBlockEntity(pos) instanceof InkColorTileEntity te)
         {
-            if (te.getColor() != getColor())
-                setColor(te.getColor());
+            if (te.getInkColor() != getColor())
+                setColor(te.getInkColor());
         }
     }
 
     @Override
-    public boolean isPickable()
+    public boolean canHit()
     {
         return getInkHealth() > 0;
     }
 
     @Override
-    public boolean onEntityInked(DamageSource source, float damage, int color)
+    public boolean onEntityInked(DamageSource source, float damage, InkColor color)
     {
         if (hurtCooldown <= 0 && getInkHealth() > 0 && !inkproof)
         {
             ink(damage, color);
             if (getInkHealth() <= 0 && !isImmortal())
             {
-                level().broadcastEntityEvent(this, (byte) 34);
+                getWorld().sendEntityStatus(this, (byte) 34);
             }
             return true;
         }
@@ -128,74 +129,82 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
      * Called when the entity is attacked.
      */
     @Override
-    public boolean hurt(@NotNull DamageSource source, float amount)
+    public boolean damage(@NotNull DamageSource source, float amount)
     {
-        if (!this.getWorld().isClient() && this.isAlive())
+        if (!getWorld().isClient() && isAlive())
         {
-            if (source.is(DamageTypes.FELL_OUT_OF_WORLD))
+            if (source.isOf(DamageTypes.OUT_OF_WORLD))
             {
-                this.discard();
+                discard();
                 return false;
             }
-            else if (!this.isInvulnerableTo(source))
+            else if (!isInvulnerableTo(source))
             {
-                if (source.is(DamageTypes.EXPLOSION))
+                if (source.isOf(DamageTypes.EXPLOSION))
                 {
                     dropBumper();
-                    this.discard();
+                    discard();
                     return false;
                 }
-                else if (source.is(DamageTypes.IN_FIRE))
+                else if (source.isOf(DamageTypes.IN_FIRE))
                 {
-                    if (this.isOnFire())
+                    if (isOnFire())
                     {
-                        this.damageBumper(source, 0.15F);
+                        damageBumper(source, 0.15F);
                     }
                     else
                     {
-                        this.setSecondsOnFire(5);
+                        setOnFireFor(5);
                     }
 
                     return false;
                 }
-                else if (source.is(DamageTypes.ON_FIRE) && this.getHealth() > 0.5F)
+                else if (source.isOf(DamageTypes.ON_FIRE) && getHealth() > 0.5F)
                 {
-                    this.damageBumper(source, 4.0F);
+                    damageBumper(source, 4.0F);
                     return false;
                 }
                 else
                 {
-                    boolean flag = source.getDirectEntity() instanceof AbstractArrow;
-                    boolean flag1 = flag && ((AbstractArrow) source.getDirectEntity()).getPierceLevel() > 0;
-                    boolean flag2 = "player".equals(source.getMsgId());
-                    if (!flag2 && !flag)
+                    if (
+                        (source.getSource() instanceof PersistentProjectileEntity projectileEntity &&
+                            projectileEntity.getPierceLevel() > 0 &&
+                            source.getName().equals("player")) ||
+                            (
+                                source.getAttacker() instanceof PlayerEntity player && player.getAbilities().allowModifyWorld
+                            ))
+                    {
+
+                    }
+                    boolean flag1 = source.getSource() instanceof PersistentProjectileEntity projectileEntity && projectileEntity.getPierceLevel() > 0;
+                    if (!"player".equals(source.getName()) && !(source.getSource() instanceof PersistentProjectileEntity))
                     {
                         return false;
                     }
-                    else if (source.getEntity() instanceof Player && !((Player) source.getEntity()).getAbilities().mayBuild)
+                    else if (source.getAttacker() instanceof PlayerEntity player && !player.getAbilities().allowModifyWorld)
                     {
                         return false;
                     }
-                    else if (source.isCreativePlayer())
+                    else if (source.isSourceCreativePlayer())
                     {
-                        this.playBrokenSound();
-                        this.playParticles();
-                        this.discard();
+                        playBrokenSound();
+                        playParticles();
+                        discard();
                         return flag1;
                     }
                     else
                     {
-                        long i = this.getWorld().getGameTime();
-                        if (i - this.punchCooldown > 5L && !flag)
+                        long i = getWorld().getTime();
+                        if (i - punchCooldown > 5L && !(source.getSource() instanceof PersistentProjectileEntity projectileEntity))
                         {
-                            this.getWorld().broadcastEntityEvent(this, (byte) 32);
-                            this.punchCooldown = i;
+                            getWorld().sendEntityStatus(this, (byte) 32);
+                            punchCooldown = i;
                         }
                         else
                         {
-                            this.dropBumper();
-                            this.playParticles();
-                            this.discard();
+                            dropBumper();
+                            playParticles();
+                            discard();
                         }
 
                         return true;
@@ -215,9 +224,9 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 
     private void playParticles()
     {
-        if (this.getWorld() instanceof ServerWorld serverLevel)
+        if (getWorld() instanceof ServerWorld serverLevel)
         {
-            serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.WHITE_WOOL.defaultBlockState()), this.getX(), this.getEyePosition(0.6666666666666666f).y(), this.getZ(), 10, this.getBbWidth() / 4.0F, this.getBbHeight() / 4.0F, this.getBbWidth() / 4.0F, 0.05D);
+            serverLevel.spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.WHITE_WOOL.getDefaultState()), getX(), getEyePos().y, getZ(), 10, getWidth() / 4.0F, getHeight() / 4.0F, getWidth() / 4.0F, 0.05D);
         }
     }
 
@@ -225,67 +234,67 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     {
         for (int i = 0; i < 10; i++)
         {
-            level().addParticle(new InkSplashParticleData(getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), random.nextDouble() * 0.5 - 0.25, random.nextDouble() * 0.5 - 0.25, random.nextDouble() * 0.5 - 0.25);
+            getWorld().addParticle(new InkSplashParticleData(getColor(), 2), getX(), getY() + getHeight() * 0.5, getZ(), random.nextDouble() * 0.5 - 0.25, random.nextDouble() * 0.5 - 0.25, random.nextDouble() * 0.5 - 0.25);
         }
-        level().addParticle(new InkExplosionParticleData(getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
+        getWorld().addParticle(new InkExplosionParticleData(getColor(), 2), getX(), getY() + getHeight() * 0.5, getZ(), 0, 0, 0);
     }
 
     private void playHealParticles()
     {
-        level().addParticle(new InkSplashParticleData(InkOverlayCapability.get(this).getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
+        getWorld().addParticle(new InkSplashParticleData(InkOverlayCapability.get(this).getColor(), 2), getX(), getY() + getHeight() * 0.5, getZ(), 0, 0, 0);
     }
 
     private void playBrokenSound()
     {
-        this.getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SplatcraftSounds.squidBumperBreak, this.getSoundSource(), 1.0F, 1.0F);
+        getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.squidBumperBreak, getSoundCategory(), 1.0F, 1.0F);
     }
 
     private void damageBumper(DamageSource source, float dmg)
     {
-        float f = this.getHealth();
+        float f = getHealth();
         f -= dmg;
         if (f <= 0.5F)
         {
-            this.dropBumper();
-            this.discard();
+            dropBumper();
+            discard();
         }
         else
         {
-            this.setHealth(f);
+            setHealth(f);
         }
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public void handleEntityEvent(byte id)
+    @Environment(EnvType.CLIENT)
+    public void handleStatus(byte id)
     {
         switch (id)
         {
             case 31:
-                if (this.getWorld().isClientSide())
+                if (getWorld().isClient())
                 {
-                    hurtCooldown = level().getGameTime();
-                    level().playLocalSound(this.getX(), this.getY(), this.getZ(), SplatcraftSounds.squidBumperInk, this.getSoundSource(), 0.3F, 1.0F, false);
+                    hurtCooldown = getWorld().getTime();
+                    getWorld().playSound(getX(), getY(), getZ(), SplatcraftSounds.squidBumperInk, getSoundCategory(), 0.3F, 1.0F, false);
                 }
                 break;
             case 32:
-                if (level().isClientSide())
+                if (getWorld().isClient())
                 {
-                    level().playLocalSound(this.getX(), this.getY(), this.getZ(), SplatcraftSounds.squidBumperHit, this.getSoundSource(), 0.3F, 1.0F, false);
-                    this.punchCooldown = level().getGameTime();
+                    getWorld().playSound(getX(), getY(), getZ(), SplatcraftSounds.squidBumperHit, getSoundCategory(), 0.3F, 1.0F, false);
+                    punchCooldown = getWorld().getTime();
                 }
                 break;
             case 34:
-                if (level().isClientSide())
+                if (getWorld().isClient())
                 {
-                    level().playLocalSound(this.getX(), this.getY(), this.getZ(), SplatcraftSounds.squidBumperPop, this.getSoundSource(), 0.5F, 20.0F, false);
+                    getWorld().playSound(getX(), getY(), getZ(), SplatcraftSounds.squidBumperPop, getSoundCategory(), 0.5F, 20.0F, false);
                     InkOverlayCapability.get(this).setAmount(0);
                     playPopParticles();
                 }
                 break;
 
             default:
-                super.handleEntityEvent(id);
+                super.handleStatus(id);
         }
     }
 
@@ -302,17 +311,17 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     }
 
     @Override
-    public void doPush(@NotNull Entity entityIn)
+    public void pushAway(@NotNull Entity entityIn)
     {
         if (getInkHealth() <= 0)
             return;
 
-        if (!this.isPassengerOfSameVehicle(entityIn))
+        if (!isConnectedThroughVehicle(entityIn))
         {
-            if (!entityIn.noPhysics && !this.noPhysics)
+            if (!entityIn.noClip && !noClip)
             {
-                double d0 = entityIn.getX() - this.getX();
-                double d1 = entityIn.getZ() - this.getZ();
+                double d0 = entityIn.getX() - getX();
+                double d1 = entityIn.getZ() - getZ();
                 double d2 = MathHelper.absMax(d0, d1);
 
                 if (d2 >= 0.009999999776482582D)
@@ -334,9 +343,9 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
                     d0 *= 3;
                     d1 *= 3;
 
-                    if (!entityIn.isVehicle())
+                    if (!entityIn.hasPassengers())
                     {
-                        entityIn.push(d0, 0.0D, d1);
+                        entityIn.addVelocity(d0, 0.0D, d1);
                     }
                 }
             }
@@ -344,51 +353,51 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     }
 
     @Override
-    public void push(double p_233627_1_, double p_233627_2_, double p_233627_4_)
+    public void addVelocity(double p_233627_1_, double p_233627_2_, double p_233627_4_)
     {
     }
 
     public void dropBumper()
     {
-        CommonUtils.blockDrop(level(), this.blockPosition(), ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.squidBumper.get()), getColor()), true));
+        CommonUtils.blockDrop(getWorld(), getBlockPos(), ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.squidBumper.get()), getColor()), true));
     }
 
     @Override
-    public ItemStack getPickedResult(HitResult target)
+    protected void drop(ServerWorld world, DamageSource damageSource)
     {
-        return ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.squidBumper.get()), getColor()), true);
+        super.drop(world, damageSource);
     }
 
     @Override
-    public @NotNull Iterable<ItemStack> getArmorSlots()
+    public @NotNull Iterable<ItemStack> getArmorItems()
     {
         return Collections.EMPTY_LIST;
     }
 
     @Override
-    public @NotNull ItemStack getItemBySlot(@NotNull EquipmentSlot slotIn)
+    public @NotNull ItemStack getEquippedStack(@NotNull EquipmentSlot slotIn)
     {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void setItemSlot(@NotNull EquipmentSlot slotIn, @NotNull ItemStack stack)
+    public void equipStack(@NotNull EquipmentSlot slotIn, @NotNull ItemStack stack)
     {
 
     }
 
     @Override
-    public @NotNull HumanoidArm getMainArm()
+    public @NotNull Arm getMainArm()
     {
-        return HumanoidArm.RIGHT;
+        return Arm.RIGHT;
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull NbtCompound nbt)
+    public void readCustomDataFromNbt(@NotNull NbtCompound nbt)
     {
-        super.readAdditionalSaveData(nbt);
+        super.readCustomDataFromNbt(nbt);
         if (nbt.contains("Color"))
-            setColor(ColorUtils.getColorFromNbt(nbt));
+            setColor(InkColor.getFromNbt(nbt));
         else setColor(ColorUtils.getRandomStarterColor());
 
         if (nbt.contains("Inkproof"))
@@ -403,10 +412,10 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull NbtCompound nbt)
+    public void writeCustomDataToNbt(@NotNull NbtCompound nbt)
     {
-        super.addAdditionalSaveData(nbt);
-        nbt.putInt("Color", getColor());
+        super.writeCustomDataToNbt(nbt);
+        nbt.put("Color", getColor().getNbt());
         nbt.putBoolean("Inkproof", inkproof);
 
         nbt.putFloat("InkHealth", getInkHealth());
@@ -415,45 +424,45 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     }
 
     @Override
-    public int getColor()
+    public InkColor getColor()
     {
-        return entityData.get(COLOR);
+        return dataTracker.get(COLOR);
     }
 
     @Override
-    public void setColor(int color)
+    public void setColor(InkColor color)
     {
-        entityData.set(COLOR, color);
+        dataTracker.set(COLOR, color);
     }
 
     public float getInkHealth()
     {
-        return entityData.get(SPLAT_HEALTH);
+        return dataTracker.get(SPLAT_HEALTH);
     }
 
     public void setInkHealth(float value)
     {
-        entityData.set(SPLAT_HEALTH, value);
+        dataTracker.set(SPLAT_HEALTH, value);
     }
 
     public int getRespawnTime()
     {
-        return entityData.get(RESPAWN_TIME);
+        return dataTracker.get(RESPAWN_TIME);
     }
 
     public void setRespawnTime(int value)
     {
-        entityData.set(RESPAWN_TIME, value);
+        dataTracker.set(RESPAWN_TIME, value);
     }
 
     public boolean isImmortal()
     {
-        return entityData.get(IMMORTAL);
+        return dataTracker.get(IMMORTAL);
     }
 
     public void setImmortal(boolean immortal)
     {
-        entityData.set(IMMORTAL, immortal);
+        dataTracker.set(IMMORTAL, immortal);
     }
 
     public float getBumperScale(float partialTicks)
@@ -461,21 +470,21 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
         return getInkHealth() <= 0 ? (10 - Math.min(MathHelper.lerp(partialTicks, prevRespawnTime, getRespawnTime()), 10)) / 10f : 1;
     }
 
-    public void ink(float damage, int color)
+    public void ink(float damage, InkColor color)
     {
-        level().broadcastEntityEvent(this, (byte) 31);
+        getWorld().sendEntityStatus(this, (byte) 31);
         setRespawnTime(maxRespawnTime);
-        hurtCooldown = invulnerableTime;
+        hurtCooldown = timeUntilRegen;
 
-        if (entityData.get(IMMORTAL))
+        if (dataTracker.get(IMMORTAL))
         {
             setInkHealth(maxInkHealth - damage);
         }
         else
         {
             setInkHealth(getInkHealth() - damage);
-            if (!level().isClientSide())
-                if (!isInWater() && InkOverlayCapability.hasCapability(this))
+            if (!getWorld().isClient())
+                if (!isSubmergedInWater() && InkOverlayCapability.hasCapability(this))
                 {
                     InkOverlayInfo info = InkOverlayCapability.get(this);
 
@@ -495,16 +504,10 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
     public void respawn()
     {
         if (getInkHealth() <= 0)
-            level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.squidBumperReady, getSoundSource(), 1, 1);
+            getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.squidBumperReady, getSoundCategory(), 1, 1);
         setInkHealth(maxInkHealth);
         setRespawnTime(0);
 
         InkOverlayCapability.get(this).setAmount(0);
-    }
-
-    @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket()
-    {
-        return NetworkHooks.getEntitySpawningPacket(this);
     }
 }

@@ -1,36 +1,37 @@
 package net.splatcraft.handlers;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerWorld;
-import net.minecraft.sounds.SoundSource;
+import dev.architectury.event.CompoundEventResult;
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.common.InteractionEvent;
+import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityPose;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.effect.StatusEffectUtil;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.effect.MobEffectUtil;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.blocks.SpawnPadBlock;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.registries.SplatcraftDamageTypes;
@@ -40,45 +41,54 @@ import net.splatcraft.registries.SplatcraftStats;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Mod.EventBusSubscriber
 public class SquidFormHandler
 {
-    private static final Map<Player, SquidState> squidSubmergeMode = new LinkedHashMap<>();
+    private static final Map<LivingEntity, SquidState> squidSubmergeMode = new LinkedHashMap<>();
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLivingHurt(LivingHurtEvent event)
+    public static void registerEvents()
     {
-        if (event.getSource().is(SplatcraftDamageTypes.ENEMY_INK) && event.getEntity().getHealth() <= 4)
-            event.setCanceled(true);
+        PlayerEvent.ATTACK_ENTITY.register(SquidFormHandler::onPlayerAttackEntity);
+        InteractionEvent.CLIENT_LEFT_CLICK_AIR.register(SquidFormHandler::onPlayerInteract);
+        InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register(SquidFormHandler::onPlayerInteract);
+        InteractionEvent.LEFT_CLICK_BLOCK.register(SquidFormHandler::onPlayerInteract);
+        InteractionEvent.RIGHT_CLICK_BLOCK.register(SquidFormHandler::onPlayerInteract);
+        InteractionEvent.RIGHT_CLICK_ITEM.register(SquidFormHandler::onPlayerInteractItem);
+        InteractionEvent.INTERACT_ENTITY.register(SquidFormHandler::onPlayerInteract);
+        TickEvent.PLAYER_POST.register(SquidFormHandler::playerTick);
     }
 
-    @SubscribeEvent
-    public static void playerTick(TickEvent.PlayerTickEvent event)
+    public static void onLivingHurt(LivingEntity entity, DamageSource source, CallbackInfoReturnable<Boolean> cir)
     {
-        Player player = event.player;
+        if (source.isOf(SplatcraftDamageTypes.ENEMY_INK) && entity.getHealth() <= 4)
+            cir.cancel();
+    }
 
+    public static void playerTick(PlayerEntity player)
+    {
         if (InkBlockUtils.onEnemyInk(player))
         {
-            if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.getWorld().getDifficulty() != Difficulty.PEACEFUL)
-                player.hurt(player.damageSources().source(SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
+            if (player.age % 20 == 0 && player.getHealth() > 4 && player.getWorld().getDifficulty() != Difficulty.PEACEFUL)
+                player.damage(SplatcraftDamageTypes.of(player.getWorld(), SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
             if (player.getWorld().getRandom().nextFloat() < 0.5f)
             {
                 ColorUtils.addStandingInkSplashParticle(player.getWorld(), player, 1);
             }
         }
 
-        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isInWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
-            player.hurt(player.damageSources().source(SplatcraftDamageTypes.WATER), 8f);
+        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.WATER_DAMAGE) && player.isSubmergedInWater() && player.age % 10 == 0 && !StatusEffectUtil.hasWaterBreathing(player))
+            player.damage(SplatcraftDamageTypes.of(player.getWorld(), SplatcraftDamageTypes.WATER), 8f);
 
-        if (!PlayerInfoCapability.hasCapability(player))
+        if (!EntityInfoCapability.hasCapability(player))
             return;
 
-        PlayerInfo info = PlayerInfoCapability.get(player);
-        if (event.phase == TickEvent.Phase.START)
+        EntityInfo info = EntityInfoCapability.get(player);
+//        if (event.phase == TickEvent.Phase.START)
         {
             SquidState state = SquidState.SURFACED; // this is more readable with enums though :(
 
@@ -102,7 +112,7 @@ public class SquidFormHandler
 
             if (state == SquidState.SUBMERGING)
             {
-                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 
                 if (player.getWorld() instanceof ServerWorld serverLevel)
                 {
@@ -112,7 +122,7 @@ public class SquidFormHandler
             }
             else if (state == SquidState.SURFACING)
             {
-                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+                player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
             }
 
             squidSubmergeMode.put(player, state);
@@ -122,30 +132,30 @@ public class SquidFormHandler
         {
             if (!player.getAbilities().flying)
             {
-                player.setSprinting(player.isInWater());
-                player.walkDist = player.walkDistO;
+                player.setSprinting(player.isSubmergedInWater());
+                player.horizontalSpeed = player.prevHorizontalSpeed;
             }
 
-            player.setPose(Pose.SWIMMING);
+            player.setPose(EntityPose.SWIMMING);
             player.stopUsingItem();
 
-            player.awardStat(SplatcraftStats.SQUID_TIME);
+            player.incrementStat(SplatcraftStats.SQUID_TIME);
 
             if (InkBlockUtils.canSquidHide(player))
             {
-                if (player.getHealth() < player.getMaxHealth() && SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) && player.tickCount % 5 == 0 && !player.hasEffect(MobEffects.POISON) && !player.hasEffect(MobEffects.WITHER))
+                if (player.getHealth() < player.getMaxHealth() && SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.INK_HEALING) && player.age % 5 == 0 && !player.hasStatusEffect(StatusEffects.POISON) && !player.hasStatusEffect(StatusEffects.WITHER))
                 {
                     player.heal(0.5f);
-                    if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
-                        player.causeFoodExhaustion(0.25f);
+                    if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
+                        player.addExhaustion(0.25f);
                     if (InkOverlayCapability.hasCapability(player))
                     {
                         InkOverlayCapability.get(player).addAmount(-0.49f);
                     }
                 }
 
-                boolean crouch = player.isCrouching();
-                if (!crouch && player.getWorld().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
+                boolean crouch = player.isSneaking();
+                if (!crouch && player.getWorld().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.prevX) > 0.14 || Math.abs(player.getY() - player.prevY) > 0.07 || Math.abs(player.getZ() - player.prevZ) > 0.14))
                 {
                     ColorUtils.addInkSplashParticle(player.getWorld(), player, 1.1f);
                 }
@@ -177,9 +187,9 @@ public class SquidFormHandler
             {
                 InkColorTileEntity spawnPad = (InkColorTileEntity) player.getWorld().getBlockEntity(posBelow);
 
-                if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
+                if (player instanceof ServerPlayerEntity serverPlayer && ColorUtils.colorEquals(player, spawnPad))
                 {
-                    serverPlayer.setRespawnPosition(player.getWorld().dimension(), posBelow, player.getWorld().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+                    serverPlayer.setSpawnPoint(player.getWorld().getRegistryKey(), posBelow, player.getWorld().getBlockState(posBelow).get(SpawnPadBlock.DIRECTION).asRotation(), false, true);
                 }
             }
         }
@@ -189,94 +199,80 @@ public class SquidFormHandler
         }
     }
 
-    @SubscribeEvent
-    public static void onLivingFall(LivingFallEvent event)
+    public static void cancelDamageIfSquid(LivingEntity entity, float fallDistance, CallbackInfoReturnable<Boolean> cir)
     {
-        if (event.getEntity() instanceof ServerPlayer player && PlayerInfoCapability.get(player).isSquid())
+        if (entity instanceof ServerPlayerEntity player && EntityInfoCapability.get(player).isSquid())
         {
             if (InkBlockUtils.canSquidHide(player))
             {
-                SplatcraftStats.FALL_INTO_INK_TRIGGER.trigger(player, event.getDistance());
-                event.setCanceled(true);
+                SplatcraftStats.FALL_INTO_INK_TRIGGER.get().trigger(player, fallDistance);
+                cir.setReturnValue(false);
+                cir.cancel();
             }
         }
     }
 
-    @SubscribeEvent
-    public static void playerVisibility(LivingEvent.LivingVisibilityEvent event)
+    public static double modifyVisibility(LivingEntity entity, double original)
     {
-        if (!(event.getEntity() instanceof Player player))
+        if (EntityInfoCapability.hasCapability(entity) && EntityInfoCapability.get(entity).isSquid() && InkBlockUtils.canSquidHide(entity))
         {
+            return (Math.abs(entity.getX() - entity.prevX) > 0.14 || Math.abs(entity.getY() - entity.prevY) > 0.07 || Math.abs(entity.getZ() - entity.prevZ) > 0.14 ? 0.7 : 0);
+        }
+        return original;
+    }
+
+    public static void onGameModeSwitch(ServerPlayerEntity player, GameMode newGameMode)
+    {
+        if (newGameMode != GameMode.SPECTATOR) return;
+        player.stopUsingItem();
+        EntityInfoCapability.get(player).setIsSquid(false);
+        SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerSetSquidS2CPacket(player.getUuid(), false), player);
+    }
+
+    public static EventResult onPlayerAttackEntity(PlayerEntity player, World level, Entity target, Hand hand, @Nullable EntityHitResult result)
+    {
+        if (EntityInfoCapability.isSquid(player))
+            return EventResult.interruptFalse();
+        return EventResult.pass();
+    }
+
+    public static EventResult onPlayerInteract(PlayerEntity player, Object... params)
+    {
+        if (EntityInfoCapability.isSquid(player))
+        {
+            return EventResult.interruptFalse();
+        }
+        return EventResult.pass();
+    }
+
+    public static CompoundEventResult<ItemStack> onPlayerInteractItem(PlayerEntity player, Object... params)
+    {
+        if (EntityInfoCapability.isSquid(player))
+        {
+            return CompoundEventResult.pass();
+        }
+        return CompoundEventResult.interruptFalse(ItemStack.EMPTY);
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static void doSquidRotation(Entity entity)
+    {
+        if (!entity.getWorld().isClient() || !(entity instanceof LivingEntity living))
             return;
-        }
-
-        if (PlayerInfoCapability.hasCapability(player) && PlayerInfoCapability.get(player).isSquid() && InkBlockUtils.canSquidHide(player))
-        {
-            event.modifyVisibility(Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14 ? 0.7 : 0);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onGameModeSwitch(PlayerEvent.PlayerChangeGameModeEvent event)
-    {
-        if (event.getNewGameMode() != GameType.SPECTATOR) return;
-        event.getEntity().stopUsingItem();
-        PlayerInfoCapability.get(event.getEntity()).setIsSquid(false);
-        SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerSetSquidS2CPacket(event.getEntity().getUUID(), false), event.getEntity());
-    }
-
-    @SubscribeEvent
-    public static void playerBreakSpeed(PlayerEvent.BreakSpeed event)
-    {
-        if (PlayerInfoCapability.isSquid(event.getEntity()))
-        {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerAttackEntity(AttackEntityEvent event)
-    {
-        if (PlayerInfoCapability.isSquid(event.getEntity()))
-            event.setCanceled(true);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerInteract(PlayerInteractEvent event)
-    {
-        if (PlayerInfoCapability.isSquid(event.getEntity()) && event.isCancelable())
-        {
-            event.setCanceled(true);
-        }
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    @SubscribeEvent
-    public static void onClientLivingTick(LivingEvent.LivingTickEvent event)
-    {
-        if (!event.getEntity().getWorld().isClientSide())
-            return;
-        LivingEntity living = event.getEntity();
         if (InkOverlayCapability.hasCapability(living))
         {
             InkOverlayInfo info = InkOverlayCapability.get(living);
-            Vec3d prev = living.getPosition(0);
+            Vec3d prev = living.getLerpedPos(0);
 
-            info.setSquidRot(Math.abs(living.getY() - prev.y()) * living.position().subtract(prev).normalize().y);
+            info.setSquidRot(Math.abs(living.getY() - prev.y) * living.getPos().subtract(prev).normalize().y);
         }
     }
 
-    @SubscribeEvent
-    public static void onPlayerJump(LivingEvent.LivingJumpEvent event)
+    public static void modifyJumpSpeed(LivingEntity entity)
     {
-        if (!(event.getEntity() instanceof Player player) || !PlayerInfoCapability.hasCapability(event.getEntity()))
+        if (EntityInfoCapability.get(entity).isSquid() && InkBlockUtils.canSquidSwim(entity))
         {
-            return;
-        }
-
-        if (PlayerInfoCapability.get(player).isSquid() && InkBlockUtils.canSquidSwim(player))
-        {
-            player.setDeltaMovement(player.getDeltaMovement().x(), player.getDeltaMovement().y() * 1.1, player.getDeltaMovement().z());
+            entity.setVelocity(entity.getVelocity().x, entity.getVelocity().y * 1.1, entity.getVelocity().z);
         }
     }
 

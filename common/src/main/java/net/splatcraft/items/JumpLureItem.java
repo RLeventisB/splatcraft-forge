@@ -1,38 +1,39 @@
 package net.splatcraft.items;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.UseAnim;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3d;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.UseAction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendJumpLureDataPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,15 +41,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class JumpLureItem extends Item implements IColoredItem
+public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
     public JumpLureItem()
     {
-        super(new Properties().stacksTo(1));
+        super(new Item.Settings().maxCount(1));
         SplatcraftItems.inkColoredItems.add(this);
     }
 
-    public static void activate(ServerPlayer player, UUID targetUUID, int color)
+    public static void activate(ServerPlayerEntity player, UUID targetUUID, InkColor color)
     {
         Vec3d target;
         if (targetUUID == null)
@@ -56,168 +57,169 @@ public class JumpLureItem extends Item implements IColoredItem
             BlockPos spawnPos = SuperJumpCommand.getSpawnPadPos(player);
             if (spawnPos != null)
             {
-                target = new Vec3d(spawnPos.getCenter().x(), spawnPos.getY() + SuperJumpCommand.blockHeight(spawnPos, player.level()), spawnPos.getCenter().z());
-                if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, target))
+                target = new Vec3d(spawnPos.toCenterPos().getX(), spawnPos.getY() + SuperJumpCommand.blockHeight(spawnPos, player.getWorld()), spawnPos.toCenterPos().getZ());
+                if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, target))
                 {
-                    player.sendSystemMessage(Component.literal("Spawn Pad outside of stage bounds!")); //TODO better feedback
+                    player.sendMessage(Text.literal("Spawn Pad outside of stage bounds!")); //TODO better feedback
                     return;
                 }
             }
             else
             {
-                player.sendSystemMessage(Component.literal("No valid Spawn Pad was found!")); //TODO better feedback
+                player.sendMessage(Text.literal("No valid Spawn Pad was found!")); //TODO better feedback
                 return;
             }
         }
         else
         {
-            Player targetPlayer = player.getWorld().getPlayerByUUID(targetUUID);
+            PlayerEntity targetPlayer = player.getWorld().getPlayerByUuid(targetUUID);
 
-            if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
-                && !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())))
+            if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
+                && !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.getPos())))
             {
-                player.sendSystemMessage(Component.literal("A communication error has occurred.")); //TODO better feedback
+                player.sendMessage(Text.literal("A communication error has occurred.")); //TODO better feedback
+                // this error message is funny af
                 return;
             }
             else
-                target = targetPlayer.position();
+                target = targetPlayer.getPos();
         }
         SuperJumpCommand.superJump(player, target);
     }
 
-    public static boolean hasMatchingLure(Player targetPlayer, int color)
+    public static boolean hasMatchingLure(PlayerEntity targetPlayer, InkColor color)
     {
-        for (int i = 0; i < targetPlayer.getInventory().getContainerSize(); i++)
-            if (targetPlayer.getInventory().getItem(i).getItem() instanceof JumpLureItem &&
-                ColorUtils.colorEquals(targetPlayer.getWorld(), targetPlayer.blockPosition(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getItem(i))))
+        for (int i = 0; i < targetPlayer.getInventory().size(); i++)
+            if (targetPlayer.getInventory().getStack(i).getItem() instanceof JumpLureItem &&
+                ColorUtils.colorEquals(targetPlayer.getWorld(), targetPlayer.getBlockPos(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getStack(i))))
                 return true;
         return false;
     }
 
-    public static List<? extends Player> getAvailableCandidates(Player player, int color)
+    public static List<? extends PlayerEntity> getAvailableCandidates(PlayerEntity player, InkColor color)
     {
-        ArrayList<Player> players = new ArrayList<>();
-        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+        ArrayList<PlayerEntity> players = new ArrayList<>();
+        if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
         {
-            players.addAll(player.getWorld().players());
+            players.addAll(player.getWorld().getPlayers());
         }
         else
         {
-            ArrayList<Stage> stages = Stage.getStagesForPosition(player.getWorld(), player.position());
+            ArrayList<Stage> stages = Stage.getStagesForPosition(player.getWorld(), player.getPos());
             for (Stage stage : stages)
-                players.addAll(player.getWorld().getEntitiesOfClass(Player.class, stage.getBounds()));
+                players.addAll(player.getWorld().getEntitiesByClass(PlayerEntity.class, stage.getBounds(), v -> true));
         }
         players.removeIf(target ->
             player.equals(target) || !hasMatchingLure(target, color)
-                && !SuperJumpCommand.canSuperJumpTo(player, target.position()));
+                && !SuperJumpCommand.canSuperJumpTo(player, target.getPos()));
         return players;
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flags)
+    public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
     {
-        super.appendHoverText(stack, level, tooltip, flags);
-        if (I18n.exists(getDescriptionId() + ".tooltip"))
-            tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
+        super.appendTooltip(stack, context, tooltip, type);
+        if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
+            tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
         boolean inverted = ColorUtils.isInverted(stack);
         if (ColorUtils.isColorLocked(stack))
         {
             tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
             if (inverted)
-                tooltip.add(Component.translatable("item.splatcraft.tooltip.inverted").withStyle(Style.EMPTY.withItalic(true).withColor(ChatFormatting.DARK_PURPLE)));
+                tooltip.add(Text.translatable("item.splatcraft.tooltip.inverted").setStyle(Style.EMPTY.withItalic(true).withColor(Formatting.DARK_PURPLE)));
         }
         else
-            tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color" + (inverted ? ".inverted" : "")).formatted(Formatting.GRAY));
     }
 
     @Override
-    public int getUseDuration(@NotNull ItemStack p_41454_)
+    public int getMaxUseTime(ItemStack stack, LivingEntity user)
     {
         return 72000;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     private void releaseLure(LivingEntity entity)
     {
-        if (entity.equals(Minecraft.getInstance().player))
+        if (entity.equals(ClientUtils.getClientPlayer()))
             JumpLureHudHandler.releaseLure();
     }
 
     @Override
-    public @NotNull UseAnim getUseAnimation(@NotNull ItemStack p_41452_)
+    public UseAction getUseAction(ItemStack stack)
     {
-        return UseAnim.SPEAR;
+        return UseAction.SPEAR;
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand)
+    public @NotNull TypedActionResult<ItemStack> use(@NotNull World world, @NotNull PlayerEntity player, @NotNull Hand hand)
     {
-        if (level.isClientSide())
+        if (world.isClient())
         {
             JumpLureHudHandler.clickedThisFrame = false;
-            return super.use(level, player, hand);
+            return super.use(world, player, hand);
         }
 
-        int color = ColorUtils.getInkColorOrInverted(player.getItemInHand(hand));
-        ArrayList<UUID> players = new ArrayList<>(getAvailableCandidates(player, color).stream().map(Entity::getUUID).toList());
+        InkColor color = ColorUtils.getInkColorOrInverted(player.getStackInHand(hand));
+        ArrayList<UUID> players = new ArrayList<>(getAvailableCandidates(player, color).stream().map(Entity::getUuid).toList());
 
-        ServerPlayer serverPlayer = (ServerPlayer) player;
+        ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
 
         BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
 
-        if (!SplatcraftGameRules.getLocalizedRule(level, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3d(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
+        if (!SplatcraftGameRules.getLocalizedRule(world, player.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3d(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
             spawnPadPos = null;
 
         if (spawnPadPos == null && players.isEmpty())
         {
-            player.displayClientMessage(Component.translatable("status.no_superjump_targets").withStyle(ChatFormatting.RED), true);
-            return super.use(level, player, hand);
+            ((ServerPlayerEntity) player).sendMessageToClient(Text.translatable("status.no_superjump_targets").formatted(Formatting.RED), true);
+            return super.use(world, player, hand);
         }
         SplatcraftPacketHandler.sendToPlayer(new SendJumpLureDataPacket(color, spawnPadPos != null,
             players, spawnPadPos), serverPlayer);
 
-        player.startUsingItem(hand);
-        return super.use(level, player, hand);
+        player.setCurrentHand(hand);
+        return super.use(world, player, hand);
     }
 
     @Override
-    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity entity, int useTime)
+    public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, @NotNull LivingEntity entity, int useTime)
     {
-        super.releaseUsing(stack, level, entity, useTime);
-        if (level.isClientSide())
+        super.onStoppedUsing(stack, world, entity, useTime);
+        if (world.isClient())
             releaseLure(entity);
     }
 
     @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
+    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
     {
-        super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-        if (entity instanceof Player player)
+        if (entity instanceof PlayerEntity player)
         {
-            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getPlayerColor(player)
-                && PlayerInfoCapability.hasCapability(player))
-                ColorUtils.setInkColor(stack, ColorUtils.getPlayerColor(player));
+            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+                && EntityInfoCapability.hasCapability(player))
+                ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
         }
     }
 
     @Override
     public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
     {
-        BlockPos pos = entity.blockPosition().below();
+        BlockPos pos = entity.getBlockPos().down();
 
         if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
         {
             if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
             {
-                ColorUtils.setInkColor(entity.getItem(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getItem(), true);
+                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+                ColorUtils.setColorLocked(entity.getStack(), true);
             }
         }
-        else if ((stack.getItem() instanceof SubWeaponItem && !SubWeaponItem.singleUse(stack) || !(stack.getItem() instanceof SubWeaponItem))
-            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack) != 0xFFFFFF)
+        else if ((!(stack.getItem() instanceof SubWeaponItem) || !SubWeaponItem.singleUse(stack))
+            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack).getColor() != 0xFFFFFF)
         {
-            ColorUtils.setInkColor(stack, 0xFFFFFF);
+            ColorUtils.setInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
             ColorUtils.setColorLocked(stack, false);
         }
         return false;

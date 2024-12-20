@@ -1,30 +1,30 @@
 package net.splatcraft.client.handlers;
 
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundSource;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import dev.architectury.event.EventResult;
+import dev.architectury.event.events.client.ClientRawInputEvent;
+import dev.architectury.event.events.client.ClientTickEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.splatcraft.client.gui.SuperJumpSelectorScreen;
 import net.splatcraft.items.JumpLureItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.UseJumpLurePacket;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
-@OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class JumpLureHudHandler
 {
     private static final SuperJumpSelectorScreen selectorGui = new SuperJumpSelectorScreen();
@@ -32,53 +32,59 @@ public class JumpLureHudHandler
     private static SuperJumpTargets targets;
     private static double scrollDelta = 0;
 
-    public static void renderGui(ForgeGui gui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight)
+    public static void registerEvents()
     {
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientRawInputEvent.MOUSE_SCROLLED.register(JumpLureHudHandler::onMouseScroll);
+        ClientRawInputEvent.MOUSE_CLICKED_PRE.register(JumpLureHudHandler::onMouseClick);
+        ClientTickEvent.CLIENT_PRE.register(JumpLureHudHandler::onKeypadInput);
+    }
+
+    public static void renderGui(DrawContext context, RenderTickCounter tickCounter)
+    {
+        ClientPlayerEntity player = ClientUtils.getClientPlayer();
 
         if (player == null ||
-            !(player.getUseItem().getItem() instanceof JumpLureItem) || targets == null)
+            !(player.getActiveItem().getItem() instanceof JumpLureItem) || targets == null)
             return;
 
-        scrollDelta = selectorGui.render(guiGraphics, partialTick, targets, scrollDelta, clickedThisFrame);
+        scrollDelta = selectorGui.render(context, tickCounter, targets, scrollDelta, clickedThisFrame);
         clickedThisFrame = false;
     }
 
-    @SubscribeEvent
-    public static void onMouseScroll(InputEvent.MouseScrollingEvent event)
+    public static EventResult onMouseScroll(MinecraftClient client, double horizontalScroll, double verticalScroll)
     {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.getUseItem().getItem() instanceof JumpLureItem && player.isUsingItem())
+        ClientPlayerEntity player = ClientUtils.getClientPlayer();
+        if (player != null && player.getActiveItem().getItem() instanceof JumpLureItem && player.isUsingItem())
         {
-            scrollDelta -= event.getScrollDelta();
-            event.setCanceled(true);
+            scrollDelta -= horizontalScroll;
+            return EventResult.interruptFalse();
         }
+        return EventResult.pass();
     }
 
-    @SubscribeEvent
-    public static void onMouseClick(InputEvent.MouseButton event)
+    public static EventResult onMouseClick(MinecraftClient client, int button, int action, int mods)
     {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player != null && player.getUseItem().getItem() instanceof JumpLureItem && event.getButton() == 0 && event.getAction() == 1)
+        ClientPlayerEntity player = ClientUtils.getClientPlayer();
+        if (player != null && player.getActiveItem().getItem() instanceof JumpLureItem && button == 0 && action == 1)
             clickedThisFrame = true;
+        return EventResult.pass();
     }
 
-    @SubscribeEvent
-    public static void onKeypadInput(TickEvent.ClientTickEvent event)
+    public static void onKeypadInput(MinecraftClient client)
     {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (event.phase != TickEvent.Phase.START || player == null)
+        ClientPlayerEntity player = ClientUtils.getClientPlayer();
+        if (player == null)
             return;
 
-        if (player.getUseItem().getItem() instanceof JumpLureItem)
+        if (player.getActiveItem().getItem() instanceof JumpLureItem)
         {
             int totalOptions = targets.playerTargetUuids.size() + (targets.canTargetSpawn ? 2 : 1);
 
             for (int i = 0; i < totalOptions; i++) // ok tbh this is personal preference but for now this is going to work like this
             {
-                KeyMapping key = Minecraft.getInstance().options.keyHotbarSlots[i];
+                KeyBinding key = MinecraftClient.getInstance().options.hotbarKeys[i];
 
-                if (key.consumeClick())
+                if (key.wasPressed())
                 {
                     scrollDelta = i + 1;
                     return;
@@ -94,12 +100,12 @@ public class JumpLureHudHandler
 
     public static void releaseLure()
     {
-        LocalPlayer player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = ClientUtils.getClientPlayer();
 
         if (player == null || targets == null) return;
 
         ArrayList<UUID> playerUuids = new ArrayList<>(targets.playerTargetUuids);
-        playerUuids.removeIf(uuid -> !player.connection.getOnlinePlayerIds().contains(uuid));
+        playerUuids.removeIf(uuid -> !player.networkHandler.getPlayerUuids().contains(uuid));
 
         int entryCount = playerUuids.size() + (targets.canTargetSpawn ? 2 : 1);
         int index = Math.floorMod((int) scrollDelta, entryCount);
@@ -110,7 +116,7 @@ public class JumpLureHudHandler
         if (index == 0) return;
         UUID target = (targets.canTargetSpawn && index == 1) ? null : playerUuids.get(index - (targets.canTargetSpawn ? 2 : 1));
 
-        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.remoteUse, SoundSource.PLAYERS, 0.8F, 1);
+        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.remoteUse, SoundCategory.PLAYERS, 0.8F, 1);
         SplatcraftPacketHandler.sendToServer(new UseJumpLurePacket(targets.color, target));
         scrollDelta = 0;
     }
@@ -119,10 +125,10 @@ public class JumpLureHudHandler
     {
         public final ArrayList<UUID> playerTargetUuids;
         public final boolean canTargetSpawn;
-        public final int color;
+        public final InkColor color;
         public final BlockPos spawnPosition;
 
-        public SuperJumpTargets(ArrayList<UUID> playerTargetUuids, boolean canTargetSpawn, int color, BlockPos spawnPosition)
+        public SuperJumpTargets(ArrayList<UUID> playerTargetUuids, boolean canTargetSpawn, InkColor color, BlockPos spawnPosition)
         {
             this.playerTargetUuids = playerTargetUuids;
             this.canTargetSpawn = canTargetSpawn;

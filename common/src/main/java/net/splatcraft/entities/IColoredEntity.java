@@ -1,14 +1,15 @@
 package net.splatcraft.entities;
 
 import net.minecraft.entity.damage.DamageSource;
+import net.splatcraft.util.InkColor;
 
 public interface IColoredEntity
 {
-    int getColor();
+    InkColor getColor();
 
-    void setColor(int color);
+    void setColor(InkColor color);
 
-    default boolean onEntityInked(DamageSource source, float damage, int color)
+    default boolean onEntityInked(DamageSource source, float damage, InkColor color)
     {
         return false;
     }

@@ -1,49 +1,43 @@
 package net.splatcraft.util;
 
+import com.mojang.serialization.Lifecycle;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.NewRegistryEvent;
-import net.minecraftforge.registries.RegistryBuilder;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.SimpleRegistry;
+import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfo;
-import net.splatcraft.data.capabilities.playerinfo.PlayerInfoCapability;
-import net.splatcraft.items.weapons.BlasterItem;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.SlosherItem;
-import net.splatcraft.items.weapons.WeaponBaseItem;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.function.Supplier;
 
-import static net.splatcraft.Splatcraft.MODID;
-
-@Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PlayerCooldown
 {
     public static final int OVERLOAD_LIMIT = -28800;
-    public static Supplier<IForgeRegistry<Class<? extends PlayerCooldown>>> REGISTRY;
+    public static Registry<Class<? extends PlayerCooldown>> REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldowns")), Lifecycle.stable());
     public ItemStack storedStack;
     public boolean cancellable = false;
     float maxTime;
     int slotIndex;
-    InteractionHand hand;
+    Hand hand;
     boolean canMove;
     boolean forceCrouch;
     boolean preventWeaponUse;
     boolean isGrounded;
     float time;
-    public PlayerCooldown(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+
+    public PlayerCooldown(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
     {
-        this.storedStack = stack;
+        storedStack = stack;
         this.time = time;
         this.maxTime = maxTime;
         this.slotIndex = slotIndex;
@@ -54,40 +48,32 @@ public class PlayerCooldown
         this.isGrounded = isGrounded;
     }
 
-    public PlayerCooldown(ItemStack stack, float time, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+    public PlayerCooldown(ItemStack stack, float time, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
     {
         this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
     }
 
-    public PlayerCooldown(NbtCompound nbt)
+    public PlayerCooldown(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
     {
-        fromNbt(nbt);
+        fromNbt(wrapperLookup, nbt);
     }
 
-    @SubscribeEvent
-    public static void registerRegistry(final NewRegistryEvent event)
+    public static void registerCooldowns()
     {
-        RegistryBuilder<Class<? extends PlayerCooldown>> registryBuilder = new RegistryBuilder<>();
-        registryBuilder.setName(new ResourceLocation(MODID, "player_cooldowns"));
-        REGISTRY = event.create(registryBuilder, (registry) ->
-        {
-            registry.register(new ResourceLocation(MODID, "superjump"), SuperJumpCommand.SuperJump.class);
-            registry.register(new ResourceLocation(MODID, "sloshcooldown"), SlosherItem.SloshCooldown.class);
-            registry.register(new ResourceLocation(MODID, "dodgerollcooldown"), DualieItem.DodgeRollCooldown.class);
-            registry.register(new ResourceLocation(MODID, "blastercooldown"), BlasterItem.BlasterCooldown.class);
-            registry.register(new ResourceLocation(MODID, "weaponfirecooldown"), WeaponBaseItem.WeaponFireCooldown.class);
-        });
+        Registry.register(REGISTRY, Splatcraft.identifierOf("superjump"), SuperJumpCommand.SuperJump.class);
+        Registry.register(REGISTRY, Splatcraft.identifierOf("sloshcooldown"), SlosherItem.SloshCooldown.class);
+        Registry.register(REGISTRY, Splatcraft.identifierOf("dodgerollcooldown"), DualieItem.DodgeRollCooldown.class);
     }
 
-    public static PlayerCooldown readNBT(NbtCompound nbt)
+    public static PlayerCooldown readNBT(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
     {
         if (nbt.contains("CooldownClass"))
         {
-            Class<? extends PlayerCooldown> clazz = REGISTRY.get().getValue(new ResourceLocation(nbt.getString("CooldownClass")));
+            Class<? extends PlayerCooldown> clazz = REGISTRY.get(Identifier.of(nbt.getString("CooldownClass")));
             try
             {
                 if (clazz == null) throw new AssertionError();
-                return clazz.getConstructor(NbtCompound.class).newInstance(nbt);
+                return clazz.getConstructor(RegistryWrapper.WrapperLookup.class, NbtCompound.class).newInstance(wrapperLookup, nbt);
             }
             catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                    NoSuchMethodException e)
@@ -96,25 +82,25 @@ public class PlayerCooldown
             }
         }
 
-        return new PlayerCooldown(nbt);
+        return new PlayerCooldown(wrapperLookup, nbt);
     }
 
     public static PlayerCooldown getPlayerCooldown(LivingEntity player)
     {
-        PlayerInfo playerInfo = PlayerInfoCapability.get(player);
+        EntityInfo playerInfo = EntityInfoCapability.get(player);
         if (playerInfo == null)
             return null;
         return playerInfo.getPlayerCooldown();
     }
 
-    public static void setPlayerCooldown(Player player, PlayerCooldown playerCooldown)
+    public static void setPlayerCooldown(LivingEntity player, PlayerCooldown playerCooldown)
     {
-        PlayerInfoCapability.get(player).setPlayerCooldown(playerCooldown);
+        EntityInfoCapability.get(player).setPlayerCooldown(playerCooldown);
     }
 
-    public static PlayerCooldown setCooldownTime(Player player, int time)
+    public static PlayerCooldown setCooldownTime(LivingEntity player, int time)
     {
-        PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
+        PlayerCooldown cooldown = EntityInfoCapability.get(player).getPlayerCooldown();
         if (cooldown == null)
         {
             return null;
@@ -129,36 +115,36 @@ public class PlayerCooldown
 
     public static boolean hasPlayerCooldown(LivingEntity player)
     {
-        if (player == null || !PlayerInfoCapability.hasCapability(player))
+        if (player == null || !EntityInfoCapability.hasCapability(player))
             return false;
-        PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
+        PlayerCooldown cooldown = EntityInfoCapability.get(player).getPlayerCooldown();
         return cooldown != null && cooldown.getTime() > 0;
     }
 
-    public static boolean hasOverloadedPlayerCooldown(Player player)
+    public static boolean hasOverloadedPlayerCooldown(LivingEntity player)
     {
-        if (player == null || !PlayerInfoCapability.hasCapability(player))
+        if (player == null || !EntityInfoCapability.hasCapability(player))
             return false;
-        PlayerCooldown cooldown = PlayerInfoCapability.get(player).getPlayerCooldown();
+        PlayerCooldown cooldown = EntityInfoCapability.get(player).getPlayerCooldown();
         return cooldown != null;
     }
 
-    public final void fromNbt(NbtCompound nbt)
+    public final void fromNbt(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
     {
-        this.storedStack = ItemStack.of(nbt.getCompound("StoredStack"));
-        this.time = nbt.getFloat("Time");
-        this.maxTime = nbt.getFloat("MaxTime");
-        this.slotIndex = nbt.getInt("SlotIndex");
-        this.hand = nbt.getBoolean("MainHand") ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-        this.canMove = nbt.getBoolean("CanMove");
-        this.forceCrouch = nbt.getBoolean("ForceCrouch");
-        this.preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
-        this.isGrounded = nbt.getBoolean("IsGrounded");
+        storedStack = ItemStack.fromNbtOrEmpty(wrapperLookup, nbt.getCompound("StoredStack"));
+        time = nbt.getFloat("Time");
+        maxTime = nbt.getFloat("MaxTime");
+        slotIndex = nbt.getInt("SlotIndex");
+        hand = nbt.getBoolean("MainHand") ? Hand.MAIN_HAND : Hand.OFF_HAND;
+        canMove = nbt.getBoolean("CanMove");
+        forceCrouch = nbt.getBoolean("ForceCrouch");
+        preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
+        isGrounded = nbt.getBoolean("IsGrounded");
     }
 
     public PlayerCooldown setCancellable()
     {
-        this.cancellable = true;
+        cancellable = true;
         return this;
     }
 
@@ -203,21 +189,21 @@ public class PlayerCooldown
         return slotIndex;
     }
 
-    public InteractionHand getHand()
+    public Hand getHand()
     {
         return hand;
     }
 
-    public void setHand(InteractionHand hand)
+    public void setHand(Hand hand)
     {
         this.hand = hand;
     }
 
-    public void tick(Player player)
+    public void tick(LivingEntity player)
     {
     }
 
-    public NbtCompound writeNBT(NbtCompound nbt)
+    public NbtCompound writeNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
     {
         nbt.putFloat("Time", time);
         nbt.putFloat("MaxTime", maxTime);
@@ -226,19 +212,19 @@ public class PlayerCooldown
         nbt.putBoolean("ForceCrouch", forceCrouch);
         nbt.putBoolean("PreventWeaponUse", preventWeaponUse);
         nbt.putBoolean("IsGrounded", isGrounded);
-        nbt.putBoolean("MainHand", hand.equals(InteractionHand.MAIN_HAND));
+        nbt.putBoolean("MainHand", hand.equals(Hand.MAIN_HAND));
         if (storedStack.getItem() != Items.AIR)
         {
-            nbt.put("StoredStack", storedStack.serializeNBT());
+            nbt.put("StoredStack", storedStack.encode(registryLookup, nbt));
         }
         return nbt;
     }
 
-    public void onStart(Player player)
+    public void onStart(LivingEntity player)
     {
     }
 
-    public void onEnd(Player player)
+    public void onEnd(LivingEntity player)
     {
     }
 }

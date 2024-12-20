@@ -1,52 +1,36 @@
 package net.splatcraft.data.capabilities.inkoverlay;
 
-import net.minecraft.core.Direction;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.INBTSerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class InkOverlayCapability implements ICapabilityProvider, INBTSerializable<NbtCompound>
+import java.util.concurrent.ConcurrentHashMap;
+
+public class InkOverlayCapability
 {
-    public static Capability<InkOverlayInfo> CAPABILITY = CapabilityManager.get(new CapabilityToken<>()
-    {
-    });
-    private InkOverlayInfo inkOverlayInfo = null;
-    private final LazyOptional<InkOverlayInfo> opt = LazyOptional.of(() ->
-        inkOverlayInfo == null ? (inkOverlayInfo = new InkOverlayInfo()) : inkOverlayInfo);
+    private static final ConcurrentHashMap<LivingEntity, InkOverlayInfo> map = new ConcurrentHashMap<>();
 
     public static InkOverlayInfo get(LivingEntity entity) throws NullPointerException
     {
-        return entity.getCapability(CAPABILITY).orElseThrow(NullPointerException::new);
+        return map.computeIfAbsent(entity, t -> new InkOverlayInfo());
     }
 
     public static boolean hasCapability(LivingEntity entity)
     {
-        return entity.getCapability(CAPABILITY).isPresent();
+        return map.containsKey(entity);
     }
 
-    @NotNull
-    @Override
-    public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side)
+    public static void serialize(LivingEntity entity, NbtCompound data)
     {
-        return cap == CAPABILITY ? opt.cast() : LazyOptional.empty();
+        get(entity).writeNBT(data);
     }
 
-    @Override
-    public NbtCompound serializeNBT()
+    public static void deserialize(LivingEntity entity, NbtCompound data)
     {
-        return opt.orElse(null).writeNBT(new NbtCompound());
+        get(entity).readNBT(data);
     }
 
-    @Override
-    public void deserializeNBT(NbtCompound nbt)
+    public static void remove(LivingEntity livingEntity)
     {
-        opt.orElse(null).readNBT(nbt);
+        map.remove(livingEntity);
     }
 }
