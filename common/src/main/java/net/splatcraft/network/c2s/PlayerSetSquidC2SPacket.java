@@ -13,7 +13,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(PlayerSetSquidC2SPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(PlayerSetSquidC2SPacket.class);
     private final boolean squid, isCancel;
 
     public PlayerSetSquidC2SPacket(boolean squid, boolean sendSquidCancel)

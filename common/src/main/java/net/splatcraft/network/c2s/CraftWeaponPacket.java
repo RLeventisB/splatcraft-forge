@@ -19,7 +19,7 @@ import java.util.Optional;
 
 public class CraftWeaponPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CraftWeaponPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CraftWeaponPacket.class);
     Identifier recipeID;
     int subtype;
 

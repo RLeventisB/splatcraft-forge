@@ -11,7 +11,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class RequestUpdateStageSpawnPadsPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestUpdateStageSpawnPadsPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestUpdateStageSpawnPadsPacket.class);
     final String stageId;
 
     public RequestUpdateStageSpawnPadsPacket(String stageId)

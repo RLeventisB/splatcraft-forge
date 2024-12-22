@@ -8,7 +8,7 @@ import net.splatcraft.util.PlayerCharge;
 
 public class UpdateChargeStatePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateChargeStatePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateChargeStatePacket.class);
     private final boolean hasCharge;
 
     public UpdateChargeStatePacket(boolean hasCharge)

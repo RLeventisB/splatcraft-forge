@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class UpdateIntGamerulesPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
     public TreeMap<Integer, Integer> intRules;
 
     public UpdateIntGamerulesPacket(TreeMap<Integer, Integer> intRules)

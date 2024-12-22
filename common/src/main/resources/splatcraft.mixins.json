@@ -13,9 +13,11 @@
         "ItemRenderingMixins$HeldItemRendererMixin",
         "PlayerListMixin",
         "PlayerMixins$PlayerMixin",
+        "PlayerMixins$ServerPlayerMixin",
         "ProjectileMixin$InkProjectileDataMixin",
         "ProjectileMixin$InkProjectileMovementMixin",
-        "SaveInfoInjectorMixin",
+        "SaveDataMixins$LevelStorageMixin",
+        "SaveDataMixins$SessionMixin",
         "ServerGamePacketMixin",
         "SheepMixin",
         "SquidPassthroughMixin",
@@ -26,9 +28,6 @@
         "defaultRequire": 1
     },
     "client": [
-        "BlockRenderMixin$ChunkRegionAccessor",
-        "BlockRenderMixin$ChunkRenderDispatcherMixin",
-        "BlockRenderMixin$ChunkRenderDispatcherMixin$BakedModelQuadModifierMixin",
         "EntityLayerMixin",
         "EntityMixins$EntityRendererMixin",
         "GameRendererMixin",
@@ -41,6 +40,7 @@
         "SheepWoolLayerMixin",
         "WeaponHotkeyMixin$MinecraftInstance",
         "WeaponHotkeyMixin$PlayerControllerMix",
+        "accessors.ChunkRegionAccessor",
         "accessors.GameRendererFovAccessor",
         "accessors.MinecraftClientAccessor"
     ]

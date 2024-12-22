@@ -12,7 +12,7 @@ import net.splatcraft.util.InkColor;
 
 public class UpdateBlockColorPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_block_color_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_block_color_packet"));
     BlockPos pos;
     InkColor color;
     int inkVatPointer = -1;

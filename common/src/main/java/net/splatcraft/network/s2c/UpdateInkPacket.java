@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class UpdateInkPacket extends IncrementalChunkBasedPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_ink_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_ink_packet"));
     protected final HashMap<BlockPos, ChunkInk.BlockEntry> dirty;
 
     public UpdateInkPacket(ChunkPos chunkPos)

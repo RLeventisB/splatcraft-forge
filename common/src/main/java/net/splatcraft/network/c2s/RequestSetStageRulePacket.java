@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class RequestSetStageRulePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestSetStageRulePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestSetStageRulePacket.class);
     final String stageId;
     final String ruleId;
     final Boolean value;

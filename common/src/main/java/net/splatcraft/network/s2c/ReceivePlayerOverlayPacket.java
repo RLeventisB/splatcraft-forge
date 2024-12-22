@@ -16,7 +16,7 @@ import java.util.UUID;
 
 public class ReceivePlayerOverlayPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("receive_player_overlay_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("receive_player_overlay_packet"));
     final UUID player;
     final byte[] imageBytes;
 

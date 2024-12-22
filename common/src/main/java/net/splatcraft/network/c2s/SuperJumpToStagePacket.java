@@ -10,7 +10,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
     final String stageId;
 
     public SuperJumpToStagePacket(String stageId)

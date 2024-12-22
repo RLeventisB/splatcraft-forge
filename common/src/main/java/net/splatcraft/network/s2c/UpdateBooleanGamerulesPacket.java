@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateBooleanGamerulesPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateBooleanGamerulesPacket.class);
     public TreeMap<Integer, Boolean> booleanRules;
 
     public UpdateBooleanGamerulesPacket(TreeMap<Integer, Boolean> booleanRules)

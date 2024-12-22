@@ -76,13 +76,13 @@ public class SplatcraftPacketHandler
         CustomPayload.Id<MSG> id;
         try
         {
-            id = (CustomPayload.Id<MSG>) messageType.newInstance().getId();
+            id = (CustomPayload.Id<MSG>) messageType.getField("ID").get(null);
         }
-        catch (InstantiationException | IllegalAccessException e)
+        catch (IllegalAccessException | NoSuchFieldException e)
         {
             throw new RuntimeException(e);
         }
-        if (PlayC2SPacket.class.isAssignableFrom(messageType))
+	    if (PlayC2SPacket.class.isAssignableFrom(messageType))
         {
             NetworkManager.registerReceiver(
                 NetworkManager.Side.C2S,

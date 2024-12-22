@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class CreateOrEditStagePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CreateOrEditStagePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CreateOrEditStagePacket.class);
     final String stageId;
     final Text stageName;
     final BlockPos corner1;

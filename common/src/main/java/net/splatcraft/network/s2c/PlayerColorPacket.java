@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class PlayerColorPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_color_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_color_packet"));
     private final InkColor color;
     UUID target;
     String playerName;

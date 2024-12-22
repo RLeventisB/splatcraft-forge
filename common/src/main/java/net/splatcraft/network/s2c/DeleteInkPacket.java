@@ -18,7 +18,7 @@ import java.util.List;
 
 public class DeleteInkPacket extends IncrementalChunkBasedPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("delete_ink_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("delete_ink_packet"));
     public final List<BlockPos> toDelete;
 
     public DeleteInkPacket(ChunkPos chunkPos)

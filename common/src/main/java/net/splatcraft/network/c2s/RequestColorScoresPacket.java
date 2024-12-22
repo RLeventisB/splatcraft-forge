@@ -12,7 +12,7 @@ import net.splatcraft.util.InkColor;
 
 public class RequestColorScoresPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestColorScoresPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestColorScoresPacket.class);
 
     public RequestColorScoresPacket()
     {

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class RequestPlayerInfoPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestPlayerInfoPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestPlayerInfoPacket.class);
     UUID target;
 
     public RequestPlayerInfoPacket(PlayerEntity target)

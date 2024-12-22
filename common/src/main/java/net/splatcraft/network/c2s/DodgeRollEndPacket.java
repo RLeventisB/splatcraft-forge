@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class DodgeRollEndPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(DodgeRollEndPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(DodgeRollEndPacket.class);
     UUID target;
 
     public DodgeRollEndPacket(UUID target)

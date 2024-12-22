@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class UseJumpLurePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UseJumpLurePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UseJumpLurePacket.class);
     @Nullable
     final UUID targetUUID;
     final InkColor color;

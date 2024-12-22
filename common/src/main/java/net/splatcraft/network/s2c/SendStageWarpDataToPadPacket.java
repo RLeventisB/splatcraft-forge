@@ -15,7 +15,7 @@ import java.util.List;
 
 public class SendStageWarpDataToPadPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendStageWarpDataToPadPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendStageWarpDataToPadPacket.class);
     final List<String> validStages;
     final List<String> outOfReachStages;
     final List<String> needsUpdate;

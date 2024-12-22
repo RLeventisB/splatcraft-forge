@@ -17,7 +17,7 @@ import java.util.UUID;
 
 public class SendPlayerOverlayPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendPlayerOverlayPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendPlayerOverlayPacket.class);
     final UUID player;
     final byte[] imageBytes;
     @Environment(EnvType.CLIENT)

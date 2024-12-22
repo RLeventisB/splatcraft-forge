@@ -15,6 +15,7 @@ accessible method net/minecraft/world/GameRules$IntRule create (I)Lnet/minecraft
 accessible method net/minecraft/scoreboard/ScoreboardCriterion <init> (Ljava/lang/String;)V # ObjectiveCriteria
 
 accessible field net/minecraft/scoreboard/ScoreboardCriterion CRITERIA Ljava/util/Map; # CRITERIA_CACHE
+accessible method net/minecraft/scoreboard/ScoreboardCriterion getOrCreateStatCriterion (Ljava/lang/String;)Ljava/util/Optional;
 
 # DamageSources thank u https://github/com/Glitchfiend/BiomesOPlenty/blob/551bff467ade42cb2a0b23609f439137ca7fa60f/src/main/resources/META-INF/accesstransformer/cfg for existing
 #accessible method net/minecraft/entity/damage/DamageSources *

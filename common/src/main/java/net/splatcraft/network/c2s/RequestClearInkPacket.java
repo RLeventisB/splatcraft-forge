@@ -11,7 +11,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class RequestClearInkPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestClearInkPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestClearInkPacket.class);
     final String stageId;
 
     public RequestClearInkPacket(String stageId)

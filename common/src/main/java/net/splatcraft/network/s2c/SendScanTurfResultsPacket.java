@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class SendScanTurfResultsPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("send_scarf_turf_results_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("send_scarf_turf_results_packet"));
     InkColor[] colors;
     Float[] scores;
     int length;

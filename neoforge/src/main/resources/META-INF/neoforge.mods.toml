@@ -54,3 +54,5 @@ side = "BOTH"
 
 [[mixins]]
 config = "splatcraft.mixins.json"
+[[mixins]]
+config = "splatcraft-neoforge.mixins.json"

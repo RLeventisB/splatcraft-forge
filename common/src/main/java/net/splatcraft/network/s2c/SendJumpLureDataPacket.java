@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class SendJumpLureDataPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("send_jump_lure_data_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("send_jump_lure_data_packet"));
     final InkColor color;
     final boolean canJumpToSpawn;
     final BlockPos spawnPosition;

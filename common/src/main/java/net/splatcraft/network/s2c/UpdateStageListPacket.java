@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class UpdateStageListPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateStageListPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateStageListPacket.class);
     private static final PacketCodec<RegistryByteBuf, Map<String, Stage>> STAGE_INFO_PACKET_CODEC = PacketCodecs.map(HashMap::new, PacketCodecs.STRING, Stage.PACKET_CODEC);
     Map<String, Stage> stages;
 

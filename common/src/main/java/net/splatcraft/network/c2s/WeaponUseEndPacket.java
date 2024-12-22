@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class WeaponUseEndPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WeaponUseEndPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WeaponUseEndPacket.class);
     UUID target;
 
     public WeaponUseEndPacket(UUID target)

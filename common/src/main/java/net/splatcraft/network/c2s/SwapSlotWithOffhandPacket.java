@@ -9,7 +9,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class SwapSlotWithOffhandPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SwapSlotWithOffhandPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SwapSlotWithOffhandPacket.class);
     final int slot;
     final boolean stopUsing;
 

@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
     InkColor[] colors;
     boolean add;
     boolean clear;

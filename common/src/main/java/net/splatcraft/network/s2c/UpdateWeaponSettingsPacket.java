@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateWeaponSettingsPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateWeaponSettingsPacket.class);
     private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, String> CLASS_TO_TYPE = new HashMap<>()
     {{
         for (Entry<String, Class<? extends AbstractWeaponSettings<?, ?>>> entry : DataHandler.WeaponStatsListener.SETTING_TYPES.entrySet())

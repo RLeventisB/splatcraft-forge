@@ -13,7 +13,7 @@ import java.util.Optional;
 // this is basically ServerboundPlayerInputPacket but it ignores if youre riding a vehicle
 public class SquidInputPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SquidInputPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SquidInputPacket.class);
     private final Optional<Direction> climbedDirection;
     private final float squidSurgeCharge;
 

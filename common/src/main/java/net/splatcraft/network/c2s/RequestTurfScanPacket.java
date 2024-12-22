@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 public class RequestTurfScanPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestTurfScanPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestTurfScanPacket.class);
     final String stageId;
     final boolean isTopDown;
 

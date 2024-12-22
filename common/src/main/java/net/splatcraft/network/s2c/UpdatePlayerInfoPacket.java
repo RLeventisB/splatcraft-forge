@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class UpdatePlayerInfoPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdatePlayerInfoPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdatePlayerInfoPacket.class);
     UUID target;
     NbtCompound nbt;
 

@@ -12,7 +12,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class UpdateInkOverlayPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateInkOverlayPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateInkOverlayPacket.class);
     int entityId;
     NbtCompound nbt;
     public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayInfo info)

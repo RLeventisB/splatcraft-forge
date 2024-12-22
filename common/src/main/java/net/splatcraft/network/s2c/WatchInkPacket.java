@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class WatchInkPacket extends IncrementalChunkBasedPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WatchInkPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WatchInkPacket.class);
     private final HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty;
 
     public WatchInkPacket(ChunkPos chunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty)

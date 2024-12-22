@@ -11,7 +11,7 @@ import net.splatcraft.util.CommonUtils;
 
 public class RequestWarpDataPacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestWarpDataPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestWarpDataPacket.class);
 
     public static RequestWarpDataPacket decode(PacketByteBuf buf)
     {

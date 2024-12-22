@@ -13,7 +13,7 @@ import net.splatcraft.client.gui.stagepad.StageSettingsScreen;
 
 public class NotifyStageCreatePacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("notify_stage_create_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("notify_stage_create_packet"));
     final String stageId;
 
     public NotifyStageCreatePacket(String stageId)

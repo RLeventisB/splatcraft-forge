@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_set_squid_s2c_packet"));
+    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_set_squid_s2c_packet"));
     private final boolean squid, isCancel;
     UUID target;
 

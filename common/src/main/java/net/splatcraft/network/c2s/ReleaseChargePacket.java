@@ -10,7 +10,7 @@ import net.splatcraft.util.PlayerCharge;
 
 public class ReleaseChargePacket extends PlayC2SPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(ReleaseChargePacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(ReleaseChargePacket.class);
     private final float charge;
     private final ItemStack stack;
     private final boolean resetCharge;

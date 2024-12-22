@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class UpdateClientColorsPacket extends PlayS2CPacket
 {
-    private static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateClientColorsPacket.class);
+    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateClientColorsPacket.class);
     final TreeMap<UUID, InkColor> colors;
     final boolean reset;
 
