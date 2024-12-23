@@ -4,7 +4,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.ComponentMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,7 +14,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.*;
 import net.minecraft.util.shape.VoxelShape;
@@ -38,40 +36,26 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftStats;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class ColorUtils
 {
 	// actual heresy but i am a c# dev so public static!!!!!
 	public static final Random random = new Random();
-	private static final int ORANGE = 0xDF641A;
-	private static final int BLUE = 0x26229F;
-	private static final int GREEN = 0x409d3b;
-	private static final int PINK = 0xc83d79;
-	private static final int DEFAULT = 0x1F1F2D;
-	private static final int COLOR_LOCK_FRIENDLY = 0xDEA801;
-	private static final int COLOR_LOCK_HOSTILE = 0x4717A9;
-	private static final Collection<InkColor> getStarterColors = InkColorGroups.STARTER_COLORS.getAll();
-	public static @Nullable SplatcraftComponents.ItemColorData getColorDataFromStack(ItemStack stack)
-	{
-		return stack.getComponents().getOrDefault(SplatcraftComponents.ITEM_COLOR_DATA, null);
-	}
 	public static boolean doesStackHaveColorData(ItemStack stack)
 	{
-		return stack.getComponents().contains(SplatcraftComponents.ITEM_COLOR_DATA);
+		return stack.contains(SplatcraftComponents.ITEM_COLOR_DATA);
 	}
-	public static @Nullable SplatcraftComponents.ItemColorData getColorDataFromStack(ItemStack stack, Supplier<SplatcraftComponents.ItemColorData> fallback)
+	public static <T> T applyColorDataPredicate(ItemStack stack, Function<SplatcraftComponents.ItemColorData, T> predicate, T fallback)
 	{
-		ComponentMap components = stack.getComponents();
-		if (components.contains(SplatcraftComponents.ITEM_COLOR_DATA))
-			return components.get(SplatcraftComponents.ITEM_COLOR_DATA);
-		return fallback.get();
+		if (stack.contains(SplatcraftComponents.ITEM_COLOR_DATA))
+			return predicate.apply(stack.get(SplatcraftComponents.ITEM_COLOR_DATA));
+		return fallback;
 	}
 	public static @NotNull InkColor getEntityColor(Entity entity)
 	{
@@ -118,30 +102,33 @@ public class ColorUtils
 	}
 	public static boolean isInverted(ItemStack stack)
 	{
-		return getColorDataFromStack(stack).inverted();
+		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::hasInvertedColor, false);
 	}
-	public static ItemStack setInverted(ItemStack stack, boolean inverted)
+	public static ItemStack withInvertedColor(ItemStack stack, boolean inverted)
 	{
-		SplatcraftComponents.ItemColorData colorData = getColorDataFromStack(stack, SplatcraftComponents.ItemColorData.DEFAULT);
-		colorData.setInverted(inverted);
+		stack.apply(
+			SplatcraftComponents.ITEM_COLOR_DATA,
+			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			v -> v.withInvertedColor(inverted)
+		);
 		return stack;
 	}
 	public static @NotNull InkColor getInkColor(ItemStack stack)
 	{
-		SplatcraftComponents.ItemColorData colorData = getColorDataFromStack(stack);
-		return doesStackHaveColorData(stack) ? colorData.inkColor() : InkColor.INVALID;
+		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::color, InkColor.INVALID);
 	}
 	public static @NotNull InkColor getInkColorOrInverted(ItemStack stack)
 	{
-		return getColorDataFromStack(stack).getEffectiveColor();
+		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::color, InkColor.INVALID);
 	}
-	public static ItemStack setInkColor(ItemStack stack, InkColor color)
+	public static ItemStack withInkColor(ItemStack stack, InkColor color)
 	{
-		SplatcraftComponents.ItemColorData colorData = getColorDataFromStack(stack);
-		if (color == null)
-			colorData.setInkColor(InkColor.DEFAULT);
-		else
-			colorData.setInkColor(color);
+		InkColor finalColor = color == null ? getDefaultColor() : color;
+		stack.apply(
+			SplatcraftComponents.ITEM_COLOR_DATA,
+			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			v -> v.withInkColor(finalColor)
+		);
 		return stack;
 	}
 	public static InkColor getInkColor(BlockEntity te)
@@ -153,7 +140,7 @@ public class ColorUtils
 		if (world.getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			return coloredBlock.getColor(world, pos);
 		
-		return InkColor.DEFAULT;
+		return getDefaultColor();
 	}
 	public static InkColor getInkColorOrInverted(World world, BlockPos pos)
 	{
@@ -164,12 +151,12 @@ public class ColorUtils
 	{
 		return world.getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock && coloredBlock.isInverted(world, pos);
 	}
-	public static void setInverted(World world, BlockPos pos, boolean inverted)
+	public static void withInvertedColor(World world, BlockPos pos, boolean inverted)
 	{
 		if (world.getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			coloredBlock.setInverted(world, pos, inverted);
 	}
-	public static boolean setInkColor(BlockEntity te, InkColor color)
+	public static boolean withInkColor(BlockEntity te, InkColor color)
 	{
 		if (te instanceof InkColorTileEntity te1)
 		{
@@ -187,13 +174,13 @@ public class ColorUtils
 		List<ItemStack> items = new ArrayList<>();
 		
 		if (matching)
-			items.add(setInkColor(item.asItem().getDefaultStack(), null));
+			items.add(withInkColor(item.asItem().getDefaultStack(), null));
 		if (inverted)
-			items.add(setInverted(setColorLocked(item.asItem().getDefaultStack(), false), true));
+			items.add(withInvertedColor(withColorLocked(item.asItem().getDefaultStack(), false), true));
 		
 		if (starter)
 			for (InkColor color : getGetStarterColors())
-				items.add(setColorLocked(setInkColor(item.asItem().getDefaultStack(), color), true));
+				items.add(withColorLocked(withInkColor(item.asItem().getDefaultStack(), color), true));
 		
 		return items;
 	}
@@ -227,14 +214,14 @@ public class ColorUtils
 	}
 	public static MutableText getColorName(InkColor color)
 	{
-		
 		return MutableText.of(new InkColorTranslatableContents(color));//Text.literal("#" + String.format("%06X", color).toUpperCase());
 	}
 	public static MutableText getFormatedColorName(InkColor color, boolean colorless)
 	{
-		return color == getDefaultColor()
-			? Text.literal((colorless ? Formatting.GRAY : "") + getColorName(color).getString())
-			: getColorName(color).setStyle(getColorName(color).getStyle().withColor(TextColor.fromRgb(color.getColor())));
+		MutableText colorName = getColorName(color);
+		if (color == getDefaultColor())
+			return Text.literal((colorless ? Formatting.GRAY : "") + colorName.getString());
+		return colorName.withColor(color.getColor());
 	}
 	public static boolean colorEquals(World world, BlockPos pos, InkColor colorA, InkColor colorB)
 	{
@@ -269,15 +256,18 @@ public class ColorUtils
 			return false;
 		return colorEquals(entity.getWorld(), entity.getBlockPos(), entityColor, inkColor);
 	}
-	public static ItemStack setColorLocked(ItemStack stack, boolean isLocked)
+	public static ItemStack withColorLocked(ItemStack stack, boolean isLocked)
 	{
-		getColorDataFromStack(stack).setColorImmutable(isLocked);
+		stack.apply(
+			SplatcraftComponents.ITEM_COLOR_DATA,
+			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			v -> v.withColorLocked(isLocked)
+		);
 		return stack;
 	}
 	public static boolean isColorLocked(ItemStack stack)
 	{
-		SplatcraftComponents.ItemColorData colorData = getColorDataFromStack(stack);
-		return colorData != null && colorData.isColorImmutable();
+		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::colorLocked, false);
 	}
 	public static float[] hexToRGB(int color)
 	{
@@ -398,6 +388,9 @@ public class ColorUtils
 	}
 	public static InkColor getDefaultColor()
 	{
+		if (!InkColorRegistry.REGISTRY.stream().findAny().isPresent())
+			return new InkColor(0x1F1F2D);
+		
 		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("default"));
 	}
 	public static InkColor getColorLockFriendly()

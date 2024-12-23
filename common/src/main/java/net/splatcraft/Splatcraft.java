@@ -13,6 +13,7 @@ import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.config.ConfigScreenProvider;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.registries.*;
@@ -34,6 +35,7 @@ public final class Splatcraft
 		modInstance.registerConfigurationScreen(configProvider);
 		SplatcraftConfig.initialize();
 		
+		DataHandler.addReloadListeners();
 		SplatcraftCommands.registerCommands();
 		SplatcraftTags.register();
 		ScoreboardHandler.register();

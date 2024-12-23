@@ -40,7 +40,6 @@ public class ChunkInkCapability
 			{
 				return innerMap.get(pos.toLong());
 			}
-			throw new NullPointerException("Couldn't find WorldInk capability!");
 		}
 		throw new NullPointerException("Couldn't find WorldInk capability!");
 	}
@@ -110,6 +109,9 @@ public class ChunkInkCapability
 	public static void unloadChunkData(World world, ChunkPos pos)
 	{
 		ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+		
+		if (map == null)
+			return;
 		
 		map.remove(pos.toLong());
 		if (map.isEmpty())

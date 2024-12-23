@@ -51,7 +51,7 @@ public class SplatcraftConfigImpl
 	}
 	public static class Server
 	{
-//        public static ModConfigSpec.BooleanValue limitFallSpeed;
+		//        public static ModConfigSpec.BooleanValue limitFallSpeed;
 		public static void init(ModConfigSpec.Builder server)
 		{
 			server.comment("Server Settings");
@@ -60,7 +60,7 @@ public class SplatcraftConfigImpl
 	}
 	public static class Client
 	{
-//        public static ModConfigSpec.EnumValue<SplatcraftKeyHandler.KeyMode> squidKeyMode;
+		//        public static ModConfigSpec.EnumValue<SplatcraftKeyHandler.KeyMode> squidKeyMode;
 //        public static ModConfigSpec.EnumValue<SplatcraftConfig.InkIndicator> inkIndicator;
 //        public static ModConfigSpec.BooleanRule vanillaInkDurability;
 //        public static ModConfigSpec.BooleanRule holdBarrierToRender;
@@ -79,7 +79,7 @@ public class SplatcraftConfigImpl
 			registerSetting(client.comment("Squid Key Mode").defineEnum("splatcraft.squidKeyMode", SplatcraftKeyHandler.KeyMode.TOGGLE));
 			registerSetting(client.comment("Determines how the amount of ink left in your tank is visualized.").defineEnum("splatcraft.inkIndicator", SplatcraftConfig.InkIndicator.BOTH));
 			registerSetting(client.comment("Determines whether the indicator that determines how much ink you have left matches vanilla durability colors instead of your ink color.")
-				.define("splatcraft.vanillaInkDurabilityColor", false));
+				.define("splatcraft.vanillaInkDurability", false));
 			registerSetting(client.comment("Prevents Stage Barriers from rendering in creative mode unless the player is holding one in their hand.")
 				.define("splatcraft.holdBarrierToRender", true));
 			registerSetting(client.comment("How far away stage barriers or voids will render away from you.")

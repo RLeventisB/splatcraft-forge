@@ -21,110 +21,95 @@ import org.jetbrains.annotations.Nullable;
 
 public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBlock
 {
-    public final boolean blocksColor;
-
-    public ColoredBarrierBlock(boolean blocksColor)
-    {
-        super(false);
-        this.blocksColor = blocksColor;
-    }
-
-    @Override
-    public @Nullable BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
-    {
-        return SplatcraftTileEntities.colorBarrierTileEntity.get().instantiate(pos, state);
-    }
-
-    @Override
-    public boolean setColor(World world, BlockPos pos, InkColor color)
-    {
-        BlockState state = world.getBlockState(pos);
-        if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
-        {
-            te.setColor(color);
-            world.updateListeners(pos, state, state, 3);
-            state.updateNeighbors(world, pos, 3);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public InkColor getColor(WorldView world, BlockPos pos)
-    {
-        if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
-            return te.getColor();
-        return InkColor.INVALID;
-    }
-
-    @Override
-    public boolean isInverted(World world, BlockPos pos)
-    {
-        return (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te) && te.isInverted();
-    }
-
-    @Override
-    public void setInverted(World world, BlockPos pos, boolean inverted)
-    {
-        if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
-            te.setInverted(inverted);
-    }
-
-    @Override
-    public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
-    {
-        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getPickStack(level, pos, state), getColor(level, pos)), true);
-    }
-
-    @Override
-    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
-    {
-        if (!(context instanceof EntityShapeContext entityContext))
-            return super.getCollisionShape(state, levelIn, pos, context);
-
-        if (ColorUtils.getEntityColor(entityContext.getEntity()).isValid())
-            return !canAllowThrough(pos, entityContext.getEntity()) ? super.getCollisionShape(state, levelIn, pos, context) : VoxelShapes.empty();
-        return entityContext.getEntity() == null || blocksColor ? super.getCollisionShape(state, levelIn, pos, context) : VoxelShapes.empty();
-    }
-
-    public boolean canAllowThrough(BlockPos pos, Entity entity)
-    {
-        return blocksColor != ColorUtils.colorEquals(entity, entity.getWorld().getBlockEntity(pos));
-    }
-
-    @Override
-    public boolean canClimb()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean canSwim()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean canDamage()
-    {
-        return false;
-    }
-
-    @Override
-    public boolean canRemoteColorChange(World world, BlockPos pos, InkColor color, InkColor newColor)
-    {
-        return IColoredBlock.super.canRemoteColorChange(world, pos, color, newColor);
-    }
-
-    @Override
-    public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
-    {
-        return setColor(world, pos, newColor);
-    }
-
-    @Override
-    public boolean remoteInkClear(World world, BlockPos pos)
-    {
-        return false;
-    }
+	public final boolean blocksColor;
+	public ColoredBarrierBlock(boolean blocksColor)
+	{
+		super(false);
+		this.blocksColor = blocksColor;
+	}
+	@Override
+	public @Nullable BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+	{
+		return SplatcraftTileEntities.colorBarrierTileEntity.get().instantiate(pos, state);
+	}
+	@Override
+	public boolean setColor(World world, BlockPos pos, InkColor color)
+	{
+		BlockState state = world.getBlockState(pos);
+		if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
+		{
+			te.setColor(color);
+			world.updateListeners(pos, state, state, 3);
+			state.updateNeighbors(world, pos, 3);
+			return true;
+		}
+		return false;
+	}
+	@Override
+	public InkColor getColor(WorldView world, BlockPos pos)
+	{
+		if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
+			return te.getColor();
+		return InkColor.INVALID;
+	}
+	@Override
+	public boolean isInverted(World world, BlockPos pos)
+	{
+		return (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te) && te.isInverted();
+	}
+	@Override
+	public void setInverted(World world, BlockPos pos, boolean inverted)
+	{
+		if (world.getBlockEntity(pos) instanceof ColoredBarrierTileEntity te)
+			te.setInverted(inverted);
+	}
+	@Override
+	public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
+	{
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.getPickStack(level, pos, state), getColor(level, pos)), true);
+	}
+	@Override
+	public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
+	{
+		if (!(context instanceof EntityShapeContext entityContext))
+			return super.getCollisionShape(state, levelIn, pos, context);
+		
+		if (ColorUtils.getEntityColor(entityContext.getEntity()).isValid())
+			return !canAllowThrough(pos, entityContext.getEntity()) ? super.getCollisionShape(state, levelIn, pos, context) : VoxelShapes.empty();
+		return entityContext.getEntity() == null || blocksColor ? super.getCollisionShape(state, levelIn, pos, context) : VoxelShapes.empty();
+	}
+	public boolean canAllowThrough(BlockPos pos, Entity entity)
+	{
+		return blocksColor != ColorUtils.colorEquals(entity, entity.getWorld().getBlockEntity(pos));
+	}
+	@Override
+	public boolean canClimb()
+	{
+		return false;
+	}
+	@Override
+	public boolean canSwim()
+	{
+		return false;
+	}
+	@Override
+	public boolean canDamage()
+	{
+		return false;
+	}
+	@Override
+	public boolean canRemoteColorChange(World world, BlockPos pos, InkColor color, InkColor newColor)
+	{
+		return IColoredBlock.super.canRemoteColorChange(world, pos, color, newColor);
+	}
+	@Override
+	public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
+	{
+		return setColor(world, pos, newColor);
+	}
+	@Override
+	public boolean remoteInkClear(World world, BlockPos pos)
+	{
+		return false;
+	}
 }

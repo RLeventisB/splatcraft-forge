@@ -106,7 +106,7 @@ public class SplatcraftItemGroups
 			output.addAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
 		}).build());
 	public static final RegistrySupplier<ItemGroup> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.setInkColor(splattershot.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
+		.icon(() -> ColorUtils.withInkColor(splattershot.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
 		.displayName(Text.translatable("itemGroup.splatcraft_weapons"))
 		.entries((parameters, output) ->
 		{
@@ -128,7 +128,7 @@ public class SplatcraftItemGroups
 			output.add(inkClothBoots.get());
 		}).build());
 	public static final RegistrySupplier<ItemGroup> GROUP_COLORS = REGISTRY.register("splatcraft_colors", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.setInkColor(inkwell.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
+		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
 		.displayName(Text.translatable("itemGroup.splatcraft_colors"))
 		.noScrollbar()
 		.entries((parameters, output) ->
@@ -136,9 +136,9 @@ public class SplatcraftItemGroups
 			for (Item item : colorTabItems)
 			{
 				for (InkColor color : InkColorGroups.CREATIVE_TAB_COLORS.getAll().stream().toList())
-					output.add(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(item), color), true));
+					output.add(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
 				if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
-					output.add(ColorUtils.setInverted(new ItemStack(item), true));
+					output.add(ColorUtils.withInvertedColor(new ItemStack(item), true));
 			}
 		})
 		.build());

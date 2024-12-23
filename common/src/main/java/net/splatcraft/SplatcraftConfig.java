@@ -29,7 +29,7 @@ public class SplatcraftConfig
 		// client settings
 		settingsMap.put("splatcraft.squidKeyMode", new Setting<>(SplatcraftKeyHandler.KeyMode.class));
 		settingsMap.put("splatcraft.inkIndicator", new Setting<>(InkIndicator.class));
-		settingsMap.put("splatcraft.vanillaInkDurabilityColor", new Setting<>(Boolean.class));
+		settingsMap.put("splatcraft.vanillaInkDurability", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.holdBarrierToRender", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.barrierRenderDistance", new Setting<>(Integer.class));
 		settingsMap.put("splatcraft.colorLock", new Setting<>(Double.class));
@@ -77,7 +77,7 @@ public class SplatcraftConfig
 	{
 		if (!settingsMap.containsKey(name))
 		{
-			throw new IllegalArgumentException("No setting named " + name + "exists");
+			throw new IllegalArgumentException("No setting named " + name + " exists");
 		}
 		
 		Setting<T> setting = (Setting<T>) settingsMap.get(name);

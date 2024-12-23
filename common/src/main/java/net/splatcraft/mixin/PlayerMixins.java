@@ -38,7 +38,7 @@ public class PlayerMixins
 		}
 	}
 	@Mixin(ServerPlayerEntity.class)
-	public static class ServerPlayerMixin
+	public static class ServerPlayerMixinFabric
 	{
 		@Inject(method = "changeGameMode", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V"))
 		public void splatcraft$onChangeGamemode(GameMode gameMode, CallbackInfoReturnable<Boolean> cir)
@@ -47,7 +47,7 @@ public class PlayerMixins
 		}
 	}
 	@Mixin(ClientPlayerEntity.class)
-	public static class LocalPlayerMixin
+	public static class LocalPlayerMixinFabric
 	{
 		@Shadow
 		public Input input;

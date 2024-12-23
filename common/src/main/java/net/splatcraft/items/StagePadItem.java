@@ -28,86 +28,78 @@ import org.jetbrains.annotations.Nullable;
 
 public class StagePadItem extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
-    public static final UseAction OPEN_MAIN_MENU = ((level, player, hand, stack, pos) ->
-        ((StagePadItem) stack.getItem()).openMenu(stack));
-    public static UseAction clientUseAction = OPEN_MAIN_MENU;
-
-    public StagePadItem()
-    {
-        super(new Item.Settings().maxCount(1));
-        SplatcraftItems.inkColoredItems.add(this);
-    }
-
-    public static void resetUseAction()
-    {
-        clientUseAction = OPEN_MAIN_MENU;
-    }
-
-    @Override
-    public @NotNull TypedActionResult<ItemStack> use(World world, PlayerEntity player, @NotNull Hand hand)
-    {
-        ItemStack itemstack = player.getStackInHand(hand);
-        player.incrementStat(Stats.USED.getOrCreateStat(this));
-
-        if (world.isClient())
-            clientUseAction.apply(world, player, hand, itemstack, null);
-
-        return TypedActionResult.success(itemstack, world.isClient());
-    }
-
-    @Override
-    public @NotNull ActionResult useOnBlock(ItemUsageContext context)
-    {
-        if (context.getWorld().isClient())
-            clientUseAction.apply(context.getWorld(), context.getPlayer(), context.getHand(), context.getStack(), context.getBlockPos());
-
-        return ActionResult.success(context.getWorld().isClient());
-    }
-
-    @Environment(EnvType.CLIENT)
-    public void openMenu(ItemStack itemStack)
-    {
-        MinecraftClient.getInstance().setScreen(new StageSelectionScreen(itemStack.getName()));
-    }
-
-    @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
-    {
-        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-
-        if (entity instanceof PlayerEntity player)
-        {
-            if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
-                && EntityInfoCapability.hasCapability(player))
-                ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
-        }
-    }
-
-    @Override
-    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
-    {
-        BlockPos pos = entity.getBlockPos().down();
-
-        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
-        {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
-            {
-                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getStack(), true);
-            }
-        }
-        else if ((!(stack.getItem() instanceof SubWeaponItem) || !SubWeaponItem.singleUse(stack))
-            && InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack).getColor() != 0xFFFFFF)
-        {
-            ColorUtils.setInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
-            ColorUtils.setColorLocked(stack, false);
-        }
-
-        return false;
-    }
-
-    public interface UseAction
-    {
-        void apply(World world, PlayerEntity player, Hand hand, ItemStack stack, @Nullable BlockPos pos);
-    }
+	public static final UseAction OPEN_MAIN_MENU = ((level, player, hand, stack, pos) ->
+		((StagePadItem) stack.getItem()).openMenu(stack));
+	public static UseAction clientUseAction = OPEN_MAIN_MENU;
+	public StagePadItem()
+	{
+		super(new Item.Settings().maxCount(1));
+		SplatcraftItems.inkColoredItems.add(this);
+	}
+	public static void resetUseAction()
+	{
+		clientUseAction = OPEN_MAIN_MENU;
+	}
+	@Override
+	public @NotNull TypedActionResult<ItemStack> use(World world, PlayerEntity player, @NotNull Hand hand)
+	{
+		ItemStack itemstack = player.getStackInHand(hand);
+		player.incrementStat(Stats.USED.getOrCreateStat(this));
+		
+		if (world.isClient())
+			clientUseAction.apply(world, player, hand, itemstack, null);
+		
+		return TypedActionResult.success(itemstack, world.isClient());
+	}
+	@Override
+	public @NotNull ActionResult useOnBlock(ItemUsageContext context)
+	{
+		if (context.getWorld().isClient())
+			clientUseAction.apply(context.getWorld(), context.getPlayer(), context.getHand(), context.getStack(), context.getBlockPos());
+		
+		return ActionResult.success(context.getWorld().isClient());
+	}
+	@Environment(EnvType.CLIENT)
+	public void openMenu(ItemStack itemStack)
+	{
+		MinecraftClient.getInstance().setScreen(new StageSelectionScreen(itemStack.getName()));
+	}
+	@Override
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	{
+		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
+		
+		if (entity instanceof PlayerEntity player)
+		{
+			if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+				&& EntityInfoCapability.hasCapability(player))
+				ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
+		}
+	}
+	@Override
+	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	{
+		BlockPos pos = entity.getBlockPos().down();
+		
+		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
+		{
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
+			{
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+				ColorUtils.withColorLocked(entity.getStack(), true);
+			}
+		}
+		else if ((!(stack.getItem() instanceof SubWeaponItem) || !SubWeaponItem.singleUse(stack))
+			&& InkedBlock.causesClear(entity.getWorld(), pos, entity.getWorld().getBlockState(pos)) && ColorUtils.getInkColor(stack).getColor() != 0xFFFFFF)
+		{
+			ColorUtils.withInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
+			ColorUtils.withColorLocked(stack, false);
+		}
+		
+		return false;
+	}
+	public interface UseAction
+	{
+		void apply(World world, PlayerEntity player, Hand hand, ItemStack stack, @Nullable BlockPos pos);
+	}
 }

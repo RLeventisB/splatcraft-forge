@@ -27,60 +27,56 @@ import java.util.List;
 
 public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatcraftForgeItemDummy
 {
-    public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType, Item.Settings settings)
-    {
-        super(material, armorType, settings);
-        SplatcraftItems.inkColoredItems.add(this);
-
-        CauldronBehavior.registerBehavior();
-        CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, CauldronBehavior.CLEAN_DYEABLE_ITEM);
-    }
-
-    public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType)
-    {
-        this(material, armorType, new Item.Settings().maxCount(1).component(DataComponentTypes.DYED_COLOR, new DyedColorComponent(0, false)));
-    }
-
-    @Override
-    public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
-    {
-        super.appendTooltip(stack, context, tooltip, flag);
-
-        if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
-            tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
-
-        if (ColorUtils.isColorLocked(stack))
-            tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
-        else
-            tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color").formatted(Formatting.GRAY));
-    }
-
-    @Override
-    public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
-    {
-        super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-
-        if (entity instanceof LivingEntity player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
-            && EntityInfoCapability.hasCapability(player))
-        {
-            ColorUtils.setInkColor(stack, ColorUtils.getEntityColor(player));
-        }
-    }
-
-    @Override
-    public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
-    {
-        BlockPos pos = entity.getBlockPos().down();
-
-        if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
-        {
-            if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
-            {
-                ColorUtils.setInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
-                ColorUtils.setColorLocked(entity.getStack(), true);
-            }
-        }
-
-        return false;
-    }
+	public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType, Item.Settings settings)
+	{
+		super(material, armorType, settings);
+		SplatcraftItems.inkColoredItems.add(this);
+		
+		CauldronBehavior.registerBehavior();
+		CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, CauldronBehavior.CLEAN_DYEABLE_ITEM);
+	}
+	public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType)
+	{
+		this(material, armorType, new Item.Settings().maxCount(1).component(DataComponentTypes.DYED_COLOR, new DyedColorComponent(0, false)));
+	}
+	@Override
+	public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
+	{
+		super.appendTooltip(stack, context, tooltip, flag);
+		
+		if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
+			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
+		
+		if (ColorUtils.isColorLocked(stack))
+			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
+		else
+			tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color").formatted(Formatting.GRAY));
+	}
+	@Override
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	{
+		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
+		
+		if (entity instanceof LivingEntity player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+			&& EntityInfoCapability.hasCapability(player))
+		{
+			ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
+		}
+	}
+	@Override
+	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	{
+		BlockPos pos = entity.getBlockPos().down();
+		
+		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
+		{
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
+			{
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+				ColorUtils.withColorLocked(entity.getStack(), true);
+			}
+		}
+		
+		return false;
+	}
 }
