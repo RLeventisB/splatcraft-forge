@@ -26,6 +26,7 @@ import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendJumpLureDataPacket;
@@ -193,7 +194,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		}
 	}
 	@Override
-	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.getBlockPos().down();
 		

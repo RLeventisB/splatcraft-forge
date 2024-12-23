@@ -7,12 +7,14 @@ import net.minecraft.block.TranslucentBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.enums.NoteBlockInstrument;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.BlockSoundGroup;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftTileEntities;
@@ -39,16 +41,16 @@ public class InkedGlassBlock extends TranslucentBlock implements IColoredBlock, 
 		return true;
 	}
 	@Override
-	public float[] getBeaconColorMultiplier(BlockState state, WorldAccess world, BlockPos pos, BlockPos beaconPos)
+	public Integer phGetBeaconColorMultiplier(BlockState state, WorldView world, BlockPos pos, BlockPos beaconPos)
 	{
-		return getColor(world, pos).getRGB();
+		return getColor(world, pos).getColor();
 	}
-	//  why ARE THERE TWOOO???????????????? IT'S 4 AM I CANT UNDERSTAND THIS
-    /*@Override
-    public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state)
-    {
-        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getPickStack(world, pos, state), getColor((World) world, pos)), true);
-    }*/
+	//  ok guys i learned why were there two getPickStack methods one was a forge override oops
+	@Override
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
+	{
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
+	}
 	@Override
 	public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
 	{

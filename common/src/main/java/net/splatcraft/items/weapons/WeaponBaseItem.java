@@ -27,11 +27,11 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.IColoredItem;
-import net.splatcraft.items.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -246,7 +246,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		return ShootingHandler.FiringStatData.DEFAULT;
 	}
 	@Override
-	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.getBlockPos().down();
 		
@@ -315,7 +315,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	@Override
 	public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
 	{
-		entity.stopUsingItem();
 		super.onStoppedUsing(stack, world, entity, timeLeft);
 	}
 	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)

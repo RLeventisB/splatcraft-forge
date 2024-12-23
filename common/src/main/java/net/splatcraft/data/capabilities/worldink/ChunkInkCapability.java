@@ -27,6 +27,26 @@ public class ChunkInkCapability
 	{
 		return has(world, chunk.getPos());
 	}
+	public static boolean hasAndNotEmpty(World world, BlockPos pos)
+	{
+		return hasAndNotEmpty(world, new ChunkPos(pos));
+	}
+	public static boolean hasAndNotEmpty(World world, ChunkPos pos)
+	{
+		if (inkMap.containsKey(world))
+		{
+			ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+			if (map.containsKey(pos.toLong()))
+			{
+				return map.get(pos.toLong()).isntEmpty();
+			}
+		}
+		return false;
+	}
+	public static boolean hasAndNotEmpty(World world, Chunk chunk)
+	{
+		return hasAndNotEmpty(world, chunk.getPos());
+	}
 	public static ChunkInk get(World world, BlockPos pos) throws NullPointerException
 	{
 		return get(world, new ChunkPos(pos));

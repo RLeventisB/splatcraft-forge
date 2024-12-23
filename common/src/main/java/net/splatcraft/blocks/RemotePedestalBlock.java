@@ -11,6 +11,7 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
@@ -20,6 +21,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.items.IColoredItem;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
@@ -51,9 +53,9 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, BlockEn
 		return SHAPE;
 	}
 	@Override
-	public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
 	{
-		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.getPickStack(level, pos, state), getColor(level, pos)), true);
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
 	}
 	@Override
 	protected void appendProperties(StateManager.Builder<Block, BlockState> container)
@@ -130,7 +132,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, BlockEn
 		return 0;
 	}
 	@Override
-	public boolean canConnectRedstone(BlockState state, BlockView level, BlockPos pos, @Nullable Direction side)
+	public boolean phCanConnectRedstone(BlockState state, BlockView level, BlockPos pos, @Nullable Direction side)
 	{
 		return true;
 	}

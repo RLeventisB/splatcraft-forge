@@ -25,6 +25,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.*;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.items.ColoredBlockItem;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -65,9 +66,9 @@ public class InkwellBlock extends Block implements IColoredBlock, Waterloggable,
 		}
 	}
 	@Override
-	public float[] getBeaconColorMultiplier(BlockState state, WorldAccess level, BlockPos pos, BlockPos beaconPos)
+	public Integer phGetBeaconColorMultiplier(BlockState state, WorldView level, BlockPos pos, BlockPos beaconPos)
 	{
-		return getColor(level, pos).getRGB();
+		return getColor(level, pos).getColor();
 	}
 	@Nullable
 	@Override
@@ -99,7 +100,7 @@ public class InkwellBlock extends Block implements IColoredBlock, Waterloggable,
 		return SHAPE;
 	}
 	@Override
-	public @NotNull PistonBehavior getPistonBehavior(@NotNull BlockState state)
+	public @NotNull PistonBehavior phGetPistonBehavior(@NotNull BlockState state)
 	{
 		return PistonBehavior.DESTROY;
 	}
@@ -134,7 +135,7 @@ public class InkwellBlock extends Block implements IColoredBlock, Waterloggable,
 		super.onPlaced(world, pos, state, entity, stack);
 	}
 	@Override
-	public boolean shouldCheckWeakPower(RedstoneView level, BlockPos pos, Direction side)
+	public boolean phShouldCheckWeakPower(BlockState state, RedstoneView level, BlockPos pos, Direction side)
 	{
 		return true;
 	}

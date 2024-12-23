@@ -19,6 +19,7 @@ import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
@@ -77,7 +78,7 @@ public class StagePadItem extends Item implements IColoredItem, ISplatcraftForge
 		}
 	}
 	@Override
-	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.getBlockPos().down();
 		

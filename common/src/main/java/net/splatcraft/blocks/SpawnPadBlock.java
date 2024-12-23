@@ -16,6 +16,7 @@ import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.Properties;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -25,6 +26,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
@@ -62,20 +64,17 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 		return SHAPE;
 	}
 	@Override
-	public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, WorldView WorldView, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+	public Optional<Vec3d> phGetRespawnPosition(BlockState state, EntityType<?> type, WorldView WorldView, BlockPos pos, float orientation)
 	{
-		if (entity != null && !ColorUtils.colorEquals(entity, WorldView.getBlockEntity(pos)))
-			return Optional.empty();
-		
 		Vec3d vec = Dismounting.findRespawnPos(type, WorldView, pos, false);
 		
 		return vec == null ? Optional.empty() : Optional.of(vec);
 	}
-	//    @Override
-//    public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
-//    {
-//        return ColorUtils.setColorLocked(ColorUtils.setInkColor(super.getPickStack(level, pos, state), getColor((World) level, pos)), true);
-//    }
+	@Override
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
+	{
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
+	}
 	@Nullable
 	@Override
 	public BlockState getPlacementState(@NotNull ItemPlacementContext context)
@@ -111,11 +110,11 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 		
 		return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
-	/*@Override
-	public @NotNull PistonBehavior getPistonBehavior(@NotNull BlockState state)
+	@Override
+	public @NotNull PistonBehavior phGetPistonBehavior(@NotNull BlockState state)
 	{
 		return PistonBehavior.BLOCK;
-	}*/
+	}
 	@Override
 	public @NotNull ItemStack getPickStack(@NotNull WorldView reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
@@ -283,15 +282,15 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 			return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 		}
 		@Override
-		public boolean onDestroyedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid)
+		public boolean phOnDestroyedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid)
 		{
 			BlockPos parentPos = getParentPos(state, pos);
 			if (world.getBlockState(parentPos).getBlock() == parent)
 				world.removeBlock(parentPos, willHarvest);
-			return ISplatcraftForgeBlockDummy.super.onDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
+			return ISplatcraftForgeBlockDummy.super.phOnDestroyedByPlayer(state, world, pos, player, willHarvest, fluid);
 		}
 		@Override
-		public @NotNull PistonBehavior getPistonBehavior(@NotNull BlockState state)
+		public @NotNull PistonBehavior phGetPistonBehavior(@NotNull BlockState state)
 		{
 			return PistonBehavior.BLOCK;
 		}
@@ -326,10 +325,10 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 			return false;
 		}
 		@Override
-		public Optional<Vec3d> getRespawnPosition(BlockState state, EntityType<?> type, WorldView world, BlockPos pos, float orientation, @Nullable LivingEntity entity)
+		public Optional<Vec3d> phGetRespawnPosition(BlockState state, EntityType<?> type, WorldView world, BlockPos pos, float orientation)
 		{
 			BlockPos parentPos = getParentPos(state, pos);
-			return parent.getRespawnPosition(world.getBlockState(parentPos), type, world, parentPos, orientation, entity);
+			return parent.phGetRespawnPosition(world.getBlockState(parentPos), type, world, parentPos, orientation);
 		}
 		@Override
 		public @NotNull ItemStack getPickStack(@NotNull WorldView level, @NotNull BlockPos pos, @NotNull BlockState state)

@@ -201,7 +201,7 @@ public class ChunkInkHandler
 			return;
 		
 		List<WorldChunk> chunks = StreamSupport.stream(world.getChunkManager().chunkLoadingManager.entryIterator().spliterator(), false).map(ChunkHolder::getWorldChunk)
-			.filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.get(world, chunk).getInkInChunk().isEmpty()).toList();
+			.filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.hasAndNotEmpty(world, chunk)).toList();
 		int maxChunkCheck = Math.min(world.random.nextInt(MAX_DECAYABLE_CHUNKS), chunks.size());
 		
 		for (int i = 0; i < maxChunkCheck; i++)

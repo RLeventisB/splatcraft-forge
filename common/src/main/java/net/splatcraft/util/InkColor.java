@@ -24,7 +24,7 @@ public class InkColor implements Comparable<InkColor>
 {
 	public static final InkColor INVALID;
 	private static final TreeMap<Integer, InkColor> hexToColorMap = new TreeMap<>();
-	public static final PacketCodec<? super RegistryByteBuf, InkColor> PACKET_CODEC =
+	public static final PacketCodec<RegistryByteBuf, InkColor> PACKET_CODEC =
 		PacketCodec.tuple(
 			PacketCodecs.INTEGER, InkColor::getColor,
 			InkColor::constructOrReuse

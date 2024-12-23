@@ -21,9 +21,10 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-import net.splatcraft.blocks.ISplatcraftForgeBlockDummy;
 import net.splatcraft.blocks.InkVatBlock;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
+import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.items.FilterItem;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftTileEntities;
@@ -34,7 +35,7 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkVatTileEntity extends LockableContainerBlockEntity implements SidedInventory, RecipeInput, ISplatcraftForgeBlockDummy
+public class InkVatTileEntity extends LockableContainerBlockEntity implements SidedInventory, RecipeInput, ISplatcraftForgeBlockDummy, ISplatcraftForgeBlockEntityDummy
 {
 	private static final int[] INPUT_SLOTS = new int[] {0, 1, 2, 3};
 	private static final int[] OUTPUT_SLOTS = new int[] {4};
@@ -227,13 +228,13 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 		return BlockEntityUpdateS2CPacket.create(this);
 	}
 	@Override
-	public void onDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup wrapperLookup)
 	{
 		if (world != null)
 		{
 			BlockState state = world.getBlockState(getPos());
 			world.updateListeners(getPos(), state, state, 2);
-			handleUpdateTag(pkt.getNbt(), wrapperLookup);
+			phHandleUpdateTag(pkt.getNbt(), wrapperLookup);
 		}
 	}
 	@Override

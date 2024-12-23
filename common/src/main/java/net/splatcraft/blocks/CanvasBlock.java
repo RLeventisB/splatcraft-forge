@@ -8,11 +8,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
@@ -128,9 +130,9 @@ public class CanvasBlock extends Block implements IColoredBlock, BlockEntityProv
 		return false;
 	}
 	@Override
-	public ItemStack getPickStack(WorldView level, BlockPos pos, PlayerEntity player, boolean includeData, BlockState state)
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
 	{
-		ItemStack stack = super.getPickStack(level, pos, state);
+		ItemStack stack = ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player);
 		if (state.get(INKED))
 			return ColorUtils.withColorLocked(ColorUtils.withInkColor(stack, getColor(level, pos)), true);
 		return stack;

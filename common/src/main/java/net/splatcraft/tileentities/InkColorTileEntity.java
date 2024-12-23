@@ -12,7 +12,8 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
-import net.splatcraft.blocks.ISplatcraftForgeBlockDummy;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
+import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ColorUtils;
@@ -20,7 +21,7 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatcraftForgeBlockDummy
+public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatcraftForgeBlockDummy, ISplatcraftForgeBlockEntityDummy
 {
 	private InkColor color = ColorUtils.getDefaultColor();
 	private boolean inverted = false;
@@ -67,18 +68,18 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 		return nbt;
 	}
 	@Override
-	public void handleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup)
+	public void phHandleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup)
 	{
 		readNbt(tag, registryLookup);
 	}
 	@Override
-	public void onDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookupProvider)
+	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookupProvider)
 	{
 		if (world != null)
 		{
 			BlockState state = world.getBlockState(getPos());
 			world.updateListeners(getPos(), state, state, 2);
-			handleUpdateTag(pkt.getNbt(), lookupProvider);
+			phHandleUpdateTag(pkt.getNbt(), lookupProvider);
 		}
 	}
 	public InkColor getInkColor()

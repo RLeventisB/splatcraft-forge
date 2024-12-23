@@ -17,6 +17,7 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -35,11 +36,11 @@ import java.util.List;
 public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeItemDummy
 {
 	public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
-	private static final boolean initModels = false;
+	public static boolean initModels = false;
 	public final float capacity;
 	public final Item.Settings settings;
 	@Environment(EnvType.CLIENT)
-	private AbstractInkTankModel model;
+	public AbstractInkTankModel model;
 	public InkTankItem(String tagId, float capacity, RegistryEntry<ArmorMaterial> material, Item.Settings settings)
 	{
 		super(material, Type.CHESTPLATE, settings.component(SplatcraftComponents.TANK_DATA, new SplatcraftComponents.TankData(false, false, 0, 0)));
@@ -143,63 +144,6 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 			}
 		}
 	}
-	/*@Environment(EnvType.CLIENT)
-	@Override
-	public void initializeClient(@NotNull Consumer<IClientItemExtensions> consumer)
-	{
-		super.initializeClient(consumer);
-		consumer.accept(new IClientItemExtensions()
-		{
-			@Override
-			public @NotNull BipedEntityModel<?> getHumanoidArmorModel(ItemStack itemStack, EquipmentSlot armorSlot, BipedEntityModel<?> _default)
-			{
-				if (!initModels) //i have NO idea where else to put this
-				{
-					initModels = true;
-					SplatcraftItems.registerArmorModels();
-				}
-
-				if (!(itemStack.getItem() instanceof InkTankItem))
-				{
-					return DEFAULT.getHumanoidArmorModel(itemStack, armorSlot, _default);
-				}
-
-				if (model == null)
-				{
-					return DEFAULT.getHumanoidArmorModel(itemStack, armorSlot, _default);
-				}
-
-				if (!itemStack.isEmpty())
-				{
-					if (itemStack.getItem() instanceof InkTankItem item)
-					{
-						model.rightLeg.visible = armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.FEET;
-						model.leftLeg.visible = armorSlot == EquipmentSlot.LEGS || armorSlot == EquipmentSlot.FEET;
-
-						model.body.visible = armorSlot == EquipmentSlot.CHEST;
-						model.leftArm.visible = armorSlot == EquipmentSlot.CHEST;
-						model.rightArm.visible = armorSlot == EquipmentSlot.CHEST;
-
-						model.head.visible = armorSlot == EquipmentSlot.HEAD;
-						model.hat.visible = armorSlot == EquipmentSlot.HEAD;
-
-						model.sneaking = _default.sneaking;
-						model.riding = _default.riding;
-						model.child = _default.child;
-
-						model.rightArmPose = _default.rightArmPose;
-						model.leftArmPose = _default.leftArmPose;
-
-						model.setInkLevels(getInkAmount(itemStack) / item.capacity);
-
-						return model;
-					}
-				}
-
-				return DEFAULT.getHumanoidArmorModel(itemStack, armorSlot, _default);
-			}
-		});
-	}*/
 	@Override
 	public int getItemBarStep(@NotNull ItemStack stack)
 	{
@@ -219,7 +163,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 			stack.contains(SplatcraftComponents.TANK_DATA) && getInkAmount(stack) < capacity;
 	}
 	@Override
-	public boolean isCombineRepairable(@Nullable ItemStack stack)
+	public boolean phIsRepairable(@Nullable ItemStack stack)
 	{
 		return false;
 	}

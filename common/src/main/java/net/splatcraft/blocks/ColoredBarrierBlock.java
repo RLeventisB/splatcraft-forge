@@ -5,13 +5,16 @@ import net.minecraft.block.EntityShapeContext;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
+import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.ColoredBarrierTileEntity;
 import net.splatcraft.util.ColorUtils;
@@ -19,7 +22,7 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBlock
+public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBlock, ISplatcraftForgeBlockDummy
 {
 	public final boolean blocksColor;
 	public ColoredBarrierBlock(boolean blocksColor)
@@ -64,9 +67,9 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
 			te.setInverted(inverted);
 	}
 	@Override
-	public ItemStack getPickStack(WorldView level, BlockPos pos, BlockState state)
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
 	{
-		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.getPickStack(level, pos, state), getColor(level, pos)), true);
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
 	}
 	@Override
 	public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)

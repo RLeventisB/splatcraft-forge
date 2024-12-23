@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 		}
 	}
 	@Override
-	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.getBlockPos().down();
 		

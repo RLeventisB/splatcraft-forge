@@ -19,8 +19,8 @@ import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.IColoredItem;
-import net.splatcraft.items.ISplatcraftForgeItemDummy;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -115,7 +115,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 		}
 	}
 	@Override
-	public boolean onEntityItemUpdate(ItemStack stack, ItemEntity entity)
+	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.getBlockPos().down();
 		
