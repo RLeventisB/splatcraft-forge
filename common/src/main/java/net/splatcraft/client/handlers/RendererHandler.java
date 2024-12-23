@@ -14,6 +14,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -77,20 +78,30 @@ public class RendererHandler
 		ClientChatEvent.RECEIVED.register(RendererHandler::onChatMessage);
 		ClientTickEvent.CLIENT_POST.register(RendererHandler::onRenderTick);
 	}
-	public static boolean playerRender(PlayerEntityRenderer instance, AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i)
+	public static boolean playerRender(PlayerEntityRenderer instance, AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int color, EntityRendererFactory.Context ctx)
 	{
 		if (player.isSpectator()) return false;
 		
 		if (EntityInfoCapability.isSquid(player))
 		{
 			if (squidRenderer == null)
-				squidRenderer = new InkSquidRenderer(InkSquidRenderer.getContext());
+				squidRenderer = new InkSquidRenderer(ctx);
 			if (!InkBlockUtils.canSquidHide(player))
 			{
-				squidRenderer.render(player, f, g, matrixStack, consumerProvider, i);
-				CommonUtils.doPlayerSquidForgeEvent(player, squidRenderer, g, matrixStack, consumerProvider, i);
+//				InkColor entityColor = ColorUtils.getEntityColor(player);
+//				if (entityColor.isValid())
+//				{
+//					float[] rgbOriginal = ColorUtils.hexToRGB(color);
+//					float[] rgbColor = entityColor.getRGB();
+//					rgbOriginal[0] = rgbOriginal[0] * rgbColor[0];
+//					rgbOriginal[1] = rgbOriginal[1] * rgbColor[1];
+//					rgbOriginal[2] = rgbOriginal[2] * rgbColor[2];
+//					color = ColorUtils.RGBtoHex(rgbOriginal);
+//				}
+				squidRenderer.render(player, f, g, matrixStack, consumerProvider, color);
+				CommonUtils.doPlayerSquidForgeEvent(player, squidRenderer, g, matrixStack, consumerProvider, color);
+				return true;
 			}
-			return true;
 		}
 		return false;
 	}
@@ -175,81 +186,80 @@ public class RendererHandler
 		}
 		return false;
 	}
+	/*public static void renderItem(ItemRenderer itemRenderer, ItemStack stack, ModelTransformationMode renderMode, boolean leftHand, MatrixStack matrices, VertexConsumerProvider consumer, int light, int overlay, BakedModel model)
+	{
+		if (!stack.isEmpty())
+		{
+			matrices.push();
+			boolean bl = renderMode == ModelTransformationMode.GUI || renderMode == ModelTransformationMode.GROUND || renderMode == ModelTransformationMode.FIXED;
+			if (bl) {
+				if (stack.isOf(Items.TRIDENT)) {
+					model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("trident")));
+				} else if (stack.isOf(Items.SPYGLASS)) {
+					model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("spyglass")));
+				}
+			}
 
-    /*public static void renderItem(ItemRenderer itemRenderer, ItemStack stack, ModelTransformationMode renderMode, boolean leftHand, MatrixStack matrices, VertexConsumerProvider consumer, int light, int overlay, BakedModel model)
-    {
-        if (!stack.isEmpty())
-        {
-            matrices.push();
-            boolean bl = renderMode == ModelTransformationMode.GUI || renderMode == ModelTransformationMode.GROUND || renderMode == ModelTransformationMode.FIXED;
-            if (bl) {
-                if (stack.isOf(Items.TRIDENT)) {
-                    model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("trident")));
-                } else if (stack.isOf(Items.SPYGLASS)) {
-                    model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("spyglass")));
-                }
-            }
+			model.getTransformation().getTransformation(renderMode).apply(leftHand, matrices);
+			matrices.translate(-0.5F, -0.5F, -0.5F);
+			if (!model.isBuiltin() && (!stack.isOf(Items.TRIDENT) || bl)) {
+			{
+				boolean flag1;
+				if (renderMode != ModelTransformationMode.GUI && !renderMode.isFirstPerson() && stack.getItem() instanceof BlockItem blockItem)
+				{
+					Block block = blockItem.getBlock();
+					flag1 = !(block instanceof TranslucentBlock) && !(block instanceof StainedGlassPaneBlock);
+				}
+				else
+				{
+					flag1 = true;
+				}
 
-            model.getTransformation().getTransformation(renderMode).apply(leftHand, matrices);
-            matrices.translate(-0.5F, -0.5F, -0.5F);
-            if (!model.isBuiltin() && (!stack.isOf(Items.TRIDENT) || bl)) {
-            {
-                boolean flag1;
-                if (renderMode != ModelTransformationMode.GUI && !renderMode.isFirstPerson() && stack.getItem() instanceof BlockItem blockItem)
-                {
-                    Block block = blockItem.getBlock();
-                    flag1 = !(block instanceof TranslucentBlock) && !(block instanceof StainedGlassPaneBlock);
-                }
-                else
-                {
-                    flag1 = true;
-                }
+				RenderLayer renderLayer = RenderLayers.getItemLayer(stack, flag1);
+				net.minecraft.client.render.VertexConsumer ivertexbuilder;
+				if (stack.getItem() == Items.COMPASS || stack.getItem() == Items.CLOCK && stack.hasGlint())
+				{
+					matrices.push();
+					MatrixStack.Entry matrixstack$entry = matrices.peek().copy();
+					if (renderMode == ModelTransformationMode.GUI)
+					{
+						matrixstack$entry.getMatrices().scale(0.5F);
+					}
+					else if (renderMode.firstPerson())
+					{
+						matrixstack$entry.getMatrices().scale(0.75F);
+					}
 
-                RenderLayer renderLayer = RenderLayers.getItemLayer(stack, flag1);
-                net.minecraft.client.render.VertexConsumer ivertexbuilder;
-                if (stack.getItem() == Items.COMPASS || stack.getItem() == Items.CLOCK && stack.hasGlint())
-                {
-                    matrices.push();
-                    MatrixStack.Entry matrixstack$entry = matrices.peek().copy();
-                    if (renderMode == ModelTransformationMode.GUI)
-                    {
-                        matrixstack$entry.getMatrices().scale(0.5F);
-                    }
-                    else if (renderMode.firstPerson())
-                    {
-                        matrixstack$entry.getMatrices().scale(0.75F);
-                    }
+					if (flag1)
+					{
+						ivertexbuilder = ItemRenderer.getCompassFoilBufferDirect(consumer, rendertype, matrixstack$entry);
+					}
+					else
+					{
+						ivertexbuilder = ItemRenderer.getCompassFoilBuffer(consumer, rendertype, matrixstack$entry);
+					}
 
-                    if (flag1)
-                    {
-                        ivertexbuilder = ItemRenderer.getCompassFoilBufferDirect(consumer, rendertype, matrixstack$entry);
-                    }
-                    else
-                    {
-                        ivertexbuilder = ItemRenderer.getCompassFoilBuffer(consumer, rendertype, matrixstack$entry);
-                    }
+					matrices.pop();
+				}
+				else if (flag1)
+				{
+					ivertexbuilder = ItemRenderer.getFoilBufferDirect(consumer, rendertype, true, stack.hasGlint());
+				}
+				else
+				{
+					ivertexbuilder = ItemRenderer.getFoilBuffer(consumer, rendertype, true, stack.hasGlint());
+				}
 
-                    matrices.pop();
-                }
-                else if (flag1)
-                {
-                    ivertexbuilder = ItemRenderer.getFoilBufferDirect(consumer, rendertype, true, stack.hasGlint());
-                }
-                else
-                {
-                    ivertexbuilder = ItemRenderer.getFoilBuffer(consumer, rendertype, true, stack.hasGlint());
-                }
+				itemRenderer.renderModelLists(model, stack, light, overlay, matrices, ivertexbuilder);
+			}
+			else
+			{
+				itemRenderer. IClientItemExtensions.of(stack).getCustomRenderer().renderByItem(stack, renderMode, matrices, consumer, light, overlay);
+			}
 
-                itemRenderer.renderModelLists(model, stack, light, overlay, matrices, ivertexbuilder);
-            }
-            else
-            {
-                itemRenderer. IClientItemExtensions.of(stack).getCustomRenderer().renderByItem(stack, renderMode, matrices, consumer, light, overlay);
-            }
-
-            matrices.pop();
-        }
-    }*/
+			matrices.pop();
+		}
+	}*/
 	public static CompoundEventResult<Text> onChatMessage(MessageType.Parameters parameretes, Text message)
 	{
 		ClientWorld level = MinecraftClient.getInstance().world;

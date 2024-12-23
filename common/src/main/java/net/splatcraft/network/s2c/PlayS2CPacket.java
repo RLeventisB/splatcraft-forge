@@ -6,15 +6,14 @@ import net.splatcraft.network.SplatcraftPacket;
 
 public abstract class PlayS2CPacket extends SplatcraftPacket
 {
-    @Override
-    public void consume(NetworkManager.PacketContext ctx)
-    {
-        if (ctx.getEnvironment() == Env.SERVER)
-        {
-            ctx.queue(this::execute);
-        }
+	@Override
+	public void consume(NetworkManager.PacketContext ctx)
+	{
+		if (ctx.getEnvironment() == Env.CLIENT)
+		{
+			ctx.queue(this::execute);
+		}
 //        ctx.get().setPacketHandled(true);
-    }
-
-    public abstract void execute();
+	}
+	public abstract void execute();
 }

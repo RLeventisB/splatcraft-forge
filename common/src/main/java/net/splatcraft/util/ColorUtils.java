@@ -277,9 +277,9 @@ public class ColorUtils
 		
 		return new float[] {r, g, b};
 	}
-	public static InkColor RGBtoHex(float[] color)
+	public static int RGBtoHex(float[] color)
 	{
-		return InkColor.constructOrReuse((((int) (color[0] * 255f)) << 16) | (((int) (color[1] * 255f)) << 8) | (((int) (color[2] * 255f))));
+		return (int) (color[0] * 255f) << 16 | (int) (color[1] * 255f) << 8 | (int) (color[2] * 255f);
 	}
 	public static InkColor getRandomStarterColor()
 	{
@@ -388,7 +388,7 @@ public class ColorUtils
 	}
 	public static InkColor getDefaultColor()
 	{
-		if (!InkColorRegistry.REGISTRY.stream().findAny().isPresent())
+		if (InkColorRegistry.REGISTRY.isEmpty())
 			return new InkColor(0x1F1F2D);
 		
 		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("default"));

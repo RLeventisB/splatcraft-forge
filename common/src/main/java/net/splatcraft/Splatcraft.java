@@ -9,10 +9,7 @@ import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.splatcraft.client.handlers.ClientSetupHandler;
-import net.splatcraft.client.handlers.JumpLureHudHandler;
-import net.splatcraft.client.handlers.PlayerMovementHandler;
-import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.client.handlers.*;
 import net.splatcraft.config.ConfigScreenProvider;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
@@ -55,9 +52,15 @@ public final class Splatcraft
 		JumpLureHudHandler.registerEvents();
 		PlayerMovementHandler.registerEvents();
 		RendererHandler.registerEvents();
+		SplatcraftKeyHandler.registerBindingsAndEvents();
 //		SplatcraftOreGen.registerOres();
 		
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
+		LifecycleEvent.SERVER_STARTING.register(Splatcraft::onServerStarting);
+	}
+	public static void onServerStarting(MinecraftServer server)
+	{
+//		SplatcraftConfig.loadConfig();
 	}
 	public static void onServerStart(MinecraftServer server)
 	{

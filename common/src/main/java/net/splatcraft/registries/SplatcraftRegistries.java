@@ -11,6 +11,7 @@ public class SplatcraftRegistries
 		SplatcraftEntities.REGISTRY.register();
 		SplatcraftAttributes.REGISTRY.register();
 		SplatcraftItems.REGISTRY.register();
+		SplatcraftItems.ARMOR_MATERIAL_REGISTRY.register();
 		SplatcraftItemGroups.REGISTRY.register();
 		SplatcraftTileEntities.REGISTRY.register();
 		SplatcraftTileEntities.CONTAINER_REGISTRY.register();
@@ -18,5 +19,7 @@ public class SplatcraftRegistries
 		SplatcraftLoot.REGISTRY.register();
 		ScoreboardHandler.REGISTRY.register();
 		SplatcraftCommands.ARGUMENT_REGISTRY.register();
+		SplatcraftStats.CRITERION_REGISTRY.register();
+		SplatcraftStats.STAT_REGISTRY.register();
 	}
 }

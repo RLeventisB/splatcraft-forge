@@ -4,9 +4,12 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.base.Joiner;
 import dev.architectury.utils.Env;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
@@ -34,16 +37,24 @@ public class SplatcraftConfigImpl
 		Server.init(configBuilder);
 		serverConfig = configBuilder.build();
 	}
-	public static void loadConfig(Env env)
+	public static void loadConfig()
 	{
-		String path = SplatcraftConfig.getModConfigPathString(env);
-		final CommentedFileConfig file = CommentedFileConfig.builder(new File(path)).sync().autosave().writingMode(WritingMode.REPLACE).build();
+		if (SplatcraftConfig.loaded)
+			return;
+		ModContainer container = ModLoadingContext.get().getActiveContainer();
 		
+		CommentedFileConfig file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(Env.CLIENT))).sync().autosave().writingMode(WritingMode.REPLACE).build();
 		file.load();
-		ModConfigSpec config = env == Env.CLIENT ? clientConfig : serverConfig;
-		config.correct(file);
+		clientConfig.correct(file);
+		container.registerConfig(ModConfig.Type.CLIENT, clientConfig);
 		
-		ModLoadingContext.get().getActiveContainer().registerConfig(env == Env.CLIENT ? ModConfig.Type.CLIENT : ModConfig.Type.SERVER, config);
+		file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(Env.SERVER))).sync().autosave().writingMode(WritingMode.REPLACE).build();
+		file.load();
+		serverConfig.correct(file);
+		container.registerConfig(ModConfig.Type.SERVER, serverConfig);
+		
+		container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+		SplatcraftConfig.loaded = true;
 	}
 	public static <T> void registerSetting(ModConfigSpec.ConfigValue<T> configValue)
 	{

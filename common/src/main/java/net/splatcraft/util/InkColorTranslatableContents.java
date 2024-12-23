@@ -1,5 +1,6 @@
 package net.splatcraft.util;
 
+import net.minecraft.text.MutableText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.Language;
@@ -14,11 +15,12 @@ public class InkColorTranslatableContents extends TranslatableTextContent
 	public InkColorTranslatableContents(InkColor color, Object... pArgs)
 	{
 		super(getKeyForColor(color), "#" + String.format("%06X", color.getColor()).toUpperCase(), pArgs);
-		inverted = new TranslatableTextContent("ink_color.invert", null, new TranslatableTextContent[] {
-			new TranslatableTextContent(
-				InkColorRegistry.getFirstAliasForColor(color.getInverted().getColor()).toTranslationKey(),
+		inverted = new TranslatableTextContent("ink_color.invert", null, new MutableText[] {
+			MutableText.of(new TranslatableTextContent(
+				getKeyForColor(color.getInverted()),
 				getFallback(),
 				pArgs)
+			)
 		});
 		this.color = color;
 	}

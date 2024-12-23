@@ -1,5 +1,7 @@
 package net.splatcraft.data;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -7,35 +9,26 @@ import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import com.mojang.serialization.Lifecycle;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.SimpleDefaultedRegistry;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
-import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class InkColorRegistry
 {
-	public static final Registry<InkColor> REGISTRY = new SimpleDefaultedRegistry<>("default", RegistryKey.ofRegistry(Splatcraft.identifierOf("ink_colors")), Lifecycle.stable(), false);
+	public static final BiMap<Identifier, InkColor> REGISTRY = HashBiMap.create();
 	public static InkColor getInkColorByAlias(Identifier location)
 	{
 		return REGISTRY.get(location);
 	}
 	public static boolean containsAlias(Identifier location)
 	{
-		return REGISTRY.containsId(location);
+		return REGISTRY.containsKey(location);
 	}
 	/**
 	 * @param value The identifier of the color, or the hex code
@@ -62,34 +55,34 @@ public class InkColorRegistry
 	public static List<Identifier> getAliasesForColor(int color)
 	{
 		List<Identifier> result = new ArrayList<>();
-		REGISTRY.getEntrySet().forEach((entry) ->
+		REGISTRY.forEach((key, value) ->
 		{
-			if (entry.getValue().getColor() == color)
-				result.add(entry.getKey().getValue());
+			if (value.getColor() == color)
+				result.add(key);
 		});
 		
 		return result;
 	}
 	public static Identifier getColorAlias(InkColor color)
 	{
-		return REGISTRY.getId(color);
+		return REGISTRY.inverse().get(color);
 	}
 	public static Identifier getFirstAliasForColor(int color)
 	{
-		for (Map.Entry<RegistryKey<InkColor>, InkColor> entry : REGISTRY.getEntrySet())
+		for (Map.Entry<Identifier, InkColor> entry : REGISTRY.entrySet())
 		{
-			RegistryKey<InkColor> alias = entry.getKey();
+			Identifier alias = entry.getKey();
 			InkColor c = entry.getValue();
 			if (c.getColor() == color)
 			{
-				return alias.getValue();
+				return alias;
 			}
 		}
 		return null;
 	}
 	public static Set<Identifier> getAllAliases()
 	{
-		return REGISTRY.getKeys().stream().map(RegistryKey::getValue).collect(Collectors.toSet());
+		return new HashSet<>(REGISTRY.keySet());
 	}
 	public static class Listener extends JsonDataLoader
 	{
@@ -102,7 +95,7 @@ public class InkColorRegistry
 		@Override
 		protected @NotNull Map<Identifier, JsonElement> prepare(@NotNull ResourceManager manager, @NotNull Profiler profiler)
 		{
-			REGISTRY.clearTags();
+			REGISTRY.clear();
 			return super.prepare(manager, profiler);
 		}
 		@Override
@@ -119,7 +112,7 @@ public class InkColorRegistry
 					if (inkColorResult.isSuccess())
 					{
 						InkColor color = inkColorResult.map(Pair::getFirst).getOrThrow();
-						Registry.register(REGISTRY, key, color);
+						REGISTRY.put(key, color);
 					}
 				}
 			}

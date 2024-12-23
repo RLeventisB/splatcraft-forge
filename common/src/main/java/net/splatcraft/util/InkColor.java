@@ -14,6 +14,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.DyeColor;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.splatcraft.data.InkColorRegistry;
 
@@ -29,29 +30,43 @@ public class InkColor implements Comparable<InkColor>
 			PacketCodecs.INTEGER, InkColor::getColor,
 			InkColor::constructOrReuse
 		);
+	public static final Codec<InkColor> NUMBER_CODEC = new Codec<>()
+	{
+		@Override
+		public <T> DataResult<T> encode(InkColor input, DynamicOps<T> ops, T prefix)
+		{
+			if (input == null)
+			{
+				return DataResult.error(() -> "Input InkColor is not valid");
+			}
+			
+			return DataResult.success(ops.createNumeric(input.getColor()));
+		}
+		@Override
+		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
+		{
+			DataResult<Number> hexValue = ops.getNumberValue(input);
+			
+			if (hexValue.isSuccess())
+			{
+				return DataResult.success(Pair.of(constructOrReuse(hexValue.map(Number::intValue).getOrThrow()), input));
+			}
+			
+			return DataResult.error(() -> "InkColor wasn't formatted correctly");
+		}
+	};
 	public static final Codec<InkColor> CODEC = new Codec<>()
 	{
 		@Override
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
 		{
-			DataResult<Number> hexValue = ops.getNumberValue(input);
 			InkColor inkColor = null;
 			
-			if (hexValue.isSuccess())
+			DataResult<String> stringValue = ops.getStringValue(input);
+			if (stringValue.isSuccess())
 			{
-				inkColor = constructOrReuse(hexValue.map(Number::intValue).getOrThrow());
-			}
-			else
-			{
-				DataResult<String> stringValue = ops.getStringValue(input);
-				if (stringValue.isSuccess())
-				{
-					String hexCode = stringValue.getOrThrow();
-					if (!hexCode.startsWith("0x") && !hexCode.startsWith("0X") && !hexCode.startsWith("#") && !hexCode.startsWith("0"))
-						inkColor = constructOrReuse(Integer.valueOf(hexCode, 16));
-					else
-						inkColor = constructOrReuse(Integer.decode(hexCode));
-				}
+				String hexCode = stringValue.getOrThrow();
+				inkColor = constructOrReuse(Integer.decode(hexCode));
 			}
 			if (inkColor == null)
 				return DataResult.error(() -> "Invalid InkColor color", Pair.of(INVALID, ops.empty()));
@@ -100,7 +115,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public static InkColor getFromNbt(NbtElement nbt)
 	{
-		return CODEC.decode(NbtOps.INSTANCE, nbt).getOrThrow().getFirst();
+		return Codec.either(NUMBER_CODEC, CODEC).decode(NbtOps.INSTANCE, nbt).getOrThrow().getFirst().orThrow();
 	}
 	public static InkColor getIfInversed(InkColor color, boolean inverted)
 	{
@@ -120,7 +135,13 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public String getTranslationKey()
 	{
-		return "ink_color." + InkColorRegistry.getFirstAliasForColor(hexCode).toShortTranslationKey();
+		Identifier alias = InkColorRegistry.getFirstAliasForColor(hexCode);
+		
+		if (alias != null)
+		{
+			return "ink_color." + alias.toShortTranslationKey();
+		}
+		return "ink_color." + String.format("%06X", hexCode).toLowerCase();
 	}
 	public String getHexCode()
 	{
@@ -136,7 +157,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public int getColorWithAlpha(int alpha)
 	{
-		return hexCode | alpha << 24;
+		return hexCode | (alpha << 24);
 	}
 	public String getName()
 	{

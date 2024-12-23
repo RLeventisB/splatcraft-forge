@@ -50,5 +50,7 @@ accessible method net/minecraft/client/render/entity/LivingEntityRenderer addFea
 accessible class net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask
 accessible method net/minecraft/server/world/ServerChunkLoadingManager entryIterator ()Ljava/lang/Iterable;
 accessible field net/minecraft/server/world/ServerChunkManager chunkLoadingManager Lnet/minecraft/server/world/ServerChunkLoadingManager;
+accessible field net/minecraft/server/world/ServerChunkLoadingManager entityTrackers Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;
+accessible class net/minecraft/server/world/ServerChunkLoadingManager$EntityTracker
 
 accessible field net/minecraft/client/render/model/json/JsonUnbakedModel QUAD_FACTORY Lnet/minecraft/client/render/model/BakedQuadFactory;

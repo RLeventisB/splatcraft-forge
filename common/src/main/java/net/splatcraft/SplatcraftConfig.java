@@ -1,7 +1,6 @@
 package net.splatcraft;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import dev.architectury.platform.Platform;
 import dev.architectury.utils.Env;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +15,7 @@ import java.util.function.Supplier;
 public class SplatcraftConfig
 {
 	// todo: rework this entire class plz
+	public static boolean loaded = false;
 	static Map<String, Setting<?>> settingsMap = new HashMap<>();
 	public static String getModConfigPathString(Env env)
 	{
@@ -45,7 +45,7 @@ public class SplatcraftConfig
 		throw new AssertionError();
 	}
 	@ExpectPlatform
-	public static void loadConfig(Env env)
+	public static void loadConfig()
 	{
 		throw new AssertionError();
 	}
@@ -88,7 +88,7 @@ public class SplatcraftConfig
 		initializeSettingsMap();
 		initializeConfigs();
 		
-		loadConfig(Platform.getEnvironment());
+		loadConfig();
 	}
 	public enum InkIndicator
 	{

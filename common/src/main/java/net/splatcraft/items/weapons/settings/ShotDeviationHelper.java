@@ -8,17 +8,19 @@ import net.splatcraft.util.CommonUtils;
 
 public class ShotDeviationHelper
 {
-	public static void tickDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord data, float timeDelta)
+	public static void tickDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotData, float timeDelta)
 	{
-		SplatcraftComponents.WeaponPrecisionData deviationData = getDeviationData(stack);
+		SplatcraftComponents.WeaponPrecisionData data = getDeviationData(stack);
 		
-		CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), timeDelta);
-		CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, timeDelta);
+		CommonUtils.Result actualChanceResult = CommonUtils.tickValue(data.chanceDecreaseDelay(), data.chance(), shotData.chanceDecreasePerTick(), shotData.minDeviateChance(), timeDelta);
+		CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(data.airborneDecreaseDelay(), data.airborneInfluence(), shotData.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / shotData.airborneContractTimeToDecrease(), 0, timeDelta);
 		
-		deviationData.setChanceDecreaseDelay(actualChanceResult.delay());
-		deviationData.setChance(actualChanceResult.value());
-		deviationData.setAirborneDecreaseDelay(airInfluenceResult.delay());
-		deviationData.setAirborneInfluence(airInfluenceResult.value());
+		stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, data
+			.withChanceDecreaseDelay(actualChanceResult.delay())
+			.withChance(actualChanceResult.value())
+			.withAirborneDecreaseDelay(airInfluenceResult.delay())
+			.withAirborneInfluence(airInfluenceResult.value())
+		);
 	}
 	public static SplatcraftComponents.WeaponPrecisionData getDeviationData(ItemStack stack)
 	{
@@ -39,21 +41,21 @@ public class ShotDeviationHelper
 		if (chance < shotDeviationData.maxDeviateChance())
 			chance += Math.min(shotDeviationData.maxDeviateChance() - chance, shotDeviationData.chanceIncreasePerShot());
 		
-		nbt.setChanceDecreaseDelay(shotDeviationData.chanceDecreaseDelay() + 1);
-		nbt.setChance(chance);
+		nbt.withChanceDecreaseDelay(shotDeviationData.chanceDecreaseDelay() + 1);
+		nbt.withChance(chance);
 		return maxAngle;
 	}
 	public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
 	{
 		stack.apply(
-            SplatcraftComponents.WEAPON_PRECISION_DATA,
-            SplatcraftComponents.WeaponPrecisionData.DEFAULT,
-            v -> v.registerJump(shotDeviationData)
-        );
+			SplatcraftComponents.WEAPON_PRECISION_DATA,
+			SplatcraftComponents.WeaponPrecisionData.DEFAULT,
+			v -> v.registerJump(shotDeviationData)
+		);
 		SplatcraftComponents.WeaponPrecisionData nbt = getDeviationData(stack);
-		nbt.setAirborneDecreaseDelay(shotDeviationData.airborneContractDelay());
-		nbt.setAirborneInfluence(1);
-		nbt.setChance(shotDeviationData.deviationChanceWhenAirborne());
+		nbt.withAirborneDecreaseDelay(shotDeviationData.airborneContractDelay());
+		nbt.withAirborneInfluence(1);
+		nbt.withChance(shotDeviationData.deviationChanceWhenAirborne());
 	}
 	public static float getModifiedAirInfluence(float airborneInfluence)
 	{

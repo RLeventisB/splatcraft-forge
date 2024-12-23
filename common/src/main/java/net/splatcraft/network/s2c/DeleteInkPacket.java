@@ -18,72 +18,65 @@ import java.util.List;
 
 public class DeleteInkPacket extends IncrementalChunkBasedPacket
 {
-    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("delete_ink_packet"));
-    public final List<BlockPos> toDelete;
-
-    public DeleteInkPacket(ChunkPos chunkPos)
-    {
-        super(chunkPos);
-        toDelete = new ArrayList<>();
-    }
-
-    public DeleteInkPacket(ChunkPos chunkPos, List<BlockPos> toDelete)
-    {
-        super(chunkPos);
-        this.toDelete = toDelete;
-    }
-
-    public static DeleteInkPacket decode(RegistryByteBuf buffer)
-    {
-        ChunkPos chunkPos = buffer.readChunkPos();
-        int changedBlocks = buffer.readInt();
-        List<BlockPos> toDelete = new ArrayList<>(changedBlocks);
-        for (int i = 0; i < changedBlocks; i++)
-        {
-            BlockPos pos = buffer.readBlockPos();
-            toDelete.add(pos);
-        }
-        return new DeleteInkPacket(chunkPos, toDelete);
-    }
-
-    @Override
-    public Id<? extends CustomPayload> getId()
-    {
-        return ID;
-    }
-
-    @Override
-    public void add(World world, BlockPos pos)
-    {
-        toDelete.add(pos);
-    }
-
-    @Override
-    public void encode(RegistryByteBuf buffer)
-    {
-        buffer.writeChunkPos(chunkPos);
-        buffer.writeInt(toDelete.size());
-        for (var blockPos : toDelete)
-        {
-            buffer.writeBlockPos(blockPos);
-        }
-    }
-
-    @Override
-    public void execute()
-    {
-        ClientWorld level = MinecraftClient.getInstance().world;
-        if (level != null)
-        {
-            ChunkInk chunkInk = ChunkInkCapability.get(level, level.getChunk(chunkPos.x, chunkPos.z));
-            for (BlockPos blockPos : toDelete)
-            {
-                if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))
-                {
-                    BlockState state = level.getBlockState(blockPos);
-                    level.updateListeners(blockPos, state, state, 0);
-                }
-            }
-        }
-    }
+	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("delete_ink_packet"));
+	public final List<BlockPos> toDelete;
+	public DeleteInkPacket(ChunkPos chunkPos)
+	{
+		super(chunkPos);
+		toDelete = new ArrayList<>();
+	}
+	public DeleteInkPacket(ChunkPos chunkPos, List<BlockPos> toDelete)
+	{
+		super(chunkPos);
+		this.toDelete = toDelete;
+	}
+	public static DeleteInkPacket decode(RegistryByteBuf buffer)
+	{
+		ChunkPos chunkPos = buffer.readChunkPos();
+		int changedBlocks = buffer.readInt();
+		List<BlockPos> toDelete = new ArrayList<>(changedBlocks);
+		for (int i = 0; i < changedBlocks; i++)
+		{
+			BlockPos pos = buffer.readBlockPos();
+			toDelete.add(pos);
+		}
+		return new DeleteInkPacket(chunkPos, toDelete);
+	}
+	@Override
+	public Id<? extends CustomPayload> getId()
+	{
+		return ID;
+	}
+	@Override
+	public void add(World world, BlockPos pos)
+	{
+		toDelete.add(pos);
+	}
+	@Override
+	public void encode(RegistryByteBuf buffer)
+	{
+		buffer.writeChunkPos(chunkPos);
+		buffer.writeInt(toDelete.size());
+		for (var blockPos : toDelete)
+		{
+			buffer.writeBlockPos(blockPos);
+		}
+	}
+	@Override
+	public void execute()
+	{
+		ClientWorld level = MinecraftClient.getInstance().world;
+		if (level != null)
+		{
+			ChunkInk chunkInk = ChunkInkCapability.get(level, level.getChunk(chunkPos.x, chunkPos.z));
+			for (BlockPos blockPos : toDelete)
+			{
+				if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))
+				{
+					BlockState state = level.getBlockState(blockPos);
+					level.updateListeners(blockPos, state, state, 0);
+				}
+			}
+		}
+	}
 }

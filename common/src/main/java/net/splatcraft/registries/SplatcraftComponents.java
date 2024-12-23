@@ -104,6 +104,7 @@ public class SplatcraftComponents
 			BlockPos.CODEC.optionalFieldOf("point_b").forGetter(RemoteInfo::pointB),
 			Codec.INT.optionalFieldOf("mode_state", 0).forGetter(RemoteInfo::modeIndex)
 		).apply(builder, RemoteInfo::new));
+		public static final RemoteInfo DEFAULT = new RemoteInfo(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 0);
 		public RemoteInfo setStageId(String stageId)
 		{
 			return new RemoteInfo(Optional.ofNullable(stageId), dimensionId, targets, pointA, pointB, modeIndex);
@@ -165,19 +166,19 @@ public class SplatcraftComponents
 			Codec.FLOAT.optionalFieldOf("airborne_influence", 0f).forGetter(WeaponPrecisionData::airborneInfluence)
 		).apply(builder, WeaponPrecisionData::new));
 		public static final WeaponPrecisionData DEFAULT = new WeaponPrecisionData(0, 0, 0, 0);
-		public WeaponPrecisionData setChanceDecreaseDelay(float chanceDecreaseDelay)
+		public WeaponPrecisionData withChanceDecreaseDelay(float chanceDecreaseDelay)
 		{
 			return new WeaponPrecisionData(chanceDecreaseDelay, chance, airborneDecreaseDelay, airborneInfluence);
 		}
-		public WeaponPrecisionData setChance(float chance)
+		public WeaponPrecisionData withChance(float chance)
 		{
 			return new WeaponPrecisionData(chanceDecreaseDelay, chance, airborneDecreaseDelay, airborneInfluence);
 		}
-		public WeaponPrecisionData setAirborneDecreaseDelay(float airborneDecreaseDelay)
+		public WeaponPrecisionData withAirborneDecreaseDelay(float airborneDecreaseDelay)
 		{
 			return new WeaponPrecisionData(chanceDecreaseDelay, chance, airborneDecreaseDelay, airborneInfluence);
 		}
-		public WeaponPrecisionData setAirborneInfluence(float airborneInfluence)
+		public WeaponPrecisionData withAirborneInfluence(float airborneInfluence)
 		{
 			return new WeaponPrecisionData(chanceDecreaseDelay, chance, airborneDecreaseDelay, airborneInfluence);
 		}
@@ -191,7 +192,7 @@ public class SplatcraftComponents
 		public static final Codec<ItemColorData> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.BOOL.optionalFieldOf("color_locked", false).forGetter(ItemColorData::colorLocked),
 			Codec.BOOL.optionalFieldOf("inverted", false).forGetter(ItemColorData::hasInvertedColor),
-			InkColor.CODEC.optionalFieldOf("color", ColorUtils.getDefaultColor()).forGetter(ItemColorData::color)
+			InkColor.NUMBER_CODEC.optionalFieldOf("color", ColorUtils.getDefaultColor()).forGetter(ItemColorData::color)
 		).apply(builder, ItemColorData::new));
 		public static final Supplier<ItemColorData> DEFAULT = () -> new ItemColorData(false, false, InkColor.INVALID);
 		public ItemColorData withColorLocked(boolean colorLocked)
