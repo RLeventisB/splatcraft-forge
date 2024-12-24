@@ -3,10 +3,8 @@ package net.splatcraft.handlers;
 import com.google.common.reflect.TypeToken;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.common.BlockEvent;
-import dev.architectury.event.events.common.ChunkEvent;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.event.events.common.*;
+import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.value.IntValue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -25,8 +23,9 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemUsageContext;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
@@ -39,7 +38,6 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
@@ -75,9 +73,16 @@ public class ChunkInkHandler
 		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
 		ClientTickEvent.CLIENT_LEVEL_PRE.register(ChunkInkHandler::onClientWorldTickStart);
 		
-		ChunkEvent.LOAD_DATA.register(ChunkInkHandler::onChunkDataLoad);
 		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::onChunkDataRead);
 		ChunkEvent.SAVE_DATA.register(ChunkInkCapability::onChunkDataSave);
+		LifecycleEvent.SERVER_STOPPING.register(ChunkInkHandler::onServerSave);
+	}
+	private static void onServerSave(MinecraftServer server)
+	{
+		for (ServerWorld world : server.getWorlds())
+		{
+			ChunkInkCapability.unloadAllChunks(world);
+		}
 	}
 	public static void addInkToRemove(World world, BlockPos pos)
 	{
@@ -93,8 +98,8 @@ public class ChunkInkHandler
 			return;
 		
 		ChunkPos chunkPos = CommonUtils.getChunkPos(pos);
-		HashMap<ChunkPos, List<IncrementalChunkBasedPacket>> chunkPackets = sharedPacket.getOrDefault(world, new HashMap<>());
-		List<IncrementalChunkBasedPacket> existingPacketsInBlock = chunkPackets.getOrDefault(chunkPos, new ArrayList<>());
+		HashMap<ChunkPos, List<IncrementalChunkBasedPacket>> chunkPackets = sharedPacket.computeIfAbsent(world, v -> new HashMap<>());
+		List<IncrementalChunkBasedPacket> existingPacketsInBlock = chunkPackets.computeIfAbsent(chunkPos, v -> new ArrayList<>());
 		TypeToken<T> token = TypeToken.of(tClass);
 		T packet = null;
 		for (var extraData : existingPacketsInBlock)
@@ -108,8 +113,6 @@ public class ChunkInkHandler
 			existingPacketsInBlock.add(packet);
 		}
 		packet.add(world, pos);
-		chunkPackets.put(chunkPos, existingPacketsInBlock);
-		sharedPacket.put(world, chunkPackets);
 	}
 	//Ink Removal
 	public static void onBlockUpdate(World world, BlockPos pos, List<Direction> directions)
@@ -278,23 +281,12 @@ public class ChunkInkHandler
 			}
 		}
 	}*/
-	public static void onChunkWatch(ServerPlayerEntity player, World world, WorldChunk chunk)
+	public static void sendChunkData(ServerPlayNetworkHandler handler, World world, WorldChunk chunk)
 	{
-		if (!ChunkInkCapability.has(world, chunk))
+		if (!ChunkInkCapability.hasAndNotEmpty(world, chunk))
 			return;
 		ChunkInk worldInk = ChunkInkCapability.get(world, chunk);
-		if (!worldInk.isntEmpty())
-			return;
-		SplatcraftPacketHandler.sendToPlayer(new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), player);
-	}
-	public static void onChunkDataLoad(Chunk chunk, World world, NbtElement nbt)
-	{
-		if (!ChunkInkCapability.has(world, chunk))
-			return;
-		ChunkInk worldInk = ChunkInkCapability.get(world, chunk);
-		if (!worldInk.isntEmpty())
-			return;
-		SplatcraftPacketHandler.sendToDim(new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.getRegistryKey());
+		handler.send(SplatcraftPacketHandler.CHANNEL.toPacket(NetworkManager.Side.S2C, new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.getRegistryManager()), null);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void updateClientInkForChunk(World world, WorldChunk chunk)

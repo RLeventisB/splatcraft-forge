@@ -84,7 +84,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		{
 			// the dedicated server will crash if you pass the level and pos directly. wow.
 			// yes i will keep this comment in case i test on a dedicated server
-			ChunkInk chunkInk = ChunkInkCapability.get(level, level.getChunk(chunkPos.x, chunkPos.z));
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(level, level.getChunk(chunkPos.x, chunkPos.z));
 			
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{

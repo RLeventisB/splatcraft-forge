@@ -6,7 +6,8 @@
     "mixins": [
         "ForgeDummyInjections$BlockEntityMixin",
         "ForgeDummyInjections$BlockMixin",
-        "ForgeDummyInjections$ItemMixin"
+        "ForgeDummyInjections$ItemMixin",
+        "ServerChunkLoadManagerMixin"
     ],
     "minVersion": "0.8",
     "injectors": {

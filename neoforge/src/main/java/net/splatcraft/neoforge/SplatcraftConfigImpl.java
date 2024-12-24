@@ -96,7 +96,7 @@ public class SplatcraftConfigImpl
 			registerSetting(client.comment("How far away stage barriers or voids will render away from you.")
 				.defineInRange("splatcraft.barrierRenderDistance", 40, 4, 80));
 			registerSetting(client.comment("Sets a static color for friendly and hostile colors").define("splatcraft.colorLock", false));
-			registerSetting(client.comment("Makes projectiles colors more palid and more \"resistant\" to lightning changes").define("splatcraft.shinierConfig", false));
+			registerSetting(client.comment("Makes projectiles colors more palid and more \"resistant\" to lightning changes").define("splatcraft.makeShinier", false));
 			registerSetting(client.comment("Prevents changing FOV when in Squid Mode").defineEnum("splatcraft.preventBobView", SplatcraftConfig.PreventBobView.OFF));
 			registerSetting(client.comment("Determines whether the ink indicator near your crosshair warns you if your ink is low.")
 				.define("splatcraft.lowInkWarning", true));

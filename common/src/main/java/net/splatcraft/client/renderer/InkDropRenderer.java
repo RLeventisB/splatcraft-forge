@@ -19,60 +19,55 @@ import org.jetbrains.annotations.NotNull;
 
 public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements FeatureRendererContext<InkDropEntity, InkDropModel>
 {
-    private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/entity/shooter_projectile.png");
-    private final InkDropModel MODEL;
-
-    public InkDropRenderer(EntityRendererFactory.Context context)
-    {
-        super(context);
-
-        MODEL = new InkDropModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION));
-    }
-
-    @Override
-    public void render(InkDropEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
-    {
-        if (entityIn.isInvisible())
-            return;
-
-        if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 12.25D)
-        {
-            float scale = entityIn.getProjectileSize();
-            InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
-
-            int rgb = color.getColorWithAlpha(255);
-
-            //0.30000001192092896D
-            matrixStackIn.push();
-            matrixStackIn.translate(0.0D, scale, 0.0D);
-            matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
-            matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
-            matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getVelocity().length()));
-
-            InkDropModel model = MODEL;
-
-            model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
-            model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), packedLightIn, OverlayTexture.DEFAULT_UV, rgb);
-            matrixStackIn.pop();
-
-            super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
-        }
-    }
-
-    protected float handleRotationFloat(InkDropEntity livingBase, float partialTicks)
-    {
-        return (float) livingBase.age + partialTicks;
-    }
-
-    @Override
-    public @NotNull InkDropModel getModel()
-    {
-        return MODEL;
-    }
-
-    @Override
-    public @NotNull Identifier getTexture(@NotNull InkDropEntity entity)
-    {
-        return TEXTURE;
-    }
+	private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/entity/ink_projectile_shooter.png");
+	private final InkDropModel MODEL;
+	public InkDropRenderer(EntityRendererFactory.Context context)
+	{
+		super(context);
+		
+		MODEL = new InkDropModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION));
+	}
+	@Override
+	public void render(InkDropEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
+	{
+		if (entityIn.isInvisible())
+			return;
+		
+		if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 12.25D)
+		{
+			float scale = entityIn.getProjectileSize();
+			InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
+			
+			int rgb = color.getColorWithAlpha(255);
+			
+			//0.30000001192092896D
+			matrixStackIn.push();
+			matrixStackIn.translate(0.0D, scale, 0.0D);
+			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
+			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
+			matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getVelocity().length()));
+			
+			InkDropModel model = MODEL;
+			
+			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
+			model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), packedLightIn, OverlayTexture.DEFAULT_UV, rgb);
+			matrixStackIn.pop();
+			
+			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+		}
+	}
+	protected float handleRotationFloat(InkDropEntity livingBase, float partialTicks)
+	{
+		return (float) livingBase.age + partialTicks;
+	}
+	@Override
+	public @NotNull InkDropModel getModel()
+	{
+		return MODEL;
+	}
+	@Override
+	public @NotNull Identifier getTexture(@NotNull InkDropEntity entity)
+	{
+		return TEXTURE;
+	}
 }

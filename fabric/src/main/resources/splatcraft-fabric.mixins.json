@@ -4,6 +4,7 @@
     "compatibilityLevel": "JAVA_21",
     "refmap": "splatcraft-refmap.json",
     "mixins": [
+        "ServerChunkDataMixin"
     ],
     "minVersion": "0.8",
     "injectors": {

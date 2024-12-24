@@ -1,5 +1,6 @@
 package net.splatcraft.registries;
 
+import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.worldgen.SplatcraftOreGen;
 
@@ -7,6 +8,7 @@ public class SplatcraftRegistries
 {
 	public static void register()
 	{
+		SplatcraftSounds.register();
 		SplatcraftBlocks.REGISTRY.register();
 		SplatcraftEntities.REGISTRY.register();
 		SplatcraftAttributes.REGISTRY.register();
@@ -21,5 +23,11 @@ public class SplatcraftRegistries
 		SplatcraftCommands.ARGUMENT_REGISTRY.register();
 		SplatcraftStats.CRITERION_REGISTRY.register();
 		SplatcraftStats.STAT_REGISTRY.register();
+	}
+	public static void afterRegister()
+	{
+		SplatcraftTileEntities.bindTESR();
+		SplatcraftItems.registerModelProperties();
+		ClientSetupHandler.bindScreenContainers();
 	}
 }

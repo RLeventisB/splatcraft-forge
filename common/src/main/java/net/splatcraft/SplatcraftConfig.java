@@ -33,7 +33,7 @@ public class SplatcraftConfig
 		settingsMap.put("splatcraft.holdBarrierToRender", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.barrierRenderDistance", new Setting<>(Integer.class));
 		settingsMap.put("splatcraft.colorLock", new Setting<>(Double.class));
-		settingsMap.put("splatcraft.shinierConfig", new Setting<>(Boolean.class));
+		settingsMap.put("splatcraft.makeShinier", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.preventBobView", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.lowInkWarning", new Setting<>(PreventBobView.class));
 		settingsMap.put("splatcraft.coloredPlayerNames", new Setting<>(Boolean.class));

@@ -13,6 +13,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -70,7 +71,6 @@ public class SplatcraftCommonHandler
 		if (InkBlockUtils.onEnemyInk(entity))
 			entity.setVelocity(entity.getVelocity().x, Math.min(entity.getVelocity().y, 0.1f), entity.getVelocity().z);
 	}
-	
 	// todo: uhhh this thing checks for another events
     /*public static void onLivingDestroyBlock(LivingDestroyBlockEvent event)
     {
@@ -146,7 +146,7 @@ public class SplatcraftCommonHandler
 		}
 		return EventResult.pass();
 	}
-	public static void onLivingDeathDrops(LivingEntity entity, List<ItemStack> drops)
+	public static void onLivingDeathDrops(LivingEntity entity, Collection<ItemEntity> drops)
 	{
         /*
         //handle inked wool drops (should've handled in the mixin)
@@ -172,7 +172,7 @@ public class SplatcraftCommonHandler
 		{
 			DefaultedList<ItemStack> matchInv = EntityInfoCapability.get(player).getMatchInventory();
 			
-			drops.removeIf(matchInv::contains);
+			drops.removeIf(o -> matchInv.contains(o.getStack()));
 			
 			for (int i = 0; i < matchInv.size(); i++)
 			{

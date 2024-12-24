@@ -4,12 +4,14 @@ import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
-import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.splatcraft.client.handlers.*;
+import net.splatcraft.client.handlers.JumpLureHudHandler;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
+import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.config.ConfigScreenProvider;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
@@ -43,7 +45,7 @@ public final class Splatcraft
 		SplatcraftPacketHandler.registerMessages();
 		SplatcraftParticleTypes.registerParticles();
 		SplatcraftRecipeTypes.register();
-		SplatcraftEntities.defineModelLayers();
+		SplatcraftEntities.registerDataTrackers();
 		WeaponHandler.registerEvents();
 		ChunkInkHandler.registerEvents();
 		ShootingHandler.registerEvents();
@@ -56,11 +58,6 @@ public final class Splatcraft
 //		SplatcraftOreGen.registerOres();
 		
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
-		LifecycleEvent.SERVER_STARTING.register(Splatcraft::onServerStarting);
-	}
-	public static void onServerStarting(MinecraftServer server)
-	{
-//		SplatcraftConfig.loadConfig();
 	}
 	public static void onServerStart(MinecraftServer server)
 	{
@@ -72,12 +69,7 @@ public final class Splatcraft
 	public static void initClient()
 	{
 		SplatcraftEntities.bindRenderers();
-		SplatcraftTileEntities.bindTESR();
-		
-		SplatcraftItems.registerModelProperties();
-		ClientSetupHandler.bindScreenContainers();
-		
-		SplatcraftSounds.register((id, sound) -> Registry.register(Registries.SOUND_EVENT, id, sound));
+		SplatcraftEntities.defineModelLayers();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)
 	{

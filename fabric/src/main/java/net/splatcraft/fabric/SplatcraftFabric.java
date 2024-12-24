@@ -1,8 +1,10 @@
 package net.splatcraft.fabric;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.entities.SquidBumperEntity;
@@ -21,8 +23,10 @@ public final class SplatcraftFabric implements ModInitializer
 		// Run our common setup.
 		Splatcraft.init();
 		SplatcraftRegistries.register();
+		SplatcraftRegistries.afterRegister();
 		FabricDefaultAttributeRegistry.register(SplatcraftEntities.INK_SQUID.get(), InkSquidEntity.setCustomAttributes());
 		FabricDefaultAttributeRegistry.register(SplatcraftEntities.SQUID_BUMPER.get(), SquidBumperEntity.setCustomAttributes());
 		InkProjectileEntity.registerDataAccessors();
+		ServerChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> ChunkInkCapability.unloadChunkData(world, chunk.getPos()));
 	}
 }

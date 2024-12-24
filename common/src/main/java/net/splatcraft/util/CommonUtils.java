@@ -98,20 +98,7 @@ public class CommonUtils
 	};
 	public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
 	{
-		StringBuilder builder = new StringBuilder();
-		for (char chr : clazz.getSimpleName().toCharArray())
-		{
-			if (chr == '-' || chr == '_' || chr == '.' || Character.isLetterOrDigit(chr))
-			{
-				if (Character.isUpperCase(chr))
-				{
-					builder.append('_');
-					builder.append(Character.toLowerCase(chr));
-				}
-				else builder.append(chr);
-			}
-		}
-		return new CustomPayload.Id<>(Splatcraft.identifierOf(builder.toString()));
+		return new CustomPayload.Id<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));
 	}
 	public static String makeStringIdentifierValid(String text)
 	{
@@ -377,9 +364,9 @@ public class CommonUtils
 		return returnValueDependantOnSquidCancel(entity, firingData.squidStartupFrames(), firingData.startupFrames());
 //        return firingData.startupFrames();
 	}
-	public static float triangle(Random random, float min, float max)
+	public static float nextTriangular(Random random, float mode, float deviation)
 	{
-		return min + max * (random.nextFloat() - random.nextFloat());
+		return mode + deviation * (random.nextFloat() - random.nextFloat());
 	}
 	public static boolean isRolling(LivingEntity entity)
 	{
@@ -409,7 +396,7 @@ public class CommonUtils
 	@ExpectPlatform
 	public static void doPlayerSquidForgeEvent(AbstractClientPlayerEntity player, InkSquidRenderer squidRenderer, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i)
 	{
-	
+		
 	}
 	@ExpectPlatform
 	public static InteractionEventResultDummy doPlayerUseItemForgeEvent(int i, KeyBinding useKey, Hand hand)
@@ -419,7 +406,7 @@ public class CommonUtils
 	@ExpectPlatform
 	public static void doForgeEmptyClickEvent(ClientPlayerEntity player, Hand hand)
 	{
-	
+		
 	}
 	@ExpectPlatform
 	public static ItemStack callGetPickItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)

@@ -7,7 +7,6 @@
     "mixins": [
         "BlockUpdateMixins$ServerWorldMixin",
         "BlockUpdateMixins$WorldMixin",
-        "ChunkSerializerMixin",
         "EntityMixins$EntityMixin",
         "EntityMixins$LivingEntityMixin",
         "ItemRenderingMixins$HeldItemRendererMixin",

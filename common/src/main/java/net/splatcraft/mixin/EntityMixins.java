@@ -9,7 +9,6 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -43,15 +42,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class EntityMixins
 {
-	@Unique
-	private static final List<ItemStack> splatcraft$drops = new ArrayList<>();
-	@Unique
-	private static boolean splatcraft$capturingDrops;
 	@Mixin(Entity.class)
 	public static class EntityMixin
 	{
@@ -68,12 +60,6 @@ public class EntityMixins
 			
 			if (InkBlockUtils.canSquidHide(player) && EntityInfoCapability.get(player).isSquid())
 				cir.setReturnValue(true);
-		}
-		@Inject(method = "dropStack(Lnet/minecraft/item/ItemStack;F)Lnet/minecraft/entity/ItemEntity;", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/ItemEntity;setToDefaultPickupDelay()V"))
-		public void splatcraft$captureDrop(ItemStack stack, float yOffset, CallbackInfoReturnable<ItemEntity> cir)
-		{
-			if (splatcraft$capturingDrops)
-				splatcraft$drops.add(stack);
 		}
 		@Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
 		public void setSprinting(boolean sprinting, CallbackInfo ci)
@@ -155,19 +141,6 @@ public class EntityMixins
 		public void splatcraft$onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir)
 		{
 			SplatcraftCommonHandler.onPlayerAboutToDie((LivingEntity) (Object) this, amount);
-		}
-		@Inject(method = "drop", at = @At(value = "HEAD"))
-		public void splatcraft$startCapturingDrops(ServerWorld world, DamageSource damageSource, CallbackInfo ci)
-		{
-			splatcraft$drops.clear();
-			splatcraft$capturingDrops = true;
-		}
-		@Inject(method = "drop", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;dropXp(Lnet/minecraft/entity/Entity;)V"))
-		public void splatcraft$onDrops(ServerWorld world, DamageSource damageSource, CallbackInfo ci)
-		{
-			SplatcraftCommonHandler.onLivingDeathDrops((LivingEntity) (Object) this, new ArrayList<>(splatcraft$drops));
-			splatcraft$drops.clear();
-			splatcraft$capturingDrops = false;
 		}
 		@Inject(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getVelocity()Lnet/minecraft/util/math/Vec3d;"))
 		public void onJump(CallbackInfo ci)

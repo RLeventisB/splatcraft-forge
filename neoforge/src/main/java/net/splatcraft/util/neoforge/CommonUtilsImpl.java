@@ -1,10 +1,12 @@
 package net.splatcraft.util.neoforge;
 
+import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.data.TrackedDataHandler;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -17,6 +19,8 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.RecipeMatcher;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +30,7 @@ import java.util.function.Predicate;
 
 public class CommonUtilsImpl
 {
+	public static final DeferredRegister<TrackedDataHandler<?>> DATA_TRACKER_REGISTRY = Splatcraft.deferredRegistryOf(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS);
 	public static <T> int @Nullable [] findMatches(List<T> inputs, List<? extends Predicate<T>> tests)
 	{
 		return RecipeMatcher.findMatches(inputs, tests);

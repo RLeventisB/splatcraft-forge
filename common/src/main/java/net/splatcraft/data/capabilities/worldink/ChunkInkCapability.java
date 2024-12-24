@@ -7,10 +7,11 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.WatchInkPacket;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 public class ChunkInkCapability
 {
@@ -81,25 +82,6 @@ public class ChunkInkCapability
 	{
 		return getOrCreate(world, chunk.getPos());
 	}
-	public static void saveAllChunks(World world, boolean unload, Function<Long, NbtCompound> nbtSupplier)
-	{
-		if (!inkMap.containsKey(world))
-			return;
-		
-		ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
-		for (var entry : map.entrySet())
-		{
-			entry.getValue().writeNBT(nbtSupplier.apply(entry.getKey()));
-			if (unload)
-			{
-				map.remove(entry.getKey());
-			}
-		}
-		if (unload)
-		{
-			inkMap.remove(world);
-		}
-	}
 	public static void loadChunkData(World world, ChunkPos pos, NbtCompound nbt) throws Exception
 	{
 		ConcurrentHashMap<Long, ChunkInk> map = inkMap.computeIfAbsent(world, v -> new ConcurrentHashMap<>());
@@ -109,12 +91,13 @@ public class ChunkInkCapability
 		}
 		ChunkInk chunkInk = new ChunkInk();
 		chunkInk.readNBT(nbt);
+		SplatcraftPacketHandler.sendToDim(new WatchInkPacket(pos, chunkInk.getInkInChunk()), world.getRegistryKey());
 		map.put(pos.toLong(), chunkInk);
 	}
 	public static void saveChunkData(World world, ChunkPos pos, NbtCompound nbt, boolean unload)
 	{
-		ConcurrentHashMap<Long, ChunkInk> map = inkMap.computeIfAbsent(world, v -> new ConcurrentHashMap<>());
-		ChunkInk chunkInk = map.computeIfAbsent(pos.toLong(), v -> new ChunkInk());
+		ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+		ChunkInk chunkInk = map.get(pos.toLong());
 		chunkInk.writeNBT(nbt);
 		
 		if (unload)
@@ -138,6 +121,18 @@ public class ChunkInkCapability
 		{
 			inkMap.remove(world);
 		}
+	}
+	public static void unloadAllChunks(World world)
+	{
+		if (!inkMap.containsKey(world))
+			return;
+		
+		ConcurrentHashMap<Long, ChunkInk> map = inkMap.get(world);
+		for (var entry : map.entrySet())
+		{
+			map.remove(entry.getKey());
+		}
+		inkMap.remove(world);
 	}
 	public static void onChunkDataRead(Chunk chunk, @Nullable ServerWorld world, NbtCompound nbt)
 	{

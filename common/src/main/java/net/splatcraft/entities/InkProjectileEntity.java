@@ -187,6 +187,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	@Override
 	protected void initDataTracker(DataTracker.Builder builder)
 	{
+		super.initDataTracker(builder);
 		builder.add(PROJ_TYPE, Types.SHOOTER);
 		builder.add(COLOR, ColorUtils.getDefaultColor());
 		builder.add(PROJ_SIZE, new Vector2f(0.2F, 0.6F));
@@ -195,18 +196,18 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		builder.add(SPEED, 0f);
 		builder.add(HORIZONTAL_DRAG, 1F);
 		builder.add(GRAVITY_SPEED_MULT, 1F);
-		builder.add(SHOOT_DIRECTION, new Vector3f(0, 0, 0));
 		builder.add(EXTRA_DATA, new ExtraDataList());
+		builder.add(SHOOT_DIRECTION, new Vector3f(0, 0, 0));
 	}
 	@Override
-	public void onDataTrackerUpdate(List<DataTracker.SerializedEntry<?>> dataParameter)
+	public void onTrackedDataSet(TrackedData<?> data)
 	{
-		if (dataParameter.stream().anyMatch(v -> v.id() == PROJ_SIZE.id()))
+		if (PROJ_SIZE.equals(data))
 			calculateDimensions();
-		else if (dataParameter.stream().anyMatch(v -> v.id() == STRAIGHT_SHOT_TIME.id()))
+		else if (STRAIGHT_SHOT_TIME.equals(data))
 			straightShotTime = dataTracker.get(STRAIGHT_SHOT_TIME);
 		
-		super.onDataTrackerUpdate(dataParameter);
+		super.onTrackedDataSet(data);
 	}
 	@Override
 	protected @NotNull Item getDefaultItem()
@@ -247,7 +248,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 						MathHelper.getLerpProgress(getZ(), lastPosition.z, nextPosition.z)
 				) / 3);
 			setVelocity(getVelocity().multiply(frame));
-			calculateDrops(lastPosition, (float) frame);
+			if (Double.isFinite(frame))
+				calculateDrops(lastPosition, (float) frame);
 			return;
 		}
 		
@@ -259,7 +261,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				InkExplosion.createInkExplosion(getOwner(), getPos(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
 				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
 				getWorld().sendEntityStatus(this, (byte) 3);
-				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
+				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 			}
 			else
 			{
@@ -313,7 +315,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	private Vector3f getShootVelocity(float timeDelta)
 	{
-		Vector3f shootDirection = dataTracker.get(SHOOT_DIRECTION);
+		Vector3f shootDirection = getShotDirection();
 		float frame = getMaxStraightShotTime() - straightShotTime;
 		float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
 		Vector3f velocity = shootDirection.mul(speedData[0]);
@@ -326,6 +328,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		float speed = dataTracker.get(SPEED);
 		float fallenFrames = frame - straightShotFrame;
 		float fallenFramesNext = fallenFrames + timeDelta;
+		if (timeDelta == 0)
+			return new float[] {0, fallenFramesNext};
 		
 		if (fallenFramesNext < 0) // not close to falling
 		{
@@ -430,7 +434,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				{
 					InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
 					getWorld().sendEntityStatus(this, (byte) 3);
-					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
+					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 				}
 				else
 					getWorld().sendEntityStatus(this, (byte) 2);
@@ -517,7 +521,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		float usedInaccuracy = inaccuracy * MathHelper.RADIANS_PER_DEGREE * 1.34f;
 		Vec3d vec3 = new Vec3d(x, y, z)
 			.rotateY((random.nextFloat() * 2f - 1f) * usedInaccuracy)
-			.rotateX((random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f);
+			.rotateX((random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();
 		
 		dataTracker.set(SHOOT_DIRECTION, vec3.toVector3f());
 		vec3 = vec3.multiply(velocity);
@@ -722,7 +726,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	public Vector3f getShotDirection()
 	{
-		return dataTracker.get(SHOOT_DIRECTION);
+		return new Vector3f(dataTracker.get(SHOOT_DIRECTION));
 	}
 	@Override
 	public boolean hasNoGravity()

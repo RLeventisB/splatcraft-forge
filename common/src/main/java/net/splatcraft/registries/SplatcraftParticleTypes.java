@@ -69,24 +69,9 @@ public class SplatcraftParticleTypes
 		ParticleProviderRegistry.register(INK_EXPLOSION, InkExplosionParticle.Factory::new);
 		ParticleProviderRegistry.register(SQUID_SOUL, SquidSoulParticle.Factory::new);
 		ParticleProviderRegistry.register(INK_TERRAIN, InkTerrainParticle.Factory::new);
-//
-//        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_splash"), INK_SPLASH);
-//        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_explosion"), INK_EXPLOSION);
-//        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("squid_soul"), SQUID_SOUL);
-//        Registry.register(Registries.PARTICLE_TYPE, Splatcraft.identifierOf("ink_terrain"), INK_TERRAIN);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void registerClientFactories()
 	{
-//        SpriteLoader.fromAtlas(new SpriteAtlasTexture(Splatcraft.identifierOf("")))
-//        ClientSpriteRegistryCallback.event(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).register(((atlasTexture, registry) ->
-//        {
-//            registry.register(Identifier.of("modid", "particle/green_flame"));
-//        }));
-		
-		/* Registers our particle client-side.
-		 * First argument is our particle's instance, created previously on ExampleMod.
-		 * Second argument is the particle's factory. The factory controls how the particle behaves.
-		 * In this example, we'll use FlameParticle's Factory.*/
 	}
 }
