@@ -231,18 +231,14 @@ public class SquidFormHandler
 	public static EventResult onPlayerInteract(PlayerEntity player, Object... params)
 	{
 		if (EntityInfoCapability.isSquid(player))
-		{
 			return EventResult.interruptFalse();
-		}
 		return EventResult.pass();
 	}
 	public static CompoundEventResult<ItemStack> onPlayerInteractItem(PlayerEntity player, Object... params)
 	{
 		if (EntityInfoCapability.isSquid(player))
-		{
-			return CompoundEventResult.pass();
-		}
-		return CompoundEventResult.interruptFalse(ItemStack.EMPTY);
+			return CompoundEventResult.interruptFalse(ItemStack.EMPTY);
+		return CompoundEventResult.pass();
 	}
 	@Environment(EnvType.CLIENT)
 	public static void doSquidRotation(Entity entity)

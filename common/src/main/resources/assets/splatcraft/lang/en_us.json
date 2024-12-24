@@ -3,7 +3,6 @@
     "itemGroup.splatcraft_weapons": "Splatcraft Weapons",
     "itemGroup.splatcraft_colors": "Splatcraft Colors",
     "itemGroup.splatcraft_colors.label": "Find Colors",
-
     "advancements.splatcraft.story.root.name": "Splatcraft",
     "advancements.splatcraft.story.root.description": "A tale of kid and squid",
     "advancements.splatcraft.story.get_sardinium.name": "Fish Out of Water",
@@ -26,23 +25,18 @@
     "advancements.splatcraft.story.turf_war_won.description": "Use a Turf Scanner to determine Turf War results and have your color win!",
     "advancements.splatcraft.story.turf_war_ruler.name": "Turf War Ruler",
     "advancements.splatcraft.story.turf_war_ruler.description": "Use a Turf Scanner to scan 500 blocks of your own ink and win the match",
-
     "advancements.splatcraft.unlocks.root.name": "Splatcraft Blueprints",
     "advancements.splatcraft.unlocks.root.description": "Think you can get them all?",
     "advancements.splatcraft.weapon_unlock": "You may now craft the %s at the Ammo Knights Weapon Workbench",
-
     "block.splatcraft.inked_block": "Inked Block",
     "block.splatcraft.glowing_inked_block": "Glowing Inked Block",
     "block.splatcraft.clear_inked_block": "Clear Inked Block",
-
     "block.splatcraft.inkwell": "Inkwell",
     "block.splatcraft.canvas": "Ink Canvas",
-
     "block.splatcraft.ink_stained_wool": "Ink Stained Wool",
     "block.splatcraft.ink_stained_carpet": "Ink Stained Carpet",
     "block.splatcraft.ink_stained_glass": "Ink Stained Glass",
     "block.splatcraft.ink_stained_glass_pane": "Ink Stained Glass Pane",
-
     "block.splatcraft.empty_inkwell": "Empty Inkwell",
     "block.splatcraft.grate": "Grate",
     "block.splatcraft.grate_ramp": "Grate Ramp",
@@ -67,23 +61,19 @@
     "block.splatcraft.remote_pedestal": "Remote Pedestal",
     "block.splatcraft.splat_switch": "Splat-Switch",
     "block.splatcraft.spawn_pad": "Spawn Pad",
-
     "block.splatcraft.stage_barrier": "Stage Barrier",
     "block.splatcraft.stage_void": "Stage Void",
     "block.splatcraft.allowed_color_barrier": "Colored Stage Barrier (Allow)",
     "block.splatcraft.denied_color_barrier": "Colored Stage Barrier (Deny)",
-
     "item.splatcraft.raw_sardinium": "Raw Sardinium",
     "item.splatcraft.sardinium": "Sardinium",
     "item.splatcraft.power_egg": "Power Egg",
     "item.splatcraft.power_egg_can": "Can of Power Eggs",
     "item.splatcraft.toni_kensa_pin": "Toni Kensa Pin",
     "item.splatcraft.ammo_knights_scrap": "Ammo Knights™ Scrap",
-
     "item.splatcraft.blueprint": "Blueprint",
     "item.splatcraft.blueprint.tooltip": "§o§7Use to unlock a new weapon!",
     "item.splatcraft.blueprint.tooltip.empty": "§o§7It appears to be blank.",
-
     "item.splatcraft.blueprint.tooltip.shooters": "Shooter set",
     "item.splatcraft.blueprint.tooltip.blasters": "Blaster set",
     "item.splatcraft.blueprint.tooltip.rollers": "Roller set",
@@ -96,7 +86,6 @@
     "item.splatcraft.blueprint.tooltip.sub_weapons": "Sub Weapon set",
     "item.splatcraft.blueprint.tooltip.special_weapons": "Special Weapon set",
     "item.splatcraft.blueprint.tooltip.wildcard": "Every Weapon set",
-
     "item.splatcraft.filter": "Filter",
     "item.splatcraft.organic_filter": "Organic Filter",
     "item.splatcraft.pastel_filter": "Pastel Filter",
@@ -106,7 +95,6 @@
     "item.splatcraft.midnight_filter": "Midnight Filter",
     "item.splatcraft.creative_filter": "Creative Filter",
     "item.splatcraft.filter.tooltip": "Use it at an Ink Vat to get more colors!",
-
     "item.splatcraft.ink_disruptor": "Ink Disruptor",
     "item.splatcraft.turf_scanner": "Turf Scanner",
     "item.splatcraft.turf_scanner.mode.0": "Top-Down",
@@ -118,11 +106,9 @@
     "item.remote.coords.a": "(%s,%s,%s)",
     "item.remote.coords.b": "(%s,%s,%s) to (%s,%s,%s)",
     "item.remote.coords.invalid": "Invalid coord set!",
-
     "item.splatcraft.super_jump_lure": "Super Jump Lure",
     "item.splatcraft.super_jump_lure.tooltip": "Allows you to super jump back to your spawn pad or other players with matching lures.",
     "item.splatcraft.stage_pad": "Stage Pad",
-
     "item.splatcraft.squid_bumper": "Squid Bumper",
     "item.splatcraft.ink_cloth_helmet": "Ink Cloth Hat",
     "item.splatcraft.ink_cloth_chestplate": "Ink Cloth Shirt",
@@ -135,9 +121,7 @@
     "item.splatcraft.tooltip.inverted": "Inverted",
     "item.splatcraft.tooltip.matches_color": "matches your ink color!",
     "item.splatcraft.tooltip.matches_color.inverted": "matches your inverted ink color!",
-
     "item.splatcraft.wax_applicator": "Wax Applicator",
-
     "item.splatcraft.splattershot": "Splattershot",
     "item.splatcraft.tentatek_splattershot": "Tentatek Splattershot",
     "item.splatcraft.wasabi_splattershot": "Wasabi Splattershot",
@@ -161,7 +145,6 @@
     "item.splatcraft.jet_squelcher": "Jet Squelcher",
     "item.splatcraft.custom_jet_squelcher": "Custom Jet Squelcher",
     "item.splatcraft.splash_o_matic": "Splash-o-matic",
-
     "item.splatcraft.blaster": "Blaster",
     "item.splatcraft.grim_blaster": "Grim Blaster",
     "item.splatcraft.custom_blaster": "Custom Blaster",
@@ -178,7 +161,6 @@
     "item.splatcraft.kensa_rapid_blaster": "Kensa Rapid Blaster",
     "item.splatcraft.rapid_blaster_pro": "Rapid Blaster Pro",
     "item.splatcraft.rapid_blaster_pro_deco": "Rapid Blaster Pro Deco",
-
     "item.splatcraft.splat_roller": "Splat Roller",
     "item.splatcraft.krak_on_splat_roller": "Krak-On Splat Roller",
     "item.splatcraft.corocoro_splat_roller": "CoroCoro Splat Roller",
@@ -194,7 +176,6 @@
     "item.splatcraft.octobrush": "Octobrush",
     "item.splatcraft.kensa_octobrush": "Kensa Octobrush",
     "item.splatcraft.octobrush_nouveau": "Octobrush Nouveau",
-
     "item.splatcraft.splat_charger": "Splat Charger",
     "item.splatcraft.bento_splat_charger": "Bento Splat Charger",
     "item.splatcraft.kelp_splat_charger": "Kelp Splat Charger",
@@ -208,7 +189,6 @@
     "item.splatcraft.bamboozler_14_mk1": "Bamboozler 14 MK I",
     "item.splatcraft.bamboozler_14_mk2": "Bamboozler 14 MK II",
     "item.splatcraft.bamboozler_14_mk3": "Bamboozler 14 MK III",
-
     "item.splatcraft.splat_dualies": "Splat Dualie",
     "item.splatcraft.splat_dualies.plural": "Splat Dualies",
     "item.splatcraft.enperry_splat_dualies": "Enperry Splat Dualie",
@@ -225,7 +205,6 @@
     "item.splatcraft.glooga_dualies_deco.plural": "Glooga Dualies Deco",
     "item.splatcraft.kensa_glooga_dualies": "Kensa Glooga Dualie",
     "item.splatcraft.kensa_glooga_dualies.plural": "Kensa Glooga Dualies",
-
     "item.splatcraft.explosher": "Explosher",
     "item.splatcraft.custom_explosher": "Custom Explosher",
     "item.splatcraft.slosher": "Slosher",
@@ -234,7 +213,6 @@
     "item.splatcraft.slosher_deco": "Slosher Deco",
     "item.splatcraft.tri_slosher": "Tri-Slosher",
     "item.splatcraft.tri_slosher_nouveau": "Tri-Slosher Nouveau",
-
     "item.splatcraft.mini_splatling": "Mini Splatling",
     "item.splatcraft.zink_mini_splatling": "Zink Mini Splatling",
     "item.splatcraft.refurbished_mini_splatling": "Refurbished Mini Splatling",
@@ -244,7 +222,6 @@
     "item.splatcraft.heavy_splatling_remix": "Heavy Splatling Remix",
     "item.splatcraft.nautilus_47": "Nautilus 47",
     "item.splatcraft.nautilus_79": "Nautilus 79",
-
     "item.splatcraft.splat_bomb": "Splat Bomb",
     "item.splatcraft.splat_bomb_2": "Splat Bomb 2",
     "item.splatcraft.burst_bomb": "Burst Bomb",
@@ -252,7 +229,6 @@
     "item.splatcraft.curling_bomb": "Curling Bomb",
     "item.splatcraft.splash_wall": "Splash Wall",
     "item.splatcraft.tooltip.single_use": "§7§oSingle Use",
-
     "item.splatcraft.ink_tank": "Ink Tank",
     "item.splatcraft.ink_tank.ink": "%s / %s",
     "item.splatcraft.ink_tank.cant_recharge": "§7§oCan't Recharge",
@@ -261,7 +237,6 @@
     "item.splatcraft.ink_tank_jr.tooltip": "Only works with Junior weapons.",
     "item.splatcraft.armored_ink_tank": "Armored Ink Tank",
     "item.splatcraft.hero_ink_tank": "Hero Tank",
-
     "weaponStat.speed": "Projectile Speed",
     "weaponStat.range": "Range",
     "weaponStat.damage": "Damage",
@@ -275,7 +250,6 @@
     "weaponStat.roll_distance": "Roll Distance",
     "weaponStat.charge_speed": "Charge Speed",
     "weaponStat.ink_consumption": "Ink Consumption",
-
     "weaponStat.metric.gauge": "%s%s%s%s%s",
     "weaponStat.metric.seconds": "%ss",
     "weaponStat.metric.ticks": "%st",
@@ -285,11 +259,9 @@
     "weaponStat.metric.multiplier": "x%s",
     "weaponStat.metric.units": "%su",
     "weaponStat.metric.health": "%shp",
-
     "weaponStat.format": "%s: %s",
     "weaponStat.gauge.full": "■",
     "weaponStat.gauge.empty": "□",
-
     "weaponTab.splatcraft:weapon_workbench_tabs/shooters": "Shooters",
     "weaponTab.splatcraft:weapon_workbench_tabs/blasters": "Blasters",
     "weaponTab.splatcraft:weapon_workbench_tabs/rollers": "Rollers",
@@ -302,7 +274,6 @@
     "weaponTab.splatcraft:weapon_workbench_tabs/special_weapons": "Special Weapons",
     "weaponTab.splatcraft:weapon_workbench_tabs/ink_tanks": "Ink Tanks",
     "weaponTab.splatcraft:weapon_workbench_tabs/rare": "Fresh Swag",
-
     "weaponTab.description.splatcraft:weapon_workbench_tabs/shooters": "War, war never changes",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/blasters": "Business is boomin'",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rollers": "They see me rollin'",
@@ -315,13 +286,11 @@
     "weaponTab.description.splatcraft:weapon_workbench_tabs/special_weapons": "Bring out the big guns!",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/ink_tanks": "Carry no less than 5 at a time, like a sensible person",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rare": "Reserved for the best of the best",
-
     "weaponRecipe.splatcraft:aerospray": "Aerospray",
     "weaponRecipe.splatcraft:n-zap": "N-ZAP",
     "weaponRecipe.splatcraft:e_liter": "E-Liter",
     "weaponRecipe.splatcraft:bamboozler_14": "Bamboozler 14",
     "weaponRecipe.splatcraft:nautilus": "Nautilus",
-
     "weaponType.original": "Original",
     "weaponType.classic": "Classic",
     "weaponType.custom": "Custom",
@@ -353,10 +322,8 @@
     "weaponType.83": "'83",
     "weaponType.85": "'85",
     "weaponType.89": "'89",
-
     "inkType.glowing": "Glowing Ink",
     "inkType.clear": "Clear Ink",
-
     "subtitle.shooter_firing": "Shooter Firing",
     "subtitle.blaster_firing": "Blaster Firing",
     "subtitle.blaster_direct": "Blaster Projectile Directs",
@@ -391,19 +358,14 @@
     "subtitle.ink_swim": "Squid Swims Through Ink",
     "subtitle.superjump_start": "Player superjumps",
     "subtitle.superjump_land": "Player lands from superjump",
-
     "container.ink_vat": "Inkwell Crafting",
     "container.ammo_knights_workbench": "Weapon Crafting",
-
     "gui.ammo_knights_workbench.craft": "Craft",
     "gui.ammo_knights_workbench.empty": "Find Blueprints to unlock more weapons!",
-
-
     "gui.stage_pad.tab.settings": "Settings",
     "gui.stage_pad.tab.rules": "Rules",
     "gui.stage_pad.tab.teams": "Teams",
     "gui.stage_pad.tab.actions": "Actions",
-
     "gui.stage_pad.label.stage_select": "Select a Stage...",
     "gui.stage_pad.label.settings": "Settings",
     "gui.stage_pad.label.rules": "Rules",
@@ -415,7 +377,6 @@
     "gui.stage_pad.label.stage_id": "id: %s",
     "gui.stage_pad.label.corner_1": "Corner 1:",
     "gui.stage_pad.label.corner_2": "Corner 2:",
-
     "gui.stage_pad.button.create_stage": "+ Create a new Stage",
     "gui.stage_pad.textbox.search_stage": "Enter Stage Name...",
     "gui.stage_pad.button.search_stage": "Toggle Search Bar",
@@ -438,39 +399,33 @@
     "gui.stage_pad.button.rule_value.on": "Enabled",
     "gui.stage_pad.button.rule_value.off": "Disabled",
     "gui.stage_pad.button.rule_value.default": "World-Determined (%s)",
-
     "ink_color.invert": "Inverted %s",
     "ink_color.splatcraft.orange": "Orange",
     "ink_color.splatcraft.blue": "Blue",
     "ink_color.splatcraft.green": "Green",
     "ink_color.splatcraft.pink": "Pink",
-
     "ink_color.splatcraft.light_blue": "Light Blue",
     "ink_color.splatcraft.turquoise": "Turquoise",
     "ink_color.splatcraft.yellow": "Yellow",
     "ink_color.splatcraft.lilac": "Lilac",
     "ink_color.splatcraft.lemon": "Lemon",
     "ink_color.splatcraft.plum": "Plum",
-
     "ink_color.splatcraft.mint": "Mint",
     "ink_color.splatcraft.cyan": "Cyan",
     "ink_color.splatcraft.cherry": "Cherry",
     "ink_color.splatcraft.peach": "Peach",
-
     "ink_color.splatcraft.neon_orange": "Neon Orange",
     "ink_color.splatcraft.neon_blue": "Neon Blue",
     "ink_color.splatcraft.neon_green": "Neon Green",
     "ink_color.splatcraft.neon_pink": "Neon Pink",
     "ink_color.splatcraft.hero_yellow": "Hero Yellow",
     "ink_color.splatcraft.octo_pink": "Octo Pink",
-
     "ink_color.splatcraft.cobalt": "Cobalt",
     "ink_color.splatcraft.mojang": "Red Thing",
     "ink_color.splatcraft.ice": "Icy Mint",
     "ink_color.splatcraft.floral": "Floral Pink",
     "ink_color.splatcraft.omni_green": "Omni Green",
     "ink_color.splatcraft.mana": "Mana Purple",
-
     "ink_color.splatcraft.light_green": "Light Green",
     "ink_color.splatcraft.purple": "Purple",
     "ink_color.splatcraft.royal_blue": "Royal Blue",
@@ -484,7 +439,6 @@
     "ink_color.splatcraft.winter_green": "Winter Green",
     "ink_color.splatcraft.pumpkin": "Pumpkin",
     "ink_color.splatcraft.redwood": "Redwood",
-
     "ink_color.splatcraft.organic_white": "Organic White",
     "ink_color.splatcraft.organic_orange": "Organic Orange",
     "ink_color.splatcraft.organic_magenta": "Organic Magenta",
@@ -501,11 +455,9 @@
     "ink_color.splatcraft.organic_green": "Organic Green",
     "ink_color.splatcraft.organic_red": "Organic Red",
     "ink_color.splatcraft.organic_black": "Organic Black",
-
     "ink_color.splatcraft.color_lock_a": "Color Locked Friendly",
     "ink_color.splatcraft.color_lock_b": "Color Locked Hostile",
     "ink_color.splatcraft.default": "Undyed",
-
     "death.attack.splatcraft:water": "%s dissolved in water",
     "death.attack.splatcraft:water.player": "%s dissolved in water whilst trying to escape %s",
     "death.attack.splatcraft:splat": "%s was splatted",
@@ -518,12 +470,10 @@
     "death.attack.splatcraft:roll.player.item": "%s was crushed by %s using %s",
     "death.attack.splatcraft:out_of_stage": "%s tried to escape the stage",
     "death.attack.splatcraft:out_of_stage.player": "%1$s was knocked out of the stage by %2$s",
-
     "entity.splatcraft.ink_projectile": "Ink Projectile",
     "entity.splatcraft.ink_squid": "Squid",
     "entity.splatcraft.squid_bumper": "Squid Bumper",
     "entity.splatcraft.spawn_shield": "Spawn Pad Shield",
-
     "entity.splatcraft.splat_bomb": "Splat Bomb",
     "entity.splatcraft.burst_bomb": "Burst Bomb",
     "entity.splatcraft.suction_bomb": "Suction Bomb",
@@ -539,7 +489,6 @@
     "entity.splatcraft.squid_beakon": "Squid Beakon",
     "entity.splatcraft.fizzy_bomb": "Fizzy Bomb",
     "entity.splatcraft.torpedo": "Torpedo",
-
     "gamerule.splatcraft.inkDecay": "Ink decay",
     "gamerule.splatcraft.inkDecayRate": "Ink decay rate",
     "gamerule.splatcraft.inkDecayRate.description": "Determines the likelyhood of ink decaying per tick",
@@ -579,7 +528,6 @@
     "gamerule.splatcraft.globalSuperJumping.description": "Allows players to Super Jump outside of Stages",
     "gamerule.splatcraft.superJumpDistanceLimit": "Super Jump Distance Limit",
     "gamerule.splatcraft.superJumpDistanceLimit.description": "Determines the maximum distance players can Super Jump to outside of Stages. Negative values disable the limit completely",
-
     "status.coord_set.a": "Set first position to X: %s Y: %s Z: %s",
     "status.coord_set.b": "Set second position to X: %s Y: %s Z: %s",
     "status.no_ink": "Low Ink!",
@@ -598,12 +546,10 @@
     "status.stage_pad.set_corner.a": "Click on a block with the Stage Pad to set Corner 1",
     "status.stage_pad.set_corner.b": "Click on a block with the Stage Pad to set Corner 2",
     "status.no_superjump_targets": "No valid targets to superjump!",
-
     "status.blueprint.invalid": "This Blueprint is empty.",
     "status.blueprint.already_unlocked.single": "You already have this Blueprint.",
     "status.blueprint.already_unlocked": "You already completed this Blueprint set.",
     "status.blueprint.unlock": "% has been unlocked.",
-
     "commands.scanturf.success": "Successfully scanned %s blocks of turf",
     "commands.inkcolor.success.single": "Changed %s's ink color to %s",
     "commands.inkcolor.success.multiple": "Changed the ink color of %s players to %s",
@@ -613,7 +559,6 @@
     "commands.colorscores.list.empty": "There are no registered color criteria",
     "commands.colorscores.list.count": "Showing %s registered color criteria:",
     "commands.colorscores.list.entry": "%s: displays as '%s'",
-
     "commands.stage.add.success": "Successfully added stage [%s]",
     "commands.stage.remove.success": "Successfully removed stage [%s]",
     "commands.stage.list.get": "The stages registered are:\n%s",
@@ -628,7 +573,6 @@
     "commands.stage.teams.get.success": "[%s] team on %s is currently %s",
     "commands.stage.warp.success": "Successfully teleported %s player(s) to [%s]",
     "commands.stage.play.success": "Successfully played stage %s with %s player(s)",
-
     "arg.colorCriterion.notFound": "No criteria were found by the color %s",
     "arg.inkColor.notFound": "Unknown color %s",
     "arg.stageWarp.noSpawnPads": "No available Spawn Pads were found on stage [%s]",
@@ -639,7 +583,6 @@
     "arg.stageSetting.notFound": "Setting %s does not exist",
     "arg.stage.notEnoughTeams": "There aren't more than 1 team in this stage",
     "arg.stage.alreadyPlaying": "This stage has an active playing session.",
-
     "stat.splatcraft.turf_wars_won": "Turf Wars Won",
     "stat.splatcraft.squid_time": "Time as Squid",
     "stat.splatcraft.blocks_inked": "Blocks Inked",
@@ -647,14 +590,12 @@
     "stat.splatcraft.inkwells_crafted": "Inkwells Filled",
     "stat.splatcraft.subs_used": "Sub Weapons Used",
     "stat.splatcraft.specials_used": "Special Weapons Used",
-
     "key.categories.splatcraft": "Splatcraft",
     "key.squidForm": "Squid",
+    "key.useWeapon": "Use weapon",
     "key.subWeaponHotkey": "Sub Weapon Hotkey",
     "key.specialWeaponHotkey": "Special Weapon Hotkey",
-
     "attribute.splatcraft.ink_swim_speed": "Ink Swim Speed Bonus",
-
     "disconnect.lost": "A communication error occurred"
 }
 

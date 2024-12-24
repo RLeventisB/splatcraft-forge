@@ -3,6 +3,7 @@ package net.splatcraft.util;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.TranslatableTextContent;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
 import net.splatcraft.data.InkColorRegistry;
 
@@ -33,8 +34,14 @@ public class InkColorTranslatableContents extends TranslatableTextContent
 	{
 		Language language = Language.getInstance();
 		
-		if (!language.hasTranslation(getKey()) && language.hasTranslation(InkColorRegistry.getFirstAliasForColor(0xFFFFFF - color.getColor()).toTranslationKey()))
-			return inverted.visit(visitor);
+		if (!language.hasTranslation(getKey()))
+		{
+			Identifier alias = InkColorRegistry.getColorAlias(color.getInverted());
+			if (alias != null && language.hasTranslation(alias.toTranslationKey()))
+			{
+				return inverted.visit(visitor);
+			}
+		}
 		
 		return super.visit(visitor);
 	}
