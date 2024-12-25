@@ -10,7 +10,6 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.text.Text;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	public EntityAttributeModifier getSpeedModifier()
 	{
 		if (SPEED_MODIFIER == null)
-			SPEED_MODIFIER = new EntityAttributeModifier(Splatcraft.identifierOf(CommonUtils.makeStringIdentifierValid(name) + "_mobility"), moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+			SPEED_MODIFIER = new EntityAttributeModifier(Splatcraft.identifierOf("weapon_mobility"), moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		
 		return SPEED_MODIFIER;
 	}

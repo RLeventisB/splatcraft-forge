@@ -23,6 +23,7 @@ public class SplatcraftRegistries
 		SplatcraftCommands.ARGUMENT_REGISTRY.register();
 		SplatcraftStats.CRITERION_REGISTRY.register();
 		SplatcraftStats.STAT_REGISTRY.register();
+		SplatcraftParticleTypes.REGISTRY.register();
 	}
 	public static void afterRegister()
 	{

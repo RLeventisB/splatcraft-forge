@@ -23,7 +23,6 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -315,13 +314,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity
 		dataTracker.set(COOK_SCALE, v);
 	}
 	@Override
-	public void onDataTrackerUpdate(@NotNull List<DataTracker.SerializedEntry<?>> dataParameter)
+	public void onTrackedDataSet(TrackedData<?> data)
 	{
-		super.onDataTrackerUpdate(dataParameter);
-		
-		if (dataParameter.stream().anyMatch(v -> v.id() == INIT_FUSE_TIME.id()))
-		{
+		if (INIT_FUSE_TIME.equals(data))
 			fuseTime = getInitialFuseTime();
-		}
+		
+		super.onTrackedDataSet(data);
 	}
 }

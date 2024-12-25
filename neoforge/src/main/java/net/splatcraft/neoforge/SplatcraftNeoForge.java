@@ -11,6 +11,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -24,11 +25,16 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.client.particles.InkExplosionParticle;
+import net.splatcraft.client.particles.InkSplashParticle;
+import net.splatcraft.client.particles.InkTerrainParticle;
+import net.splatcraft.client.particles.SquidSoulParticle;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.registries.SplatcraftRegistries;
 import net.splatcraft.registries.neoforge.SplatcraftEntitiesImpl;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +49,12 @@ public final class SplatcraftNeoForge
 		// Run our common setup.
 		Splatcraft.init();
 		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
-		modBus.addListener(this::onRegistryUnlocked);
-		modBus.addListener(this::registerGuiOverlays);
+		modBus.addListener(SplatcraftNeoForge::onRegistryUnlocked);
+		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerClientExtensions);
+		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		
-		NeoForge.EVENT_BUS.addListener(this::afterRegistryEvent);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::afterRegistryEvent);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onMobDrops);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
@@ -55,6 +62,13 @@ public final class SplatcraftNeoForge
 		
 		if (Platform.getEnvironment() == Env.CLIENT)
 			Splatcraft.initClient();
+	}
+	private static void registerParticleProviders(RegisterParticleProvidersEvent event)
+	{
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
 	}
 	private static void onChunkWatch(ChunkWatchEvent.Sent event)
 	{
@@ -130,15 +144,15 @@ public final class SplatcraftNeoForge
 	{
 		SquidFormHandler.onGameModeSwitch(event.getEntity(), event.getNewGameMode());
 	}
-	public void afterRegistryEvent(IdMappingEvent event)
+	public static void afterRegistryEvent(IdMappingEvent event)
 	{
 		SplatcraftRegistries.afterRegister();
 	}
-	public void onRegistryUnlocked(NewRegistryEvent event)
+	public static void onRegistryUnlocked(NewRegistryEvent event)
 	{
 		SplatcraftRegistries.register();
 	}
-	public void registerGuiOverlays(RegisterGuiLayersEvent event)
+	public static void registerGuiOverlays(RegisterGuiLayersEvent event)
 	{
 		event.registerAbove(VanillaGuiLayers.CROSSHAIR, Splatcraft.identifierOf("overlay"), RendererHandler::renderGui);
 		event.registerAbove(VanillaGuiLayers.HOTBAR, Splatcraft.identifierOf("jump_lure"), JumpLureHudHandler::renderGui);

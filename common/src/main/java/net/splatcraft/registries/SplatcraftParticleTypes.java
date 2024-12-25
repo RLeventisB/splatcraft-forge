@@ -1,16 +1,20 @@
 package net.splatcraft.registries;
 
 import com.mojang.serialization.MapCodec;
-import dev.architectury.registry.client.particle.ParticleProviderRegistry;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.particle.ParticleType;
-import net.splatcraft.client.particles.*;
+import net.minecraft.registry.Registries;
+import net.splatcraft.Splatcraft;
+import net.splatcraft.client.particles.InkExplosionParticleData;
+import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.client.particles.InkTerrainParticleData;
+import net.splatcraft.client.particles.SquidSoulParticleData;
 
 public class SplatcraftParticleTypes
 {
+	public static final DeferredRegister<ParticleType<?>> REGISTRY = Splatcraft.deferredRegistryOf(Registries.PARTICLE_TYPE);
 	public static final ParticleType<InkSplashParticleData> INK_SPLASH = new ParticleType<>(false)
 	{
 		@Override
@@ -65,13 +69,17 @@ public class SplatcraftParticleTypes
 	};
 	public static void registerParticles()
 	{
+		REGISTRY.register(Splatcraft.identifierOf("ink_splash"), () -> INK_SPLASH);
+		REGISTRY.register(Splatcraft.identifierOf("ink_explosion"), () -> INK_EXPLOSION);
+		REGISTRY.register(Splatcraft.identifierOf("squid_soul"), () -> SQUID_SOUL);
+		REGISTRY.register(Splatcraft.identifierOf("ink_terrain"), () -> INK_TERRAIN);
+		
+		// uhhh architectury commented the code of these, why?????????????
+/*
 		ParticleProviderRegistry.register(INK_SPLASH, InkSplashParticle.Factory::new);
 		ParticleProviderRegistry.register(INK_EXPLOSION, InkExplosionParticle.Factory::new);
 		ParticleProviderRegistry.register(SQUID_SOUL, SquidSoulParticle.Factory::new);
 		ParticleProviderRegistry.register(INK_TERRAIN, InkTerrainParticle.Factory::new);
-	}
-	@Environment(EnvType.CLIENT)
-	public static void registerClientFactories()
-	{
+*/
 	}
 }
