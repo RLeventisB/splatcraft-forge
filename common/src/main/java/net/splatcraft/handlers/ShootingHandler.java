@@ -6,6 +6,8 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -28,6 +30,9 @@ public class ShootingHandler
 	public static Map<LivingEntity, EntityData> shootingData = new HashMap<>();
 	public static boolean notifyStartShooting(LivingEntity entity)
 	{
+		if (Platform.getEnvironment() == Env.CLIENT)
+			return false;
+		
 		EntityData entityData;
 		if (shootingData.containsKey(entity))
 		{
@@ -45,6 +50,9 @@ public class ShootingHandler
 	}
 	public static boolean notifyForceEndShooting(LivingEntity entity)
 	{
+		if (Platform.getEnvironment() == Env.CLIENT)
+			return false;
+		
 		EntityData entityData;
 		if (shootingData.containsKey(entity))
 		{

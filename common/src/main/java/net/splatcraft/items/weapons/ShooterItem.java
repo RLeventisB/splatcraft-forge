@@ -1,7 +1,9 @@
 package net.splatcraft.items.weapons;
 
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import dev.architectury.utils.Env;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -61,7 +63,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 			(data, accumulatedTime, entity1) ->
 			{
 				World world = entity1.getWorld();
-				if (!world.isClient())
+				if (Platform.getEnvironment() == Env.SERVER)
 				{
 					if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 					{

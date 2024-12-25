@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 public class SaveDataMixins
 {
@@ -30,7 +31,8 @@ public class SaveDataMixins
 		@Inject(method = "readLevelProperties(Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;)Lcom/mojang/serialization/Dynamic;", locals = LocalCapture.CAPTURE_FAILEXCEPTION, at = @At(value = "INVOKE_ASSIGN", target = "Lcom/mojang/serialization/Dynamic;update(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/Dynamic;", ordinal = 1))
 		private static void splatcraft$obtainWorldReadData(Path path, DataFixer dataFixer, CallbackInfoReturnable<Dynamic<?>> cir, NbtCompound nbtCompound, NbtCompound nbtCompound2, int i, Dynamic dynamic)
 		{
-			if (!SaveInfoCapability.load(dynamic))
+			Optional<Dynamic<?>> saveLocation = dynamic.get("splatcraft_save_info").result();
+			if (saveLocation.isEmpty() || !SaveInfoCapability.load(saveLocation.get()))
 			{
 				Path forgeCapabilitiesPath = path.getParent().resolve("data/capabilities.dat");
 				try
