@@ -16,67 +16,61 @@ import java.util.Map;
 
 public record SaveInfo(Map<String, PlaySession> playSessions, Map<String, Stage> stages, List<InkColor> colorScores)
 {
-    public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-        Codec.unboundedMap(Codec.STRING, PlaySession.CODEC).fieldOf("PlaySessions").forGetter(SaveInfo::playSessions),
-        Codec.unboundedMap(Codec.STRING, Stage.CODEC.codec()).fieldOf("Stages").forGetter(SaveInfo::stages),
-        Codec.list(InkColor.CODEC).fieldOf("Stages").forGetter(SaveInfo::colorScores)
-    ).apply(inst, SaveInfo::new));
-
-    public void addInitializedColorScores(InkColor... colors)
-    {
-        for (InkColor color : colors)
-        {
-            if (!colorScores.contains(color))
-            {
-                colorScores.add(color);
-            }
-        }
-    }
-
-    public void removeColorScore(InkColor color)
-    {
-        colorScores.remove(color);
-    }
-
-    public Map<String, Stage> getStages()
-    {
-        return stages;
-    }
-
-    public boolean createOrEditStage(World stageLevel, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
-    {
-        if (stageLevel.isClient())
-            return false;
-
-        if (stages.containsKey(stageId))
-        {
-            Stage stage = stages.get(stageId);
-            stage.seStagetName(stageName);
-            stage.updateBounds(stageLevel, corner1, corner2);
-            stage.dimID = stageLevel.getDimension().effects();
-        }
-        else
-            stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
-
-        SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-        return true;
-    }
-
-    public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
-    {
-        if (world.isClient())
-            return false;
-
-        if (stages.containsKey(stageId))
-            return false;
-
-        stages.put(stageId, new Stage(world, corner1, corner2, stageId, stageName));
-        SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
-        return true;
-    }
-
-    public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2)
-    {
-        return createStage(world, stageId, corner1, corner2, Text.literal(stageId));
-    }
+	public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		Codec.unboundedMap(Codec.STRING, PlaySession.CODEC).fieldOf("PlaySessions").forGetter(SaveInfo::playSessions),
+		Codec.unboundedMap(Codec.STRING, Stage.CODEC).fieldOf("Stages").forGetter(SaveInfo::stages),
+		Codec.list(InkColor.CODEC).fieldOf("Stages").forGetter(SaveInfo::colorScores)
+	).apply(inst, SaveInfo::new));
+	public void addInitializedColorScores(InkColor... colors)
+	{
+		for (InkColor color : colors)
+		{
+			if (!colorScores.contains(color))
+			{
+				colorScores.add(color);
+			}
+		}
+	}
+	public void removeColorScore(InkColor color)
+	{
+		colorScores.remove(color);
+	}
+	public Map<String, Stage> getStages()
+	{
+		return stages;
+	}
+	public boolean createOrEditStage(World stageLevel, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	{
+		if (stageLevel.isClient())
+			return false;
+		
+		if (stages.containsKey(stageId))
+		{
+			Stage stage = stages.get(stageId);
+			stage.seStagetName(stageName);
+			stage.updateBounds(stageLevel, corner1, corner2);
+			stage.dimID = stageLevel.getDimension().effects();
+		}
+		else
+			stages.put(stageId, new Stage(stageLevel, corner1, corner2, stageId, stageName));
+		
+		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
+		return true;
+	}
+	public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	{
+		if (world.isClient())
+			return false;
+		
+		if (stages.containsKey(stageId))
+			return false;
+		
+		stages.put(stageId, new Stage(world, corner1, corner2, stageId, stageName));
+		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
+		return true;
+	}
+	public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2)
+	{
+		return createStage(world, stageId, corner1, corner2, Text.literal(stageId));
+	}
 }

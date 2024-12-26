@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -28,8 +27,8 @@ public class SaveDataMixins
 	@Mixin(LevelStorage.class)
 	public static class LevelStorageMixin
 	{
-		@Inject(method = "readLevelProperties(Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;)Lcom/mojang/serialization/Dynamic;", locals = LocalCapture.CAPTURE_FAILEXCEPTION, at = @At(value = "INVOKE_ASSIGN", target = "Lcom/mojang/serialization/Dynamic;update(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/Dynamic;", ordinal = 1))
-		private static void splatcraft$obtainWorldReadData(Path path, DataFixer dataFixer, CallbackInfoReturnable<Dynamic<?>> cir, NbtCompound nbtCompound, NbtCompound nbtCompound2, int i, Dynamic dynamic)
+		@Inject(method = "readLevelProperties(Ljava/nio/file/Path;Lcom/mojang/datafixers/DataFixer;)Lcom/mojang/serialization/Dynamic;", at = @At(value = "INVOKE_ASSIGN", target = "Lcom/mojang/serialization/Dynamic;update(Ljava/lang/String;Ljava/util/function/Function;)Lcom/mojang/serialization/Dynamic;", ordinal = 1))
+		private static void splatcraft$obtainWorldReadData(Path path, DataFixer dataFixer, CallbackInfoReturnable<Dynamic<?>> cir, @Local Dynamic dynamic)
 		{
 			Optional<Dynamic<?>> saveLocation = dynamic.get("splatcraft_save_info").result();
 			if (saveLocation.isEmpty() || !SaveInfoCapability.load(saveLocation.get()))
@@ -49,7 +48,7 @@ public class SaveDataMixins
 				}
 				catch (IOException e)
 				{
-					Splatcraft.LOGGER.info("Could not read save info.");
+					Splatcraft.LOGGER.info("Could not read save info, creating empty.");
 				}
 			}
 		}
