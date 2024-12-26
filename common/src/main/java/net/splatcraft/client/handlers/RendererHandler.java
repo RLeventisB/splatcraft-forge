@@ -76,7 +76,6 @@ public class RendererHandler
 	public static void registerEvents()
 	{
 		ClientChatEvent.RECEIVED.register(RendererHandler::onChatMessage);
-		ClientTickEvent.CLIENT_POST.register(RendererHandler::onRenderTick);
 	}
 	public static boolean playerRender(PlayerEntityRenderer instance, AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int color, EntityRendererFactory.Context ctx)
 	{
@@ -88,16 +87,6 @@ public class RendererHandler
 				squidRenderer = new InkSquidRenderer(ctx);
 			if (!InkBlockUtils.canSquidHide(player))
 			{
-//				InkColor entityColor = ColorUtils.getEntityColor(player);
-//				if (entityColor.isValid())
-//				{
-//					float[] rgbOriginal = ColorUtils.hexToRGB(color);
-//					float[] rgbColor = entityColor.getRGB();
-//					rgbOriginal[0] = rgbOriginal[0] * rgbColor[0];
-//					rgbOriginal[1] = rgbOriginal[1] * rgbColor[1];
-//					rgbOriginal[2] = rgbOriginal[2] * rgbColor[2];
-//					color = ColorUtils.RGBtoHex(rgbOriginal);
-//				}
 				squidRenderer.render(player, f, g, matrixStack, consumerProvider, color);
 				CommonUtils.doPlayerSquidForgeEvent(player, squidRenderer, g, matrixStack, consumerProvider, color);
 				return true;
@@ -105,19 +94,28 @@ public class RendererHandler
 		}
 		return false;
 	}
+	public static int slotToAssign(PlayerEntity player)
+	{
+		if (player != null && !player.isSpectator())
+		{
+			if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
+			{
+				return PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
+			}
+			else if (ShootingHandler.isDoingShootingAction(player))
+			{
+				return ShootingHandler.shootingData.get(player).selected;
+			}
+		}
+		return -1;
+	}
 	public static void onRenderTick(MinecraftClient client)
 	{
 		PlayerEntity player = ClientUtils.getClientPlayer();
-		if (player != null && !player.isSpectator())
+		int slot = slotToAssign(player);
+		if (slot != -1)
 		{
-			if (ShootingHandler.isDoingShootingAction(player))
-			{
-				player.getInventory().selectedSlot = ShootingHandler.shootingData.get(player).selected;
-			}
-			if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
-			{
-				player.getInventory().selectedSlot = PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
-			}
+				player.getInventory().selectedSlot = slot;
 		}
 	}
 	public static void renderArm(PlayerEntityRenderer instance, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, AbstractClientPlayerEntity player, ModelPart arm, ModelPart sleeve)
