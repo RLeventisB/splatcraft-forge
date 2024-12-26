@@ -84,14 +84,4 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity>
         Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
         poseStack.pop();
     }
-
-    public void renderBase(MatrixStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
-    {
-        Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
-    }
-
-    public void renderBumper(MatrixStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
-    {
-        Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
-    }
 }

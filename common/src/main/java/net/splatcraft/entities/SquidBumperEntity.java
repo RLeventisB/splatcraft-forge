@@ -68,6 +68,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	@Override
 	protected void initDataTracker(DataTracker.Builder builder)
 	{
+		super.initDataTracker(builder);
 		builder.add(COLOR, ColorUtils.getDefaultColor());
 		builder.add(SPLAT_HEALTH, maxInkHealth);
 		builder.add(RESPAWN_TIME, maxRespawnTime);

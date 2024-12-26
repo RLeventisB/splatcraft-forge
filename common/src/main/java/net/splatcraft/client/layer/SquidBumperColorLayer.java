@@ -37,6 +37,6 @@ public class SquidBumperColorLayer extends FeatureRenderer<SquidBumperEntity, Sq
         model.setAngles(entity, limbSwing, limbSwingAmount, partialTickTime, ageInTicks, netHeadYaw);
 
         VertexConsumer ivertexbuilder = bufferSource.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURE));
-        model.render(poseStack, ivertexbuilder, packedLight, LivingEntityRenderer.getOverlay(entity, 0.0F), color.getColorWithAlpha(255));
+        model.render(poseStack, ivertexbuilder, packedLight, LivingEntityRenderer.getOverlay(entity, 0.0F), color.getColor());
     }
 }

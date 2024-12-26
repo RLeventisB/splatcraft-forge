@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.level.ChunkWatchEvent;
 import net.neoforged.neoforge.registries.IdMappingEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
@@ -53,6 +55,8 @@ public final class SplatcraftNeoForge
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerClientExtensions);
 		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
+		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
+		modBus.addListener(SplatcraftNeoForge::registerColorHandlersBlock);
 		
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::afterRegistryEvent);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onMobDrops);
@@ -62,6 +66,14 @@ public final class SplatcraftNeoForge
 		
 		if (Platform.getEnvironment() == Env.CLIENT)
 			Splatcraft.initClient();
+	}
+	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
+	{
+		ClientSetupHandler.initItemColors(event.getItemColors());
+	}
+	private static void registerColorHandlersBlock(RegisterColorHandlersEvent.Block event)
+	{
+		ClientSetupHandler.initBlockColors(event.getBlockColors());
 	}
 	private static void registerParticleProviders(RegisterParticleProvidersEvent event)
 	{

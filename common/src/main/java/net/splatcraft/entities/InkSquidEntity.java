@@ -123,8 +123,8 @@ public class InkSquidEntity extends PathAwareEntity implements IColoredEntity
     @Override
     public void writeCustomDataToNbt(@NotNull NbtCompound nbt)
     {
-        super.saveNbt(nbt);
-        nbt.putInt("Color", getColor().getColor());
+        super.writeCustomDataToNbt(nbt);
+        nbt.put("Color", getColor().getNbt());
     }
 
     @Override

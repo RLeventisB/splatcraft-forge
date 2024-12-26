@@ -527,10 +527,12 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		vec3 = vec3.multiply(velocity);
 		
 		double d0 = vec3.horizontalLength();
-		setYaw((float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN));
-		setPitch((float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN));
-		prevYaw = getYaw(partialTicks);
-		prevPitch = getPitch(partialTicks);
+		float yaw = (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN);
+		float pitch = (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN);
+		setYaw(yaw);
+		setPitch(pitch);
+		prevYaw = yaw;
+		prevPitch = pitch;
 		setVelocity(vec3);
 		
 		dataTracker.set(SPEED, velocity);

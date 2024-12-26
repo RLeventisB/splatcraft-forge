@@ -39,18 +39,18 @@ import java.util.Optional;
 
 public class ClientSetupHandler
 {
-    public static void onTextureStitch(Sprite sprite)
-    {
-        if (!sprite.getAtlasId().equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE))
-            return;
-
-        List<SpriteContents> copy = new ArrayList<>();
-        copy.add(sprite.getContents());
-        registerSprite(copy, Splatcraft.identifierOf("block/stage_barrier_fancy"));
-        registerSprite(copy, Splatcraft.identifierOf("block/stage_void_fancy"));
-        registerSprite(copy, Splatcraft.identifierOf("block/allowed_color_barrier_fancy"));
-        registerSprite(copy, Splatcraft.identifierOf("block/denied_color_barrier_fancy"));
-        registerSprite(copy, Splatcraft.identifierOf("block/permanent_ink_overlay"));
+	public static void onTextureStitch(Sprite sprite)
+	{
+		if (!sprite.getAtlasId().equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE))
+			return;
+		
+		List<SpriteContents> copy = new ArrayList<>();
+		copy.add(sprite.getContents());
+		registerSprite(copy, Splatcraft.identifierOf("block/stage_barrier_fancy"));
+		registerSprite(copy, Splatcraft.identifierOf("block/stage_void_fancy"));
+		registerSprite(copy, Splatcraft.identifierOf("block/allowed_color_barrier_fancy"));
+		registerSprite(copy, Splatcraft.identifierOf("block/denied_color_barrier_fancy"));
+		registerSprite(copy, Splatcraft.identifierOf("block/permanent_ink_overlay"));
 //      dont know what do these do but ok??? curse of i = 30338
 //		int i = 1;
 //		while (MinecraftClient.getInstance().getResourceManager().getResource(Splatcraft.identifierOf("textures/block/inked_block" + i + ".png")).isEmpty())
@@ -58,93 +58,89 @@ public class ClientSetupHandler
 //		i = 1;
 //		while (MinecraftClient.getInstance().getResourceManager().getResource(Splatcraft.identifierOf("textures/block/glitter" + i + ".png")).isEmpty())
 //			registerSprite(copy, Splatcraft.identifierOf("block/glitter" + (i++)));
-        registerSprite(copy, Splatcraft.identifierOf("block/inked_block"));
-        registerSprite(copy, Splatcraft.identifierOf("block/glitter"));
+		registerSprite(copy, Splatcraft.identifierOf("block/inked_block"));
+		registerSprite(copy, Splatcraft.identifierOf("block/glitter"));
 
 //        event.getAtlas().sprites = List.copyOf(copy);
-    }
-
-    public static void registerSprite(List<SpriteContents> sprites, Identifier location)
-    {
-        final ResourceFinder TEXTURE_ID_CONVERTER = new ResourceFinder("textures", ".png");
-        Identifier ohNo = TEXTURE_ID_CONVERTER.toResourceId(location);
-        Optional<Resource> resource = MinecraftClient.getInstance().getResourceManager().getResource(ohNo);
-        if (resource.isPresent())
-        {
+	}
+	public static void registerSprite(List<SpriteContents> sprites, Identifier location)
+	{
+		final ResourceFinder TEXTURE_ID_CONVERTER = new ResourceFinder("textures", ".png");
+		Identifier ohNo = TEXTURE_ID_CONVERTER.toResourceId(location);
+		Optional<Resource> resource = MinecraftClient.getInstance().getResourceManager().getResource(ohNo);
+		if (resource.isPresent())
+		{
 //            SpriteContents contents = SpriteLoader.fromAtlas(new SpriteAtlasTexture(ohNo, resource.get());
 //            sprites.add(contents);
-        }
-    }
-
-    public static void bindScreenContainers()
-    {
-        MenuRegistry.registerScreenFactory(SplatcraftTileEntities.inkVatContainer.get(), InkVatScreen::new);
-        MenuRegistry.registerScreenFactory(SplatcraftTileEntities.weaponWorkbenchContainer.get(), WeaponWorkbenchScreen::new);
-    }
-
-    // todo: me thinks these are handled by the rendering but just in case i will put a todo here
-    public static void initItemColors(ItemColors colors)
-    {
-        colors.register(new InkItemColor(), SplatcraftItems.inkColoredItems.toArray(new Item[0]));
-    }
-
-    public static void initBlockColors(BlockColors colors)
-    {
-        colors.registerColorProvider(new InkBlockColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
-    }
-
-    // https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
+		}
+	}
+	public static void bindScreenContainers()
+	{
+		MenuRegistry.registerScreenFactory(SplatcraftTileEntities.inkVatContainer.get(), InkVatScreen::new);
+		MenuRegistry.registerScreenFactory(SplatcraftTileEntities.weaponWorkbenchContainer.get(), WeaponWorkbenchScreen::new);
+	}
+	// todo: me thinks these are handled by the rendering but just in case i will put a todo here
+	public static void initItemColors(ItemColors colors)
+	{
+		SplatcraftItems.inkColoredItems.add(SplatcraftItems.splatfestBand.get());
+		SplatcraftItems.inkColoredItems.add(SplatcraftItems.clearBand.get());
+		
+		colors.register(new InkItemColor(), SplatcraftItems.inkColoredItems.toArray(new Item[0]));
+	}
+	public static void initBlockColors(BlockColors colors)
+	{
+		colors.registerColorProvider(new InkBlockColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
+	}
+	// https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
     /*@SubscribeEvent
     public static void registerSpriteLoaders(RegisterSpriteLoadersEvent event)
     {
         event.register("weapon_loader", new WeaponLoader()); // so the gal deco texture has this!!! idk why but ok here it is
     }*/
-
-    protected static class InkItemColor implements ItemColorProvider
-    {
-        @Override
-        public int getColor(@NotNull ItemStack stack, int i)
-        {
-            if (i != 0)
-                return -1;
-
-            boolean isDefault = !ColorUtils.getInkColor(stack).isValid() && !ColorUtils.isColorLocked(stack);
-            InkColor color = (stack.isIn(SplatcraftTags.Items.INK_BANDS) || !stack.isIn(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
-                ? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : ColorUtils.getInkColor(stack);
-
-            if (ColorUtils.isInverted(stack))
-                color = color.getInverted();
-
-            color = ColorUtils.getColorLockedIfConfig(color);
-
-            return color.getColor();
-        }
-    }
-
-    public static class InkBlockColor implements BlockColorProvider
-    {
-        @Override
-        public int getColor(@NotNull BlockState blockState, @Nullable BlockRenderView iBlockDisplayReader, @Nullable BlockPos blockPos, int i)
-        {
-            if (i != 0 || iBlockDisplayReader == null || blockPos == null)
-                return -1;
-
-            BlockEntity te = iBlockDisplayReader.getBlockEntity(blockPos);
-
-            if (te == null)
-                return -1;
-
-            InkColor color = ColorUtils.getInkColor(te);
-
-            if (ColorUtils.isInverted(te.getWorld(), blockPos))
-                color = color.getInverted();
-
-            color = ColorUtils.getColorLockedIfConfig(color);
-
-            if (!color.isValid())
-                return 0xFFFFFF;
-
-            return color.getColor();
-        }
-    }
+	protected static class InkItemColor implements ItemColorProvider
+	{
+		@Override
+		public int getColor(@NotNull ItemStack stack, int i)
+		{
+			if (i != 0)
+				return -1;
+			
+			boolean isDefault = !ColorUtils.getInkColor(stack).isValid() && !ColorUtils.isColorLocked(stack);
+			InkColor color = (stack.isIn(SplatcraftTags.Items.INK_BANDS) || !stack.isIn(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
+				? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : ColorUtils.getInkColor(stack);
+			
+			if (ColorUtils.isInverted(stack))
+				color = color.getInverted();
+			
+			color = ColorUtils.getColorLockedIfConfig(color);
+			
+			return color.getColorWithAlpha(255);
+		}
+	}
+	public static class InkBlockColor implements BlockColorProvider
+	{
+		@Override
+		public int getColor(@NotNull BlockState blockState, @Nullable BlockRenderView iBlockDisplayReader, @Nullable BlockPos blockPos, int i)
+		{
+			if (i != 0 || iBlockDisplayReader == null || blockPos == null)
+				return -1;
+			
+			BlockEntity te = iBlockDisplayReader.getBlockEntity(blockPos);
+			
+			if (te == null)
+				return -1;
+			
+			InkColor color = ColorUtils.getInkColor(te);
+			
+			if (ColorUtils.isInverted(te.getWorld(), blockPos))
+				color = color.getInverted();
+			
+			color = ColorUtils.getColorLockedIfConfig(color);
+			
+			if (!color.isValid())
+				return 0xFFFFFF;
+			
+			return color.getColorWithAlpha(255);
+		}
+	}
 }

@@ -19,6 +19,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockCollisionSpliterator;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.InkedBlock;
@@ -124,7 +125,8 @@ public class InkBlockUtils
 		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.INKABLE_GROUND))
 			return BlockInkedResult.FAIL;
 		
-		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, pos);
+		WorldChunk chunk = world.getWorldChunk(pos);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, chunk);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
 		
@@ -138,6 +140,7 @@ public class InkBlockUtils
 			return BlockInkedResult.ALREADY_INKED;
 		
 		worldInk.ink(offset, index, color, inkType);
+		chunk.setNeedsSaving(true);
 		
 		if (SplatcraftGameRules.getLocalizedRule(world, pos.up(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
 			isBlockFoliage(world.getBlockState(pos.up())))
@@ -161,6 +164,8 @@ public class InkBlockUtils
 			for (int z = chunkMinZ; z <= chunkmaxZ; z++)
 			{
 				ChunkPos chunkPos = new ChunkPos(x, z);
+				if (!ChunkInkCapability.hasAndNotEmpty(world, chunkPos))
+					continue;
 				Set<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> uhhh = ChunkInkCapability.get(world, chunkPos).getInkInChunk().entrySet();
 				List<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> entries;
 				synchronized (uhhh)
@@ -187,7 +192,9 @@ public class InkBlockUtils
 	}
 	public static @Nullable ChunkInk.BlockEntry getInkBlock(World world, BlockPos pos)
 	{
-		return ChunkInkCapability.getOrCreate(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
+		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
+			return null;
+		return ChunkInkCapability.get(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static ChunkInk.InkEntry getInkInFace(World world, BlockPos pos, Direction direction)
 	{
@@ -199,11 +206,11 @@ public class InkBlockUtils
 	}
 	public static boolean isInked(World world, BlockPos pos, int index)
 	{
-		return ChunkInkCapability.getOrCreate(world, pos).isInked(RelativeBlockPos.fromAbsolute(pos), index);
+		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.get(world, pos).isInked(RelativeBlockPos.fromAbsolute(pos), index);
 	}
 	public static boolean isInkedAny(World world, BlockPos pos)
 	{
-		return ChunkInkCapability.getOrCreate(world, pos).isInkedAny(RelativeBlockPos.fromAbsolute(pos));
+		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.get(world, pos).isInkedAny(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static boolean canInkFromFace(World world, BlockPos pos, Direction face)
 	{

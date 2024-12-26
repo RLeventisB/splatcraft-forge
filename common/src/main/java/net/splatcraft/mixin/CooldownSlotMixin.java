@@ -36,7 +36,8 @@ public class CooldownSlotMixin
 		int slot = RendererHandler.slotToAssign(player);
 		if (slot != -1)
 		{
-			original.call(instance, slot);
+			value = slot;
 		}
+		original.call(instance, value);
 	}
 }

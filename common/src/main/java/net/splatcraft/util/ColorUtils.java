@@ -59,24 +59,15 @@ public class ColorUtils
 	}
 	public static @NotNull InkColor getEntityColor(Entity entity)
 	{
-		if (entity instanceof PlayerEntity player)
+		if (entity instanceof LivingEntity living)
 		{
-			if (player == ClientUtils.getClientPlayer())
-				return ClientUtils.getClientPlayerColor(player.getUuid());
-			if (EntityInfoCapability.hasCapability(player))
-				return EntityInfoCapability.get(player).getColor();
-			return InkColor.INVALID;
+			if (living == ClientUtils.getClientPlayer())
+				return ClientUtils.getClientPlayerColor(living.getUuid());
+			if (EntityInfoCapability.hasCapability(living))
+				return EntityInfoCapability.get(living).getColor();
 		}
-		else if (entity instanceof IColoredEntity coloredEntity)
+		if (entity instanceof IColoredEntity coloredEntity)
 			return coloredEntity.getColor();
-		else return InkColor.INVALID;
-	}
-	public static @NotNull InkColor getEntityColor(LivingEntity player)
-	{
-		if (player == ClientUtils.getClientPlayer())
-			return ClientUtils.getClientPlayerColor(player.getUuid());
-		if (EntityInfoCapability.hasCapability(player))
-			return EntityInfoCapability.get(player).getColor();
 		return InkColor.INVALID;
 	}
 	public static void setPlayerColor(PlayerEntity player, InkColor color, boolean updateClient)

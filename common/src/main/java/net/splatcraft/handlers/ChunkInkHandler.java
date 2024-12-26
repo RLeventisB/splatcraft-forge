@@ -11,7 +11,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.color.block.BlockColorProvider;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.ModelBakeSettings;
@@ -36,7 +35,6 @@ import net.minecraft.util.math.AffineTransformation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
@@ -71,7 +69,7 @@ public class ChunkInkHandler
 		BlockEvent.BREAK.register(ChunkInkHandler::onBlockBreak);
 		TickEvent.SERVER_LEVEL_PRE.register(ChunkInkHandler::onWorldTickStart);
 		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
-		ClientTickEvent.CLIENT_LEVEL_PRE.register(ChunkInkHandler::onClientWorldTickStart);
+		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
 		
 		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::onChunkDataRead);
 		ChunkEvent.SAVE_DATA.register(ChunkInkCapability::onChunkDataSave);
@@ -204,13 +202,13 @@ public class ChunkInkHandler
 			return;
 		
 		List<WorldChunk> chunks = StreamSupport.stream(world.getChunkManager().chunkLoadingManager.entryIterator().spliterator(), false).map(ChunkHolder::getWorldChunk)
-			.filter(Objects::nonNull).filter(chunk -> !ChunkInkCapability.hasAndNotEmpty(world, chunk)).toList();
+			.filter(Objects::nonNull).filter(chunk -> ChunkInkCapability.hasAndNotEmpty(world, chunk)).toList();
 		int maxChunkCheck = Math.min(world.random.nextInt(MAX_DECAYABLE_CHUNKS), chunks.size());
 		
 		for (int i = 0; i < maxChunkCheck; i++)
 		{
 			WorldChunk chunk = chunks.get(world.random.nextInt(chunks.size()));
-			ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, chunk);
+			ChunkInk worldInk = ChunkInkCapability.get(world, chunk);
 			HashMap<RelativeBlockPos, ChunkInk.BlockEntry> decayableInk = new HashMap<>(worldInk.getInkInChunk());
 			
 			int blockCount = 0;
@@ -291,17 +289,15 @@ public class ChunkInkHandler
 	@Environment(EnvType.CLIENT)
 	public static void updateClientInkForChunk(World world, WorldChunk chunk)
 	{
-		ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, chunk);
 		ChunkPos chunkPos = chunk.getPos();
-		
 		if (INK_CACHE.containsKey(chunkPos))
 		{
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, chunk);
+			
 			INK_CACHE.get(chunkPos).forEach((relativePos, entry) ->
 			{
 				BlockPos pos = relativePos.toAbsolute(chunkPos);
 				entry.apply(chunkInk, relativePos);
-				
-				pos = new BlockPos(pos.getX() + chunkPos.x * 16, pos.getY(), pos.getZ() + chunkPos.z * 16);
 				BlockState state = world.getBlockState(pos);
 				world.updateListeners(pos, state, state, 0);
 			});
@@ -361,13 +357,13 @@ public class ChunkInkHandler
 			}
 			return splatcraftColorProvider;
 		}
-		public static List<BakedQuad> getInkedBlockQuad(Direction direction, Random rnd, RenderLayer renderType)
+		public static BakedModel getInkedBakedModel()
 		{
 			if (model == null)
 			{
 				model = MinecraftClient.getInstance().getBakedModelManager().getBlockModels().getModel(SplatcraftBlocks.inkedBlock.get().getDefaultState());
 			}
-			return model.getQuads(SplatcraftBlocks.inkedBlock.get().getDefaultState(), direction, rnd);
+			return model;
 		}
 		public static Sprite getInkedBlockSprite()
 		{
