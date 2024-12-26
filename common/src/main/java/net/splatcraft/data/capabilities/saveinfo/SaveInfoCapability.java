@@ -20,7 +20,7 @@ public class SaveInfoCapability
 	}
 	public static void save(NbtCompound nbt)
 	{
-		DataResult<NbtElement> result = SaveInfo.CODEC.encode(saveInfo, NbtOps.INSTANCE, nbt);
+		DataResult<NbtElement> result = SaveInfo.CODEC.encodeStart(NbtOps.INSTANCE, saveInfo);
 		if (result.isSuccess())
 			nbt.put("splatcraft_save_info", result.getOrThrow());
 	}
