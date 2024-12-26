@@ -2,6 +2,7 @@ package net.splatcraft.neoforge.mixin;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -24,6 +25,7 @@ import net.minecraft.world.RedstoneView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.minecraft.world.explosion.Explosion;
+import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
 import net.neoforged.neoforge.common.extensions.IBlockEntityExtension;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import net.neoforged.neoforge.common.extensions.IItemExtension;
@@ -62,6 +64,15 @@ public class ForgeDummyInjections
 		default boolean shouldCauseReequipAnimation(@NotNull ItemStack oldStack, @NotNull ItemStack newStack, boolean slotChanged)
 		{
 			return ((ISplatcraftForgeItemDummy) this).phShouldCauseReequipAnimation(oldStack, newStack, slotChanged);
+		}
+	}
+	@Mixin(ISplatcraftForgeBlockDummy.class)
+	public interface ClientBlockMixin extends IClientBlockExtensions
+	{
+		@Override
+		default boolean addHitEffects(@NotNull BlockState state, @NotNull World level, @NotNull HitResult target, @NotNull ParticleManager manager)
+		{
+			return ((ISplatcraftForgeBlockDummy) this).phAddHitEffects(state, level, target, manager);
 		}
 	}
 	@Mixin(ISplatcraftForgeBlockDummy.class)

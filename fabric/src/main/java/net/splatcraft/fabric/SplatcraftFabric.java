@@ -31,8 +31,6 @@ public final class SplatcraftFabric implements ModInitializer
 		SplatcraftRegistries.register();
 		SplatcraftRegistries.afterRegister();
 		
-		FabricDefaultAttributeRegistry.register(SplatcraftEntities.INK_SQUID.get(), InkSquidEntity.setCustomAttributes());
-		FabricDefaultAttributeRegistry.register(SplatcraftEntities.SQUID_BUMPER.get(), SquidBumperEntity.setCustomAttributes());
 		InkProjectileEntity.registerDataAccessors();
 		
 		ServerChunkEvents.CHUNK_UNLOAD.register((world, chunk) -> ChunkInkCapability.unloadChunkData(world, chunk.getPos()));

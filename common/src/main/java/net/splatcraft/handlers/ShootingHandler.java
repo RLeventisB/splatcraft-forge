@@ -6,8 +6,6 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.platform.Platform;
-import dev.architectury.utils.Env;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -30,7 +28,7 @@ public class ShootingHandler
 	public static Map<LivingEntity, EntityData> shootingData = new HashMap<>();
 	public static boolean notifyStartShooting(LivingEntity entity)
 	{
-		if (Platform.getEnvironment() == Env.CLIENT)
+		if (entity.getWorld().isClient)
 			return false;
 		
 		EntityData entityData;
@@ -50,7 +48,7 @@ public class ShootingHandler
 	}
 	public static boolean notifyForceEndShooting(LivingEntity entity)
 	{
-		if (Platform.getEnvironment() == Env.CLIENT)
+		if (entity.getWorld().isClient)
 			return false;
 		
 		EntityData entityData;
@@ -107,6 +105,8 @@ public class ShootingHandler
 		public final WeaponShootingData offHandData;
 		public boolean usedThisTick;
 		public int selected;
+		public Hand handThatAppliedModifier;
+		public EntityAttributeModifier speedModifier;
 		public EntityData(LivingEntity entity)
 		{
 			isPlayer = entity instanceof PlayerEntity;
@@ -151,18 +151,14 @@ public class ShootingHandler
 			
 			if (isPlayer)
 				selected = player.getInventory().selectedSlot;
-			EntityAttributeInstance speedAttribute = entity.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
 			ItemStack mainHand = entity.getStackInHand(Hand.MAIN_HAND);
 			FiringStatData weaponFireData = null;
 			if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
 			{
 				weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
 				mainHandData.start(mainHand, weaponFireData);
-				EntityAttributeModifier speedModifier = mainHandWeapon.getSpeedModifier(entity, mainHand);
-				if (!speedAttribute.hasModifier(speedModifier.id()))
-				{
-					speedAttribute.addTemporaryModifier(speedModifier);
-				}
+				speedModifier = mainHandWeapon.getSpeedModifier(entity, mainHand);
+				handThatAppliedModifier = Hand.MAIN_HAND;
 			}
 			ItemStack offHand = entity.getStackInHand(Hand.OFF_HAND);
 			if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
@@ -173,12 +169,15 @@ public class ShootingHandler
 				else
 				{
 					offHandData.start(offHand, offHandFireData);
-					EntityAttributeModifier speedModifier = offHandWeapon.getSpeedModifier(entity, offHand);
-					if (!speedAttribute.hasModifier(speedModifier.id()))
-					{
-						speedAttribute.addTemporaryModifier(speedModifier);
-					}
+					speedModifier = offHandWeapon.getSpeedModifier(entity, mainHand);
+					handThatAppliedModifier = Hand.OFF_HAND;
 				}
+			}
+			
+			EntityAttributeInstance speedAttribute = entity.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+			if (speedModifier != null && !speedAttribute.hasModifier(speedModifier.id()))
+			{
+				speedAttribute.addTemporaryModifier(speedModifier);
 			}
 			usedThisTick = true;
 		}
@@ -202,6 +201,17 @@ public class ShootingHandler
 			{
 				FiringStatData weaponFireData = offHandWeapon.getWeaponFireData(mainHand, entity);
 				offHandData.modifyFiringData(weaponFireData);
+			}
+		}
+		public void notifyEnd(Hand hand)
+		{
+			if (handThatAppliedModifier == hand && speedModifier != null)
+			{
+				EntityAttributeInstance speedAttribute = entity.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+				if (speedAttribute.hasModifier(speedModifier.id()))
+				{
+					speedAttribute.removeModifier(speedModifier);
+				}
 			}
 		}
 	}
@@ -304,6 +314,7 @@ public class ShootingHandler
 		{
 			active = false;
 			doingEndlag = false;
+			entityData.notifyEnd(hand);
 		}
 		public boolean isUsingWeaponEqualToStoredWeapon(@NotNull LivingEntity entity)
 		{

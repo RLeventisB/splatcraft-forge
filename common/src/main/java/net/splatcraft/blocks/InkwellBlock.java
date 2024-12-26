@@ -104,7 +104,6 @@ public class InkwellBlock extends Block implements IColoredBlock, Waterloggable,
 	{
 		return PistonBehavior.DESTROY;
 	}
-	//todo: this used some forge implementation
 	@Override
 	public @NotNull ItemStack getPickStack(WorldView reader, BlockPos pos, BlockState state)
 	{

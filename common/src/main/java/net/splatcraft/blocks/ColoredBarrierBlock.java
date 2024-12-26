@@ -69,7 +69,7 @@ public class ColoredBarrierBlock extends StageBarrierBlock implements IColoredBl
 	@Override
 	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
 	{
-		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
 	}
 	@Override
 	public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)

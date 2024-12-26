@@ -130,7 +130,7 @@ public class SplatcraftItemGroups
 	public static final RegistrySupplier<ItemGroup> GROUP_COLORS = REGISTRY.register("splatcraft_colors", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
 		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
 		.displayName(Text.translatable("itemGroup.splatcraft_colors"))
-		.noScrollbar()
+		.noRenderedName()
 		.entries((parameters, output) ->
 		{
 			for (Item item : colorTabItems)

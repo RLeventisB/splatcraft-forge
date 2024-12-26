@@ -8,6 +8,7 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.worldink.ChunkInk;
 import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
@@ -68,13 +69,17 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 		ClientWorld level = MinecraftClient.getInstance().world;
 		if (level != null)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.get(level, level.getChunk(chunkPos.x, chunkPos.z));
-			for (BlockPos blockPos : toDelete)
+			WorldChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
+			if (ChunkInkCapability.hasAndNotEmpty(level, chunk))
 			{
-				if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))
+				ChunkInk chunkInk = ChunkInkCapability.get(level, chunk);
+				for (BlockPos blockPos : toDelete)
 				{
-					BlockState state = level.getBlockState(blockPos);
-					level.updateListeners(blockPos, state, state, 0);
+					if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))
+					{
+						BlockState state = level.getBlockState(blockPos);
+						level.updateListeners(blockPos, state, state, 0);
+					}
 				}
 			}
 		}

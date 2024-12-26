@@ -3,6 +3,7 @@ package net.splatcraft.registries;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
+import dev.architectury.registry.level.entity.EntityAttributeRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
@@ -91,6 +92,9 @@ public class SplatcraftEntities
 		EntityRendererRegistry.register(CURLING_BOMB, CurlingBombRenderer::new);
 		
 		EntityRendererRegistry.register(SPAWN_SHIELD, SpawnShieldRenderer::new);
+		
+		EntityAttributeRegistry.register(SQUID_BUMPER, SquidBumperEntity::setCustomAttributes);
+		EntityAttributeRegistry.register(INK_SQUID, InkSquidEntity::setCustomAttributes);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void defineModelLayers()

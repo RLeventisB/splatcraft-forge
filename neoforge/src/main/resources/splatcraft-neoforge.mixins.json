@@ -15,6 +15,7 @@
     },
     "client": [
         "BlockRenderMixinForge$BlockRenderManagerMixin",
-        "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge"
+        "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
+        "ForgeDummyInjections$ClientBlockMixin"
     ]
 }

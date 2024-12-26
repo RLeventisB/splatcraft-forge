@@ -1,9 +1,7 @@
 package net.splatcraft.items.weapons;
 
-import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
-import dev.architectury.utils.Env;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -63,7 +61,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 			(data, accumulatedTime, entity1) ->
 			{
 				World world = entity1.getWorld();
-				if (Platform.getEnvironment() == Env.SERVER)
+				if (!world.isClient)
 				{
 					if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 					{
@@ -76,9 +74,9 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 							proj.tick(accumulatedTime);
 							world.spawnEntity(proj);
 						}
+					world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 					}
 				}
-				world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 			}, null);
 	}
 	@Override

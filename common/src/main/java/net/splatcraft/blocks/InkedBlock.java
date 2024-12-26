@@ -21,6 +21,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
+import net.minecraft.world.explosion.Explosion;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftBlocks;
@@ -203,18 +204,17 @@ public class InkedBlock extends Block implements BlockEntityProvider, IColoredBl
 		
 		return te.getSavedState().calcBlockBreakingDelta(player, levelIn, pos);
 	}
-	//todo
-    /*@Override
-    public float getExplosionResistance(BlockState state, BlockView level, BlockPos pos, Explosion explosion)
-    {
-        if (!(level.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
-            return super.getExplosionResistance(state, level, pos, explosion);
-
-        if (te.getSavedState().getBlock() instanceof InkedBlock)
-            return super.getExplosionResistance(state, level, pos, explosion);
-
-        return te.getSavedState().getBlock().getExplosionResistance(te.getSavedState(), level, pos, explosion);
-    }*/
+	@Override
+	public float phGetExplosionResistance(BlockState state, BlockView level, BlockPos pos, Explosion explosion)
+	{
+		if (!(level.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
+			return super.getBlastResistance();
+		
+		if (te.getSavedState().getBlock() instanceof InkedBlock)
+			return super.getBlastResistance();
+		
+		return ((ISplatcraftForgeBlockDummy) te.getSavedState().getBlock()).phGetExplosionResistance(te.getSavedState(), level, pos, explosion);
+	}
 	@Override
 	public boolean phAddLandingEffects(BlockState state1, ServerWorld level, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
 	{

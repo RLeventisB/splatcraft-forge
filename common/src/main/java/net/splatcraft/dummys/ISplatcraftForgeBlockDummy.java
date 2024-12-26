@@ -2,6 +2,7 @@ package net.splatcraft.dummys;
 
 import net.minecraft.block.*;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -56,11 +57,15 @@ public interface ISplatcraftForgeBlockDummy
 	}
 	default boolean phAddLandingEffects(BlockState state1, ServerWorld levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
 	{
-		return true;
+		return false;
+	}
+	default boolean phAddHitEffects(BlockState state, World levelObj, HitResult target, ParticleManager manager)
+	{
+		return false;
 	}
 	default boolean phAddRunningEffects(BlockState state, World world, BlockPos pos, Entity entity)
 	{
-		return true;
+		return false;
 	}
 	default boolean phCanHarvestBlock(BlockState state, BlockView level, BlockPos pos, PlayerEntity player)
 	{

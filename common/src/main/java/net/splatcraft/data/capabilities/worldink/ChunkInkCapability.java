@@ -170,9 +170,11 @@ public class ChunkInkCapability
 	}
 	public static void onChunkDataSave(Chunk chunk, ServerWorld world, NbtCompound nbtCompound)
 	{
-		if (has(world, chunk))
+		if (hasAndNotEmpty(world, chunk))
 		{
-			saveChunkData(world, chunk.getPos(), nbtCompound, false);
+			NbtCompound splatcraftData = new NbtCompound();
+			saveChunkData(world, chunk.getPos(), splatcraftData, false);
+			nbtCompound.put("splatcraft_ink_data", splatcraftData);
 		}
 	}
 }
