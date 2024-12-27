@@ -1,7 +1,5 @@
 package net.splatcraft.neoforge;
 
-import dev.architectury.platform.Platform;
-import dev.architectury.utils.Env;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.entity.EquipmentSlot;
@@ -63,9 +61,6 @@ public final class SplatcraftNeoForge
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
-		
-		if (Platform.getEnvironment() == Env.CLIENT)
-			Splatcraft.initClient();
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{
@@ -97,12 +92,6 @@ public final class SplatcraftNeoForge
 			                   @Override
 			                   public @NotNull BipedEntityModel<?> getHumanoidArmorModel(@NotNull LivingEntity livingEntity, @NotNull ItemStack itemStack, @NotNull EquipmentSlot armorSlot, @NotNull BipedEntityModel<?> original)
 			                   {
-				                   if (!InkTankItem.initModels) //i have NO idea where else to put this
-				                   {
-					                   InkTankItem.initModels = true;
-					                   SplatcraftItems.registerArmorModels();
-				                   }
-				                   
 				                   if (!(itemStack.getItem() instanceof InkTankItem item))
 				                   {
 					                   return DEFAULT.getHumanoidArmorModel(livingEntity, itemStack, armorSlot, original);

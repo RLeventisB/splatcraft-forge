@@ -1,17 +1,16 @@
 package net.splatcraft;
 
+import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.splatcraft.client.handlers.JumpLureHudHandler;
-import net.splatcraft.client.handlers.PlayerMovementHandler;
-import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.client.handlers.*;
 import net.splatcraft.config.ConfigScreenProvider;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
@@ -54,9 +53,12 @@ public final class Splatcraft
 		JumpLureHudHandler.registerEvents();
 		PlayerMovementHandler.registerEvents();
 		RendererHandler.registerEvents();
-		SplatcraftKeyHandler.registerBindingsAndEvents();
 //		SplatcraftOreGen.registerOres();
 		
+		SplatcraftEntities.defineModelLayers();
+		SplatcraftEntities.bindRenderers();
+		
+		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClient);
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
 	}
 	public static void onServerStart(MinecraftServer server)
@@ -66,10 +68,12 @@ public final class Splatcraft
 		
 		SplatcraftItems.postRegister();
 	}
-	public static void initClient()
+	public static void initClient(MinecraftClient client)
 	{
-		SplatcraftEntities.bindRenderers();
-		SplatcraftEntities.defineModelLayers();
+		SplatcraftTileEntities.bindTESR();
+		SplatcraftKeyHandler.registerBindingsAndEvents();
+		ClientSetupHandler.bindScreenContainers();
+		SplatcraftItems.registerArmorModels();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)
 	{

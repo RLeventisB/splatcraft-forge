@@ -1,6 +1,5 @@
 package net.splatcraft.registries;
 
-import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.worldgen.SplatcraftOreGen;
 
@@ -27,8 +26,6 @@ public class SplatcraftRegistries
 	}
 	public static void afterRegister()
 	{
-		SplatcraftTileEntities.bindTESR();
 		SplatcraftItems.registerModelProperties();
-		ClientSetupHandler.bindScreenContainers();
 	}
 }
