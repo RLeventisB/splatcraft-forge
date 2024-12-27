@@ -526,6 +526,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		dataTracker.set(SHOOT_DIRECTION, vec3.toVector3f());
 		vec3 = vec3.multiply(velocity);
 		
+		velocityDirty = true;
+		
 		double d0 = vec3.horizontalLength();
 		float yaw = (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN);
 		float pitch = (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN);
@@ -598,7 +600,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		String type = nbt.getString("ProjectileType");
 		setProjectileType(type.isEmpty() ? Types.DEFAULT : type);
-		inkType = InkBlockUtils.InkType.values.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
+		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 		
 		sourceWeapon = ItemStack.fromNbtOrEmpty(getRegistryManager(), nbt.getCompound("SourceWeapon"));
 		

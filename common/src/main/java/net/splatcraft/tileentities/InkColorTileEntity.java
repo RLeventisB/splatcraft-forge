@@ -4,7 +4,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.listener.ClientPlayPacketListener;
@@ -39,10 +38,8 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 	{
 		if (!team.isEmpty())
 			nbt.putString("Team", team);
-		NbtElement element = new NbtCompound();
 		// no i wont save them like a normal person instead i will make an ItemColorData for each one of them
-		SplatcraftComponents.ItemColorData.CODEC.encode(new SplatcraftComponents.ItemColorData(true, inverted, color), NbtOps.INSTANCE, element);
-		nbt.put("ColorData", element);
+		nbt.put("ColorData", SplatcraftComponents.ItemColorData.CODEC.encode(new SplatcraftComponents.ItemColorData(true, inverted, color), NbtOps.INSTANCE, nbt).getOrThrow());
 		super.writeNbt(nbt, registryLookup);
 	}
 	//Nbt Read
@@ -70,7 +67,7 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 	@Override
 	public void phHandleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup)
 	{
-		readNbt(tag, registryLookup);
+		read(tag, registryLookup);
 	}
 	@Override
 	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookupProvider)

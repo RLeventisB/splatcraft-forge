@@ -1,15 +1,10 @@
 package net.splatcraft.handlers;
 
 import dev.architectury.event.EventResult;
-import dev.architectury.event.events.client.ClientPlayerEvent;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.platform.Platform;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
@@ -27,8 +22,6 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameRules;
-import net.splatcraft.Splatcraft;
-import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
@@ -38,7 +31,6 @@ import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestPlayerInfoPacket;
-import net.splatcraft.network.c2s.SendPlayerOverlayPacket;
 import net.splatcraft.network.s2c.*;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
@@ -46,21 +38,15 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
 import net.splatcraft.util.PlayerCooldown;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class SplatcraftCommonHandler
 {
-	public static final HashMap<UUID, byte[]> COLOR_SKIN_OVERLAY_SERVER_CACHE = new HashMap<>();
 	public static void registerEvents()
 	{
 		PlayerEvent.PLAYER_CLONE.register(SplatcraftCommonHandler::onPlayerClone);
 		EntityEvent.LIVING_DEATH.register(SplatcraftCommonHandler::onLivingDeath);
 		PlayerEvent.PLAYER_JOIN.register(SplatcraftCommonHandler::onPlayerLoggedIn);
-		ClientPlayerEvent.CLIENT_PLAYER_JOIN.register(SplatcraftCommonHandler::onClientLogIn);
-		ClientPlayerEvent.CLIENT_PLAYER_QUIT.register(SplatcraftCommonHandler::onClientLogOut);
 		TickEvent.PLAYER_PRE.register(SplatcraftCommonHandler::capabilityUpdateEvent);
 		TickEvent.SERVER_LEVEL_PRE.register(SplatcraftCommonHandler::onWorldTick);
 		
@@ -236,37 +222,6 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().getStages()), player);
-		if (!COLOR_SKIN_OVERLAY_SERVER_CACHE.isEmpty())
-		{
-			COLOR_SKIN_OVERLAY_SERVER_CACHE.forEach(((uuid, bytes) -> SplatcraftPacketHandler.sendToPlayer(new ReceivePlayerOverlayPacket(uuid, bytes), player)));
-		}
-	}
-	@Environment(EnvType.CLIENT)
-	public static void onClientLogIn(ClientPlayerEntity player)
-	{
-		File file = Paths.get("config\\splatcraft\\player_ink_color.png").toFile();
-		if (file.exists())
-		{
-			try
-			{
-				SplatcraftPacketHandler.sendToServer(new SendPlayerOverlayPacket(player.getUuid(), file));
-			}
-			catch (IOException e)
-			{
-				Splatcraft.LOGGER.error("Could not send player overlay packet", e);
-			}
-		}
-	}
-	@Environment(EnvType.CLIENT)
-	public static void onClientLogOut(ClientPlayerEntity player)
-	{
-		PlayerInkColoredSkinLayer.TEXTURES.values().forEach(MinecraftClient.getInstance().getTextureManager()::destroyTexture);
-		PlayerInkColoredSkinLayer.TEXTURES.clear();
-		
-		if (player != null)
-		{
-			SplatcraftPacketHandler.sendToServer(new SendPlayerOverlayPacket(player.getUuid(), new byte[0]));
-		}
 	}
 	public static void capabilityUpdateEvent(PlayerEntity player)
 	{
@@ -277,13 +232,13 @@ public class SplatcraftCommonHandler
 			{
 				info.setInitialized(true);
 				
-				if (Platform.getEnv() == EnvType.CLIENT)
+				if (player instanceof ClientPlayerEntity)
 				{
 					SplatcraftPacketHandler.sendToServer(new RequestPlayerInfoPacket(player));
 				}
 			}
 			
-			if (Platform.getEnv() == EnvType.SERVER)
+			if (player instanceof ServerPlayerEntity)
 			{
 				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.isIn(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
 				

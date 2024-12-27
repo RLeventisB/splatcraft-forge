@@ -37,7 +37,7 @@ public class BlockRenderMixinForge
 	{
 		@WrapOperation(method = "compile", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/render/model/BakedModel;getRenderTypes(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/random/Random;Lnet/neoforged/neoforge/client/model/data/ModelData;)Lnet/neoforged/neoforge/client/ChunkRenderTypeSet;"))
-		public ChunkRenderTypeSet splatcraft$fixRenderLayer(BakedModel instance, BlockState state, Random random, net.neoforged.neoforge.client.model.data.ModelData modelData, Operation<ChunkRenderTypeSet> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) ChunkRendererRegion arg2)
+		public ChunkRenderTypeSet splatcraft$fixRenderLayer(BakedModel instance, BlockState state, Random random, ModelData modelData, Operation<ChunkRenderTypeSet> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) ChunkRendererRegion arg2)
 		{
 			World world = ((ChunkRegionAccessor) arg2).getWorld();
 			ChunkRenderTypeSet renderType = original.call(instance, state, random, modelData);

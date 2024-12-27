@@ -52,8 +52,6 @@ public class SplatcraftPacketHandler
 		registerMessage(SwapSlotWithOffhandPacket.class, SwapSlotWithOffhandPacket::decode);
 		registerMessage(UpdateStageListPacket.class, UpdateStageListPacket::decode);
 		registerMessage(UpdateWeaponSettingsPacket.class, UpdateWeaponSettingsPacket::decode);
-		registerMessage(SendPlayerOverlayPacket.class, SendPlayerOverlayPacket::decode);
-		registerMessage(ReceivePlayerOverlayPacket.class, ReceivePlayerOverlayPacket::decode);
 		registerMessage(UpdateInkPacket.class, UpdateInkPacket::decode);
 		registerMessage(DeleteInkPacket.class, DeleteInkPacket::decode);
 		registerMessage(WatchInkPacket.class, WatchInkPacket::decode);

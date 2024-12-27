@@ -79,6 +79,7 @@ public class SplatcraftEntities
 	{
 		return create(name, supplier, classification, 1, 1);
 	}
+	@Environment(EnvType.CLIENT)
 	public static void bindRenderers()
 	{
 		EntityRendererRegistry.register(INK_DROP, InkDropRenderer::new);

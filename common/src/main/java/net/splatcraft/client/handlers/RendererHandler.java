@@ -4,10 +4,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientChatEvent;
-import dev.architectury.event.events.client.ClientTickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -16,7 +14,6 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
-import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
@@ -36,7 +33,6 @@ import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.client.layer.PlayerInkColoredSkinLayer;
 import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
@@ -115,13 +111,8 @@ public class RendererHandler
 		int slot = slotToAssign(player);
 		if (slot != -1)
 		{
-				player.getInventory().selectedSlot = slot;
+			player.getInventory().selectedSlot = slot;
 		}
-	}
-	public static void renderArm(PlayerEntityRenderer instance, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, AbstractClientPlayerEntity player, ModelPart arm, ModelPart sleeve)
-	{
-		PlayerEntityModel<AbstractClientPlayerEntity> playerModel = instance.getModel();
-		PlayerInkColoredSkinLayer.renderHand(playerModel, matrixStack, vertexConsumerProvider, light, player, arm, sleeve);
 	}
 	public static boolean renderHand(float tickDelta, Hand hand, MatrixStack matrices)
 	{
@@ -340,7 +331,7 @@ public class RendererHandler
 				if (info.getPlayerCharge() != null)
 				{
 					PlayerCharge playerCharge = info.getPlayerCharge();
-					float charge = lerp(playerCharge.prevCharge, playerCharge.charge, frameTime);
+					float charge = MathHelper.lerp(frameTime, playerCharge.prevCharge, playerCharge.charge);
 					
 					if (charge > 1)
 					{
@@ -495,7 +486,7 @@ public class RendererHandler
 					if (inkFlash < 0)
 						inkFlash = CommonUtils.tickValueToMax(0, inkFlash, 0.004f, 0, 1).value();
 					
-					float inkPctgLerp = lerp(prevInkPctg, inkPctg, 0.05f);
+					float inkPctgLerp = MathHelper.lerp(0.05f, prevInkPctg, inkPctg);
 					float inkSize = (1 - inkPctg) * 18;
 					
 					RenderSystem.setShaderColor(playerColor[0] + inkFlash, playerColor[1] + inkFlash, playerColor[2] + inkFlash, 1);
@@ -537,23 +528,5 @@ public class RendererHandler
 		{
 			squidTime = 0;
 		}
-	}
-	public static void blitCentered(DrawContext graphics, Identifier atlasLocation, int pX, int pY, int pWidth, int pHeight, float pUOffset, float pVOffset, int pUWidth, int pVHeight, int pTextureWidth, int pTextureHeight)
-	{
-		graphics.drawTexture(atlasLocation,
-			pX + pWidth / 2,
-			pY - pHeight / 2,
-			pWidth,
-			pHeight,
-			pUOffset,
-			pVOffset,
-			pUWidth,
-			pVHeight,
-			pTextureWidth,
-			pTextureHeight);
-	}
-	private static float lerp(float a, float b, float f)
-	{
-		return a + f * (b - a);
 	}
 }

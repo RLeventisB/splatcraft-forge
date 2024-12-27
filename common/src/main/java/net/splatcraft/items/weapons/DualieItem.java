@@ -13,7 +13,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.sound.SoundCategory;
@@ -362,9 +361,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			nbt.putFloat("Time", getTime());
 			nbt.putFloat("MaxTime", getMaxTime());
 			nbt.putInt("SlotIndex", getSlotIndex());
-			NbtElement element = new NbtCompound();
-			ItemStack.CODEC.encode(storedStack, NbtOps.INSTANCE, element);
-			nbt.put("StoredStack", element);
+			nbt.put("StoredStack", ItemStack.CODEC.encode(storedStack, NbtOps.INSTANCE, nbt).getOrThrow());
 			nbt.putBoolean("Hand", getHand() == Hand.MAIN_HAND);
 			return nbt;
 		}
