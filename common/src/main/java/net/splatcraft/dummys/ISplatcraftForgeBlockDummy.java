@@ -9,6 +9,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -32,19 +33,31 @@ public interface ISplatcraftForgeBlockDummy
 	}
 	default boolean phOnDestroyedByPlayer(BlockState state, World world, BlockPos pos, PlayerEntity player, boolean willHarvest, FluidState fluid)
 	{
-		return true;
+		if (world.isClient())
+		{
+			// On the client, vanilla calls Level#setBlock, per MultiPlayerGameMode#destroyBlock
+			return world.setBlockState(pos, fluid.getBlockState(), 11);
+		}
+		else
+		{
+			// On the server, vanilla calls Level#removeBlock, per ServerPlayerGameMode#destroyBlock
+			return world.removeBlock(pos, false);
+		}
 	}
-	default @NotNull PistonBehavior phGetPistonBehavior(@NotNull BlockState state)
+	@Nullable
+	default PistonBehavior phGetPistonBehavior(@NotNull BlockState state)
 	{
-		return PistonBehavior.NORMAL;
+		return null;
 	}
-	// todo: link these to forge
 	default boolean phShouldCheckWeakPower(BlockState state, RedstoneView level, BlockPos pos, Direction side)
 	{
-		return true;
+		return state.isSolidBlock(level, pos);
 	}
+	@Nullable
 	default Integer phGetBeaconColorMultiplier(BlockState state, WorldView level, BlockPos pos, BlockPos beaconPos)
 	{
+		if (self() instanceof Stainable self)
+			return self.getColor().getEntityColor();
 		return null;
 	}
 	default Optional<Vec3d> phGetRespawnPosition(BlockState state, EntityType<?> type, WorldView world, BlockPos pos, float orientation)
@@ -53,7 +66,7 @@ public interface ISplatcraftForgeBlockDummy
 	}
 	default float phGetExplosionResistance(BlockState state, BlockView level, BlockPos pos, Explosion explosion)
 	{
-		return 0f;
+		return self().getBlastResistance();
 	}
 	default boolean phAddLandingEffects(BlockState state1, ServerWorld levelserver, BlockPos pos, BlockState state2, LivingEntity entity, int numberOfParticles)
 	{
@@ -73,7 +86,7 @@ public interface ISplatcraftForgeBlockDummy
 	}
 	default boolean phCollisionExtendsVertically(BlockState state, BlockView level, BlockPos pos, Entity collidingEntity)
 	{
-		return false;
+		return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || self() instanceof FenceGateBlock;
 	}
 	default boolean phCanConnectRedstone(BlockState state, BlockView level, BlockPos pos, @Nullable Direction direction)
 	{
