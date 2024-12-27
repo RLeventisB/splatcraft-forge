@@ -148,7 +148,7 @@ public class ChunkInk
 				NbtCompound element = (NbtCompound) tag;
 				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type")));
+				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type")));
 				
 				for (byte i = 0; i < 6; i++)
 				{
@@ -166,7 +166,7 @@ public class ChunkInk
 				NbtCompound element = (NbtCompound) tag;
 				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type")));
+				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type")));
 				
 				BlockEntry entry = getInk(pos);
 				
@@ -200,7 +200,7 @@ public class ChunkInk
 						ink(pos,
 							activeIndex,
 							InkColor.constructOrReuse(element.getInt("Color" + direction.name())),
-							InkBlockUtils.InkType.values.get(Identifier.of(element.getString("Type" + direction.name())))
+							InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type" + direction.name())))
 						);
 						if (isPermanent)
 							markInmutable(pos);

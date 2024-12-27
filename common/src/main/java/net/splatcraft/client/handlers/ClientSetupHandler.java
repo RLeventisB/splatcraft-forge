@@ -89,7 +89,7 @@ public class ClientSetupHandler
 	}
 	public static void initBlockColors(BlockColors colors)
 	{
-		colors.registerColorProvider(new InkBlockColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
+		colors.registerColorProvider(new ColoredTileEntityColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
 	}
 	// https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
     /*@SubscribeEvent
@@ -117,7 +117,7 @@ public class ClientSetupHandler
 			return color.getColorWithAlpha(255);
 		}
 	}
-	public static class InkBlockColor implements BlockColorProvider
+	public static class ColoredTileEntityColor implements BlockColorProvider
 	{
 		@Override
 		public int getColor(@NotNull BlockState blockState, @Nullable BlockRenderView iBlockDisplayReader, @Nullable BlockPos blockPos, int i)

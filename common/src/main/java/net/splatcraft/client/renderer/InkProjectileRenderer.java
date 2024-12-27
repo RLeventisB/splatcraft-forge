@@ -68,13 +68,13 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			//0.30000001192092896D
 			matrixStackIn.push();
 			matrixStackIn.translate(0.0D, visualSize / 4, 0.0D);
-			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
-			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
+			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
+			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entityIn.getPitch(partialTicks)));
 			matrixStackIn.scale(scale, scale, scale);
 			
 			InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
 			
-			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
+			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch(partialTicks));
 			model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), shinier ? LightmapTextureManager.MAX_LIGHT_COORDINATE : packedLightIn, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
 			matrixStackIn.pop();
 			

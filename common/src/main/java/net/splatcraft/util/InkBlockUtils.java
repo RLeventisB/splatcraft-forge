@@ -35,7 +35,10 @@ import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InkBlockUtils
 {
@@ -52,6 +55,8 @@ public class InkBlockUtils
 	}
 	public static Direction getRandomInkedFace(World world, BlockPos pos)
 	{
+		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
+			return null;
 		ChunkInk chunkInk = ChunkInkCapability.get(world, pos);
 		ChunkInk.BlockEntry entry = chunkInk.getInk(RelativeBlockPos.fromAbsolute(pos));
 		if (entry != null && entry.isInkedAny())
@@ -66,6 +71,8 @@ public class InkBlockUtils
 	}
 	public static boolean clearInk(World world, BlockPos pos, int index, boolean removePermanent)
 	{
+		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
+			return false;
 		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		
@@ -87,6 +94,8 @@ public class InkBlockUtils
 	}
 	public static boolean clearBlock(World world, BlockPos pos, boolean removePermanent)
 	{
+		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
+			return false;
 		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
@@ -383,7 +392,7 @@ public class InkBlockUtils
 	public static InkType getInkTypeFromStack(ItemStack stack)
 	{
 		if (!stack.isEmpty())
-			for (InkType t : InkType.values.values())
+			for (InkType t : InkType.values())
 				if (t.getRepItem().equals(stack.getItem()))
 					return t;
 		
@@ -392,34 +401,33 @@ public class InkBlockUtils
 	public static boolean hasInkType(ItemStack stack)
 	{
 		if (!stack.isEmpty())
-			for (InkType t : InkType.values.values())
+			for (InkType t : InkType.values())
 				if (t.getRepItem().equals(stack.getItem()))
 					return true;
 		return false;
 	}
-	public interface InkedBlockConsumer
+	public enum InkType implements Comparable<InkType>
 	{
-		void accept(BlockPos pos, ChunkInk.BlockEntry ink);
-	}
-	public static class InkType implements Comparable<InkType>
-	{
-		public static final HashMap<Identifier, InkType> values = new HashMap<>();
-		public static final InkType NORMAL = new InkType(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.get());
-		public static final InkType GLOWING = new InkType(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get());
-		public static final InkType CLEAR = new InkType(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand.get(), SplatcraftBlocks.clearInkedBlock.get());
+		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.get()),
+		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get()),
+		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand.get(), SplatcraftBlocks.clearInkedBlock.get());
+		public static final Map<Identifier, InkType> IDENTIFIER_MAP = Map.of(
+			Splatcraft.identifierOf("normal"), NORMAL,
+			Splatcraft.identifierOf("glowing"), GLOWING,
+			Splatcraft.identifierOf("clear"), CLEAR
+		);
 		private final Identifier name;
 		private final Item repItem;
 		private final InkedBlock block;
 		private final byte id;
-		public InkType(int id, Identifier name, Item repItem, InkedBlock inkedBlock)
+		InkType(int id, Identifier name, Item repItem, InkedBlock inkedBlock)
 		{
-			values.put(name, this);
 			this.id = (byte) id;
 			this.name = name;
 			this.repItem = repItem;
 			block = inkedBlock;
 		}
-		public InkType(int id, Identifier name, InkedBlock inkedBlock)
+		InkType(int id, Identifier name, InkedBlock inkedBlock)
 		{
 			this(id, name, Items.AIR, inkedBlock);
 		}
@@ -432,11 +440,6 @@ public class InkBlockUtils
 				case 2 -> CLEAR;
 				default -> throw new IllegalStateException("Unexpected value: " + id);
 			};
-		}
-		@Override
-		public int compareTo(InkType o)
-		{
-			return getName().compareTo(o.getName());
 		}
 		public Identifier getName()
 		{
@@ -459,5 +462,9 @@ public class InkBlockUtils
 		{
 			return id;
 		}
+	}
+	public interface InkedBlockConsumer
+	{
+		void accept(BlockPos pos, ChunkInk.BlockEntry ink);
 	}
 }

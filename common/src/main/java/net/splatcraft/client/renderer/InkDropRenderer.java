@@ -49,7 +49,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 			
 			InkDropModel model = MODEL;
 			
-			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch());
+			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch(partialTicks));
 			model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), packedLightIn, OverlayTexture.DEFAULT_UV, rgb);
 			matrixStackIn.pop();
 			

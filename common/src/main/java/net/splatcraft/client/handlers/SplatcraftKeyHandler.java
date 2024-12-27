@@ -8,6 +8,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -40,12 +41,13 @@ import java.util.List;
 public class SplatcraftKeyHandler
 {
 	private static final List<ToggleableKey> pressState = new ObjectArrayList<>();
-	private static final ToggleableKey SHOOT_KEYBIND = new ToggleableKey(new KeyBinding("key.useWeapon", MinecraftClient.getInstance().options.useKey.getDefaultKey().getCode(), "key.categories.splatcraft"));
+	private static final ToggleableKey SHOOT_KEYBIND = new ToggleableKey(new KeyBinding("key.useWeapon", InputUtil.Type.MOUSE, MinecraftClient.getInstance().options.useKey.getDefaultKey().getCode(), "key.categories.splatcraft"));
 	private static final ToggleableKey SQUID_KEYBIND = new ToggleableKey(new KeyBinding("key.squidForm", GLFW.GLFW_KEY_Z, "key.categories.splatcraft"));
 	private static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
 	private static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static boolean usingSubWeaponHotkey;
 	private static int slot = -1;
+	@Environment(EnvType.CLIENT)
 	public static void registerBindingsAndEvents()
 	{
 		KeyMappingRegistry.register(SUB_WEAPON_KEYBIND.key);

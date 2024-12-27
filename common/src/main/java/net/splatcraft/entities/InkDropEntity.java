@@ -196,7 +196,7 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 		
 		setInvisible(nbt.getBoolean("Invisible"));
 		
-		inkType = InkBlockUtils.InkType.values.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
+		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 		
 		sourceWeapon = ItemStack.fromNbtOrEmpty(getRegistryManager(), nbt.getCompound("SourceWeapon"));
 	}

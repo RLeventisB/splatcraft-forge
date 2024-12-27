@@ -36,7 +36,6 @@ import java.util.List;
 public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeItemDummy
 {
 	public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
-	public static boolean initModels = false;
 	public final float capacity;
 	public final Item.Settings settings;
 	@Environment(EnvType.CLIENT)
