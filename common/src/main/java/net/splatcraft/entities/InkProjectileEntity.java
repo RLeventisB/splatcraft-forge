@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
 
 public class InkProjectileEntity extends ThrownItemEntity implements IColoredEntity
 {
@@ -224,8 +227,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		if (timeDelta > lifespan)
 			timeDelta = lifespan;
 		
-		Vector3f lastPosition = getPos().toVector3f();
-		Vector3f velocity = getShootVelocity(timeDelta); // guess we're doing vector3f now
+		Vec3d lastPosition = getPos();
+		Vec3d velocity = getShootVelocity(timeDelta); // guess we're doing vector3f now
 		setVelocity(velocity.x, velocity.y, velocity.z);
 		
 		MixinTimeDelta = timeDelta;
@@ -240,16 +243,10 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		if (isRemoved())
 		{
-			Vector3f nextPosition = lastPosition.add(velocity);
-			double frame = (
-				(
-					MathHelper.getLerpProgress(getX(), lastPosition.x, nextPosition.x) +
-						MathHelper.getLerpProgress(getY(), lastPosition.y, nextPosition.y) +
-						MathHelper.getLerpProgress(getZ(), lastPosition.z, nextPosition.z)
-				) / 3);
+			Vec3d nextPosition = lastPosition.add(velocity);
+			double frame = CommonUtils.getDeltaBetweenVectors(getPos(), lastPosition, nextPosition, 0.5);
 			setVelocity(getVelocity().multiply(frame));
-			if (Double.isFinite(frame))
-				calculateDrops(lastPosition, (float) frame);
+			calculateDrops(lastPosition, (float) frame);
 			return;
 		}
 		
@@ -279,15 +276,15 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			calculateDrops(lastPosition, timeDelta);
 		}
 	}
-	private void calculateDrops(Vector3f lastPosition, float timeDelta)
+	private void calculateDrops(Vec3d lastPosition, float timeDelta)
 	{
 		if (distanceBetweenDrops == 0)
 		{
 			createDrop(getX(), getY(), getZ(), 0, timeDelta);
 			return;
 		}
-		Vector3f deltaMovement = getVelocity().toVector3f();
-		float dropsTravelled = deltaMovement.length() / distanceBetweenDrops;
+		Vec3d deltaMovement = getVelocity();
+		float dropsTravelled = (float) deltaMovement.length() / distanceBetweenDrops;
 		if (dropsTravelled > 0)
 		{
 			accumulatedDrops += dropsTravelled;
@@ -296,7 +293,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				accumulatedDrops -= 1;
 				
 				float progress = accumulatedDrops / dropsTravelled;
-				Vector3f dropPos = lastPosition.lerp(getPos().toVector3f(), progress);
+				Vec3d dropPos = lastPosition.lerp(getPos(), progress);
 				
 				createDrop(dropPos.x, dropPos.y, dropPos.z, progress, timeDelta);
 			}
@@ -313,15 +310,15 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		getWorld().spawnEntity(proj);
 		proj.tick((float) (extraFrame + timeDelta));
 	}
-	private Vector3f getShootVelocity(float timeDelta)
+	private Vec3d getShootVelocity(float timeDelta)
 	{
 		Vector3f shootDirection = getShotDirection();
 		float frame = getMaxStraightShotTime() - straightShotTime;
 		float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
-		Vector3f velocity = shootDirection.mul(speedData[0]);
+		Vec3d velocity = new Vec3d(shootDirection.x * speedData[0], shootDirection.y * speedData[0], shootDirection.z * speedData[0]);
 		if (speedData[1] <= 0)
 			return velocity;
-		return velocity.sub(0, (float) (getGravity() * speedData[1]), 0);
+		return velocity.subtract(0, (float) (getGravity() * speedData[1]), 0);
 	}
 	public float[] getSpeed(float frame, float straightShotFrame, float timeDelta)
 	{
@@ -395,12 +392,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			Vec3d nextPosition = getPos().add(getVelocity());
 			Vec3d impactPos = result.getPos();
 			
-			List<Double> values = new ArrayList<>();
-			values.add(MathHelper.getLerpProgress(impactPos.x, getX(), nextPosition.x));
-			values.add(MathHelper.getLerpProgress(impactPos.y, getY(), nextPosition.y));
-			values.add(MathHelper.getLerpProgress(impactPos.z, getZ(), nextPosition.z));
-			values.removeIf(d -> !Double.isFinite(d));
-			lastChimeIntensity = (float) values.stream().mapToDouble(v -> v).average().orElse(0.5);
+			lastChimeIntensity = (float) CommonUtils.getDeltaBetweenVectors(impactPos, getPos(), nextPosition, 0.5);
 			setPosition(impactPos);
 			float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
 			lastChimeIntensity = storedCrystalSoundIntensity;

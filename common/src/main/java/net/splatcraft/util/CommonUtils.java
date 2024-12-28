@@ -57,6 +57,7 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -94,6 +95,24 @@ public class CommonUtils
 		public @NotNull InkColor copy(@NotNull InkColor color)
 		{
 			return InkColor.constructOrReuse(color.getColor());
+		}
+	};
+	public static final TrackedDataHandler<Vec3d> VEC3DDATAHANDLER = new TrackedDataHandler<>()
+	{
+		public static final PacketCodec<RegistryByteBuf, Vec3d> PACKET_CODEC = PacketCodec.tuple(
+			PacketCodecs.DOUBLE, Vec3d::getX,
+			PacketCodecs.DOUBLE, Vec3d::getY,
+			PacketCodecs.DOUBLE, Vec3d::getZ,
+			Vec3d::new);
+		@Override
+		public PacketCodec<? super RegistryByteBuf, Vec3d> codec()
+		{
+			return PACKET_CODEC;
+		}
+		@Override
+		public @NotNull Vec3d copy(@NotNull Vec3d vec)
+		{
+			return new Vec3d(vec.x, vec.y, vec.z);
 		}
 	};
 	public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
@@ -417,6 +436,17 @@ public class CommonUtils
 	public static boolean callCanHarvestBlock(BlockState state, BlockView level, BlockPos pos, PlayerEntity player)
 	{
 		return false;
+	}
+	// this only accepts a fallback in cases of some coordinate not being finite / startPos being equal to endPos
+	public static double getDeltaBetweenVectors(Vec3d pos, Vec3d startPos, Vec3d endPos, Double fallback)
+	{
+		Double[] progresses = new Double[]
+			{
+				MathHelper.getLerpProgress(pos.x, startPos.x, endPos.x),
+				MathHelper.getLerpProgress(pos.y, startPos.y, endPos.y),
+				MathHelper.getLerpProgress(pos.z, startPos.z, endPos.z)
+			};
+		return Arrays.stream(progresses).filter(Double::isFinite).mapToDouble(v -> v).average().orElse(fallback);
 	}
 	public record Result(float delay, float value)
 	{
