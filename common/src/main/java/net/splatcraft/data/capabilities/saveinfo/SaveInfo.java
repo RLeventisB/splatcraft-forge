@@ -47,7 +47,7 @@ public record SaveInfo(Map<String, PlaySession> playSessions, Map<String, Stage>
 		if (stages.containsKey(stageId))
 		{
 			Stage stage = stages.get(stageId);
-			stage.seStagetName(stageName);
+			stage.setStageName(stageName);
 			stage.updateBounds(stageLevel, corner1, corner2);
 			stage.dimID = stageLevel.getDimension().effects();
 		}

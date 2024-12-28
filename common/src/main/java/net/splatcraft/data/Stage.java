@@ -200,7 +200,7 @@ public class Stage implements Comparable<Stage>
 	{
 		return name;
 	}
-	public void seStagetName(Text name)
+	public void setStageName(Text name)
 	{
 		this.name = name;
 	}

@@ -121,6 +121,7 @@ public class SplatcraftEntities
 	public static void registerDataTrackers()
 	{
 		registerDataTracker("ink_color_handler", CommonUtils.INKCOLORDATAHANDLER);
+		registerDataTracker("vec3d_handler", CommonUtils.VEC3DDATAHANDLER);
 		registerDataTracker("vector2_handler", CommonUtils.VEC2DATAHANDLER);
 		registerDataTracker("extra_data_handler", ExtraSaveData.SERIALIZER);
 	}
