@@ -20,6 +20,11 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Rarity;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.client.layer.InkTankFeature;
+import net.splatcraft.client.models.inktanks.ArmoredInkTankModel;
+import net.splatcraft.client.models.inktanks.ClassicInkTankModel;
+import net.splatcraft.client.models.inktanks.InkTankJrModel;
+import net.splatcraft.client.models.inktanks.InkTankModel;
 import net.splatcraft.dispenser.PlaceBlockDispenseBehavior;
 import net.splatcraft.entities.subs.CurlingBombEntity;
 import net.splatcraft.items.*;
@@ -30,7 +35,9 @@ import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.items.weapons.*;
 import net.splatcraft.util.ColorUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
@@ -230,7 +237,7 @@ public class SplatcraftItems
 				ArmorItem.Type.CHESTPLATE, armor,
 				ArmorItem.Type.LEGGINGS, armor,
 				ArmorItem.Type.BOOTS, armor)
-				, 0, equipSound, () -> repairIngredient, Collections.singletonList(new ArmorMaterial.Layer(id, "", false)), toughness, knockbackResistance));
+				, 0, equipSound, () -> repairIngredient, List.of(), toughness, knockbackResistance));
 	}
 	@Environment(EnvType.CLIENT)
 	public static void registerModelProperties()
@@ -267,25 +274,10 @@ public class SplatcraftItems
 		ItemPropertiesRegistry.register(coralite.get(), Splatcraft.identifierOf("colored"), coloredProperty);
 		ItemPropertiesRegistry.register(coraliteSlab.get(), Splatcraft.identifierOf("colored"), coloredProperty);
 		ItemPropertiesRegistry.register(coraliteStairs.get(), Splatcraft.identifierOf("colored"), coloredProperty);
-	}
-	@Environment(EnvType.CLIENT)
-	public static void registerArmorModels()
-	{
-//        inkTank.get().setArmorModel(new InkTankModel(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(InkTankModel.LAYER_LOCATION)));
-//        classicInkTank.get().setArmorModel(new ClassicInkTankModel(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(ClassicInkTankModel.LAYER_LOCATION)));
-//        inkTankJr.get().setArmorModel(new InkTankJrModel(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(InkTankJrModel.LAYER_LOCATION)));
-//        armoredInkTank.get().setArmorModel(new ArmoredInkTankModel(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(ArmoredInkTankModel.LAYER_LOCATION)));
-	}
-	public static class Missmaps
-	{
-		private static final HashMap<String, RegistrySupplier<? extends Item>> remaps = new HashMap<>()
-		{{
-			put("inked_wool", inkedWool);
-			put("inked_carpet", inkedCarpet);
-			put("inked_glass", inkedGlass);
-			put("inked_glass_pane", inkedGlassPane);
-			put("weapon_workbench", weaponWorkbench);
-			put("ink_polisher", waxApplicator);
-		}};
+		
+		InkTankFeature.register(inkTank.get(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
+		InkTankFeature.register(classicInkTank.get(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
+		InkTankFeature.register(inkTankJr.get(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);
+		InkTankFeature.register(armoredInkTank.get(), ArmoredInkTankModel.LAYER_LOCATION, ArmoredInkTankModel::new);
 	}
 }

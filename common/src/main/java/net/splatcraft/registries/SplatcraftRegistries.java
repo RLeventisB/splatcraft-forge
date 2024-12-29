@@ -24,8 +24,4 @@ public class SplatcraftRegistries
 		SplatcraftStats.STAT_REGISTRY.register();
 		SplatcraftParticleTypes.REGISTRY.register();
 	}
-	public static void afterRegister()
-	{
-		SplatcraftItems.registerModelProperties();
-	}
 }

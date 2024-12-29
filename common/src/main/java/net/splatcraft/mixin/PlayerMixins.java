@@ -20,13 +20,13 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.client.layer.InkTankFeature;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -66,12 +66,11 @@ public class PlayerMixins
 	@Mixin(PlayerEntityRenderer.class)
 	public static class PlayerRendererMixin
 	{
-		@Unique
-		private EntityRendererFactory.Context splatcraft$context;
-		@Inject(method = "<init>", at = @At("TAIL"))
+		@Inject(method = "<init>", at = @At("RETURN"))
 		public void splatcraft$captureContext(EntityRendererFactory.Context ctx, boolean slim, CallbackInfo ci)
 		{
-			splatcraft$context = ctx;
+			PlayerEntityRenderer renderer = (PlayerEntityRenderer) (Object) this;
+			renderer.addFeature(new InkTankFeature<>(renderer, ctx.getModelLoader()));
 		}
 		@WrapOperation(method = "renderArm", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/ModelPart;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;II)V"))
 		public void splatcraft$overrideArmRender(ModelPart instance, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, Operation<Void> original, @Local(argsOnly = true) AbstractClientPlayerEntity player)
@@ -88,7 +87,7 @@ public class PlayerMixins
 		@WrapOperation(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
 		public void splatcraft$overridePlayerRender(PlayerEntityRenderer instance, LivingEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i, Operation<Void> original)
 		{
-			if (!RendererHandler.playerRender(instance, (AbstractClientPlayerEntity) player, f, g, matrixStack, consumerProvider, i, splatcraft$context))
+			if (!RendererHandler.playerRender(instance, (AbstractClientPlayerEntity) player, f, g, matrixStack, consumerProvider, i))
 			{
 				original.call(instance, player, f, g, matrixStack, consumerProvider, i);
 			}

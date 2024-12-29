@@ -59,7 +59,13 @@ public final class Splatcraft
 		SplatcraftEntities.bindRenderers();
 		
 		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClient);
+//		ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register(Splatcraft::afterInitClient);
+		ClientLifecycleEvent.CLIENT_STARTED.register(Splatcraft::afterInitClient);
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
+	}
+	private static void afterInitClient(MinecraftClient client)
+	{
+		SplatcraftItems.registerModelProperties();
 	}
 	public static void onServerStart(MinecraftServer server)
 	{
@@ -73,7 +79,6 @@ public final class Splatcraft
 		SplatcraftTileEntities.bindTESR();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		ClientSetupHandler.bindScreenContainers();
-		SplatcraftItems.registerArmorModels();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)
 	{

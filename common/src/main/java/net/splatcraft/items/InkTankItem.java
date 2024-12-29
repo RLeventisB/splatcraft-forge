@@ -12,9 +12,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
@@ -38,8 +38,6 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
 	public final float capacity;
 	public final Item.Settings settings;
-	@Environment(EnvType.CLIENT)
-	public AbstractInkTankModel model;
 	public InkTankItem(String tagId, float capacity, RegistryEntry<ArmorMaterial> material, Item.Settings settings)
 	{
 		super(material, Type.CHESTPLATE, settings.component(SplatcraftComponents.TANK_DATA, new SplatcraftComponents.TankData(false, false, 0, 0)));
@@ -63,9 +61,9 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 			return 0;
 		
 		float capacity = inkTankItem.capacity;
-		SplatcraftComponents.@Nullable TankData data = getTankData(stack);
+		SplatcraftComponents.TankData data = getTankData(stack);
 		if (data.infiniteInk()) return capacity;
-		return Math.max(0, Math.min(capacity, data.inkLevel()));
+		return MathHelper.clamp(data.inkLevel(), 0, capacity);
 	}
 	private static SplatcraftComponents.@Nullable TankData getTankData(ItemStack stack)
 	{
@@ -176,9 +174,5 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	public void refill(ItemStack stack)
 	{
 		setInkAmount(stack, capacity);
-	}
-	public void setArmorModel(AbstractInkTankModel inkTankModel)
-	{
-		model = inkTankModel;
 	}
 }
