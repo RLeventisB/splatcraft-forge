@@ -18,62 +18,54 @@ import java.util.Locale;
 
 public class InkTerrainParticleData implements ParticleEffect
 {
-    public static final MapCodec<InkTerrainParticleData> CODEC = RecordCodecBuilder.mapCodec((instance) ->
-        instance.group(
-            Codec.FLOAT.fieldOf("r").forGetter(InkTerrainParticleData::getRed),
-            Codec.FLOAT.fieldOf("g").forGetter(InkTerrainParticleData::getGreen),
-            Codec.FLOAT.fieldOf("b").forGetter(InkTerrainParticleData::getBlue)
-        ).apply(instance, InkTerrainParticleData::new));
-    public static final PacketCodec<RegistryByteBuf, InkTerrainParticleData> PACKET_CODEC = PacketCodec.tuple(
-        PacketCodecs.FLOAT, InkTerrainParticleData::getRed,
-        PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
-        PacketCodecs.FLOAT, InkTerrainParticleData::getGreen,
-        InkTerrainParticleData::new);
-    protected final float red;
-    protected final float green;
-    protected final float blue;
-
-    public InkTerrainParticleData(InkColor color)
-    {
-        this(ColorUtils.getLockedColor(color).getRGB());
-    }
-
-    private InkTerrainParticleData(float[] rgb)
-    {
-        this(rgb[0], rgb[1], rgb[2]);
-    }
-
-    public InkTerrainParticleData(float red, float green, float blue)
-    {
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-    }
-
-    @Override
-    public @NotNull ParticleType<?> getType()
-    {
-        return SplatcraftParticleTypes.INK_TERRAIN;
-    }
-
-    @Override
-    public @NotNull String toString()
-    {
-        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue);
-    }
-
-    public float getRed()
-    {
-        return red;
-    }
-
-    public float getGreen()
-    {
-        return green;
-    }
-
-    public float getBlue()
-    {
-        return blue;
-    }
+	public static final MapCodec<InkTerrainParticleData> CODEC = RecordCodecBuilder.mapCodec((instance) ->
+		instance.group(
+			Codec.FLOAT.fieldOf("r").forGetter(InkTerrainParticleData::getRed),
+			Codec.FLOAT.fieldOf("g").forGetter(InkTerrainParticleData::getGreen),
+			Codec.FLOAT.fieldOf("b").forGetter(InkTerrainParticleData::getBlue)
+		).apply(instance, InkTerrainParticleData::new));
+	public static final PacketCodec<RegistryByteBuf, InkTerrainParticleData> PACKET_CODEC = PacketCodec.tuple(
+		PacketCodecs.FLOAT, InkTerrainParticleData::getRed,
+		PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
+		PacketCodecs.FLOAT, InkTerrainParticleData::getGreen,
+		InkTerrainParticleData::new);
+	protected final float red;
+	protected final float green;
+	protected final float blue;
+	public InkTerrainParticleData(InkColor color)
+	{
+		this(ColorUtils.getColorLockedIfConfig(color).getRGB());
+	}
+	private InkTerrainParticleData(float[] rgb)
+	{
+		this(rgb[0], rgb[1], rgb[2]);
+	}
+	public InkTerrainParticleData(float red, float green, float blue)
+	{
+		this.red = red;
+		this.green = green;
+		this.blue = blue;
+	}
+	@Override
+	public @NotNull ParticleType<?> getType()
+	{
+		return SplatcraftParticleTypes.INK_TERRAIN;
+	}
+	@Override
+	public @NotNull String toString()
+	{
+		return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue);
+	}
+	public float getRed()
+	{
+		return red;
+	}
+	public float getGreen()
+	{
+		return green;
+	}
+	public float getBlue()
+	{
+		return blue;
+	}
 }
