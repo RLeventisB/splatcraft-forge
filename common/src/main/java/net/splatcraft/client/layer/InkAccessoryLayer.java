@@ -64,7 +64,7 @@ public class InkAccessoryLayer extends FeatureRenderer<AbstractClientPlayerEntit
 		
 		if (MinecraftClient.getInstance().getResourceManager().getResource(texture).isPresent())
 		{
-			getContextModel().copyStateTo(MODEL);
+			getContextModel().copyBipedStateTo(MODEL);
 			render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, -1, texture);
 			if (MinecraftClient.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
 				render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, color.getColorWithAlpha(255), coloredTexture);
