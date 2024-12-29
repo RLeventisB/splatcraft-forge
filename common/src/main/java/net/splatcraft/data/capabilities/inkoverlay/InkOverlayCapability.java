@@ -7,30 +7,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class InkOverlayCapability
 {
-    private static final ConcurrentHashMap<LivingEntity, InkOverlayInfo> map = new ConcurrentHashMap<>();
-
-    public static InkOverlayInfo get(LivingEntity entity) throws NullPointerException
-    {
-        return map.computeIfAbsent(entity, t -> new InkOverlayInfo());
-    }
-
-    public static boolean hasCapability(LivingEntity entity)
-    {
-        return map.containsKey(entity);
-    }
-
-    public static void serialize(LivingEntity entity, NbtCompound data)
-    {
-        get(entity).writeNBT(data);
-    }
-
-    public static void deserialize(LivingEntity entity, NbtCompound data)
-    {
-        get(entity).readNBT(data);
-    }
-
-    public static void remove(LivingEntity livingEntity)
-    {
-        map.remove(livingEntity);
-    }
+	// todo: handle entity spawning and despawning pls
+	private static final ConcurrentHashMap<LivingEntity, InkOverlayInfo> map = new ConcurrentHashMap<>();
+	public static InkOverlayInfo get(LivingEntity entity) throws NullPointerException
+	{
+		return map.computeIfAbsent(entity, t -> new InkOverlayInfo());
+	}
+	public static boolean hasCapability(LivingEntity entity)
+	{
+		return map.containsKey(entity);
+	}
+	public static void serialize(LivingEntity entity, NbtCompound data)
+	{
+		get(entity).writeNBT(data);
+	}
+	public static void deserialize(LivingEntity entity, NbtCompound data)
+	{
+		get(entity).readNBT(data);
+	}
+	public static void remove(LivingEntity livingEntity)
+	{
+		map.remove(livingEntity);
+	}
 }
