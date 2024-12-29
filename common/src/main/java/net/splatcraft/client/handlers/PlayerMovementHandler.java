@@ -85,13 +85,6 @@ public class PlayerMovementHandler
 			useStack = player.getItemCooldownManager().isCoolingDown(player.getMainHandStack().getItem()) ? player.getMainHandStack() :
 				player.getItemCooldownManager().isCoolingDown(player.getOffHandStack().getItem()) ? player.getOffHandStack() : ItemStack.EMPTY;
 		
-		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(player, useStack))
-		{
-			EntityAttributeModifier mod = weapon.getSpeedModifier(player, useStack);
-			if (!speedAttribute.hasModifier(mod.id()))
-				speedAttribute.addTemporaryModifier(mod);
-		}
-		
 		if (playerInfo.isSquid())
 		{
 			if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.isOnGround())
