@@ -26,10 +26,18 @@ import org.joml.Matrix4f;
 public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSquidModel> implements FeatureRendererContext<LivingEntity, InkSquidModel>
 {
 	private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/entity/ink_squid_overlay.png");
+	private static EntityRendererFactory.Context context;
 	public InkSquidRenderer(EntityRendererFactory.Context context)
 	{
 		super(context, new InkSquidModel(context.getPart(InkSquidModel.LAYER_LOCATION)), 0.5f);
 		addFeature(new InkSquidColorLayer(this, context.getModelLoader()));
+		
+		if (InkSquidRenderer.context == null)
+			InkSquidRenderer.context = context;
+	}
+	public static EntityRendererFactory.Context getContext()
+	{
+		return context;
 	}
 	private static void addVertexPair(VertexConsumer p_174308_, Matrix4f p_174309_, float p_174310_, float p_174311_, float p_174312_, int p_174313_, int p_174314_, int p_174315_, int p_174316_, float p_174317_, float p_174318_, float p_174319_, float p_174320_, int p_174321_, boolean p_174322_)
 	{

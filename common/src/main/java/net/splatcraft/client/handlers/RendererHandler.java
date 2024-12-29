@@ -12,7 +12,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
@@ -73,20 +72,20 @@ public class RendererHandler
 	{
 		ClientChatEvent.RECEIVED.register(RendererHandler::onChatMessage);
 	}
-	public static boolean playerRender(PlayerEntityRenderer instance, AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int color, EntityRendererFactory.Context ctx)
+	public static boolean playerRender(PlayerEntityRenderer instance, AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int color)
 	{
 		if (player.isSpectator()) return false;
 		
 		if (EntityInfoCapability.isSquid(player))
 		{
 			if (squidRenderer == null)
-				squidRenderer = new InkSquidRenderer(ctx);
+				squidRenderer = new InkSquidRenderer(InkSquidRenderer.getContext());
 			if (!InkBlockUtils.canSquidHide(player))
 			{
 				squidRenderer.render(player, f, g, matrixStack, consumerProvider, color);
 				CommonUtils.doPlayerSquidForgeEvent(player, squidRenderer, g, matrixStack, consumerProvider, color);
-				return true;
 			}
+			return true;
 		}
 		return false;
 	}
