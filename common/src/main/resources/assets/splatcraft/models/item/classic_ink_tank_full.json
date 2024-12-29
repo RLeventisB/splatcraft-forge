@@ -5,9 +5,9 @@
         64
     ],
     "textures": {
-        "1": "splatcraft:item/armor/classic_ink_tank_layer_1",
-        "2": "splatcraft:item/armor/classic_ink_tank_layer_1_overlay",
-        "particle": "splatcraft:item/armor/classic_ink_tank_layer_1"
+        "1": "splatcraft:item/tanks/classic_ink_tank_layer_1",
+        "2": "splatcraft:item/tanks/classic_ink_tank_layer_1_overlay",
+        "particle": "splatcraft:item/tanks/classic_ink_tank_layer_1"
     },
     "elements": [
         {
