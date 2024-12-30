@@ -41,7 +41,7 @@ public class PlayerMovementHandler
 		TickEvent.PLAYER_POST.register((player) ->
 		{
 			Vec3d deltaMovement = player.getVelocity();
-			if (Boolean.TRUE.equals(SplatcraftConfig.get("limitFallSpeed")) && deltaMovement.y < -0.5)
+			if (Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.limitFallSpeed")) && deltaMovement.y < -0.5)
 			{
 				player.setVelocity(deltaMovement.x, -0.5, deltaMovement.z);
 			}

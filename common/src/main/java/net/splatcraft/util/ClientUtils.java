@@ -60,7 +60,7 @@ public class ClientUtils
 	}
 	public static boolean showDurabilityBar(ItemStack stack)
 	{
-		return (SplatcraftConfig.get("inkIndicator").equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.get("inkIndicator").equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
+		return (SplatcraftConfig.get("splatcraft.inkIndicator").equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.get("splatcraft.inkIndicator").equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
 			getClientPlayer().getStackInHand(Hand.MAIN_HAND).equals(stack) && getDurabilityForDisplay() > 0;
 	}
 	public static double getDurabilityForDisplay()

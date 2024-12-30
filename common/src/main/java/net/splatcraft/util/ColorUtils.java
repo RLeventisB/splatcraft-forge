@@ -178,7 +178,7 @@ public class ColorUtils
 	@Environment(EnvType.CLIENT)
 	public static boolean isColorLocked()
 	{
-		return SplatcraftConfig.get("colorLock");
+		return SplatcraftConfig.get("splatcraft.colorLock");
 	}
 	@Environment(EnvType.CLIENT)
 	public static @NotNull InkColor getColorLockedIfConfig(InkColor color)

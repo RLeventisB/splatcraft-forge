@@ -52,7 +52,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
 			InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
 			
-			boolean shinier = SplatcraftConfig.get("makeShinier");
+			boolean shinier = SplatcraftConfig.get("splatcraft.makeShinier");
 			if (shinier)
 			{
 				byte[] colorValues = color.getRGBBytes();

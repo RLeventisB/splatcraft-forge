@@ -181,7 +181,7 @@ public class RendererHandler
 	public static CompoundEventResult<Text> onChatMessage(MessageType.Parameters parameretes, Text message)
 	{
 		ClientWorld level = MinecraftClient.getInstance().world;
-		if (level != null && Boolean.TRUE.equals(SplatcraftConfig.get("coloredPlayerNames")))
+		if (level != null && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.coloredPlayerNames")))
 		{
 			HashMap<String, UUID> players = new HashMap<>();
 			ClientPlayNetworkHandler connection = MinecraftClient.getInstance().getNetworkHandler();
@@ -212,10 +212,10 @@ public class RendererHandler
 	}
 	public static Text modifyNameplate(Entity entity, Text label)
 	{
-		if (Boolean.TRUE.equals(SplatcraftConfig.get("coloredPlayerNames")) && entity instanceof LivingEntity)
+		if (Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.coloredPlayerNames")) && entity instanceof LivingEntity)
 		{
 			InkColor color = ColorUtils.getColorLockedIfConfig(ColorUtils.getEntityColor(entity));
-			if (SplatcraftConfig.get("colorLock"))
+			if (SplatcraftConfig.get("splatcraft.colorLock"))
 			{
 				color = ColorUtils.getLockedColor(color);
 			}
@@ -357,10 +357,10 @@ public class RendererHandler
 			matrixStack.pop();
 		}
 		
-		Object inkIndicator = SplatcraftConfig.get("inkIndicator");
+		Object inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 		boolean showCrosshairInkIndicator = inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
 		boolean isHoldingMatchItem = player.getMainHandStack().isIn(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffHandStack().isIn(SplatcraftTags.Items.MATCH_ITEMS);
-		boolean showLowInkWarning = showCrosshairInkIndicator && Boolean.TRUE.equals(SplatcraftConfig.get("lowInkWarning")) && (isHoldingMatchItem || info.isSquid()) && !enoughInk(player, null, 10f, 0, false);
+		boolean showLowInkWarning = showCrosshairInkIndicator && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.lowInkWarning")) && (isHoldingMatchItem || info.isSquid()) && !enoughInk(player, null, 10f, 0, false);
 		
 		boolean canUse = true;
 		float inkPctg = 0;
@@ -423,7 +423,7 @@ public class RendererHandler
 					graphics.drawTexture(WIDGETS, width / 2 + 9, (int) (height / 2 - 9 + (14 - heightAnim) + (1 - inkPctgLerp) * 18), 18, (int) ((4 + heightAnim) * inkPctgLerp), 18, 95 + inkSize, 18, (int) ((4 + heightAnim) * inkPctg), 256, 256);
 					matrixStack.translate(0, -(inkSize - Math.floor(inkSize)), 0);
 					
-					if (SplatcraftConfig.get("vanillaInkDurability"))
+					if (SplatcraftConfig.get("splatcraft.vanillaInkDurability"))
 					{
 						float[] durRgb = ColorUtils.hexToRGB(MathHelper.hsvToRgb(Math.max(0.0F, inkPctgLerp) / 3.0F, 1.0F, 1.0F));
 						RenderSystem.setShaderColor(durRgb[0], durRgb[1], durRgb[2], 1);

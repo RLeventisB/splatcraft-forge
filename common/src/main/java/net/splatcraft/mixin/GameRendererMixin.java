@@ -14,20 +14,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin
 {
-	/**
-	 * Disables view bobbing if configured.
-	 */
-	@Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-	private void onBobView(MatrixStack matrices, float f, CallbackInfo ci)
-	{
-		if (ClientUtils.getClientPlayer() != null)
-		{
-			if (EntityInfoCapability.isSquid(ClientUtils.getClientPlayer()))
-			{
-				SplatcraftConfig.PreventBobView value = SplatcraftConfig.get("preventBobView");
-				if (value.equals(SplatcraftConfig.PreventBobView.ALWAYS) || value.equals(SplatcraftConfig.PreventBobView.SUBMERGED) && EntityInfoCapability.isSquid(ClientUtils.getClientPlayer()) && InkBlockUtils.canSquidHide(ClientUtils.getClientPlayer()))
-					ci.cancel();
-			}
-		}
-	}
+    /**
+     * Disables view bobbing if configured.
+     */
+    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
+    private void onBobView(MatrixStack matrices, float f, CallbackInfo ci)
+    {
+        if (ClientUtils.getClientPlayer() != null)
+        {
+            if (EntityInfoCapability.isSquid(ClientUtils.getClientPlayer()))
+            {
+                SplatcraftConfig.PreventBobView value = SplatcraftConfig.get("splatcraft.preventBobView");
+                if (value.equals(SplatcraftConfig.PreventBobView.ALWAYS) || value.equals(SplatcraftConfig.PreventBobView.SUBMERGED) && EntityInfoCapability.isSquid(ClientUtils.getClientPlayer()) && InkBlockUtils.canSquidHide(ClientUtils.getClientPlayer()))
+                    ci.cancel();
+            }
+        }
+    }
 }
