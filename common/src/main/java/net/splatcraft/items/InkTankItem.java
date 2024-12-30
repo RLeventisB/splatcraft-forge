@@ -149,13 +149,13 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	@Override
 	public int getItemBarColor(@NotNull ItemStack stack)
 	{
-		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getItemBarColor(stack) : ColorUtils.getInkColor(stack).getColorWithAlpha(255);
+		return SplatcraftConfig.get("vanillaInkDurability") ? super.getItemBarColor(stack) : ColorUtils.getInkColor(stack).getColorWithAlpha(255);
 	}
 	@Environment(EnvType.CLIENT)
 	@Override
 	public boolean isItemBarVisible(@NotNull ItemStack stack)
 	{
-		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
+		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("inkIndicator");
 		return (inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
 			stack.contains(SplatcraftComponents.TANK_DATA) && getInkAmount(stack) < capacity;
 	}

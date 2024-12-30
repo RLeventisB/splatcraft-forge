@@ -45,11 +45,11 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 		{
 			boolean canRender = true;
 			PlayerEntity player = ClientUtils.getClientPlayer();
-			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
+			int renderDistance = SplatcraftConfig.get("barrierRenderDistance");
 			
 			if (player.squaredDistanceTo(getPos().toCenterPos()) > renderDistance * renderDistance)
 				canRender = false;
-			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
+			else if (SplatcraftConfig.get("holdBarrierToRender"))
 			{
 				canRender = player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS) ||
 					player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);

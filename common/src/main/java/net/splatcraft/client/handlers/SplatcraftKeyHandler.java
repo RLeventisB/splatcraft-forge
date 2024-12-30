@@ -85,7 +85,7 @@ public class SplatcraftKeyHandler
 		updatePressState(SHOOT_KEYBIND, autoSquidDelay);
 		
 		EntityInfo info = EntityInfoCapability.get(player);
-		KeyMode squidKeyMode = SplatcraftConfig.get("splatcraft.squidKeyMode");
+		KeyMode squidKeyMode = SplatcraftConfig.get("squidKeyMode");
 		
 		SQUID_KEYBIND.tick(squidKeyMode, canHold);
 		updatePressState(SQUID_KEYBIND, 0);

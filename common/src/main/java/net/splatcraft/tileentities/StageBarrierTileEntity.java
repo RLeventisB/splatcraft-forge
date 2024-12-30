@@ -57,11 +57,11 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		{
 			boolean canRender = true;
 			PlayerEntity player = ClientUtils.getClientPlayer();
-			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
+			int renderDistance = SplatcraftConfig.get("barrierRenderDistance");
 			
 			if (player.squaredDistanceTo(getPos().getX(), getPos().getY(), getPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
-			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
+			else if (SplatcraftConfig.get("holdBarrierToRender"))
 			{
 				canRender = player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS) ||
 					player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);
@@ -76,8 +76,8 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	}
 	protected void addActiveTime()
 	{
-		if (activeTime < maxActiveTime)
-			activeTime += 3;
+		activeTime += 3;
+		activeTime = Math.min(maxActiveTime, activeTime);
 	}
 	@Override
 	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)

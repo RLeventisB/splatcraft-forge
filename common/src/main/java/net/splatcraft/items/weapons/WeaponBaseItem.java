@@ -282,7 +282,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	@Override
 	public int getItemBarColor(@NotNull ItemStack stack)
 	{
-		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getItemBarColor(stack) : ColorUtils.getInkColor(stack).getColor();
+		return SplatcraftConfig.get("vanillaInkDurability") ? super.getItemBarColor(stack) : ColorUtils.getInkColor(stack).getColor();
 	}
 	@Override
 	public boolean isItemBarVisible(@NotNull ItemStack stack)

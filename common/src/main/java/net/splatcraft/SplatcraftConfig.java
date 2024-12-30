@@ -24,20 +24,20 @@ public class SplatcraftConfig
 	public static void initializeSettingsMap()
 	{
 		// server settings
-		settingsMap.put("splatcraft.limitFallSpeed", new Setting<>(Boolean.class));
+		settingsMap.put("limitFallSpeed", new Setting<>(Boolean.class));
 		
 		// client settings
-		settingsMap.put("splatcraft.squidKeyMode", new Setting<>(SplatcraftKeyHandler.KeyMode.class));
-		settingsMap.put("splatcraft.inkIndicator", new Setting<>(InkIndicator.class));
-		settingsMap.put("splatcraft.vanillaInkDurability", new Setting<>(Boolean.class));
-		settingsMap.put("splatcraft.holdBarrierToRender", new Setting<>(Boolean.class));
-		settingsMap.put("splatcraft.barrierRenderDistance", new Setting<>(Integer.class));
-		settingsMap.put("splatcraft.colorLock", new Setting<>(Double.class));
-		settingsMap.put("splatcraft.makeShinier", new Setting<>(Boolean.class));
-		settingsMap.put("splatcraft.preventBobView", new Setting<>(Boolean.class));
-		settingsMap.put("splatcraft.lowInkWarning", new Setting<>(PreventBobView.class));
-		settingsMap.put("splatcraft.coloredPlayerNames", new Setting<>(Boolean.class));
-		settingsMap.put("splatcraft.inkTankGuiScale", new Setting<>(Boolean.class));
+		settingsMap.put("squidKeyMode", new Setting<>(SplatcraftKeyHandler.KeyMode.class));
+		settingsMap.put("inkIndicator", new Setting<>(InkIndicator.class));
+		settingsMap.put("vanillaInkDurability", new Setting<>(Boolean.class));
+		settingsMap.put("holdBarrierToRender", new Setting<>(Boolean.class));
+		settingsMap.put("barrierRenderDistance", new Setting<>(Integer.class));
+		settingsMap.put("colorLock", new Setting<>(Double.class));
+		settingsMap.put("makeShinier", new Setting<>(Boolean.class));
+		settingsMap.put("preventBobView", new Setting<>(Boolean.class));
+		settingsMap.put("lowInkWarning", new Setting<>(PreventBobView.class));
+		settingsMap.put("coloredPlayerNames", new Setting<>(Boolean.class));
+		settingsMap.put("inkTankGuiScale", new Setting<>(Boolean.class));
 	}
 	@ExpectPlatform
 	public static Path getModConfigPath()
