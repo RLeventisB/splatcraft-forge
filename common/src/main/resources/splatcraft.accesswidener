@@ -22,6 +22,7 @@ accessible method net/minecraft/scoreboard/ScoreboardCriterion getOrCreateStatCr
 
 #accessible net/minecraft/client/renderer/texture/TextureAtlas *
 
+accessible field net/minecraft/client/render/entity/EntityRenderDispatcher renderers Ljava/util/Map;
 accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setText (Lnet/minecraft/text/Text;)V
 accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setDisplayFlags (B)V
 accessible method net/minecraft/entity/decoration/DisplayEntity$BillboardMode getIndex ()B

@@ -67,12 +67,17 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 					player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);
 			}
 			if (canRender)
-				resetActiveTime();
+				addActiveTime();
 		}
 	}
 	protected void resetActiveTime()
 	{
 		activeTime = maxActiveTime;
+	}
+	protected void addActiveTime()
+	{
+		if (activeTime < maxActiveTime)
+			activeTime++;
 	}
 	@Override
 	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)

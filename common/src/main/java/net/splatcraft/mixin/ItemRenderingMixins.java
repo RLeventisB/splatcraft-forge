@@ -9,31 +9,38 @@ import net.minecraft.client.render.item.HeldItemRenderer;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 public class ItemRenderingMixins
 {
 	@Mixin(ItemRenderer.class)
 	public static class ItemRendererMixin
 	{
-		@WrapOperation(method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/world/World;III)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/ItemRenderer;renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V"))
-		public void onRenderGuiItem(ItemRenderer instance, ItemStack stack, ModelTransformationMode renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, BakedModel model, Operation<Void> original)
+		@Inject(method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$tweakItemRender(ItemStack stack, ModelTransformationMode renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, BakedModel model, CallbackInfo ci)
 		{
+			if (stack.getItem() instanceof SubWeaponItem subWeaponItem)
+			{
+				RendererHandler.renderSubWeapon(stack, subWeaponItem, matrices, vertexConsumers, light, MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), leftHanded);
+				ci.cancel();
+			}
 			if (stack.getItem().equals(SplatcraftItems.powerEgg.get()))
 			{
-				// old code felt sloppy and unnecessary idk why (but ill leave a note here in case something breaks when rendering power eggs, idk how but ok)
-				Identifier key = SplatcraftItems.powerEgg.getId();
-				model = MinecraftClient.getInstance().getItemRenderer().getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(key));
+//	 todo: does this ever change anything???
+// old code felt sloppy and unnecessary idk why (but ill leave a note here in case something breaks when rendering power eggs, idk how but ok)
+
+//				Identifier key = SplatcraftItems.powerEgg.getId();
+//				model = MinecraftClient.getInstance().getItemRenderer().getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(key));
 			}
-			original.call(instance, stack, renderMode, leftHanded, matrices, vertexConsumers, light, overlay, model);
 		}
 	}
 	@Mixin(HeldItemRenderer.class)

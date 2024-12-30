@@ -25,6 +25,7 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
@@ -270,14 +271,16 @@ public class SplatcraftCommonHandler
 	{
 		if (entity instanceof LivingEntity livingEntity && InkOverlayCapability.hasCapability(livingEntity))
 		{
+			InkOverlayInfo overlayInfo = InkOverlayCapability.get(livingEntity);
 			if (entity.isSubmergedInWater())
 			{
-				InkOverlayCapability.get(livingEntity).setAmount(0);
+				overlayInfo.setAmount(0);
 			}
 			else
 			{
-				InkOverlayCapability.get(livingEntity).addAmount(-0.01f);
+				overlayInfo.addAmount(-0.01f);
 			}
+			InkOverlayCapability.set(livingEntity, overlayInfo);
 		}
 	}
 	public static EventResult onBlockLeftClick(PlayerEntity player,

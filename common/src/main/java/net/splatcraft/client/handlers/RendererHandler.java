@@ -13,6 +13,9 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
+import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
@@ -156,98 +159,25 @@ public class RendererHandler
 		}
 		return true;
 	}
-	public static boolean renderSubWeapon(ItemStack stack, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks)
+	public static boolean renderSubWeapon(ItemStack stack, SubWeaponItem subWeaponItem, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks, boolean leftHanded)
 	{
-		if (stack.getItem() instanceof SubWeaponItem subWeaponItem)
-		{
-			AbstractSubWeaponEntity sub = subWeaponItem.entityType.get().create(ClientUtils.getClientPlayer().clientWorld);
-			sub.setColor(ColorUtils.getInkColor(stack));
-			sub.setItem(stack);
+//		SubWeaponRenderer<?, ?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().renderers.get(subWeaponItem.entityType.get());
+		// ok i tried to render the sub models via getting their internal model instead of instantiating a whole entity but the entityrenderer thing does a lot of work about colors and those things since these models have 2 layers
+		// maybe i will take that approach soon or something
+		AbstractSubWeaponEntity sub = subWeaponItem.entityType.get().create(ClientUtils.getClientPlayer().clientWorld);
+		sub.setColor(ColorUtils.getInkColor(stack));
+		sub.setItem(stack);
+		if (stack.contains(DataComponentTypes.ENTITY_DATA))
 			sub.readItemData(stack.get(DataComponentTypes.ENTITY_DATA).copyNbt());
-			
-			sub.isItem = true;
-			
-			poseStack.translate(.5f, .55f, .5f);
-			
-			MinecraftClient.getInstance().getEntityRenderDispatcher().getRenderer(sub).render(sub, 0, partialTicks, poseStack, source, light);
-			return true;
-		}
-		return false;
+		
+		sub.isItem = true;
+		
+		BakedModel itemModel = MinecraftClient.getInstance().getBakedModelManager().getModel(new ModelIdentifier(subWeaponItem.arch$registryName(), "inventory"));
+		itemModel.getTransformation().getTransformation(ModelTransformationMode.GUI).apply(leftHanded, poseStack);
+		
+		MinecraftClient.getInstance().getEntityRenderDispatcher().getRenderer(sub).render(sub, 0, partialTicks, poseStack, source, light);
+		return true;
 	}
-	/*public static void renderItem(ItemRenderer itemRenderer, ItemStack stack, ModelTransformationMode renderMode, boolean leftHand, MatrixStack matrices, VertexConsumerProvider consumer, int light, int overlay, BakedModel model)
-	{
-		if (!stack.isEmpty())
-		{
-			matrices.push();
-			boolean bl = renderMode == ModelTransformationMode.GUI || renderMode == ModelTransformationMode.GROUND || renderMode == ModelTransformationMode.FIXED;
-			if (bl) {
-				if (stack.isOf(Items.TRIDENT)) {
-					model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("trident")));
-				} else if (stack.isOf(Items.SPYGLASS)) {
-					model = itemRenderer.getModels().getModelManager().getModel(ModelIdentifier.ofInventoryVariant(Identifier.ofVanilla("spyglass")));
-				}
-			}
-
-			model.getTransformation().getTransformation(renderMode).apply(leftHand, matrices);
-			matrices.translate(-0.5F, -0.5F, -0.5F);
-			if (!model.isBuiltin() && (!stack.isOf(Items.TRIDENT) || bl)) {
-			{
-				boolean flag1;
-				if (renderMode != ModelTransformationMode.GUI && !renderMode.isFirstPerson() && stack.getItem() instanceof BlockItem blockItem)
-				{
-					Block block = blockItem.getBlock();
-					flag1 = !(block instanceof TranslucentBlock) && !(block instanceof StainedGlassPaneBlock);
-				}
-				else
-				{
-					flag1 = true;
-				}
-
-				RenderLayer renderLayer = RenderLayers.getItemLayer(stack, flag1);
-				net.minecraft.client.render.VertexConsumer ivertexbuilder;
-				if (stack.getItem() == Items.COMPASS || stack.getItem() == Items.CLOCK && stack.hasGlint())
-				{
-					matrices.push();
-					MatrixStack.Entry matrixstack$entry = matrices.peek().copy();
-					if (renderMode == ModelTransformationMode.GUI)
-					{
-						matrixstack$entry.getMatrices().scale(0.5F);
-					}
-					else if (renderMode.firstPerson())
-					{
-						matrixstack$entry.getMatrices().scale(0.75F);
-					}
-
-					if (flag1)
-					{
-						ivertexbuilder = ItemRenderer.getCompassFoilBufferDirect(consumer, rendertype, matrixstack$entry);
-					}
-					else
-					{
-						ivertexbuilder = ItemRenderer.getCompassFoilBuffer(consumer, rendertype, matrixstack$entry);
-					}
-
-					matrices.pop();
-				}
-				else if (flag1)
-				{
-					ivertexbuilder = ItemRenderer.getFoilBufferDirect(consumer, rendertype, true, stack.hasGlint());
-				}
-				else
-				{
-					ivertexbuilder = ItemRenderer.getFoilBuffer(consumer, rendertype, true, stack.hasGlint());
-				}
-
-				itemRenderer.renderModelLists(model, stack, light, overlay, matrices, ivertexbuilder);
-			}
-			else
-			{
-				itemRenderer. IClientItemExtensions.of(stack).getCustomRenderer().renderByItem(stack, renderMode, matrices, consumer, light, overlay);
-			}
-
-			matrices.pop();
-		}
-	}*/
 	public static CompoundEventResult<Text> onChatMessage(MessageType.Parameters parameretes, Text message)
 	{
 		ClientWorld level = MinecraftClient.getInstance().world;
