@@ -44,7 +44,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 		super.appendTooltip(stack, context, tooltip, type);
 		
 		if (ColorUtils.isColorLocked(stack))
-			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColorOrInverted(stack), true));
+			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getEffectiveColor(stack), true));
 		else
 			tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color" + (ColorUtils.isInverted(stack) ? ".inverted" : "")).formatted(Formatting.GRAY));
 	}
@@ -75,9 +75,9 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 		
 		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos));
 				ColorUtils.withColorLocked(entity.getStack(), true);
 			}
 		}
@@ -108,7 +108,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 				SquidBumperEntity bumper = SplatcraftEntities.SQUID_BUMPER.get().create(serverLevel, null, pos, SpawnReason.SPAWN_EGG, true, true);
 				if (bumper != null)
 				{
-					bumper.setColor(ColorUtils.getInkColorOrInverted(stack));
+					bumper.setColor(ColorUtils.getEffectiveColor(stack));
 					float f = (float) MathHelper.floor((MathHelper.wrapDegrees(context.getPlayerYaw() - 180.0F) + 22.5F) / 45.0F) * 45.0F;
 					bumper.refreshPositionAndAngles(bumper.getX(), bumper.getY(), bumper.getZ(), f, 0);
 					bumper.setHeadYaw(f);

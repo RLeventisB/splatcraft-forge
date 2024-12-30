@@ -108,13 +108,13 @@ public class ColorUtils
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::color, InkColor.INVALID);
 	}
-	public static @NotNull InkColor getInkColorOrInverted(ItemStack stack)
+	public static @NotNull InkColor getEffectiveColor(ItemStack stack)
 	{
-		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::color, InkColor.INVALID);
+		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::getEffectiveColor, InkColor.INVALID);
 	}
 	public static ItemStack withInkColor(ItemStack stack, InkColor color)
 	{
-		InkColor finalColor = color == null ? getDefaultColor() : color;
+		InkColor finalColor = color == null ? InkColor.INVALID : color;
 		stack.apply(
 			SplatcraftComponents.ITEM_COLOR_DATA,
 			SplatcraftComponents.ItemColorData.DEFAULT.get(),
@@ -133,7 +133,7 @@ public class ColorUtils
 		
 		return getDefaultColor();
 	}
-	public static InkColor getInkColorOrInverted(World world, BlockPos pos)
+	public static InkColor getEffectiveColor(World world, BlockPos pos)
 	{
 		InkColor color = getInkColor(world, pos);
 		return InkColor.getIfInversed(color, isInverted(world, pos));
@@ -232,7 +232,7 @@ public class ColorUtils
 			return false;
 		
 		InkColor entityColor = getEntityColor(entity);
-		InkColor inkColor = getInkColorOrInverted(te.getWorld(), te.getPos());
+		InkColor inkColor = getEffectiveColor(te.getWorld(), te.getPos());
 		
 		if (!entityColor.isValid() || !inkColor.isValid())
 			return false;

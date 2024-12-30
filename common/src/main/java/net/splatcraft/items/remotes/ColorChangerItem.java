@@ -121,9 +121,9 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 		
 		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos));
 				ColorUtils.withColorLocked(entity.getStack(), true);
 			}
 		}

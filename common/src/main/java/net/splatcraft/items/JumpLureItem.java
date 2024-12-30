@@ -90,7 +90,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 	{
 		for (int i = 0; i < targetPlayer.getInventory().size(); i++)
 			if (targetPlayer.getInventory().getStack(i).getItem() instanceof JumpLureItem &&
-				ColorUtils.colorEquals(targetPlayer.getWorld(), targetPlayer.getBlockPos(), color, ColorUtils.getInkColorOrInverted(targetPlayer.getInventory().getStack(i))))
+				ColorUtils.colorEquals(targetPlayer.getWorld(), targetPlayer.getBlockPos(), color, ColorUtils.getEffectiveColor(targetPlayer.getInventory().getStack(i))))
 				return true;
 		return false;
 	}
@@ -153,7 +153,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 			return super.use(world, player, hand);
 		}
 		
-		InkColor color = ColorUtils.getInkColorOrInverted(player.getStackInHand(hand));
+		InkColor color = ColorUtils.getEffectiveColor(player.getStackInHand(hand));
 		ArrayList<UUID> players = new ArrayList<>(getAvailableCandidates(player, color).stream().map(Entity::getUuid).toList());
 		
 		ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
@@ -200,9 +200,9 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		
 		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos));
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos));
 				ColorUtils.withColorLocked(entity.getStack(), true);
 			}
 		}

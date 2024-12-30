@@ -12,7 +12,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.CommonRecords;
-import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 
 import java.util.List;
@@ -192,7 +191,7 @@ public class SplatcraftComponents
 		public static final Codec<ItemColorData> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.BOOL.optionalFieldOf("color_locked", false).forGetter(ItemColorData::colorLocked),
 			Codec.BOOL.optionalFieldOf("inverted", false).forGetter(ItemColorData::hasInvertedColor),
-			InkColor.NUMBER_CODEC.optionalFieldOf("color", ColorUtils.getDefaultColor()).forGetter(ItemColorData::color)
+			InkColor.NUMBER_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(ItemColorData::color)
 		).apply(builder, ItemColorData::new));
 		public static final Supplier<ItemColorData> DEFAULT = () -> new ItemColorData(false, false, InkColor.INVALID);
 		public ItemColorData withColorLocked(boolean colorLocked)

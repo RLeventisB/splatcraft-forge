@@ -25,6 +25,7 @@ import net.splatcraft.client.gui.WeaponWorkbenchScreen;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftBlocks;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ClientUtils;
@@ -102,17 +103,17 @@ public class ClientSetupHandler
 		@Override
 		public int getColor(@NotNull ItemStack stack, int i)
 		{
-			if (i != 0)
+			if (i != 0 || !stack.contains(SplatcraftComponents.ITEM_COLOR_DATA))
 				return -1;
 			
-			boolean isDefault = !ColorUtils.getInkColor(stack).isValid() && !ColorUtils.isColorLocked(stack);
+			SplatcraftComponents.ItemColorData colorData = stack.get(SplatcraftComponents.ITEM_COLOR_DATA);
+			boolean isDefault = colorData.color().isInvalid() && !colorData.colorLocked();
 			InkColor color = (stack.isIn(SplatcraftTags.Items.INK_BANDS) || !stack.isIn(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
-				? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : ColorUtils.getInkColor(stack);
+				? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : colorData.color();
+			color = ColorUtils.getColorLockedIfConfig(color);
 			
 			if (ColorUtils.isInverted(stack))
 				color = color.getInverted();
-			
-			color = ColorUtils.getColorLockedIfConfig(color);
 			
 			return color.getColorWithAlpha(255);
 		}

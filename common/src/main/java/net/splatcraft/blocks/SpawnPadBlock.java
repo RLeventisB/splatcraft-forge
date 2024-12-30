@@ -142,7 +142,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 		{
 			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getInkColor(stack));
 			
-			SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getInkColorOrInverted(stack));
+			SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getEffectiveColor(stack));
 			spawnPadTile.setSpawnShield(shield);
 			
 			world.spawnEntity(shield);
@@ -205,7 +205,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 			spawnPad.setColor(newColor);
 			SpawnShieldEntity shield = spawnPad.getSpawnShield();
 			if (shield != null)
-				shield.setColor(ColorUtils.getInkColorOrInverted(world, pos));
+				shield.setColor(ColorUtils.getEffectiveColor(world, pos));
 			world.updateListeners(pos, state, state, 3);
 			state.updateNeighbors(world, pos, 3);
 			return true;

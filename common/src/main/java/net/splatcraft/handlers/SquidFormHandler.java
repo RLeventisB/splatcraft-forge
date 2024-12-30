@@ -28,10 +28,10 @@ import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.blocks.SpawnPadBlock;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.registries.SplatcraftDamageTypes;
@@ -177,7 +177,7 @@ public class SquidFormHandler
 			
 			if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.getWorld(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
 			{
-				ColorUtils.setPlayerColor(player, ColorUtils.getInkColorOrInverted(player.getWorld(), posBelow));
+				ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.getWorld(), posBelow));
 			}
 			
 			if (blockBelow instanceof SpawnPadBlock)

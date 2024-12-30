@@ -126,11 +126,10 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		if (server == null)
 			return false;
 		
-		InkColor color = ColorUtils.getInkColor(stack);
+		InkColor color = ColorUtils.getEffectiveColor(stack);
 		
 		if (color.isValid())
 			ColorUtils.withInkColor(levelIn.getBlockEntity(pos), color);
-		ColorUtils.withInvertedColor(levelIn, pos, ColorUtils.isInverted(stack));
 		
 		return super.postPlacement(pos, levelIn, player, stack, state);
 	}
@@ -141,7 +140,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		
 		if (matchColor && (!ColorUtils.getInkColor(stack).isValid() || !ColorUtils.isColorLocked(stack)))
 		{
-			ColorUtils.withInkColor(stack, entityIn instanceof PlayerEntity && EntityInfoCapability.hasCapability((LivingEntity) entityIn) ?
+			ColorUtils.withInkColor(stack, entityIn instanceof LivingEntity living && EntityInfoCapability.hasCapability(living) ?
 				ColorUtils.getEntityColor(entityIn) : ColorUtils.getDefaultColor());
 		}
 	}
@@ -152,9 +151,9 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		
 		if (entity.getWorld().getBlockState(pos.down()).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.down()))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos.down()))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getInkColorOrInverted(entity.getWorld(), pos.down()));
+				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos.down()));
 				ColorUtils.withColorLocked(entity.getStack(), true);
 			}
 		}
