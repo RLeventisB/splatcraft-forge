@@ -26,8 +26,8 @@ public class InkTerrainParticleData implements ParticleEffect
 		).apply(instance, InkTerrainParticleData::new));
 	public static final PacketCodec<RegistryByteBuf, InkTerrainParticleData> PACKET_CODEC = PacketCodec.tuple(
 		PacketCodecs.FLOAT, InkTerrainParticleData::getRed,
-		PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
 		PacketCodecs.FLOAT, InkTerrainParticleData::getGreen,
+		PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
 		InkTerrainParticleData::new);
 	protected final float red;
 	protected final float green;

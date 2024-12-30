@@ -30,8 +30,8 @@ public class InkSplashParticleData implements ParticleEffect
 		).apply(instance, InkSplashParticleData::new));
 	public static final PacketCodec<RegistryByteBuf, InkSplashParticleData> PACKET_CODEC = PacketCodec.tuple(
 		PacketCodecs.FLOAT, InkSplashParticleData::getRed,
-		PacketCodecs.FLOAT, InkSplashParticleData::getBlue,
 		PacketCodecs.FLOAT, InkSplashParticleData::getGreen,
+		PacketCodecs.FLOAT, InkSplashParticleData::getBlue,
 		PacketCodecs.FLOAT, InkSplashParticleData::getScale,
 		InkSplashParticleData::new);
 	protected final float red;
