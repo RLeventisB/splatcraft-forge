@@ -126,7 +126,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		if (server == null)
 			return false;
 		
-		InkColor color = ColorUtils.getEffectiveColor(stack);
+		InkColor color = ColorUtils.getEffectiveColor(stack, player);
 		
 		if (color.isValid())
 			ColorUtils.withInkColor(levelIn.getBlockEntity(pos), color);

@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.component.ComponentType;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
@@ -12,6 +13,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 
 import java.util.List;
@@ -208,6 +210,14 @@ public class SplatcraftComponents
 		}
 		public InkColor getEffectiveColor()
 		{
+			return InkColor.getIfInversed(color, hasInvertedColor);
+		}
+		public InkColor getEffectiveColor(Entity entity)
+		{
+			if (color == InkColor.INVALID)
+			{
+				return InkColor.getIfInversed(ColorUtils.getEntityColor(entity), hasInvertedColor);
+			}
 			return InkColor.getIfInversed(color, hasInvertedColor);
 		}
 	}

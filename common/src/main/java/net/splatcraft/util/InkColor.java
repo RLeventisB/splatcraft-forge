@@ -119,7 +119,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public static InkColor getIfInversed(InkColor color, boolean inverted)
 	{
-		if (color.getColor() < 0)
+		if (color.isInvalid())
 		{
 			return color;
 		}
@@ -159,14 +159,13 @@ public class InkColor implements Comparable<InkColor>
 	{
 		return hexCode | (alpha << 24);
 	}
-	public String getName()
-	{
-		return InkColorRegistry.getFirstAliasForColor(hexCode).getPath();
-	}
 	@Override
 	public String toString()
 	{
-		return getName() + ": #" + getHexCode().toUpperCase();
+		Identifier alias = InkColorRegistry.getColorAlias(this);
+		if (alias != null)
+			return alias.getPath() + ": #" + getHexCode().toUpperCase();
+		return "unregistered: #" + getHexCode().toUpperCase();
 	}
 	@Override
 	public int compareTo(InkColor other)

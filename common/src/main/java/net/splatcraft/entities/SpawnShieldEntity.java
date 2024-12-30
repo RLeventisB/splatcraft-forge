@@ -9,7 +9,7 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -41,6 +41,8 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		setColor(color);
 		setPos(pos.getX() + .5, pos.getY() - 1, pos.getZ() + .5);
 		setSpawnPadPos(pos);
+		calculateDimensions();
+		refreshPosition();
 	}
 	@Override
 	public void onTrackedDataSet(TrackedData<?> data)
@@ -115,7 +117,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		if (nbt.contains("Color"))
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
 		if (nbt.contains("SpawnPadPos"))
-			setSpawnPadPos(NbtHelper.toBlockPos(nbt, "SpawnPadPos").get());
+			setSpawnPadPos(BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("SpawnPadPos")).getOrThrow());
 	}
 	@Override
 	protected void writeCustomDataToNbt(NbtCompound nbt)
@@ -123,7 +125,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		nbt.putFloat("Size", getSize());
 		nbt.put("Color", getColor().getNbt());
 		if (getSpawnPadPos() != null)
-			nbt.put("SpawnPadPos", NbtHelper.fromBlockPos(getSpawnPadPos()));
+			nbt.put("SpawnPadPos", BlockPos.CODEC.encodeStart(NbtOps.INSTANCE, getSpawnPadPos()).getOrThrow());
 	}
 	@Override
 	public InkColor getColor()

@@ -76,8 +76,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	}
 	protected void addActiveTime()
 	{
-		if (activeTime < maxActiveTime)
-			activeTime += 3;
+		activeTime = Math.min(maxActiveTime, activeTime + 3);
 	}
 	@Override
 	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)

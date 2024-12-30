@@ -51,10 +51,10 @@ public class ColorUtils
 	{
 		return stack.contains(SplatcraftComponents.ITEM_COLOR_DATA);
 	}
-	public static <T> T applyColorDataPredicate(ItemStack stack, Function<SplatcraftComponents.ItemColorData, T> predicate, T fallback)
+	public static <T> T applyColorDataPredicate(ItemStack stack, Function<SplatcraftComponents.ItemColorData, T> getter, T fallback)
 	{
 		if (stack.contains(SplatcraftComponents.ITEM_COLOR_DATA))
-			return predicate.apply(stack.get(SplatcraftComponents.ITEM_COLOR_DATA));
+			return getter.apply(stack.get(SplatcraftComponents.ITEM_COLOR_DATA));
 		return fallback;
 	}
 	public static @NotNull InkColor getEntityColor(Entity entity)
@@ -111,6 +111,12 @@ public class ColorUtils
 	public static @NotNull InkColor getEffectiveColor(ItemStack stack)
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::getEffectiveColor, InkColor.INVALID);
+	}
+	public static @NotNull InkColor getEffectiveColor(ItemStack stack, Entity entity)
+	{
+		if (entity == null)
+			return getEffectiveColor(stack);
+		return applyColorDataPredicate(stack, data -> data.getEffectiveColor(entity), InkColor.INVALID);
 	}
 	public static ItemStack withInkColor(ItemStack stack, InkColor color)
 	{

@@ -138,9 +138,9 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 	@Override
 	public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
 	{
-		if (!stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
+		if (!world.isClient() && !stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
 		{
-			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getInkColor(stack));
+			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getEffectiveColor(stack, entity));
 			
 			SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getEffectiveColor(stack));
 			spawnPadTile.setSpawnShield(shield);
