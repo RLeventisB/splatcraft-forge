@@ -1,5 +1,7 @@
 package net.splatcraft.items.weapons;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.entity.LivingEntity;
@@ -12,11 +14,13 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -92,16 +96,31 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	}
 	public static class SloshCooldown extends PlayerCooldown
 	{
+		public static final Codec<SloshCooldown> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
+			Codec.FLOAT.fieldOf("time").forGetter(v -> v.getTime()),
+			Codec.FLOAT.fieldOf("max_time").forGetter(v -> v.getMaxTime()),
+			Codec.INT.fieldOf("slot_index").forGetter(v -> v.getSlotIndex()),
+			Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.getHand() == Hand.MAIN_HAND),
+			Identifier.CODEC.fieldOf("slosh_setting_id").forGetter(v -> DataHandler.WeaponStatsListener.SETTINGS.inverse().get(v.sloshData)),
+			Codec.BOOL.fieldOf("did_sound").forGetter(v -> v.didSound),
+			Codec.FLOAT.fieldOf("pitch").forGetter(v -> v.pitch), // i am in the middle of codec-fying player cooldowns i WILL NOT make a codec for AttackId idc its such a niche bug too if it isn't serialized
+			Codec.FLOAT.fieldOf("x_delta").forGetter(v -> v.xDelta),
+			Codec.FLOAT.fieldOf("yaw").forGetter(v -> v.yaw),
+			Codec.FLOAT.fieldOf("y_delta").forGetter(v -> v.yDelta),
+			Codec.FLOAT.fieldOf("x_rot_old").forGetter(v -> v.xRotOld),
+			Codec.FLOAT.fieldOf("y_rot_old").forGetter(v -> v.yRotOld)
+		).apply(inst, SloshCooldown::new));
 		public SlosherWeaponSettings sloshData = null;
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
 		public boolean didSound;
 		public AttackId attackId;
-		public float pitch, xDelta, yaw, yDelta, xRotOld, prevYawld;
+		public float pitch, xDelta, yaw, yDelta, xRotOld, yRotOld;
 		public SloshCooldown(PlayerEntity player, ItemStack stack, int slotIndex, Hand hand, SlosherWeaponSettings sloshData, int duration)
 		{
 			super(stack, duration, slotIndex, hand, true, false, true, false);
 			pitch = xRotOld = player.getPitch();
-			yaw = prevYawld = player.getYaw();
+			yaw = yRotOld = player.getYaw();
 			this.sloshData = sloshData;
 			for (int i = 0; i < sloshData.shotData.sloshes().size(); i++)
 			{
@@ -120,6 +139,28 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			didSound = nbt.getBoolean("DidSound");
 			fromNbt(wrapperLookup, nbt);
 		}
+		public SloshCooldown(ItemStack storedStack, float time, float maxTime, int slotIndex, boolean isMainHand, Identifier sloshDataId, boolean didSound, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
+		{
+			super(storedStack, time, maxTime, slotIndex, isMainHand ? Hand.MAIN_HAND : Hand.OFF_HAND, true, false, true, false);
+			sloshData = (SlosherWeaponSettings) DataHandler.WeaponStatsListener.SETTINGS.get(sloshDataId);
+			
+			for (int i = 0; i < sloshData.shotData.sloshes().size(); i++)
+			{
+				SlosherWeaponSettings.SingularSloshShotData slosh = sloshData.shotData.sloshes().get(i);
+				for (byte j = 0; j < slosh.count(); j++)
+				{
+					sloshes.add(new CalculatedSloshData(slosh.startupTicks() + j * slosh.delayBetweenProjectiles(), j, i));
+				}
+			}
+			attackId = AttackId.registerAttack().countProjectile(sloshes.size());
+			this.didSound = didSound;
+			this.pitch = pitch;
+			this.xDelta = xDelta;
+			this.yaw = yaw;
+			this.yDelta = yDelta;
+			this.xRotOld = xRotOld;
+			this.yRotOld = yRotOld;
+		}
 		@Override
 		public void tick(LivingEntity player)
 		{
@@ -137,7 +178,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				xDelta = xDelta * 0.7f + (MathHelper.subtractAngles(pitch, player.getPitch())) * 0.12f;
 				yDelta = yDelta * 0.7f + (MathHelper.subtractAngles(yaw, player.getYaw())) * 0.12f;
 				xRotOld = pitch;
-				prevYawld = yaw;
+				yRotOld = yaw;
 				
 				pitch += xDelta * (didSound ? 1 : 0.4f);
 				yaw += yDelta * (didSound ? 1 : 0.4f);
@@ -145,7 +186,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			else
 			{
 				xRotOld = pitch;
-				prevYawld = yaw;
+				yRotOld = yaw;
 				pitch = player.getPitch();
 				yaw = player.getYaw();
 			}
@@ -166,7 +207,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						InkProjectileEntity proj = new InkProjectileEntity(world, player, storedStack, InkBlockUtils.getInkType(player), projectileData.size(), sloshData);
 						proj.setSlosherStats(projectileData);
 						
-						float xRotation = MathHelper.lerp(partialTick, prevYawld, yaw);
+						float xRotation = MathHelper.lerp(partialTick, yRotOld, yaw);
 						proj.setVelocity(
 							null,
 							MathHelper.lerp(partialTick, xRotOld, pitch),
@@ -232,8 +273,23 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			
 			return nbt;
 		}
+		@Override
+		public boolean canMove()
+		{
+			return true;
+		}
+		@Override
+		public boolean preventWeaponUse()
+		{
+			return true;
+		}
 		public record CalculatedSloshData(float time, byte indexInSlosh, int sloshDataIndex)
 		{
+			public static final Codec<CalculatedSloshData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+				Codec.FLOAT.fieldOf("time").forGetter(CalculatedSloshData::time),
+				Codec.BYTE.fieldOf("index_in_slosh").forGetter(CalculatedSloshData::indexInSlosh),
+				Codec.INT.fieldOf("slosh_data_index").forGetter(CalculatedSloshData::sloshDataIndex)
+			).apply(inst, CalculatedSloshData::new));
 		}
 	}
 }

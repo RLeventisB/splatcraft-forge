@@ -18,7 +18,7 @@ import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.registries.SplatcraftComponents;

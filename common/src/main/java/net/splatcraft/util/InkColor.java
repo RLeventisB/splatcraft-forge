@@ -40,7 +40,7 @@ public class InkColor implements Comparable<InkColor>
 				return DataResult.error(() -> "Input InkColor is not valid");
 			}
 			
-			return DataResult.success(ops.createNumeric(input.getColor()));
+			return DataResult.success(ops.createInt(input.getColor()));
 		}
 		@Override
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
@@ -115,7 +115,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public static InkColor getFromNbt(NbtElement nbt)
 	{
-		return Codec.either(NUMBER_CODEC, CODEC).decode(NbtOps.INSTANCE, nbt).getOrThrow().getFirst().orThrow();
+		return Codec.withAlternative(NUMBER_CODEC, CODEC).decode(NbtOps.INSTANCE, nbt).getOrThrow().getFirst();
 	}
 	public static InkColor getIfInversed(InkColor color, boolean inverted)
 	{

@@ -17,6 +17,7 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.handlers.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.registries.*;
+import net.splatcraft.util.PlayerCooldown;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,19 +54,14 @@ public final class Splatcraft
 		JumpLureHudHandler.registerEvents();
 		PlayerMovementHandler.registerEvents();
 		RendererHandler.registerEvents();
+		PlayerCooldown.registerCooldowns();
 //		SplatcraftOreGen.registerOres();
 		
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftEntities.bindRenderers();
 		
 		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClient);
-//		ClientLifecycleEvent.CLIENT_LEVEL_LOAD.register(Splatcraft::afterInitClient);
-		ClientLifecycleEvent.CLIENT_STARTED.register(Splatcraft::afterInitClient);
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
-	}
-	private static void afterInitClient(MinecraftClient client)
-	{
-		SplatcraftItems.registerModelProperties();
 	}
 	public static void onServerStart(MinecraftServer server)
 	{
@@ -79,10 +75,15 @@ public final class Splatcraft
 		SplatcraftTileEntities.bindTESR();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		ClientSetupHandler.bindScreenContainers();
+		SplatcraftItems.registerModelProperties();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)
 	{
 		return DeferredRegister.create(MODID, (RegistryKey<Registry<T>>) registry.getKey());
+	}
+	public static <T> DeferredRegister<T> deferredRegistryOf(RegistryKey<Registry<T>> registry)
+	{
+		return DeferredRegister.create(MODID, registry);
 	}
 	public static Mod getModInstance()
 	{

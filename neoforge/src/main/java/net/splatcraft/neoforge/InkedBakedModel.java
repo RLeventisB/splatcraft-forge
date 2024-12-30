@@ -13,7 +13,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.neoforged.neoforge.client.model.data.ModelData;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;

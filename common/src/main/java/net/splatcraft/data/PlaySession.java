@@ -9,8 +9,8 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.world.World;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 
 import java.util.Collection;
 import java.util.List;

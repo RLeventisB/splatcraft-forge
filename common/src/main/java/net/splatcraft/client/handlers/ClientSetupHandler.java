@@ -23,7 +23,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.client.gui.InkVatScreen;
 import net.splatcraft.client.gui.WeaponWorkbenchScreen;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftTileEntities;

@@ -9,8 +9,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.RelativeBlockPos;
 
@@ -82,7 +82,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		
 		if (level != null)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(level, level.getChunk(chunkPos.x, chunkPos.z));
+			ChunkInk chunkInk = ChunkInkCapability.get(level, chunkPos);
 			
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{

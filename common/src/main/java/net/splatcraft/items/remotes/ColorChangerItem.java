@@ -17,7 +17,7 @@ import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.IColoredItem;

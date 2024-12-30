@@ -14,7 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.world.World;
 import net.splatcraft.client.audio.ChargerChargingTickableSound;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;

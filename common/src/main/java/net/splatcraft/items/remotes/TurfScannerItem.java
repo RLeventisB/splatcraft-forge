@@ -12,7 +12,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendScanTurfResultsPacket;

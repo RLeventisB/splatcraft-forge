@@ -35,7 +35,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.crafting.*;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.CraftWeaponPacket;
 import net.splatcraft.registries.SplatcraftComponents;

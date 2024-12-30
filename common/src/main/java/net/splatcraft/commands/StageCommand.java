@@ -27,7 +27,7 @@ import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.commands.arguments.StageGameModeArgument;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.StageGameMode;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;

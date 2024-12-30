@@ -6,8 +6,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.MathHelper;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.util.PlayerCharge;
 

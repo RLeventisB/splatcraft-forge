@@ -1,5 +1,6 @@
 package net.splatcraft.util;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -12,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.Util;
 import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.*;
@@ -25,10 +27,10 @@ import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.EntityAccessor;
@@ -135,12 +137,12 @@ public class InkBlockUtils
 			return BlockInkedResult.FAIL;
 		
 		WorldChunk chunk = world.getWorldChunk(pos);
-		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, chunk);
+		ChunkInk worldInk = ChunkInkCapability.get(chunk);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
 		
 		boolean isInked = entry != null && entry.isInked(index);
-		if (entry != null && entry.inmutable)
+		if (entry != null && entry.immutable)
 			return BlockInkedResult.IS_PERMANENT;
 		
 		boolean sameColor = isInked && entry.color(index) == color;
@@ -406,7 +408,7 @@ public class InkBlockUtils
 					return true;
 		return false;
 	}
-	public enum InkType implements Comparable<InkType>
+	public enum InkType implements Comparable<InkType>, StringIdentifiable
 	{
 		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.get()),
 		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get()),
@@ -416,6 +418,7 @@ public class InkBlockUtils
 			Splatcraft.identifierOf("glowing"), GLOWING,
 			Splatcraft.identifierOf("clear"), CLEAR
 		);
+		public static final Codec<InkType> CODEC = StringIdentifiable.createCodec(InkType::values);
 		private final Identifier name;
 		private final Item repItem;
 		private final InkedBlock block;
@@ -461,6 +464,11 @@ public class InkBlockUtils
 		public byte getId()
 		{
 			return id;
+		}
+		@Override
+		public String asString()
+		{
+			return name();
 		}
 	}
 	public interface InkedBlockConsumer

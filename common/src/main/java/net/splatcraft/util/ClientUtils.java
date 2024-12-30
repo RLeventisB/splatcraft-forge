@@ -16,7 +16,7 @@ import net.minecraft.util.math.*;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.network.SplatcraftPacketHandler;

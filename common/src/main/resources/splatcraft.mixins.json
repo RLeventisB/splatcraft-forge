@@ -16,7 +16,6 @@
         "ProjectileMixin$InkProjectileDataMixin",
         "ProjectileMixin$InkProjectileMovementMixin",
         "SaveDataMixins$LevelStorageMixin",
-        "SaveDataMixins$SessionMixin",
         "ServerGamePacketMixin",
         "SheepMixin",
         "SquidPassthroughMixin",

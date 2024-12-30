@@ -17,8 +17,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.ChunkRegionAccessor;
 import net.splatcraft.registries.SplatcraftBlocks;
@@ -63,8 +63,10 @@ public class BlockRenderMixinFabric
 			target = "Lnet/minecraft/client/render/RenderLayers;getBlockLayer(Lnet/minecraft/block/BlockState;)Lnet/minecraft/client/render/RenderLayer;"))
 		public RenderLayer getRenderLayer(BlockState state, Operation<RenderLayer> original)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(splatcraft$world, splatcraft$blockPos);
 			RenderLayer originalLayer = original.call(state);
+			if (!ChunkInkCapability.has(splatcraft$world, splatcraft$blockPos))
+				return originalLayer;
+			ChunkInk chunkInk = ChunkInkCapability.get(splatcraft$world, splatcraft$blockPos);
 			
 			if (chunkInk != null && chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(splatcraft$blockPos)))
 			{

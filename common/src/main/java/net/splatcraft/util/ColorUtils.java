@@ -26,7 +26,7 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.client.particles.InkTerrainParticleData;
 import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;

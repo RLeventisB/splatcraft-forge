@@ -16,7 +16,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;

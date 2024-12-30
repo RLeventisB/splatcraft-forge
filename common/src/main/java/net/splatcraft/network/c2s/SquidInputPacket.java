@@ -4,8 +4,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.math.Direction;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.CommonUtils;
 
 import java.util.Optional;

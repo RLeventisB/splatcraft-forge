@@ -12,7 +12,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.IColoredBlock;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.InkBlockUtils;

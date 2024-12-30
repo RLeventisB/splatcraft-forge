@@ -1,5 +1,7 @@
 package net.splatcraft.util;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
@@ -12,6 +14,11 @@ import net.minecraft.util.math.Vec3i;
  */
 public class RelativeBlockPos extends Vec3i
 {
+	public static final Codec<RelativeBlockPos> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		Codec.BYTE.fieldOf("x").forGetter(v -> (byte) v.getX()),
+		Codec.INT.fieldOf("y").forGetter(v -> v.getY()),
+		Codec.BYTE.fieldOf("z").forGetter(v -> (byte) v.getZ())
+	).apply(inst, RelativeBlockPos::new));
 	private RelativeBlockPos(byte x, int y, byte z)
 	{
 		super(x, y, z);
@@ -57,6 +64,11 @@ public class RelativeBlockPos extends Vec3i
 			buf.readByte()
 		);
 	}
+	public static RelativeBlockPos fromString(String string)
+	{
+		String[] coords = string.split(",");
+		return new RelativeBlockPos(Byte.decode(coords[0]), Integer.decode(coords[1]), Byte.decode(coords[2]));
+	}
 	/**
 	 * Instantiates an absolute block position from this relative block position using a chunk position.
 	 *
@@ -94,5 +106,10 @@ public class RelativeBlockPos extends Vec3i
 		buf.writeByte(getZ());
 		
 		return buf;
+	}
+	@Override
+	public String toString()
+	{
+		return getX() + "," + getY() + "," + getZ(); // do not add spaces to the strings it will make the codecs unhappy
 	}
 }

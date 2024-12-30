@@ -42,7 +42,6 @@ public class DodgeRollPacket extends PlayC2SPacket
 	{
 		buffer.writeUuid(target);
 		ItemStack.PACKET_CODEC.encode(buffer, activeDualie);
-		buffer.writeRegistryKey(activeDualie.getRegistryEntry().getKey().get());
 		buffer.writeBoolean(hand == Hand.OFF_HAND);
 		buffer.writeInt(maxRolls);
 		buffer.writeFloat(rollPotency.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3d uses doubles)

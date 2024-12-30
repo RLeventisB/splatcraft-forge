@@ -10,8 +10,8 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.util.RelativeBlockPos;
 
 import java.util.ArrayList;
@@ -70,9 +70,9 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 		if (level != null)
 		{
 			WorldChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
-			if (ChunkInkCapability.hasAndNotEmpty(level, chunk))
+			if (ChunkInkCapability.hasAndNotEmpty(chunk))
 			{
-				ChunkInk chunkInk = ChunkInkCapability.get(level, chunk);
+				ChunkInk chunkInk = ChunkInkCapability.get(chunk);
 				for (BlockPos blockPos : toDelete)
 				{
 					if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))

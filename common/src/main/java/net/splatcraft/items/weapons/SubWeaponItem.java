@@ -58,17 +58,6 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 	{
 		return SubWeaponSettings.class;
 	}
-	//	@Override
-//	public void fillItemCategory(@NotNull ItemGroup group, @NotNull DefaultedList<ItemStack> list)
-//	{
-//		super.fillItemCategory(group, list);
-//		if (!isSecret && group == ItemGroup.TAB_SEARCH)
-//		{
-//			ItemStack stack = new ItemStack(this);
-//			stack.getOrCreateTag().putBoolean("SingleUse", true);
-//			list.add(stack);
-//		}
-//	}
 	@Override
 	public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
 	{
@@ -213,7 +202,7 @@ public class SubWeaponItem extends WeaponBaseItem<SubWeaponSettings>
 			return 0;
 		}
 	}
-
+	
     /*private static class SubWeaponClientItemExtensions implements IClientItemExtensions
     {
         @Override

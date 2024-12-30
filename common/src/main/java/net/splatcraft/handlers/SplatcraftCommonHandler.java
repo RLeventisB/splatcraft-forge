@@ -14,7 +14,6 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
@@ -23,14 +22,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameRules;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.RequestPlayerInfoPacket;
+import net.splatcraft.network.c2s.RequestEntityInfoPacket;
 import net.splatcraft.network.s2c.*;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
@@ -80,10 +79,6 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-
-//        oldPlayer.reviveCaps(); // Mod devs should not have to do this
-		EntityInfoCapability.get(newPlayer).readNBT(EntityInfoCapability.get(oldPlayer).writeNBT(new NbtCompound(), newPlayer.getRegistryManager()), newPlayer.getRegistryManager());
-//        event.getOriginal().invalidateCaps();
 		
 		DefaultedList<ItemStack> matchInv = EntityInfoCapability.get(newPlayer).getMatchInventory();
 		
@@ -234,7 +229,7 @@ public class SplatcraftCommonHandler
 				
 				if (player instanceof ClientPlayerEntity)
 				{
-					SplatcraftPacketHandler.sendToServer(new RequestPlayerInfoPacket(player));
+					SplatcraftPacketHandler.sendToServer(new RequestEntityInfoPacket(player));
 				}
 			}
 			
@@ -245,7 +240,7 @@ public class SplatcraftCommonHandler
 				if (!ItemStack.areItemsEqual(info.getInkBand(), inkBand))
 				{
 					info.setInkBand(inkBand);
-					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdatePlayerInfoPacket(player), player);
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(player), player);
 				}
 			}
 		}

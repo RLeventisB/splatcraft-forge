@@ -26,7 +26,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;

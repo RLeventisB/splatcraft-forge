@@ -13,7 +13,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -23,8 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -40,7 +38,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 public class EntityMixins
 {
@@ -53,12 +50,12 @@ public class EntityMixins
 		public void splatcraft$modifyVisibility(CallbackInfoReturnable<Boolean> cir)
 		{
 			Entity entity = (Entity) (Object) this;
-			if (!(entity instanceof PlayerEntity player) || !EntityInfoCapability.hasCapability(player))
+			if (!(entity instanceof LivingEntity living) || !EntityInfoCapability.hasCapability(living))
 			{
 				return;
 			}
 			
-			if (InkBlockUtils.canSquidHide(player) && EntityInfoCapability.get(player).isSquid())
+			if (InkBlockUtils.canSquidHide(living) && EntityInfoCapability.isSquid(living))
 				cir.setReturnValue(true);
 		}
 		@Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
@@ -90,7 +87,7 @@ public class EntityMixins
 			
 			return original.call(instance);
 		}
-		@Inject(method = "playStepSound", locals = LocalCapture.CAPTURE_FAILHARD, at = @At(value = "HEAD"))
+		@Inject(method = "playStepSound", at = @At(value = "HEAD"))
 		public void getBlockPos(BlockPos pos, BlockState state, CallbackInfo ci)
 		{
 			splatcraft$stepBlockPos = pos;
@@ -115,23 +112,6 @@ public class EntityMixins
 			Entity entity = (Entity) (Object) this;
 			SquidFormHandler.doSquidRotation(entity);
 			SplatcraftCommonHandler.onLivingTick(entity);
-		}
-		// todo: there is a revive method that only players use! maybe handle it in the future if another mod uses it (not like making mods is suitable for compatibility though)
-		@Inject(method = "setRemoved", at = @At("TAIL"))
-		public void splatcraft$onEntityRemoval(Entity.RemovalReason reason, CallbackInfo ci)
-		{
-			Entity entity = (Entity) (Object) this;
-			if (entity instanceof LivingEntity livingEntity)
-			{
-				if (InkOverlayCapability.hasCapability(livingEntity))
-				{
-					InkOverlayCapability.remove(livingEntity);
-				}
-				if (EntityInfoCapability.hasCapability(livingEntity))
-				{
-					EntityInfoCapability.remove(livingEntity);
-				}
-			}
 		}
 	}
 	@Mixin(LivingEntity.class)
@@ -169,52 +149,6 @@ public class EntityMixins
 			
 			SplatcraftCommonHandler.onPlayerJump(entity);
 			SquidFormHandler.modifyJumpSpeed(entity);
-		}
-		@Inject(method = "writeCustomDataToNbt", at = @At("TAIL"))
-		public void splatcraft$writeSplatcraftData(NbtCompound nbt, CallbackInfo ci)
-		{
-			LivingEntity entity = (LivingEntity) (Object) this;
-			NbtCompound splatcraftData = new NbtCompound();
-			
-			if (InkOverlayCapability.hasCapability(entity))
-			{
-				NbtCompound data = new NbtCompound();
-				InkOverlayCapability.serialize(entity, data);
-				splatcraftData.put("ink_overlay", data);
-			}
-			
-			if (EntityInfoCapability.hasCapability(entity))
-			{
-				NbtCompound data = new NbtCompound();
-				EntityInfoCapability.serialize(entity, data);
-				splatcraftData.put("entity_info", data);
-			}
-			nbt.put("splatcraft_data", splatcraftData);
-		}
-		@Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
-		public void splatcraft$readSplatcraftData(NbtCompound nbt, CallbackInfo ci)
-		{
-			LivingEntity entity = (LivingEntity) (Object) this;
-			if (nbt.contains("splatcraft_data"))
-			{
-				NbtCompound splatcraftData = nbt.getCompound("splatcraft_data");
-				if (splatcraftData.contains("ink_overlay"))
-				{
-					InkOverlayCapability.deserialize(entity, splatcraftData.getCompound("ink_overlay"));
-				}
-				if (splatcraftData.contains("entity_info"))
-				{
-					EntityInfoCapability.deserialize(entity, splatcraftData.getCompound("entity_info"));
-				}
-			}
-			else if (nbt.contains("ForgeCaps"))
-			{
-				NbtCompound forgeCaps = nbt.getCompound("ForgeCaps");
-				if (forgeCaps.contains("splatcraft:ink_overlay"))
-				{
-					InkOverlayCapability.deserialize(entity, forgeCaps.getCompound("splatcraft:ink_overlay"));
-				}
-			}
 		}
 		@Inject(method = "damage", at = @At("HEAD"))
 		public void splatcraft$failsafeDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir)

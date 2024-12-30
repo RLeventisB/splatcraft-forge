@@ -3,7 +3,7 @@ package net.splatcraft.mixin;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;

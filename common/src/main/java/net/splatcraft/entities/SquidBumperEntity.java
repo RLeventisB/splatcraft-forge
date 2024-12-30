@@ -374,7 +374,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	{
 		super.readCustomDataFromNbt(nbt);
 		if (nbt.contains("Color"))
-			setColor(InkColor.getFromNbt(nbt));
+			setColor(InkColor.getFromNbt(nbt.get("Color")));
 		else setColor(ColorUtils.getRandomStarterColor());
 		
 		if (nbt.contains("Inkproof"))

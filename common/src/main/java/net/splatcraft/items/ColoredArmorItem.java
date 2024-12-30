@@ -18,7 +18,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;

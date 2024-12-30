@@ -18,7 +18,7 @@ import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;

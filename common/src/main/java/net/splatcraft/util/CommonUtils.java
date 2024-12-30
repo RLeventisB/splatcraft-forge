@@ -1,7 +1,10 @@
 package net.splatcraft.util;
 
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.PrimitiveCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -35,6 +38,7 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
+import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
@@ -44,7 +48,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.DualieItem;
@@ -57,13 +61,16 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class CommonUtils
 {
+	public static final Codec<Vec2f> VEC_2_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
+		Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
+	).apply(inst, Vec2f::new));
 	public static final TrackedDataHandler<Vector2f> VEC2DATAHANDLER = new TrackedDataHandler<>()
 	{
 		public static final PacketCodec<RegistryByteBuf, Vector2f> PACKET_CODEC = PacketCodec.tuple(
@@ -115,6 +122,16 @@ public class CommonUtils
 			return new Vec3d(vec.x, vec.y, vec.z);
 		}
 	};
+	public static <T> Codec<T> withNullSupport(Codec<T> originalCodec, T defaultValue, Predicate<T> isEmpty)
+	{
+		return Codecs.optional(originalCodec).xmap(
+			(optional) -> optional.orElse(defaultValue),
+			(value) -> isEmpty.test(value) ? Optional.empty() : Optional.of(value));
+	}
+	public static <T> Codec<T> withNullSupport(Codec<T> originalCodec, T defaultValue)
+	{
+		return withNullSupport(originalCodec, defaultValue, Objects::isNull);
+	}
 	public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPayload.Id<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));
@@ -447,6 +464,10 @@ public class CommonUtils
 				MathHelper.getLerpProgress(pos.z, startPos.z, endPos.z)
 			};
 		return Arrays.stream(progresses).filter(Double::isFinite).mapToDouble(v -> v).average().orElse(fallback);
+	}
+	public static <K, V> Codec<Map<K, V>> hashMapCodec(PrimitiveCodec<K> keyCodec, Codec<V> valueCodec)
+	{
+		return Codec.unboundedMap(keyCodec, valueCodec).xmap(HashMap::new, v -> v);
 	}
 	public record Result(float delay, float value)
 	{

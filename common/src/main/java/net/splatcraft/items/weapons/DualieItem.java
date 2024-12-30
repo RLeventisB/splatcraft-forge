@@ -1,6 +1,8 @@
 package net.splatcraft.items.weapons;
 
 import com.google.common.collect.Lists;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.client.MinecraftClient;
@@ -18,9 +20,10 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.world.World;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -250,6 +253,19 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static class DodgeRollCooldown extends PlayerCooldown
 	{
+		public static final Codec<DodgeRollCooldown> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
+			Codec.FLOAT.fieldOf("time").forGetter(v -> v.getTime()),
+			Codec.FLOAT.fieldOf("max_time").forGetter(v -> v.getMaxTime()),
+			Codec.INT.fieldOf("slot_index").forGetter(v -> v.getSlotIndex()),
+			Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.getHand() == Hand.MAIN_HAND),
+			Codec.BYTE.fieldOf("roll_frame").forGetter(v -> v.rollFrame),
+			Codec.BYTE.fieldOf("roll_end_frame").forGetter(v -> v.rollEndFrame),
+			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
+			CommonUtils.VEC_2_CODEC.fieldOf("roll_direction").forGetter(v -> v.rollDirection),
+			Codec.BOOL.fieldOf("can_slide").forGetter(v -> v.canSlide),
+			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState)
+		).apply(inst, DodgeRollCooldown::new));
 		final byte rollFrame, rollEndFrame, turretModeFrame;
 		final Vec2f rollDirection;
 		boolean canSlide;
@@ -274,6 +290,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			canSlide = nbt.getBoolean("CanSlide");
 			rollState = RollState.fromValue(nbt.getByte("RollState"));
 			setTime(nbt.getFloat("Time"));
+		}
+		public DodgeRollCooldown(ItemStack storedStack, float time, Float maxTime, Integer slotIndex, Boolean isMainHand, Byte rollFrame, Byte rollEndFrame, Byte turretModeFrame, Vec2f rollDirection, Boolean canSlide, RollState rollState)
+		{
+			super(storedStack, time, maxTime, slotIndex, isMainHand ? Hand.MAIN_HAND : Hand.OFF_HAND, false, false, true, false);
+			this.rollDirection = rollDirection;
+			this.rollFrame = rollFrame;
+			this.rollEndFrame = rollEndFrame;
+			this.turretModeFrame = turretModeFrame;
+			this.canSlide = canSlide;
+			this.rollState = rollState;
 		}
 		@Override
 		public void tick(LivingEntity player)
@@ -384,12 +410,13 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			return rollState != RollState.TURRET;
 		}
-		enum RollState
+		enum RollState implements StringIdentifiable
 		{
 			BEFORE_ROLL(0),
 			ROLL(1),
 			AFTER_ROLL(2),
 			TURRET(3);
+			public static final Codec<RollState> CODEC = StringIdentifiable.createCodec(RollState::values);
 			final byte value;
 			RollState(int value)
 			{
@@ -404,6 +431,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					case 2 -> TURRET;
 					default -> throw new IllegalStateException("Unexpected value: " + value);
 				};
+			}
+			@Override
+			public String asString()
+			{
+				return name();
 			}
 		}
 	}

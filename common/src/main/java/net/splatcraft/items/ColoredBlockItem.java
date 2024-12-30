@@ -23,7 +23,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
@@ -142,7 +142,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		if (matchColor && (!ColorUtils.getInkColor(stack).isValid() || !ColorUtils.isColorLocked(stack)))
 		{
 			ColorUtils.withInkColor(stack, entityIn instanceof PlayerEntity && EntityInfoCapability.hasCapability((LivingEntity) entityIn) ?
-				ColorUtils.getEntityColor((PlayerEntity) entityIn) : ColorUtils.getDefaultColor());
+				ColorUtils.getEntityColor(entityIn) : ColorUtils.getDefaultColor());
 		}
 	}
 	@Override

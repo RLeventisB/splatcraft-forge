@@ -32,10 +32,8 @@ import net.splatcraft.registries.neoforge.SplatcraftEntitiesImpl;
 @Mod(Splatcraft.MODID)
 public final class SplatcraftNeoForge
 {
-	private final IEventBus modBus;
 	public SplatcraftNeoForge(IEventBus modBus)
 	{
-		this.modBus = modBus;
 		// Run our common setup.
 		Splatcraft.init();
 		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
@@ -49,6 +47,8 @@ public final class SplatcraftNeoForge
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
+		
+		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{

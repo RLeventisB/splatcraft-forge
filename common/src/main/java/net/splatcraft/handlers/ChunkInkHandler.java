@@ -3,7 +3,10 @@ package net.splatcraft.handlers;
 import com.google.common.reflect.TypeToken;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.common.*;
+import dev.architectury.event.events.common.BlockEvent;
+import dev.architectury.event.events.common.ChunkEvent;
+import dev.architectury.event.events.common.InteractionEvent;
+import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.value.IntValue;
 import net.fabricmc.api.EnvType;
@@ -23,7 +26,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkHolder;
@@ -39,8 +41,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.worldink.ChunkInk;
-import net.splatcraft.data.capabilities.worldink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.DeleteInkPacket;
 import net.splatcraft.network.s2c.IncrementalChunkBasedPacket;
@@ -71,16 +73,7 @@ public class ChunkInkHandler
 		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
 		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
 		
-		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::onChunkDataRead);
-		ChunkEvent.SAVE_DATA.register(ChunkInkCapability::onChunkDataSave);
-		LifecycleEvent.SERVER_STOPPING.register(ChunkInkHandler::onServerSave);
-	}
-	private static void onServerSave(MinecraftServer server)
-	{
-		for (ServerWorld world : server.getWorlds())
-		{
-			ChunkInkCapability.unloadAllChunks(world);
-		}
+		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::tryReadLegacyData);
 	}
 	public static void addInkToRemove(World world, BlockPos pos)
 	{
@@ -202,13 +195,13 @@ public class ChunkInkHandler
 			return;
 		
 		List<WorldChunk> chunks = StreamSupport.stream(world.getChunkManager().chunkLoadingManager.entryIterator().spliterator(), false).map(ChunkHolder::getWorldChunk)
-			.filter(Objects::nonNull).filter(chunk -> ChunkInkCapability.hasAndNotEmpty(world, chunk)).toList();
+			.filter(Objects::nonNull).filter(chunk -> ChunkInkCapability.hasAndNotEmpty(chunk)).toList();
 		int maxChunkCheck = Math.min(world.random.nextInt(MAX_DECAYABLE_CHUNKS), chunks.size());
 		
 		for (int i = 0; i < maxChunkCheck; i++)
 		{
 			WorldChunk chunk = chunks.get(world.random.nextInt(chunks.size()));
-			ChunkInk worldInk = ChunkInkCapability.get(world, chunk);
+			ChunkInk worldInk = ChunkInkCapability.get(chunk);
 			HashMap<RelativeBlockPos, ChunkInk.BlockEntry> decayableInk = new HashMap<>(worldInk.getInkInChunk());
 			
 			int blockCount = 0;
@@ -219,7 +212,7 @@ public class ChunkInkHandler
 				
 				if (!SplatcraftGameRules.getLocalizedRule(world, clearPos, SplatcraftGameRules.INK_DECAY) ||
 					world.random.nextFloat() >= SplatcraftGameRules.getIntRuleValue(world, SplatcraftGameRules.INK_DECAY_RATE) * 0.001f ||
-					decayableInk.get(pos).inmutable)
+					decayableInk.get(pos).immutable)
 				{
 					decayableInk.remove(pos);
 					continue;
@@ -281,9 +274,9 @@ public class ChunkInkHandler
 	}*/
 	public static void sendChunkData(ServerPlayNetworkHandler handler, World world, WorldChunk chunk)
 	{
-		if (!ChunkInkCapability.hasAndNotEmpty(world, chunk))
+		if (!ChunkInkCapability.hasAndNotEmpty(chunk))
 			return;
-		ChunkInk worldInk = ChunkInkCapability.get(world, chunk);
+		ChunkInk worldInk = ChunkInkCapability.get(chunk);
 		handler.send(SplatcraftPacketHandler.CHANNEL.toPacket(NetworkManager.Side.S2C, new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.getRegistryManager()), null);
 	}
 	@Environment(EnvType.CLIENT)
@@ -292,7 +285,7 @@ public class ChunkInkHandler
 		ChunkPos chunkPos = chunk.getPos();
 		if (INK_CACHE.containsKey(chunkPos))
 		{
-			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, chunk);
+			ChunkInk chunkInk = ChunkInkCapability.get(chunk);
 			
 			INK_CACHE.get(chunkPos).forEach((relativePos, entry) ->
 			{

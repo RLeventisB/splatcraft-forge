@@ -9,8 +9,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
 import net.splatcraft.VectorUtils;
 import net.splatcraft.client.particles.SquidSoulParticleData;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfo;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.*;
 

@@ -18,7 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Pair;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.InkTankItem;
 
 import java.util.HashMap;

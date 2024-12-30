@@ -30,13 +30,13 @@ public class SplatcraftPacketHandler
 	public static void registerMessages()
 	{
 		//INSTANCE.registerMessage(ID++, PlayerColorPacket.class, SplatcraftPacket::encode, PlayerColorPacket::decode, SplatcraftPacket::consume);
-		registerMessage(UpdatePlayerInfoPacket.class, UpdatePlayerInfoPacket::decode);
+		registerMessage(UpdateEntityInfoPacket.class, UpdateEntityInfoPacket::decode);
 		registerMessage(PlayerColorPacket.class, PlayerColorPacket::decode);
 		registerMessage(PlayerSetSquidC2SPacket.class, PlayerSetSquidC2SPacket::decode);
 		registerMessage(PlayerSetSquidS2CPacket.class, PlayerSetSquidS2CPacket::decode);
 		registerMessage(UpdateBooleanGamerulesPacket.class, UpdateBooleanGamerulesPacket::decode);
 		registerMessage(UpdateIntGamerulesPacket.class, UpdateIntGamerulesPacket::decode);
-		registerMessage(RequestPlayerInfoPacket.class, RequestPlayerInfoPacket::decode);
+		registerMessage(RequestEntityInfoPacket.class, RequestEntityInfoPacket::decode);
 		registerMessage(SendScanTurfResultsPacket.class, SendScanTurfResultsPacket::decode);
 		registerMessage(UpdateColorScoresPacket.class, UpdateColorScoresPacket::decode);
 		registerMessage(UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);

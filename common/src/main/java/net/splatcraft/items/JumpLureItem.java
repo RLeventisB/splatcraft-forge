@@ -25,7 +25,7 @@ import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.playerinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.network.SplatcraftPacketHandler;

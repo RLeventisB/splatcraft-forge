@@ -9,18 +9,25 @@ import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public record SaveInfo(Map<String, PlaySession> playSessions, Map<String, Stage> stages, List<InkColor> colorScores)
 {
 	public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		Codec.unboundedMap(Codec.STRING, PlaySession.CODEC).fieldOf("PlaySessions").forGetter(SaveInfo::playSessions),
-		Codec.unboundedMap(Codec.STRING, Stage.CODEC).fieldOf("Stages").forGetter(SaveInfo::stages),
-		Codec.list(InkColor.CODEC).fieldOf("Stages").forGetter(SaveInfo::colorScores)
+		CommonUtils.hashMapCodec(Codec.STRING, PlaySession.CODEC).fieldOf("play_sessions").forGetter(SaveInfo::playSessions),
+		CommonUtils.hashMapCodec(Codec.STRING, Stage.CODEC).xmap(v -> v, HashMap::new).fieldOf("stages").forGetter(SaveInfo::stages),
+		Codec.list(InkColor.CODEC).fieldOf("color_scores").forGetter(SaveInfo::colorScores)
 	).apply(inst, SaveInfo::new));
+	public SaveInfo()
+	{
+		this(new HashMap<>(), new HashMap<>(), new ArrayList<>());
+	}
 	public void addInitializedColorScores(InkColor... colors)
 	{
 		for (InkColor color : colors)
