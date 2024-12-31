@@ -319,6 +319,7 @@ public class ChunkInkHandler
 	public static class Render
 	{
 		public static final Identifier INKED_BLOCK_LOCATION = Splatcraft.identifierOf("block/inked_block");
+		public static final ModelElementTexture defaultUv = new ModelElementTexture(new float[] {0, 0, 1, 1}, 0);
 		private static BlockColorProvider splatcraftColorProvider, inkedBlockColorProvider;
 		private static Sprite inkedBlockSprite;
 		private static BakedModel model;
@@ -372,122 +373,6 @@ public class ChunkInkHandler
 		{
 			return MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(Splatcraft.identifierOf("block/permanent_ink_overlay"));
 		}
-		/*public static boolean splatcraft$renderInkedBlock(ChunkRendererRegion region, BlockPos pos, VertexConsumer
-			consumer, MatrixStack.Entry matrix, BakedQuad quad, float[] brightness, int[] lightmap, int f2, boolean f3)
-		{
-			ChunkInk worldInk = ChunkInkCapability.get(((BlockRenderMixin.ChunkRegionAccessor) region).getWorld(), pos);
-
-			int index = quad.getFace().getId();
-			RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
-			ChunkInk.BlockEntry ink = worldInk.getInk(offset);
-			if (ink == null)
-				return false;
-
-			if (!worldInk.isInked(offset, index))
-			{
-				if (ink.inmutable)
-				{
-					splatcraft$putBulkData(getPermanentInkSprite(), consumer, matrix, quad, brightness, 1, 1, 1, lightmap, f2, f3, false);
-					return false;
-				}
-				return false;
-			}
-
-			float[] rgb = ColorUtils.hexToRGB(ink.color(index));
-			Sprite sprite = null;
-
-			InkBlockUtils.InkType type = ink.type(index);
-			if (type != InkBlockUtils.InkType.CLEAR)
-				sprite = getInkedBlockSprite();
-
-			splatcraft$putBulkData(sprite, consumer, matrix, quad, brightness, rgb[0], rgb[1], rgb[2], lightmap, f2, f3, type == InkBlockUtils.InkType.GLOWING);
-			if (type == InkBlockUtils.InkType.GLOWING)
-				splatcraft$putBulkData(getGlitterSprite(), consumer, matrix, quad, brightness, 1, 1, 1, lightmap, f2, f3, true);
-
-			if (ink.inmutable)
-				splatcraft$putBulkData(getPermanentInkSprite(), consumer, matrix, quad, brightness, 1, 1, 1, lightmap, f2, f3, false);
-
-			return true;
-		}
-
-		static void splatcraft$putBulkData(Sprite sprite, VertexConsumer consumer, MatrixStack.Entry getMatrices, BakedQuad bakedQuad, float[] p_85998_, float r, float g, float b, int[] p_86002_, int packedOverlay, boolean p_86004_, boolean emissive)
-		{
-			float[] afloat = new float[]{p_85998_[0], p_85998_[1], p_85998_[2], p_85998_[3]};
-			int[] aint1 = bakedQuad.getVertexData();
-			Vec3i vec3i = bakedQuad.getFace().getVector();
-			Matrix4f matrix4f = getMatrices.getPositionMatrix();
-			Vector3f vector3f = getMatrices.getNormalMatrix().transform(new Vector3f((float) vec3i.getX(), (float) vec3i.getY(), (float) vec3i.getZ()));
-			int j = aint1.length / 8;
-			MemoryStack memorystack = MemoryStack.stackPush();
-
-			try
-			{
-				ByteBuffer bytebuffer = memorystack.malloc(VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSizeByte());
-				IntBuffer intbuffer = bytebuffer.asIntBuffer();
-
-				for (int k = 0; k < j; ++k)
-				{
-					intbuffer.clear();
-					intbuffer.put(aint1, k * 8, 8);
-					float f = bytebuffer.getFloat(0);
-					float f1 = bytebuffer.getFloat(4);
-					float f2 = bytebuffer.getFloat(8);
-					float f3;
-					float f4;
-					float f5;
-
-					if (emissive)
-						afloat[k] = Math.min(1, afloat[k] + 0.5f);
-
-					if (p_86004_)
-					{
-						float f6 = (float) (bytebuffer.get(12) & 255) / 255.0F;
-						float f7 = (float) (bytebuffer.get(13) & 255) / 255.0F;
-						float f8 = (float) (bytebuffer.get(14) & 255) / 255.0F;
-
-						f3 = f6 * afloat[k] * r;
-						f4 = f7 * afloat[k] * g;
-						f5 = f8 * afloat[k] * b;
-					}
-					else
-					{
-						f3 = afloat[k] * r;
-						f4 = afloat[k] * g;
-						f5 = afloat[k] * b;
-					}
-
-					int l = consumer.applyBakedDiffuseLighting(emissive ? LightmapTextureManager.pack(15, 15) : p_86002_[k], bytebuffer);
-					float f9 = bytebuffer.getFloat(16);
-					float f10 = bytebuffer.getFloat(20);
-
-					Vector4f vector4f = (new Vector4f(f, f1, f2, 1.0F));
-
-					Direction.Axis axis = bakedQuad.getFace().getAxis();
-
-					float texU = sprite == null ? f9 : sprite.getMinU() + (axis.equals(Direction.Axis.X) ? vector4f.z() : vector4f.x()) * (sprite.getMaxU() - sprite.getMinU());
-					float texV = sprite == null ? f10 : sprite.getMinV() + (axis.equals(Direction.Axis.Y) ? vector4f.z() : vector4f.y()) * (sprite.getMaxV() - sprite.getMinV());
-
-					vector4f = matrix4f.transform(vector4f);
-					consumer.applyBakedNormals(vector3f, bytebuffer, getMatrices.getNormalMatrix());
-					consumer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), f3, f4, f5, 1.0F, texU, texV, packedOverlay, l, vector3f.x(), vector3f.y(), vector3f.z());
-				}
-			}
-			catch (Throwable throwable1)
-			{
-				try
-				{
-					memorystack.close();
-				}
-				catch (Throwable throwable)
-				{
-					throwable1.addSuppressed(throwable);
-				}
-
-				throw throwable1;
-			}
-
-			memorystack.close();
-		}*/
 		public static BakedQuad[] getGlitterQuad()
 		{
 			if (glitterQuads == null)
