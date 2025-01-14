@@ -28,7 +28,6 @@ import org.joml.Vector3i;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -280,7 +279,6 @@ public class InkExplosion
 		public final Direction faceNormalDir;
 		public final PointData[] corners;
 		public final PointData centroid;
-		private final Supplier<Vector3d> closestProvider;
 		public FaceData(int blockPosIndex, Direction faceNormalDir, double planeCoord, double minCoord1, double maxCoord1, double minCoord2, double maxCoord2)
 		{
 			this.blockPosIndex = blockPosIndex;
@@ -322,20 +320,6 @@ public class InkExplosion
 				case Y -> new Vector3d((minCoord1 + maxCoord1) / 2, planeCoord, (minCoord2 + maxCoord2) / 2);
 				case Z -> new Vector3d((minCoord1 + maxCoord1) / 2, (minCoord2 + maxCoord2) / 2, planeCoord);
 			});
-			
-			double actualMinCoord1 = Math.min(minCoord1, maxCoord1);
-			double actualMaxCoord1 = Math.max(minCoord1, maxCoord1);
-			double actualMinCoord2 = Math.min(minCoord2, maxCoord2);
-			double actualMaxCoord2 = Math.max(minCoord2, maxCoord2);
-			closestProvider = switch (faceNormalDir.getAxis())
-			{
-				case X ->
-					() -> new Vector3d(planeCoord, Math.clamp(0, actualMinCoord1, actualMaxCoord1), Math.clamp(0, actualMinCoord2, actualMaxCoord2));
-				case Y ->
-					() -> new Vector3d(Math.clamp(0, actualMinCoord1, actualMaxCoord1), planeCoord, Math.clamp(0, actualMinCoord2, actualMaxCoord2));
-				case Z ->
-					() -> new Vector3d(Math.clamp(0, actualMinCoord1, actualMaxCoord1), Math.clamp(0, actualMinCoord2, actualMaxCoord2), planeCoord);
-			};
 		}
 		public static List<FaceData> getFacesFromBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int blockPosIndex, Predicate<FaceData> distanceChecker)
 		{
@@ -411,10 +395,6 @@ public class InkExplosion
 			if (this == o) return true;
 			if (!(o instanceof FaceData faceData)) return false;
 			return blockPosIndex == faceData.blockPosIndex && faceNormalDir == faceData.faceNormalDir && Objects.equals(centroid, faceData.centroid) && Objects.deepEquals(corners, faceData.corners);
-		}
-		public Vector3d getClosestToOrigin()
-		{
-			return closestProvider.get();
 		}
 		public static final class PointData implements Comparable<PointData>
 		{

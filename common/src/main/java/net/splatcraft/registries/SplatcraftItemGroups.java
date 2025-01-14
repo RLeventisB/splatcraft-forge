@@ -144,7 +144,7 @@ public class SplatcraftItemGroups
 		.build());
 	public static void addSplatcraftItemsToVanillaGroups()
 	{
-		CreativeTabRegistry.append(ItemGroups.REDSTONE, splatSwitch.get());
-		CreativeTabRegistry.append(ItemGroups.REDSTONE, remotePedestal.get());
+		CreativeTabRegistry.append(ItemGroups.REDSTONE, splatSwitch);
+		CreativeTabRegistry.append(ItemGroups.REDSTONE, remotePedestal);
 	}
 }
