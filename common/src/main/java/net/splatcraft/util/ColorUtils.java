@@ -202,11 +202,17 @@ public class ColorUtils
 	public static void forEachColoredBlockInBounds(World world, Box bounds, ColoredBlockConsumer action)
 	{
 		final Box expandedBounds = bounds.stretch(1, 1, 1);
-		for (BlockPos.Mutable chunkPos = new BlockPos.Mutable(bounds.minX, bounds.minY, bounds.minZ);
-		     chunkPos.getX() <= bounds.maxX && chunkPos.getY() <= bounds.maxY && chunkPos.getZ() <= bounds.maxZ; chunkPos.move(16, 16, 16))
+		int chunkMinX = (int) bounds.minX >> 4;
+		int chunkMinZ = (int) bounds.minZ >> 4;
+		int chunkmaxX = (int) bounds.maxX >> 4;
+		int chunkmaxZ = (int) bounds.maxZ >> 4;
+		for (int x = chunkMinX; x <= chunkmaxX; x++)
+			for (int z = chunkMinZ; z <= chunkmaxZ; z++)
+			{
+				world.getChunk(x, z).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getCachedState().getBlock() instanceof IColoredBlock && expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
+					.forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getCachedState().getBlock(), entry.getValue()));
+			}
 		{
-			world.getWorldChunk(chunkPos).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getCachedState().getBlock() instanceof IColoredBlock && expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
-				.forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getCachedState().getBlock(), entry.getValue()));
 		}
 	}
 	public static MutableText getColorName(InkColor color)

@@ -174,13 +174,10 @@ public class InkBlockUtils
 	public static void forEachInkedBlockInBounds(World world, final Box bounds, InkedBlockConsumer action)
 	{
 		int chunkMinX = (int) bounds.minX >> 4;
-		int chunkMinY = (int) bounds.minY >> 4;
 		int chunkMinZ = (int) bounds.minZ >> 4;
 		int chunkmaxX = (int) bounds.maxX >> 4;
-		int chunkmaxY = (int) bounds.maxY >> 4;
 		int chunkmaxZ = (int) bounds.maxZ >> 4;
 		for (int x = chunkMinX; x <= chunkmaxX; x++)
-//            for (int y = chunkMinY; y <= chunkmaxY; y++)
 			for (int z = chunkMinZ; z <= chunkmaxZ; z++)
 			{
 				ChunkPos chunkPos = new ChunkPos(x, z);
