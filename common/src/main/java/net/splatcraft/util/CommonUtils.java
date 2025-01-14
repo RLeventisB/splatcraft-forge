@@ -1,8 +1,10 @@
 package net.splatcraft.util;
 
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.injectables.annotations.ExpectPlatform;
@@ -58,6 +60,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.awt.*;
@@ -66,7 +69,24 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class CommonUtils
+
 {
+	public static final Codec<Hand> HAND_NULL_IS_MAIN_CODEC = new Codec<>()
+	{
+		@Override
+		public <T> DataResult<Pair<Hand, T>> decode(DynamicOps<T> ops, T input)
+		{
+			DataResult<Boolean> result = ops.getBooleanValue(input);
+			if (result.isSuccess())
+				return DataResult.success(Pair.of(result.getOrThrow() ? Hand.MAIN_HAND : Hand.OFF_HAND, input));
+			return DataResult.error(() -> "Invalid input.");
+		}
+		@Override
+		public <T> DataResult<T> encode(Hand input, DynamicOps<T> ops, T prefix)
+		{
+			return DataResult.success(ops.createBoolean(Objects.equals(input, Hand.MAIN_HAND)));
+		}
+	};
 	public static final Codec<Vec2f> VEC_2_CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 		Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
@@ -157,16 +177,23 @@ public class CommonUtils
 	{
 		spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(1, 0, 0), 1), pos);
 	}
-	public static void spawnTestText(World world, Vec3d pos, String text)
+	public static TimedTextDisplayEntity spawnTestText(World world, Vec3d pos, String text, int durationTicks)
 	{
+		return spawnTestText(world, pos, Text.literal(text), durationTicks);
+	}
+	public static TimedTextDisplayEntity spawnTestText(World world, Vec3d pos, Text text, int durationTicks)
+	{
+		TimedTextDisplayEntity entity = null;
+/*
 		if (world != null)
 		{
-			DisplayEntity.TextDisplayEntity entity = new DisplayEntity.TextDisplayEntity(EntityType.TEXT_DISPLAY, MinecraftClient.getInstance().world);
+			entity = new TimedTextDisplayEntity(EntityType.TEXT_DISPLAY, world, durationTicks);
 			entity.setPosition(pos);
-			entity.setText(Text.literal(text));
-			entity.setDisplayFlags(DisplayEntity.BillboardMode.CENTER.getIndex());
+			entity.setText(text);
 			world.spawnEntity(entity);
 		}
+*/
+		return entity;
 	}
 	public static void spawnTestParticle(Vec3d pos, Color color)
 	{
@@ -469,6 +496,14 @@ public class CommonUtils
 	{
 		return Codec.unboundedMap(keyCodec, valueCodec).xmap(HashMap::new, v -> v);
 	}
+	public static float calculateStep(float width, float minStep)
+	{
+		return width / MathHelper.ceil(width / minStep);
+	}
+	public static Vec3d vec3dFromVector3dc(Vector3d vector)
+	{
+		return new Vec3d(vector.x, vector.y, vector.z);
+	}
 	public record Result(float delay, float value)
 	{
 	}
@@ -488,6 +523,23 @@ public class CommonUtils
 		public boolean isCanceled()
 		{
 			return canceled;
+		}
+	}
+	public static class TimedTextDisplayEntity extends DisplayEntity.TextDisplayEntity
+	{
+		public int lifeSpan;
+		public TimedTextDisplayEntity(EntityType<TextDisplayEntity> entityType, World world, int lifeSpan)
+		{
+			super(entityType, world);
+			this.lifeSpan = lifeSpan;
+		}
+		@Override
+		public void tick()
+		{
+			super.tick();
+			if (lifeSpan == 0)
+				discard();
+			lifeSpan--;
 		}
 	}
 }

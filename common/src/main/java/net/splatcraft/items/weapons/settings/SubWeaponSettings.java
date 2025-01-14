@@ -1,7 +1,7 @@
 package net.splatcraft.items.weapons.settings;
 
-import com.mojang.datafixers.util.Function5;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
@@ -9,90 +9,116 @@ import net.minecraft.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.SubWeaponRecords.SubDataRecord;
 import net.splatcraft.util.WeaponTooltip;
 
-public class SubWeaponSettings extends AbstractWeaponSettings<SubWeaponSettings, SubWeaponSettings.BaseSubRecord>
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static net.splatcraft.items.weapons.settings.CommonRecords.*;
+
+public class SubWeaponSettings<T extends SubDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T>
 {
-	public static final SubWeaponSettings DEFAULT = new SubWeaponSettings("default");
-	public BaseSubRecord subDataRecord = BaseSubRecord.DEFAULT;
+	public static final SubWeaponSettings<?> DEFAULT = new SubWeaponSettings<>("default");
+	public T subDataRecord;
+	public DataRecord dataRecord = DataRecord.DEFAULT;
 	public SubWeaponSettings(String name)
 	{
 		super(name);
 	}
-	public static <T> Codec<BaseSubRecord<T>> createSubCodec(Codec<T> subDataCodec, Function5<T, CommonRecords.InkUsageDataRecord, Integer, Float, Boolean, BaseSubRecord<T>> constructor)
+	@Override
+	public Map.Entry<String, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return RecordCodecBuilder.create(
-			instance -> instance.group(
-				subDataCodec.fieldOf("sub_data").forGetter(BaseSubRecord::subData),
-				CommonRecords.InkUsageDataRecord.CODEC.optionalFieldOf("ink_usage", BaseSubRecord.DEFAULT_INK_USAGE).forGetter(BaseSubRecord::inkUsage),
-				Codec.INT.optionalFieldOf("hold_time", WeaponBaseItem.USE_DURATION).forGetter(BaseSubRecord::holdTime),
-				Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(BaseSubRecord::mobility),
-				Codec.BOOL.optionalFieldOf("isSecret", false).forGetter(BaseSubRecord::isSecret)
-			).apply(instance, constructor)
-		);
+		return new Map.Entry[] {
+			Map.entry("throwable_exploding", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
+			Map.entry("burst_bomb", SubWeaponRecords.BurstBombDataRecord.CODEC),
+			Map.entry("curling_bomb", SubWeaponRecords.CurlingBombDataRecord.CODEC)
+		};
+	}
+	@Override
+	public T getDynamicDataToSerialize()
+	{
+		return subDataRecord;
+	}
+	@Override
+	public DataRecord getDataToSerialize()
+	{
+		return dataRecord;
+	}
+	@Override
+	protected void processResult(DataRecord dataRecord, T subData)
+	{
+		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
+		subDataRecord = SplatcraftConvertors.convert(subData);
 	}
 	@Override
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
 	{
-		return subDataRecord.directDamage;
+		return 0;
 	}
 	@Override
-	public WeaponTooltip<SubWeaponSettings>[] tooltipsToRegister()
+	public List<WeaponTooltip<SubWeaponSettings<T>>> tooltipsToRegister()
 	{
-		return new WeaponTooltip[]
-			{
-				new WeaponTooltip<SubWeaponSettings>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.subDataRecord.directDamage, WeaponTooltip.RANKER_ASCENDING),
-				new WeaponTooltip<SubWeaponSettings>("splash_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.subDataRecord.damageRanges.getMaxRegisteredDamage(), WeaponTooltip.RANKER_ASCENDING),
-				new WeaponTooltip<SubWeaponSettings>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.subDataRecord.inkConsumption, WeaponTooltip.RANKER_DESCENDING)
-			};
+		List<WeaponTooltip<SubWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
+		
+		weaponTooltips.add(new WeaponTooltip<>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().consumption(), WeaponTooltip.RANKER_DESCENDING));
+		weaponTooltips.add(new WeaponTooltip<>("ink_recovery", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().recoveryCooldown(), WeaponTooltip.RANKER_DESCENDING));
+		subDataRecord.addTooltips(weaponTooltips);
+		return weaponTooltips;
 	}
 	@Override
-	public Codec<BaseSubRecord> getCodec()
+	public MapCodec<DataRecord> getMapCodec()
 	{
-		return BaseSubRecord.CODEC;
+		return DataRecord.CODEC;
 	}
 	@Override
-	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
+	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
-	}
-	@Override
-	public void deserialize(BaseSubRecord data)
-	{
-		subDataRecord = SplatcraftConvertors.convert(data);
-	}
-	@Override
-	public BaseSubRecord serialize()
-	{
-		return subDataRecord;
+		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
 	{
 		return 0;
 	}
-	public record BaseSubRecord<T>(
-		T subData,
-		CommonRecords.InkUsageDataRecord inkUsage,
+	public record DataRecord(
+		InkUsageDataRecord inkUsage,
 		int holdTime,
 		float mobility,
 		boolean isSecret
 	)
 	{
-		public static final CommonRecords.InkUsageDataRecord DEFAULT_INK_USAGE = new CommonRecords.InkUsageDataRecord(70, 70);
-		public static final BaseSubRecord DEFAULT = new BaseSubRecord(null, DEFAULT_INK_USAGE, WeaponBaseItem.USE_DURATION, 1f, false);
+		public static final InkUsageDataRecord DEFAULT_INK_USAGE = new InkUsageDataRecord(70, 70);
+		public static final MapCodec<DataRecord> CODEC = RecordCodecBuilder.mapCodec(
+			inst -> inst.group(
+				InkUsageDataRecord.CODEC.optionalFieldOf("ink_usage", DEFAULT_INK_USAGE).forGetter(DataRecord::inkUsage),
+				Codec.INT.optionalFieldOf("hold_time", WeaponBaseItem.USE_DURATION).forGetter(DataRecord::holdTime),
+				Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
+				Codec.BOOL.optionalFieldOf("isSecret", false).forGetter(DataRecord::isSecret)
+			).apply(inst, DataRecord::new)
+		);
+		public static final DataRecord DEFAULT = new DataRecord(DEFAULT_INK_USAGE, WeaponBaseItem.USE_DURATION, 1f, false);
 	}
-	public record CurlingDataRecord(
-		int cookTime,
-		float contactDamage
+	public record SplashAroundDataRecord(
+		FloatRange splashVelocityRange,
+		FloatRange splashPitchRange,
+		int splashCount,
+		float splashPaintRadius,
+		float angleRandomness,
+		boolean distributeEvenly
 	)
 	{
-		public static final Codec<CurlingDataRecord> CODEC = RecordCodecBuilder.create(
-			instance -> instance.group(
-				Codec.INT.optionalFieldOf("cook_time", 180).forGetter(CurlingDataRecord::cookTime),
-				Codec.FLOAT.optionalFieldOf("contact_damage", 5f).forGetter(CurlingDataRecord::contactDamage)
-			).apply(instance, CurlingDataRecord::new)
+		public static final Codec<SplashAroundDataRecord> CODEC = RecordCodecBuilder.create(
+			inst -> inst.group(
+				FloatRange.CODEC.fieldOf("splash_velocity_range").forGetter(SplashAroundDataRecord::splashVelocityRange),
+				FloatRange.CODEC.optionalFieldOf("splash_pitch_range", new FloatRange(19, 33)).forGetter(SplashAroundDataRecord::splashPitchRange),
+				Codec.INT.fieldOf("splash_count").forGetter(SplashAroundDataRecord::splashCount),
+				Codec.FLOAT.fieldOf("splash_paint_radius").forGetter(SplashAroundDataRecord::splashPaintRadius),
+				Codec.FLOAT.optionalFieldOf("angle_randomness", 20f).forGetter(SplashAroundDataRecord::angleRandomness),
+				Codec.BOOL.optionalFieldOf("distribute_evenly", true).forGetter(SplashAroundDataRecord::distributeEvenly)
+			).apply(inst, SplashAroundDataRecord::new)
 		);
-		public static final CurlingDataRecord DEFAULT = new CurlingDataRecord(180, 5);
+		public static final SplashAroundDataRecord DEFAULT = new SplashAroundDataRecord(FloatRange.ZERO, FloatRange.ZERO, 0, 0, 20, true);
 	}
 }

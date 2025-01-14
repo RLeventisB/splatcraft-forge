@@ -62,7 +62,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		return this;
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		if (world.isClient)
 			return;

@@ -84,7 +84,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		};
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		if (!(entity instanceof PlayerEntity player))
 			return;
@@ -95,7 +95,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		RollerWeaponSettings settings = getSettings(stack);
 		RollerWeaponSettings.RollerAttackDataRecord attackData = entity.isOnGround() ? settings.swingData.attackData() : settings.flingData.attackData();
 		int startupTicks = attackData.startupTime();
-		int rollTime = getMaxUseTime(stack, entity) - timeLeft;
+		int rollTime = getMaxUseTime(stack, entity) - remainingUseTicks;
 		if (rollTime < startupTicks)
 		{
 			//if (getInkAmount(entity, stack) > inkConsumption){
@@ -103,7 +103,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			PlayerCooldown.setPlayerCooldown(player, cooldown);
 			cooldownTracker.set(this, startupTicks + 6);
 			//} else
-			if (settings.isBrush && reduceInk(entity, this, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), timeLeft % 4 == 0))
+			if (settings.isBrush && reduceInk(entity, this, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), remainingUseTicks % 4 == 0))
 			{
 				world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 				int total = settings.rollData.inkSize() * 2 + 1;
@@ -147,7 +147,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				
 				for (float yOff = 0; yOff >= -3; yOff--)
 				{
-					if (!enoughInk(entity, this, toConsume, 0, timeLeft % 4 == 0))
+					if (!enoughInk(entity, this, toConsume, 0, remainingUseTicks % 4 == 0))
 					{
 						break;
 					}

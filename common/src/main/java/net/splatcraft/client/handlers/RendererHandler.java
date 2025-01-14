@@ -18,7 +18,6 @@ import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
@@ -43,11 +42,12 @@ import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.IChargeableWeapon;
-import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.items.weapons.settings.SubWeaponRecords;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -159,16 +159,14 @@ public class RendererHandler
 		}
 		return true;
 	}
-	public static boolean renderSubWeapon(ItemStack stack, SubWeaponItem subWeaponItem, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks, boolean leftHanded)
+	public static <T extends SubWeaponRecords.SubDataRecord<T>> boolean renderSubWeapon(ItemStack stack, SubWeaponItem<T> subWeaponItem, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks, boolean leftHanded)
 	{
 //		SubWeaponRenderer<?, ?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().renderers.get(subWeaponItem.entityType.get());
 		// ok i tried to render the sub models via getting their internal model instead of instantiating a whole entity but the entityrenderer thing does a lot of work about colors and those things since these models have 2 layers
 		// maybe i will take that approach soon or something
-		AbstractSubWeaponEntity sub = subWeaponItem.entityType.get().create(ClientUtils.getClientPlayer().clientWorld);
+		AbstractSubWeaponEntity<T> sub = subWeaponItem.entityType.get().create(ClientUtils.getClientPlayer().clientWorld);
 		sub.setColor(ColorUtils.getInkColor(stack));
 		sub.setItem(stack);
-		if (stack.contains(DataComponentTypes.ENTITY_DATA))
-			sub.readItemData(stack.get(DataComponentTypes.ENTITY_DATA).copyNbt());
 		
 		sub.isItem = true;
 		

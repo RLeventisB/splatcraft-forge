@@ -22,6 +22,7 @@ import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.ReleaseChargePacket;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,10 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	public ChargerChargingTickableSound chargingSound;
 	protected ChargerItem(String settingsId)
 	{
-		super(settingsId);
+		super(settingsId, new Item.Settings().maxCount(1)
+			.component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT)
+			.component(SplatcraftComponents.CHARGE, 0f)
+		);
 	}
 	public static RegistrySupplier<ChargerItem> create(DeferredRegister<Item> register, String settings, String name)
 	{
@@ -79,11 +83,11 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		MinecraftClient.getInstance().getSoundManager().play(chargingSound);
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		if (!world.isClient)
 		{
-			if (timeLeft % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
+			if (remainingUseTicks % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
 				playNoInkSound(entity, SplatcraftSounds.noInkMain);
 		}
 		else if (entity instanceof PlayerEntity player && !player.getItemCooldownManager().isCoolingDown(this))
@@ -95,7 +99,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			if (!entity.isOnGround())
 				chargeThisFrame *= settings.chargeData.airborneChargeRate();
 			
-			if (!enoughInk(entity, this, getInkConsumption(stack, prevCharge + chargeThisFrame), 0, timeLeft % 4 == 0))
+			if (!enoughInk(entity, this, getInkConsumption(stack, prevCharge + chargeThisFrame), 0, remainingUseTicks % 4 == 0))
 			{
 				float rechargeMult = InkTankItem.rechargeMult(player.getEquippedStack(EquipmentSlot.CHEST), true);
 				

@@ -14,8 +14,8 @@ import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.ColoredBlockItem;
 import net.splatcraft.items.InkTankItem;
-import net.splatcraft.items.weapons.SubWeaponItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 

@@ -305,7 +305,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize, float timeDelta)
 	{
-		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize, sourceWeapon);
+		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize);
 		proj.refreshPositionAfterTeleport(dropX, dropY, dropZ);
 		getWorld().spawnEntity(proj);
 		proj.tick((float) (extraFrame + timeDelta));
@@ -347,8 +347,20 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		if (!Vec3d.ZERO.equals(motion))
 		{
-			setPitch(updateRotation(prevPitch, (float) (MathHelper.atan2(motion.y, motion.horizontalLength()) * MathHelper.DEGREES_PER_RADIAN)));
-			setYaw(updateRotation(prevYaw, (float) (MathHelper.atan2(motion.x, motion.z) * MathHelper.DEGREES_PER_RADIAN)));
+			float pitch = (float) (MathHelper.atan2(motion.y, motion.horizontalLength()) * MathHelper.DEGREES_PER_RADIAN);
+			float yaw = (float) (MathHelper.atan2(motion.x, motion.z) * MathHelper.DEGREES_PER_RADIAN);
+			if (firstUpdate)
+			{
+				setPitch(pitch);
+				setYaw(yaw);
+				prevPitch = pitch;
+				prevYaw = yaw;
+			}
+			else
+			{
+				setPitch(updateRotation(prevPitch, pitch));
+				setYaw(updateRotation(prevYaw, yaw));
+			}
 		}
 	}
 	@Override

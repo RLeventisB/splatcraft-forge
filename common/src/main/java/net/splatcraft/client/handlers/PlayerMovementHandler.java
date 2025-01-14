@@ -32,7 +32,7 @@ import java.util.HashMap;
 
 public class PlayerMovementHandler
 {
-	public static final HashMap<ClientPlayerEntity, Input> unmodifiedInput = new HashMap<>();
+	public static final HashMap<ClientPlayerEntity, InputWithData> unmodifiedInput = new HashMap<>();
 	private static final EntityAttributeModifier INK_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("ink_movement_boost"), 0D, EntityAttributeModifier.Operation.ADD_VALUE);
 	private static final EntityAttributeModifier SQUID_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("squid_swim_speed"), 0.2D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final EntityAttributeModifier ENEMY_INK_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -106,16 +106,8 @@ public class PlayerMovementHandler
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
 		
-		Input clonedInput = new Input();
-		clonedInput.movementSideways = input.movementSideways;
-		clonedInput.movementForward = input.movementForward;
-		clonedInput.pressingForward = input.pressingForward;
-		clonedInput.pressingBack = input.pressingBack;
-		clonedInput.pressingLeft = input.pressingLeft;
-		clonedInput.pressingRight = input.pressingRight;
-		clonedInput.jumping = input.jumping;
-		clonedInput.sneaking = input.sneaking;
-		unmodifiedInput.put(player, clonedInput);
+		InputWithData clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new InputWithData());
+		clonedInput.copyFrom(input);
 		
 		float speedMod = !input.sneaking ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
 		
@@ -260,5 +252,40 @@ public class PlayerMovementHandler
 		SplatcraftPacketHandler.sendToServer(new SquidInputPacket(
 			playerInfo.getClimbedDirection(),
 			playerInfo.getSquidSurgeCharge()));
+	}
+	public static class InputWithData extends Input
+	{
+		private boolean didJumpThisframe, oldJump;
+		public InputWithData()
+		{
+		}
+		public void tickJumping()
+		{
+			if (jumping)
+			{
+				didJumpThisframe = !oldJump;
+			}
+			if (!jumping)
+			{
+				didJumpThisframe = false;
+			}
+			oldJump = jumping;
+		}
+		public void copyFrom(Input input)
+		{
+			movementSideways = input.movementSideways;
+			movementForward = input.movementForward;
+			pressingForward = input.pressingForward;
+			pressingBack = input.pressingBack;
+			pressingLeft = input.pressingLeft;
+			pressingRight = input.pressingRight;
+			jumping = input.jumping;
+			sneaking = input.sneaking;
+			tickJumping();
+		}
+		public boolean didJumpThisframe()
+		{
+			return didJumpThisframe;
+		}
 	}
 }

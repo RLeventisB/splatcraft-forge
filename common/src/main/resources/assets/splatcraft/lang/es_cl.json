@@ -3,7 +3,6 @@
     "itemGroup.splatcraft_weapons": "Armas de Splatcraft",
     "itemGroup.splatcraft_colors": "Colores de Splatcraft",
     "itemGroup.splatcraft_colors.label": "Buscar Color",
-
     "advancements.splatcraft.story.root.name": "Splatcraft",
     "advancements.splatcraft.story.root.description": "Una historia de niño y calamar",
     "advancements.splatcraft.story.get_sardinium.name": "Como un pez fuera del agua",
@@ -26,23 +25,18 @@
     "advancements.splatcraft.story.turf_war_won.description": "Usa un Escáner de Territorio para determinar los resultados de Territorial y ten tu color ganar",
     "advancements.splatcraft.story.turf_war_ruler.name": "Estrella de Territorial",
     "advancements.splatcraft.story.turf_war_ruler.description": "Usa un Escáner de Territorio para escanear 500 bloques de tu propia tinta y gana la partida.",
-
     "advancements.splatcraft.unlocks.root.name": "Planos de Splatcraft",
     "advancements.splatcraft.unlocks.root.description": "Cres que puedes conseguirlos todos?",
     "advancements.splatcraft.weapon_unlock": "Ahora puedes crear el %s en la Estación de Armas",
-
     "block.splatcraft.inked_block": "Bloque entintado",
     "block.splatcraft.glowing_inked_block": "Bloque con tinta reluciente",
     "block.splatcraft.clear_inked_block": "Bloque con tinta clara",
-
     "block.splatcraft.inkwell": "Tintero",
     "block.splatcraft.canvas": "Lienzo para tinta",
-
     "block.splatcraft.ink_stained_wool": "Lana entintada",
     "block.splatcraft.ink_stained_carpet": "Alfombra entintada",
     "block.splatcraft.ink_stained_glass": "Cristal entintado",
     "block.splatcraft.ink_stained_glass_pane": "Panel de cristal entintado",
-
     "block.splatcraft.empty_inkwell": "Tintero vacío",
     "block.splatcraft.grate": "Rejilla",
     "block.splatcraft.grate_ramp": "Rampa de rejilla",
@@ -67,23 +61,19 @@
     "block.splatcraft.remote_pedestal": "Pedestal de remotos",
     "block.splatcraft.splat_switch": "Interruptor de tinta",
     "block.splatcraft.spawn_pad": "Punto Base",
-
     "block.splatcraft.stage_barrier": "Barrera invisible",
     "block.splatcraft.stage_void": "Vacío invisible",
     "block.splatcraft.allowed_color_barrier": "Barrera de color (Permitir)",
     "block.splatcraft.denied_color_barrier": "Barrera de color (Denegar)",
-
     "item.splatcraft.raw_sardinium": "Anchovio en bruto",
     "item.splatcraft.sardinium": "Anchovio",
     "item.splatcraft.power_egg": "Caviar rojo",
     "item.splatcraft.power_egg_can": "Lata de caviar rojo",
     "item.splatcraft.toni_kensa_pin": "Pasador de tonken",
     "item.splatcraft.ammo_knights_scrap": "Fragmento de tecnología antigua",
-
     "item.splatcraft.blueprint": "Plano",
     "item.splatcraft.blueprint.tooltip": "¡§o§7Úsalo para desbloquear una nueva arma!",
     "item.splatcraft.blueprint.tooltip.empty": "§o§7Parece estar en blanco.",
-
     "item.splatcraft.blueprint.tooltip.shooters": "Conjungto de Rociadores",
     "item.splatcraft.blueprint.tooltip.blasters": "Conjunto de Lanzamotas",
     "item.splatcraft.blueprint.tooltip.rollers": "Conjunto de Rodillos",
@@ -96,7 +86,6 @@
     "item.splatcraft.blueprint.tooltip.sub_weapons": "Conjunto de Armas secundarias",
     "item.splatcraft.blueprint.tooltip.special_weapons": "Conjunto de Armas especiales",
     "item.splatcraft.blueprint.tooltip.wildcard": "Cada conjunto de armas",
-
     "item.splatcraft.filter": "Filtro",
     "item.splatcraft.organic_filter": "Filtro organico",
     "item.splatcraft.pastel_filter": "Filtro pastel",
@@ -106,7 +95,6 @@
     "item.splatcraft.midnight_filter": "Filtro nocturno",
     "item.splatcraft.creative_filter": "Filtro creativo",
     "item.splatcraft.filter.tooltip": "¡Úsalo en mezclador de tinta para obtener más colores!",
-
     "item.splatcraft.ink_disruptor": "Disruptor de tinta",
     "item.splatcraft.turf_scanner": "Escáner de Territorio",
     "item.splatcraft.turf_scanner.mode.0": "Tradicional",
@@ -118,7 +106,6 @@
     "item.remote.coords.a": "(%s,%s,%s)",
     "item.remote.coords.b": "(%s,%s,%s) a (%s,%s,%s)",
     "item.remote.coords.invalid": "¡Conjunto de coordenadas inválido!",
-
     "item.splatcraft.squid_bumper": "Barricada calamar",
     "item.splatcraft.ink_cloth_helmet": "Gorro de tinta",
     "item.splatcraft.ink_cloth_chestplate": "Túnica de tinta",
@@ -131,9 +118,7 @@
     "item.splatcraft.tooltip.inverted": "Invertido",
     "item.splatcraft.tooltip.matches_color": "Coincide con tu color de tinta!",
     "item.splatcraft.tooltip.matches_color.inverted": "Coincide con tu color de tinta invertido!",
-
     "item.splatcraft.wax_applicator": "Aplicador de cera",
-
     "item.splatcraft.splattershot": "Rociador",
     "item.splatcraft.tentatek_splattershot": "Rociador tentáctica",
     "item.splatcraft.wasabi_splattershot": "Rociador wasabi",
@@ -155,7 +140,6 @@
     "item.splatcraft.n-zap89": "N-ZAP 89",
     "item.splatcraft.jet_squelcher": "Megasoplador",
     "item.splatcraft.custom_jet_squelcher": "Megasoplador adaptado",
-
     "item.splatcraft.blaster": "Lanzamotas",
     "item.splatcraft.grim_blaster": "Lanzamotas funesto",
     "item.splatcraft.custom_blaster": "Lanzamotas adaptado",
@@ -172,7 +156,6 @@
     "item.splatcraft.kensa_rapid_blaster": "Turbolanzamotas Tonken",
     "item.splatcraft.rapid_blaster_pro": "Turbolanzamotas Pro",
     "item.splatcraft.rapid_blaster_pro_deco": "Turbolanzamotas Pro chic",
-
     "item.splatcraft.splat_roller": "Rodillo básico",
     "item.splatcraft.krak_on_splat_roller": "Rodillo básico Meddux",
     "item.splatcraft.corocoro_splat_roller": "Rodillo básico CoroCoro",
@@ -188,7 +171,6 @@
     "item.splatcraft.octobrush": "Pincel caligrafía",
     "item.splatcraft.kensa_octobrush": "Pincel caligrafía Tonken",
     "item.splatcraft.octobrush_nouveau": "Pincel caligrafía maestro",
-
     "item.splatcraft.splat_charger": "Cargatintas",
     "item.splatcraft.bento_splat_charger": "Cargatintas Bento",
     "item.splatcraft.kelp_splat_charger": "Cargatintas alga",
@@ -202,7 +184,6 @@
     "item.splatcraft.bamboozler_14_mk1": "Bamzuka 14-I",
     "item.splatcraft.bamboozler_14_mk2": "Bamzuka 14-II",
     "item.splatcraft.bamboozler_14_mk3": "Bamzuka 14-III",
-
     "item.splatcraft.splat_dualies": "Difusor dual",
     "item.splatcraft.splat_dualies.plural": "Difusor dual",
     "item.splatcraft.enperry_splat_dualies": "Difusor dual Emperi",
@@ -221,14 +202,12 @@
     "item.splatcraft.kensa_glooga_dualies.plural": "Fundidora 525 dual Tonken",
     "item.splatcraft.explosher": "Derramatic POSITIVE_X",
     "item.splatcraft.custom_explosher": "Derramatic POSITIVE_X Adaptado",
-
     "item.splatcraft.slosher": "Derramatic",
     "item.splatcraft.classic_slosher": "Derramatic clasico",
     "item.splatcraft.soda_slosher": "Derramatic burbujeante",
     "item.splatcraft.slosher_deco": "Derramatic chic",
     "item.splatcraft.tri_slosher": "Derramatic triple",
     "item.splatcraft.tri_slosher_nouveau": "Derramatic triple maestro",
-
     "item.splatcraft.mini_splatling": "Garabateador",
     "item.splatcraft.zink_mini_splatling": "Garabateador Tintaz",
     "item.splatcraft.refurbished_mini_splatling": "Garabateador renovado",
@@ -238,7 +217,6 @@
     "item.splatcraft.heavy_splatling_remix": "Garabateador Pro festivo",
     "item.splatcraft.nautilus_47": "Nautilo 47",
     "item.splatcraft.nautilus_79": "Nautilo 79",
-
     "item.splatcraft.splat_bomb": "Plasbomba",
     "item.splatcraft.splat_bomb_2": "Plasbomba 2",
     "item.splatcraft.burst_bomb": "Globo entintado",
@@ -246,7 +224,6 @@
     "item.splatcraft.curling_bomb": "Bomba deslizante",
     "item.splatcraft.splash_wall": "Telón de Tinta",
     "item.splatcraft.tooltip.single_use": "§7§oUn Uso",
-
     "item.splatcraft.ink_tank": "Tanque de tinta",
     "item.splatcraft.ink_tank.ink": "%s / %s",
     "item.splatcraft.ink_tank.cant_recharge": "§7§oNo puede recargar",
@@ -255,7 +232,6 @@
     "item.splatcraft.ink_tank_jr.tooltip": "Solo funciona con el Rociador básico.",
     "item.splatcraft.armored_ink_tank": "Tanque de Tinta Blindado",
     "item.splatcraft.hero_ink_tank": "Tanque élite",
-
     "weaponStat.speed": "Velocidad del proyectil",
     "weaponStat.range": "Rango",
     "weaponStat.damage": "Daño",
@@ -269,21 +245,18 @@
     "weaponStat.roll_distance": "Distancia del rollo",
     "weaponStat.charge_speed": "Velocidad de carga",
     "weaponStat.ink_consumption": "Consumo de tinta",
-
     "weaponStat.metric.gauge": "%s%s%s%s%s",
     "weaponStat.metric.seconds": "%ss",
     "weaponStat.metric.ticks": "%st",
     "weaponStat.metric.blocks": "%s bloques",
-    "weaponStat.metric.blocks_per_second": "%sb/s",
+    "weaponStat.metric.bullets_per_second": "%s disparos/segundo",
     "weaponStat.metric.blocks_per_tick": "%sb/t",
     "weaponStat.metric.multiplier": "x%s",
     "weaponStat.metric.units": "%su",
     "weaponStat.metric.health": "%spc",
-
     "weaponStat.format": "%s: %s",
     "weaponStat.gauge.full": "■",
     "weaponStat.gauge.empty": "□",
-
     "weaponTab.splatcraft:weapon_workbench_tabs/shooters": "Rociadores",
     "weaponTab.splatcraft:weapon_workbench_tabs/blasters": "Lanzamotas",
     "weaponTab.splatcraft:weapon_workbench_tabs/rollers": "Rodillos",
@@ -296,7 +269,6 @@
     "weaponTab.splatcraft:weapon_workbench_tabs/special_weapons": "Armas especiales",
     "weaponTab.splatcraft:weapon_workbench_tabs/ink_tanks": "Tanques de tinta",
     "weaponTab.splatcraft:weapon_workbench_tabs/rare": "Raro",
-
     "weaponTab.description.splatcraft:weapon_workbench_tabs/shooters": "La guerra nunca cambia.",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/blasters": "¡El negocio está explotando!",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rollers": "Zooom",
@@ -309,13 +281,11 @@
     "weaponTab.description.splatcraft:weapon_workbench_tabs/special_weapons": "¡Sacad las armas pesadas!",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/ink_tanks": "Lleva no menos de 5 a la vez, como persona sensata",
     "weaponTab.description.splatcraft:weapon_workbench_tabs/rare": "Reservado para lo mejor de lo mejor.",
-
     "weaponRecipe.splatcraft:aerospray": "Aerógrafo",
     "weaponRecipe.splatcraft:n-zap": "N-ZAP",
     "weaponRecipe.splatcraft:e_liter": "Entintador",
     "weaponRecipe.splatcraft:bamboozler_14": "Bamzuka 14",
     "weaponRecipe.splatcraft:nautilus": "Nautilo",
-
     "weaponType.original": "Original",
     "weaponType.classic": "Clasico",
     "weaponType.custom": "Adaptado",
@@ -347,10 +317,8 @@
     "weaponType.83": "'83",
     "weaponType.85": "'85",
     "weaponType.89": "'89",
-
     "inkType.glowing": "Tinta reluciente",
     "inkType.clear": "Tinta clara",
-
     "subtitle.shooter_firing": "Rociador disparando",
     "subtitle.blaster_firing": "Lanzamotas disparando",
     "subtitle.blaster_explosion": "Mota de tinta explotando",
@@ -382,45 +350,37 @@
     "subtitle.ink_submerge": "Calamar se sumerge",
     "subtitle.ink_surface": "Calamar emerge",
     "subtitle.ink_swim": "Calamar nada en tinta",
-
     "container.ink_vat": "Creación de tinteros",
     "container.ammo_knights_workbench": "Creación de armas",
-
     "gui.ammo_knights_workbench.craft": "Crear",
     "gui.ammo_knights_workbench.empty": "¡Encuentra planos para desbloquear más armas!",
-
     "ink_color.invert": "%s Invertido",
     "ink_color.splatcraft.orange": "Naranja",
     "ink_color.splatcraft.blue": "Azul",
     "ink_color.splatcraft.green": "Verde",
     "ink_color.splatcraft.pink": "Rosa",
-
     "ink_color.splatcraft.light_blue": "Azul claro",
     "ink_color.splatcraft.turquoise": "Turquesa",
     "ink_color.splatcraft.yellow": "Amarillo",
     "ink_color.splatcraft.lilac": "Lila",
     "ink_color.splatcraft.lemon": "Limón",
     "ink_color.splatcraft.plum": "Ciruela",
-
     "ink_color.splatcraft.mint": "Verde menta",
     "ink_color.splatcraft.cyan": "Cian",
     "ink_color.splatcraft.cherry": "Cereza",
     "ink_color.splatcraft.peach": "Melocotón",
-
     "ink_color.splatcraft.neon_orange": "Naranja neon",
     "ink_color.splatcraft.neon_blue": "Azul neon",
     "ink_color.splatcraft.neon_green": "Verde neon",
     "ink_color.splatcraft.neon_pink": "Rosa neon",
     "ink_color.splatcraft.hero_yellow": "Amarillo élite",
     "ink_color.splatcraft.octo_pink": "Rosa Octariano",
-
     "ink_color.splatcraft.cobalt": "Cobalto",
     "ink_color.splatcraft.mojang": "Rojo Mojang",
     "ink_color.splatcraft.ice": "Menta helada",
     "ink_color.splatcraft.floral": "Rosa floral",
     "ink_color.splatcraft.omni_green": "Verde alienígena",
     "ink_color.splatcraft.mana": "Magenta magico",
-
     "ink_color.splatcraft.light_green": "Verde claro",
     "ink_color.splatcraft.purple": "Morado",
     "ink_color.splatcraft.royal_blue": "Azul real",
@@ -434,7 +394,6 @@
     "ink_color.splatcraft.winter_green": "Verde invierno",
     "ink_color.splatcraft.pumpkin": "Calabaza",
     "ink_color.splatcraft.redwood": "Rojo secoya",
-
     "ink_color.splatcraft.organic_white": "Blanco organico",
     "ink_color.splatcraft.organic_orange": "Naranja organico",
     "ink_color.splatcraft.organic_magenta": "Magenta organico",
@@ -451,7 +410,6 @@
     "ink_color.splatcraft.organic_green": "Verde organico",
     "ink_color.splatcraft.organic_red": "Rojo organico",
     "ink_color.splatcraft.organic_black": "Negro organico",
-
     "ink_color.splatcraft.color_lock_a": "Color amistoso",
     "ink_color.splatcraft.color_lock_b": "Color hostil",
     "ink_color.splatcraft.default": "Tinta básica",
@@ -467,12 +425,10 @@
     "death.attack.splatcraft:roll.player.item": "%1$s fue aplastado por %2$s usando %3$s",
     "death.attack.splatcraft:out_of_stage": "%1$s intento de escapar del mapa",
     "death.attack.splatcraft:out_of_stage.player": "%1$s fue hechado del mapa por %2$s",
-
     "entity.splatcraft.ink_projectile": "Proyectil de tinta",
     "entity.splatcraft.ink_squid": "Calamar de tinta",
     "entity.splatcraft.squid_bumper": "Barrera de calamar",
     "entity.splatcraft.spawn_shield": "Escudo del Punto Base",
-
     "entity.splatcraft.splat_bomb": "Plasbomba",
     "entity.splatcraft.burst_bomb": "Globo entintado",
     "entity.splatcraft.suction_bomb": "Bomba pegajosa",
@@ -488,7 +444,6 @@
     "entity.splatcraft.squid_beakon": "Baliza",
     "entity.splatcraft.fizzy_bomb": "Bomba carbónica",
     "entity.splatcraft.torpedo": "Torpedo",
-
     "gamerule.splatcraft.inkDecay": "Decaimiento de la tinta",
     "gamerule.splatcraft.inkDecayRate": "Posibilidad de deterioro de la tinta",
     "gamerule.splatcraft.inkDecayRate.description": "Determina la probabilidad de que la tinta se descomponga por tick",
@@ -516,7 +471,6 @@
     "gamerule.splatcraft.inkableGround.description": "Permite que las armas entinten bloques",
     "gamerule.splatcraft.rechargeableInkTank": "Tanque de tinta recargable",
     "gamerule.splatcraft.rechargeableInkTank.description": "Permite que los tanques de tinta recuperen tinta pasivamente, la tasa de recarga aumenta al nadar en tinta",
-
     "status.coord_set.a": "Primera posición establecida en X: %s Y: %s Z: %s",
     "status.coord_set.b": "Segunda posición establecida en X: %s Y: %s Z: %s",
     "status.no_ink": "Tinta Baja!",
@@ -532,12 +486,10 @@
     "status.clear_ink.success": "Se limpiaron %s bloques exitosamente",
     "status.change_color.out_of_world": "§cNo se pueden revisar bloques por fuera del mundo",
     "status.change_color.success": "Se recoloraron %s bloques a %s exitosamente",
-
     "status.blueprint.invalid": "Este plano está vacío.",
     "status.blueprint.already_unlocked.single": "Ya tienes este plano.",
     "status.blueprint.already_unlocked": "Ya has completado este conjunto de planos.",
     "status.blueprint.unlock": "% ha sido desbloqueado.",
-
     "commands.scanturf.success": "Se han escaneado %s bloques exitosamente",
     "commands.inkcolor.success.single": "Se ha cambiado el color de tinta de %s a %s",
     "commands.inkcolor.success.multiple": "Se ha cambiado el color de tinta de %s jugadores a %s",
@@ -547,7 +499,6 @@
     "commands.colorscores.list.empty": "No existen criterios para ningun color",
     "commands.colorscores.list.count": "Mostrando criterios para %s colores:",
     "commands.colorscores.list.entry": "%s: se muestra como '%s'",
-
     "commands.stage.add.success": "Escenario [%s] agregado exitosamente",
     "commands.stage.remove.success": "Escenario [%s] eliminado exitosamente",
     "commands.stage.setting.success.default": "Reinicio configuración %s para escenario [%s]",
@@ -560,7 +511,6 @@
     "commands.stage.teams.remove.success": "Equipo [%s] en %s eliminado exitosamente, afectando %s bloques",
     "commands.stage.teams.get.success": "Equipo [%s] en %s es establecido como %s",
     "commands.stage.warp.success": "Teletransportado %s jugadores(s) exitosamente a [%s]",
-
     "arg.colorCriterion.notFound": "No existen criterios para el color %s",
     "arg.inkColor.notFound": "Color desconocido %s",
     "arg.stageWarp.noSpawnPads": "No se a encontraron Puntos Base disponibles en escenario [%s]",
@@ -569,7 +519,6 @@
     "arg.stage.alreadyExists": "Escenario [%s] ya existe",
     "arg.stageTeam.notFound": "Equipo %s desconocido para escenario [%s]",
     "arg.stageSetting.notFound": "Configuración %s no existe",
-
     "stat.splatcraft.turf_wars_won": "Combates territorial ganados",
     "stat.splatcraft.squid_time": "Tiempo como calamar",
     "stat.splatcraft.blocks_inked": "Bloques entintados",
@@ -577,13 +526,10 @@
     "stat.splatcraft.inkwells_crafted": "Tinteros llenados",
     "stat.splatcraft.subs_used": "Armas secundarias usadas",
     "stat.splatcraft.specials_used": "Armas especiales usadas",
-
     "key.categories.splatcraft": "Splatcraft",
     "key.squidForm": "Transformarse en Calamar",
     "key.subWeaponHotkey": "Arma secundaria tecla directa",
     "key.specialWeaponHotkey": "Arma especial tecla directa",
-
     "attribute.splatcraft.ink_swim_speed": "Velocidad extra al nadar en tinta",
-
     "disconnect.lost": "Se produjo un error de conexión."
 }

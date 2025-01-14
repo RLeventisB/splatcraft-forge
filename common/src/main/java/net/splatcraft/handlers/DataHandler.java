@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.serialization.JsonOps;
 import dev.architectury.registry.ReloadListenerRegistry;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
@@ -46,7 +45,13 @@ public class DataHandler
 			put(Splatcraft.MODID + ":slosher", SlosherWeaponSettings.class);
 			put(Splatcraft.MODID + ":dualie", DualieWeaponSettings.class);
 			put(Splatcraft.MODID + ":splatling", SplatlingWeaponSettings.class);
-			put(Splatcraft.MODID + ":sub_weapon", SubWeaponSettings.class);
+			try
+			{
+				put(Splatcraft.MODID + ":sub_weapon", (Class<? extends AbstractWeaponSettings<?, ?>>) Class.forName("net.splatcraft.items.weapons.settings.SubWeaponSettings"));
+			}
+			catch (ClassNotFoundException ignored)
+			{
+			}
 		}}; //TODO make better registry probably
 		public static final BiMap<Identifier, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -71,9 +76,7 @@ public class DataHandler
 						return;
 					
 					AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(String.class).newInstance(key.toString());
-					settings.getCodec().parse(JsonOps.INSTANCE, json).resultOrPartial(msg -> Splatcraft.LOGGER.error("Failed to load weapon settings for %s: %s".formatted(key, msg))).ifPresent(
-						settings::castAndDeserialize
-					);
+					settings.deserialize(key, json);
 					
 					settings.registerStatTooltips();
 					SETTINGS.put(key, settings);

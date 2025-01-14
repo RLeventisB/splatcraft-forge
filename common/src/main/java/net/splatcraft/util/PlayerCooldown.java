@@ -26,11 +26,11 @@ public class PlayerCooldown
 {
 	public static final int OVERLOAD_LIMIT = -28800;
 	private static final Codec<PlayerCooldown> DEFAULT_CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
+		ItemStack.OPTIONAL_CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
 		Codec.BOOL.optionalFieldOf("cancellable", false).forGetter(v -> v.cancellable),
 		Codec.FLOAT.fieldOf("max_time").forGetter(v -> v.maxTime),
 		Codec.INT.fieldOf("slot_index").forGetter(v -> v.slotIndex),
-		Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.hand == Hand.MAIN_HAND),
+		CommonUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("used_hand").forGetter(v -> v.hand),
 		Codec.BOOL.fieldOf("can_move").forGetter(v -> v.canMove),
 		Codec.BOOL.fieldOf("force_crouch").forGetter(v -> v.forceCrouch),
 		Codec.BOOL.fieldOf("prevent_weapon_use").forGetter(v -> v.preventWeaponUse),
@@ -39,7 +39,7 @@ public class PlayerCooldown
 	).apply(inst, PlayerCooldown::new));
 	public static Registry<Class<? extends PlayerCooldown>> CLASS_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldowns")), Lifecycle.stable());
 	public static Registry<Supplier<Codec<PlayerCooldown>>> CODEC_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldowns")), Lifecycle.stable());
-	public static final MapCodec<PlayerCooldown> SERIALIZER_CODEC = new MapCodec<PlayerCooldown>()
+	public static final MapCodec<PlayerCooldown> SERIALIZER_CODEC = new MapCodec<>()
 	{
 		@Override
 		public <T> RecordBuilder<T> encode(PlayerCooldown input, DynamicOps<T> ops, RecordBuilder<T> builder)
@@ -93,8 +93,18 @@ public class PlayerCooldown
 	{
 		fromNbt(wrapperLookup, nbt);
 	}
-	public PlayerCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, boolean isMainHand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time)
+	public PlayerCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time)
 	{
+		this.storedStack = storedStack;
+		this.cancellable = cancellable;
+		this.time = time;
+		this.maxTime = maxTime;
+		this.slotIndex = slotIndex;
+		this.hand = hand;
+		this.canMove = canMove;
+		this.forceCrouch = forceCrouch;
+		this.preventWeaponUse = preventWeaponUse;
+		this.isGrounded = isGrounded;
 	}
 	public static void registerCooldowns()
 	{

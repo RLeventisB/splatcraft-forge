@@ -56,6 +56,7 @@ public final class Splatcraft
 		RendererHandler.registerEvents();
 		PlayerCooldown.registerCooldowns();
 //		SplatcraftOreGen.registerOres();
+		SplatcraftItemGroups.addSplatcraftItemsToVanillaGroups();
 		
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftEntities.bindRenderers();

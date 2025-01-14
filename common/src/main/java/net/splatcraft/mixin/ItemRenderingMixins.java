@@ -13,7 +13,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

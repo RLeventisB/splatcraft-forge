@@ -15,6 +15,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
+import net.splatcraft.client.handlers.PlayerMovementHandler.InputWithData;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.items.InkTankItem;
@@ -81,8 +82,8 @@ public class ClientUtils
 	}
 	public static boolean canPerformRoll(ClientPlayerEntity player)
 	{
-		Input input = getUnmodifiedInput(player);
-		return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && input.jumping && (input.movementSideways != 0 || input.movementForward != 0);
+		InputWithData input = getUnmodifiedInput(player);
+		return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && input.didJumpThisframe() && (input.movementSideways != 0 || input.movementForward != 0);
 	}
 	public static Vec2f getDodgeRollVector(ClientPlayerEntity player, float rollSpeed)
 	{
@@ -129,9 +130,9 @@ public class ClientUtils
 		cap.flagSquidCancel();
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid, sendSquidCancel));
 	}
-	public static Input getUnmodifiedInput(ClientPlayerEntity player)
+	public static InputWithData getUnmodifiedInput(ClientPlayerEntity player)
 	{
-		return PlayerMovementHandler.unmodifiedInput.getOrDefault(player, new Input());
+		return PlayerMovementHandler.unmodifiedInput.getOrDefault(player, new InputWithData());
 	}
 	@Environment(EnvType.CLIENT)
 	public static MinecraftClient getClient()

@@ -79,6 +79,11 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 			{
 				setActiveTime(MAX_ACTIVE_TIME);
 				
+				// todo: maybe move this to the sub weapon class instead of here??
+				if (entity instanceof ObjectCollideListenerEntity listener)
+				{
+					listener.onCollidedWithObjectEntity(this);
+				}
 				if (entity instanceof AbstractSubWeaponEntity || entity instanceof InkProjectileEntity)
 				{
 					getWorld().sendEntityStatus(entity, (byte) -1);

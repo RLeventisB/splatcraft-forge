@@ -1,6 +1,8 @@
 package net.splatcraft.items.weapons.settings;
 
+import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -8,15 +10,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, CODEC>, CODEC>
+public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, DATA>, DATA>
 {
 	private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
 	public String name;
@@ -63,26 +65,37 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	}
 	public void registerStatTooltips()
 	{
-		Collections.addAll(statTooltips, tooltipsToRegister());
+		statTooltips.addAll(tooltipsToRegister());
 	}
-	public abstract WeaponTooltip<SELF>[] tooltipsToRegister();
-	public abstract Codec<CODEC> getCodec();
+	public abstract List<WeaponTooltip<SELF>> tooltipsToRegister();
+	public abstract Codec<DATA> getCodec();
 	public abstract CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity);
-	public void castAndDeserialize(Object o)
+	public void processResult(Object o)
 	{
 		try
 		{
-			deserialize((CODEC) o);
+			processData((DATA) o);
 		}
 		catch (ClassCastException ignored)
 		{
 		}
 	}
-	public abstract void deserialize(CODEC o);
-	public abstract CODEC serialize();
+	public abstract void processData(DATA o);
+	public abstract DATA getDataToSerialize();
 	public void serializeToBuffer(RegistryByteBuf buffer)
 	{
-		buffer.encodeAsJson(getCodec(), serialize());
+		buffer.encodeAsJson(getCodec(), getDataToSerialize());
 	}
 	public abstract float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem);
+	public void onStartReading(JsonObject json)
+	{
+	
+	}
+	public void deserialize(Identifier key, JsonObject json)
+	{
+		onStartReading(json);
+		getCodec().parse(JsonOps.INSTANCE, json).resultOrPartial(msg -> Splatcraft.LOGGER.error("Failed to load weapon settings for %s: %s".formatted(key, msg))).ifPresent(
+			this::processResult
+		);
+	}
 }

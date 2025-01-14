@@ -25,7 +25,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.weapons.IChargeableWeapon;
-import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
@@ -45,8 +45,8 @@ public class SplatcraftKeyHandler
 	private static final ToggleableKey SQUID_KEYBIND = new ToggleableKey(new KeyBinding("key.squidForm", GLFW.GLFW_KEY_Z, "key.categories.splatcraft"));
 	private static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
 	private static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
-	private static boolean usingSubWeaponHotkey;
 	private static int slot = -1;
+	private static boolean usingSubWeaponHotkey;
 	@Environment(EnvType.CLIENT)
 	public static void registerBindingsAndEvents()
 	{

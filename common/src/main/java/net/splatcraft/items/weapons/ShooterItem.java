@@ -48,7 +48,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		ShootingHandler.notifyStartShooting(entity);
 	}
@@ -74,7 +74,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 							proj.tick(accumulatedTime);
 							world.spawnEntity(proj);
 						}
-					world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 					}
 				}
 			}, null);

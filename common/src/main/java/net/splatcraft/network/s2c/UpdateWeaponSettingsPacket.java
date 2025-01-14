@@ -1,8 +1,11 @@
 package net.splatcraft.network.s2c;
 
+import com.google.gson.JsonObject;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
@@ -41,16 +44,16 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 			try
 			{
 				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(buffer.readString()).getConstructor(String.class).newInstance(key.toString());
-				setting.castAndDeserialize(buffer.decodeAsJson(setting.getCodec()));
+				JsonObject json = JsonHelper.deserialize(buffer.readString());
+				setting.deserialize(key, json);
 				
 				setting.registerStatTooltips();
 				settings.add(Map.entry(key, setting));
 			}
 			catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-			       NoSuchMethodException e)
+			       NoSuchMethodException | ClassCastException e)
 			{
-				
-				throw new RuntimeException(e);
+				Splatcraft.LOGGER.error("Error upon reading data for {}", key);
 			}
 		}
 		

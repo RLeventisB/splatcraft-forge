@@ -13,7 +13,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.splatcraft.client.models.AbstractSubWeaponModel;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,6 @@ public abstract class SubWeaponRenderer<E extends AbstractSubWeaponEntity, M ext
 	@Override
 	public void render(E entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
 	{
-		
 		InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
 		
 		int rgba = color.getColor();

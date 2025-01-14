@@ -82,56 +82,18 @@ public class SplatcraftPacketHandler
 			messageConsumer,
 			PlayC2SPacket.class.isAssignableFrom(messageType) ? NetworkManager.Side.C2S : NetworkManager.Side.S2C
 		);
-
-		/*CustomPayload.Id<MSG> id;
-		try
-		{
-			id = (CustomPayload.Id<MSG>) messageType.getField("ID").get(null);
-		}
-		catch (IllegalAccessException | NoSuchFieldException e)
-		{
-			throw new RuntimeException(e);
-		}
-		NetworkManager.Side side = PlayC2SPacket.class.isAssignableFrom(messageType) ? NetworkManager.Side.C2S : NetworkManager.Side.S2C;
-		if (side == NetworkManager.Side.C2S)
-		{
-			//noinspection removal
-			NetworkManager.registerReceiver(
-				side,
-				id.id(),
-//			packetCodec,
-//			Collections.singletonList(new SplitPacketTransformer()),
-				(buf, context) ->
-				{
-					messageConsumer.accept(decoder.apply(buf), context);
-				}
-			);
-		}
-		else if (Platform.getEnvironment() == Env.SERVER)
-		{
-			PacketCodec<RegistryByteBuf, MSG> packetCodec = PacketCodec.ofStatic(
-				(t, u) -> encoder.accept(u, t),
-				decoder::apply
-			);
-			
-			NetworkManager.registerS2CPayloadType(id.id(), packetCodec, List.of(new SplitPacketTransformer()));
-		}*/
 	}
 	public static <MSG extends PlayS2CPacket> void sendToPlayer(MSG message, ServerPlayerEntity player)
 	{
 		CHANNEL.sendToPlayer(player, message);
-//        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), message);
 	}
 	public static <MSG extends SplatcraftPacket> void sendToPlayers(MSG message, List<ServerPlayerEntity> players)
 	{
 		CHANNEL.sendToPlayers(players, message);
-//        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), message);
 	}
 	public static <MSG extends SplatcraftPacket> void sendToDim(MSG message, RegistryKey<World> world)
 	{
 		sendToPlayers(message, GameInstance.getServer().getPlayerManager().getPlayerList().stream().filter(v -> v.getWorld().getRegistryKey() == world).toList());
-
-//        INSTANCE.send(PacketDistributor.DIMENSION.with(() -> world), message);
 	}
 	public static <MSG extends SplatcraftPacket> void sendToTrackers(MSG message, WorldChunk trackedChunk)
 	{
@@ -139,8 +101,6 @@ public class SplatcraftPacketHandler
 		{
 			sendToPlayers(message, serverChunkManager.chunkLoadingManager.getPlayersWatchingChunk(trackedChunk.getPos()));
 		}
-
-//        INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> trackedChunk), message);
 	}
 	public static <MSG extends SplatcraftPacket> void sendToTrackers(MSG message, Entity trackedEntity)
 	{
@@ -148,7 +108,6 @@ public class SplatcraftPacketHandler
 		{
 			serverChunkManager.sendToOtherNearbyPlayers(trackedEntity, CHANNEL.toPacket(NetworkManager.Side.S2C, message, trackedEntity.getRegistryManager()));
 		}
-//        INSTANCE.send(PacketDistributor.TRACKING_ENTITY.with(() -> trackedEntity), message);
 	}
 	public static <MSG extends SplatcraftPacket> void sendToTrackersAndSelf(MSG message, Entity trackedEntity)
 	{
@@ -160,7 +119,6 @@ public class SplatcraftPacketHandler
 	public static <MSG extends SplatcraftPacket> void sendToAll(MSG message)
 	{
 		CHANNEL.sendToPlayers(GameInstance.getServer().getPlayerManager().getPlayerList(), message);
-//		GameInstance.getServer().getPlayerManager().sendToAll(new CustomPayloadS2CPacket(message));
 	}
 	public static <MSG extends PlayC2SPacket> void sendToServer(MSG message)
 	{

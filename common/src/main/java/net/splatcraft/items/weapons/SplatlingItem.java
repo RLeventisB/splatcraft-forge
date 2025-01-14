@@ -41,7 +41,10 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public SplatlingChargingTickableSound chargingSound;
 	protected SplatlingItem(String settingsId)
 	{
-		super(settingsId);
+		super(settingsId, new Item.Settings().maxCount(1)
+			.component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT)
+			.component(SplatcraftComponents.CHARGE, 0f)
+		);
 	}
 	public static RegistrySupplier<SplatlingItem> create(DeferredRegister<Item> register, String settings, String name)
 	{
@@ -109,7 +112,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		}
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		if (!(entity instanceof PlayerEntity player))
 			return;
@@ -124,7 +127,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			float prevCharge = PlayerCharge.getChargeValue(player, stack);
 			float newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.secondChargeTime() : settings.chargeData.firstChargeTime());
 			
-			if (!enoughInk(entity, this, MathHelper.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, timeLeft % 4 == 0))
+			if (!enoughInk(entity, this, MathHelper.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, remainingUseTicks % 4 == 0))
 			{
 				float rechargeMult = InkTankItem.rechargeMult(player.getEquippedStack(EquipmentSlot.CHEST), true);
 				if (!hasInkInTank(player, this) || rechargeMult == 0)
@@ -139,7 +142,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			
 			PlayerCharge.addChargeValue(player, stack, newCharge - prevCharge, true, maxCharges);
 		}
-		else if (timeLeft % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
+		else if (remainingUseTicks % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
 			playNoInkSound(player, SplatcraftSounds.noInkMain);
 	}
 	@Override

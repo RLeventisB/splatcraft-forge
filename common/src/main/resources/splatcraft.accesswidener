@@ -24,14 +24,14 @@ accessible method net/minecraft/scoreboard/ScoreboardCriterion getOrCreateStatCr
 
 accessible field net/minecraft/client/render/entity/EntityRenderDispatcher renderers Ljava/util/Map;
 accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setText (Lnet/minecraft/text/Text;)V
-accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setDisplayFlags (B)V
-accessible method net/minecraft/entity/decoration/DisplayEntity$BillboardMode getIndex ()B
+accessible method net/minecraft/entity/decoration/DisplayEntity setBillboardMode (Lnet/minecraft/entity/decoration/DisplayEntity$BillboardMode;)V
 accessible method net/minecraft/block/entity/BlockEntity addComponents (Lnet/minecraft/component/ComponentMap$Builder;)V
 accessible class net/minecraft/entity/decoration/DisplayEntity
 accessible field net/minecraft/client/render/Tessellator allocator Lnet/minecraft/client/util/BufferAllocator;
 accessible field net/minecraft/client/network/ClientAdvancementManager advancementProgresses Ljava/util/Map;
 accessible field net/minecraft/client/gui/hud/InGameHud layeredDrawer Lnet/minecraft/client/gui/LayeredDrawer;
 accessible class net/minecraft/server/world/ServerEntityManager$Listener
+accessible method net/minecraft/server/world/ServerWorld getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 
 #accessible net/minecraft/client/gui/components/AbstractWidget *
 #accessible net/minecraft/client/gui/components/AbstractWidget *()
@@ -40,12 +40,16 @@ accessible class net/minecraft/server/world/ServerEntityManager$Listener
 
 accessible field net/minecraft/entity/Entity lastChimeIntensity F # dont ask why i used crystalSoundIntensity to store a value that shows the partialTick that an ink projectile hit a mob i want to save some memory ok
 accessible field net/minecraft/entity/Entity dimensions Lnet/minecraft/entity/EntityDimensions;
+accessible method net/minecraft/entity/Entity checkBlockCollision ()V # checkBlockCollision
+accessible method net/minecraft/entity/Entity adjustMovementForCollisions (Lnet/minecraft/util/math/Vec3d;)Lnet/minecraft/util/math/Vec3d; # adjustMovementForCollisions
+accessible method net/minecraft/entity/Entity adjustMovementForCollisions (Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/List;)Lnet/minecraft/util/math/Vec3d; # adjustMovementForCollisions
+accessible method net/minecraft/entity/Entity findCollisionsForMovement (Lnet/minecraft/entity/Entity;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/util/math/Box;)Ljava/util/List; # adjustMovementForCollisions
 accessible field net/minecraft/entity/LivingEntity jumping Z
 
 accessible method net/minecraft/entity/projectile/ProjectileEntity canHit (Lnet/minecraft/entity/Entity;)Z # canHitEntity
 accessible method net/minecraft/entity/projectile/ProjectileEntity updateRotation ()V # updateRotation
 accessible method net/minecraft/entity/projectile/ProjectileEntity onCollision (Lnet/minecraft/util/hit/HitResult;)V # onHit
-accessible method net/minecraft/entity/Entity checkBlockCollision ()V # checkBlockCollision
+accessible method net/minecraft/entity/projectile/ProjectileEntity <init> (Lnet/minecraft/entity/EntityType;Lnet/minecraft/world/World;)V
 accessible method net/minecraft/client/render/entity/LivingEntityRenderer addFeature (Lnet/minecraft/client/render/entity/feature/FeatureRenderer;)Z
 
 accessible class net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask

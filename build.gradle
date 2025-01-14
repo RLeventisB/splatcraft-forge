@@ -6,6 +6,7 @@ plugins {
 
 architectury {
     minecraft = project.minecraft_version
+    compileOnly()
 }
 
 allprojects {

@@ -26,13 +26,16 @@ import net.splatcraft.client.models.inktanks.ClassicInkTankModel;
 import net.splatcraft.client.models.inktanks.InkTankJrModel;
 import net.splatcraft.client.models.inktanks.InkTankModel;
 import net.splatcraft.dispenser.PlaceBlockDispenseBehavior;
-import net.splatcraft.entities.subs.CurlingBombEntity;
 import net.splatcraft.items.*;
 import net.splatcraft.items.remotes.ColorChangerItem;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.items.weapons.*;
+import net.splatcraft.items.weapons.subs.BurstBombSubWeaponItem;
+import net.splatcraft.items.weapons.subs.CurlingSubWeaponItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
+import net.splatcraft.items.weapons.subs.ThrowableBombSubWeaponItem;
 import net.splatcraft.util.ColorUtils;
 
 import java.util.ArrayList;
@@ -131,11 +134,11 @@ public class SplatcraftItems
 	public static final RegistrySupplier<InkTankItem> classicInkTank = REGISTRY.register("classic_ink_tank", () -> new InkTankItem("classic_ink_tank", 100));
 	public static final RegistrySupplier<InkTankItem> inkTankJr = REGISTRY.register("ink_tank_jr", () -> new InkTankItem("ink_tank_jr", 110));
 	//Sub Weapons
-	public static final RegistrySupplier<SubWeaponItem> splatBomb = REGISTRY.register("splat_bomb", () -> new SubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb"));
-	public static final RegistrySupplier<SubWeaponItem> splatBomb2 = REGISTRY.register("splat_bomb_2", () -> new SubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb").setSecret(true));
-	public static final RegistrySupplier<SubWeaponItem> burstBomb = REGISTRY.register("burst_bomb", () -> new SubWeaponItem(SplatcraftEntities.BURST_BOMB, "burst_bomb"));
-	public static final RegistrySupplier<SubWeaponItem> suctionBomb = REGISTRY.register("suction_bomb", () -> new SubWeaponItem(SplatcraftEntities.SUCTION_BOMB, "suction_bomb"));
-	public static final RegistrySupplier<SubWeaponItem> curlingBomb = REGISTRY.register("curling_bomb", () -> new CurlingSubWeaponItem(SplatcraftEntities.CURLING_BOMB, "curling_bomb", CurlingBombEntity::onItemUseTick));
+	public static final RegistrySupplier<SubWeaponItem> splatBomb = REGISTRY.register("splat_bomb", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb"));
+	public static final RegistrySupplier<SubWeaponItem> splatBomb2 = REGISTRY.register("splat_bomb_2", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb").setSecret(true));
+	public static final RegistrySupplier<SubWeaponItem> burstBomb = REGISTRY.register("burst_bomb", () -> new BurstBombSubWeaponItem(SplatcraftEntities.BURST_BOMB, "burst_bomb"));
+	public static final RegistrySupplier<SubWeaponItem> suctionBomb = REGISTRY.register("suction_bomb", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SUCTION_BOMB, "suction_bomb"));
+	public static final RegistrySupplier<SubWeaponItem> curlingBomb = REGISTRY.register("curling_bomb", () -> new CurlingSubWeaponItem(SplatcraftEntities.CURLING_BOMB, "curling_bomb"));
 	//Materials
 	public static final RegistrySupplier<Item> sardinium = REGISTRY.register("sardinium", () -> new Item(new Item.Settings()));
 	public static final RegistrySupplier<Item> sardiniumBlock = REGISTRY.register("sardinium_block", () -> new BlockItem(SplatcraftBlocks.sardiniumBlock.get()));

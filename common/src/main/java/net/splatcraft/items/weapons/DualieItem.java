@@ -193,14 +193,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		}
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		ItemStack offhandDualie = ItemStack.EMPTY;
-		if (entity.getActiveHand().equals(Hand.MAIN_HAND) && entity.getMainHandStack().equals(stack) && entity.getOffHandStack().getItem() instanceof DualieItem)
-		{
-			offhandDualie = entity.getOffHandStack();
-		}
-		
 		PlayerEntity player = (PlayerEntity) entity;
 		player.setBodyYaw(player.getBodyYaw()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 		

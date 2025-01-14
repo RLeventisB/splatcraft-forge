@@ -34,6 +34,7 @@ import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.IColoredItem;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -50,7 +51,7 @@ import java.util.List;
 public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
 	public static final int USE_DURATION = 72000;
-	private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, AbstractWeaponSettings<?, ?>> DEFAULTS = new HashMap<>() // a
+	private static final HashMap<Class<? extends AbstractWeaponSettings<?, ?>>, AbstractWeaponSettings<?, ?>> DEFAULTS = new HashMap<>() // sub weapons aren't here because they're handled differently (they literally just have generics)
 	{{
 		put(ShooterWeaponSettings.class, ShooterWeaponSettings.DEFAULT);
 		put(BlasterWeaponSettings.class, BlasterWeaponSettings.DEFAULT);
@@ -58,14 +59,17 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		put(ChargerWeaponSettings.class, ChargerWeaponSettings.DEFAULT);
 		put(SlosherWeaponSettings.class, SlosherWeaponSettings.DEFAULT);
 		put(DualieWeaponSettings.class, DualieWeaponSettings.DEFAULT);
-		put(SubWeaponSettings.class, SubWeaponSettings.DEFAULT);
 		put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
 	}};
 	public Identifier settingsId;
 	public boolean isSecret;
 	public WeaponBaseItem(String settingsId)
 	{
-		super(new Item.Settings().maxCount(1).component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT));
+		this(settingsId, new Item.Settings().maxCount(1).component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT));
+	}
+	public WeaponBaseItem(String settingsId, Settings settings)
+	{
+		super(settings);
 		SplatcraftItems.inkColoredItems.add(this);
 		SplatcraftItems.weapons.add(this);
 		this.settingsId = settingsId.contains(":") ? Identifier.of(settingsId) : Splatcraft.identifierOf(settingsId);
@@ -313,11 +317,22 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		return useSuper(world, player, hand);
 	}
 	@Override
-	public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
+	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
-		super.onStoppedUsing(stack, world, entity, timeLeft);
+		boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(user);
+		PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(user);
+		boolean notPreventedByCooldown = true;
+		
+		if (hasCooldown)
+			notPreventedByCooldown = !cooldown.preventWeaponUse();
+		
+		if (notPreventedByCooldown && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
+		{
+			weaponUseTick(world, user, stack, remainingUseTicks);
+			user.setSprinting(false);
+		}
 	}
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int timeLeft)
+	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 	
 	}

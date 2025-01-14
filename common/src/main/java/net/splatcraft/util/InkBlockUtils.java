@@ -35,6 +35,7 @@ import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -112,6 +113,15 @@ public class InkBlockUtils
 		}
 		return false;
 	}
+	public static void inkBlock(@Nullable Entity entity, World world, BlockPos pos, InkColor color, Direction face, InkType inkType, float damage)
+	{
+		if (entity instanceof PlayerEntity player)
+		{
+			playerInkBlock(player, world, pos, color, face, inkType, damage);
+			return;
+		}
+		inkBlock(world, pos, color, face, inkType, damage);
+	}
 	public static BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, Direction direction, InkType inkType, float damage)
 	{
 		return inkBlock(world, pos, color, direction.getId(), inkType, damage);
@@ -121,9 +131,8 @@ public class InkBlockUtils
 		if (isUninkable(world, pos, Direction.byId(index)))
 			return BlockInkedResult.FAIL;
 		
-		for (SpawnShieldEntity shieldEntity : world.getEntitiesByClass(SpawnShieldEntity.class, new Box(pos), (no) -> true))
-			if (!ColorUtils.colorEquals(world, pos, ColorUtils.getEntityColor(shieldEntity), color))
-				return BlockInkedResult.FAIL;
+		if (!world.getEntitiesByClass(SpawnShieldEntity.class, new Box(pos), v -> ColorUtils.colorEquals(world, pos, ColorUtils.getEntityColor(v), color)).isEmpty())
+			return BlockInkedResult.FAIL;
 		
 		BlockState state = world.getBlockState(pos);
 		if (state.getBlock() instanceof IColoredBlock coloredBlock)
@@ -201,7 +210,7 @@ public class InkBlockUtils
 	{
 		return (inkType == null ? InkType.NORMAL : inkType).block.getDefaultState();
 	}
-	public static @Nullable ChunkInk.BlockEntry getInkBlock(World world, BlockPos pos)
+	public static @NotNull ChunkInk.BlockEntry getInkBlock(World world, BlockPos pos)
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;

@@ -7,8 +7,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.projectile.thrown.ThrownItemEntity;
-import net.minecraft.item.Item;
+import net.minecraft.entity.projectile.thrown.ThrownEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtDouble;
@@ -26,38 +25,38 @@ import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftGameRules;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
-public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
+public class InkDropEntity extends ThrownEntity implements IColoredEntity
 {
 	private static final TrackedData<InkColor> DROP_COLOR = DataTracker.registerData(InkDropEntity.class, CommonUtils.INKCOLORDATAHANDLER);
 	private static final TrackedData<Float> DROP_SIZE = DataTracker.registerData(InkDropEntity.class, TrackedDataHandlerRegistry.FLOAT);
 	private static final TrackedData<Float> GRAVITY = DataTracker.registerData(InkDropEntity.class, TrackedDataHandlerRegistry.FLOAT);
 	public int lifespan = 600;
-	public ItemStack sourceWeapon = ItemStack.EMPTY;
 	public float impactCoverage;
 	public InkBlockUtils.InkType inkType;
 	public InkDropEntity(EntityType<InkDropEntity> type, World world)
 	{
 		super(type, world);
 	}
-	public InkDropEntity(World world, InkProjectileEntity projectile, InkColor color, InkBlockUtils.InkType inkType, float splatSize, ItemStack sourceWeapon)
+	public InkDropEntity(World world, Vec3d pos, Entity owner, InkColor color, InkBlockUtils.InkType inkType, float splashSize)
 	{
 		super(SplatcraftEntities.INK_DROP.get(), world);
-		setPos(projectile.getX(), projectile.getY(), projectile.getZ());
-		setOwner(projectile.getOwner());
+		setPosition(pos);
+		setOwner(owner);
 		setColor(color);
 		setProjectileSize(0.045f);
-		impactCoverage = splatSize;
+		impactCoverage = splashSize;
 		this.inkType = inkType;
-		this.sourceWeapon = sourceWeapon;
+	}
+	public InkDropEntity(World world, InkProjectileEntity projectile, InkColor color, InkBlockUtils.InkType inkType, float splashSize)
+	{
+		this(world, projectile.getPos(), projectile.getOwner(), color, inkType, splashSize);
 	}
 	@Override
 	protected void initDataTracker(DataTracker.Builder builder)
 	{
-		super.initDataTracker(builder);
 		builder.add(DROP_COLOR, ColorUtils.getDefaultColor());
 		builder.add(DROP_SIZE, 0.045f);
 		builder.add(GRAVITY, 0.275f);
@@ -68,11 +67,6 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 			calculateDimensions();
 		
 		super.onTrackedDataSet(data);
-	}
-	@Override
-	protected @NotNull Item getDefaultItem()
-	{
-		return SplatcraftItems.splattershot.get();
 	}
 	@Override
 	public void tick()
@@ -136,7 +130,7 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 		
 		super.onBlockHit(result);
 		
-		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector()), impactCoverage, 0, 0, inkType, sourceWeapon);
+		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector()), impactCoverage, 0, 0, inkType, ItemStack.EMPTY);
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
 			getWorld().sendEntityStatus(this, (byte) -1);
 		else
@@ -150,12 +144,12 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 	public void setVelocity(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
 	{
 		super.setVelocity(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy);
-		InkExplosion.createInkExplosion(getOwner(), thrower.getPos(), 0.75f, 0, 0, inkType, sourceWeapon);
+		InkExplosion.createInkExplosion(getOwner(), thrower.getPos(), 0.75f, 0, 0, inkType, ItemStack.EMPTY);
 	}
 	@Override
 	public void setVelocity(double x, double y, double z, float velocity, float inaccuracy)
 	{
-		Vec3d vec3 = (new Vec3d(x, y, z)).normalize().add(random.nextGaussian() * 0.0075 * inaccuracy, random.nextGaussian() * 0.0075D * inaccuracy, random.nextGaussian() * 0.0075 * inaccuracy);
+		Vec3d vec3 = (new Vec3d(x, y, z)).normalize().multiply(velocity).add(random.nextGaussian() * 0.0075 * inaccuracy, random.nextGaussian() * 0.0075D * inaccuracy, random.nextGaussian() * 0.0075 * inaccuracy);
 		
 		setVelocity(vec3);
 		double d0 = vec3.horizontalLength();
@@ -197,8 +191,6 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 		setInvisible(nbt.getBoolean("Invisible"));
 		
 		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(Identifier.of(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
-		
-		sourceWeapon = ItemStack.fromNbtOrEmpty(getRegistryManager(), nbt.getCompound("SourceWeapon"));
 	}
 	@Override
 	public void writeCustomDataToNbt(NbtCompound nbt)
@@ -220,15 +212,9 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 		nbt.putBoolean("Invisible", isInvisible());
 		
 		nbt.putString("InkType", inkType.getSerializedName());
-		nbt.put("SourceWeapon", sourceWeapon.encode(getWorld().getRegistryManager(), new NbtCompound()));
 		
 		super.writeCustomDataToNbt(nbt);
 		nbt.remove("Item");
-	}
-	@Override
-	public ItemStack getStack()
-	{
-		return sourceWeapon;
 	}
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose getMatrices)
@@ -244,11 +230,6 @@ public class InkDropEntity extends ThrownItemEntity implements IColoredEntity
 		dataTracker.set(DROP_SIZE, size);
 		refreshPosition();
 		calculateDimensions();
-	}
-	@Deprecated() //Modify sourceWeapon variable instead
-	@Override
-	public void setItem(@NotNull ItemStack itemStack)
-	{
 	}
 	@Override
 	public double getGravity()

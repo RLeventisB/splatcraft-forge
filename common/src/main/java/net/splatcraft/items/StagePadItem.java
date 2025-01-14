@@ -20,7 +20,7 @@ import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
-import net.splatcraft.items.weapons.SubWeaponItem;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
