@@ -228,8 +228,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), shotData.pitchCompensation(), projectileData.speed(), inaccuracy);
 							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity1)));
 							proj.setDualieStats(projectileData);
-							proj.tick(accumulatedTime);
 							world.spawnEntity(proj);
+							proj.tick(accumulatedTime);
 						}
 						
 						world.playSoundFromEntity(entity, SplatcraftSounds.dualieShot, SoundCategory.PLAYERS, 0.7F, (float) world.getRandom().nextTriangular(0.95f, 0.095f));

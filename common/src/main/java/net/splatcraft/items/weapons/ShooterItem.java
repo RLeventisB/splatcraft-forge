@@ -71,8 +71,8 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
 							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy, accumulatedTime);
 							proj.setShooterStats(settings);
-							proj.tick(accumulatedTime);
 							world.spawnEntity(proj);
+							proj.tick(accumulatedTime);
 						}
 						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 					}
