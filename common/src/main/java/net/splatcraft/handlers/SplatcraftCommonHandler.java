@@ -276,6 +276,10 @@ public class SplatcraftCommonHandler
 			{
 				overlayInfo.setAmount(0);
 			}
+			else if (entity.isWet())
+			{
+				overlayInfo.addAmount(-0.5f);
+			}
 			else
 			{
 				overlayInfo.addAmount(-0.01f);

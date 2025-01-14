@@ -11,14 +11,12 @@ public class InkOverlayInfo
 	public static final Codec<InkOverlayInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		InkColor.CODEC.fieldOf("color").forGetter(InkOverlayInfo::getColor),
 		Codec.FLOAT.fieldOf("amount").forGetter(InkOverlayInfo::getAmount),
-		InkColor.CODEC.optionalFieldOf("wool_color", InkColor.INVALID).forGetter(InkOverlayInfo::getWoolColor),
 		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayInfo::isInkproof),
 		Codec.DOUBLE.fieldOf("squid_rot").forGetter(InkOverlayInfo::getSquidRot),
 		Codec.DOUBLE.fieldOf("squid_rot_0").forGetter(InkOverlayInfo::getSquidRotO)
 	).apply(inst, InkOverlayInfo::new));
 	private InkColor color = ColorUtils.getDefaultColor();
 	private float amount = 0;
-	private InkColor woolColor = InkColor.INVALID;
 	private boolean inkproof = false;
 	private double squidRot;
 	private double squidRotO;
@@ -27,14 +25,12 @@ public class InkOverlayInfo
 	}
 	public InkOverlayInfo(InkColor color,
 	                      float amount,
-	                      InkColor woolColor,
 	                      boolean inkproof,
 	                      double squidRot,
 	                      double squidRotO)
 	{
 		this.color = color;
 		this.amount = amount;
-		this.woolColor = woolColor;
 		this.inkproof = inkproof;
 		this.squidRot = squidRot;
 		this.squidRotO = squidRotO;
@@ -59,14 +55,6 @@ public class InkOverlayInfo
 	{
 		setAmount(amount + v);
 	}
-	public InkColor getWoolColor()
-	{
-		return woolColor;
-	}
-	public void setWoolColor(InkColor v)
-	{
-		woolColor = v;
-	}
 	public double getSquidRot()
 	{
 		return squidRot;
@@ -86,9 +74,6 @@ public class InkOverlayInfo
 		nbt.putFloat("Amount", getAmount());
 		nbt.putBoolean("Inkproof", isInkproof());
 		
-		if (getWoolColor().isValid())
-			nbt.put("WoolColor", getWoolColor().getNbt());
-		
 		return nbt;
 	}
 	public void readNBT(NbtCompound nbt)
@@ -96,9 +81,6 @@ public class InkOverlayInfo
 		setColor(InkColor.getFromNbt(nbt.get("Color")));
 		setAmount(nbt.getFloat("Amount"));
 		setInkproof(nbt.getBoolean("Inkproof"));
-		
-		if (nbt.contains("WoolColor"))
-			setWoolColor(InkColor.getFromNbt(nbt.get("WoolColor")));
 	}
 	public String toString()
 	{

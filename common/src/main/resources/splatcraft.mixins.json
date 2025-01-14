@@ -17,7 +17,6 @@
         "ProjectileMixin$InkProjectileMovementMixin",
         "SaveDataMixins$LevelStorageMixin",
         "ServerGamePacketMixin",
-        "SheepMixin",
         "SquidPassthroughMixin",
         "accessors.EntityAccessor"
     ],
@@ -36,7 +35,6 @@
         "PlayerModelMixin",
         "PlayerTabOverlayMixin",
         "RecipeCategoryMixin",
-        "SheepWoolLayerMixin",
         "WeaponHotkeyMixin$MinecraftInstance",
         "WeaponHotkeyMixin$PlayerControllerMix",
         "accessors.ChunkRegionAccessor",

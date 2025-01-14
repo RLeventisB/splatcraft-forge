@@ -13,10 +13,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.splatcraft.commands.SuperJumpCommand;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.entities.SquidBumperEntity;
@@ -100,13 +100,7 @@ public class InkDamageUtils
 				canInk = false;
 				targetColor = InkColor.INVALID;
 				
-				InkOverlayInfo info = InkOverlayCapability.get(target);
-				
-				info.setWoolColor(color);
-				if (!targetLevel.isClient())
-				{
-					SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(target, info), target);
-				}
+				sheep.setColor(color.getDyeColor());
 			}
 		}
 		
@@ -121,6 +115,7 @@ public class InkDamageUtils
 			InkOverlayInfo info = InkOverlayCapability.get(target);
 			if (info.getAmount() < target.getMaxHealth() * 1.5)
 				info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
+			
 			info.setColor(color);
 			if (!targetLevel.isClient())
 			{

@@ -131,7 +131,7 @@ public class InkBlockUtils
 		if (isUninkable(world, pos, Direction.byId(index)))
 			return BlockInkedResult.FAIL;
 		
-		if (!world.getEntitiesByClass(SpawnShieldEntity.class, new Box(pos), v -> ColorUtils.colorEquals(world, pos, ColorUtils.getEntityColor(v), color)).isEmpty())
+		if (!world.getEntitiesByClass(SpawnShieldEntity.class, new Box(pos), v -> !ColorUtils.colorEquals(world, pos, ColorUtils.getEntityColor(v), color)).isEmpty())
 			return BlockInkedResult.FAIL;
 		
 		BlockState state = world.getBlockState(pos);
