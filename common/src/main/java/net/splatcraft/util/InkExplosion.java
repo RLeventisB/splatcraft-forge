@@ -209,7 +209,7 @@ public class InkExplosion
 					BlockPos pos = CommonUtils.createBlockPos(position.x + x, position.y + y, position.z + z);
 					BlockState blockState = world.getBlockState(pos);
 					
-					if (InkBlockUtils.isBlockUninkable(world, pos) || !canPassIfBarrier(color, world, pos, blockState))
+					if (!canPassIfBarrier(color, world, pos, blockState))
 						continue;
 					
 					VoxelShape shape = blockState.getCollisionShape(world, pos);
