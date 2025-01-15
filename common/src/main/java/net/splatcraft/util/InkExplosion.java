@@ -494,6 +494,7 @@ public class InkExplosion
 			QuadFrustum frustum = new QuadFrustum();
 			List<Integer> obstructedFaces = new ArrayList<>(faces.size());
 			HashSet<Integer> facesToProcess = IntStream.range(0, faces.size()).boxed().collect(Collectors.toCollection(HashSet::new));
+			HashSet<Integer> facesThatArePartiallyObstructed = new HashSet<>();
 			
 			for (int i = 0; i < faces.size(); i++)
 			{
@@ -521,13 +522,42 @@ public class InkExplosion
 					
 					// if a face is obstructed (centroid and all corners are "above" these 5 planes) by the current face,
 					// it is added to a list to remove after the entire loop, and skips processing the face
-					if (frustum.isFaceObstructed(otherFace))
+					QuadFrustum.FaceState state = frustum.isFaceObstructed(otherFace);
+					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
 					{
 						obstructedFaces.add(j);
+						
 						facesToProcess.remove(j);
+						facesThatArePartiallyObstructed.remove(j);
+					}
+					else if (state == QuadFrustum.FaceState.PARTIALLY_OBSTRUCTED)
+					{
+						facesThatArePartiallyObstructed.add(j);
 					}
 				}
 			}
+			
+			// try obstructing more faces in the case of a face being obstructed by another face, but this another face was defined as removed and thus not processed
+			for (var removedIndex : obstructedFaces.toArray(new Integer[obstructedFaces.size()]))
+			{
+				FaceData currentFace = faces.get(removedIndex);
+				frustum.createFor(currentFace);
+				
+				for (var partiallyObstructedIndex : facesThatArePartiallyObstructed)
+				{
+					FaceData otherFace = faces.get(partiallyObstructedIndex);
+					
+					if (obstructedFaces.contains(partiallyObstructedIndex) || currentFace == otherFace)
+						continue;
+					
+					QuadFrustum.FaceState state = frustum.isFaceObstructed(otherFace);
+					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
+					{
+						obstructedFaces.add(partiallyObstructedIndex);
+					}
+				}
+			}
+			
 			// start from highest since starting from the lowest shifts the entire list
 			obstructedFaces.sort(Comparator.reverseOrder());
 			for (int index : obstructedFaces)
@@ -595,7 +625,7 @@ public class InkExplosion
 				
 				return pointObstructed;
 			}
-			public boolean isFaceObstructed(FaceData otherFace)
+			public FaceState isFaceObstructed(FaceData otherFace)
 			{
 				Vector3d centroidPoint = otherFace.centroid.point;
 				boolean centroid = isPointObstructed(otherFace.centroid, centroidPoint);
@@ -604,7 +634,17 @@ public class InkExplosion
 				boolean c3 = isPointObstructed(otherFace.corners[2], centroidPoint);
 				boolean c4 = isPointObstructed(otherFace.corners[3], centroidPoint);
 				
-				return centroid && c1 && c2 && c3 && c4;
+				if (centroid && c1 && c2 && c3 && c4)
+					return FaceState.FULLY_OBSTRUCTED;
+				else if (centroid || c1 || c2 || c3 || c4)
+					return FaceState.PARTIALLY_OBSTRUCTED;
+				return FaceState.UNOBSTRUCTED;
+			}
+			public enum FaceState
+			{
+				UNOBSTRUCTED,
+				PARTIALLY_OBSTRUCTED,
+				FULLY_OBSTRUCTED
 			}
 		}
 		public static class Plane
@@ -629,7 +669,7 @@ public class InkExplosion
 				// small epsilon vectors that are literally on the plane arent "9.34537e-10" units above because of floating point precision
 				// however! i rewrote all of this to use doubles instead so that's less common but anyways
 				double distance = getDistance(point);
-				return lowerTolerance ? distance + 10e-7 >= 0 : distance - 10e-6 > 0;
+				return lowerTolerance ? distance >= 0 : distance - 10e-6 > 0;
 			}
 			@Override
 			public String toString()

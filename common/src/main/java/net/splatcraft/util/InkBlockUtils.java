@@ -35,7 +35,6 @@ import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -207,7 +206,7 @@ public class InkBlockUtils
 	{
 		return (inkType == null ? InkType.NORMAL : inkType).block.getDefaultState();
 	}
-	public static @NotNull ChunkInk.BlockEntry getInkBlock(World world, BlockPos pos)
+	public static @Nullable ChunkInk.BlockEntry getInkBlock(World world, BlockPos pos)
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;

@@ -78,19 +78,20 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 	@Override
 	public void execute()
 	{
-		ClientWorld level = MinecraftClient.getInstance().world;
+		ClientWorld world = MinecraftClient.getInstance().world;
 		
-		if (level != null)
+		if (world != null)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.get(level, chunkPos);
+			ChunkInk chunkInk = ChunkInkCapability.get(world, chunkPos);
 			
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{
 				BlockPos pos = entry.getKey();
 				entry.getValue().apply(chunkInk, RelativeBlockPos.fromAbsolute(pos));
-				BlockState state = level.getBlockState(pos);
-				level.updateListeners(pos, state, state, 0);
+				BlockState state = world.getBlockState(pos);
+				world.updateListeners(pos, state, state, 0);
 			}
+			world.getChunk(chunkPos.x, chunkPos.z).setNeedsSaving(true);
 		}
 	}
 }

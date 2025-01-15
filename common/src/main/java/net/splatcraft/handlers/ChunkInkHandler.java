@@ -293,6 +293,7 @@ public class ChunkInkHandler
 				entry.apply(chunkInk, relativePos);
 				BlockState state = world.getBlockState(pos);
 				world.updateListeners(pos, state, state, 0);
+				world.getChunk(chunkPos.x, chunkPos.z).setNeedsSaving(true);
 			});
 			INK_CACHE.remove(chunkPos);
 		}

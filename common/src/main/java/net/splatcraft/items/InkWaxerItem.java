@@ -39,16 +39,6 @@ public class InkWaxerItem extends Item
 			world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundCategory.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
 			
 			InkBlockUtils.clearInk(world, pos, face, true);
-			
-			// alternative behaviour where breaking an inked block only breaks the wax, making it not permanent
-			/*
-
-			ChunkInk.BlockEntry ink = worldInk.getInk(pos);
-			ink.permanent = true;
-
-			context.getWorld().levelEvent(context.getPlayer(), 3004, context.getClickedPos(), 0);
-
-			 */
 		}
 	}
 	@Override

@@ -3,12 +3,9 @@ package net.splatcraft.mixin;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.input.Input;
-import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
@@ -23,8 +20,6 @@ import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.client.layer.InkTankFeature;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.registries.SplatcraftEntities;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -71,18 +66,6 @@ public class PlayerMixins
 		{
 			PlayerEntityRenderer renderer = (PlayerEntityRenderer) (Object) this;
 			renderer.addFeature(new InkTankFeature<>(renderer, ctx.getModelLoader()));
-		}
-		@WrapOperation(method = "renderArm", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/model/ModelPart;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;II)V"))
-		public void splatcraft$overrideArmRender(ModelPart instance, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, Operation<Void> original, @Local(argsOnly = true) AbstractClientPlayerEntity player)
-		{
-			InkColor color = ColorUtils.getEntityColor(player);
-			if (color.isValid())
-			{
-				// oh! so that's why there was code about getting skins and somethings idk
-				instance.render(matrices, vertices, light, overlay, color.getColorWithAlpha(255));
-				return;
-			}
-			original.call(instance, matrices, vertices, light, overlay);
 		}
 		@WrapOperation(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
 		public void splatcraft$overridePlayerRender(PlayerEntityRenderer instance, LivingEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i, Operation<Void> original)
