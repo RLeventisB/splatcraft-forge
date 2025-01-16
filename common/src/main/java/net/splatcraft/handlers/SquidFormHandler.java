@@ -203,7 +203,6 @@ public class SquidFormHandler
 			{
 				SplatcraftStats.FALL_INTO_INK_TRIGGER.get().trigger(player, fallDistance);
 				cir.setReturnValue(false);
-				cir.cancel();
 			}
 		}
 	}
