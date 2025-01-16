@@ -160,7 +160,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public static void playNoInkSound(LivingEntity entity, SoundEvent sound)
 	{
 		entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundCategory.PLAYERS, 0.8F,
-			((entity.getWorld().getRandom().nextFloat() - entity.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+			CommonUtils.nextTriangular(entity.getWorld().getRandom(), 0.95f, 0.095f));
 	}
 	public abstract Class<S> getSettingsClass();
 	public S getSettings(ItemStack stack)
@@ -332,9 +332,18 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			user.setSprinting(false);
 		}
 	}
+	@Override
+	public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks)
+	{
+		super.onStoppedUsing(stack, world, user, remainingUseTicks);
+	}
 	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 	
+	}
+	public boolean preventStopUsingWeapon(World world, LivingEntity entity)
+	{
+		return false;
 	}
 	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
 	{
