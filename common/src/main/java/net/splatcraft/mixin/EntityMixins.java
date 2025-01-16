@@ -99,7 +99,7 @@ public class EntityMixins
 			World world = entity.getWorld();
 			if (InkBlockUtils.isInked(world, splatcraft$stepBlockPos, Direction.UP))
 			{
-				BlockSoundGroup soundGroup = entity instanceof LivingEntity player && EntityInfoCapability.isSquid(player) && InkBlockUtils.canSquidSwim(player) ?
+				BlockSoundGroup soundGroup = entity instanceof LivingEntity living && EntityInfoCapability.isSquid(living) && InkBlockUtils.canSquidSwim(living) ?
 					SplatcraftSounds.SOUND_TYPE_SWIMMING : SplatcraftSounds.SOUND_TYPE_INK;
 				original.call(instance, soundGroup.getFallSound(), volume, pitch);
 				return;
@@ -155,7 +155,7 @@ public class EntityMixins
 		{
 			SquidFormHandler.onLivingHurt((LivingEntity) (Object) this, source, cir);
 		}
-		@Inject(method = "handleFallDamage", at = @At("HEAD"))
+		@Inject(method = "handleFallDamage", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir)
 		{
 			SquidFormHandler.cancelDamageIfSquid((LivingEntity) (Object) this, fallDistance, cir);
