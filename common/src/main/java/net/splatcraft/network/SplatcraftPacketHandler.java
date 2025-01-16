@@ -42,7 +42,6 @@ public class SplatcraftPacketHandler
 		registerMessage(UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);
 		registerMessage(DodgeRollPacket.class, DodgeRollPacket::decode);
 		registerMessage(DodgeRollEndPacket.class, DodgeRollEndPacket::decode);
-		registerMessage(WeaponUseEndPacket.class, WeaponUseEndPacket::decode);
 		registerMessage(SquidInputPacket.class, SquidInputPacket::decode);
 		registerMessage(CraftWeaponPacket.class, CraftWeaponPacket::decode);
 		registerMessage(UpdateClientColorsPacket.class, UpdateClientColorsPacket::decode);
