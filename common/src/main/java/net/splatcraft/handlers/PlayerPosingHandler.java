@@ -115,8 +115,7 @@ public class PlayerPosingHandler
 						mainHand.pitch = -0.36f + 0.5f + MathHelper.cos(angle) * 0.5f;
 					}
 					break;
-				case
-					BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge getMatrices 😭😭😭😭 sorry
+				case BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge 😭😭😭😭 sorry
 					if (mainHand == model.rightArm)
 					{
 						mainHand.yaw = -0.1F + model.getHead().yaw;
