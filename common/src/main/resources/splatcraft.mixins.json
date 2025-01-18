@@ -5,6 +5,7 @@
     "refmap": "splatcraft-refmap.json",
     "plugin": "net.splatcraft.mixin.MixinInitializer",
     "mixins": [
+        "AxeWaxMixin",
         "BlockUpdateMixins$ServerWorldMixin",
         "BlockUpdateMixins$WorldMixin",
         "EntityMixins$EntityMixin",
