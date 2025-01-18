@@ -15,7 +15,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Hand;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -304,6 +307,10 @@ public class ShootingHandler
 					if (firingData.onShoot != null)
 						firingData.onShoot.accept(this, -timer, entity);
 					timer += firingData.endlagFrames;
+					if (entity.equals(ClientUtils.getClientPlayer()))
+					{
+						SplatcraftKeyHandler.autoSquidDelay = firingData.miscEndlagFrames;
+					}
 				}
 				
 				doingEndlag = !doingEndlag;
@@ -334,17 +341,22 @@ public class ShootingHandler
 		}
 	}
 	public record FiringStatData(float squidStartupFrames, float startupFrames, float endlagFrames,
-	                             EndlagConsumer onEndlagEnd,
-	                             ShootConsumer onShoot, EndConsumer onEnd)
+	                             int miscEndlagFrames,
+	                             EndlagConsumer onEndlagEnd, ShootConsumer onShoot, EndConsumer onEnd)
 	{
 		public static final Codec<FiringStatData> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.optionalFieldOf("squid_startup_frames", 2f).forGetter(FiringStatData::squidStartupFrames),
 				Codec.FLOAT.fieldOf("startup_frames").forGetter(FiringStatData::startupFrames),
-				Codec.FLOAT.fieldOf("endlag_frames").forGetter(FiringStatData::endlagFrames)
-			).apply(instance, (Float squidStartupFrames, Float startupFrames, Float endlagFrames) -> new FiringStatData(squidStartupFrames, startupFrames, endlagFrames, null, null, null))
+				Codec.FLOAT.fieldOf("endlag_frames").forGetter(FiringStatData::endlagFrames),
+				Codec.INT.fieldOf("other_action_endlag_frames").forGetter(FiringStatData::miscEndlagFrames)
+			).apply(instance, (Float squidStartupFrames, Float startupFrames, Float endlagFrames, Integer miscEndlagFrames) -> new FiringStatData(squidStartupFrames, startupFrames, endlagFrames, miscEndlagFrames, null, null, null))
 		);
-		public static final FiringStatData DEFAULT = new FiringStatData(2, 1, 1, null, null, null);
+		public static final FiringStatData DEFAULT = new FiringStatData(2, 1, 1, 1, null, null, null);
+		public static FiringStatData createFromShotData(CommonRecords.ShotDataRecord shotData, EndlagConsumer onEndlagEnd, ShootConsumer onShoot, EndConsumer onEnd)
+		{
+			return new FiringStatData(shotData.squidStartupTicks(), shotData.startupTicks(), shotData.endlagTicks(), Math.round(shotData.miscEndlagTicks()), onEndlagEnd, onShoot, onEnd);
+		}
 		public float getFiringSpeed()
 		{
 			return startupFrames + endlagFrames;

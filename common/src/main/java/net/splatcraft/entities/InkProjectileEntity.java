@@ -496,11 +496,13 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		double f = -Math.sin(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
 		double f1 = -Math.sin((pitch + pitchOffset) * MathHelper.RADIANS_PER_DEGREE);
 		double f2 = Math.cos(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
+		setVelocity(f, f1, f2, velocity, inaccuracy);
+		
 		Vec3d posDiff = new Vec3d(0, 0, 0);
 		
 		try
 		{
-			posDiff = thrower.getLerpedPos(partialTicks).subtract(CommonUtils.getOldPosition(thrower, partialTicks));
+			posDiff = thrower.getMovement();
 			if (thrower.isOnGround())
 				posDiff.multiply(1, 0, 1);
 			posDiff = posDiff.multiply(0.8);
@@ -509,20 +511,12 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		{
 		}
 		
-		f += posDiff.x;
-		f1 += posDiff.y;
-		f2 += posDiff.z;
-		setVelocity(f, f1, f2, velocity, inaccuracy, partialTicks);
+		addVelocity(posDiff);
 	}
 	@Override
 	public void setVelocity(double x, double y, double z, float velocity, float inaccuracy)
 	{
-		setVelocity(x, y, z, velocity, inaccuracy, 0);
-	}
-	public void setVelocity(double x, double y, double z, float velocity, float inaccuracy, float partialTicks)
-	{
-		// 1.34f is only to make the acurracy more aproppiate in minecraft since 5 degrees in splatoon isnt as impactful as 5 degrees in minecraft kinda
-		float usedInaccuracy = inaccuracy * MathHelper.RADIANS_PER_DEGREE * 1.34f;
+		float usedInaccuracy = inaccuracy * MathHelper.RADIANS_PER_DEGREE;
 		Vec3d vec3 = new Vec3d(x, y, z)
 			.rotateY((random.nextFloat() * 2f - 1f) * usedInaccuracy)
 			.rotateX((random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();

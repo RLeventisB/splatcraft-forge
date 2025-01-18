@@ -9,9 +9,11 @@ import net.splatcraft.util.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class EntityInfo
 {
+	public static final int HIGHER_STARTUP_DURATION = 10;
 	public static final Codec<EntityInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.optionalFieldOf("dodge_count", 0).forGetter(EntityInfo::getDodgeCount),
 		InkColor.NUMBER_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(EntityInfo::getColor),
@@ -23,8 +25,8 @@ public class EntityInfo
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
-		Codec.BOOL.optionalFieldOf("is_playing_match", false).forGetter(EntityInfo::isPlaying),
-		Codec.BOOL.optionalFieldOf("did_squid_cancel_this_tick", false).forGetter(EntityInfo::didSquidCancelThisTick)
+		PlayingData.CODEC.optionalFieldOf("playing_data", new PlayingData(false, 0)).forGetter(EntityInfo::playingData),
+		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks)
 	).apply(inst, EntityInfo::new));
 	private int dodgeCount;
 	private InkColor color;
@@ -36,8 +38,8 @@ public class EntityInfo
 	private PlayerCharge playerCharge = null;
 	private ItemStack inkBand = ItemStack.EMPTY;
 	private float squidSurgeCharge = 0f;
-	private boolean isPlaying;
-	private boolean didSquidCancelThisTick;
+	private PlayingData playingData = PlayingData.DEFAULT.get();
+	private int higherStartupTicks;
 	public EntityInfo(InkColor defaultColor)
 	{
 		color = defaultColor;
@@ -56,8 +58,8 @@ public class EntityInfo
 	                  Optional<PlayerCharge> playerCharge,
 	                  ItemStack inkBand,
 	                  float squidSurgeCharge,
-	                  boolean isPlaying,
-	                  boolean didSquidCancelThisTick)
+	                  PlayingData playingData,
+	                  int higherStartupTicks)
 	{
 		this.dodgeCount = dodgeCount;
 		this.color = color;
@@ -69,8 +71,14 @@ public class EntityInfo
 		this.playerCharge = playerCharge.orElse(null);
 		this.inkBand = inkBand;
 		this.squidSurgeCharge = squidSurgeCharge;
-		this.isPlaying = isPlaying;
-		this.didSquidCancelThisTick = didSquidCancelThisTick;
+		this.playingData = playingData;
+		this.higherStartupTicks = higherStartupTicks;
+	}
+	private PlayingData playingData()
+	{
+		if (playingData == null)
+			playingData = PlayingData.DEFAULT.get();
+		return playingData;
 	}
 	public boolean isInitialized()
 	{
@@ -160,24 +168,60 @@ public class EntityInfo
 	{
 		this.dodgeCount = dodgeCount;
 	}
-	public boolean isPlaying()
+	private Integer getHigherStartupTicks()
 	{
-		return isPlaying;
-	}
-	public void setPlaying(boolean playing)
-	{
-		isPlaying = playing;
+		return higherStartupTicks;
 	}
 	public void flagSquidCancel()
 	{
-		didSquidCancelThisTick = true;
+		flagSquidCancel(HIGHER_STARTUP_DURATION);
 	}
-	public boolean didSquidCancelThisTick()
+	public void flagSquidCancel(int frames)
 	{
-		return didSquidCancelThisTick;
+		higherStartupTicks = frames;
 	}
-	public void removeSquidCancelFlag()
+	public boolean hasHigherStartup()
 	{
-		didSquidCancelThisTick = false;
+		return higherStartupTicks > 0;
+	}
+	public void resetHigherStartup()
+	{
+		higherStartupTicks = 0;
+	}
+	public void reduceSquidAnimationTick()
+	{
+		if (higherStartupTicks > 0)
+			higherStartupTicks--;
+	}
+	public boolean isPlaying()
+	{
+		return playingData != null && playingData.isPlaying;
+	}
+	public void setPlaying(boolean playing)
+	{
+		playingData = new PlayingData(playing, playingData != null ? playingData.respawnTime : 0);
+	}
+	public int getMatchRespawnTimeLeft()
+	{
+		if (playingData == null)
+			playingData = PlayingData.DEFAULT.get();
+		return playingData.respawnTime;
+	}
+	public void setMatchRespawnTimeLeft(int time)
+	{
+		playingData = new PlayingData(isPlaying(), time);
+	}
+	public record PlayingData(
+		boolean isPlaying,
+		int respawnTime
+	)
+	{
+		public static final Codec<PlayingData> CODEC = RecordCodecBuilder.create(
+			inst -> inst.group(
+				Codec.BOOL.optionalFieldOf("is_playing", false).forGetter(PlayingData::isPlaying),
+				Codec.INT.optionalFieldOf("respawn_time", 0).forGetter(PlayingData::respawnTime)
+			).apply(inst, PlayingData::new)
+		);
+		public static final Supplier<PlayingData> DEFAULT = () -> new PlayingData(false, 0);
 	}
 }

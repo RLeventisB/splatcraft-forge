@@ -319,12 +319,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	@Override
 	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
-		boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(user);
-		PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(user);
-		boolean notPreventedByCooldown = true;
-		
-		if (hasCooldown)
-			notPreventedByCooldown = !cooldown.preventWeaponUse();
+		// this returns true if there is no cooldown, or the cooldown has preventWeaponUse set as false
+		boolean notPreventedByCooldown = PlayerCooldown.getCooldownIf(user, PlayerCooldown::preventWeaponUse).isEmpty();
 		
 		if (notPreventedByCooldown && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
 		{

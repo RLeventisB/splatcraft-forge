@@ -16,7 +16,7 @@ public class RelativeBlockPos extends Vec3i
 {
 	public static final Codec<RelativeBlockPos> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.BYTE.fieldOf("x").forGetter(v -> (byte) v.getX()),
-		Codec.INT.fieldOf("y").forGetter(v -> v.getY()),
+		Codec.INT.fieldOf("y").forGetter(Vec3i::getY),
 		Codec.BYTE.fieldOf("z").forGetter(v -> (byte) v.getZ())
 	).apply(inst, RelativeBlockPos::new));
 	private RelativeBlockPos(byte x, int y, byte z)

@@ -63,7 +63,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
 	{
 		BlasterWeaponSettings settings = getSettings(stack);
-		return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
+		return ShootingHandler.FiringStatData.createFromShotData(settings.shotData,
 			BlasterItem::getEndlagConsumer,
 			(data, accumulatedTime, entity1) ->
 			{

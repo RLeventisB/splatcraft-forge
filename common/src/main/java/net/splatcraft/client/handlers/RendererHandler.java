@@ -57,6 +57,8 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.HashMap;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
@@ -96,9 +98,10 @@ public class RendererHandler
 	{
 		if (player != null && !player.isSpectator())
 		{
-			if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getSlotIndex() >= 0)
+			Optional<PlayerCooldown> cooldown = PlayerCooldown.getCooldownIf(player, v -> v.getSlotIndex() >= 0);
+			if (cooldown.isPresent())
 			{
-				return PlayerCooldown.getPlayerCooldown(player).getSlotIndex();
+				return cooldown.get().getSlotIndex();
 			}
 			else if (ShootingHandler.isDoingShootingAction(player))
 			{
@@ -109,7 +112,7 @@ public class RendererHandler
 	}
 	public static void onRenderTick(MinecraftClient client)
 	{
-		PlayerEntity player = ClientUtils.getClientPlayer();
+		PlayerEntity player = client.player;
 		int slot = slotToAssign(player);
 		if (slot != -1)
 		{
@@ -124,9 +127,10 @@ public class RendererHandler
 			return false;
 		}
 		
-		if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).getHand().equals(hand))
+		Optional<PlayerCooldown> cooldownOptional = PlayerCooldown.getCooldownIf(player, v -> Objects.equals(v.getHand(), hand));
+		if (cooldownOptional.isPresent())
 		{
-			PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
+			PlayerCooldown cooldown = cooldownOptional.get();
 			float time = cooldown.getTime();
 			float maxTime = cooldown.getMaxTime();
 			if (time != oldCooldown)
@@ -307,7 +311,7 @@ public class RendererHandler
 			float currentAirInfluence = airInfluenceResult.value();
 			float currentDeviationChance = actualChanceResult.value();
 			
-			float currentDeviation = Math.max(0.017453292f, MathHelper.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * MathHelper.RADIANS_PER_DEGREE / 2f * 1.34f);
+			float currentDeviation = Math.max(0.017453292f, MathHelper.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * MathHelper.RADIANS_PER_DEGREE / 2f);
 			
 			float aspectRatio = MathHelper.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
 			

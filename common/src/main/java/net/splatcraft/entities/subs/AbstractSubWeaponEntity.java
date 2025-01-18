@@ -18,6 +18,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
@@ -116,7 +117,10 @@ public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubD
 	@Override
 	public void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float divergence)
 	{
-		super.setVelocity(thrower, pitch, yaw, pitchOffset, speed, divergence);
+		float f = -MathHelper.sin(yaw * 0.017453292F) * MathHelper.cos(pitch * 0.017453292F);
+		float g = -MathHelper.sin((pitch + pitchOffset) * 0.017453292F);
+		float h = MathHelper.cos(yaw * 0.017453292F) * MathHelper.cos(pitch * 0.017453292F);
+		setVelocity(f, g, h, speed, divergence);
 		
 		Vec3d posDiff = new Vec3d(0, 0, 0);
 		

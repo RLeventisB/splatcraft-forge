@@ -13,23 +13,16 @@ import java.util.UUID;
 public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 {
 	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_set_squid_s2c_packet"));
-	private final boolean squid, isCancel;
+	private final boolean squid;
 	UUID target;
 	public PlayerSetSquidS2CPacket(UUID player, boolean squid)
 	{
-		this(player, squid, false);
-	}
-	public PlayerSetSquidS2CPacket(UUID player, boolean squid, boolean isSquidCancel)
-	{
 		this.squid = squid;
 		target = player;
-		isCancel = isSquidCancel;
 	}
 	public static PlayerSetSquidS2CPacket decode(RegistryByteBuf buffer)
 	{
-		UUID player = buffer.readUuid();
-		byte state = buffer.readByte();
-		return new PlayerSetSquidS2CPacket(player, (state & 1) == 1, (state & 2) == 2);
+		return new PlayerSetSquidS2CPacket(buffer.readUuid(), buffer.readBoolean());
 	}
 	@Override
 	public Id<? extends CustomPayload> getId()
@@ -40,7 +33,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 	public void encode(RegistryByteBuf buffer)
 	{
 		buffer.writeUuid(target);
-		buffer.writeByte((squid ? 1 : 0) | (isCancel ? 2 : 0));
+		buffer.writeBoolean(squid);
 	}
 	@Override
 	public void execute()
@@ -52,7 +45,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 		}
 		EntityInfo target = EntityInfoCapability.get(player);
 		target.setIsSquid(squid);
-		if (isCancel)
+		if (!squid)
 			target.flagSquidCancel();
 	}
 }

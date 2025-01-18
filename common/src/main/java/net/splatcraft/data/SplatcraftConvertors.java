@@ -2,15 +2,20 @@ package net.splatcraft.data;
 
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
+import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SlosherShotDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.SubDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.DamageRangesRecord;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+
+import static net.splatcraft.items.weapons.settings.CommonRecords.*;
+import static net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SingularSloshShotData;
 
 public class SplatcraftConvertors
 {
@@ -18,22 +23,22 @@ public class SplatcraftConvertors
 	public static final int SplatoonFramesPerMinecraftTick = 3;
 	public static final int SplatoonHealthPerMinecraftHealth = 5;
 	public static boolean SkipConverting = false;
-	public static CommonRecords.InkUsageDataRecord convert(CommonRecords.InkUsageDataRecord dataRecord)
+	public static InkUsageDataRecord convert(InkUsageDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
-		return new CommonRecords.InkUsageDataRecord(
+		return new InkUsageDataRecord(
 			dataRecord.consumption(),
 			dataRecord.recoveryCooldown() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static CommonRecords.ProjectileDataRecord convert(CommonRecords.ProjectileDataRecord dataRecord)
+	public static ProjectileDataRecord convert(ProjectileDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
-		return new CommonRecords.ProjectileDataRecord(
+		return new ProjectileDataRecord(
 			dataRecord.size() / DistanceUnitsPerMinecraftSquare * 2, // splatoon hitboxes are circles, and often specify radiuses
 			dataRecord.visualSize() / DistanceUnitsPerMinecraftSquare * 2,
 			dataRecord.lifeTicks() / SplatoonFramesPerMinecraftTick,
@@ -50,15 +55,39 @@ public class SplatcraftConvertors
 			dataRecord.damageDecayStartTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
 			dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick);
 	}
-	public static CommonRecords.ShotDataRecord convert(CommonRecords.ShotDataRecord dataRecord)
+	public static Optional<OptionalProjectileDataRecord> convert(Optional<OptionalProjectileDataRecord> optional)
+	{
+		if (SkipConverting)
+			return optional;
+		
+		return optional.map(dataRecord -> new OptionalProjectileDataRecord(
+			multiplyIfPresentFloat(dataRecord.size(), 1.0 / DistanceUnitsPerMinecraftSquare * 2),
+			multiplyIfPresentFloat(dataRecord.visualSize(), 1.0 / DistanceUnitsPerMinecraftSquare * 2),
+			multiplyIfPresentFloat(dataRecord.lifeTicks(), 1.0 / SplatoonFramesPerMinecraftTick),
+			multiplyIfPresentFloat(dataRecord.speed(), 1.0 / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
+			dataRecord.delaySpeedMult(),
+			powIfPresentFloat(dataRecord.horizontalDrag(), SplatoonFramesPerMinecraftTick),
+			multiplyIfPresentFloat(dataRecord.straightShotTicks(), 1.0 / SplatoonFramesPerMinecraftTick),
+			multiplyIfPresentFloat(dataRecord.gravity(), (double) SplatoonFramesPerMinecraftTick / DistanceUnitsPerMinecraftSquare),
+			multiplyIfPresentFloat(dataRecord.inkCoverageImpact(), 1.0 / DistanceUnitsPerMinecraftSquare),
+			multiplyIfPresentFloat(dataRecord.inkDropCoverage(), 1.0 / DistanceUnitsPerMinecraftSquare),
+			multiplyIfPresentFloat(dataRecord.distanceBetweenInkDrops(), 1.0 / DistanceUnitsPerMinecraftSquare),
+			multiplyIfPresentFloat(dataRecord.baseDamage(), 1.0 / SplatoonHealthPerMinecraftHealth),
+			multiplyIfPresentFloat(dataRecord.minDamage(), 1.0 / SplatoonHealthPerMinecraftHealth),
+			multiplyIfPresentFloat(dataRecord.damageDecayStartTick(), 1.0 / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick),
+			multiplyIfPresentFloat(dataRecord.damageDecayPerTick(), 1.0 / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick))
+		);
+	}
+	public static ShotDataRecord convert(ShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
-		return new CommonRecords.ShotDataRecord(
+		return new ShotDataRecord(
 			dataRecord.startupTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.squidStartupTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.projectileCount(),
 			convert(dataRecord.accuracyData()),
 			dataRecord.pitchCompensation(),
@@ -66,12 +95,12 @@ public class SplatcraftConvertors
 			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static CommonRecords.ShotDeviationDataRecord convert(CommonRecords.ShotDeviationDataRecord dataRecord)
+	public static ShotDeviationDataRecord convert(ShotDeviationDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
-		return new CommonRecords.ShotDeviationDataRecord(
+		return new ShotDeviationDataRecord(
 			dataRecord.groundShotDeviation(),
 			dataRecord.airborneShotDeviation(),
 			dataRecord.minDeviateChance(),
@@ -143,7 +172,7 @@ public class SplatcraftConvertors
 			dataRecord.lerpBetween()
 		);
 	}
-	public static <T extends SubDataRecord<T>> SubWeaponSettings.DataRecord convert(SubWeaponSettings.DataRecord dataRecord)
+	public static SubWeaponSettings.DataRecord convert(SubWeaponSettings.DataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -176,34 +205,73 @@ public class SplatcraftConvertors
 			dataRecord.distributeEvenly()
 		);
 	}
-	public static CommonRecords.FloatRange convertLength(CommonRecords.FloatRange range)
+	public static SlosherShotDataRecord convert(SlosherShotDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new SlosherShotDataRecord(
+			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			Math.round((float) dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick),
+			convert(dataRecord.sloshes()),
+			dataRecord.pitchCompensation(),
+			dataRecord.inkConsumption(),
+			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
+			dataRecord.allowFlicking()
+		);
+	}
+	private static List<SingularSloshShotData> convert(List<SingularSloshShotData> dataRecords)
+	{
+		if (SkipConverting)
+			return dataRecords;
+		
+		return dataRecords.stream().map(dataRecord ->
+			new SingularSloshShotData(
+				dataRecord.startupTicks() / SplatoonFramesPerMinecraftTick,
+				dataRecord.count(),
+				dataRecord.delayBetweenProjectiles() / SplatoonFramesPerMinecraftTick,
+				dataRecord.speedSubstract() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
+				dataRecord.offsetAngle(),
+				convert(dataRecord.projectileModifications()),
+				dataRecord.detonationData().map(SplatcraftConvertors::convert)
+			)).toList();
+	}
+	public static FloatRange convertLength(FloatRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new CommonRecords.FloatRange(
+		return new FloatRange(
 			range.min() / DistanceUnitsPerMinecraftSquare,
 			range.max() / DistanceUnitsPerMinecraftSquare
 		);
 	}
-	public static CommonRecords.FloatRange convertSpeed(CommonRecords.FloatRange range)
+	public static FloatRange convertSpeed(FloatRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new CommonRecords.FloatRange(
+		return new FloatRange(
 			range.min() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 			range.max() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static CommonRecords.IntRange convertTime(CommonRecords.IntRange range)
+	public static IntRange convertTime(IntRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new CommonRecords.IntRange(
+		return new IntRange(
 			range.min() / SplatoonFramesPerMinecraftTick,
 			range.max() / SplatoonFramesPerMinecraftTick
 		);
+	}
+	private static Optional<Float> powIfPresentFloat(Optional<Float> value, double exponent)
+	{
+		return value.map(aFloat -> (float) Math.pow(aFloat, exponent));
+	}
+	private static Optional<Float> multiplyIfPresentFloat(Optional<Float> value, double multiplier)
+	{
+		return value.map(aFloat -> (float) (aFloat * multiplier));
 	}
 }

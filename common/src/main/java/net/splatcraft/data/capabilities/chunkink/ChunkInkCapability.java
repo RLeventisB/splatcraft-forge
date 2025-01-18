@@ -8,6 +8,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.splatcraft.Splatcraft;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 public class ChunkInkCapability
@@ -34,6 +35,7 @@ public class ChunkInkCapability
 		return hasAndNotEmpty(world.getChunk(pos.x, pos.z));
 	}
 	@ExpectPlatform
+	@Contract
 	public static boolean hasAndNotEmpty(Chunk chunk)
 	{
 		throw new AssertionError();

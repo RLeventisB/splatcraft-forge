@@ -34,7 +34,6 @@ public class BurstBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.Burst
 			
 			proj.setItem(stack.copy());
 			proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), burstData.throwAngle(), burstData.throwVelocity(), 0);
-			proj.setVelocity(proj.getVelocity().add(entity.getVelocity().multiply(1, 0, 1)));
 			world.spawnEntity(proj);
 		}
 		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundCategory.PLAYERS, 0.7F, 1);

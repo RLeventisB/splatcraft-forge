@@ -6,6 +6,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
+import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.WeaponTooltip;
@@ -75,8 +76,8 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 	@Override
 	public void processData(DataRecord data)
 	{
-		shotData = data.shot;
-		baseProjectile = data.baseProjectile;
+		shotData = SplatcraftConvertors.convert(data.shot);
+		baseProjectile = SplatcraftConvertors.convert(data.baseProjectile);
 		mergedProjectileData = new CommonRecords.ProjectileDataRecord[shotData.sloshes.size()];
 		for (int i = 0; i < shotData.sloshes.size(); i++)
 		{
@@ -124,10 +125,10 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 				Codec.FLOAT.fieldOf("size").forGetter(CommonRecords.ProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize())),
 				Codec.FLOAT.fieldOf("speed").forGetter(CommonRecords.ProjectileDataRecord::speed),
-				Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(t -> Optional.of(t.delaySpeedMult())),
-				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.681472f).forGetter(CommonRecords.ProjectileDataRecord::horizontalDrag),
+				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(CommonRecords.ProjectileDataRecord::delaySpeedMult),
+				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.88f).forGetter(CommonRecords.ProjectileDataRecord::horizontalDrag),
 				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(CommonRecords.ProjectileDataRecord::straightShotTicks),
-				Codec.FLOAT.optionalFieldOf("gravity", 0.125f).forGetter(CommonRecords.ProjectileDataRecord::gravity),
+				Codec.FLOAT.optionalFieldOf("gravity", 0.5f).forGetter(CommonRecords.ProjectileDataRecord::gravity),
 				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact())),
 				Codec.FLOAT.optionalFieldOf("ink_drop_coverage", 0f).forGetter(CommonRecords.ProjectileDataRecord::inkDropCoverage),
 				Codec.FLOAT.optionalFieldOf("distance_between_drops", 4f).forGetter(CommonRecords.ProjectileDataRecord::distanceBetweenInkDrops),
@@ -146,9 +147,9 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
 			).apply(instance, DataRecord::create)
 		);
-		public static CommonRecords.ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, float speed, Optional<Float> delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, float inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
+		public static CommonRecords.ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, float speed, Float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, float inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
 		{
-			return CommonRecords.ProjectileDataRecord.create(size, visualSize, 600, speed, delaySpeedMult.orElse(1f), horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, Optional.of(inkDropCoverage), distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
+			return CommonRecords.ProjectileDataRecord.create(size, visualSize, 600, speed, delaySpeedMult, horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, Optional.of(inkDropCoverage), distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
 		}
 		private static DataRecord create(SlosherShotDataRecord shot, CommonRecords.ProjectileDataRecord baseProjectile, float mobility, boolean bypassesMobDamage, boolean isSecret)
 		{
@@ -156,25 +157,27 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		}
 	}
 	public record SlosherShotDataRecord(
-		int endlagTicks,
+		float endlagTicks,
+		int miscEndlagTicks,
 		List<SingularSloshShotData> sloshes,
 		float pitchCompensation,
 		float inkConsumption,
-		int inkRecoveryCooldown,
+		float inkRecoveryCooldown,
 		boolean allowFlicking
 	)
 	{
 		public static final Codec<SlosherShotDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.INT.optionalFieldOf("endlag_ticks", 1).forGetter(SlosherShotDataRecord::endlagTicks),
+				Codec.FLOAT.optionalFieldOf("endlag_ticks", 1f).forGetter(SlosherShotDataRecord::endlagTicks),
+				Codec.INT.optionalFieldOf("other_actions_endlag_ticks", 1).forGetter(SlosherShotDataRecord::miscEndlagTicks),
 				SingularSloshShotData.CODEC.listOf().fieldOf("sloshes_data").forGetter(SlosherShotDataRecord::sloshes),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(SlosherShotDataRecord::pitchCompensation),
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(SlosherShotDataRecord::inkConsumption),
-				Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(SlosherShotDataRecord::inkRecoveryCooldown),
+				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(SlosherShotDataRecord::inkRecoveryCooldown),
 				Codec.BOOL.optionalFieldOf("allow_flicking", true).forGetter(SlosherShotDataRecord::allowFlicking)
 			).apply(instance, SlosherShotDataRecord::new)
 		);
-		public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(0, new ArrayList<>(), 0, 0, 0, true);
+		public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(1, 1, new ArrayList<>(), 0, 0, 0, true);
 	}
 	public record SingularSloshShotData(
 		float startupTicks,

@@ -1,63 +1,60 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 1.067,
-        "visual_size": 1.2,
-        "gravity": 0.3,
-        "speed": 1.792,
-        "delay_speed_mult": 0.8,
-        "ink_coverage_on_impact": 0.8,
-        "straight_shot_ticks": 1,
-        "ink_drop_coverage": 0,
-        "direct_damage": 12.4,
-        "minimum_damage": 7,
-        "fall_damage_start": 1,
-        "fall_damage_end": 5.33333
+        "size": 8,
+        "visual_size": 0,
+        "speed": 8.396,
+        "ink_coverage_on_impact": 3,
+        "straight_shot_ticks": 3,
+        "direct_damage": 62,
+        "minimum_damage": 35,
+        "fall_damage_start": 15,
+        "fall_damage_end": 80
     },
     "shot": {
         "pitch_compensation": -15,
-        "endlag_ticks": 8,
+        "endlag_ticks": 23,
         "ink_consumption": 6,
-        "ink_recovery_cooldown": 12,
+        "ink_recovery_cooldown": 35,
         "sloshes_data": [
             {
-                "startup_ticks": 4,
+                "startup_ticks": 12,
                 "slosh_count": 4,
-                "delay_between_projectiles": 0.33333333333,
-                "speed_substract_per_projectile": 0.107,
+                "delay_between_projectiles": 1,
+                "speed_substract_per_projectile": 1.6,
                 "slosh_projectile_modifications": {
-                    "size": 1.2,
-                    "visual_size": 1.4,
-                    "speed": 2.4458,
-                    "ink_coverage_on_impact": 1.6
+                    "size": 9,
+                    "visual_size": 14,
+                    "speed": 12.229,
+                    "ink_coverage_on_impact": 32
                 }
             },
             {
                 "startup_ticks": 4.6666,
                 "slosh_count": 3,
-                "delay_between_projectiles": 0.66666666666,
+                "delay_between_projectiles": 2,
                 "speed_substract_per_projectile": 0.5
             },
             {
-                "startup_ticks": 5,
+                "startup_ticks": 15,
                 "slosh_count": 1,
                 "offset_angle": 15,
                 "slosh_projectile_modifications": {
-                    "size": 0.93,
-                    "visual_size": 1.0,
-                    "speed": 1.794,
-                    "ink_coverage_on_impact": 0.75
+                    "size": 7,
+                    "visual_size": 10,
+                    "speed": 8.97,
+                    "ink_coverage_on_impact": 15
                 }
             },
             {
-                "startup_ticks": 5,
+                "startup_ticks": 15,
                 "slosh_count": 1,
                 "offset_angle": -15,
                 "slosh_projectile_modifications": {
-                    "size": 0.93,
-                    "visual_size": 1.0,
-                    "speed": 1.794,
-                    "ink_coverage_on_impact": 0.75
+                    "size": 7,
+                    "visual_size": 10,
+                    "speed": 8.97,
+                    "ink_coverage_on_impact": 15
                 }
             }
         ]

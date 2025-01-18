@@ -56,7 +56,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
 	{
 		ShooterWeaponSettings settings = getSettings(stack);
-		return new ShootingHandler.FiringStatData(settings.shotData.squidStartupTicks(), settings.shotData.startupTicks(), settings.shotData.endlagTicks(),
+		return ShootingHandler.FiringStatData.createFromShotData(settings.shotData,
 			null,
 			(data, accumulatedTime, entity1) ->
 			{

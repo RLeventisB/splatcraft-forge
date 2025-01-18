@@ -215,7 +215,7 @@ public class SuperJumpCommand
 			entity.fallDistance = 0;
 		}
 		@Override
-		public void onEnd(LivingEntity entity)
+		public boolean canEnd(LivingEntity entity)
 		{
 			entity.setPosition(end);
 			entity.noClip = hadPhysics;
@@ -225,6 +225,7 @@ public class SuperJumpCommand
 				player.getAbilities().flying = false;
 			}
 			entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.superjumpLand, SoundCategory.PLAYERS, 0.8F, 1);
+			return true;
 		}
 		@Override
 		public boolean preventWeaponUse()

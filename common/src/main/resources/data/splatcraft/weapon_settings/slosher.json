@@ -1,53 +1,52 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 1.41667,
-        "delay_speed_mult": 0.8,
-        "visual_size": 0.8,
-        "speed": 4.40225,
-        "ink_coverage_on_impact": 1.083,
-        "straight_shot_ticks": 0.66666666666666,
-        "ink_drop_coverage": 0,
-        "direct_damage": 14,
-        "minimum_damage": 10,
-        "fall_damage_start": 1.25,
-        "fall_damage_end": 6.354167
+        "size": 8,
+        "visual_size": 12,
+        "speed": 17.609,
+        "ink_coverage_on_impact": 13,
+        "straight_shot_ticks": 2,
+        "direct_damage": 70,
+        "minimum_damage": 50,
+        "fall_damage_start": 15,
+        "fall_damage_end": 76.25
     },
     "shot": {
         "pitch_compensation": -15,
-        "endlag_ticks": 10,
+        "endlag_ticks": 29,
+        "other_actions_endlag_ticks": 16,
         "ink_consumption": 7.3,
         "ink_recovery_cooldown": 13,
         "sloshes_data": [
             {
-                "startup_ticks": 4,
+                "startup_ticks": 12,
                 "slosh_count": 1,
                 "slosh_projectile_modifications": {
-                    "visual_size": 1.4,
-                    "ink_coverage_on_impact": 2.667
+                    "visual_size": 21,
+                    "ink_coverage_on_impact": 32
                 }
             },
             {
-                "startup_ticks": 4.33333333333,
+                "startup_ticks": 13,
                 "slosh_count": 3,
-                "delay_between_projectiles": 0.33333333333,
-                "speed_substract_per_projectile": 0.4,
+                "delay_between_projectiles": 1,
+                "speed_substract_per_projectile": 1.6,
                 "slosh_projectile_modifications": {
-                    "speed": 4.00225
+                    "speed": 16.009
                 }
             },
             {
-                "startup_ticks": 5.33333333333333,
+                "startup_ticks": 16,
                 "slosh_count": 5,
-                "delay_between_projectiles": 0.66666666666666,
-                "speed_substract_per_projectile": 0.5,
+                "delay_between_projectiles": 2,
+                "speed_substract_per_projectile": 2,
                 "slosh_projectile_modifications": {
-                    "size": 0.75,
-                    "visual_size": 0.4,
-                    "speed": 2.75,
-                    "ink_coverage_on_impact": 0.833,
-                    "direct_damage": 10,
-                    "minimum_damage": 10
+                    "size": 4.5,
+                    "visual_size": 6,
+                    "speed": 11,
+                    "ink_coverage_on_impact": 10,
+                    "direct_damage": 50,
+                    "minimum_damage": 50
                 }
             }
         ]

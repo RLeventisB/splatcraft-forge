@@ -50,6 +50,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
@@ -402,8 +403,8 @@ public class CommonUtils
 	}
 	public static Vec3d getOldPosition(Entity entity, double partialTick)
 	{
-		if (entity instanceof PlayerEntity player)
-			return WeaponHandler.getPlayerPrevPos(player).getPosition(partialTick);
+		if (entity instanceof LivingEntity living)
+			return WeaponHandler.getPlayerPrevPos(living).getPosition(partialTick);
 		throw new NotImplementedException();
 	}
 	public static <T> T returnValueDependantOnSquidCancel(LivingEntity player, T withCancel, T withoutCancel)
@@ -411,7 +412,9 @@ public class CommonUtils
 		boolean didCancel = false;
 		if (EntityInfoCapability.hasCapability(player))
 		{
-			didCancel = EntityInfoCapability.get(player).didSquidCancelThisTick();
+			EntityInfo info = EntityInfoCapability.get(player);
+			didCancel = info.hasHigherStartup();
+			info.resetHigherStartup();
 		}
 		return didCancel ? withCancel : withoutCancel;
 	}

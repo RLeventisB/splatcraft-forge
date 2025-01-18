@@ -15,8 +15,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
@@ -169,7 +167,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				if (rollCount < maxRolls && ClientUtils.canPerformRoll(localPlayer))
 				{
 					ItemStack activeDualie;
-					boolean lastRoll = false;
+					boolean lastRoll = rollCount == maxRolls - 1;
 					if (lastRoll)
 					{
 						activeDualie = getRollTurretDuration(stack) >= getRollTurretDuration(offhandDualie) ? stack : offhandDualie;
@@ -207,7 +205,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		CommonRecords.ShotDataRecord shotData = settings.getShotData(entity);
 		CommonRecords.ProjectileDataRecord projectileData = settings.getProjectileData(entity);
 		World world = entity.getWorld();
-		return new ShootingHandler.FiringStatData(shotData.squidStartupTicks(), shotData.startupTicks(), shotData.endlagTicks(),
+		return ShootingHandler.FiringStatData.createFromShotData(shotData,
 			null,
 			(data, accumulatedTime, entity1) ->
 			{
@@ -249,9 +247,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		public static final Codec<DodgeRollCooldown> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
-			Codec.FLOAT.fieldOf("time").forGetter(v -> v.getTime()),
-			Codec.FLOAT.fieldOf("max_time").forGetter(v -> v.getMaxTime()),
-			Codec.INT.fieldOf("slot_index").forGetter(v -> v.getSlotIndex()),
+			Codec.FLOAT.fieldOf("time").forGetter(PlayerCooldown::getTime),
+			Codec.FLOAT.fieldOf("max_time").forGetter(PlayerCooldown::getMaxTime),
+			Codec.INT.fieldOf("slot_index").forGetter(PlayerCooldown::getSlotIndex),
 			Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.getHand() == Hand.MAIN_HAND),
 			Codec.BYTE.fieldOf("roll_frame").forGetter(v -> v.rollFrame),
 			Codec.BYTE.fieldOf("roll_end_frame").forGetter(v -> v.rollEndFrame),
@@ -296,9 +294,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			this.rollState = rollState;
 		}
 		@Override
-		public void tick(LivingEntity player)
+		public void tick(LivingEntity entity)
 		{
-			boolean local = player.getWorld().isClient;
+			boolean local = entity.getWorld().isClient;
 			boolean doLogic = true;
 			while (doLogic)
 			{
@@ -309,12 +307,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (!local)
 							{
-								player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.dualieDodge, SoundCategory.PLAYERS, 0.7F, ((player.getWorld().random.nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-								InkExplosion.createInkExplosion(player, player.getPos(), 0.9f, 0, 0, InkBlockUtils.getInkType(player), storedStack);
+								entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundCategory.PLAYERS, 0.7F, ((entity.getWorld().random.nextFloat() - entity.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
+								InkExplosion.createInkExplosion(entity, entity.getPos(), 0.9f, 0, 0, InkBlockUtils.getInkType(entity), storedStack);
 							}
-							player.setNoDrag(true);
+							entity.setNoDrag(true);
 							
-							player.setVelocity(rollDirection.x, -0.5, rollDirection.y);
+							entity.setVelocity(rollDirection.x, -0.5, rollDirection.y);
 							rollState = RollState.ROLL;
 							break;
 						}
@@ -323,7 +321,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					case ROLL:
 						if (getTime() <= rollEndFrame)
 						{
-							player.setNoDrag(false);
+							entity.setNoDrag(false);
 							
 							rollState = RollState.AFTER_ROLL;
 							break;
@@ -344,13 +342,13 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (local)
 							{
-								Input input = ClientUtils.getUnmodifiedInput((ClientPlayerEntity) player);
-								boolean endedTurretMode = input.jumping || input.movementForward != 0 || input.movementSideways != 0 || !player.isUsingItem() || player.getVelocity().y > 0.1;
+								Input input = ClientUtils.getUnmodifiedInput((ClientPlayerEntity) entity);
+								boolean endedTurretMode = input.jumping || input.movementForward != 0 || input.movementSideways != 0 || !entity.isUsingItem() || entity.getVelocity().y > 0.1;
 								if (endedTurretMode)
 								{
 									setTime(0);
-									EntityInfoCapability.get(player).setDodgeCount(0);
-									SplatcraftPacketHandler.sendToServer(new DodgeRollEndPacket(player.getUuid()));
+									EntityInfoCapability.get(entity).setDodgeCount(0);
+									SplatcraftPacketHandler.sendToServer(new DodgeRollEndPacket(entity.getUuid()));
 								}
 								else
 								{
@@ -365,25 +363,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						break;
 				}
 			}
-		}
-		@Override
-		public NbtCompound writeNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
-		{
-			nbt.putBoolean("DodgeRollCooldown", true);
-			nbt.putByte("RollFrame", rollFrame);
-			nbt.putByte("RollEndFrame", rollEndFrame);
-			nbt.putByte("TurretModeFrame", turretModeFrame);
-			nbt.putBoolean("CanSlide", canSlide);
-			nbt.putFloat("RollDirectionX", rollDirection.x);
-			nbt.putFloat("RollDirectionZ", rollDirection.y);
-			nbt.putByte("RollState", rollState.value);
-			
-			nbt.putFloat("Time", getTime());
-			nbt.putFloat("MaxTime", getMaxTime());
-			nbt.putInt("SlotIndex", getSlotIndex());
-			nbt.put("StoredStack", ItemStack.CODEC.encode(storedStack, NbtOps.INSTANCE, nbt).getOrThrow());
-			nbt.putBoolean("Hand", getHand() == Hand.MAIN_HAND);
-			return nbt;
 		}
 		public boolean canCancelRoll()
 		{

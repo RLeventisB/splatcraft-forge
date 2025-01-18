@@ -220,7 +220,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		if (world.isClient && entity instanceof PlayerEntity player && player.equals(ClientUtils.getClientPlayer()))
 		{
-			if (PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player).preventWeaponUse())
+			if (PlayerCooldown.hasCooldownAnd(player, PlayerCooldown::preventWeaponUse))
 				return;
 			
 			PlayerCharge charge = PlayerCharge.getCharge(player);

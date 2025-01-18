@@ -1,36 +1,43 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 0.667,
-        "visual_size": 1,
-        "speed": 2.821,
-        "ink_coverage_on_impact": 1.583,
-        "straight_shot_ticks": 2.66666666666666,
-        "ink_drop_coverage": 0.8,
-        "distance_between_drops": 0.5,
-        "direct_damage": 11
+        "size": 4,
+        "visual_size": 7,
+        "speed": 14.105,
+        "ink_coverage_on_impact": 0,
+        "straight_shot_ticks": 8,
+        "ink_drop_coverage": 13,
+        "distance_between_drops": 5,
+        "direct_damage": 55
     },
     "shot": {
         "pitch_compensation": -6,
-        "endlag_ticks": 18,
+        "endlag_ticks": 55,
         "ink_consumption": 11.7,
-        "ink_recovery_cooldown": 23,
+        "ink_recovery_cooldown": 70,
         "allow_flicking": false,
         "sloshes_data": [
             {
-                "startup_ticks": 7.3333333333,
+                "startup_ticks": 16,
                 "slosh_count": 1,
                 "detonation_data": {
                     "damage_data": {
                         "points": [
                             {
-                                "max_range": 2.3333,
-                                "damage": 7
+                                "max_range": 28,
+                                "damage": 35
                             }
                         ]
                     },
-                    "spark_damage_multiplier": 1,
-                    "explosion_paint_size": 2.75,
+                    "spark_damage_data": {
+                        "points": [
+                            {
+                                "max_range": 28,
+                                "damage": 35
+                            }
+                        ]
+                    },
+                    "explosion_paint_size": 45,
                     "new_attack_id": true
                 }
             }

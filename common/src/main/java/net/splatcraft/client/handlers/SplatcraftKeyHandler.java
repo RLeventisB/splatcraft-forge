@@ -8,7 +8,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -19,7 +18,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -36,22 +34,19 @@ import net.splatcraft.util.PlayerCharge;
 import net.splatcraft.util.PlayerCooldown;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.List;
-
 public class SplatcraftKeyHandler
 {
-	private static final List<ToggleableKey> pressState = new ObjectArrayList<>();
-	private static final ToggleableKey SHOOT_KEYBIND = new ToggleableKey(new KeyBinding("key.useWeapon", InputUtil.Type.MOUSE, MinecraftClient.getInstance().options.useKey.getDefaultKey().getCode(), "key.categories.splatcraft"));
-	private static final ToggleableKey SQUID_KEYBIND = new ToggleableKey(new KeyBinding("key.squidForm", GLFW.GLFW_KEY_Z, "key.categories.splatcraft"));
-	private static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
-	private static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
+	public static final ToggleableKey SHOOT_KEYBIND = new ToggleableKey(MinecraftClient.getInstance().options.useKey);
+	public static final ToggleableKey SQUID_KEYBIND = new ToggleableKey(new KeyBinding("key.squidForm", GLFW.GLFW_KEY_Z, "key.categories.splatcraft"));
+	public static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
+	private static final ObjectArrayList<ToggleableKey> pressState = new ObjectArrayList<>();
+	public static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static int slot = -1;
 	private static boolean usingSubWeaponHotkey;
 	@Environment(EnvType.CLIENT)
 	public static void registerBindingsAndEvents()
 	{
 		KeyMappingRegistry.register(SUB_WEAPON_KEYBIND.key);
-		KeyMappingRegistry.register(SHOOT_KEYBIND.key);
 		KeyMappingRegistry.register(SQUID_KEYBIND.key);
 		ClientTickEvent.CLIENT_PRE.register(SplatcraftKeyHandler::onClientTick);
 	}
@@ -73,27 +68,15 @@ public class SplatcraftKeyHandler
 			return;
 		}
 		
-		if (!mc.options.useKey.isPressed() && PlayerCharge.hasCharge(player) && EntityInfoCapability.isSquid(player)) //Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
+		tickKeys(mc);
+		
+		if (!SHOOT_KEYBIND.active && PlayerCharge.hasCharge(player) && EntityInfoCapability.isSquid(player)) //Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
 		{
 			PlayerCharge.getCharge(player).reset();
 			SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
 		}
 		
-		boolean canHold = canHoldKeys(mc);
-		
-		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SHOOT_KEYBIND, autoSquidDelay);
-		
-		EntityInfo info = EntityInfoCapability.get(player);
-		KeyMode squidKeyMode = SplatcraftConfig.get("splatcraft.squidKeyMode");
-		
-		SQUID_KEYBIND.tick(squidKeyMode, canHold);
-		updatePressState(SQUID_KEYBIND, 0);
-		
-		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
-		
-		if ((PlayerCooldown.hasPlayerCooldown(player) && !(PlayerCooldown.getPlayerCooldown(player).cancellable && SQUID_KEYBIND.active))
+		if ((PlayerCooldown.hasCooldownAnd(player, v -> !(SQUID_KEYBIND.active && v.cancellable)))
 			|| CommonUtils.anyWeaponOnCooldown(player) || ShootingHandler.isDoingShootingAction(player))
 		{
 			return;
@@ -101,26 +84,21 @@ public class SplatcraftKeyHandler
 		
 		ToggleableKey last = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
 		
-		if (!MinecraftClient.getInstance().isPaused())
-		{
-			int autoSquidMaxDelay = PlayerCooldown.hasPlayerCooldown(player) ? (int) (PlayerCooldown.getPlayerCooldown(player).getTime() + 10) :
-				(player.getActiveItem().getItem() instanceof IChargeableWeapon ? 100 : 10); //autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
-			autoSquidDelay = SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || PlayerCooldown.hasPlayerCooldown(player) ? autoSquidMaxDelay :
-				MathHelper.clamp(autoSquidDelay - 1, 0, autoSquidMaxDelay);
-		}
+		tickAutoSquidDelay(player);
 		
+		EntityInfo info = EntityInfoCapability.get(player);
 		if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
 		{
 			// Unsquid so we can actually fire
-			ClientUtils.setSquid(info, false, true);
+			ClientUtils.setSquid(info, false);
 		}
 		
 		if (SUB_WEAPON_KEYBIND.equals(last))
 		{
 			ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
 			
-			if (sub.isEmpty() || (info.isSquid() && player.getWorld().getBlockCollisions(player,
-				new Box(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext()))
+			if (sub.isEmpty() || (info.isSquid() && !player.getWorld().isBlockSpaceEmpty(player,
+				new Box(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3))))
 			{
 				player.sendMessage(Text.translatable("status.cant_use"), true);
 			}
@@ -168,14 +146,44 @@ public class SplatcraftKeyHandler
 		}
 		
 		if (player.getVehicle() == null &&
-			!player.getWorld().getBlockCollisions(player,
-				new Box(-0.3 + player.getX(), player.getY(), -0.3 + player.getZ(), 0.3 + player.getX(), 0.6 + player.getY(), 0.3 + player.getZ())).iterator().hasNext())
+			player.getWorld().isBlockSpaceEmpty(player,
+				new Box(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3)))
 		{
 			if (SQUID_KEYBIND.equals(last) || !SQUID_KEYBIND.active)
 			{
 				ClientUtils.setSquid(info, SQUID_KEYBIND.active);
 			}
 		}
+	}
+	private static void tickAutoSquidDelay(PlayerEntity player)
+	{
+		if (!MinecraftClient.getInstance().isPaused())
+		{
+			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
+			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || hasCooldown)
+			{
+				//autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
+				autoSquidDelay = hasCooldown ? (int) (PlayerCooldown.getPlayerCooldown(player).getTime() + 10) :
+					(player.getActiveItem().getItem() instanceof IChargeableWeapon ? 100 : 5);
+			}
+			else if (autoSquidDelay > 0)
+			{
+				autoSquidDelay--;
+			}
+		}
+	}
+	private static void tickKeys(MinecraftClient mc)
+	{
+		boolean canHold = canHoldKeys(mc);
+		
+		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
+		updatePressState(SHOOT_KEYBIND, autoSquidDelay);
+		
+		SQUID_KEYBIND.tick(SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
+		updatePressState(SQUID_KEYBIND, 0);
+		
+		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
+		updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
 	}
 	private static void updatePressState(ToggleableKey key, int releaseDelay)
 	{
@@ -202,6 +210,7 @@ public class SplatcraftKeyHandler
 		if (!mc.interactionManager.isBreakingBlock())
 		{
 			((MinecraftClientAccessor) mc).setRightClickDelay(4);
+			if (!mc.player.isRiding())
 			{
 				CommonUtils.InteractionEventResultDummy inputEvent = CommonUtils.doPlayerUseItemForgeEvent(1, mc.options.useKey, hand);
 				if (inputEvent.isCanceled())
@@ -293,11 +302,11 @@ public class SplatcraftKeyHandler
 		HOLD,
 		TOGGLE
 	}
-	private static class ToggleableKey
+	public static class ToggleableKey
 	{
 		private final KeyBinding key;
 		private boolean active;
-		private boolean wasKeyDown;
+		private boolean previousKeyDown;
 		private boolean pressed;
 		private boolean released;
 		public ToggleableKey(KeyBinding key)
@@ -307,21 +316,46 @@ public class SplatcraftKeyHandler
 		public void tick(KeyMode mode, boolean canHold)
 		{
 			boolean isKeyDown = key.isPressed() && canHold;
-			if (mode.equals(KeyMode.HOLD))
+			pressed = isKeyDown && !previousKeyDown;
+			released = !isKeyDown && previousKeyDown;
+			switch (mode)
 			{
-				pressed = isKeyDown && !active;
-				released = !isKeyDown && active;
-				active = isKeyDown;
-				return;
+				case HOLD -> active = isKeyDown;
+				case TOGGLE ->
+				{
+					if (pressed)
+					{
+						active = !active;
+					}
+				}
 			}
-			if (isKeyDown && !wasKeyDown)
+			previousKeyDown = isKeyDown;
+		}
+		public boolean isActive()
+		{
+			return active;
+		}
+		public KeyState getKeybindState()
+		{
+			if (active)
 			{
-				active = !active;
+				if (pressed)
+					return KeyState.JUST_PRESSED;
+				return KeyState.PRESSED;
 			}
-			
-			pressed = isKeyDown && !wasKeyDown;
-			released = !isKeyDown && wasKeyDown;
-			wasKeyDown = isKeyDown;
+			else
+			{
+				if (released)
+					return KeyState.JUST_RELEASED;
+				return KeyState.RELEASED;
+			}
+		}
+		public enum KeyState
+		{
+			RELEASED,
+			JUST_PRESSED,
+			PRESSED,
+			JUST_RELEASED
 		}
 	}
 }

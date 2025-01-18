@@ -4,11 +4,8 @@ import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.SimpleRegistry;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -19,6 +16,8 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.SlosherItem;
 
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -35,10 +34,11 @@ public class PlayerCooldown
 		Codec.BOOL.fieldOf("force_crouch").forGetter(v -> v.forceCrouch),
 		Codec.BOOL.fieldOf("prevent_weapon_use").forGetter(v -> v.preventWeaponUse),
 		Codec.BOOL.fieldOf("is_grounded").forGetter(v -> v.isGrounded),
-		Codec.FLOAT.fieldOf("time").forGetter(v -> v.time)
+		Codec.FLOAT.fieldOf("time").forGetter(v -> v.time),
+		Codec.BOOL.fieldOf("prevent_stop_using").forGetter(v -> v.preventStopUsing)
 	).apply(inst, PlayerCooldown::new));
-	public static Registry<Class<? extends PlayerCooldown>> CLASS_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldowns")), Lifecycle.stable());
-	public static Registry<Supplier<Codec<PlayerCooldown>>> CODEC_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldowns")), Lifecycle.stable());
+	public static Registry<Class<? extends PlayerCooldown>> CLASS_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_classes")), Lifecycle.stable());
+	public static Registry<Supplier<Codec<PlayerCooldown>>> CODEC_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_codecs")), Lifecycle.stable());
 	public static final MapCodec<PlayerCooldown> SERIALIZER_CODEC = new MapCodec<>()
 	{
 		@Override
@@ -63,15 +63,16 @@ public class PlayerCooldown
 			return Stream.of(ops.createString("id"), ops.createString("data"));
 		}
 	};
+	final boolean forceCrouch;
+	final boolean preventWeaponUse;
+	final boolean isGrounded;
+	final boolean preventStopUsing;
+	final float maxTime;
+	final int slotIndex;
+	final Hand hand;
+	final boolean canMove;
 	public ItemStack storedStack;
 	public boolean cancellable = false;
-	float maxTime;
-	int slotIndex;
-	Hand hand;
-	boolean canMove;
-	boolean forceCrouch;
-	boolean preventWeaponUse;
-	boolean isGrounded;
 	float time;
 	public PlayerCooldown(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
 	{
@@ -84,16 +85,13 @@ public class PlayerCooldown
 		this.forceCrouch = forceCrouch;
 		this.preventWeaponUse = preventWeaponUse;
 		this.isGrounded = isGrounded;
+		preventStopUsing = false;
 	}
 	public PlayerCooldown(ItemStack stack, float time, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
 	{
 		this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
 	}
-	public PlayerCooldown(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
-	{
-		fromNbt(wrapperLookup, nbt);
-	}
-	public PlayerCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time)
+	public PlayerCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time, boolean preventStopUsing)
 	{
 		this.storedStack = storedStack;
 		this.cancellable = cancellable;
@@ -105,6 +103,7 @@ public class PlayerCooldown
 		this.forceCrouch = forceCrouch;
 		this.preventWeaponUse = preventWeaponUse;
 		this.isGrounded = isGrounded;
+		this.preventStopUsing = preventStopUsing;
 	}
 	public static void registerCooldowns()
 	{
@@ -126,6 +125,10 @@ public class PlayerCooldown
 			return null;
 		return playerInfo.getPlayerCooldown();
 	}
+	public static Optional<PlayerCooldown> getPlayerCooldownOptional(LivingEntity entity)
+	{
+		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getPlayerCooldown);
+	}
 	public static void setPlayerCooldown(LivingEntity player, PlayerCooldown playerCooldown)
 	{
 		EntityInfoCapability.get(player).setPlayerCooldown(playerCooldown);
@@ -144,6 +147,22 @@ public class PlayerCooldown
 		
 		return cooldown;
 	}
+	public static boolean hasCooldownAnd(LivingEntity player, Predicate<PlayerCooldown> cooldownPredicate)
+	{
+		return getCooldownIf(player, cooldownPredicate).isPresent();
+	}
+	public static Optional<PlayerCooldown> getCooldownIf(LivingEntity player, Predicate<PlayerCooldown> cooldownPredicate)
+	{
+		if (player != null && EntityInfoCapability.hasCapability(player))
+		{
+			PlayerCooldown cooldown = EntityInfoCapability.get(player).getPlayerCooldown();
+			if (cooldown != null && cooldown.getTime() > 0 && cooldownPredicate.test(cooldown))
+			{
+				return Optional.of(cooldown);
+			}
+		}
+		return Optional.empty();
+	}
 	public static boolean hasPlayerCooldown(LivingEntity player)
 	{
 		if (player == null || !EntityInfoCapability.hasCapability(player))
@@ -157,18 +176,6 @@ public class PlayerCooldown
 			return false;
 		PlayerCooldown cooldown = EntityInfoCapability.get(player).getPlayerCooldown();
 		return cooldown != null;
-	}
-	public final void fromNbt(RegistryWrapper.WrapperLookup wrapperLookup, NbtCompound nbt)
-	{
-		storedStack = ItemStack.fromNbtOrEmpty(wrapperLookup, nbt.getCompound("StoredStack"));
-		time = nbt.getFloat("Time");
-		maxTime = nbt.getFloat("MaxTime");
-		slotIndex = nbt.getInt("SlotIndex");
-		hand = nbt.getBoolean("MainHand") ? Hand.MAIN_HAND : Hand.OFF_HAND;
-		canMove = nbt.getBoolean("CanMove");
-		forceCrouch = nbt.getBoolean("ForceCrouch");
-		preventWeaponUse = nbt.getBoolean("PreventWeaponUse");
-		isGrounded = nbt.getBoolean("IsGrounded");
 	}
 	public PlayerCooldown setCancellable()
 	{
@@ -186,6 +193,10 @@ public class PlayerCooldown
 	public boolean preventWeaponUse()
 	{
 		return preventWeaponUse;
+	}
+	public boolean preventStopUsing()
+	{
+		return preventStopUsing;
 	}
 	public boolean isGrounded()
 	{
@@ -212,33 +223,14 @@ public class PlayerCooldown
 	{
 		return hand;
 	}
-	public void setHand(Hand hand)
-	{
-		this.hand = hand;
-	}
-	public void tick(LivingEntity player)
+	public void tick(LivingEntity entity)
 	{
 	}
-	public NbtCompound writeNBT(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
-	{
-		nbt.putFloat("Time", time);
-		nbt.putFloat("MaxTime", maxTime);
-		nbt.putInt("SlotIndex", slotIndex);
-		nbt.putBoolean("CanMove", canMove);
-		nbt.putBoolean("ForceCrouch", forceCrouch);
-		nbt.putBoolean("PreventWeaponUse", preventWeaponUse);
-		nbt.putBoolean("IsGrounded", isGrounded);
-		nbt.putBoolean("MainHand", hand.equals(Hand.MAIN_HAND));
-		if (storedStack.getItem() != Items.AIR)
-		{
-			nbt.put("StoredStack", storedStack.encode(registryLookup, nbt));
-		}
-		return nbt;
-	}
-	public void onStart(LivingEntity player)
+	public void onStart(LivingEntity entity)
 	{
 	}
-	public void onEnd(LivingEntity player)
+	public boolean canEnd(LivingEntity entity)
 	{
+		return true;
 	}
 }

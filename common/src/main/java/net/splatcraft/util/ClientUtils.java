@@ -118,17 +118,14 @@ public class ClientUtils
 	}
 	public static void setSquid(EntityInfo cap, boolean newSquid)
 	{
-		setSquid(cap, newSquid, false);
-	}
-	public static void setSquid(EntityInfo cap, boolean newSquid, boolean sendSquidCancel)
-	{
 		if (cap.isSquid() == newSquid)
 		{
 			return;
 		}
 		cap.setIsSquid(newSquid);
-		cap.flagSquidCancel();
-		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid, sendSquidCancel));
+		if (!newSquid)
+			cap.flagSquidCancel();
+		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
 	}
 	public static InputWithData getUnmodifiedInput(ClientPlayerEntity player)
 	{

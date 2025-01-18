@@ -215,6 +215,7 @@ public class CommonRecords
 		float startupTicks,
 		float squidStartupTicks,
 		float endlagTicks,
+		float miscEndlagTicks,
 		int projectileCount,
 		ShotDeviationDataRecord accuracyData,
 		float pitchCompensation,
@@ -227,6 +228,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(ShotDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(t -> Optional.of(t.squidStartupTicks)),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks", 1f).forGetter(ShotDataRecord::endlagTicks),
+				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks", 4f).forGetter(ShotDataRecord::miscEndlagTicks),
 				Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
 				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation),
@@ -234,10 +236,10 @@ public class CommonRecords
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown)
 			).apply(instance, ShotDataRecord::create)
 		);
-		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
-		public static ShotDataRecord create(float startupTicks, Optional<Float> squidStartupTicks, float endlagTicks, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, float inkRecoveryCooldown)
+		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
+		public static ShotDataRecord create(float startupTicks, Optional<Float> squidStartupTicks, float endlagTicks, float miscEndlagTicks, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, float inkRecoveryCooldown)
 		{
-			return new ShotDataRecord(startupTicks, squidStartupTicks.orElse(startupTicks), endlagTicks, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
+			return new ShotDataRecord(startupTicks, squidStartupTicks.orElse(startupTicks), endlagTicks, miscEndlagTicks, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
 		}
 		public float getFiringSpeed()
 		{
@@ -252,6 +254,7 @@ public class CommonRecords
 		Optional<Float> startupTicks,
 		Optional<Float> squidStartupTicks,
 		Optional<Float> endlagTicks,
+		Optional<Float> miscEndlagTicks,
 		Optional<Integer> projectileCount,
 		Optional<ShotDeviationDataRecord> accuracyData,
 		Optional<Float> pitchCompensation,
@@ -264,6 +267,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("startup_ticks").forGetter(OptionalShotDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(OptionalShotDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks").forGetter(OptionalShotDataRecord::endlagTicks),
+				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks").forGetter(OptionalShotDataRecord::miscEndlagTicks),
 				Codec.INT.optionalFieldOf("shot_count").forGetter(OptionalShotDataRecord::projectileCount),
 				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data").forGetter(OptionalShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation").forGetter(OptionalShotDataRecord::pitchCompensation),
@@ -279,6 +283,7 @@ public class CommonRecords
 			Optional.empty(),
 			Optional.empty(),
 			Optional.empty(),
+			Optional.empty(),
 			Optional.empty()
 		);
 		public static Optional<OptionalShotDataRecord> from(ShotDataRecord shot)
@@ -287,6 +292,7 @@ public class CommonRecords
 				Optional.of(shot.startupTicks),
 				Optional.of(shot.squidStartupTicks),
 				Optional.of(shot.endlagTicks),
+				Optional.of(shot.miscEndlagTicks),
 				Optional.of(shot.projectileCount),
 				Optional.of(shot.accuracyData),
 				Optional.of(shot.pitchCompensation),
@@ -304,6 +310,7 @@ public class CommonRecords
 				modifiedGet.startupTicks().orElse(base.startupTicks()),
 				modifiedGet.squidStartupTicks().orElse(base.squidStartupTicks()),
 				modifiedGet.endlagTicks().orElse(base.endlagTicks()),
+				modifiedGet.miscEndlagTicks().orElse(base.miscEndlagTicks()),
 				modifiedGet.projectileCount().orElse(base.projectileCount()),
 				modifiedGet.accuracyData().orElse(base.accuracyData()),
 				modifiedGet.pitchCompensation().orElse(base.pitchCompensation()),
