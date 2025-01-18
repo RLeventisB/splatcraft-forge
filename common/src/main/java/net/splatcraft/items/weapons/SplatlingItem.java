@@ -5,6 +5,7 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
@@ -33,6 +34,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Function;
 
 public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> implements IChargeableWeapon
@@ -93,7 +95,8 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	@Environment(EnvType.CLIENT)
 	protected void playChargingSound(PlayerEntity player, ItemStack stack)
 	{
-		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUuid().equals(player.getUuid()))
+		ClientPlayerEntity clientPlayer = ClientUtils.getClientPlayer();
+		if (!Objects.equals(clientPlayer, player))
 		{
 			return;
 		}
@@ -102,11 +105,11 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		if (chargingSound == null || chargingSound.isDone() || !chargingSound.getSoundEvent().equals(soundEvent))
 		{
-			boolean exsistingSound = chargingSound != null;
-			if (exsistingSound)
+			boolean soundExists = chargingSound != null;
+			if (soundExists)
 				chargingSound.fadeOut();
-			chargingSound = new SplatlingChargingTickableSound(ClientUtils.getClientPlayer(), soundEvent);
-			if (exsistingSound)
+			chargingSound = new SplatlingChargingTickableSound(clientPlayer, soundEvent);
+			if (soundExists)
 				chargingSound.fadeIn();
 			MinecraftClient.getInstance().getSoundManager().play(chargingSound);
 		}
