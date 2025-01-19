@@ -112,14 +112,13 @@ public class InkBlockUtils
 		}
 		return false;
 	}
-	public static void inkBlock(@Nullable Entity entity, World world, BlockPos pos, InkColor color, Direction face, InkType inkType, float damage)
+	public static BlockInkedResult inkBlock(@Nullable Entity entity, World world, BlockPos pos, InkColor color, Direction face, InkType inkType, float damage)
 	{
 		if (entity instanceof PlayerEntity player)
 		{
-			playerInkBlock(player, world, pos, color, face, inkType, damage);
-			return;
+			return playerInkBlock(player, world, pos, color, face, inkType, damage);
 		}
-		inkBlock(world, pos, color, face, inkType, damage);
+		return inkBlock(world, pos, color, face, inkType, damage);
 	}
 	public static BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, Direction direction, InkType inkType, float damage)
 	{
