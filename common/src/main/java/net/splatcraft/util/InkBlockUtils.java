@@ -394,7 +394,7 @@ public class InkBlockUtils
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{
-		return EntityInfoCapability.hasCapability(entity) ? EntityInfoCapability.get(entity).getInkType() : InkType.NORMAL;
+		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getInkType).orElse(InkType.NORMAL);
 	}
 	public static InkType getInkTypeFromStack(ItemStack stack)
 	{
