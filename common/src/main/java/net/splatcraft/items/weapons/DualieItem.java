@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.input.Input;
 import net.minecraft.client.item.ClampedModelPredicateProvider;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -14,7 +13,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
@@ -270,18 +268,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			rollEndFrame = (byte) (turretModeFrames + endlagFrames);
 			turretModeFrame = turretModeFrames;
 			this.canSlide = canSlide;
-		}
-		public DodgeRollCooldown(NbtCompound nbt)
-		{
-			super(ItemStack.fromNbtOrEmpty(MinecraftClient.getInstance().world.getRegistryManager(), nbt.getCompound("StoredStack")), nbt.getFloat("MaxTime"), nbt.getInt("SlotIndex"), nbt.getBoolean("Hand") ? Hand.MAIN_HAND : Hand.OFF_HAND, false, false, true, false);
-			
-			rollDirection = new Vec2f(nbt.getFloat("RollDirectionX"), nbt.getFloat("RollDirectionZ"));
-			rollFrame = nbt.getByte("RollFrame");
-			rollEndFrame = nbt.getByte("RollEndFrame");
-			turretModeFrame = nbt.getByte("TurretModeFrame");
-			canSlide = nbt.getBoolean("CanSlide");
-			rollState = RollState.fromValue(nbt.getByte("RollState"));
-			setTime(nbt.getFloat("Time"));
 		}
 		public DodgeRollCooldown(ItemStack storedStack, float time, Float maxTime, Integer slotIndex, Boolean isMainHand, Byte rollFrame, Byte rollEndFrame, Byte turretModeFrame, Vec2f rollDirection, Boolean canSlide, RollState rollState)
 		{
