@@ -248,8 +248,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				xRotation + projectileSetting.offsetAngle() - 3,
 				shotSetting.pitchCompensation(),
 				projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
-				0,
-				partialTick);
+				0);
 			proj.setAttackId(attackId);
 			proj.refreshPositionAfterTeleport(proj.getPos().add(EntityAccessor.invokeMovementInputToVelocity(new Vec3d(-0.4, -1, 0), 1, xRotation)));
 			

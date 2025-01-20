@@ -69,7 +69,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 						for (int i = 0; i < settings.shotData.projectileCount(); i++)
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy, accumulatedTime);
+							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), settings.shotData.pitchCompensation(), settings.projectileData.speed(), inaccuracy);
 							proj.setShooterStats(settings);
 							world.spawnEntity(proj);
 							proj.tick(accumulatedTime);

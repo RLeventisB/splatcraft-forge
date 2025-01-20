@@ -15,7 +15,6 @@
         "PlayerMixins$PlayerMixin",
         "PlayerMixins$ServerPlayerMixinFabric",
         "ProjectileMixin$InkProjectileDataMixin",
-        "ProjectileMixin$InkProjectileMovementMixin",
         "SaveDataMixins$LevelStorageMixin",
         "ServerGamePacketMixin",
         "SquidPassthroughMixin",
