@@ -506,11 +506,6 @@ public class InkExplosion
 				// used to check quickly if a point is obstructed) and 4 aditional planes: right, bottom, up, left for more precise checking
 				FaceData currentFace = faces.get(i);
 				frustum.createFor(currentFace);
-				Vector3d[] corners = Arrays.stream(currentFace.corners).map(v -> v.point).toArray(Vector3d[]::new);
-				CommonUtils.spawnTestText(world, CommonUtils.vec3dFromVector3dc(worldOrigin.add(corners[0], new Vector3d())), "0", 100);
-				CommonUtils.spawnTestText(world, CommonUtils.vec3dFromVector3dc(worldOrigin.add(corners[1], new Vector3d())), "1", 100);
-				CommonUtils.spawnTestText(world, CommonUtils.vec3dFromVector3dc(worldOrigin.add(corners[2], new Vector3d())), "2", 100);
-				CommonUtils.spawnTestText(world, CommonUtils.vec3dFromVector3dc(worldOrigin.add(corners[3], new Vector3d())), "3", 100);
 				
 				for (int j = 0; j < faces.size(); j++)
 				{

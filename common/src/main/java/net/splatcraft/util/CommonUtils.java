@@ -185,7 +185,7 @@ public class CommonUtils
 	public static TimedTextDisplayEntity spawnTestText(World world, Vec3d pos, Text text, int durationTicks)
 	{
 		TimedTextDisplayEntity entity = null;
-/*
+		
 		if (world != null)
 		{
 			entity = new TimedTextDisplayEntity(EntityType.TEXT_DISPLAY, world, durationTicks);
@@ -193,7 +193,7 @@ public class CommonUtils
 			entity.setText(text);
 			world.spawnEntity(entity);
 		}
-*/
+		
 		return entity;
 	}
 	public static void spawnTestParticle(Vec3d pos, Color color)
