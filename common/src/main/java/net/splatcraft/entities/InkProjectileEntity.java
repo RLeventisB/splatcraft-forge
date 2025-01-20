@@ -53,6 +53,10 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	private static final TrackedData<Float> GRAVITY_SPEED_MULT = DataTracker.registerData(InkProjectileEntity.class, TrackedDataHandlerRegistry.FLOAT);
 	private static final TrackedData<ExtraDataList> EXTRA_DATA = DataTracker.registerData(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
 	private static final TrackedData<Vector3f> SHOOT_DIRECTION = DataTracker.registerData(InkProjectileEntity.class, TrackedDataHandlerRegistry.VECTOR3F);
+	private static final byte BARRIER_DENY = -1;
+	private static final byte DROP_PARTICLE = 1;
+	private static final byte PROJECTILE_IMPACT = 2;
+	private static final byte BLAST_PARTICLE = 3;
 	public float lifespan = 600;
 	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
@@ -222,13 +226,20 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	@Override
 	public void tick()
 	{
+		tick(1);
+	}
+	public void tick(float timeDelta)
+	{
+		if (timeDelta > lifespan)
+			timeDelta = lifespan;
+		
 		Vec3d lastPosition = getPos();
-		Vec3d velocity = getShootVelocity();
+		Vec3d velocity = getShootVelocity(timeDelta);
 		setVelocity(velocity.x, velocity.y, velocity.z);
 		
 		super.tick();
 		
-		straightShotTime--;
+		straightShotTime -= timeDelta;
 		if (isSubmergedInWater())
 		{
 			discard();
@@ -244,30 +255,33 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			return;
 		}
 		
-		if (!getWorld().isClient() && !persistent && (lifespan--) <= 0)
+		if (!getWorld().isClient())
 		{
-			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-			if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
+			if (!persistent && (lifespan -= timeDelta) <= 0)
 			{
-				InkExplosion.createInkExplosion(getOwner(), getPos(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
-				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, 1f);
-				getWorld().sendEntityStatus(this, (byte) 3);
-				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
+				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
+				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
+				{
+					InkExplosion.createInkExplosion(getOwner(), getPos(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
+					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
+					getWorld().sendEntityStatus(this, BLAST_PARTICLE);
+					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
+				}
+				else
+				{
+					InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, 0, 0, inkType, sourceWeapon);
+				}
+				calculateDrops(lastPosition, timeDelta);
+				discard();
 			}
-			else
+			else if (dropImpactSize > 0)
 			{
-				InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, 0, 0, inkType, sourceWeapon);
+				if (!isInvisible())
+				{
+					getWorld().sendEntityStatus(this, DROP_PARTICLE);
+				}
+				calculateDrops(lastPosition, timeDelta);
 			}
-			calculateDrops(lastPosition, 1f);
-			discard();
-		}
-		else if (dropImpactSize > 0)
-		{
-			if (!isInvisible())
-			{
-				getWorld().sendEntityStatus(this, (byte) 1);
-			}
-			calculateDrops(lastPosition, 1f);
 		}
 	}
 	private void calculateDrops(Vec3d lastPosition, float timeDelta)
@@ -304,30 +318,32 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		getWorld().spawnEntity(proj);
 		proj.tick(extraFrame + timeDelta);
 	}
-	private Vec3d getShootVelocity()
+	private Vec3d getShootVelocity(float timeDelta)
 	{
 		Vector3f shootDirection = getShotDirection();
 		float frame = getMaxStraightShotTime() - straightShotTime;
-		float[] speedData = getSpeed(frame, getMaxStraightShotTime());
+		float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
 		Vec3d velocity = new Vec3d(shootDirection.x * speedData[0], shootDirection.y * speedData[0], shootDirection.z * speedData[0]);
 		if (speedData[1] <= 0)
 			return velocity;
 		return velocity.subtract(0, (float) (getGravity() * speedData[1]), 0);
 	}
-	public float[] getSpeed(float frame, float straightShotFrame)
+	public float[] getSpeed(float frame, float straightShotFrame, float timeDelta)
 	{
 		float speed = dataTracker.get(SPEED);
 		float fallenFrames = frame - straightShotFrame;
-		float fallenFramesNext = fallenFrames + 1.0f;
+		float fallenFramesNext = fallenFrames + timeDelta;
+		if (timeDelta == 0)
+			return new float[] {0, fallenFramesNext};
 		
 		if (fallenFramesNext < 0) // not close to falling
 		{
-			return new float[] {speed, fallenFramesNext};
+			return new float[] {speed * timeDelta, fallenFramesNext};
 		}
-		else if (fallenFramesNext >= 1.0f) // already falling
+		else if (fallenFramesNext >= timeDelta) // already falling
 		{
 			speed *= getHorizontalDrag() * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallenFrames);
-			return new float[] {speed, fallenFramesNext};
+			return new float[] {speed * timeDelta, fallenFramesNext};
 		}
 		float straightFraction = -fallenFrames;
 		return new float[] {(speed * straightFraction + speed * getHorizontalDrag() * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallenFrames) * fallenFramesNext), fallenFramesNext};
@@ -361,18 +377,19 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		super.handleStatus(id);
 		switch (id)
 		{
-			case -1 ->
+			case BARRIER_DENY ->
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
-			case 1 ->
+			case DROP_PARTICLE ->
 			{
+				Vec3d velocity = getVelocity();
 				if (getProjectileType().equals(Types.CHARGER))
-					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - getVelocity().x * 0.25D, getY() + getHeight() * 0.5f - getVelocity().y * 0.25D, getZ() - getVelocity().z * 0.25D, 0, -0.1, 0);
+					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
 				else
-					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - getVelocity().x * 0.25D, getY() + getHeight() * 0.5f - getVelocity().y * 0.25D, getZ() - getVelocity().z * 0.25D, getVelocity().x, getVelocity().y, getVelocity().z);
+					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
 			}
-			case 2 ->
+			case PROJECTILE_IMPACT ->
 				getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), getX(), getY(), getZ(), 0, 0, 0);
-			case 3 ->
+			case BLAST_PARTICLE ->
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
@@ -404,7 +421,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 			{
 				discard();
-				getWorld().sendEntityStatus(this, (byte) -1);
+				getWorld().sendEntityStatus(this, BARRIER_DENY);
 			}
 			
 			if (target instanceof LivingEntity livingTarget)
@@ -429,11 +446,11 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				if (explodes && explosionData != null)
 				{
 					InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
-					getWorld().sendEntityStatus(this, (byte) 3);
+					getWorld().sendEntityStatus(this, BLAST_PARTICLE);
 					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 				}
 				else
-					getWorld().sendEntityStatus(this, (byte) 2);
+					getWorld().sendEntityStatus(this, PROJECTILE_IMPACT);
 				
 				discard();
 			}
@@ -458,16 +475,16 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		super.onBlockHit(result);
 		setPosition(result.getPos());
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
-			getWorld().sendEntityStatus(this, (byte) -1);
+			getWorld().sendEntityStatus(this, BARRIER_DENY);
 		else
 		{
-			getWorld().sendEntityStatus(this, (byte) 2);
+			getWorld().sendEntityStatus(this, PROJECTILE_IMPACT);
 			Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector());
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
 				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(true, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
-				getWorld().sendEntityStatus(this, (byte) 3);
+				getWorld().sendEntityStatus(this, BLAST_PARTICLE);
 			}
 			else
 			{
@@ -656,7 +673,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	/**
 	 * @return a exposed list to the synched list that manages the extra data sent to the connection or smtinh
-	 * @apiNote this list if updated isnt going to be synched!!!!! for this use addExtraData instead, or sendExtraData
+	 * @apiNote this list if updated isnt going to be synched!!!!! for this use {@link #addExtraData(ExtraSaveData)} instead, or {@link #setExtraDataList(ExtraDataList)}
 	 */
 	public ExtraDataList getExtraDatas()
 	{
