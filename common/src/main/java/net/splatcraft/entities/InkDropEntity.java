@@ -23,7 +23,6 @@ import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.registries.SplatcraftEntities;
-import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,12 +60,10 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	@Override
 	public void tick()
 	{
-		tick(SplatcraftGameRules.getIntRuleValue(getWorld(), SplatcraftGameRules.INK_PROJECTILE_FREQUENCY) / 100f);
+		tick(1f);
 	}
 	public void tick(float timeDelta)
 	{
-		InkProjectileEntity.MixinTimeDelta = timeDelta;
-		
 		Vec3d vel = getVelocity();
 		
 		if (isInFluid() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
@@ -81,7 +78,9 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 			return;
 		}
 		
+		setVelocity(vel.multiply(timeDelta));
 		super.tick();
+		setVelocity(vel);
 	}
 	@Override
 	public void updateRotation()
@@ -110,7 +109,7 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	@Override
 	protected void onBlockHit(BlockHitResult result)
 	{
-		if (InkBlockUtils.canInkPassthrough(getWorld(), result.getBlockPos()))
+		if (InkBlockUtils.canInkPassthrough(getWorld(), result.getBlockPos()) || result.isInsideBlock())
 			return;
 		
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&

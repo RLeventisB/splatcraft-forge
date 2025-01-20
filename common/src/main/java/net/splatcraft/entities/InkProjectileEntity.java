@@ -27,7 +27,10 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.*;
-import net.splatcraft.registries.*;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.registries.SplatcraftEntities;
+import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
@@ -50,7 +53,6 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	private static final TrackedData<Float> GRAVITY_SPEED_MULT = DataTracker.registerData(InkProjectileEntity.class, TrackedDataHandlerRegistry.FLOAT);
 	private static final TrackedData<ExtraDataList> EXTRA_DATA = DataTracker.registerData(InkProjectileEntity.class, ExtraSaveData.SERIALIZER);
 	private static final TrackedData<Vector3f> SHOOT_DIRECTION = DataTracker.registerData(InkProjectileEntity.class, TrackedDataHandlerRegistry.VECTOR3F);
-	public static float MixinTimeDelta;
 	public float lifespan = 600;
 	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
@@ -220,21 +222,13 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	@Override
 	public void tick()
 	{
-		tick(SplatcraftGameRules.getIntRuleValue(getWorld(), SplatcraftGameRules.INK_PROJECTILE_FREQUENCY) / 100f);
-	}
-	public void tick(float timeDelta)
-	{
-		if (timeDelta > lifespan)
-			timeDelta = lifespan;
-		
 		Vec3d lastPosition = getPos();
-		Vec3d velocity = getShootVelocity(timeDelta); // guess we're doing vector3f now
+		Vec3d velocity = getShootVelocity();
 		setVelocity(velocity.x, velocity.y, velocity.z);
 		
-		MixinTimeDelta = timeDelta;
 		super.tick();
 		
-		straightShotTime -= timeDelta;
+		straightShotTime--;
 		if (isSubmergedInWater())
 		{
 			discard();
@@ -250,13 +244,13 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			return;
 		}
 		
-		if (!getWorld().isClient() && !persistent && (lifespan -= timeDelta) <= 0)
+		if (!getWorld().isClient() && !persistent && (lifespan--) <= 0)
 		{
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
 			{
 				InkExplosion.createInkExplosion(getOwner(), getPos(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
-				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
+				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, 1f);
 				getWorld().sendEntityStatus(this, (byte) 3);
 				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 			}
@@ -264,7 +258,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			{
 				InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, 0, 0, inkType, sourceWeapon);
 			}
-			calculateDrops(lastPosition, timeDelta);
+			calculateDrops(lastPosition, 1f);
 			discard();
 		}
 		else if (dropImpactSize > 0)
@@ -273,7 +267,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			{
 				getWorld().sendEntityStatus(this, (byte) 1);
 			}
-			calculateDrops(lastPosition, timeDelta);
+			calculateDrops(lastPosition, 1f);
 		}
 	}
 	private void calculateDrops(Vec3d lastPosition, float timeDelta)
@@ -299,43 +293,41 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			}
 		}
 	}
-	public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float timeDelta)
+	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float timeDelta)
 	{
 		createDrop(dropX, dropY, dropZ, extraFrame, dropImpactSize, timeDelta);
 	}
-	public void createDrop(double dropX, double dropY, double dropZ, double extraFrame, float dropImpactSize, float timeDelta)
+	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float dropImpactSize, float timeDelta)
 	{
 		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize);
 		proj.refreshPositionAfterTeleport(dropX, dropY, dropZ);
 		getWorld().spawnEntity(proj);
-		proj.tick((float) (extraFrame + timeDelta));
+		proj.tick(extraFrame + timeDelta);
 	}
-	private Vec3d getShootVelocity(float timeDelta)
+	private Vec3d getShootVelocity()
 	{
 		Vector3f shootDirection = getShotDirection();
 		float frame = getMaxStraightShotTime() - straightShotTime;
-		float[] speedData = getSpeed(frame, getMaxStraightShotTime(), timeDelta);
+		float[] speedData = getSpeed(frame, getMaxStraightShotTime());
 		Vec3d velocity = new Vec3d(shootDirection.x * speedData[0], shootDirection.y * speedData[0], shootDirection.z * speedData[0]);
 		if (speedData[1] <= 0)
 			return velocity;
 		return velocity.subtract(0, (float) (getGravity() * speedData[1]), 0);
 	}
-	public float[] getSpeed(float frame, float straightShotFrame, float timeDelta)
+	public float[] getSpeed(float frame, float straightShotFrame)
 	{
 		float speed = dataTracker.get(SPEED);
 		float fallenFrames = frame - straightShotFrame;
-		float fallenFramesNext = fallenFrames + timeDelta;
-		if (timeDelta == 0)
-			return new float[] {0, fallenFramesNext};
+		float fallenFramesNext = fallenFrames + 1.0f;
 		
 		if (fallenFramesNext < 0) // not close to falling
 		{
-			return new float[] {speed * timeDelta, fallenFramesNext};
+			return new float[] {speed, fallenFramesNext};
 		}
-		else if (fallenFramesNext >= timeDelta) // already falling
+		else if (fallenFramesNext >= 1.0f) // already falling
 		{
 			speed *= getHorizontalDrag() * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallenFrames);
-			return new float[] {speed * timeDelta, fallenFramesNext};
+			return new float[] {speed, fallenFramesNext};
 		}
 		float straightFraction = -fallenFrames;
 		return new float[] {(speed * straightFraction + speed * getHorizontalDrag() * getGravitySpeedMult() * (float) Math.pow(getHorizontalDrag(), fallenFrames) * fallenFramesNext), fallenFramesNext};
@@ -487,10 +479,6 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	@Override
 	public void setVelocity(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
-	{
-		setVelocity(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy, 0);
-	}
-	public void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy, float partialTicks)
 	{
 		double f = -Math.sin(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
 		double f1 = -Math.sin((pitch + pitchOffset) * MathHelper.RADIANS_PER_DEGREE);
