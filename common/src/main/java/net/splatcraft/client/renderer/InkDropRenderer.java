@@ -35,17 +35,17 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 		
 		if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 12.25D)
 		{
-			float scale = entityIn.getProjectileSize();
+			float size = InkDropEntity.DROP_SIZE;
 			InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
 			
 			int rgb = color.getColorWithAlpha(255);
 			
 			//0.30000001192092896D
 			matrixStackIn.push();
-			matrixStackIn.translate(0.0D, scale, 0.0D);
+			matrixStackIn.translate(0.0D, size, 0.0D);
 			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
 			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
-			matrixStackIn.scale(scale, scale, (float) (scale * entityIn.getVelocity().length()));
+			matrixStackIn.scale(size, size, (float) (size * entityIn.getVelocity().length()));
 			
 			InkDropModel model = MODEL;
 			

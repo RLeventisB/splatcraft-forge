@@ -62,7 +62,7 @@ public class SplatcraftEntities
 {
 	protected static final DeferredRegister<EntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(Registries.ENTITY_TYPE);
 	public static final RegistrySupplier<EntityType<InkSquidEntity>> INK_SQUID = create("ink_squid", InkSquidEntity::new, SpawnGroup.AMBIENT, 0.6f, 0.5f);
-	public static final RegistrySupplier<EntityType<InkDropEntity>> INK_DROP = create("ink_drop", InkDropEntity::new, SpawnGroup.MISC);
+	public static final RegistrySupplier<EntityType<InkDropEntity>> INK_DROP = create("ink_drop", InkDropEntity::new, SpawnGroup.MISC, InkDropEntity.DROP_SIZE, InkDropEntity.DROP_SIZE);
 	public static final RegistrySupplier<EntityType<InkProjectileEntity>> INK_PROJECTILE = create("ink_projectile", InkProjectileEntity::new, SpawnGroup.MISC);
 	public static final RegistrySupplier<EntityType<SquidBumperEntity>> SQUID_BUMPER = create("squid_bumper", SquidBumperEntity::new, SpawnGroup.MISC, 0.6f, 1.8f);
 	public static final RegistrySupplier<EntityType<SpawnShieldEntity>> SPAWN_SHIELD = create("spawn_shield", SpawnShieldEntity::new, SpawnGroup.MISC, 1, 1);

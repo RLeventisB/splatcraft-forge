@@ -146,7 +146,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		if (throwerAirborne)
 		{
-			accumulatedDrops = 1;
+			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 			return setRollerProjectileStats(settings.flingData.projectileData());
 		}
 		return setRollerProjectileStats(settings.swingData.projectileData());
@@ -476,7 +476,6 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			{
 				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(true, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
 				getWorld().sendEntityStatus(this, (byte) 3);
-//				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.triangle(getWorld().getRandom(), 0.95F, 0.095F));
 			}
 			else
 			{

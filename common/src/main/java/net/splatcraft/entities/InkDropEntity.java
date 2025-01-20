@@ -6,7 +6,6 @@ import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.projectile.thrown.ThrownEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -30,9 +29,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class InkDropEntity extends ThrownEntity implements IColoredEntity
 {
+	public static final float DROP_SIZE = 1f;
 	private static final TrackedData<InkColor> DROP_COLOR = DataTracker.registerData(InkDropEntity.class, CommonUtils.INKCOLORDATAHANDLER);
-	private static final TrackedData<Float> DROP_SIZE = DataTracker.registerData(InkDropEntity.class, TrackedDataHandlerRegistry.FLOAT);
-	private static final TrackedData<Float> GRAVITY = DataTracker.registerData(InkDropEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final byte SHIELD_DENY = -1;
+	private static final byte BLOCK_COLLIDE = 1;
 	public int lifespan = 600;
 	public float impactCoverage;
 	public InkBlockUtils.InkType inkType;
@@ -46,7 +46,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		setPosition(pos);
 		setOwner(owner);
 		setColor(color);
-		setProjectileSize(0.045f);
 		impactCoverage = splashSize;
 		this.inkType = inkType;
 	}
@@ -58,15 +57,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	protected void initDataTracker(DataTracker.Builder builder)
 	{
 		builder.add(DROP_COLOR, ColorUtils.getDefaultColor());
-		builder.add(DROP_SIZE, 0.045f);
-		builder.add(GRAVITY, 0.275f);
-	}
-	public void onTrackedDataSet(TrackedData<?> data)
-	{
-		if (DROP_SIZE.equals(data))
-			calculateDimensions();
-		
-		super.onTrackedDataSet(data);
 	}
 	@Override
 	public void tick()
@@ -75,9 +65,9 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	}
 	public void tick(float timeDelta)
 	{
-		Vec3d vel = getVelocity();
 		InkProjectileEntity.MixinTimeDelta = timeDelta;
-		super.tick();
+		
+		Vec3d vel = getVelocity();
 		
 		if (isInFluid() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
 		{
@@ -85,14 +75,13 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 			return;
 		}
 		
-		if (isRemoved())
-			return;
-		setVelocity(vel.subtract(0, getGravity(), 0).multiply(Math.pow(0.9, timeDelta)));
-		
 		if (!getWorld().isClient && lifespan-- <= 0)
 		{
 			discard();
+			return;
 		}
+		
+		super.tick();
 	}
 	@Override
 	public void updateRotation()
@@ -112,10 +101,10 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		
 		switch (id)
 		{
-			case -1 ->
+			case SHIELD_DENY ->
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
-			case 1 ->
-				getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.5f), getX(), getY(), getZ(), 0, 0, 0);
+			case BLOCK_COLLIDE ->
+				getWorld().addParticle(new InkSplashParticleData(getColor(), 0.0225f), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override
@@ -132,9 +121,9 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		
 		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector()), impactCoverage, 0, 0, inkType, ItemStack.EMPTY);
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
-			getWorld().sendEntityStatus(this, (byte) -1);
+			getWorld().sendEntityStatus(this, SHIELD_DENY);
 		else
-			getWorld().sendEntityStatus(this, (byte) 1);
+			getWorld().sendEntityStatus(this, BLOCK_COLLIDE);
 		if (!getWorld().isClient)
 		{
 			discard();
@@ -173,9 +162,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	{
 		super.readCustomDataFromNbt(nbt);
 		
-		if (nbt.contains("Size"))
-			setProjectileSize(nbt.getFloat("Size"));
-		
 		NbtList directionTag = nbt.getList("DeltaMotion", NbtDouble.DOUBLE_TYPE);
 		setVelocity(new Vec3d(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
 		
@@ -183,8 +169,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		
 		setColor(InkColor.getFromNbt(nbt.get("DropColor")));
 		
-		if (nbt.contains("Gravity"))
-			setGravity(nbt.getFloat("Gravity"));
 		if (nbt.contains("Lifespan"))
 			lifespan = nbt.getInt("Lifespan");
 		
@@ -195,7 +179,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	@Override
 	public void writeCustomDataToNbt(NbtCompound nbt)
 	{
-		nbt.putFloat("Size", getProjectileSize());
 		NbtList directionTag = new NbtList();
 		Vec3d direction = getVelocity();
 		directionTag.add(NbtDouble.of(direction.x));
@@ -206,7 +189,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		nbt.putFloat("ImpactCoverage", impactCoverage);
 		nbt.put("DropColor", getColor().getNbt());
 		
-		nbt.putDouble("Gravity", getGravity());
 		nbt.putInt("Lifespan", lifespan);
 		
 		nbt.putBoolean("Invisible", isInvisible());
@@ -214,31 +196,20 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		nbt.putString("InkType", inkType.getSerializedName());
 		
 		super.writeCustomDataToNbt(nbt);
-		nbt.remove("Item");
 	}
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose getMatrices)
 	{
-		return super.getDimensions(getMatrices).scaled(getProjectileSize() / 2f);
+		return super.getDimensions(getMatrices);
 	}
 	public float getProjectileSize()
 	{
-		return dataTracker.get(DROP_SIZE);
-	}
-	public void setProjectileSize(float size)
-	{
-		dataTracker.set(DROP_SIZE, size);
-		refreshPosition();
-		calculateDimensions();
+		return DROP_SIZE;
 	}
 	@Override
-	public double getGravity()
+	protected double getGravity()
 	{
-		return dataTracker.get(GRAVITY);
-	}
-	public void setGravity(float gravity)
-	{
-		dataTracker.set(GRAVITY, gravity);
+		return 0.125;
 	}
 	@Override
 	public InkColor getColor()
