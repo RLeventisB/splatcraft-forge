@@ -22,14 +22,12 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class InkExplosion
 {
@@ -493,13 +491,13 @@ public class InkExplosion
 			// god fucking lord this was hard to search for
 			QuadFrustum frustum = new QuadFrustum();
 			List<Integer> obstructedFaces = new ArrayList<>(faces.size());
-			HashSet<Integer> facesToProcess = IntStream.range(0, faces.size()).boxed().collect(Collectors.toCollection(HashSet::new));
-			HashSet<Integer> facesThatArePartiallyObstructed = new HashSet<>();
+//			HashSet<Integer> facesToProcess = IntStream.range(0, faces.size()).boxed().collect(Collectors.toCollection(HashSet::new));
+//			HashSet<Integer> facesThatArePartiallyObstructed = new HashSet<>();
 			
 			for (int i = 0; i < faces.size(); i++)
 			{
 				// this iterares through all faces!!! unless it has been already processed, or obstructed
-				if (!facesToProcess.contains(i))
+				if (obstructedFaces.contains(i))
 					continue;
 				
 				// gets the current face, and creates a frustom that consists of 5 planes: quad plane (the back of the face as a plane,
@@ -512,7 +510,7 @@ public class InkExplosion
 					FaceData otherFace = faces.get(j);
 					
 					// if a face was already obstructed (by another face) just skip processing it
-					if (obstructedFaces.contains(j) || currentFace == otherFace)
+					if (obstructedFaces.contains(j) || i == j || !frustum.isAbleToBeObstructed(otherFace))
 						continue;
 					
 					// if a face is obstructed (centroid and all corners are "above" these 5 planes) by the current face,
@@ -521,24 +519,24 @@ public class InkExplosion
 					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
 					{
 						obstructedFaces.add(j);
-						
-						facesToProcess.remove(j);
-						facesThatArePartiallyObstructed.remove(j);
+
+//						facesToProcess.remove(j);
+//						facesThatArePartiallyObstructed.remove(j);
 					}
 					else if (state == QuadFrustum.FaceState.PARTIALLY_OBSTRUCTED)
 					{
-						facesThatArePartiallyObstructed.add(j);
+//						facesThatArePartiallyObstructed.add(j);
 					}
 				}
 			}
 			
 			// try obstructing more faces in the case of a face being obstructed by another face, but this another face was defined as removed and thus not processed
-			for (var removedIndex : obstructedFaces.toArray(new Integer[obstructedFaces.size()]))
+			/*for (var removedIndex : obstructedFaces.toArray(new Integer[obstructedFaces.size()]))
 			{
 				FaceData currentFace = faces.get(removedIndex);
 				frustum.createFor(currentFace);
 				
-				for (var partiallyObstructedIndex : facesThatArePartiallyObstructed)
+				for (var partiallyObstructedIndex : facesThatArePartiallyObstructed.toArray(new Integer[facesThatArePartiallyObstructed.size()]))
 				{
 					FaceData otherFace = faces.get(partiallyObstructedIndex);
 					
@@ -549,10 +547,48 @@ public class InkExplosion
 					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
 					{
 						obstructedFaces.add(partiallyObstructedIndex);
+						facesThatArePartiallyObstructed.remove(partiallyObstructedIndex);
+					}
+				}
+			}*/
+			
+			sortAndRemoveIndices(obstructedFaces);
+			
+			// now its time to remove the faces that have adyacent points (since we have been ignoring them with the small epsilon)!!!
+			// first we collect all the faces that are connected by a point
+			HashMap<Vector3d, List<Integer>> adyacentPointMap = new HashMap<>();
+			for (int i = 0; i < faces.size(); i++)
+			{
+				FaceData face = faces.get(i);
+				for (FaceData.PointData corner : face.corners)
+				{
+					List<Integer> facesInPoint = adyacentPointMap.computeIfAbsent(corner.point, v -> new ArrayList<>());
+					facesInPoint.add(i);
+				}
+			}
+			
+			// then we just keep the one that doesn't have it's centroid as obstructed (and reuse the list for some reason)
+			obstructedFaces.clear();
+			for (List<Integer> indices : adyacentPointMap.values())
+			{
+				if (indices.size() <= 1)
+					continue;
+				
+				for (int index : indices)
+				{
+					FaceData face = faces.get(index);
+					if (face.centroid.isObstructed() && !obstructedFaces.contains(index))
+					{
+						obstructedFaces.add(index);
 					}
 				}
 			}
 			
+			// wait i just noticed i could've made a removeAll(v -> v.centroid.isObstructed) but i feel that i could place a predicate that does more checks
+			sortAndRemoveIndices(obstructedFaces);
+		}
+		private void sortAndRemoveIndices(List<Integer> obstructedFaces)
+		{
 			// start from highest since starting from the lowest shifts the entire list
 			obstructedFaces.sort(Comparator.reverseOrder());
 			for (int index : obstructedFaces)
@@ -591,7 +627,7 @@ public class InkExplosion
 			private final Plane right = new Plane();
 			private final Plane up = new Plane();
 			private final Plane left = new Plane();
-			private final QuadPlane quad = new QuadPlane();
+			private final QuadPlane backQuad = new QuadPlane();
 			public void createFor(FaceData face)
 			{
 				FaceData.PointData[] midpoints = face.corners;
@@ -599,21 +635,19 @@ public class InkExplosion
 				left.setFor3Point(midpoints, 1);
 				up.setFor3Point(midpoints, 2);
 				right.setFor3Point(midpoints, 3);
-				quad.setForPointAndNormal(face.getCentroid().point, new Vector3i(face.faceNormalDir.getOffsetX(), face.faceNormalDir.getOffsetY(), face.faceNormalDir.getOffsetZ()));
+				Direction normalDir = face.faceNormalDir;
+				backQuad.setForPointAndNormal(face.getCentroid().point, new Vector3i(normalDir.getOffsetX(), normalDir.getOffsetY(), normalDir.getOffsetZ()));
 			}
-			public boolean isPointObstructed(FaceData.PointData point, Vector3d centroid)
+			public boolean isPointObstructed(FaceData.PointData point)
 			{
 				if (point.isObstructed())
 					return true;
-				// this is true if the quad is not in and adyacent or something idk how to explain it
-				boolean lowerTolerance = Math.abs(quad.normal.dot(centroid)) > 10e-3;
 				
 				boolean pointObstructed =
-					quad.isAboveOrIn(point.point, lowerTolerance) &&
-						left.isAboveOrIn(point.point, lowerTolerance) &&
-						up.isAboveOrIn(point.point, lowerTolerance) &&
-						right.isAboveOrIn(point.point, lowerTolerance) &&
-						down.isAboveOrIn(point.point, lowerTolerance);
+					left.isAbove(point.point) &&
+						up.isAbove(point.point) &&
+						right.isAbove(point.point) &&
+						down.isAbove(point.point);
 				
 				if (pointObstructed)
 					point.markObstructed();
@@ -622,18 +656,21 @@ public class InkExplosion
 			}
 			public FaceState isFaceObstructed(FaceData otherFace)
 			{
-				Vector3d centroidPoint = otherFace.centroid.point;
-				boolean centroid = isPointObstructed(otherFace.centroid, centroidPoint);
-				boolean c1 = isPointObstructed(otherFace.corners[0], centroidPoint);
-				boolean c2 = isPointObstructed(otherFace.corners[1], centroidPoint);
-				boolean c3 = isPointObstructed(otherFace.corners[2], centroidPoint);
-				boolean c4 = isPointObstructed(otherFace.corners[3], centroidPoint);
+				boolean centroid = isPointObstructed(otherFace.centroid);
+				boolean c1 = isPointObstructed(otherFace.corners[0]);
+				boolean c2 = isPointObstructed(otherFace.corners[1]);
+				boolean c3 = isPointObstructed(otherFace.corners[2]);
+				boolean c4 = isPointObstructed(otherFace.corners[3]);
 				
 				if (centroid && c1 && c2 && c3 && c4)
 					return FaceState.FULLY_OBSTRUCTED;
 				else if (centroid || c1 || c2 || c3 || c4)
 					return FaceState.PARTIALLY_OBSTRUCTED;
 				return FaceState.UNOBSTRUCTED;
+			}
+			public boolean isAbleToBeObstructed(FaceData otherFace)
+			{
+				return backQuad.isAbove(otherFace.centroid.point);
 			}
 			public enum FaceState
 			{
@@ -659,12 +696,10 @@ public class InkExplosion
 			{
 				return normal.dot(point);
 			}
-			public boolean isAboveOrIn(Vector3d point, boolean lowerTolerance)
+			public boolean isAbove(Vector3d point)
 			{
-				// small epsilon vectors that are literally on the plane arent "9.34537e-10" units above because of floating point precision
-				// however! i rewrote all of this to use doubles instead so that's less common but anyways
-				double distance = getDistance(point);
-				return lowerTolerance ? distance >= 0 : distance - 10e-6 > 0;
+				// small epsilon so blocks that are on the plane aren't detected as obstructed, but will be processed later
+				return getDistance(point) > 10e-6;
 			}
 			@Override
 			public String toString()
@@ -680,12 +715,13 @@ public class InkExplosion
 				this.normal = new Vector3IntImpl(normal.negate(new Vector3i()));
 				
 				// since the dot product of the normal and the point must be 0 (lies in the plane) ax + by + cz = d HOLY FUCKIGN SHIT I AM LEARNGIN geometry
-				distance = this.normal.dot(point);
+				// note: distance is inverted since normal is inverted to detect points that are in the "back"
+				distance = -this.normal.dot(point);
 			}
 			@Override
 			public double getDistance(Vector3d point)
 			{
-				return normal.dot(point) - distance;
+				return normal.dot(point) + distance;
 			}
 			@Override
 			public String toString()

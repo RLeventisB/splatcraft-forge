@@ -16,6 +16,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
@@ -246,14 +247,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			return;
 		}
 		
-		if (isRemoved())
-		{
-			Vec3d nextPosition = lastPosition.add(velocity);
-			double frame = CommonUtils.getDeltaBetweenVectors(getPos(), lastPosition, nextPosition, 0.5);
-			setVelocity(getVelocity().multiply(frame));
-			calculateDrops(lastPosition, (float) frame);
-			return;
-		}
+		if (isRemoved()) return;
 		
 		if (!getWorld().isClient())
 		{
@@ -263,7 +257,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
 				{
 					InkExplosion.createInkExplosion(getOwner(), getPos(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
-					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint, timeDelta);
+					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
 					getWorld().sendEntityStatus(this, BLAST_PARTICLE);
 					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 				}
@@ -271,7 +265,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				{
 					InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, 0, 0, inkType, sourceWeapon);
 				}
-				calculateDrops(lastPosition, timeDelta);
+				calculateDrops(lastPosition);
 				discard();
 			}
 			else if (dropImpactSize > 0)
@@ -280,28 +274,44 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				{
 					getWorld().sendEntityStatus(this, DROP_PARTICLE);
 				}
-				calculateDrops(lastPosition, timeDelta);
+				calculateDrops(lastPosition);
 			}
 		}
 	}
-	private void calculateDrops(Vec3d lastPosition, float timeDelta)
+	private void calculateDrops(Vec3d lastPosition)
+	{
+		calculateDrops(lastPosition, getPos());
+	}
+	private void calculateDrops(Vec3d lastPosition, Vec3d currentPosition)
+	{
+		calculateDrops(lastPosition, currentPosition, (float) getVelocity().length());
+	}
+	private void calculateDrops(Vec3d lastPosition, Vec3d currentPosition, float unitsTravelled)
+	{
+		calculateDrops(lastPosition, currentPosition, unitsTravelled, false);
+	}
+	private void calculateDrops(Vec3d lastPosition, Vec3d currentPosition, float unitsTravelled, boolean doRayCheck)
 	{
 		if (distanceBetweenDrops == 0)
 		{
-			createDrop(getX(), getY(), getZ(), 0, timeDelta);
+			createDrop(getX(), getY(), getZ(), 0, 0);
 			return;
 		}
-		Vec3d deltaMovement = getVelocity();
-		float dropsTravelled = (float) deltaMovement.length() / distanceBetweenDrops;
+		float dropsTravelled = unitsTravelled / distanceBetweenDrops;
 		if (dropsTravelled > 0)
 		{
 			accumulatedDrops += dropsTravelled;
+			
 			while (accumulatedDrops >= 1)
 			{
 				accumulatedDrops -= 1;
 				
 				float progress = accumulatedDrops / dropsTravelled;
-				Vec3d dropPos = lastPosition.lerp(getPos(), progress);
+				
+				Vec3d dropPos = lastPosition.lerp(currentPosition, progress);
+				
+				if (doRayCheck && !getWorld().isSpaceEmpty(Box.of(dropPos, 1, 1, 1)))
+					break;
 				
 				createDrop(dropPos.x, dropPos.y, dropPos.z, progress, dropImpactSize);
 			}
@@ -469,7 +479,11 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			return;
 		
 		super.onBlockHit(result);
-		setPosition(result.getPos());
+		
+		Vec3d nextPosition = getPos().add(getVelocity());
+		double framesAdvanced = CommonUtils.getDeltaBetweenVectors(result.getPos(), getPos(), nextPosition, 0);
+		calculateDrops(getPos(), nextPosition, (float) (framesAdvanced * getVelocity().length()), true);
+		
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
 			getWorld().sendEntityStatus(this, BARRIER_DENY);
 		else
