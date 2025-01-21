@@ -225,7 +225,7 @@ public class InkExplosion
 					double dist = relativePos.length();
 					if (dist <= paintRadius + MathHelper.SQUARE_ROOT_OF_TWO)
 					{
-						map.register(pos, shape);
+						map.register(pos, blockState, shape);
 					}
 				}
 		
@@ -328,51 +328,51 @@ public class InkExplosion
 				case Z -> new Vector3d((minCoord1 + maxCoord1) / 2, (minCoord2 + maxCoord2) / 2, planeCoord);
 			});
 		}
-		public static List<FaceData> getFacesFromBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int blockPosIndex, Predicate<FaceData> distanceChecker)
+		public static List<FaceData> getFacesFromBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int blockPosIndex, Predicate<FaceData> facePredicate)
 		{
 			List<FaceData> list = new ArrayList<>(3);
 			
 			// negative X
 			if (minX > 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.WEST,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.WEST,
 					minX, minY, maxY, maxZ, minZ
 				));
 			
 			// positive x
 			if (maxX < 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.EAST,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.EAST,
 					maxX, minY, maxY, minZ, maxZ
 				));
 			
 			// negative y
 			if (minY > 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.DOWN,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.DOWN,
 					minY, maxX, minX, minZ, maxZ
 				));
 			
 			// positive y
 			if (maxY < 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.UP,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.UP,
 					maxY, minX, maxX, minZ, maxZ
 				));
 			
 			// negative z
 			if (minZ > 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.NORTH,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.NORTH,
 					minZ, minX, maxX, minY, maxY
 				));
 			
 			// positive z
 			if (maxZ < 0)
-				addToListIfClose(list, distanceChecker, new FaceData(blockPosIndex, Direction.SOUTH,
+				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.SOUTH,
 					maxZ, maxX, minX, minY, maxY
 				));
 			
 			return list;
 		}
-		private static void addToListIfClose(List<FaceData> list, Predicate<FaceData> distanceChecker, FaceData faceData)
+		private static void addToListIfValid(List<FaceData> list, Predicate<FaceData> facePredicate, FaceData faceData)
 		{
-			if (distanceChecker.test(faceData))
+			if (facePredicate.test(faceData))
 				list.add(faceData);
 		}
 		public PointData getCentroid()
@@ -467,7 +467,7 @@ public class InkExplosion
 			this.noiseRange = noiseRange;
 			this.random = random;
 		}
-		public void register(BlockPos pos, VoxelShape shape)
+		public void register(BlockPos pos, BlockState state, VoxelShape shape)
 		{
 			shape.forEachBox((xmin, ymin, zmin, xmax, ymax, zmax) ->
 			{
@@ -478,7 +478,7 @@ public class InkExplosion
 				double maxY = -worldOrigin.y + ymax + pos.getY();
 				double maxZ = -worldOrigin.z + zmax + pos.getZ();
 				
-				List<FaceData> facesList = FaceData.getFacesFromBox(minX, minY, minZ, maxX, maxY, maxZ, blockPositions.size(), this::checkCloseEnough);
+				List<FaceData> facesList = FaceData.getFacesFromBox(minX, minY, minZ, maxX, maxY, maxZ, blockPositions.size(), (FaceData face) -> checkCloseEnoughAndVisible(face, state, pos));
 				if (!facesList.isEmpty())
 				{
 					blockPositions.add(pos);
@@ -486,11 +486,22 @@ public class InkExplosion
 				}
 			});
 		}
-		public boolean checkCloseEnough(FaceData data)
+		public boolean checkCloseEnoughAndVisible(FaceData face, BlockState blockState, BlockPos pos)
 		{
-			float noiseValue = (random.nextFloat() * 2f - 1) * noiseRange;
 			// is this faster than doing a² + 2ab + b²?????? i should benchmark that but it has been 4 days since i am doing this thing so im tired
-			return data.centroid.point.length() < paintRange + noiseValue;
+			float noiseValue = (random.nextFloat() * 2f - 1) * noiseRange;
+			if (face.centroid.point.length() < paintRange + noiseValue)
+			{
+				// if close enough check if there isn't another block fully occluding the face
+				BlockPos forwardPos = pos.offset(face.faceNormalDir);
+				
+				BlockState occludingBlockState = world.getBlockState(forwardPos);
+				VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFace(face.faceNormalDir);
+				VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, forwardPos).getFace(face.faceNormalDir.getOpposite());
+				
+				return !VoxelShapes.isSideCovered(blockCollision, occludingCollision, face.faceNormalDir);
+			}
+			return false;
 		}
 		public void processAndCull()
 		{
@@ -500,12 +511,10 @@ public class InkExplosion
 			// god fucking lord this was hard to search for
 			QuadFrustum frustum = new QuadFrustum();
 			List<Integer> obstructedFaces = new ArrayList<>(faces.size());
-//			HashSet<Integer> facesToProcess = IntStream.range(0, faces.size()).boxed().collect(Collectors.toCollection(HashSet::new));
-//			HashSet<Integer> facesThatArePartiallyObstructed = new HashSet<>();
 			
 			for (int i = 0; i < faces.size(); i++)
 			{
-				// this iterares through all faces!!! unless it has been already processed, or obstructed
+				// this iterares through all faces!!! unless it has been obstructed
 				if (obstructedFaces.contains(i))
 					continue;
 				
@@ -528,73 +537,15 @@ public class InkExplosion
 					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
 					{
 						obstructedFaces.add(j);
-
-//						facesToProcess.remove(j);
-//						facesThatArePartiallyObstructed.remove(j);
-					}
-					else if (state == QuadFrustum.FaceState.PARTIALLY_OBSTRUCTED)
-					{
-//						facesThatArePartiallyObstructed.add(j);
 					}
 				}
 			}
-			
-			// try obstructing more faces in the case of a face being obstructed by another face, but this another face was defined as removed and thus not processed
-			/*for (var removedIndex : obstructedFaces.toArray(new Integer[obstructedFaces.size()]))
-			{
-				FaceData currentFace = faces.get(removedIndex);
-				frustum.createFor(currentFace);
-				
-				for (var partiallyObstructedIndex : facesThatArePartiallyObstructed.toArray(new Integer[facesThatArePartiallyObstructed.size()]))
-				{
-					FaceData otherFace = faces.get(partiallyObstructedIndex);
-					
-					if (obstructedFaces.contains(partiallyObstructedIndex) || currentFace == otherFace)
-						continue;
-					
-					QuadFrustum.FaceState state = frustum.isFaceObstructed(otherFace);
-					if (state == QuadFrustum.FaceState.FULLY_OBSTRUCTED)
-					{
-						obstructedFaces.add(partiallyObstructedIndex);
-						facesThatArePartiallyObstructed.remove(partiallyObstructedIndex);
-					}
-				}
-			}*/
 			
 			sortAndRemoveIndices(obstructedFaces);
 			
-			// now its time to remove the faces that have adyacent points (since we have been ignoring them with the small epsilon)!!!
-			// first we collect all the faces that are connected by a point
-			HashMap<Vector3d, List<Integer>> adyacentPointMap = new HashMap<>();
-			for (int i = 0; i < faces.size(); i++)
-			{
-				FaceData face = faces.get(i);
-				for (FaceData.PointData corner : face.corners)
-				{
-					List<Integer> facesInPoint = adyacentPointMap.computeIfAbsent(corner.point, v -> new ArrayList<>());
-					facesInPoint.add(i);
-				}
-			}
-			
-			// then we just keep the one that doesn't have it's centroid as obstructed (and reuse the list for some reason)
-			obstructedFaces.clear();
-			for (List<Integer> indices : adyacentPointMap.values())
-			{
-				if (indices.size() <= 1)
-					continue;
-				
-				for (int index : indices)
-				{
-					FaceData face = faces.get(index);
-					if (face.centroid.isObstructed() && !obstructedFaces.contains(index))
-					{
-						obstructedFaces.add(index);
-					}
-				}
-			}
-			
-			// wait i just noticed i could've made a removeAll(v -> v.centroid.isObstructed) but i feel that i could place a predicate that does more checks
-			sortAndRemoveIndices(obstructedFaces);
+			// ok most of the time removing a face that has it's centroid obstructed but not it's corners is ok because
+			// it was skipped by that small epsilon in the plane check so this should be fine
+			faces.removeIf(v -> v.centroid.obstructed);
 		}
 		private void sortAndRemoveIndices(List<Integer> obstructedFaces)
 		{
