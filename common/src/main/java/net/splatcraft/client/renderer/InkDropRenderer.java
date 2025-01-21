@@ -42,7 +42,6 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 			
 			//0.30000001192092896D
 			matrixStack.push();
-			matrixStack.translate(0, size / 2, 0);
 			matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
 			matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entity.getPitch(partialTicks) - 90.0F));
 			matrixStack.scale(size, size, (float) (size + size * entity.getVelocity().length()));
