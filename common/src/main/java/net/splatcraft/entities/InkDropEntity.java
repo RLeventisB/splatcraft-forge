@@ -32,9 +32,10 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	private static final TrackedData<InkColor> DROP_COLOR = DataTracker.registerData(InkDropEntity.class, CommonUtils.INKCOLORDATAHANDLER);
 	private static final byte SHIELD_DENY = -1;
 	private static final byte BLOCK_COLLIDE = 1;
-	public int lifespan = 600;
+	public float lifespan = 600;
 	public float impactCoverage;
 	public InkBlockUtils.InkType inkType;
+	private float timeDelta;
 	public InkDropEntity(EntityType<InkDropEntity> type, World world)
 	{
 		super(type, world);
@@ -72,15 +73,20 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 			return;
 		}
 		
-		if (!getWorld().isClient && lifespan-- <= 0)
+		if (!getWorld().isClient && (lifespan -= timeDelta) <= 0)
 		{
 			discard();
 			return;
 		}
 		
-		setVelocity(vel.multiply(timeDelta));
+		this.timeDelta = timeDelta;
 		super.tick();
-		setVelocity(vel);
+		this.timeDelta = 1;
+	}
+	@Override
+	public Vec3d getVelocity()
+	{
+		return super.getVelocity().multiply(timeDelta);
 	}
 	@Override
 	public void updateRotation()
@@ -103,7 +109,7 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 			case SHIELD_DENY ->
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
 			case BLOCK_COLLIDE ->
-				getWorld().addParticle(new InkSplashParticleData(getColor(), 0.0225f), getX(), getY(), getZ(), 0, 0, 0);
+				getWorld().addParticle(new InkSplashParticleData(getColor(), impactCoverage), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override
@@ -118,7 +124,8 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		
 		super.onBlockHit(result);
 		
-		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector()), impactCoverage, 0, 0, inkType, ItemStack.EMPTY);
+		setPosition(InkExplosion.adjustPosition(result.getPos().offset(result.getSide(), 0.4f), result.getSide()));
+		InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getPos(), result.getSide()), impactCoverage, 0, 0, inkType, ItemStack.EMPTY);
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
 			getWorld().sendEntityStatus(this, SHIELD_DENY);
 		else
@@ -169,7 +176,7 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		setColor(InkColor.getFromNbt(nbt.get("DropColor")));
 		
 		if (nbt.contains("Lifespan"))
-			lifespan = nbt.getInt("Lifespan");
+			lifespan = nbt.getFloat("Lifespan");
 		
 		setInvisible(nbt.getBoolean("Invisible"));
 		
@@ -188,7 +195,7 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		nbt.putFloat("ImpactCoverage", impactCoverage);
 		nbt.put("DropColor", getColor().getNbt());
 		
-		nbt.putInt("Lifespan", lifespan);
+		nbt.putFloat("Lifespan", lifespan);
 		
 		nbt.putBoolean("Invisible", isInvisible());
 		
@@ -200,10 +207,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose getMatrices)
 	{
 		return super.getDimensions(getMatrices);
-	}
-	public float getProjectileSize()
-	{
-		return DROP_SIZE;
 	}
 	@Override
 	protected double getGravity()

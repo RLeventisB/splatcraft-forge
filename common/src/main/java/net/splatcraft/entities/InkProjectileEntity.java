@@ -303,20 +303,16 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				float progress = accumulatedDrops / dropsTravelled;
 				Vec3d dropPos = lastPosition.lerp(getPos(), progress);
 				
-				createDrop(dropPos.x, dropPos.y, dropPos.z, progress, timeDelta);
+				createDrop(dropPos.x, dropPos.y, dropPos.z, progress, dropImpactSize);
 			}
 		}
 	}
-	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float timeDelta)
-	{
-		createDrop(dropX, dropY, dropZ, extraFrame, dropImpactSize, timeDelta);
-	}
-	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float dropImpactSize, float timeDelta)
+	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float dropImpactSize)
 	{
 		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize);
 		proj.refreshPositionAfterTeleport(dropX, dropY, dropZ);
 		getWorld().spawnEntity(proj);
-		proj.tick(extraFrame + timeDelta);
+		proj.tick(extraFrame);
 	}
 	private Vec3d getShootVelocity(float timeDelta)
 	{
@@ -383,9 +379,9 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			{
 				Vec3d velocity = getVelocity();
 				if (getProjectileType().equals(Types.CHARGER))
-					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
+					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.8f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
 				else
-					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.4f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
+					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.8f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
 			}
 			case PROJECTILE_IMPACT ->
 				getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), getX(), getY(), getZ(), 0, 0, 0);
@@ -479,7 +475,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		else
 		{
 			getWorld().sendEntityStatus(this, PROJECTILE_IMPACT);
-			Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide().getUnitVector());
+			Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide());
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{

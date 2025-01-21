@@ -61,10 +61,10 @@ public class InkExplosion
 		this.weapon = weapon;
 		color = ColorUtils.getEntityColor(exploder);
 	}
-	public static Vec3d adjustPosition(Vec3d pos, Vector3f normal)
+	public static Vec3d adjustPosition(Vec3d pos, Direction normal)
 	{
-		float modifier = 0.01f;
-		return pos.add(normal.x() * modifier, normal.y() * modifier, normal.z() * modifier);
+		final float modifier = 0.01f;
+		return pos.offset(normal, modifier);
 	}
 	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
 	{

@@ -485,7 +485,7 @@ public class CommonUtils
 		return false;
 	}
 	// this only accepts a fallback in cases of some coordinate not being finite / startPos being equal to endPos
-	public static double getDeltaBetweenVectors(Vec3d pos, Vec3d startPos, Vec3d endPos, Double fallback)
+	public static double getDeltaBetweenVectors(Vec3d pos, Vec3d startPos, Vec3d endPos, double fallback)
 	{
 		Double[] progresses = new Double[]
 			{

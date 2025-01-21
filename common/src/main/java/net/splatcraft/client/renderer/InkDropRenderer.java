@@ -7,7 +7,6 @@ import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.feature.FeatureRendererContext;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.projectiles.InkDropModel;
@@ -42,10 +41,10 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 			
 			//0.30000001192092896D
 			matrixStackIn.push();
-			matrixStackIn.translate(0.0D, size, 0.0D);
-			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevYaw, entityIn.getYaw()) - 180.0F));
-			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(MathHelper.lerp(partialTicks, entityIn.prevPitch, entityIn.getPitch())));
-			matrixStackIn.scale(size, size, (float) (size * entityIn.getVelocity().length()));
+			matrixStackIn.translate(0, size / 2, 0);
+			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
+			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entityIn.getPitch(partialTicks) - 90.0F));
+			matrixStackIn.scale(size, size, (float) (size + size * entityIn.getVelocity().length()));
 			
 			InkDropModel model = MODEL;
 			
@@ -58,7 +57,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 	}
 	protected float handleRotationFloat(InkDropEntity livingBase, float partialTicks)
 	{
-		return (float) livingBase.age + partialTicks;
+		return livingBase.lifespan + partialTicks;
 	}
 	@Override
 	public @NotNull InkDropModel getModel()
