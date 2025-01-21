@@ -127,7 +127,6 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		}
 		else
 		{
-			// todo: clientworld doenst reach here for some reason :(
 			Vec3d particlePos = result.getPos().offset(result.getSide(), 0.4f);
 			if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
