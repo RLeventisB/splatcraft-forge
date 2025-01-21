@@ -293,8 +293,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (!local)
 							{
-								entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundCategory.PLAYERS, 0.7F, ((entity.getWorld().random.nextFloat() - entity.getWorld().getRandom().nextFloat()) * 0.1F + 1.0F) * 0.95F);
-								InkExplosion.createInkExplosion(entity, entity.getPos(), 0.9f, 0, 0, InkBlockUtils.getInkType(entity), storedStack);
+								entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(entity.getWorld().random, 0.95f, 0.095f));
+								InkExplosion.createInkExplosion(entity, entity.getPos(), 0.9f, InkBlockUtils.getInkType(entity), storedStack);
 							}
 							entity.setNoDrag(true);
 							

@@ -263,7 +263,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				}
 				else
 				{
-					InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, 0, 0, inkType, sourceWeapon);
+					InkExplosion.createInkExplosion(getOwner(), getPos(), impactCoverage, inkType, sourceWeapon);
 				}
 				calculateDrops(lastPosition);
 				discard();
@@ -322,7 +322,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize);
 		proj.refreshPositionAfterTeleport(dropX, dropY, dropZ);
 		getWorld().spawnEntity(proj);
-		proj.tick(extraFrame);
+		proj.tick(1 - extraFrame);
 	}
 	private Vec3d getShootVelocity(float timeDelta)
 	{
@@ -482,6 +482,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		Vec3d nextPosition = getPos().add(getVelocity());
 		double framesAdvanced = CommonUtils.getDeltaBetweenVectors(result.getPos(), getPos(), nextPosition, 0);
+		// todo: fix this and not depend on world.isSpaceEmpty
 		calculateDrops(getPos(), nextPosition, (float) (framesAdvanced * getVelocity().length()), true);
 		
 		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
@@ -489,7 +490,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		else
 		{
 			getWorld().sendEntityStatus(this, PROJECTILE_IMPACT);
-			Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide());
+			Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide(), this);
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
@@ -498,7 +499,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			}
 			else
 			{
-				InkExplosion.createInkExplosion(getOwner(), impactPos, impactCoverage, 0, 0, inkType, sourceWeapon);
+				InkExplosion.createInkExplosion(getOwner(), impactPos, impactCoverage, inkType, sourceWeapon);
 			}
 		}
 		if (!getWorld().isClient())

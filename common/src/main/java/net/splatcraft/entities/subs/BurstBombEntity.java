@@ -41,7 +41,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 	protected void onBlockHit(BlockHitResult result)
 	{
 		SubWeaponSettings<BurstBombDataRecord> settings = getSettings();
-		Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide());
+		Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide(), this);
 		explode(settings, impactPos);
 	}
 	public void explode(SubWeaponSettings<BurstBombDataRecord> settings, Vec3d impactPos)

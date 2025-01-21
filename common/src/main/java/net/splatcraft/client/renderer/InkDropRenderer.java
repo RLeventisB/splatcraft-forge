@@ -27,32 +27,33 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Fe
 		MODEL = new InkDropModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION));
 	}
 	@Override
-	public void render(InkDropEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
+	public void render(InkDropEntity entity, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider provider, int packetLight)
 	{
-		if (entityIn.isInvisible())
+		if (entity.isInvisible())
 			return;
 		
-		if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 12.25D)
+		double distance = dispatcher.camera.getPos().squaredDistanceTo(entity.getLerpedPos(partialTicks));
+		if (distance >= 2)
 		{
-			float size = InkDropEntity.DROP_SIZE;
-			InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
+			float size = InkDropEntity.DROP_SIZE * entity.getImpactCoverage();
+			InkColor color = ColorUtils.getColorLockedIfConfig(entity.getColor());
 			
-			int rgb = color.getColorWithAlpha(255);
+			int rgb = color.getColorWithAlpha((int) Math.min(255, distance));
 			
 			//0.30000001192092896D
-			matrixStackIn.push();
-			matrixStackIn.translate(0, size / 2, 0);
-			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
-			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entityIn.getPitch(partialTicks) - 90.0F));
-			matrixStackIn.scale(size, size, (float) (size + size * entityIn.getVelocity().length()));
+			matrixStack.push();
+			matrixStack.translate(0, size / 2, 0);
+			matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
+			matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entity.getPitch(partialTicks) - 90.0F));
+			matrixStack.scale(size, size, (float) (size + size * entity.getVelocity().length()));
 			
 			InkDropModel model = MODEL;
 			
-			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch(partialTicks));
-			model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), packedLightIn, OverlayTexture.DEFAULT_UV, rgb);
-			matrixStackIn.pop();
+			model.setAngles(entity, 0, 0, handleRotationFloat(entity, partialTicks), entityYaw, entity.getPitch(partialTicks));
+			model.render(matrixStack, provider.getBuffer(model.getLayer(getTexture(entity))), packetLight, OverlayTexture.DEFAULT_UV, rgb);
+			matrixStack.pop();
 			
-			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+			super.render(entity, entityYaw, partialTicks, matrixStack, provider, packetLight);
 		}
 	}
 	protected float handleRotationFloat(InkDropEntity livingBase, float partialTicks)

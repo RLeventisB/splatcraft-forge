@@ -75,6 +75,10 @@ public class DamageRangesRecord
 		}
 		return new DamageRangesRecord(damageValues, buffer.readBoolean());
 	}
+	public static boolean isInsignificant(DamageRangesRecord record)
+	{
+		return record == null || record.damageValues.isEmpty() || record.getMaxDistance() == 0;
+	}
 	public float getDamage(float distance)
 	{
 		if (!lerpBetween)
@@ -109,10 +113,6 @@ public class DamageRangesRecord
 	public float getMaxRegisteredDamage()
 	{
 		return damageValues.isEmpty() ? 0 : damageValues.firstEntry().getValue();
-	}
-	public boolean isInsignificant()
-	{
-		return damageValues.isEmpty() || getMaxDistance() == 0;
 	}
 	public DamageRangesRecord cloneWithMultiplier(float rangeMultiplier, float damageMultiplier)
 	{
@@ -177,7 +177,7 @@ public class DamageRangesRecord
 			).apply(instance, DamageRangeRecord::new)
 		);
 	}
-	public class Shifted extends DamageRangesRecord
+	public static class Shifted extends DamageRangesRecord
 	{
 		private final float shift;
 		public Shifted(TreeMap<Float, Float> damageValues, boolean lerpBetween, float shift)

@@ -12,6 +12,7 @@ import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.minecraft.world.explosion.Explosion;
@@ -59,9 +60,13 @@ public class InkExplosion
 		this.weapon = weapon;
 		color = ColorUtils.getEntityColor(exploder);
 	}
-	public static Vec3d adjustPosition(Vec3d pos, Direction normal)
+	public static Vec3d adjustPosition(final Vec3d pos, Direction normal, Entity entity)
 	{
-		final float modifier = 0.01f;
+		final float modifier = entity == null ? 0.01f : switch (normal.getAxis())
+		{
+			case X, Z -> entity.getWidth() / 2;
+			case Y -> entity.getHeight() / 2;
+		};
 		return pos.offset(normal, modifier);
 	}
 	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
@@ -71,6 +76,10 @@ public class InkExplosion
 	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
+	}
+	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
+	{
+		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE);
 	}
 	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
@@ -123,7 +132,7 @@ public class InkExplosion
 		getBlocksInSphereWithNoise(set, world);
 		
 		affectedBlockPositions.addAll(set);
-		if (dmgCalculator.isInsignificant())
+		if (DamageRangesRecord.isInsignificant(dmgCalculator))
 			return;
 		float radiusSquared = dmgCalculator.getMaxDistance() * dmgCalculator.getMaxDistance();
 		int k1 = MathHelper.floor(x - dmgCalculator.getMaxDistance() - 1F);
@@ -259,7 +268,7 @@ public class InkExplosion
 			if (!blockstate.isAir())
 			{
 				float dist = (float) Math.sqrt(blockFace.pos().getSquaredDistanceFromCenter(explosionPos.x, explosionPos.y, explosionPos.z));
-				InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator.getDamage(dist));
+				InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getDamage(dist));
 			}
 		}
 	}
