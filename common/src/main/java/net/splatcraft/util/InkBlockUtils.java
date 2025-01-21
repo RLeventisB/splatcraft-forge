@@ -15,7 +15,6 @@ import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.Util;
-import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.*;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
@@ -251,11 +250,13 @@ public class InkBlockUtils
 		
 		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
 			return false;
+		
 		BlockState blockState = world.getBlockState(pos);
 		BlockState occludingBlockState = world.getBlockState(pos.offset(direction));
 		VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFace(direction);
 		VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, pos.offset(direction)).getFace(direction.getOpposite());
-		return occludingBlockState.isOpaque() && !VoxelShapes.matchesAnywhere(blockCollision, occludingCollision, BooleanBiFunction.NOT_SAME);
+		
+		return VoxelShapes.isSideCovered(blockCollision, occludingCollision, direction);
 	}
 	public static boolean isBlockUninkable(World world, BlockPos pos)
 	{
