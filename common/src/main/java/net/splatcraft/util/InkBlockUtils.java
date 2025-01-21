@@ -255,7 +255,7 @@ public class InkBlockUtils
 		BlockState occludingBlockState = world.getBlockState(pos.offset(direction));
 		VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFace(direction);
 		VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, pos.offset(direction)).getFace(direction.getOpposite());
-		return blockState.isOpaque() && !VoxelShapes.matchesAnywhere(blockCollision, occludingCollision, BooleanBiFunction.NOT_SAME);
+		return occludingBlockState.isOpaque() && !VoxelShapes.matchesAnywhere(blockCollision, occludingCollision, BooleanBiFunction.NOT_SAME);
 	}
 	public static boolean isBlockUninkable(World world, BlockPos pos)
 	{
