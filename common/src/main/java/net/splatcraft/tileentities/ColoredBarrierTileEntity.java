@@ -2,17 +2,11 @@ package net.splatcraft.tileentities;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.ColoredBarrierBlock;
-import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftTileEntities;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -27,36 +21,11 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 		super(SplatcraftTileEntities.colorBarrierTileEntity.get(), pos, state);
 	}
 	@Override
-	public void tick()
+	public void onEntityCollide(Entity entity)
 	{
-		if (activeTime > 0)
-		{
-			activeTime--;
-		}
-		
-		for (Entity entity : world.getEntitiesByClass(Entity.class, new Box(getPos()).expand(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
-		{
-			if (ColorUtils.getEntityColor(entity).isValid() && (getCachedState().getBlock() instanceof ColoredBarrierBlock block &&
-				!block.canAllowThrough(getPos(), entity)))
-				resetActiveTime();
-		}
-		
-		if (world.isClient && ClientUtils.getClientPlayer().isCreative())
-		{
-			boolean canRender = true;
-			PlayerEntity player = ClientUtils.getClientPlayer();
-			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
-			
-			if (player.squaredDistanceTo(getPos().toCenterPos()) > renderDistance * renderDistance)
-				canRender = false;
-			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
-			{
-				canRender = player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS) ||
-					player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);
-			}
-			if (canRender)
-				addActiveTime();
-		}
+		if (ColorUtils.getEntityColor(entity).isValid() && (getCachedState().getBlock() instanceof ColoredBarrierBlock block &&
+			!block.canAllowThrough(getPos(), entity)))
+			resetActiveTime();
 	}
 	public InkColor getColor()
 	{

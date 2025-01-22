@@ -1,5 +1,7 @@
 package net.splatcraft.tileentities;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -35,7 +37,6 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	{
 		super(type, pos, state);
 	}
-	//	@Override
 	public void tick()
 	{
 		if (activeTime > 0)
@@ -45,15 +46,25 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		
 		for (Entity entity : world.getEntitiesByClass(Entity.class, new Box(getPos()).expand(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
 		{
-			resetActiveTime();
-			if (getCachedState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
-				entity instanceof PlayerEntity)
-			{
-				entity.damage(SplatcraftDamageTypes.of(world, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
-			}
+			onEntityCollide(entity);
 		}
 		
-		if (world.isClient && ClientUtils.getClientPlayer().isCreative())
+		if (world.isClient)
+			tickClient();
+	}
+	public void onEntityCollide(Entity entity)
+	{
+		resetActiveTime();
+		if (getCachedState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
+			entity instanceof PlayerEntity)
+		{
+			entity.damage(SplatcraftDamageTypes.of(world, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
+		}
+	}
+	@Environment(EnvType.CLIENT)
+	public void tickClient()
+	{
+		if (ClientUtils.getClientPlayer().isCreative())
 		{
 			boolean canRender = true;
 			PlayerEntity player = ClientUtils.getClientPlayer();
