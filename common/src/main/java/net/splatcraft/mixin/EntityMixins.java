@@ -20,11 +20,13 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
+import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
@@ -38,6 +40,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
 
 public class EntityMixins
 {
@@ -112,6 +116,17 @@ public class EntityMixins
 			Entity entity = (Entity) (Object) this;
 			SquidFormHandler.doSquidRotation(entity);
 			SplatcraftCommonHandler.onLivingTick(entity);
+		}
+		@Inject(method = "updateVelocity", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$cancelMovementIfRoll(float speed, Vec3d movementInput, CallbackInfo ci)
+		{
+			Entity entity = (Entity) (Object) this;
+			if (entity instanceof LivingEntity living)
+			{
+				Optional<PlayerCooldown> cooldown = PlayerCooldown.getPlayerCooldownOptional(living);
+				if (cooldown.isPresent() && cooldown.get() instanceof DualieItem.DodgeRollCooldown dodgeRoll && !dodgeRoll.canMove())
+					ci.cancel();
+			}
 		}
 	}
 	@Mixin(LivingEntity.class)
@@ -199,6 +214,13 @@ public class EntityMixins
 				return;
 			}
 			original.call(instance, soundEvent, volume, pitch);
+		}
+		@WrapOperation(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getJumpVelocity()F"))
+		public float splatcraft$cancelJumpIfRolling(LivingEntity instance, Operation<Float> original)
+		{
+			if (instance.isUsingItem() && instance.getActiveItem().getItem() instanceof DualieItem && (instance.sidewaysSpeed != 0 || instance.forwardSpeed != 0))
+				return 0;
+			return original.call(instance);
 		}
 	}
 	@Mixin(EntityRenderer.class)

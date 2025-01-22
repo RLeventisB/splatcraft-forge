@@ -5,9 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.client.input.Input;
 import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,6 +15,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.StringIdentifiable;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.world.World;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -32,7 +31,10 @@ import net.splatcraft.network.c2s.DodgeRollEndPacket;
 import net.splatcraft.network.c2s.DodgeRollPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkExplosion;
+import net.splatcraft.util.PlayerCooldown;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,24 +92,38 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		}
 		return (int) maxRolls;
 	}
+	public static Vec2f getDodgeRollVector(LivingEntity entity, float rollSpeed)
+	{
+		Vec2f direction = new Vec2f(entity.sidewaysSpeed, entity.forwardSpeed);
+		float p_20018_ = entity.getYaw(); // Entity::getInputVector
+		Vec2f vec3 = direction.normalize().multiply(rollSpeed);
+		float f = MathHelper.sin(p_20018_ * (0.017453292f));
+		float f1 = MathHelper.cos(p_20018_ * (0.017453292f));
+		return new Vec2f(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
+	}
+	public static boolean canPerformRoll(LivingEntity entity)
+	{
+		return (!PlayerCooldown.hasPlayerCooldown(entity) || (PlayerCooldown.getPlayerCooldown(entity) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && entity.jumping && (entity.sidewaysSpeed != 0 || entity.forwardSpeed != 0);
+	}
 	@Override
 	public Class<DualieWeaponSettings> getSettingsClass()
 	{
 		return DualieWeaponSettings.class;
 	}
-	public void performRoll(PlayerEntity player, ItemStack activeDualie, Hand hand, int maxRolls, Vec2f rollPotency, boolean local)
+	public void performRoll(LivingEntity entity, ItemStack activeDualie, Hand hand, int maxRolls, Vec2f rollPotency, boolean local)
 	{
-		int rollCount = getRollCount(player);
+		int rollCount = getRollCount(entity);
 		
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
 		
-		if (reduceInk(player, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !player.getWorld().isClient()))
+		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.getWorld().isClient()))
 		{
-			ShootingHandler.notifyForceEndShooting(player);
+			ShootingHandler.notifyForceEndShooting(entity);
 			int turretDuration = getRollTurretDuration(activeDualie);
-			PlayerCooldown.setPlayerCooldown(player, new DodgeRollCooldown(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
+			if (entity instanceof PlayerEntity player)
+				PlayerCooldown.setPlayerCooldown(entity, new DodgeRollCooldown(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
 			
-			EntityInfoCapability.get(player).setDodgeCount(rollCount + 1);
+			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
 	}
 	public ClampedModelPredicateProvider getIsLeft()
@@ -148,43 +164,49 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				stack.set(SplatcraftComponents.IS_PLURAL, true);
 			}
-			if (entity instanceof ClientPlayerEntity localPlayer && localPlayer.getStackInHand(hand) == stack && localPlayer.getActiveHand() == hand && localPlayer.isUsingItem())
+		}
+	}
+	@Override
+	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	{
+		doDodgeRollTick(world, user, stack, remainingUseTicks);
+		super.usageTick(world, user, stack, remainingUseTicks);
+	}
+	private void doDodgeRollTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	{
+		ItemStack offhandDualie = ItemStack.EMPTY;
+		if (user.getActiveHand().equals(Hand.OFF_HAND) && user.getOffHandStack().equals(stack) && user.getOffHandStack().getItem() instanceof DualieItem)
+		{
+			offhandDualie = user.getOffHandStack();
+		}
+		
+		int rollCount = getRollCount(user);
+		int maxRolls = getMaxRollCount(user);
+		if (rollCount > 0 && !PlayerCooldown.hasPlayerCooldown(user)) // fix just in case
+		{
+			rollCount = 0;
+		}
+		if (rollCount < maxRolls && canPerformRoll(user))
+		{
+			ItemStack activeDualie;
+			boolean lastRoll = rollCount == maxRolls - 1;
+			if (lastRoll)
 			{
-				ItemStack offhandDualie = ItemStack.EMPTY;
-				if (localPlayer.getActiveHand().equals(Hand.OFF_HAND) && localPlayer.getOffHandStack().equals(stack) && localPlayer.getOffHandStack().getItem() instanceof DualieItem)
-				{
-					offhandDualie = localPlayer.getOffHandStack();
-				}
+				activeDualie = getRollTurretDuration(stack) >= getRollTurretDuration(offhandDualie) ? stack : offhandDualie;
+			}
+			else
+			{
+				activeDualie = rollCount % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
+			}
+			DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
+			// why does vec2 use floats but vec3 use doubles
+			
+			if (enoughInk(user, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
+			{
+				Vec2f rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
 				
-				int rollCount = getRollCount(localPlayer);
-				int maxRolls = getMaxRollCount(localPlayer);
-				if (rollCount > 0 && !PlayerCooldown.hasPlayerCooldown(localPlayer)) // fix just in case
-				{
-					rollCount = 0;
-				}
-				if (rollCount < maxRolls && ClientUtils.canPerformRoll(localPlayer))
-				{
-					ItemStack activeDualie;
-					boolean lastRoll = rollCount == maxRolls - 1;
-					if (lastRoll)
-					{
-						activeDualie = getRollTurretDuration(stack) >= getRollTurretDuration(offhandDualie) ? stack : offhandDualie;
-					}
-					else
-					{
-						activeDualie = rollCount % 2 == 1 && offhandDualie.getItem() instanceof DualieItem ? offhandDualie : stack;
-					}
-					DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
-					// why does vec2 use floats but vec3 use doubles
-					
-					if (enoughInk(localPlayer, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
-					{
-						Vec2f rollPotency = ClientUtils.getDodgeRollVector(localPlayer, activeSettings.getRollImpulse());
-						
-						performRoll(localPlayer, stack, hand, maxRolls, rollPotency, true);
-						SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(localPlayer.getUuid(), activeDualie, hand, maxRolls, rollPotency));
-					}
-				}
+				performRoll(user, stack, user.getActiveHand(), maxRolls, rollPotency, true);
+				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUuid(), activeDualie, user.getActiveHand(), maxRolls, rollPotency));
 			}
 		}
 	}
@@ -328,8 +350,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (local)
 							{
-								Input input = ClientUtils.getUnmodifiedInput((ClientPlayerEntity) entity);
-								boolean endedTurretMode = input.jumping || input.movementForward != 0 || input.movementSideways != 0 || !entity.isUsingItem() || entity.getVelocity().y > 0.1;
+								boolean endedTurretMode = entity.jumping || entity.forwardSpeed != 0 || entity.sidewaysSpeed != 0 || !entity.isUsingItem() || entity.getVelocity().y > 0.1;
 								if (endedTurretMode)
 								{
 									setTime(0);

@@ -8,6 +8,8 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -15,7 +17,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -70,7 +71,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class CommonUtils
-
 {
 	public static final Codec<Hand> HAND_NULL_IS_MAIN_CODEC = new Codec<>()
 	{
@@ -176,7 +176,7 @@ public class CommonUtils
 	}
 	public static void spawnTestParticle(Vec3d pos)
 	{
-		spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(1, 0, 0), 1), pos);
+		spawnTestParticle(getCurrentWorld(), new DustParticleEffect(new Vector3f(1, 0, 0), 1), pos);
 	}
 	public static TimedTextDisplayEntity spawnTestText(World world, Vec3d pos, String text, int durationTicks)
 	{
@@ -200,24 +200,27 @@ public class CommonUtils
 	{
 		float[] rgb = color.getRGBColorComponents(null);
 		
-		spawnTestParticle(MinecraftClient.getInstance().world, new DustParticleEffect(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
+		spawnTestParticle(getCurrentWorld(), new DustParticleEffect(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
 	}
 	public static void spawnTestBlockParticle(Vec3d pos, BlockState state)
 	{
-		spawnTestParticle(MinecraftClient.getInstance().world, new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, state), pos);
+		spawnTestParticle(getCurrentWorld(), new BlockStateParticleEffect(ParticleTypes.BLOCK_MARKER, state), pos);
+	}
+	@Environment(EnvType.CLIENT)
+	public static World getCurrentWorld()
+	{
+		return MinecraftClient.getInstance().world;
 	}
 	public static void spawnTestParticle(World world, ParticleEffect options, Vec3d pos)
 	{
 		if (world != null)
 		{
-			if (world instanceof ClientWorld clientLevel)
-			{
-				clientLevel.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
-			}
 			if (world instanceof ServerWorld serverLevel)
 			{
 				serverLevel.spawnParticles(options, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+				return;
 			}
+			world.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
 		}
 	}
 	public static void showBoundingBoxCorners(World world, Box aabb)

@@ -29,10 +29,11 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.PlayerCooldown;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 public class PlayerMovementHandler
 {
-	public static final HashMap<ClientPlayerEntity, InputWithData> unmodifiedInput = new HashMap<>();
+	public static final HashMap<PlayerEntity, InputWithData> unmodifiedInput = new HashMap<>();
 	private static final EntityAttributeModifier INK_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("ink_movement_boost"), 0D, EntityAttributeModifier.Operation.ADD_VALUE);
 	private static final EntityAttributeModifier SQUID_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("squid_swim_speed"), 0.2D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final EntityAttributeModifier ENEMY_INK_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -48,15 +49,13 @@ public class PlayerMovementHandler
 		});
 		TickEvent.PLAYER_PRE.register(PlayerMovementHandler::playerMovement);
 	}
-	@Environment(EnvType.CLIENT)
 	public static void playerMovement(PlayerEntity player)
 	{
 		EntityInfo playerInfo = EntityInfoCapability.get(player);
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
 		
-		boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
-		PlayerCooldown cooldown = hasCooldown ? PlayerCooldown.getPlayerCooldown(player) : null;
+		Optional<PlayerCooldown> cooldown = PlayerCooldown.getPlayerCooldownOptional(player);
 		
 		EntityAttributeInstance speedAttribute = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
 //            EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
@@ -79,8 +78,8 @@ public class PlayerMovementHandler
 		}
 		
 		ItemStack useStack = player.getActiveItem();
-		if (hasCooldown)
-			useStack = cooldown.storedStack;
+		if (cooldown.isPresent())
+			useStack = cooldown.get().storedStack;
 		else if (useStack.isEmpty())
 			useStack = player.getItemCooldownManager().isCoolingDown(player.getMainHandStack().getItem()) ? player.getMainHandStack() :
 				player.getItemCooldownManager().isCoolingDown(player.getOffHandStack().getItem()) ? player.getOffHandStack() : ItemStack.EMPTY;
@@ -93,13 +92,17 @@ public class PlayerMovementHandler
 //                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
 		}
 		
-		if (hasCooldown && cooldown.getSlotIndex() >= 0)
-			player.getInventory().selectedSlot = cooldown.getSlotIndex();
+		cooldown.ifPresent(v ->
+		{
+			if (v.getSlotIndex() >= 0)
+				player.getInventory().selectedSlot = v.getSlotIndex();
+		});
 		
 		if (!player.getAbilities().flying)
 			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 				player.updateVelocity((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.isOnGround() ? 1 : 0.75f), new Vec3d(player.sidewaysSpeed, 0.0f, player.forwardSpeed).normalize());
 	}
+	@Environment(EnvType.CLIENT)
 	public static void onInputUpdate(ClientPlayerEntity player, Input input)
 	{
 		EntityInfo playerInfo = EntityInfoCapability.get(player);
@@ -130,11 +133,6 @@ public class PlayerMovementHandler
 				{
 					input.movementSideways *= 5.0F;
 					input.movementForward *= 5.0F;
-					
-					if (stack.getItem() instanceof DualieItem && (input.movementSideways != 0 || input.movementForward != 0))
-					{
-						input.jumping = false;
-					}
 				}
 			}
 		}
@@ -145,9 +143,12 @@ public class PlayerMovementHandler
 			
 			if (!cooldown.canMove())
 			{
-				input.movementForward = 0;
-				input.movementSideways = 0;
-				input.jumping = false;
+				if (!(cooldown instanceof DualieItem.DodgeRollCooldown))
+				{
+					input.jumping = false;
+					input.movementForward = 0;
+					input.movementSideways = 0;
+				}
 			}
 			else if (cooldown.storedStack.getItem() instanceof RollerItem rollerItem)
 			{
@@ -253,6 +254,7 @@ public class PlayerMovementHandler
 			playerInfo.getClimbedDirection(),
 			playerInfo.getSquidSurgeCharge()));
 	}
+	@Environment(EnvType.CLIENT)
 	public static class InputWithData extends Input
 	{
 		private boolean didJumpThisframe, oldJump;

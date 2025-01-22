@@ -1,5 +1,7 @@
 package net.splatcraft.network.s2c;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
@@ -76,6 +78,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		}
 	}
 	@Override
+	@Environment(EnvType.CLIENT)
 	public void execute()
 	{
 		ClientWorld world = MinecraftClient.getInstance().world;

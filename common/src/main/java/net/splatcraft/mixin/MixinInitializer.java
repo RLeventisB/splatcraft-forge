@@ -2,6 +2,7 @@ package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -11,13 +12,14 @@ import java.util.Set;
 
 public class MixinInitializer implements IMixinConfigPlugin
 {
-	public boolean sodiumInstalled, createInstalled, isOnFabric, isOnNeoForge;
+	public boolean sodiumInstalled, createInstalled, isOnFabric, isOnNeoForge, isOnClient;
 	@Override
 	public void onLoad(String mixinPackage)
 	{
 		MixinExtrasBootstrap.init();
 		isOnFabric = Platform.isFabric();
 		isOnNeoForge = Platform.isNeoForge();
+		isOnClient = Platform.getEnvironment() == Env.CLIENT;
 		try
 		{
 //			sodiumInstalled = Platform.getMods().stream().anyMatch(v -> v.getModId().contains("sodium") || v.getModId().contains("rubidium"));
@@ -35,6 +37,11 @@ public class MixinInitializer implements IMixinConfigPlugin
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
 	{
+		if (mixinClassName.endsWith("HeldItemRendererMixin"))
+		{
+			return isOnClient;
+		}
+		
 		if (mixinClassName.contains("Forge"))
 		{
 			return isOnNeoForge;

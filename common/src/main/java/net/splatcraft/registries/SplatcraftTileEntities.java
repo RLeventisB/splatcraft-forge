@@ -4,6 +4,8 @@ import com.google.common.base.Suppliers;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -42,6 +44,7 @@ public class SplatcraftTileEntities
 	{
 		return CONTAINER_REGISTRY.register(name, () -> new ScreenHandlerType<>(factoryIn, FeatureSet.empty()));
 	}
+	@Environment(EnvType.CLIENT)
 	public static void bindTESR()
 	{
 		//BlockEntityRenderers.register(inkedTileEntity.get(), InkedBlockTileEntityRenderer::new);

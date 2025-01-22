@@ -8,6 +8,8 @@ import dev.architectury.event.events.common.ChunkEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.networking.NetworkManager;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.Env;
 import dev.architectury.utils.value.IntValue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -63,9 +65,15 @@ public class ChunkInkHandler
 		BlockEvent.BREAK.register(ChunkInkHandler::onBlockBreak);
 		TickEvent.SERVER_LEVEL_PRE.register(ChunkInkHandler::onWorldTickStart);
 		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
-		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
-		
 		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::tryReadLegacyData);
+		
+		if (Platform.getEnvironment().equals(Env.CLIENT))
+			registerClientEvent();
+	}
+	@Environment(EnvType.CLIENT)
+	private static void registerClientEvent()
+	{
+		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
 	}
 	public static void addInkToRemove(World world, BlockPos pos)
 	{
@@ -228,6 +236,7 @@ public class ChunkInkHandler
 			}
 		}
 	}
+	@Environment(EnvType.CLIENT)
 	public static void onClientWorldTickStart(ClientWorld world)
 	{
 		new ArrayList<>(INK_CACHE.keySet()).forEach(chunkPos ->

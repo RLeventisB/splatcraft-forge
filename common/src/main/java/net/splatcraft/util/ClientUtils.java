@@ -6,20 +6,20 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.Input;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler.InputWithData;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.items.InkTankItem;
-import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
@@ -55,6 +55,7 @@ public class ClientUtils
 	{
 		clientColors.putAll(map);
 	}
+	@Environment(EnvType.CLIENT)
 	public static ClientPlayerEntity getClientPlayer()
 	{
 		return MinecraftClient.getInstance().player;
@@ -79,21 +80,6 @@ public class ClientUtils
 			return InkTankItem.getInkAmount(chestpiece) / item.capacity;
 		}
 		return 1;
-	}
-	public static boolean canPerformRoll(ClientPlayerEntity player)
-	{
-		InputWithData input = getUnmodifiedInput(player);
-		return (!PlayerCooldown.hasPlayerCooldown(player) || (PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && input.didJumpThisframe() && (input.movementSideways != 0 || input.movementForward != 0);
-	}
-	public static Vec2f getDodgeRollVector(ClientPlayerEntity player, float rollSpeed)
-	{
-		Input input = getUnmodifiedInput(player);
-		Vec2f direction = new Vec2f(input.movementSideways, input.movementForward);
-		float p_20018_ = player.getYaw(); // Entity::getInputVector
-		Vec2f vec3 = direction.normalize().multiply(rollSpeed);
-		float f = MathHelper.sin(p_20018_ * (0.017453292f));
-		float f1 = MathHelper.cos(p_20018_ * (0.017453292f));
-		return new Vec2f(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
 	}
 	public static boolean shouldRenderSide(BlockEntity te, Direction direction)
 	{
@@ -127,7 +113,8 @@ public class ClientUtils
 			cap.flagSquidCancel();
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
 	}
-	public static InputWithData getUnmodifiedInput(ClientPlayerEntity player)
+	@Environment(EnvType.CLIENT)
+	public static InputWithData getUnmodifiedInput(PlayerEntity player)
 	{
 		return PlayerMovementHandler.unmodifiedInput.getOrDefault(player, new InputWithData());
 	}

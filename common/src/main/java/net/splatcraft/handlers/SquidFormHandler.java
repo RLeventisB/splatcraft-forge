@@ -1,12 +1,11 @@
 package net.splatcraft.handlers;
 
+import com.mojang.serialization.Codec;
 import dev.architectury.event.CompoundEventResult;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
@@ -20,6 +19,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Hand;
+import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -44,12 +44,8 @@ import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 public class SquidFormHandler
 {
-	private static final Map<LivingEntity, SquidState> squidSubmergeMode = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
 		PlayerEvent.ATTACK_ENTITY.register(SquidFormHandler::onPlayerAttackEntity);
@@ -85,45 +81,7 @@ public class SquidFormHandler
 			return;
 		
 		EntityInfo info = EntityInfoCapability.get(player);
-//        if (event.phase == TickEvent.Phase.START)
-		{
-			SquidState state = SquidState.SURFACED; // this is more readable with enums though :(
-			
-			if (squidSubmergeMode.containsKey(player))
-				state = squidSubmergeMode.get(player);
-			
-			if (InkBlockUtils.canSquidHide(player) && info.isSquid())
-			{
-				if (state == SquidState.SUBMERGING)
-					state = SquidState.SUBMERGED;
-				else if (state != SquidState.SUBMERGED)
-					state = SquidState.SUBMERGING;
-			}
-			else
-			{
-				if (state == SquidState.SURFACING)
-					state = SquidState.SURFACED;
-				else if (state != SquidState.SURFACED)
-					state = SquidState.SURFACING;
-			}
-			
-			if (state == SquidState.SUBMERGING)
-			{
-				player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
-				
-				if (player.getWorld() instanceof ServerWorld serverLevel)
-				{
-					for (int i = 0; i < 2; i++)
-						ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
-				}
-			}
-			else if (state == SquidState.SURFACING)
-			{
-				player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
-			}
-			
-			squidSubmergeMode.put(player, state);
-		}
+		tickSquidState(player, info);
 		
 		if (info.isSquid())
 		{
@@ -195,6 +153,42 @@ public class SquidFormHandler
 			InkOverlayCapability.get(player).addAmount(-0.01f);
 		}
 	}
+	private static void tickSquidState(PlayerEntity player, EntityInfo info)
+	{
+		SquidState state = info.getSquidState(); // this is more readable with enums though :(
+		
+		if (InkBlockUtils.canSquidHide(player) && info.isSquid())
+		{
+			if (state == SquidState.SUBMERGING)
+				state = SquidState.SUBMERGED;
+			else if (state != SquidState.SUBMERGED)
+				state = SquidState.SUBMERGING;
+		}
+		else
+		{
+			if (state == SquidState.SURFACING)
+				state = SquidState.SURFACED;
+			else if (state != SquidState.SURFACED)
+				state = SquidState.SURFACING;
+		}
+		
+		if (state == SquidState.SUBMERGING)
+		{
+			player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+			
+			if (player.getWorld() instanceof ServerWorld serverLevel)
+			{
+				for (int i = 0; i < 2; i++)
+					ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
+			}
+		}
+		else if (state == SquidState.SURFACING)
+		{
+			player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundCategory.PLAYERS, 0.5F, ((player.getWorld().getRandom().nextFloat() - player.getWorld().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+		}
+		
+		info.setSquidState(state);
+	}
 	public static void cancelDamageIfSquid(LivingEntity entity, float fallDistance, CallbackInfoReturnable<Boolean> cir)
 	{
 		if (entity instanceof ServerPlayerEntity player && EntityInfoCapability.get(player).isSquid())
@@ -239,11 +233,11 @@ public class SquidFormHandler
 			return CompoundEventResult.interruptFalse(ItemStack.EMPTY);
 		return CompoundEventResult.pass();
 	}
-	@Environment(EnvType.CLIENT)
 	public static void doSquidRotation(Entity entity)
 	{
 		if (!entity.getWorld().isClient() || !(entity instanceof LivingEntity living))
 			return;
+		
 		if (InkOverlayCapability.hasCapability(living))
 		{
 			InkOverlayInfo info = InkOverlayCapability.get(living);
@@ -259,16 +253,22 @@ public class SquidFormHandler
 			entity.setVelocity(entity.getVelocity().x, entity.getVelocity().y * 1.1, entity.getVelocity().z);
 		}
 	}
-	public enum SquidState
+	public enum SquidState implements StringIdentifiable
 	{
 		SUBMERGED(0),
 		SUBMERGING(1),
 		SURFACING(2),
 		SURFACED(3);
+		public static final Codec<SquidState> CODEC = StringIdentifiable.createCodec(SquidState::values);
 		public final byte state;
 		SquidState(int state)
 		{
 			this.state = (byte) state;
+		}
+		@Override
+		public String asString()
+		{
+			return name();
 		}
 	}
 }

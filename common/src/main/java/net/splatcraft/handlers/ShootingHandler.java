@@ -307,7 +307,7 @@ public class ShootingHandler
 					if (firingData.onShoot != null)
 						firingData.onShoot.accept(this, -timer, entity);
 					timer += firingData.endlagFrames;
-					if (entity.equals(ClientUtils.getClientPlayer()))
+					if (entity.getWorld().isClient && entity.equals(ClientUtils.getClientPlayer()))
 					{
 						SplatcraftKeyHandler.autoSquidDelay = firingData.miscEndlagFrames;
 					}

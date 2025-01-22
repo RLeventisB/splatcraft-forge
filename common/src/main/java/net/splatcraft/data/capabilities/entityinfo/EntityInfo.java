@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.Direction;
+import net.splatcraft.handlers.SquidFormHandler.SquidState;
 import net.splatcraft.util.*;
 
 import java.util.List;
@@ -26,7 +27,8 @@ public class EntityInfo
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
 		PlayingData.CODEC.optionalFieldOf("playing_data", new PlayingData(false, 0)).forGetter(EntityInfo::playingData),
-		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks)
+		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks),
+		SquidState.CODEC.optionalFieldOf("squid_state", SquidState.SURFACED).forGetter(EntityInfo::getSquidState)
 	).apply(inst, EntityInfo::new));
 	private int dodgeCount;
 	private InkColor color;
@@ -40,6 +42,7 @@ public class EntityInfo
 	private float squidSurgeCharge = 0f;
 	private PlayingData playingData = PlayingData.DEFAULT.get();
 	private int higherStartupTicks;
+	private SquidState squidState = SquidState.SURFACED;
 	public EntityInfo(InkColor defaultColor)
 	{
 		color = defaultColor;
@@ -59,7 +62,8 @@ public class EntityInfo
 	                  ItemStack inkBand,
 	                  float squidSurgeCharge,
 	                  PlayingData playingData,
-	                  int higherStartupTicks)
+	                  int higherStartupTicks,
+	                  SquidState squidState)
 	{
 		this.dodgeCount = dodgeCount;
 		this.color = color;
@@ -73,6 +77,15 @@ public class EntityInfo
 		this.squidSurgeCharge = squidSurgeCharge;
 		this.playingData = playingData;
 		this.higherStartupTicks = higherStartupTicks;
+		this.squidState = squidState;
+	}
+	public SquidState getSquidState()
+	{
+		return squidState;
+	}
+	public void setSquidState(SquidState squidState)
+	{
+		this.squidState = squidState;
 	}
 	private PlayingData playingData()
 	{

@@ -30,7 +30,7 @@ public class WeaponHandler
 		EntityEvent.LIVING_DEATH.register((entity, dmgSource) ->
 		{
 			Optional<EntityInfo> info = EntityInfoCapability.getOptional(entity);
-			if (!entity.isSpectator() && entity instanceof LivingEntity target && (info.isEmpty() || !info.get().isPlaying() || info.get().getMatchRespawnTimeLeft() == 0))
+			if (!entity.getWorld().isClient() && !entity.isSpectator() && entity instanceof LivingEntity target && (info.isEmpty() || !info.get().isPlaying() || info.get().getMatchRespawnTimeLeft() == 0))
 			{
 				InkColor color = ColorUtils.getEntityColor(target);
 				((ServerWorld) target.getWorld()).spawnParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);

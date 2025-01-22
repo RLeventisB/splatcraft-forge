@@ -5,6 +5,8 @@ import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Mod;
 import dev.architectury.platform.Platform;
 import dev.architectury.registry.registries.DeferredRegister;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -32,8 +34,6 @@ public final class Splatcraft
 	{
 		// Write common init code here.
 		modInstance = Platform.getMod(MODID);
-		ConfigScreenProvider configProvider = new ConfigScreenProvider();
-		modInstance.registerConfigurationScreen(configProvider);
 		SplatcraftConfig.initialize();
 		
 		DataHandler.addReloadListeners();
@@ -46,22 +46,20 @@ public final class Splatcraft
 		SplatcraftParticleTypes.registerParticles();
 		SplatcraftRecipeTypes.register();
 		SplatcraftEntities.registerDataTrackers();
+		SplatcraftEntities.registerAttributes();
 		WeaponHandler.registerEvents();
 		ChunkInkHandler.registerEvents();
 		ShootingHandler.registerEvents();
 		SplatcraftCommonHandler.registerEvents();
 		SquidFormHandler.registerEvents();
-		JumpLureHudHandler.registerEvents();
 		PlayerMovementHandler.registerEvents();
-		RendererHandler.registerEvents();
 		PlayerCooldown.registerCooldowns();
 //		SplatcraftOreGen.registerOres();
 		SplatcraftItemGroups.addSplatcraftItemsToVanillaGroups();
 		
-		SplatcraftEntities.defineModelLayers();
-		SplatcraftEntities.bindRenderers();
+		if (Platform.getEnv().equals(EnvType.CLIENT))
+			initClient();
 		
-		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClient);
 		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
 	}
 	public static void onServerStart(MinecraftServer server)
@@ -71,8 +69,22 @@ public final class Splatcraft
 		
 		SplatcraftItems.postRegister();
 	}
-	public static void initClient(MinecraftClient client)
+	@Environment(EnvType.CLIENT)
+	public static void initClient()
 	{
+		JumpLureHudHandler.registerEvents();
+		RendererHandler.registerEvents();
+		SplatcraftEntities.bindRenderers();
+		SplatcraftEntities.defineModelLayers();
+		
+		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClientAfter);
+	}
+	@Environment(EnvType.CLIENT)
+	public static void initClientAfter(MinecraftClient client)
+	{
+		ConfigScreenProvider configProvider = new ConfigScreenProvider();
+		modInstance.registerConfigurationScreen(configProvider);
+		
 		SplatcraftTileEntities.bindTESR();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		ClientSetupHandler.bindScreenContainers();

@@ -215,7 +215,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						
 						if (!didSound)
 						{
-							if (entity.equals(ClientUtils.getClientPlayer()))
+							if (entity.getWorld().isClient() && entity.equals(ClientUtils.getClientPlayer()))
 							{
 								SplatcraftKeyHandler.autoSquidDelay = endlag;
 							}

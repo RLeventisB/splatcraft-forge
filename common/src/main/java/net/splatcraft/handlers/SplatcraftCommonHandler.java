@@ -228,7 +228,7 @@ public class SplatcraftCommonHandler
 			{
 				info.setInitialized(true);
 				
-				if (player instanceof ClientPlayerEntity)
+				if (player.getWorld().isClient() && player instanceof ClientPlayerEntity)
 				{
 					SplatcraftPacketHandler.sendToServer(new RequestEntityInfoPacket(player));
 				}

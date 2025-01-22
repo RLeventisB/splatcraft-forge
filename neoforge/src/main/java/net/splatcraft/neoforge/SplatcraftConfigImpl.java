@@ -53,8 +53,11 @@ public class SplatcraftConfigImpl
 		serverConfig.correct(file);
 		container.registerConfig(ModConfig.Type.SERVER, serverConfig);
 		
-		container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 		SplatcraftConfig.loaded = true;
+	}
+	private static void registerScreen(ModContainer container)
+	{
+		container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 	}
 	public static <T> void registerSetting(ModConfigSpec.ConfigValue<T> configValue)
 	{

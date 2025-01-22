@@ -93,9 +93,6 @@ public class SplatcraftEntities
 		EntityRendererRegistry.register(CURLING_BOMB, CurlingBombRenderer::new);
 		
 		EntityRendererRegistry.register(SPAWN_SHIELD, SpawnShieldRenderer::new);
-		
-		EntityAttributeRegistry.register(SQUID_BUMPER, SquidBumperEntity::setCustomAttributes);
-		EntityAttributeRegistry.register(INK_SQUID, InkSquidEntity::setCustomAttributes);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void defineModelLayers()
@@ -159,5 +156,10 @@ public class SplatcraftEntities
 			.filter(LivingEntityRenderer.class::isInstance)
 			.map(LivingEntityRenderer.class::cast)
 			.forEach(SplatcraftEntities::attachInkOverlay);
+	}
+	public static void registerAttributes()
+	{
+		EntityAttributeRegistry.register(SQUID_BUMPER, SquidBumperEntity::setCustomAttributes);
+		EntityAttributeRegistry.register(INK_SQUID, InkSquidEntity::setCustomAttributes);
 	}
 }

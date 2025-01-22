@@ -1,5 +1,6 @@
 package net.splatcraft.util;
 
+import dev.architectury.platform.Platform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
@@ -61,14 +62,23 @@ public class ColorUtils
 	{
 		if (entity instanceof LivingEntity living)
 		{
-			if (living == ClientUtils.getClientPlayer())
-				return ClientUtils.getClientPlayerColor(living.getUuid());
+			if (living.getWorld().isClient())
+			{
+				InkColor clientColor = getClientColor(living);
+				if (clientColor != null)
+					return clientColor;
+			}
 			if (EntityInfoCapability.hasCapability(living))
 				return EntityInfoCapability.get(living).getColor();
 		}
 		if (entity instanceof IColoredEntity coloredEntity)
 			return coloredEntity.getColor();
 		return InkColor.INVALID;
+	}
+	@Environment(EnvType.CLIENT)
+	private static InkColor getClientColor(LivingEntity living)
+	{
+		return living == ClientUtils.getClientPlayer() ? ClientUtils.getClientPlayerColor(living.getUuid()) : null;
 	}
 	public static void setPlayerColor(PlayerEntity player, InkColor color, boolean updateClient)
 	{
@@ -186,11 +196,11 @@ public class ColorUtils
 	{
 		return SplatcraftConfig.get("splatcraft.colorLock");
 	}
-	@Environment(EnvType.CLIENT)
 	public static @NotNull InkColor getColorLockedIfConfig(InkColor color)
 	{
-		return isColorLocked() ? getLockedColor(color) : color;
+		return Platform.getEnv().equals(EnvType.CLIENT) && isColorLocked() ? getLockedColor(color) : color;
 	}
+	@Environment(EnvType.CLIENT)
 	public static @NotNull InkColor getLockedColor(InkColor color)
 	{
 		return ClientUtils.getClientPlayer() != null
