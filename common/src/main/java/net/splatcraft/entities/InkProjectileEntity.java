@@ -387,7 +387,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				getWorld().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
 			case DROP_PARTICLE ->
 			{
-				Vec3d velocity = getVelocity();
+				Vector3f velocity = getShotDirection().mul(dataTracker.get(SPEED) / 2f);
 				if (getProjectileType().equals(Types.CHARGER))
 					getWorld().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.8f), getX() - velocity.x * 0.25D, getY() + getHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
 				else

@@ -3,8 +3,6 @@ package net.splatcraft.client.particles;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -63,22 +61,18 @@ public class InkSplashParticleData implements ParticleEffect
 	{
 		return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue, scale);
 	}
-	@Environment(EnvType.CLIENT)
 	public float getRed()
 	{
 		return red;
 	}
-	@Environment(EnvType.CLIENT)
 	public float getGreen()
 	{
 		return green;
 	}
-	@Environment(EnvType.CLIENT)
 	public float getBlue()
 	{
 		return blue;
 	}
-	@Environment(EnvType.CLIENT)
 	public float getScale()
 	{
 		return scale;

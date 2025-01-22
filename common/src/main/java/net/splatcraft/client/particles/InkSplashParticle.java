@@ -18,7 +18,7 @@ public class InkSplashParticle extends SpriteBillboardParticle
 	private final SpriteProvider spriteProvider;
 	public InkSplashParticle(ClientWorld level, double x, double y, double z, double motionX, double motionY, double motionZ, InkSplashParticleData data, SpriteProvider sprite)
 	{
-		super(level, x, y, z, motionX, motionY, motionZ);
+		super(level, x, y, z);
 		
 		velocityX = motionX;
 		velocityY = motionY;
@@ -28,8 +28,8 @@ public class InkSplashParticle extends SpriteBillboardParticle
 		green = Math.max(0.018f, data.getGreen() - 0.018f);
 		blue = Math.max(0.018f, data.getBlue() - 0.018f);
 		
-		scale = 0.33F * (random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
-		gravityStrength = 0;//0.1f;
+		scale = (random.nextFloat() * 0.5F + 0.5F) * 0.66f * data.getScale();
+		gravityStrength = 0;
 		maxAge = 5;
 		
 		spriteProvider = sprite;
@@ -39,10 +39,6 @@ public class InkSplashParticle extends SpriteBillboardParticle
 	public void tick()
 	{
 		super.tick();
-		if (gravityStrength > 0)
-		{
-			velocityY -= 0.004D + 0.04D * (double) gravityStrength;
-		}
 		if (world.getBlockState(new BlockPos((int) x, (int) y, (int) z)).isLiquid())
 		{
 			markDead();
