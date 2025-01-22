@@ -15,31 +15,28 @@ import java.util.List;
 
 public class BlockUpdateMixins
 {
-    @Mixin(ServerWorld.class)
-    public static class ServerWorldMixin
-    {
-        @Inject(method = "updateNeighborsAlways", at = @At("TAIL"))
-        public void splatcraft$updateInk(BlockPos pos, Block block, CallbackInfo ci)
-        {
-            ChunkInkHandler.onBlockUpdate((ServerWorld) (Object) this, pos, Direction.stream().toList());
-        }
-
-        @Inject(method = "updateNeighborsExcept", at = @At("TAIL"))
-        public void splatcraft$updateInk(BlockPos pos, Block block, Direction direction, CallbackInfo ci)
-        {
-            List<Direction> values = Direction.stream().toList();
-            values.remove(direction);
-            ChunkInkHandler.onBlockUpdate((ServerWorld) (Object) this, pos, values);
-        }
-    }
-
-    @Mixin(World.class)
-    public static class WorldMixin
-    {
-        @Inject(method = "updateNeighborsAlways", at = @At("TAIL"))
-        public void splatcraft$updateInk(BlockPos pos, Block block, CallbackInfo ci)
-        {
-            ChunkInkHandler.onBlockUpdate((World) (Object) this, pos, Direction.stream().toList());
-        }
-    }
+	@Mixin(ServerWorld.class)
+	public static class ServerWorldMixin
+	{
+		@Inject(method = "updateNeighborsAlways", at = @At("TAIL"))
+		public void splatcraft$updateInk(BlockPos pos, Block block, CallbackInfo ci)
+		{
+			ChunkInkHandler.onBlockUpdate((ServerWorld) (Object) this, pos, Direction.stream().toList());
+		}
+		@Inject(method = "updateNeighborsExcept", at = @At("TAIL"))
+		public void splatcraft$updateInk(BlockPos pos, Block block, Direction direction, CallbackInfo ci)
+		{
+			List<Direction> values = Direction.stream().filter(v -> v != direction).toList();
+			ChunkInkHandler.onBlockUpdate((ServerWorld) (Object) this, pos, values);
+		}
+	}
+	@Mixin(World.class)
+	public static class WorldMixin
+	{
+		@Inject(method = "updateNeighborsAlways", at = @At("TAIL"))
+		public void splatcraft$updateInk(BlockPos pos, Block block, CallbackInfo ci)
+		{
+			ChunkInkHandler.onBlockUpdate((World) (Object) this, pos, Direction.stream().toList());
+		}
+	}
 }
