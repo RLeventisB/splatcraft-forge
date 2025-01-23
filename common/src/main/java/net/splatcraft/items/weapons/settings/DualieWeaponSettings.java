@@ -44,7 +44,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		return List.of(
 			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.standardProjectileData), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.standardProjectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-			new WeaponTooltip<>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.rollDistance * 6, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
+			new WeaponTooltip<>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.rollDistance, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
 		);
 	}
 	@Override
