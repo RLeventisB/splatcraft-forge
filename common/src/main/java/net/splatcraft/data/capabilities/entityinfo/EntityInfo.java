@@ -6,7 +6,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.Direction;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +26,7 @@ public class EntityInfo
 		Codec.BOOL.optionalFieldOf("is_initialized", false).forGetter(EntityInfo::isInitialized),
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),
 		ItemStack.CODEC.listOf().optionalFieldOf("match_inventory", DefaultedList.ofSize(41, ItemStack.EMPTY)).forGetter(EntityInfo::getMatchInventory),
-		PlayerCooldown.SERIALIZER_CODEC.codec().lenientOptionalFieldOf("player_cooldown").forGetter(v -> Optional.ofNullable(v.getPlayerCooldown())),
+		EntityAction.SERIALIZER_CODEC.codec().lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
@@ -36,7 +40,7 @@ public class EntityInfo
 	private boolean initialized = false;
 	private Optional<Direction> climbedDirection = Optional.empty();
 	private DefaultedList<ItemStack> matchInventory = DefaultedList.of();
-	private PlayerCooldown playerCooldown = null;
+	private EntityAction entityAction = null;
 	private PlayerCharge playerCharge = null;
 	private ItemStack inkBand = ItemStack.EMPTY;
 	private float squidSurgeCharge = 0f;
@@ -57,7 +61,7 @@ public class EntityInfo
 	                  boolean initialized,
 	                  Optional<Direction> climbedDirection,
 	                  List<ItemStack> matchInventory,
-	                  Optional<PlayerCooldown> playerCooldown,
+	                  Optional<EntityAction> entityAction,
 	                  Optional<PlayerCharge> playerCharge,
 	                  ItemStack inkBand,
 	                  float squidSurgeCharge,
@@ -71,7 +75,7 @@ public class EntityInfo
 		this.initialized = initialized;
 		this.climbedDirection = climbedDirection;
 		this.matchInventory = DefaultedList.copyOf(ItemStack.EMPTY, matchInventory.toArray(new ItemStack[0]));
-		this.playerCooldown = playerCooldown.orElse(null);
+		this.entityAction = entityAction.orElse(null);
 		this.playerCharge = playerCharge.orElse(null);
 		this.inkBand = inkBand;
 		this.squidSurgeCharge = squidSurgeCharge;
@@ -145,17 +149,17 @@ public class EntityInfo
 	{
 		matchInventory = inventory;
 	}
-	public PlayerCooldown getPlayerCooldown()
+	public EntityAction getEntityAction()
 	{
-		return playerCooldown;
+		return entityAction;
 	}
-	public void setPlayerCooldown(PlayerCooldown cooldown)
+	public void setEntityAction(EntityAction action)
 	{
-		playerCooldown = cooldown;
+		entityAction = action;
 	}
-	public boolean hasPlayerCooldown()
+	public boolean hasActiveAction()
 	{
-		return playerCooldown != null && playerCooldown.getTime() > 0;
+		return entityAction != null && entityAction.getTime() > 0;
 	}
 	public PlayerCharge getPlayerCharge()
 	{

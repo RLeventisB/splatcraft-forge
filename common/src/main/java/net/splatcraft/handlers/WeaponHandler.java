@@ -11,12 +11,17 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.function.LazyIterationConsumer;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkColor;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,7 +29,7 @@ import java.util.Optional;
 
 public class WeaponHandler
 {
-	private static final Map<LivingEntity, OldPosData> prevPosMap = new LinkedHashMap<>();
+	private static final Map<LivingEntity, OldEntityTransformData> prevPosMap = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
 		EntityEvent.LIVING_DEATH.register((entity, dmgSource) ->
@@ -51,7 +56,7 @@ public class WeaponHandler
 		
 		TickEvent.PLAYER_POST.register((player) ->
 		{
-			Optional<PlayerCooldown> cooldown = PlayerCooldown.getPlayerCooldownOptional(player);
+			Optional<EntityAction> cooldown = EntityAction.getEntityActionOptional(player);
 			boolean usagePreventedByCooldown = false;
 			
 			if (cooldown.isPresent())
@@ -59,7 +64,7 @@ public class WeaponHandler
 				if (cooldown.get().getSlotIndex() >= 0)
 					player.getInventory().selectedSlot = cooldown.get().getSlotIndex();
 				
-				usagePreventedByCooldown = tickCooldownActions(player, cooldown.get());
+				usagePreventedByCooldown = tickEntityActions(player, cooldown.get());
 			}
 			if (usagePreventedByCooldown || !player.isUsingItem() || player.getItemUseTimeLeft() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
 			{
@@ -67,9 +72,13 @@ public class WeaponHandler
 			}
 		});
 		
-		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
+		TickEvent.SERVER_LEVEL_PRE.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
 		{
 			tickPreviousPosMap(entity);
+			return LazyIterationConsumer.NextIteration.CONTINUE;
+		}));
+		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
+		{
 			
 			if (EntityInfoCapability.hasCapability(entity))
 			{
@@ -94,69 +103,81 @@ public class WeaponHandler
 				scoreboard.forEachScore(ScoreboardHandler.getKillsAsColor(ColorUtils.getEntityColor(source)), target, score -> score.incrementScore(1));
 		}
 	}
-	private static boolean tickCooldownActions(PlayerEntity player, PlayerCooldown cooldown)
+	private static boolean tickEntityActions(PlayerEntity player, EntityAction action)
 	{
 		boolean preventedByCooldown = false;
-		if (cooldown.cancellable && EntityInfoCapability.isSquid(player))
+		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
 		{
-			ItemStack stack = cooldown.storedStack;
+			ItemStack stack = action.getStoredStack();
 			
-			doEndActions(player, cooldown, stack);
+			doEndActions(player, action, stack);
 		}
 		else
 		{
-			if (cooldown.getTime() == cooldown.getMaxTime())
-				cooldown.onStart(player);
-			cooldown.tick(player);
+			if (action.getTime() == action.getMaxTime())
+				action.onStart(player);
+			action.tick(player);
 			player.setSprinting(false);
 			
-			preventedByCooldown = cooldown.preventWeaponUse();
-			ItemStack stack = cooldown.storedStack;
+			preventedByCooldown = action.preventWeaponUse();
+			ItemStack stack = action.getStoredStack();
 			
-			if (cooldown.getTime() <= 1)
+			if (action.getTime() <= 1)
 			{
-				doEndActions(player, cooldown, stack);
+				doEndActions(player, action, stack);
 			}
-			else if (cooldown.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
+			else if (action.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			{
-				weapon.onPlayerCooldownTick(player.getWorld(), player, stack, cooldown);
+				weapon.onPlayerCooldownTick(player.getWorld(), player, stack, action);
 			}
-			cooldown.setTime(cooldown.getTime() - 1);
+			action.setTime(action.getTime() - 1);
 		}
 		return preventedByCooldown;
 	}
-	private static void doEndActions(PlayerEntity player, PlayerCooldown cooldown, ItemStack stack)
+	private static void doEndActions(PlayerEntity player, EntityAction action, ItemStack stack)
 	{
 		if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-			weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, cooldown);
-		if (cooldown.canEnd(player))
+			weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, action);
+		if (action.canEnd(player))
 		{
-			PlayerCooldown.setPlayerCooldown(player, null);
+			EntityAction.setEntityAction(player, null);
 		}
 	}
 	public static void tickPreviousPosMap(LivingEntity entity)
 	{
 		Vec3d oldOldPos = entity.getLerpedPos(0);
-		if (prevPosMap.containsKey(entity))
+		Vec2f oldOldRot = new Vec2f(entity.prevPitch, entity.prevYaw);
+		OldEntityTransformData oldData = prevPosMap.get(entity);
+		if (oldData != null)
 		{
-			oldOldPos = prevPosMap.get(entity).oldPosition;
+			oldOldPos = oldData.oldPosition;
+			oldOldRot = oldData.oldRot;
 		}
-		OldPosData posData = new OldPosData(entity.getLerpedPos(0), oldOldPos);
+		OldEntityTransformData posData = new OldEntityTransformData(entity.getLerpedPos(0), oldOldPos, new Vec2f(entity.prevPitch, entity.prevYaw), oldOldRot);
 		prevPosMap.put(entity, posData);
 	}
-	public static OldPosData getPlayerPrevPos(LivingEntity entity)
+	public static OldEntityTransformData getEntityPrevPos(LivingEntity entity)
 	{
-		return prevPosMap.containsKey(entity) ? prevPosMap.get(entity) : new OldPosData(entity.getPos(), entity.getLerpedPos(0));
+		return prevPosMap.containsKey(entity) ? prevPosMap.get(entity) : new OldEntityTransformData(
+			entity.getPos(), entity.getLerpedPos(0),
+			new Vec2f(entity.getPitch(), entity.getYaw()), new Vec2f(entity.prevPitch, entity.prevYaw));
 	}
-	public static class OldPosData
+	public static class OldEntityTransformData
 	{
 		public Vec3d oldPosition, oldOldPosition;
-		public OldPosData(Vec3d oldPosition, Vec3d oldOldPosition)
+		public Vec2f oldRot, oldOldRot;
+		public OldEntityTransformData(Vec3d oldPosition, Vec3d oldOldPosition, Vec2f oldRot, Vec2f oldOldRot)
 		{
 			this.oldPosition = oldPosition;
 			this.oldOldPosition = oldOldPosition;
+			this.oldRot = oldRot;
+			this.oldOldRot = oldOldRot;
 		}
-		public Vec3d getPosition(double partialTick)
+		public static Vec2f getRot(LivingEntity entity)
+		{
+			return new Vec2f(entity.getPitch(), entity.getYaw());
+		}
+		public Vec3d getOldLerpedPosition(double partialTick)
 		{
 			return oldOldPosition.lerp(oldPosition, partialTick);
 		}

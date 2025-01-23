@@ -33,7 +33,7 @@ import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -70,7 +70,7 @@ public class EntityMixins
 			{
 				return;
 			}
-			if (sprinting && PlayerCooldown.hasPlayerCooldown(player))
+			if (sprinting && EntityAction.hasEntityAction(player))
 			{
 				player.setSprinting(false);
 				ci.cancel();
@@ -123,8 +123,8 @@ public class EntityMixins
 			Entity entity = (Entity) (Object) this;
 			if (entity instanceof LivingEntity living)
 			{
-				Optional<PlayerCooldown> cooldown = PlayerCooldown.getPlayerCooldownOptional(living);
-				if (cooldown.isPresent() && cooldown.get() instanceof DualieItem.DodgeRollCooldown dodgeRoll && !dodgeRoll.canMove())
+				Optional<EntityAction> action = EntityAction.getEntityActionOptional(living);
+				if (action.isPresent() && action.get() instanceof DualieItem.DodgeRollAction dodgeRoll && !dodgeRoll.canMove())
 					ci.cancel();
 			}
 		}

@@ -26,7 +26,7 @@ import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.PlayerCharge;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +110,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 			float rechargeMult = rechargeMult(stack, true);
 			
 			if (rechargeMult > 0 && player.getEquippedStack(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
-				&& (!PlayerCooldown.hasPlayerCooldown(player))
+				&& (!EntityAction.hasEntityAction(player))
 				&& !PlayerCharge.hasCharge(player)
 				&& (!(using instanceof WeaponBaseItem)
 				|| (using instanceof RollerItem r && !r.isMoving))

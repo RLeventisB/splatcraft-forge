@@ -6,7 +6,7 @@ import net.minecraft.network.packet.CustomPayload;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.UUID;
 
@@ -31,8 +31,8 @@ public class DodgeRollEndPacket extends PlayC2SPacket
 	public void execute(PlayerEntity player)
 	{
 		PlayerEntity target = player.getWorld().getPlayerByUuid(this.target);
-		PlayerCooldown.setCooldownTime(target, 1);
-		PlayerCooldown.setPlayerCooldown(target, null);
+		EntityAction.setActionTime(target, 1);
+		EntityAction.setEntityAction(target, null);
 		EntityInfoCapability.get(player).setDodgeCount(0);
 		
 		if (ShootingHandler.isDoingShootingAction(player))

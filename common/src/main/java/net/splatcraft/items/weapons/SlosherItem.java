@@ -25,7 +25,12 @@ import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.EntityActionWithTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,16 +67,16 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		if (remainingUseTicks != stack.getMaxUseTime(user)) // sloshers cannot be held to attack normally
 			return;
 		
-		Optional<PlayerCooldown> cooldown = PlayerCooldown.getCooldownIf(user, PlayerCooldown::preventWeaponUse);
-		boolean notPreventedByCooldown = cooldown.isEmpty();
+		Optional<EntityAction> action = EntityAction.getActionIf(user, EntityAction::preventWeaponUse);
+		boolean notPreventedByAction = action.isEmpty();
 		
 		// if there is already an action, and the sloshing already shot a bullet, make it so you can slosh automatically after
-		if (!notPreventedByCooldown && cooldown.get() instanceof SloshCooldown slosh && slosh.didSound)
+		if (!notPreventedByAction && action.get() instanceof SloshAction slosh && slosh.didSound)
 		{
 			slosh.doAction = true;
 		}
 		
-		if (notPreventedByCooldown && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
+		if (notPreventedByAction && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
 		{
 			weaponUseTick(world, user, stack, remainingUseTicks);
 			user.setSprinting(false);
@@ -88,7 +93,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			{
 				return;
 			}
-			PlayerCooldown.setPlayerCooldown(player, new SloshCooldown(player, stack, player.getInventory().selectedSlot, entity.getActiveHand(), settings, settings.shotData.endlagTicks(), settings.shotData.miscEndlagTicks()));
+			EntityAction.setEntityAction(player, new SloshAction(player, stack, player.getInventory().selectedSlot, entity.getActiveHand(), settings, settings.shotData.endlagTicks(), settings.shotData.miscEndlagTicks()));
 		}
 	}
 	@Override
@@ -103,14 +108,14 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		CYCLONE,
 		BUBBLES
 	}
-	public static class SloshCooldown extends PlayerCooldown
+	public static class SloshAction extends EntityActionWithTime
 	{
-		public static final Codec<SloshCooldown> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-			ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
-			Codec.FLOAT.fieldOf("time").forGetter(PlayerCooldown::getTime),
-			Codec.FLOAT.fieldOf("max_time").forGetter(PlayerCooldown::getMaxTime),
-			Codec.INT.fieldOf("slot_index").forGetter(PlayerCooldown::getSlotIndex),
-			Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.getHand() == Hand.MAIN_HAND),
+		public static final Codec<SloshAction> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			ItemStack.CODEC.fieldOf("stored_stack").forGetter(SloshAction::getStoredStack),
+			Codec.FLOAT.fieldOf("time").forGetter(SloshAction::getTime),
+			Codec.FLOAT.fieldOf("max_time").forGetter(SloshAction::getMaxTime),
+			Codec.INT.fieldOf("slot_index").forGetter(SloshAction::getSlotIndex),
+			CommonUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("hand").forGetter(SloshAction::getHand),
 			Identifier.CODEC.fieldOf("slosh_setting_id").forGetter(v -> DataHandler.WeaponStatsListener.SETTINGS.inverse().get(v.sloshData)),
 			Codec.BOOL.fieldOf("did_sound").forGetter(v -> v.didSound),
 			Codec.BOOL.fieldOf("do_action").forGetter(v -> v.doAction),
@@ -121,16 +126,22 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			Codec.FLOAT.fieldOf("y_delta").forGetter(v -> v.yDelta),
 			Codec.FLOAT.fieldOf("x_rot_old").forGetter(v -> v.xRotOld),
 			Codec.FLOAT.fieldOf("y_rot_old").forGetter(v -> v.yRotOld)
-		).apply(inst, SloshCooldown::new));
+		).apply(inst, SloshAction::new));
+		final ItemStack storedStack;
+		final int slotIndex;
+		final Hand hand;
 		private final int endlag;
 		public SlosherWeaponSettings sloshData;
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
 		public boolean didSound, doAction = false;
 		public AttackId attackId;
 		public float pitch, xDelta, yaw, yDelta, xRotOld, yRotOld;
-		public SloshCooldown(PlayerEntity player, ItemStack stack, int slotIndex, Hand hand, SlosherWeaponSettings sloshData, float duration, int endlag)
+		public SloshAction(PlayerEntity player, ItemStack stack, int slotIndex, Hand hand, SlosherWeaponSettings sloshData, float duration, int endlag)
 		{
-			super(stack, duration, slotIndex, hand, true, false, true, false);
+			super(duration);
+			storedStack = stack;
+			this.slotIndex = slotIndex;
+			this.hand = hand;
 			pitch = xRotOld = player.getPitch();
 			yaw = yRotOld = player.getYaw();
 			this.sloshData = sloshData;
@@ -138,12 +149,15 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			
 			calculateSloshes();
 		}
-		public SloshCooldown(ItemStack storedStack, float time, float maxTime, int slotIndex, boolean isMainHand, Identifier sloshDataId, boolean didSound, boolean doAction, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
+		public SloshAction(ItemStack storedStack, float time, float maxTime, int slotIndex, Hand hand, Identifier sloshDataId, boolean didSound, boolean doAction, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
 		{
-			super(storedStack, time, maxTime, slotIndex, isMainHand ? Hand.MAIN_HAND : Hand.OFF_HAND, true, false, true, false);
+			super(time, maxTime);
 			sloshData = (SlosherWeaponSettings) DataHandler.WeaponStatsListener.SETTINGS.get(sloshDataId);
 			calculateSloshes();
 			
+			this.storedStack = storedStack;
+			this.slotIndex = slotIndex;
+			this.hand = hand;
 			this.didSound = didSound;
 			this.doAction = doAction;
 			this.endlag = endlag;
@@ -290,14 +304,24 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			return true;
 		}
 		@Override
-		public boolean canMove()
+		public boolean preventWeaponUse()
 		{
 			return true;
 		}
 		@Override
-		public boolean preventWeaponUse()
+		public ItemStack getStoredStack()
 		{
-			return true;
+			return storedStack;
+		}
+		@Override
+		public int getSlotIndex()
+		{
+			return slotIndex;
+		}
+		@Override
+		public Hand getHand()
+		{
+			return hand;
 		}
 		public record CalculatedSloshData(float time, byte indexInSlosh, int sloshDataIndex)
 		{

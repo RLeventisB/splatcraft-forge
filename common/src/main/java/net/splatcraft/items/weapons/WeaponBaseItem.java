@@ -41,7 +41,11 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkColor;
+import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -320,9 +324,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		// this returns true if there is no cooldown, or the cooldown has preventWeaponUse set as false
-		boolean notPreventedByCooldown = PlayerCooldown.getCooldownIf(user, PlayerCooldown::preventWeaponUse).isEmpty();
+		boolean notPreventedByAction = EntityAction.getActionIf(user, EntityAction::preventWeaponUse).isEmpty();
 		
-		if (notPreventedByCooldown && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
+		if (notPreventedByAction && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
 		{
 			weaponUseTick(world, user, stack, remainingUseTicks);
 			user.setSprinting(false);
@@ -341,11 +345,11 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	{
 		return false;
 	}
-	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
+	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, EntityAction action)
 	{
 	
 	}
-	public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
+	public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, EntityAction action)
 	{
 	
 	}

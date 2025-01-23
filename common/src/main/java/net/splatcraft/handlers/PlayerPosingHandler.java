@@ -17,7 +17,9 @@ import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
+
+import java.util.Optional;
 
 public class PlayerPosingHandler
 {
@@ -49,13 +51,11 @@ public class PlayerPosingHandler
 		}
 		
 		if (useTime > 0 || player.getItemCooldownManager().isCoolingDown(mainStack.getItem())
-			|| (playerInfo != null && playerInfo.getPlayerCooldown() != null && playerInfo.getPlayerCooldown().getTime() > 0))
+			|| (playerInfo != null && playerInfo.getEntityAction() != null && playerInfo.getEntityAction().getTime() > 0))
 		{
 			useTime = mainStack.getItem().getMaxUseTime(mainStack, player) - useTime;
 			float animTime;
 			float angle;
-			
-			PlayerCooldown cooldown;
 			
 			switch (weaponBaseItem.getPose(player, mainStack))
 			{
@@ -108,10 +108,10 @@ public class PlayerPosingHandler
 					mainHand.yaw = 0;
 					mainHand.pitch = -0.36f;
 					
-					if (PlayerCooldown.hasPlayerCooldown(player))
+					if (EntityAction.hasEntityAction(player))
 					{
-						cooldown = PlayerCooldown.getPlayerCooldown(player);
-						angle = (cooldown.getTime() - partialTicks) / cooldown.getMaxTime();
+						EntityAction action = EntityAction.getEntityAction(player);
+						angle = (action.getTime() - partialTicks) / action.getMaxTime();
 						mainHand.pitch = -0.36f + 0.5f + MathHelper.cos(angle) * 0.5f;
 					}
 					break;
@@ -133,38 +133,42 @@ public class PlayerPosingHandler
 					}
 					break;
 				case ROLL:
+				{
 					mainHand.yaw = model.getHead().yaw;
-					
-					if (PlayerCooldown.hasPlayerCooldown(player))
-					{
-						cooldown = PlayerCooldown.getPlayerCooldown(player);
-						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
-						RollerWeaponSettings.RollerAttackDataRecord attackData = cooldown.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
-						
-						animTime = attackData.startupTime();
-						angle = (float) ((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * MathHelper.HALF_PI) + ((float) Math.PI) / 1.8f;
-						mainHand.pitch = MathHelper.cos(angle) * 2.4f + (0.05f - 0.31415927f);
-					}
-					else
+					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
+					if (optional.isEmpty())
 					{
 						mainHand.pitch = 0.1F * 0.5F - ((float) Math.PI / 10F);
 					}
-					break;
-				case BRUSH:
-					mainHand.pitch = 0.1F * 0.5F - ((float) Math.PI / 10F);
-					
-					if (PlayerCooldown.hasPlayerCooldown(player))
+					else
 					{
-						cooldown = PlayerCooldown.getPlayerCooldown(player);
+						RollerItem.InitialSwingAction action = optional.get();
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
-						RollerWeaponSettings.RollerAttackDataRecord attackData = cooldown.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+						RollerWeaponSettings.RollerAttackDataRecord attackData = action.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+						
 						animTime = attackData.startupTime();
-						angle = (float) -((cooldown.getMaxTime() - cooldown.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
+						angle = (float) ((action.getMaxTime() - action.getTime() + partialTicks) / animTime * MathHelper.HALF_PI) + ((float) Math.PI) / 1.8f;
+						mainHand.pitch = MathHelper.cos(angle) * 2.4f + (0.05f - 0.31415927f);
+					}
+				}
+				break;
+				case BRUSH:
+				{
+					mainHand.pitch = 0.1F * 0.5F - ((float) Math.PI / 10F);
+					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
+					if (EntityAction.hasEntityAction(player))
+					{
+						RollerItem.InitialSwingAction action = optional.get();
+						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
+						RollerWeaponSettings.RollerAttackDataRecord attackData = action.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+						animTime = attackData.startupTime();
+						angle = (float) -((action.getMaxTime() - action.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 						
 						mainHand.yaw = model.getHead().yaw + MathHelper.cos(angle);
 					}
 					else mainHand.yaw = model.getHead().yaw;
-					break;
+				}
+				break;
 			}
 		}
 	}

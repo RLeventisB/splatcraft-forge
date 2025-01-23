@@ -31,8 +31,10 @@ import net.splatcraft.network.c2s.UpdateChargeStatePacket;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 public class SplatcraftKeyHandler
 {
@@ -76,7 +78,7 @@ public class SplatcraftKeyHandler
 			SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
 		}
 		
-		if ((PlayerCooldown.hasCooldownAnd(player, v -> !(SQUID_KEYBIND.active && v.cancellable)))
+		if ((EntityAction.hasActionAnd(player, v -> !(SQUID_KEYBIND.active && v.isCancellable())))
 			|| CommonUtils.anyWeaponOnCooldown(player) || ShootingHandler.isDoingShootingAction(player))
 		{
 			return;
@@ -159,12 +161,15 @@ public class SplatcraftKeyHandler
 	{
 		if (!MinecraftClient.getInstance().isPaused())
 		{
-			boolean hasCooldown = PlayerCooldown.hasPlayerCooldown(player);
-			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || hasCooldown)
+			Optional<EntityAction> optional = EntityAction.getEntityActionOptional(player);
+			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || optional.isPresent())
 			{
 				//autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
-				autoSquidDelay = hasCooldown ? (int) (PlayerCooldown.getPlayerCooldown(player).getTime() + 10) :
-					(player.getActiveItem().getItem() instanceof IChargeableWeapon ? 100 : 5);
+				autoSquidDelay = optional.map(
+					entityAction -> (int) (entityAction.getTime() + 10)
+				).orElseGet(
+					() -> (player.getActiveItem().getItem() instanceof IChargeableWeapon ? 100 : 5)
+				);
 			}
 			else if (autoSquidDelay > 0)
 			{

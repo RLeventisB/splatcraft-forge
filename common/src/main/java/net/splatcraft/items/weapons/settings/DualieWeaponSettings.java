@@ -10,8 +10,8 @@ import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.PlayerCooldown;
 import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.List;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	@Override
 	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return PlayerCooldown.hasPlayerCooldown(entity) && PlayerCooldown.getPlayerCooldown(entity) instanceof DualieItem.DodgeRollCooldown ? turretShotData.accuracyData() : standardShotData.accuracyData();
+		return EntityAction.hasEntityAction(entity) && EntityAction.getEntityAction(entity) instanceof DualieItem.DodgeRollAction ? turretShotData.accuracyData() : standardShotData.accuracyData();
 	}
 	@Override
 	public void processData(DataRecord data)

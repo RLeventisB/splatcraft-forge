@@ -52,6 +52,7 @@ import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.*;
+import net.splatcraft.util.action.EntityAction;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -98,10 +99,10 @@ public class RendererHandler
 	{
 		if (player != null && !player.isSpectator())
 		{
-			Optional<PlayerCooldown> cooldown = PlayerCooldown.getCooldownIf(player, v -> v.getSlotIndex() >= 0);
-			if (cooldown.isPresent())
+			Optional<EntityAction> action = EntityAction.getActionIf(player, v -> v.getSlotIndex() >= 0);
+			if (action.isPresent())
 			{
-				return cooldown.get().getSlotIndex();
+				return action.get().getSlotIndex();
 			}
 			else if (ShootingHandler.isDoingShootingAction(player))
 			{
@@ -127,12 +128,12 @@ public class RendererHandler
 			return false;
 		}
 		
-		Optional<PlayerCooldown> cooldownOptional = PlayerCooldown.getCooldownIf(player, v -> Objects.equals(v.getHand(), hand));
-		if (cooldownOptional.isPresent())
+		Optional<EntityAction> actionOptional = EntityAction.getActionIf(player, v -> Objects.equals(v.getHand(), hand));
+		if (actionOptional.isPresent())
 		{
-			PlayerCooldown cooldown = cooldownOptional.get();
-			float time = cooldown.getTime();
-			float maxTime = cooldown.getMaxTime();
+			EntityAction action = actionOptional.get();
+			float time = action.getTime();
+			float maxTime = action.getMaxTime();
 			if (time != oldCooldown)
 			{
 				oldCooldown = time;

@@ -24,7 +24,12 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.ReleaseChargePacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.EntityCooldown;
 import org.jetbrains.annotations.NotNull;
 
 public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implements IChargeableWeapon
@@ -68,7 +73,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		world.spawnEntity(proj);
 		world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.chargerShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 		reduceInk(player, this, getInkConsumption(stack, charge), settings.shotData.inkRecoveryCooldown(), false, true);
-		PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, player.getActiveHand(), true, false, false, player.isOnGround()));
+		EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, player.getActiveHand(), true, false, false, player.isOnGround()));
 		player.getItemCooldownManager().set(this, 7);
 	}
 	@Environment(EnvType.CLIENT)
@@ -132,7 +137,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			if (charge != null && charge.charge > 0.05f)
 			{
 				ChargerWeaponSettings settings = getSettings(stack);
-				PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, entity.getActiveHand(), true, false, false, entity.isOnGround()));
+				EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, entity.getActiveHand(), true, false, false, entity.isOnGround()));
 				SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack));
 				charge.reset();
 			}

@@ -36,7 +36,7 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.*;
 
@@ -96,7 +96,7 @@ public class SplatcraftCommonHandler
 			
 			EntityInfoCapability.get(newPlayer).setMatchInventory(DefaultedList.of());
 		}
-		PlayerCooldown.setPlayerCooldown(newPlayer, null);
+		EntityAction.setEntityAction(newPlayer, null);
 	}
 	private static boolean putStackInSlot(PlayerInventory inventory, ItemStack stack, int i)
 	{

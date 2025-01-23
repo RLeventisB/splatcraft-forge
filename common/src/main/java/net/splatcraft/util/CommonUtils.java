@@ -18,7 +18,6 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
@@ -54,11 +53,10 @@ import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
-import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
-import org.apache.commons.lang3.NotImplementedException;
+import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
@@ -404,12 +402,6 @@ public class CommonUtils
 		}
 		return new Result(delay, value);
 	}
-	public static Vec3d getOldPosition(Entity entity, double partialTick)
-	{
-		if (entity instanceof LivingEntity living)
-			return WeaponHandler.getPlayerPrevPos(living).getPosition(partialTick);
-		throw new NotImplementedException();
-	}
 	public static <T> T returnValueDependantOnSquidCancel(LivingEntity player, T withCancel, T withoutCancel)
 	{
 		boolean didCancel = false;
@@ -439,7 +431,7 @@ public class CommonUtils
 	}
 	public static boolean isRolling(LivingEntity entity)
 	{
-		return entity instanceof PlayerEntity player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DualieItem.DodgeRollCooldown;
+		return entity instanceof PlayerEntity player && EntityAction.hasEntityAction(player) && EntityAction.getEntityAction(player) instanceof DualieItem.DodgeRollAction;
 	}
 	public static Hand otherHand(Hand hand)
 	{

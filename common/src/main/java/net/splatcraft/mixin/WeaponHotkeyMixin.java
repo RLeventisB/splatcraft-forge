@@ -6,7 +6,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,7 +22,7 @@ public class WeaponHotkeyMixin
 		{
 			if (
 				SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getActiveHand() == Hand.OFF_HAND ||
-					PlayerCooldown.hasCooldownAnd(player, PlayerCooldown::preventStopUsing) ||
+					EntityAction.hasActionAnd(player, EntityAction::preventStopUsing) ||
 					((player.getActiveItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventStopUsingWeapon(player.getWorld(), player)))
 			)
 				callbackInfo.cancel();

@@ -9,12 +9,10 @@ import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.Vec3ArgumentType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -31,7 +29,8 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.Nullable;
 
 public class SuperJumpCommand
@@ -102,7 +101,7 @@ public class SuperJumpCommand
 		if (!global && !canSuperJumpTo(player, target))
 			return false;
 		
-		PlayerCooldown.setPlayerCooldown(player, new SuperJump(player.getPos(), target, windupTime, travelTime, jumpHeight, player.noClip, player.getAbilities().invulnerable));
+		EntityAction.setEntityAction(player, new SuperJump(player.getPos(), target, windupTime, travelTime, jumpHeight, player.noClip, player.getAbilities().invulnerable));
 		
 		EntityInfo info = EntityInfoCapability.get(player);
 		if (!info.isSquid())
@@ -115,13 +114,13 @@ public class SuperJumpCommand
 		
 		return true;
 	}
-	public static boolean canSuperJumpTo(PlayerEntity player, Vec3d target)
+	public static boolean canSuperJumpTo(LivingEntity entity, Vec3d target)
 	{
-		int jumpLimit = SplatcraftGameRules.getIntRuleValue(player.getWorld(), SplatcraftGameRules.SUPERJUMP_DISTANCE_LIMIT);
-		if (Stage.targetsOnSameStage(player.getWorld(), player.getPos(), target) || jumpLimit < 0 || player.getPos().distanceTo(target) <= jumpLimit)
+		int jumpLimit = SplatcraftGameRules.getIntRuleValue(entity.getWorld(), SplatcraftGameRules.SUPERJUMP_DISTANCE_LIMIT);
+		if (Stage.targetsOnSameStage(entity.getWorld(), entity.getPos(), target) || jumpLimit < 0 || entity.getPos().distanceTo(target) <= jumpLimit)
 		{
-			PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-			return !(cooldown instanceof SuperJump);
+			EntityAction action = EntityAction.getEntityAction(entity);
+			return !(action instanceof SuperJump);
 		}
 		return false;
 	}
@@ -133,7 +132,7 @@ public class SuperJumpCommand
 		else
 			return shape.getBoundingBox().getLengthY();
 	}
-	public static class SuperJump extends PlayerCooldown
+	public static class SuperJump extends EntityActionWithTime
 	{
 		public static Codec<SuperJump> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			Vec3d.CODEC.fieldOf("start").forGetter(v -> v.start),
@@ -143,7 +142,8 @@ public class SuperJumpCommand
 			Codec.DOUBLE.fieldOf("jump_height").forGetter(v -> v.height),
 			Codec.BOOL.fieldOf("had_physics").forGetter(v -> v.hadPhysics),
 			Codec.BOOL.fieldOf("had_invulnerability").forGetter(v -> v.hadInvulnerability),
-			Codec.BOOL.fieldOf("can_start").forGetter(v -> v.canStart)
+			Codec.BOOL.fieldOf("can_start").forGetter(v -> v.canStart),
+			getTimeCodec()
 		).apply(inst, SuperJump::new));
 		final Vec3d end;
 		final int travelTime;
@@ -153,7 +153,7 @@ public class SuperJumpCommand
 		boolean hadPhysics, hadInvulnerability, canStart;
 		public SuperJump(Vec3d start, Vec3d end, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability)
 		{
-			super(ItemStack.EMPTY, travelTime + windupTime, -1, Hand.MAIN_HAND, false, false, false, false);
+			super(travelTime + windupTime);
 			this.end = end;
 			this.start = start;
 			this.hadPhysics = hadPhysics;
@@ -162,9 +162,16 @@ public class SuperJumpCommand
 			this.windupTime = windupTime;
 			this.height = height;
 		}
-		public SuperJump(Vec3d start, Vec3d end, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart)
+		public SuperJump(Vec3d start, Vec3d end, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart, float time)
 		{
-			this(start, end, travelTime, windupTime, height, hadPhysics, hadInvulnerability);
+			super(time, travelTime + windupTime);
+			this.end = end;
+			this.start = start;
+			this.hadPhysics = hadPhysics;
+			this.hadInvulnerability = hadInvulnerability;
+			this.travelTime = travelTime;
+			this.windupTime = windupTime;
+			this.height = height;
 			this.canStart = canStart;
 		}
 		public static double getSuperJumpYPos(double progress, double startY, double endY, double arcHeight)
@@ -228,9 +235,24 @@ public class SuperJumpCommand
 			return true;
 		}
 		@Override
+		public boolean canMove()
+		{
+			return false;
+		}
+		@Override
+		public boolean forceCrouch()
+		{
+			return false;
+		}
+		@Override
 		public boolean preventWeaponUse()
 		{
 			return true;
+		}
+		@Override
+		public boolean preventStopUsing()
+		{
+			return false;
 		}
 		public int getTravelTime()
 		{

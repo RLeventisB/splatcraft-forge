@@ -34,6 +34,7 @@ import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
+import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -278,7 +279,7 @@ public class InkBlockUtils
 	}
 	public static boolean canSquidHide(LivingEntity entity)
 	{
-		if (entity instanceof PlayerEntity player && PlayerCooldown.hasPlayerCooldown(player) && PlayerCooldown.getPlayerCooldown(player) instanceof SuperJumpCommand.SuperJump)
+		if (entity instanceof PlayerEntity player && EntityAction.hasEntityAction(player) && EntityAction.getEntityAction(player) instanceof SuperJumpCommand.SuperJump)
 		{
 			return false;
 		}

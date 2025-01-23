@@ -61,7 +61,7 @@ public class InkDamageUtils
 		if (EntityInfoCapability.hasCapability(target))
 		{
 			EntityInfo info = EntityInfoCapability.get(target);
-			if (info.hasPlayerCooldown() && info.getPlayerCooldown() instanceof SuperJumpCommand.SuperJump)
+			if (info.hasActiveAction() && info.getEntityAction() instanceof SuperJumpCommand.SuperJump)
 				return false;
 		}
 		

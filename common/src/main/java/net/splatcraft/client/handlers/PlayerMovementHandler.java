@@ -26,14 +26,14 @@ import net.splatcraft.network.c2s.SquidInputPacket;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 
 import java.util.HashMap;
 import java.util.Optional;
 
 public class PlayerMovementHandler
 {
-	public static final HashMap<PlayerEntity, InputWithData> unmodifiedInput = new HashMap<>();
+	public static final HashMap<PlayerEntity, Input> unmodifiedInput = new HashMap<>();
 	private static final EntityAttributeModifier INK_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("ink_movement_boost"), 0D, EntityAttributeModifier.Operation.ADD_VALUE);
 	private static final EntityAttributeModifier SQUID_SWIM_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("squid_swim_speed"), 0.2D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final EntityAttributeModifier ENEMY_INK_SPEED = new EntityAttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -55,7 +55,7 @@ public class PlayerMovementHandler
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
 		
-		Optional<PlayerCooldown> cooldown = PlayerCooldown.getPlayerCooldownOptional(player);
+		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
 		
 		EntityAttributeInstance speedAttribute = player.getAttributeInstance(EntityAttributes.GENERIC_MOVEMENT_SPEED);
 //            EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
@@ -77,13 +77,6 @@ public class PlayerMovementHandler
 				speedAttribute.addTemporaryModifier(ENEMY_INK_SPEED);
 		}
 		
-		ItemStack useStack = player.getActiveItem();
-		if (cooldown.isPresent())
-			useStack = cooldown.get().storedStack;
-		else if (useStack.isEmpty())
-			useStack = player.getItemCooldownManager().isCoolingDown(player.getMainHandStack().getItem()) ? player.getMainHandStack() :
-				player.getItemCooldownManager().isCoolingDown(player.getOffHandStack().getItem()) ? player.getOffHandStack() : ItemStack.EMPTY;
-		
 		if (playerInfo.isSquid())
 		{
 			if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.isOnGround())
@@ -92,7 +85,7 @@ public class PlayerMovementHandler
 //                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
 		}
 		
-		cooldown.ifPresent(v ->
+		action.ifPresent(v ->
 		{
 			if (v.getSlotIndex() >= 0)
 				player.getInventory().selectedSlot = v.getSlotIndex();
@@ -109,8 +102,8 @@ public class PlayerMovementHandler
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
 		
-		InputWithData clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new InputWithData());
-		clonedInput.copyFrom(input);
+		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new InputWithData());
+		copyTo(input, clonedInput);
 		
 		float speedMod = !input.sneaking ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
 		
@@ -137,29 +130,39 @@ public class PlayerMovementHandler
 			}
 		}
 		
-		if (PlayerCooldown.hasPlayerCooldown(player))
+		Optional<EntityAction> optional = EntityAction.getEntityActionOptional(player);
+		optional.ifPresent(action ->
 		{
-			PlayerCooldown cooldown = PlayerCooldown.getPlayerCooldown(player);
-			
-			if (!cooldown.canMove())
+			if (!action.canMove())
 			{
-				if (!(cooldown instanceof DualieItem.DodgeRollCooldown))
+				if (!(action instanceof DualieItem.DodgeRollAction))
 				{
 					input.jumping = false;
 					input.movementForward = 0;
 					input.movementSideways = 0;
 				}
 			}
-			else if (cooldown.storedStack.getItem() instanceof RollerItem rollerItem)
+			else if (action.getStoredStack().getItem() instanceof RollerItem rollerItem)
 			{
-				input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
-				input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(cooldown.storedStack).swingData.mobility();
+				input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
+				input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
 			}
-			if (cooldown.forceCrouch() && cooldown.getTime() >= 1)
+			if (action.forceCrouch() && action.getTime() >= 1)
 			{
 				input.sneaking = !player.getAbilities().flying;
 			}
-		}
+		});
+	}
+	private static void copyTo(Input from, Input to)
+	{
+		to.movementSideways = from.movementSideways;
+		to.movementForward = from.movementForward;
+		to.pressingForward = from.pressingForward;
+		to.pressingBack = from.pressingBack;
+		to.pressingLeft = from.pressingLeft;
+		to.pressingRight = from.pressingRight;
+		to.jumping = from.jumping;
+		to.sneaking = from.sneaking;
 	}
 	private static void handleSquidMovement(EntityInfo playerInfo, PlayerEntity player, float movementSideways, float movementForward, boolean jumping, boolean sneaking, Input input)
 	{
@@ -257,37 +260,5 @@ public class PlayerMovementHandler
 	@Environment(EnvType.CLIENT)
 	public static class InputWithData extends Input
 	{
-		private boolean didJumpThisframe, oldJump;
-		public InputWithData()
-		{
-		}
-		public void tickJumping()
-		{
-			if (jumping)
-			{
-				didJumpThisframe = !oldJump;
-			}
-			if (!jumping)
-			{
-				didJumpThisframe = false;
-			}
-			oldJump = jumping;
-		}
-		public void copyFrom(Input input)
-		{
-			movementSideways = input.movementSideways;
-			movementForward = input.movementForward;
-			pressingForward = input.pressingForward;
-			pressingBack = input.pressingBack;
-			pressingLeft = input.pressingLeft;
-			pressingRight = input.pressingRight;
-			jumping = input.jumping;
-			sneaking = input.sneaking;
-			tickJumping();
-		}
-		public boolean didJumpThisframe()
-		{
-			return didJumpThisframe;
-		}
 	}
 }

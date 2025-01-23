@@ -34,7 +34,8 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkExplosion;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static boolean canPerformRoll(LivingEntity entity)
 	{
-		return (!PlayerCooldown.hasPlayerCooldown(entity) || (PlayerCooldown.getPlayerCooldown(entity) instanceof DualieItem.DodgeRollCooldown dodgeRoll && dodgeRoll.canCancelRoll())) && entity.jumping && (entity.sidewaysSpeed != 0 || entity.forwardSpeed != 0);
+		return (!EntityAction.hasEntityAction(entity) || (EntityAction.getEntityAction(entity) instanceof DodgeRollAction dodgeRoll && dodgeRoll.canCancelRoll())) && entity.jumping && (entity.sidewaysSpeed != 0 || entity.forwardSpeed != 0);
 	}
 	@Override
 	public Class<DualieWeaponSettings> getSettingsClass()
@@ -121,7 +122,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			ShootingHandler.notifyForceEndShooting(entity);
 			int turretDuration = getRollTurretDuration(activeDualie);
 			if (entity instanceof PlayerEntity player)
-				PlayerCooldown.setPlayerCooldown(entity, new DodgeRollCooldown(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
+				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
 			
 			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
@@ -182,7 +183,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		int rollCount = getRollCount(user);
 		int maxRolls = getMaxRollCount(user);
-		if (rollCount > 0 && !PlayerCooldown.hasPlayerCooldown(user)) // fix just in case
+		if (rollCount > 0 && !EntityAction.hasEntityAction(user)) // fix just in case
 		{
 			rollCount = 0;
 		}
@@ -259,41 +260,50 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
 	{
 		// loong if
-		if (PlayerCooldown.hasPlayerCooldown(player) && ShootingHandler.isDoingShootingAction(player) && PlayerCooldown.getPlayerCooldown(player) instanceof DodgeRollCooldown dodgeRoll && dodgeRoll.rollState == DodgeRollCooldown.RollState.TURRET && ShootingHandler.shootingData.get(player).isDualFire())
+		if (EntityAction.hasEntityAction(player) && ShootingHandler.isDoingShootingAction(player) && EntityAction.getEntityAction(player) instanceof DodgeRollAction dodgeRoll && dodgeRoll.rollState == DodgeRollAction.RollState.TURRET && ShootingHandler.shootingData.get(player).isDualFire())
 			return PlayerPosingHandler.WeaponPose.TURRET_FIRE;
 		return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
 	}
-	public static class DodgeRollCooldown extends PlayerCooldown
+	public static class DodgeRollAction extends EntityActionWithTime
 	{
-		public static final Codec<DodgeRollCooldown> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-			ItemStack.CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
-			Codec.FLOAT.fieldOf("time").forGetter(PlayerCooldown::getTime),
-			Codec.FLOAT.fieldOf("max_time").forGetter(PlayerCooldown::getMaxTime),
-			Codec.INT.fieldOf("slot_index").forGetter(PlayerCooldown::getSlotIndex),
-			Codec.BOOL.fieldOf("is_main_hand").forGetter(v -> v.getHand() == Hand.MAIN_HAND),
+		public static final Codec<DodgeRollAction> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			ItemStack.CODEC.fieldOf("stored_stack").forGetter(DodgeRollAction::getStoredStack),
+			Codec.FLOAT.fieldOf("time").forGetter(DodgeRollAction::getTime),
+			Codec.FLOAT.fieldOf("max_time").forGetter(DodgeRollAction::getMaxTime),
+			Codec.INT.fieldOf("slot_index").forGetter(DodgeRollAction::getSlotIndex),
+			CommonUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("hand").forGetter(EntityAction::getHand),
 			Codec.BYTE.fieldOf("roll_frame").forGetter(v -> v.rollFrame),
 			Codec.BYTE.fieldOf("roll_end_frame").forGetter(v -> v.rollEndFrame),
 			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
 			CommonUtils.VEC_2_CODEC.fieldOf("roll_direction").forGetter(v -> v.rollDirection),
 			Codec.BOOL.fieldOf("can_slide").forGetter(v -> v.canSlide),
 			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState)
-		).apply(inst, DodgeRollCooldown::new));
+		).apply(inst, DodgeRollAction::new));
+		final ItemStack storedStack;
+		final int slotIndex;
+		final Hand hand;
 		final byte rollFrame, rollEndFrame, turretModeFrame;
 		final Vec2f rollDirection;
 		boolean canSlide;
 		RollState rollState = RollState.BEFORE_ROLL;
-		public DodgeRollCooldown(ItemStack stack, int slotIndex, Hand hand, Vec2f rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide)
+		public DodgeRollAction(ItemStack stack, int slotIndex, Hand hand, Vec2f rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide)
 		{
-			super(stack, startupFrames + rollDuration + endlagFrames + turretModeFrames, slotIndex, hand, false, false, true, false);
+			super(startupFrames + rollDuration + endlagFrames + turretModeFrames);
+			storedStack = stack;
+			this.slotIndex = slotIndex;
+			this.hand = hand;
 			this.rollDirection = rollDirection;
 			rollFrame = (byte) (rollDuration + turretModeFrames + endlagFrames);
 			rollEndFrame = (byte) (turretModeFrames + endlagFrames);
 			turretModeFrame = turretModeFrames;
 			this.canSlide = canSlide;
 		}
-		public DodgeRollCooldown(ItemStack storedStack, float time, Float maxTime, Integer slotIndex, Boolean isMainHand, Byte rollFrame, Byte rollEndFrame, Byte turretModeFrame, Vec2f rollDirection, Boolean canSlide, RollState rollState)
+		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2f rollDirection, boolean canSlide, RollState rollState)
 		{
-			super(storedStack, time, maxTime, slotIndex, isMainHand ? Hand.MAIN_HAND : Hand.OFF_HAND, false, false, true, false);
+			super(time, maxTime);
+			storedStack = stack;
+			this.slotIndex = slotIndex;
+			this.hand = hand;
 			this.rollDirection = rollDirection;
 			this.rollFrame = rollFrame;
 			this.rollEndFrame = rollEndFrame;
@@ -390,7 +400,22 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			return rollState != RollState.TURRET;
 		}
-		enum RollState implements StringIdentifiable
+		@Override
+		public ItemStack getStoredStack()
+		{
+			return storedStack;
+		}
+		@Override
+		public int getSlotIndex()
+		{
+			return slotIndex;
+		}
+		@Override
+		public Hand getHand()
+		{
+			return hand;
+		}
+		public enum RollState implements StringIdentifiable
 		{
 			BEFORE_ROLL(0),
 			ROLL(1),
@@ -401,16 +426,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			RollState(int value)
 			{
 				this.value = (byte) value;
-			}
-			public static RollState fromValue(byte value)
-			{
-				return switch (value)
-				{
-					case 0 -> BEFORE_ROLL;
-					case 1 -> ROLL;
-					case 2 -> TURRET;
-					default -> throw new IllegalStateException("Unexpected value: " + value);
-				};
 			}
 			@Override
 			public String asString()

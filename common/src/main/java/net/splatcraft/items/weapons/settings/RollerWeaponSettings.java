@@ -252,8 +252,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	}
 	public record RollerAttackDataRecord(
 		float inkConsumption,
-		int inkRecoveryCooldown,
-		int startupTime,
+		float inkRecoveryCooldown,
+		float startupTime,
+		float endlagTicks,
 		float minSpeed,
 		float maxSpeed
 	)
@@ -261,12 +262,13 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		public static final Codec<RollerAttackDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollerAttackDataRecord::inkConsumption),
-				Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollerAttackDataRecord::inkRecoveryCooldown),
-				Codec.INT.fieldOf("startup_time").forGetter(RollerAttackDataRecord::startupTime),
+				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(RollerAttackDataRecord::inkRecoveryCooldown),
+				Codec.FLOAT.fieldOf("startup_time").forGetter(RollerAttackDataRecord::startupTime),
+				Codec.FLOAT.optionalFieldOf("endlag_ticks", 10 / 3f).forGetter(RollerAttackDataRecord::endlagTicks),
 				Codec.FLOAT.fieldOf("min_speed").forGetter(RollerAttackDataRecord::minSpeed),
 				Codec.FLOAT.fieldOf("max_speed").forGetter(RollerAttackDataRecord::maxSpeed)
 			).apply(instance, RollerAttackDataRecord::new)
 		);
-		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 1, 4);
+		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10 / 3f, 1, 4);
 	}
 }

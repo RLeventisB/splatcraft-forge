@@ -15,8 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.client.handlers.PlayerMovementHandler;
-import net.splatcraft.client.handlers.PlayerMovementHandler.InputWithData;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.items.InkTankItem;
@@ -112,11 +110,6 @@ public class ClientUtils
 		if (!newSquid)
 			cap.flagSquidCancel();
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
-	}
-	@Environment(EnvType.CLIENT)
-	public static InputWithData getUnmodifiedInput(PlayerEntity player)
-	{
-		return PlayerMovementHandler.unmodifiedInput.getOrDefault(player, new InputWithData());
 	}
 	@Environment(EnvType.CLIENT)
 	public static MinecraftClient getClient()

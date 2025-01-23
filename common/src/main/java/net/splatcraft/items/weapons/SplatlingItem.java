@@ -31,7 +31,12 @@ import net.splatcraft.network.c2s.UpdateChargeStatePacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.EntityCooldown;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -120,8 +125,8 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		if (!(entity instanceof PlayerEntity player))
 			return;
 		
-		if (PlayerCooldown.hasPlayerCooldown(player))
-			PlayerCooldown.setPlayerCooldown(player, null);
+		if (EntityAction.hasEntityAction(player))
+			EntityAction.setEntityAction(player, null);
 		
 		SplatlingWeaponSettings settings = getSettings(stack);
 		
@@ -149,16 +154,16 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			playNoInkSound(player, SplatcraftSounds.noInkMain);
 	}
 	@Override
-	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
+	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, EntityAction action)
 	{
-		if (cooldown.getTime() > 0)
+		if (action.getTime() > 0)
 		{
 			if (!world.isClient)
 			{
 				SplatlingWeaponSettings settings = getSettings(stack);
 				
-				float chargeLevel = cooldown.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
-				float cooldownLeft = cooldown.getTime() / cooldown.getMaxTime();
+				float chargeLevel = action.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
+				float cooldownLeft = action.getTime() / action.getMaxTime();
 				float inkConsumed = MathHelper.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
 				float inkRefunded = inkConsumed * cooldownLeft;
 				
@@ -173,7 +178,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		}
 	}
 	@Override
-	public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, PlayerCooldown cooldown)
+	public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, EntityAction action)
 	{
 		if (world.isClient)
 			return;
@@ -187,7 +192,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		int firingSpeed = getScaledShotSettingInt(settings, charge, SplatlingWeaponSettings.ShotDataRecord::firingSpeed);
 		
-		if (firingSpeed > 0 && (cooldown.getTime() - 1) % firingSpeed == 0)
+		if (firingSpeed > 0 && (action.getTime() - 1) % firingSpeed == 0)
 		{
 			float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), firingData.accuracyData());
 			for (int i = 0; i < firingData.projectileCount(); i++)
@@ -211,7 +216,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		int cooldownTime = (int) (getDecayTicks(stack) * charge);
 		reduceInk(player, this, MathHelper.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
-		PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, cooldownTime, player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
+		EntityAction.setEntityAction(player, new EntityCooldown(stack, cooldownTime, player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
 	}
 	@Override
 	public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
@@ -220,7 +225,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		if (world.isClient && entity instanceof PlayerEntity player && player.equals(ClientUtils.getClientPlayer()))
 		{
-			if (PlayerCooldown.hasCooldownAnd(player, PlayerCooldown::preventWeaponUse))
+			if (EntityAction.hasActionAnd(player, EntityAction::preventWeaponUse))
 				return;
 			
 			PlayerCharge charge = PlayerCharge.getCharge(player);
@@ -230,7 +235,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			if (!SplatcraftKeyHandler.isSquidKeyDown() && charge.charge > 0.05f) //checking for squid key press so it doesn't immediately release charge when squidding
 			{
 				SplatlingWeaponSettings settings = getSettings(stack);
-				PlayerCooldown.setPlayerCooldown(player, new PlayerCooldown(stack, (int) (settings.chargeData.firingDuration() * charge.charge), player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
+				EntityAction.setEntityAction(player, new EntityCooldown(stack, (int) (settings.chargeData.firingDuration() * charge.charge), player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
 				SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack, false));
 			}
 		}

@@ -19,7 +19,7 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.handlers.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.registries.*;
-import net.splatcraft.util.PlayerCooldown;
+import net.splatcraft.util.action.EntityAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,7 +53,7 @@ public final class Splatcraft
 		SplatcraftCommonHandler.registerEvents();
 		SquidFormHandler.registerEvents();
 		PlayerMovementHandler.registerEvents();
-		PlayerCooldown.registerCooldowns();
+		EntityAction.registerActions();
 //		SplatcraftOreGen.registerOres();
 		SplatcraftItemGroups.addSplatcraftItemsToVanillaGroups();
 		
