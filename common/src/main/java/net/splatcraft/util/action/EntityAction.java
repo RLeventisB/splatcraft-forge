@@ -49,6 +49,12 @@ public interface EntityAction
 			return Stream.of(ops.createString("id"), ops.createString("data"));
 		}
 	};
+	/**
+	 * Retrieves an {@link EntityAction} from the specified {@link LivingEntity}.
+	 *
+	 * @param entity The entity to retrieve the specified action.
+	 * @return The {@link EntityAction} if the {@link LivingEntity} has it, or else null.
+	 */
 	static EntityAction getEntityAction(LivingEntity entity)
 	{
 		EntityInfo playerInfo = EntityInfoCapability.get(entity);
@@ -56,6 +62,13 @@ public interface EntityAction
 			return null;
 		return playerInfo.getEntityAction();
 	}
+	/**
+	 * Retrieves an {@link EntityAction} from the specified {@link LivingEntity}, if the {@link EntityAction} implements or extends a specified {@link Class}.
+	 *
+	 * @param entity The entity to retrieve the specified action.
+	 * @param clazz  The class of the action.
+	 * @return The {@link EntityAction} if the {@link LivingEntity} has it, and is an instance of the specified {@link Class}, or else null.
+	 */
 	static <T extends EntityAction> T getSpecificEntityAction(LivingEntity entity, Class<T> clazz)
 	{
 		EntityInfo playerInfo = EntityInfoCapability.get(entity);
@@ -63,6 +76,12 @@ public interface EntityAction
 			return null;
 		return (T) playerInfo.getEntityAction();
 	}
+	/**
+	 * Tries to retrieve an {@link EntityAction} from the specified {@link LivingEntity}, the result is represented by an {@link Optional}.
+	 *
+	 * @param entity The entity to retrieve the specified action.
+	 * @return An {@link Optional} representing an {@link EntityAction} if the {@link LivingEntity} has it and is it not null, or else {@code Optional.empty}.
+	 */
 	static Optional<EntityAction> getEntityActionOptional(LivingEntity entity)
 	{
 		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getEntityAction);
