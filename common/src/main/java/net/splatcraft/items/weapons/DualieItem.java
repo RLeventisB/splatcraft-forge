@@ -39,6 +39,7 @@ import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
@@ -259,8 +260,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
 	{
-		// loong if
-		if (EntityAction.hasEntityAction(player) && ShootingHandler.isDoingShootingAction(player) && EntityAction.getEntityAction(player) instanceof DodgeRollAction dodgeRoll && dodgeRoll.rollState == DodgeRollAction.RollState.TURRET && ShootingHandler.shootingData.get(player).isDualFire())
+		Optional<DodgeRollAction> optional = EntityAction.getSpecificActionIf(player, DodgeRollAction::forceCrouch, DodgeRollAction.class);
+		if (optional.isPresent() && ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire())
 			return PlayerPosingHandler.WeaponPose.TURRET_FIRE;
 		return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
 	}
