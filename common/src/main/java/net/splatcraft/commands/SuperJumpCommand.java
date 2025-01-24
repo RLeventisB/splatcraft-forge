@@ -240,19 +240,9 @@ public class SuperJumpCommand
 			return false;
 		}
 		@Override
-		public boolean forceCrouch()
-		{
-			return false;
-		}
-		@Override
 		public boolean preventWeaponUse()
 		{
 			return true;
-		}
-		@Override
-		public boolean preventStopUsing()
-		{
-			return false;
 		}
 		public int getTravelTime()
 		{

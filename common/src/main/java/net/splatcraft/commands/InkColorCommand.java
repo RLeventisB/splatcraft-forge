@@ -74,7 +74,7 @@ public class InkColorCommand
 	}
 	private static int setColorByTeam(ServerCommandSource source, String stageId, String teamId, Collection<ServerPlayerEntity> targets) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
 		
@@ -87,7 +87,7 @@ public class InkColorCommand
 	}
 	private static int setColorByTeam(ServerCommandSource source, String stageId, String teamId) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
 		

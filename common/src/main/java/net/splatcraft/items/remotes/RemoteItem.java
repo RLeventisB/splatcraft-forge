@@ -2,8 +2,6 @@ package net.splatcraft.items.remotes;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import dev.architectury.platform.Platform;
-import net.fabricmc.api.EnvType;
 import net.minecraft.client.item.ClampedModelPredicateProvider;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -32,7 +30,6 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +92,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		
 		if (info.stageId().isPresent())
 		{
-			Stage stage = Platform.getEnv() == EnvType.CLIENT ?
-				ClientUtils.clientStages.get(info.stageId().get()) : SaveInfoCapability.get().getStages().get(info.stageId().get());
+			Stage stage = SaveInfoCapability.get().stages().get(info.stageId().get());
 			if (stage == null)
 				return null;
 			
@@ -133,7 +129,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
 		World result = world.getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, info.stageId().isPresent() ?
-			(world.isClient() ? ClientUtils.clientStages.get(info.stageId().get()) : SaveInfoCapability.get().getStages().get(info.stageId().get())).dimID
+			SaveInfoCapability.get().stages().get(info.stageId().get()).dimID
 			: Identifier.of(info.dimensionId().get()))));
 		
 		return result == null ? world : result;
@@ -157,7 +153,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
-		if (info.stageId().isEmpty() || ClientUtils.clientStages.containsKey(info.stageId().get()))
+		if (info.stageId().isEmpty() || SaveInfoCapability.get().stages().containsKey(info.stageId().get()))
 		{
 			if (hasCoordSet(stack))
 			{

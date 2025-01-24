@@ -218,7 +218,7 @@ public class EntityMixins
 		@WrapOperation(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getJumpVelocity()F"))
 		public float splatcraft$cancelJumpIfRolling(LivingEntity instance, Operation<Float> original)
 		{
-			if (instance.isUsingItem() && instance.getActiveItem().getItem() instanceof DualieItem && (instance.sidewaysSpeed != 0 || instance.forwardSpeed != 0))
+			if (instance.isUsingItem() && instance.getActiveItem().getItem() instanceof DualieItem && (instance.sidewaysSpeed != 0 || instance.forwardSpeed != 0) || EntityAction.getSpecificActionIf(instance, dodgeRollAction -> !dodgeRollAction.canMove(), DualieItem.DodgeRollAction.class).isPresent())
 				return 0;
 			return original.call(instance);
 		}

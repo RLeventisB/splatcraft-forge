@@ -56,4 +56,38 @@ public class RequestTurfScanPacket extends PlayC2SPacket
             playerList.add(0, serverPlayer);
         player.sendMessage(TurfScannerItem.scanTurf(stageLevel, stageLevel, stage.cornerA, stage.cornerB, isTopDown ? 0 : 1, playerList).getOutput(), true);
     }
+	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestTurfScanPacket.class);
+	final String stageId;
+	final boolean isTopDown;
+	public RequestTurfScanPacket(String stageId, boolean isTopDown)
+	{
+		this.stageId = stageId;
+		this.isTopDown = isTopDown;
+	}
+	public static RequestTurfScanPacket decode(RegistryByteBuf buffer)
+	{
+		return new RequestTurfScanPacket(buffer.readString(), buffer.readBoolean());
+	}
+	@Override
+	public Id<? extends CustomPayload> getId()
+	{
+		return ID;
+	}
+	@Override
+	public void encode(RegistryByteBuf buffer)
+	{
+		buffer.writeString(stageId);
+		buffer.writeBoolean(isTopDown);
+	}
+	@Override
+	public void execute(PlayerEntity player)
+	{
+		ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+		
+		ServerWorld stageLevel = player.getWorld().getServer().getWorld(RegistryKey.of(RegistryKeys.WORLD, stage.dimID));
+		ArrayList<ServerPlayerEntity> playerList = new ArrayList<>(stageLevel.getEntitiesByClass(ServerPlayerEntity.class, stage.getBounds(), EntityPredicates.EXCEPT_SPECTATOR));
+		if (!playerList.contains(serverPlayer))
+			playerList.addFirst(serverPlayer);
+		player.sendMessage(TurfScannerItem.scanTurf(stageLevel, stageLevel, stage.cornerA, stage.cornerB, isTopDown ? 0 : 1, playerList).getOutput(), true);
+	}
 }

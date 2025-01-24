@@ -23,53 +23,51 @@ import java.util.concurrent.CompletableFuture;
 
 public class JumpTargetArgument extends EntityArgumentType
 {
-    protected JumpTargetArgument()
-    {
-        super(true, false);
-    }
-
-    public static JumpTargetArgument target()
-    {
-        return new JumpTargetArgument();
-    }
-
-    public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> command, @NotNull SuggestionsBuilder suggestionsBuilder)
-    {
-        if (command.getSource() instanceof CommandSource sharedsuggestionprovider)
-        {
-            StringReader stringreader = new StringReader(suggestionsBuilder.getInput());
-            stringreader.setCursor(suggestionsBuilder.getStart());
-            EntitySelectorReader entityselectorparser = new EntitySelectorReader(stringreader, sharedsuggestionprovider.hasPermissionLevel(2));
-
-            try
-            {
-                entityselectorparser.read();
-            }
-            catch (CommandSyntaxException commandsyntaxexception)
-            {
-            }
-
-            return entityselectorparser.listSuggestions(suggestionsBuilder, (p_91457_) ->
-            {
-                Collection<String> collection = sharedsuggestionprovider.getPlayerNames();
-                Entity source = ((ServerCommandSource) command.getSource()).getEntity();
-                List<Stage> validStages = SaveInfoCapability.get().getStages().values().stream().filter(stage -> stage.getBounds().contains(source.getPos())).toList();
-
-                if (!SplatcraftGameRules.getLocalizedRule(source.getWorld(), source.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
-                    collection.removeIf((str) ->
-                    {
-                        PlayerEntity player = ((ServerCommandSource) command.getSource()).getServer().getPlayerManager().getPlayer(str);
-
-                        return validStages.stream().filter(stage -> stage.getBounds().contains(player.getPos())).toList().isEmpty();
-                    });
-
-                Iterable<String> iterable = Iterables.concat(collection, sharedsuggestionprovider.getEntitySuggestions());
-                CommandSource.suggestMatching(iterable, p_91457_);
-            });
-        }
-        else
-        {
-            return Suggestions.empty();
-        }
-    }
+	protected JumpTargetArgument()
+	{
+		super(true, false);
+	}
+	public static JumpTargetArgument target()
+	{
+		return new JumpTargetArgument();
+	}
+	public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(CommandContext<S> command, @NotNull SuggestionsBuilder suggestionsBuilder)
+	{
+		if (command.getSource() instanceof CommandSource sharedsuggestionprovider)
+		{
+			StringReader stringreader = new StringReader(suggestionsBuilder.getInput());
+			stringreader.setCursor(suggestionsBuilder.getStart());
+			EntitySelectorReader entityselectorparser = new EntitySelectorReader(stringreader, sharedsuggestionprovider.hasPermissionLevel(2));
+			
+			try
+			{
+				entityselectorparser.read();
+			}
+			catch (CommandSyntaxException commandsyntaxexception)
+			{
+			}
+			
+			return entityselectorparser.listSuggestions(suggestionsBuilder, (p_91457_) ->
+			{
+				Collection<String> collection = sharedsuggestionprovider.getPlayerNames();
+				Entity source = ((ServerCommandSource) command.getSource()).getEntity();
+				List<Stage> validStages = SaveInfoCapability.get().stages().values().stream().filter(stage -> stage.getBounds().contains(source.getPos())).toList();
+				
+				if (!SplatcraftGameRules.getLocalizedRule(source.getWorld(), source.getBlockPos(), SplatcraftGameRules.GLOBAL_SUPERJUMPING))
+					collection.removeIf((str) ->
+					{
+						PlayerEntity player = ((ServerCommandSource) command.getSource()).getServer().getPlayerManager().getPlayer(str);
+						
+						return validStages.stream().filter(stage -> stage.getBounds().contains(player.getPos())).toList().isEmpty();
+					});
+				
+				Iterable<String> iterable = Iterables.concat(collection, sharedsuggestionprovider.getEntitySuggestions());
+				CommandSource.suggestMatching(iterable, p_91457_);
+			});
+		}
+		else
+		{
+			return Suggestions.empty();
+		}
+	}
 }

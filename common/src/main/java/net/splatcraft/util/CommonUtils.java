@@ -498,10 +498,6 @@ public class CommonUtils
 	{
 		return width / MathHelper.ceil(width / minStep);
 	}
-	public static Vec3d vec3dFromVector3dc(Vector3d vector)
-	{
-		return new Vec3d(vector.x, vector.y, vector.z);
-	}
 	public record Result(float delay, float value)
 	{
 	}

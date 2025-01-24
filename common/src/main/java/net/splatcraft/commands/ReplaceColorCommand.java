@@ -17,80 +17,76 @@ import net.splatcraft.util.InkColor;
 
 public class ReplaceColorCommand
 {
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
-    {
-        dispatcher.register(CommandManager.literal("replacecolor").requires(commandSource -> commandSource.hasPermissionLevel(2))
-            .then(CommandManager.argument("from", BlockPosArgumentType.blockPos()).then(CommandManager.argument("to", BlockPosArgumentType.blockPos())
-                .then(CommandManager.argument("color", InkColorArgument.inkColor())
-                    .executes(context -> execute(context, 0))
-                    .then(CommandManager.literal("only").then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> execute(context, 1))))
-                    .then(CommandManager.literal("keep").then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> execute(context, 2))))
-                )))
-            .then(StageCommand.stageId("stage")
-                .then(CommandManager.argument("color", InkColorArgument.inkColor())
-                    .executes(context -> executeStage(context, 0))
-                    .then(CommandManager.literal("only")
-                        .then(StageCommand.stageTeam("affectedTeam", "stage").executes(context -> executeStageForTeam(context, 1)))
-                        .then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> executeStage(context, 1))))
-                    .then(CommandManager.literal("keep")
-                        .then(StageCommand.stageTeam("affectedTeam", "stage").executes(context -> executeStageForTeam(context, 2)))
-                        .then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> executeStage(context, 2))))
-                ))
-        );
-    }
-
-    public static int executeStage(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
-    {
-        String stageId = StringArgumentType.getString(context, "stage");
-        Stage stage = SaveInfoCapability.get().getStages().get(stageId);
-
-        if (stage == null)
-            throw StageCommand.STAGE_NOT_FOUND.create(null);
-
-        if (mode == 0)
-        {
-            return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, stageId, "");
-        }
-        return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, stageId, "");
-    }
-
-    public static int executeStageForTeam(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
-    {
-        String stageId = StringArgumentType.getString(context, "stage");
-        Stage stage = SaveInfoCapability.get().getStages().get(stageId);
-
-        if (stage == null)
-            throw StageCommand.STAGE_NOT_FOUND.create(stageId);
-
-        InkColor color = InkColorArgument.getInkColor(context, "color");
-        String team = StringArgumentType.getString(context, "affectedTeam");
-
-        if (mode == 0)
-            return execute(context.getSource(), stage.cornerA, stage.cornerB, color, InkColor.INVALID, mode, stageId, team);
-
-        if (!stage.hasTeam(team))
-            throw StageCommand.TEAM_NOT_FOUND.create(new Object[]{team, stageId});
-
-        InkColor teamColor = stage.getTeamColor(team);
-        stage.setTeamColor(team, color);
-
-        return execute(context.getSource(), stage.cornerA, stage.cornerB, color, teamColor, mode, stageId, team);
-    }
-
-    public static int execute(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
-    {
-        if (mode == 0)
-        {
-            return execute(context.getSource(), BlockPosArgumentType.getLoadedBlockPos(context, "from"), BlockPosArgumentType.getLoadedBlockPos(context, "to"), InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, "", "");
-        }
-        return execute(context.getSource(), StageCommand.getOrLoadBlockPos(context, "from"), StageCommand.getOrLoadBlockPos(context, "to"), InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, "", "");
-    }
-
-    public static int execute(ServerCommandSource source, BlockPos from, BlockPos to, InkColor color, InkColor affectedColor, int mode, String affectedStage, String affectedTeam)
-    {
-        RemoteItem.RemoteResult result = ColorChangerItem.replaceColor(source.getWorld(), from, to, color, mode, affectedColor, affectedStage, affectedTeam);
-
-        source.sendFeedback(result::getOutput, true);
-        return result.getCommandResult();
-    }
+	public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+	{
+		dispatcher.register(CommandManager.literal("replacecolor").requires(commandSource -> commandSource.hasPermissionLevel(2))
+			.then(CommandManager.argument("from", BlockPosArgumentType.blockPos()).then(CommandManager.argument("to", BlockPosArgumentType.blockPos())
+				.then(CommandManager.argument("color", InkColorArgument.inkColor())
+					.executes(context -> execute(context, 0))
+					.then(CommandManager.literal("only").then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> execute(context, 1))))
+					.then(CommandManager.literal("keep").then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> execute(context, 2))))
+				)))
+			.then(StageCommand.stageId("stage")
+				.then(CommandManager.argument("color", InkColorArgument.inkColor())
+					.executes(context -> executeStage(context, 0))
+					.then(CommandManager.literal("only")
+						.then(StageCommand.stageTeam("affectedTeam", "stage").executes(context -> executeStageForTeam(context, 1)))
+						.then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> executeStage(context, 1))))
+					.then(CommandManager.literal("keep")
+						.then(StageCommand.stageTeam("affectedTeam", "stage").executes(context -> executeStageForTeam(context, 2)))
+						.then(CommandManager.argument("affectedColor", InkColorArgument.inkColor()).executes(context -> executeStage(context, 2))))
+				))
+		);
+	}
+	public static int executeStage(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
+	{
+		String stageId = StringArgumentType.getString(context, "stage");
+		Stage stage = SaveInfoCapability.get().stages().get(stageId);
+		
+		if (stage == null)
+			throw StageCommand.STAGE_NOT_FOUND.create(null);
+		
+		if (mode == 0)
+		{
+			return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, stageId, "");
+		}
+		return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, stageId, "");
+	}
+	public static int executeStageForTeam(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
+	{
+		String stageId = StringArgumentType.getString(context, "stage");
+		Stage stage = SaveInfoCapability.get().stages().get(stageId);
+		
+		if (stage == null)
+			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
+		
+		InkColor color = InkColorArgument.getInkColor(context, "color");
+		String team = StringArgumentType.getString(context, "affectedTeam");
+		
+		if (mode == 0)
+			return execute(context.getSource(), stage.cornerA, stage.cornerB, color, InkColor.INVALID, mode, stageId, team);
+		
+		if (!stage.hasTeam(team))
+			throw StageCommand.TEAM_NOT_FOUND.create(new Object[] {team, stageId});
+		
+		InkColor teamColor = stage.getTeamColor(team);
+		stage.setTeamColor(team, color);
+		
+		return execute(context.getSource(), stage.cornerA, stage.cornerB, color, teamColor, mode, stageId, team);
+	}
+	public static int execute(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
+	{
+		if (mode == 0)
+		{
+			return execute(context.getSource(), BlockPosArgumentType.getLoadedBlockPos(context, "from"), BlockPosArgumentType.getLoadedBlockPos(context, "to"), InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, "", "");
+		}
+		return execute(context.getSource(), StageCommand.getOrLoadBlockPos(context, "from"), StageCommand.getOrLoadBlockPos(context, "to"), InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, "", "");
+	}
+	public static int execute(ServerCommandSource source, BlockPos from, BlockPos to, InkColor color, InkColor affectedColor, int mode, String affectedStage, String affectedTeam)
+	{
+		RemoteItem.RemoteResult result = ColorChangerItem.replaceColor(source.getWorld(), from, to, color, mode, affectedColor, affectedStage, affectedTeam);
+		
+		source.sendFeedback(result::getOutput, true);
+		return result.getCommandResult();
+	}
 }

@@ -60,7 +60,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 				}
 			}
 			
-            MinecraftClient.getInstance().setScreen(new StageCreationScreen(stack.getName(), parent));
+			MinecraftClient.getInstance().setScreen(new StageCreationScreen(stack.getName(), parent));
 			setCorner1 = null;
 		}));
 		
@@ -162,7 +162,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 		
 		if (client.world != null && !newId.isEmpty())
 		{
-			Map<String, Stage> stages = SaveInfoCapability.get().getStages(); //this is null in servers somehow??
+			Map<String, Stage> stages = SaveInfoCapability.get().stages();
 			for (int i = 1; stages.containsKey(newId); i++)
 				newId = savedId + "_" + i;
 		}

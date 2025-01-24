@@ -217,7 +217,7 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(player.getUuid(), EntityInfoCapability.get(player).getColor()));
 		SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
-		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().getStages()), player);
+		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
 	}
 	public static void capabilityUpdateEvent(PlayerEntity player)
 	{
