@@ -98,4 +98,9 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 			this::processResult
 		);
 	}
+	@Override
+	public String toString()
+	{
+		return name;
+	}
 }

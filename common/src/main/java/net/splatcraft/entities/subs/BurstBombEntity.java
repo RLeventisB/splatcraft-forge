@@ -69,7 +69,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 		float angle = -age * MathHelper.DEGREES_PER_RADIAN * 0.4f;
 		Vec3d vec3 = getVelocity();
 		setPitch(angle);
-		setYaw(CommonUtils.lerpRotation(0.2f, prevYaw, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN)));
+		setYaw(updateRotation(prevYaw, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN)));
 	}
 	@Override
 	public void tick()

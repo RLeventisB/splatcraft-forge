@@ -147,7 +147,7 @@ public class PlayerMovementHandler
 				input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
 				input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
 			}
-			if (action.forceCrouch() && action.getTime() >= 1)
+			if (action.forceCrouch())
 			{
 				input.sneaking = !player.getAbilities().flying;
 			}

@@ -79,7 +79,6 @@ public class WeaponHandler
 		}));
 		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
 		{
-			
 			if (EntityInfoCapability.hasCapability(entity))
 			{
 				EntityInfo playerInfo = EntityInfoCapability.get(entity);
@@ -124,7 +123,8 @@ public class WeaponHandler
 			
 			if (action.getTime() <= 1)
 			{
-				doEndActions(player, action, stack);
+				if (doEndActions(player, action, stack))
+					return false;
 			}
 			else if (action.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			{
@@ -134,14 +134,16 @@ public class WeaponHandler
 		}
 		return preventedByCooldown;
 	}
-	private static void doEndActions(PlayerEntity player, EntityAction action, ItemStack stack)
+	private static boolean doEndActions(PlayerEntity player, EntityAction action, ItemStack stack)
 	{
 		if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, action);
 		if (action.canEnd(player))
 		{
 			EntityAction.setEntityAction(player, null);
+			return true;
 		}
+		return false;
 	}
 	public static void tickPreviousPosMap(LivingEntity entity)
 	{

@@ -18,16 +18,16 @@ import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.world.World;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
-import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.DodgeRollEndPacket;
 import net.splatcraft.network.c2s.DodgeRollPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -40,6 +40,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Optional;
+
+import static net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
+import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
@@ -79,7 +82,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static int getRollCount(LivingEntity player)
 	{
-		return EntityInfoCapability.hasCapability(player) ? EntityInfoCapability.get(player).getDodgeCount() : -1;
+		return EntityInfoCapability.getOptional(player).map(EntityInfo::getDodgeCount).orElse(-1);
 	}
 	public static int getMaxRollCount(LivingEntity player)
 	{
@@ -123,7 +126,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			ShootingHandler.notifyForceEndShooting(entity);
 			int turretDuration = getRollTurretDuration(activeDualie);
 			if (entity instanceof PlayerEntity player)
-				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove()));
+				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), player.getAbilities().allowFlying));
+			else
+				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, -1, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), false));
 			
 			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
@@ -171,10 +176,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	@Override
 	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
-		doDodgeRollTick(world, user, stack, remainingUseTicks);
+		doDodgeRollTick(user, stack);
 		super.usageTick(world, user, stack, remainingUseTicks);
 	}
-	private void doDodgeRollTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	private void doDodgeRollTick(LivingEntity user, ItemStack stack)
 	{
 		ItemStack offhandDualie = ItemStack.EMPTY;
 		if (user.getActiveHand().equals(Hand.OFF_HAND) && user.getOffHandStack().equals(stack) && user.getOffHandStack().getItem() instanceof DualieItem)
@@ -224,16 +229,17 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
 	{
 		DualieWeaponSettings settings = getSettings(stack);
-		CommonRecords.ShotDataRecord shotData = settings.getShotData(entity);
-		CommonRecords.ProjectileDataRecord projectileData = settings.getProjectileData(entity);
 		World world = entity.getWorld();
-		return ShootingHandler.FiringStatData.createFromShotData(shotData,
+		return ShootingHandler.FiringStatData.createFromShotData(settings.getShotData(entity),
 			null,
 			(data, accumulatedTime, entity1) ->
 			{
 				if (!world.isClient())
 				{
-					if (reduceInk(entity1, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
+					ShotDataRecord shotData = settings.getShotData(entity);
+					ProjectileDataRecord projectileData = settings.getProjectileData(entity);
+					
+					if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 					{
 						float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), shotData.accuracyData());
 						ItemStack otherHand = entity.getStackInHand(CommonUtils.otherHand(data.hand));
@@ -246,7 +252,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
 							
 							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), shotData.pitchCompensation(), projectileData.speed(), inaccuracy);
-							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity1)));
+							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
 							proj.setDualieStats(projectileData);
 							world.spawnEntity(proj);
 							proj.tick(accumulatedTime);
@@ -278,16 +284,17 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
 			CommonUtils.VEC_2_CODEC.fieldOf("roll_direction").forGetter(v -> v.rollDirection),
 			Codec.BOOL.fieldOf("can_slide").forGetter(v -> v.canSlide),
-			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState)
+			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState),
+			Codec.BOOL.fieldOf("did_allow_flying").forGetter(v -> v.didAllowFlying)
 		).apply(inst, DodgeRollAction::new));
 		final ItemStack storedStack;
 		final int slotIndex;
 		final Hand hand;
 		final byte rollFrame, rollEndFrame, turretModeFrame;
 		final Vec2f rollDirection;
-		boolean canSlide;
+		final boolean canSlide, didAllowFlying;
 		RollState rollState = RollState.BEFORE_ROLL;
-		public DodgeRollAction(ItemStack stack, int slotIndex, Hand hand, Vec2f rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide)
+		public DodgeRollAction(ItemStack stack, int slotIndex, Hand hand, Vec2f rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
 		{
 			super(startupFrames + rollDuration + endlagFrames + turretModeFrames);
 			storedStack = stack;
@@ -298,8 +305,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			rollEndFrame = (byte) (turretModeFrames + endlagFrames);
 			turretModeFrame = turretModeFrames;
 			this.canSlide = canSlide;
+			this.didAllowFlying = didAllowFlying;
 		}
-		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2f rollDirection, boolean canSlide, RollState rollState)
+		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2f rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
 		{
 			super(time, maxTime);
 			storedStack = stack;
@@ -311,6 +319,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			this.turretModeFrame = turretModeFrame;
 			this.canSlide = canSlide;
 			this.rollState = rollState;
+			this.didAllowFlying = didAllowFlying;
+		}
+		@Override
+		public void onStart(LivingEntity entity)
+		{
+			if (entity instanceof PlayerEntity player)
+			{
+				player.getAbilities().allowFlying = false;
+				player.getAbilities().flying = false;
+			}
 		}
 		@Override
 		public void tick(LivingEntity entity)
@@ -357,30 +375,29 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						break;
 					case TURRET:
 						doLogic = false;
-						if (getTime() <= 1)
-						{
-							if (local)
-							{
-								boolean endedTurretMode = entity.jumping || entity.forwardSpeed != 0 || entity.sidewaysSpeed != 0 || !entity.isUsingItem() || entity.getVelocity().y > 0.1;
-								if (endedTurretMode)
-								{
-									setTime(0);
-									EntityInfoCapability.get(entity).setDodgeCount(0);
-									SplatcraftPacketHandler.sendToServer(new DodgeRollEndPacket(entity.getUuid()));
-								}
-								else
-								{
-									setTime(2);
-								}
-							}
-							else if (getTime() > 0)
-							{
-								setTime(2);
-							}
-						}
 						break;
 				}
 			}
+		}
+		@Override
+		public boolean canEnd(LivingEntity entity)
+		{
+			boolean endedTurretMode = entity.jumping ||
+				entity.forwardSpeed != 0 || entity.sidewaysSpeed != 0 || // these work in the client side
+				WeaponHandler.getEntityPrevPos(entity).oldOldPosition.squaredDistanceTo(entity.getPos()) > 0.01 || // this works in the server side
+				!entity.isUsingItem() || entity.getVelocity().y > 0.1;
+			if (endedTurretMode)
+			{
+				EntityInfoCapability.get(entity).setDodgeCount(0);
+				ShootingHandler.notifyRecalculateShootingData(entity);
+				if (entity instanceof PlayerEntity player)
+				{
+					player.getAbilities().allowFlying = didAllowFlying;
+				}
+				return true;
+			}
+			
+			return false;
 		}
 		public boolean canCancelRoll()
 		{

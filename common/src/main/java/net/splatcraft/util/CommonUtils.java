@@ -141,16 +141,6 @@ public class CommonUtils
 			return new Vec3d(vec.x, vec.y, vec.z);
 		}
 	};
-	public static <T> Codec<T> withNullSupport(Codec<T> originalCodec, T defaultValue, Predicate<T> isEmpty)
-	{
-		return Codecs.optional(originalCodec).xmap(
-			(optional) -> optional.orElse(defaultValue),
-			(value) -> isEmpty.test(value) ? Optional.empty() : Optional.of(value));
-	}
-	public static <T> Codec<T> withNullSupport(Codec<T> originalCodec, T defaultValue)
-	{
-		return withNullSupport(originalCodec, defaultValue, Objects::isNull);
-	}
 	public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPayload.Id<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));
@@ -302,50 +292,6 @@ public class CommonUtils
 		boolean isOffOnCooldown = player.getOffHandStack().getItem() instanceof WeaponBaseItem weapon && player.getItemCooldownManager().isCoolingDown(weapon);
 		return isMainOnCooldown || isOffOnCooldown;
 	}
-	public static float lerpRotation(float value, float a, float b)
-	{
-		while (b - a < -180.0F)
-		{
-			a -= 360.0F;
-		}
-		
-		while (b - a >= 180.0F)
-		{
-			a += 360.0F;
-		}
-		
-		return MathHelper.lerp(0.2F, a, b);
-	}
-	public static <S, V> V getArgumentOrDefault(CommandContext<S> context, String name, Class<V> clazz, V defaultValue) // why do i have to do this though
-	{
-		try
-		{
-			return context.getArgument(name, clazz);
-		}
-		catch (IllegalArgumentException e)
-		{
-			if (e.getMessage().startsWith("No such argument '"))
-			{
-				return defaultValue;
-			}
-			throw e;
-		}
-	}
-	public static <S> boolean hasArgument(CommandContext<S> context, String name) // why do i have to do this though
-	{
-		try
-		{
-			context.getArgument(name, Object.class);
-		}
-		catch (IllegalArgumentException e)
-		{
-			if (e.getMessage().startsWith("No such argument '"))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
 	public static @NotNull Result tickValue(float delay, float value, float decrease, float minValue, float timeDelta)
 	{
 		if (delay > 0)
@@ -415,15 +361,11 @@ public class CommonUtils
 	}
 	public static float startupSquidSwitch(LivingEntity entity, CommonRecords.ShotDataRecord shotData)
 	{
-//        if (entity instanceof PlayerEntity player)
 		return returnValueDependantOnSquidCancel(entity, shotData.squidStartupTicks(), shotData.startupTicks());
-//        return shotData.startupTicks();
 	}
 	public static float startupSquidSwitch(LivingEntity entity, ShootingHandler.FiringStatData firingData)
 	{
-//        if (entity instanceof PlayerEntity player)
 		return returnValueDependantOnSquidCancel(entity, firingData.squidStartupFrames(), firingData.startupFrames());
-//        return firingData.startupFrames();
 	}
 	public static float nextTriangular(Random random, float mode, float deviation)
 	{

@@ -49,15 +49,27 @@ public class ShootingHandler
 		shootingData.put(entity, entityData);
 		return true;
 	}
+	public static boolean notifyRecalculateShootingData(LivingEntity entity)
+	{
+		if (entity.getWorld().isClient)
+			return false;
+		
+		EntityData entityData;
+		if ((entityData = shootingData.get(entity)) != null)
+		{
+			entityData.recalculateFiringData();
+			return true;
+		}
+		return false;
+	}
 	public static boolean notifyForceEndShooting(LivingEntity entity)
 	{
 		if (entity.getWorld().isClient)
 			return false;
 		
 		EntityData entityData;
-		if (shootingData.containsKey(entity))
+		if ((entityData = shootingData.get(entity)) != null)
 		{
-			entityData = shootingData.get(entity);
 			entityData.mainHandData.end();
 			entityData.offHandData.end();
 			return true;
@@ -240,7 +252,7 @@ public class ShootingHandler
 		{
 			if (active && data.getFiringSpeed() != firingData.getFiringSpeed())
 			{
-				// TODO: do conversion in case of dualies having different firing speeds, maybe, i think
+				timer = timer / data.getFiringSpeed() * firingData.getFiringSpeed();
 			}
 			firingData = data;
 		}
