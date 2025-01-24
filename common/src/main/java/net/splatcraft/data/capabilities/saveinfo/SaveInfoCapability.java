@@ -19,6 +19,7 @@ public class SaveInfoCapability
 		if (Platform.getEnv().equals(EnvType.CLIENT))
 			clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObjectArrayList<>());
 	}
+	// todo: create an "register" method so get doesn't automatically instantiates a saveinfo
 	@Contract
 	@ExpectPlatform
 	public static SaveInfo get()
