@@ -59,15 +59,17 @@ public abstract class RemoteItem extends Item implements CommandOutput
 	{
 		return stack.get(SplatcraftComponents.REMOTE_INFO);
 	}
+	private static void setInfo(ItemStack stack, SplatcraftComponents.RemoteInfo info)
+	{
+		stack.set(SplatcraftComponents.REMOTE_INFO, info);
+	}
 	public static int getRemoteMode(ItemStack stack)
 	{
 		return getInfo(stack).modeIndex();
 	}
 	public static void setRemoteMode(ItemStack stack, int mode)
 	{
-		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		info.setModeIndex(mode);
-		stack.set(SplatcraftComponents.REMOTE_INFO, info);
+		setInfo(stack, getInfo(stack).setModeIndex(mode));
 	}
 	public static int cycleRemoteMode(ItemStack stack)
 	{
@@ -109,18 +111,11 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
 		if (info.dimensionId().isEmpty())
-			info.setDimensionId(world.getDimension().effects().toString());
+			info = info.setDimensionId(world.getDimension().effects().toString());
 		else if (!world.equals(getLevel(world, stack)))
 			return false;
 		
-		if (info.pointA().isPresent())
-		{
-			info.setPointB(pos);
-		}
-		else
-		{
-			info.setPointA(pos);
-		}
+		setInfo(stack, info.setPoint(pos));
 		
 		return true;
 	}

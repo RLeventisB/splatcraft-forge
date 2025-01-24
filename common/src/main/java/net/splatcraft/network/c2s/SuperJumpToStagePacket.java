@@ -10,34 +10,29 @@ import net.splatcraft.util.CommonUtils;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
-    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
-    final String stageId;
-
-    public SuperJumpToStagePacket(String stageId)
-    {
-        this.stageId = stageId;
-    }
-
-    public static SuperJumpToStagePacket decode(PacketByteBuf buf)
-    {
-        return new SuperJumpToStagePacket(buf.readString());
-    }
-
-    @Override
-    public Id<? extends CustomPayload> getId()
-    {
-        return ID;
-    }
-
-    @Override
-    public void encode(RegistryByteBuf buffer)
-    {
-        buffer.writeString(stageId);
-    }
-
-    @Override
-    public void execute(PlayerEntity player)
-    {
-        Stage.getStage(player.getWorld(), stageId).superJumpToStage((ServerPlayerEntity) player);
-    }
+	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
+	final String stageId;
+	public SuperJumpToStagePacket(String stageId)
+	{
+		this.stageId = stageId;
+	}
+	public static SuperJumpToStagePacket decode(PacketByteBuf buf)
+	{
+		return new SuperJumpToStagePacket(buf.readString());
+	}
+	@Override
+	public Id<? extends CustomPayload> getId()
+	{
+		return ID;
+	}
+	@Override
+	public void encode(RegistryByteBuf buffer)
+	{
+		buffer.writeString(stageId);
+	}
+	@Override
+	public void execute(PlayerEntity player)
+	{
+		Stage.getStage(stageId).superJumpToStage((ServerPlayerEntity) player);
+	}
 }

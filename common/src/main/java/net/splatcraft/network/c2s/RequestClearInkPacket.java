@@ -34,7 +34,7 @@ public class RequestClearInkPacket extends PlayC2SPacket
 	@Override
 	public void execute(PlayerEntity player)
 	{
-		Stage stage = Stage.getStage(player.getWorld(), stageId);
+		Stage stage = Stage.getStage(stageId);
 		net.minecraft.server.world.ServerWorld stageLevel = player.getWorld().getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, stage.dimID)));
 		player.sendMessage(InkDisruptorItem.clearInk(stageLevel, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
 	}

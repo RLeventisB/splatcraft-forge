@@ -8,6 +8,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.splatcraft.blocks.IColoredBlock;
@@ -53,7 +54,10 @@ public class TurfScannerItem extends RemoteItem
 			{
 				for (int z = minPos.getZ(); z <= maxPos.getZ(); z++)
 				{
-					BlockPos checkPos = getTopSolidOrLiquidBlock(new BlockPos(x, 0, z), world, minPos.getY(), maxPos.getY() + 1);
+					BlockPos checkPos = getTopSolidOrLiquidBlock(x, z, world, minPos.getY(), maxPos.getY() + 1);
+					if (checkPos == null)
+						continue;
+					
 					BlockState checkState = world.getBlockState(checkPos);
 					
 					if (checkPos.getY() > maxPos.getY() || !checkState.blocksMovement() || checkState.isLiquid())
@@ -124,7 +128,7 @@ public class TurfScannerItem extends RemoteItem
 						InkColor color;
 						ChunkInk.BlockEntry entry = InkBlockUtils.getInkBlock(world, checkPos);
 						
-						if (entry.isInkedAny())
+						if (entry != null && entry.isInkedAny())
 						{
 							for (byte i = 0; i < 6; i++)
 							{
@@ -207,11 +211,15 @@ public class TurfScannerItem extends RemoteItem
 		
 		return (TurfScanResult) new TurfScanResult(true, Text.translatable("commands.scanturf.success", facesTotal), scores, facesTotal).setIntResults(winner.getColor(), (int) ((float) affectedBlockTotal / facesTotal * 15));
 	}
-	private static BlockPos getTopSolidOrLiquidBlock(BlockPos pos, World world, int min, int max)
+	private static BlockPos getTopSolidOrLiquidBlock(int x, int z, World world, int min, int max)
 	{
-		Chunk chunk = world.getChunk(pos);
+		Chunk chunk = world.getChunk(ChunkSectionPos.getSectionCoord(x), ChunkSectionPos.getSectionCoord(z));
 		
-		BlockPos blockpos = new BlockPos(pos.getX(), Math.min(chunk.getHighestNonEmptySection() + 16, max), pos.getZ());
+		int highestNonEmptySection = chunk.getHighestNonEmptySection();
+		if (highestNonEmptySection == -1)
+			return null;
+		
+		BlockPos blockpos = new BlockPos(x, Math.min(ChunkSectionPos.getBlockCoord(chunk.sectionIndexToCoord(highestNonEmptySection)) + 16, max), z);
 		while (world.isInBuildLimit(blockpos) && blockpos.getY() >= min)
 		{
 			BlockState state = chunk.getBlockState(blockpos);
@@ -219,7 +227,7 @@ public class TurfScannerItem extends RemoteItem
 			if (state.isIn(SplatcraftTags.Blocks.SCAN_TURF_IGNORED) || !InkBlockUtils.canInkPassthrough(world, blockpos) ||
 				state.blocksMovement())
 			{
-				break;
+				return blockpos;
 			}
 			blockpos = blockpos.down();
 		}

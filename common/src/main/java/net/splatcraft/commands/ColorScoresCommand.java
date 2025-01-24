@@ -73,7 +73,7 @@ public class ColorScoresCommand
 		{
 			context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.count", collection.size()), false);
 			collection.forEach(color ->
-				context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.entry", color, InkColorCommand.getColorName(color)), false));
+				context.getSource().sendFeedback(() -> Text.translatable("commands.colorscores.list.entry", color.getLocalizedName(), InkColorCommand.getColorName(color)), false));
 		}
 		
 		return collection.size();

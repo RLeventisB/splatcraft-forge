@@ -130,6 +130,12 @@ public class SplatcraftComponents
 		{
 			return new RemoteInfo(stageId, dimensionId, targets, pointA, pointB, modeIndex);
 		}
+		public RemoteInfo setPoint(BlockPos pos)
+		{
+			if (pointA.isEmpty())
+				return setPointA(pos);
+			return setPointB(pos);
+		}
 	}
 	public record TankData(boolean infiniteInk, boolean hideTooltip, float inkLevel, float inkRecoveryCooldown)
 	{

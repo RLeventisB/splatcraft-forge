@@ -2,12 +2,11 @@ package net.splatcraft.data;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -30,7 +29,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
-import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Nullable;
@@ -40,13 +39,16 @@ import java.util.*;
 public class Stage implements Comparable<Stage>
 {
 	public static final TreeMap<String, GameRules.Key<GameRules.BooleanRule>> VALID_SETTINGS = new TreeMap<>();
+	private static final PacketCodec<ByteBuf, Object2ObjectOpenHashMap<String, Boolean>> SETTINGS_PACKET_CODEC = PacketCodecs.map(Object2ObjectOpenHashMap::new, PacketCodecs.STRING, PacketCodecs.BOOL);
+	private static final PacketCodec<RegistryByteBuf, Object2ObjectOpenHashMap<String, InkColor>> TEAMS_PACKET_CODEC = PacketCodecs.map(Object2ObjectOpenHashMap::new, PacketCodecs.STRING, InkColor.PACKET_CODEC);
+	private static final PacketCodec<ByteBuf, ObjectArrayList<BlockPos>> SPAWN_PAD_POSITIONS_PACKET_CODEC = BlockPos.PACKET_CODEC.collect(PacketCodecs.toCollection(ObjectArrayList::new));
 	public static Codec<Stage> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		BlockPos.CODEC.fieldOf("CornerA").forGetter(v -> v.cornerA),
 		BlockPos.CODEC.fieldOf("CornerB").forGetter(v -> v.cornerB),
 		Identifier.CODEC.fieldOf("Dimension").forGetter(v -> v.dimID),
-		Codec.unboundedMap(Codec.STRING, Codec.BOOL).fieldOf("Settings").forGetter(v -> v.settings),
-		Codec.unboundedMap(Codec.STRING, InkColor.CODEC).fieldOf("Teams").forGetter(v -> v.teams),
-		Codec.list(BlockPos.CODEC).fieldOf("SpawnPads").forGetter(v -> v.spawnPadPositions),
+		CodecUtils.hashMapCodec(Codec.STRING, Codec.BOOL).fieldOf("Settings").forGetter(v -> v.settings),
+		CodecUtils.hashMapCodec(Codec.STRING, InkColor.CODEC).fieldOf("Teams").forGetter(v -> v.teams),
+		CodecUtils.arrayList(BlockPos.CODEC).fieldOf("SpawnPads").forGetter(v -> v.spawnPadPositions),
 		TextCodecs.CODEC.fieldOf("Name").forGetter(v -> v.name),
 		Codec.STRING.fieldOf("Id").forGetter(v -> v.id)
 	).apply(inst, Stage::new));
@@ -55,7 +57,15 @@ public class Stage implements Comparable<Stage>
 		@Override
 		public Stage decode(RegistryByteBuf buf)
 		{
-			return null;
+			BlockPos cornerA = BlockPos.PACKET_CODEC.decode(buf);
+			BlockPos cornerB = BlockPos.PACKET_CODEC.decode(buf);
+			Identifier dimId = Identifier.PACKET_CODEC.decode(buf);
+			Object2ObjectOpenHashMap<String, Boolean> settings = SETTINGS_PACKET_CODEC.decode(buf);
+			Object2ObjectOpenHashMap<String, InkColor> teams = TEAMS_PACKET_CODEC.decode(buf);
+			ObjectArrayList<BlockPos> spawnPadPositions = SPAWN_PAD_POSITIONS_PACKET_CODEC.decode(buf);
+			Text name = TextCodecs.PACKET_CODEC.decode(buf);
+			String id = PacketCodecs.STRING.decode(buf);
+			return new Stage(cornerA, cornerB, dimId, settings, teams, spawnPadPositions, name, id);
 		}
 		@Override
 		public void encode(RegistryByteBuf buf, Stage value)
@@ -63,10 +73,11 @@ public class Stage implements Comparable<Stage>
 			BlockPos.PACKET_CODEC.encode(buf, value.cornerA);
 			BlockPos.PACKET_CODEC.encode(buf, value.cornerB);
 			Identifier.PACKET_CODEC.encode(buf, value.dimID);
-			PacketCodecs.map(HashMap::new, PacketCodecs.STRING, PacketCodecs.BOOL).encode(buf, (HashMap<String, Boolean>) value.settings);
-			PacketCodecs.map(HashMap::new, PacketCodecs.STRING, InkColor.PACKET_CODEC).encode(buf, (HashMap<String, InkColor>) value.teams);
-			BlockPos.PACKET_CODEC.collect(PacketCodecs.toList()).encode(buf, value.spawnPadPositions);
+			SETTINGS_PACKET_CODEC.encode(buf, value.settings);
+			TEAMS_PACKET_CODEC.encode(buf, value.teams);
+			SPAWN_PAD_POSITIONS_PACKET_CODEC.encode(buf, value.spawnPadPositions);
 			TextCodecs.PACKET_CODEC.encode(buf, value.name);
+			PacketCodecs.STRING.encode(buf, value.id);
 		}
 	};
 	static
@@ -86,9 +97,9 @@ public class Stage implements Comparable<Stage>
 		registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
 	}
 	public final String id;
-	private final Map<String, Boolean> settings;
-	private final Map<String, InkColor> teams;
-	private final List<BlockPos> spawnPadPositions;
+	private final Object2ObjectOpenHashMap<String, Boolean> settings;
+	private final Object2ObjectOpenHashMap<String, InkColor> teams;
+	private final ObjectArrayList<BlockPos> spawnPadPositions;
 	public BlockPos cornerA;
 	public BlockPos cornerB;
 	public Identifier dimID;
@@ -99,9 +110,9 @@ public class Stage implements Comparable<Stage>
 		dimID = world.getDimension().effects();
 		this.id = id;
 		this.name = name;
-		settings = new HashMap<>();
-		teams = new HashMap<>();
-		spawnPadPositions = new ArrayList<>();
+		settings = new Object2ObjectOpenHashMap<>();
+		teams = new Object2ObjectOpenHashMap<>();
+		spawnPadPositions = new ObjectArrayList<>();
 		
 		updateBounds(world, posA, posB);
 	}
@@ -116,7 +127,7 @@ public class Stage implements Comparable<Stage>
 		cornerB = stage.cornerB;
 		this.id = id;
 	}
-	public Stage(BlockPos cornerA, BlockPos cornerB, Identifier dimID, Map<String, Boolean> settings, Map<String, InkColor> teams, List<BlockPos> spawnPadPos, Text name, String id)
+	public Stage(BlockPos cornerA, BlockPos cornerB, Identifier dimID, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Text name, String id)
 	{
 		this.dimID = dimID;
 		this.settings = settings;
@@ -135,18 +146,18 @@ public class Stage implements Comparable<Stage>
 	{
 		return !getStagesForPosition(world, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
 	}
-	public static ArrayList<Stage> getAllStages(World world)
+	public static ArrayList<Stage> getAllStages()
 	{
-		return new ArrayList<>(world.isClient() ? ClientUtils.clientStages.values() : SaveInfoCapability.get().getStages().values());
+		return new ArrayList<>(SaveInfoCapability.get().stages().values());
 	}
-	public static Stage getStage(World world, String id)
+	public static Stage getStage(String id)
 	{
-		return (world.isClient() ? ClientUtils.clientStages : SaveInfoCapability.get().getStages()).get(id);
+		return SaveInfoCapability.get().stages().get(id);
 	}
 	public static ArrayList<Stage> getStagesForPosition(World world, Vec3d pos)
 	{
-		ArrayList<Stage> stages = getAllStages(world);
-		stages.removeIf(stage -> !stage.dimID.equals(world.getDimension().effects()) || !stage.getBounds().contains(pos));
+		ArrayList<Stage> stages = getAllStages();
+		stages.removeIf(stage -> stage == null || !stage.dimID.equals(world.getDimension().effects()) || !stage.getBounds().contains(pos));
 		return stages;
 	}
 	public boolean hasSetting(String key)
@@ -218,38 +229,6 @@ public class Stage implements Comparable<Stage>
 		this.cornerB = cornerB;
 		if (world != null)
 			updateSpawnPads(world);
-	}
-	public NbtCompound writeData()
-	{
-		NbtCompound nbt = new NbtCompound();
-		
-		nbt.put("CornerA", NbtHelper.fromBlockPos(cornerA));
-		nbt.put("CornerB", NbtHelper.fromBlockPos(cornerB));
-		nbt.putString("Dimension", dimID.toString());
-		
-		NbtCompound settingsNbt = new NbtCompound();
-		NbtCompound teamsNbt = new NbtCompound();
-		
-		for (Map.Entry<String, Boolean> setting : settings.entrySet())
-			settingsNbt.putBoolean(setting.getKey(), setting.getValue());
-		nbt.put("Settings", settingsNbt);
-		
-		for (Map.Entry<String, InkColor> team : teams.entrySet())
-			teamsNbt.put(team.getKey(), team.getValue().getNbt());
-		nbt.put("Teams", teamsNbt);
-		
-		if (!needsSpawnPadUpdate)
-		{
-			NbtList list = new NbtList();
-			for (BlockPos spawnPadPos : spawnPadPositions)
-				list.add(NbtHelper.fromBlockPos(spawnPadPos));
-			
-			nbt.put("SpawnPads", list);
-		}
-		
-		nbt.putString("Name", Text.Serialization.toJsonString(name, MinecraftClient.getInstance().getServer().getRegistryManager()));
-		
-		return nbt;
 	}
 	public boolean needSpawnPadUpdate()
 	{

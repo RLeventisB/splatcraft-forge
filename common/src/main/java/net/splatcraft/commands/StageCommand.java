@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -33,7 +34,6 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +101,7 @@ public class StageCommand
 	}
 	public static RequiredArgumentBuilder<ServerCommandSource, String> stageId(String argumentName)
 	{
-		return CommandManager.argument(argumentName, StringArgumentType.word()).suggests((context, builder) -> CommandSource.suggestMatching((context.getSource().getWorld().isClient() ? ClientUtils.clientStages : SaveInfoCapability.get().getStages()).keySet(), builder));
+		return CommandManager.argument(argumentName, StringArgumentType.word()).suggests((context, builder) -> CommandSource.suggestMatching(SaveInfoCapability.get().stages().keySet(), builder));
 	}
 	public static RequiredArgumentBuilder<ServerCommandSource, String> stageTeam(String argumentName, String stageArgumentName)
 	{
@@ -109,7 +109,7 @@ public class StageCommand
 		{
 			try
 			{
-				Stage stage = (context.getSource().getWorld().isClient() ? ClientUtils.clientStages : SaveInfoCapability.get().getStages()).get(StringArgumentType.getString(context, stageArgumentName));
+				Stage stage = SaveInfoCapability.get().stages().get(StringArgumentType.getString(context, stageArgumentName));
 				if (stage == null)
 					return Suggestions.empty();
 				return CommandSource.suggestMatching(stage.getTeamIds(), builder);
@@ -181,7 +181,7 @@ public class StageCommand
 	private static int warpToTeam(CommandContext<ServerCommandSource> context, boolean setSpawn, String team) throws CommandSyntaxException
 	{
 		String stageId = StringArgumentType.getString(context, "stage");
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
 		
@@ -223,7 +223,7 @@ public class StageCommand
 	}
 	private static int remove(ServerCommandSource source, String stageId) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
 		
@@ -237,7 +237,7 @@ public class StageCommand
 	}
 	private static int listStages(ServerCommandSource source)
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		StringBuilder builder = new StringBuilder();
 		for (String key : stages.keySet())
 		{
@@ -250,7 +250,7 @@ public class StageCommand
 	}
 	private static int setSetting(ServerCommandSource source, String stageId, String setting, @Nullable Boolean value) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -273,7 +273,7 @@ public class StageCommand
 	}
 	private static int getSetting(ServerCommandSource source, String stageId, String setting) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -292,7 +292,7 @@ public class StageCommand
 	}
 	private static int setTeam(ServerCommandSource source, String stageId, String teamId, InkColor teamColor) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -331,7 +331,7 @@ public class StageCommand
 	}
 	private static InkColor getTeam(ServerCommandSource source, String stageId, String teamId) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -348,7 +348,7 @@ public class StageCommand
 	}
 	private static InkColor removeTeam(ServerCommandSource source, String stageId, String teamId) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -394,7 +394,7 @@ public class StageCommand
 	}
 	private static int warpPlayers(ServerCommandSource source, String stageId, Collection<ServerPlayerEntity> targets, boolean setSpawn, InkColor color) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -444,7 +444,7 @@ public class StageCommand
 	}
 	private static int warpPlayersToAny(ServerCommandSource source, String stageId, Collection<ServerPlayerEntity> targets, boolean setSpawn) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -460,16 +460,17 @@ public class StageCommand
 		for (ServerPlayerEntity player : targets)
 		{
 			SpawnPadTileEntity te = spawnPads.get(playersTeleported % spawnPads.size());
+			BlockPos pos = te.getPos();
 			
-			float pitch = te.getWorld().getBlockState(te.getPos()).get(SpawnPadBlock.DIRECTION).asRotation();
+			float pitch = te.getWorld().getBlockState(pos).get(SpawnPadBlock.DIRECTION).asRotation();
 			
 			if (stageLevel == player.getWorld())
-				player.networkHandler.requestTeleport(te.getPos().getX() + .5, te.getPos().getY() + .5, te.getPos().getZ() + .5, pitch, 0);
+				player.networkHandler.requestTeleport(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, pitch, 0);
 			else
-				player.teleport(stageLevel, te.getPos().getX() + .5, te.getPos().getY() + .5, te.getPos().getZ(), pitch, 0);
+				player.teleport(stageLevel, pos.getX() + .5, pos.getY() + .5, pos.getZ(), pitch, 0);
 			
 			if (setSpawn)
-				player.setSpawnPoint(player.getWorld().getRegistryKey(), te.getPos(), player.getWorld().getBlockState(te.getPos()).get(SpawnPadBlock.DIRECTION).asRotation(), false, true);
+				player.setSpawnPoint(player.getWorld().getRegistryKey(), pos, player.getWorld().getBlockState(pos).get(SpawnPadBlock.DIRECTION).asRotation(), false, true);
 			
 			playersTeleported++;
 		}
@@ -484,7 +485,7 @@ public class StageCommand
 	}
 	public static int playStage(ServerCommandSource source, String stageId, Collection<ServerPlayerEntity> players, boolean assignTeams, StageGameMode gameMode) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -521,7 +522,7 @@ public class StageCommand
 	}
 	private static int setStageCoords(ServerCommandSource source, String stageId, BlockPos pos, boolean isCornerA) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -539,7 +540,7 @@ public class StageCommand
 	}
 	private static int getStageCoords(ServerCommandSource source, String stageId, boolean isCornerA) throws CommandSyntaxException
 	{
-		Map<String, Stage> stages = SaveInfoCapability.get().getStages();
+		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);

@@ -1,12 +1,6 @@
 package net.splatcraft.util;
 
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.codecs.PrimitiveCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -40,7 +34,6 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
-import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
@@ -60,36 +53,16 @@ import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class CommonUtils
 {
-	public static final Codec<Hand> HAND_NULL_IS_MAIN_CODEC = new Codec<>()
-	{
-		@Override
-		public <T> DataResult<Pair<Hand, T>> decode(DynamicOps<T> ops, T input)
-		{
-			DataResult<Boolean> result = ops.getBooleanValue(input);
-			if (result.isSuccess())
-				return DataResult.success(Pair.of(result.getOrThrow() ? Hand.MAIN_HAND : Hand.OFF_HAND, input));
-			return DataResult.error(() -> "Invalid input.");
-		}
-		@Override
-		public <T> DataResult<T> encode(Hand input, DynamicOps<T> ops, T prefix)
-		{
-			return DataResult.success(ops.createBoolean(Objects.equals(input, Hand.MAIN_HAND)));
-		}
-	};
-	public static final Codec<Vec2f> VEC_2_CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
-		Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
-	).apply(inst, Vec2f::new));
 	public static final TrackedDataHandler<Vector2f> VEC2DATAHANDLER = new TrackedDataHandler<>()
 	{
 		public static final PacketCodec<RegistryByteBuf, Vector2f> PACKET_CODEC = PacketCodec.tuple(
@@ -373,7 +346,7 @@ public class CommonUtils
 	}
 	public static boolean isRolling(LivingEntity entity)
 	{
-		return entity instanceof PlayerEntity player && EntityAction.hasEntityAction(player) && EntityAction.getEntityAction(player) instanceof DualieItem.DodgeRollAction;
+		return EntityAction.hasSpecificEntityAction(entity, DualieItem.DodgeRollAction.class);
 	}
 	public static Hand otherHand(Hand hand)
 	{
@@ -431,10 +404,6 @@ public class CommonUtils
 				MathHelper.getLerpProgress(pos.z, startPos.z, endPos.z)
 			};
 		return Arrays.stream(progresses).filter(Double::isFinite).mapToDouble(v -> v).average().orElse(fallback);
-	}
-	public static <K, V> Codec<Map<K, V>> hashMapCodec(PrimitiveCodec<K> keyCodec, Codec<V> valueCodec)
-	{
-		return Codec.unboundedMap(keyCodec, valueCodec).xmap(HashMap::new, v -> v);
 	}
 	public static float calculateStep(float width, float minStep)
 	{

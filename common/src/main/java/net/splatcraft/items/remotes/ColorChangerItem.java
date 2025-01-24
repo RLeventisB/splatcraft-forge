@@ -1,5 +1,6 @@
 package net.splatcraft.items.remotes;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.component.ComponentMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -26,14 +27,12 @@ import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.tileentities.IHasTeam;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplatcraftForgeItemDummy
@@ -66,7 +65,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 		
 		if (mode <= 1 && !affectedTeam.isEmpty() && !stage.isEmpty())
 		{
-			Map<String, Stage> stages = (world.isClient() ? ClientUtils.clientStages : SaveInfoCapability.get().getStages());
+			Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 			stages.get(stage).setTeamColor(affectedTeam, color);
 			if (!world.isClient())
 				SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
@@ -91,9 +90,9 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 				if (components.contains(SplatcraftComponents.REMOTE_INFO))
 				{
 					String stage = components.get(SplatcraftComponents.REMOTE_INFO).stageId().get();
-					if (ClientUtils.clientStages.containsKey(stage))
+					if (SaveInfoCapability.get().stages().containsKey(stage))
 					{
-						color = ClientUtils.clientStages.get(stage).getTeamColor(teamId);
+						color = SaveInfoCapability.get().stages().get(stage).getTeamColor(teamId);
 					}
 				}
 				tooltip.add(Texts.setStyleIfAbsent(Text.literal(teamId), !color.isValid() ? TARGETS_STYLE : TARGETS_STYLE.withColor(TextColor.fromRgb(color.getColorWithAlpha(255)))));

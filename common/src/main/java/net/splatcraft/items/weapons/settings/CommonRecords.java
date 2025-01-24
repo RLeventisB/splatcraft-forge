@@ -1,6 +1,7 @@
 package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.math.MathHelper;
 
@@ -55,7 +56,7 @@ public class CommonRecords
 		float damageDecayPerTick
 	)
 	{
-		public static final Codec<ProjectileDataRecord> CODEC = RecordCodecBuilder.create(
+		public static final MapCodec<ProjectileDataRecord> MAP_CODEC = RecordCodecBuilder.mapCodec(
 			instance -> instance.group(
 				Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
@@ -74,6 +75,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("damage_decay_per_tick", 0F).forGetter(ProjectileDataRecord::damageDecayPerTick)
 			).apply(instance, ProjectileDataRecord::create)
 		);
+		public static final Codec<ProjectileDataRecord> CODEC = MAP_CODEC.codec();
 		public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
 		public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
 		{

@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
-import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.CodecUtils;
 
 public class EntityCooldown extends EntityActionWithTime
 {
@@ -14,7 +14,7 @@ public class EntityCooldown extends EntityActionWithTime
 		Codec.BOOL.optionalFieldOf("cancellable", false).forGetter(v -> v.cancellable),
 		getMaxTimeCodec(),
 		Codec.INT.fieldOf("slot_index").forGetter(v -> v.slotIndex),
-		CommonUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("used_hand").forGetter(v -> v.hand),
+		CodecUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("used_hand").forGetter(v -> v.hand),
 		Codec.BOOL.fieldOf("can_move").forGetter(v -> v.canMove),
 		Codec.BOOL.fieldOf("force_crouch").forGetter(v -> v.forceCrouch),
 		Codec.BOOL.fieldOf("prevent_weapon_use").forGetter(v -> v.preventWeaponUse),

@@ -15,7 +15,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -23,14 +22,11 @@ import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.UUID;
 
 public class ClientUtils
 {
-	@Environment(EnvType.CLIENT)
-	public static final HashMap<String, Stage> clientStages = new HashMap<>();
 	@Environment(EnvType.CLIENT)
 	protected static final TreeMap<UUID, InkColor> clientColors = new TreeMap<>();
 	@Environment(EnvType.CLIENT)
