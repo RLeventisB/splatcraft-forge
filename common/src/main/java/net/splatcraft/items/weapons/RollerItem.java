@@ -36,14 +36,11 @@ import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 {
 	public static final ArrayList<RollerItem> rollers = Lists.newArrayList();
-	public static final Map<LivingEntity, Float> distanceMap = new HashMap<>();
 	public boolean isMoving;
 	protected RollerItem(String settings)
 	{
