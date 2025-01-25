@@ -79,7 +79,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				InitialSwingAction action = EntityAction.getSpecificEntityAction(player, InitialSwingAction.class);
 				if (action != null)
 				{
-					if (action.isGrounded() && action.getSlotIndex() > -1 && action.getTime() > action.attackFrame)
+					if (action.getSlotIndex() > -1)
 					{
 						ItemStack weaponStack = action.getHand() == Hand.MAIN_HAND ? player.getInventory().main.get(action.getSlotIndex())
 							: entity.getOffHandStack();
