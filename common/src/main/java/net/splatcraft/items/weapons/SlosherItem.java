@@ -168,12 +168,14 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		private void calculateSloshes()
 		{
 			sloshes.clear();
+			float baseSpeed = sloshData.shotData.baseSpeed();
 			for (int i = 0; i < sloshData.shotData.sloshes().size(); i++)
 			{
 				SlosherWeaponSettings.SingularSloshShotData slosh = sloshData.shotData.sloshes().get(i);
+				float effectiveSpeed = slosh.modifiedSpeed().orElse(baseSpeed);
 				for (byte j = 0; j < slosh.count(); j++)
 				{
-					sloshes.add(new CalculatedSloshData(slosh.startupTicks() + j * slosh.delayBetweenProjectiles(), j, i));
+					sloshes.add(new CalculatedSloshData(slosh.startupTicks() + j * slosh.delayBetweenProjectiles(), j, i, effectiveSpeed - j * slosh.speedSubstract()));
 				}
 			}
 			attackId = AttackId.registerAttack().countProjectile(sloshes.size());
@@ -248,6 +250,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		private void shootSlosh(LivingEntity entity, CalculatedSloshData calculatedSloshData, World world, float partialTick, SlosherWeaponSettings.SingularSloshShotData projectileSetting, SlosherWeaponSettings.SlosherShotDataRecord shotSetting, SlosherItem slosherItem, float extraTime)
 		{
 			CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
+			float speed = calculatedSloshData.sloshSpeed();
 			
 			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), sloshData);
 			proj.setSlosherStats(projectileData);
@@ -258,7 +261,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				MathHelper.lerp(partialTick, xRotOld, pitch),
 				xRotation + projectileSetting.offsetAngle() - 3,
 				shotSetting.pitchCompensation(),
-				projectileData.speed() - projectileSetting.speedSubstract() * calculatedSloshData.indexInSlosh,
+				speed,
 				0);
 			proj.setAttackId(attackId);
 			proj.refreshPositionAfterTeleport(proj.getPos().add(EntityAccessor.invokeMovementInputToVelocity(new Vec3d(-0.4, -1, 0), 1, xRotation)));
@@ -320,12 +323,13 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		{
 			return hand;
 		}
-		public record CalculatedSloshData(float time, byte indexInSlosh, int sloshDataIndex)
+		public record CalculatedSloshData(float time, byte subIndex, int sloshDataIndex, float sloshSpeed)
 		{
 			public static final Codec<CalculatedSloshData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 				Codec.FLOAT.fieldOf("time").forGetter(CalculatedSloshData::time),
-				Codec.BYTE.fieldOf("index_in_slosh").forGetter(CalculatedSloshData::indexInSlosh),
-				Codec.INT.fieldOf("slosh_data_index").forGetter(CalculatedSloshData::sloshDataIndex)
+				Codec.BYTE.fieldOf("index_in_slosh").forGetter(CalculatedSloshData::subIndex),
+				Codec.INT.fieldOf("slosh_data_index").forGetter(CalculatedSloshData::sloshDataIndex),
+				Codec.FLOAT.fieldOf("time").forGetter(CalculatedSloshData::sloshSpeed)
 			).apply(inst, CalculatedSloshData::new));
 		}
 	}

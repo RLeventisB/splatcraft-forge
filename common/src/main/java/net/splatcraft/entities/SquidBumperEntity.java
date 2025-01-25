@@ -56,7 +56,6 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	 */
 	public long punchCooldown;
 	public long hurtCooldown;
-	public int prevRespawnTime = 0;
 	public SquidBumperEntity(EntityType<? extends LivingEntity> type, World world)
 	{
 		super(type, world);
@@ -81,7 +80,6 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 		
 		hurtCooldown = Math.max(hurtCooldown - 1, 0);
 		
-		prevRespawnTime = getRespawnTime();
 		if (getRespawnTime() > 1)
 			setRespawnTime(getRespawnTime() - 1);
 		
@@ -103,15 +101,15 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	@Override
 	public boolean canHit()
 	{
-		return getInkHealth() > 0;
+		return getInkHealth() > 0 || isImmortal();
 	}
 	@Override
 	public boolean onEntityInked(DamageSource source, float damage, InkColor color)
 	{
-		if (hurtCooldown <= 0 && getInkHealth() > 0 && !inkproof)
+		if (hurtCooldown <= 0 && canHit() && !inkproof)
 		{
 			ink(damage, color);
-			if (getInkHealth() <= 0 && !isImmortal())
+			if (!canHit())
 			{
 				getWorld().sendEntityStatus(this, (byte) 34);
 			}
@@ -296,17 +294,17 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 		return false;
 	}
 	@Override
-	public void pushAway(@NotNull Entity entityIn)
+	public void pushAway(@NotNull Entity entity)
 	{
-		if (getInkHealth() <= 0)
+		if (!canHit())
 			return;
 		
-		if (!isConnectedThroughVehicle(entityIn))
+		if (!isConnectedThroughVehicle(entity))
 		{
-			if (!entityIn.noClip && !noClip)
+			if (!entity.noClip && !noClip)
 			{
-				double d0 = entityIn.getX() - getX();
-				double d1 = entityIn.getZ() - getZ();
+				double d0 = entity.getX() - getX();
+				double d1 = entity.getZ() - getZ();
 				double d2 = MathHelper.absMax(d0, d1);
 				
 				if (d2 >= 0.009999999776482582D)
@@ -328,9 +326,9 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 					d0 *= 3;
 					d1 *= 3;
 					
-					if (!entityIn.hasPassengers())
+					if (!entity.hasPassengers())
 					{
-						entityIn.addVelocity(d0, 0.0D, d1);
+						entity.addVelocity(d0, 0.0D, d1);
 					}
 				}
 			}
@@ -434,12 +432,13 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	}
 	public float getBumperScale(float partialTicks)
 	{
-		return getInkHealth() <= 0 ? (10 - Math.min(MathHelper.lerp(partialTicks, prevRespawnTime, getRespawnTime()), 10)) / 10f : 1;
+		return getInkHealth() <= 0 && !isImmortal() ? (10 - Math.min(getRespawnTime() - 1 + partialTicks, 10)) / 10f : 1;
 	}
 	public void ink(float damage, InkColor color)
 	{
 		getWorld().sendEntityStatus(this, (byte) 31);
-		setRespawnTime(maxRespawnTime);
+		if (!isImmortal())
+			setRespawnTime(maxRespawnTime);
 		hurtCooldown = timeUntilRegen;
 		
 		if (dataTracker.get(IMMORTAL))

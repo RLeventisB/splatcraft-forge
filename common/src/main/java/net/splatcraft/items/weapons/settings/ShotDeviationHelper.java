@@ -24,14 +24,14 @@ public class ShotDeviationHelper
 	}
 	public static SplatcraftComponents.WeaponPrecisionData getDeviationData(ItemStack stack)
 	{
-		return stack.getComponents().get(SplatcraftComponents.WEAPON_PRECISION_DATA);
+		return stack.get(SplatcraftComponents.WEAPON_PRECISION_DATA);
 	}
 	public static float updateShotDeviation(ItemStack stack, Random random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
 	{
-		SplatcraftComponents.WeaponPrecisionData nbt = getDeviationData(stack);
-		float chance = nbt.chance();
-		float airborneInfluence = nbt.airborneInfluence();
-		float maxAngle = chance; // could be 0, but chance is a value less than 1 anyways and these water guns look wrong with perfect accuracy lol
+		SplatcraftComponents.WeaponPrecisionData data = getDeviationData(stack);
+		float chance = data.chance();
+		float airborneInfluence = data.airborneInfluence();
+		float maxAngle = 0;
 		
 		if (random.nextFloat() <= chance)
 		{
@@ -41,8 +41,7 @@ public class ShotDeviationHelper
 		if (chance < shotDeviationData.maxDeviateChance())
 			chance += Math.min(shotDeviationData.maxDeviateChance() - chance, shotDeviationData.chanceIncreasePerShot());
 		
-		nbt.withChanceDecreaseDelay(shotDeviationData.chanceDecreaseDelay() + 1);
-		nbt.withChance(chance);
+		stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, data.withChanceDecreaseDelay(shotDeviationData.chanceDecreaseDelay() + 1).withChance(chance));
 		return maxAngle;
 	}
 	public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
@@ -52,10 +51,12 @@ public class ShotDeviationHelper
 			SplatcraftComponents.WeaponPrecisionData.DEFAULT,
 			v -> v.registerJump(shotDeviationData)
 		);
-		SplatcraftComponents.WeaponPrecisionData nbt = getDeviationData(stack);
-		nbt.withAirborneDecreaseDelay(shotDeviationData.airborneContractDelay());
-		nbt.withAirborneInfluence(1);
-		nbt.withChance(shotDeviationData.deviationChanceWhenAirborne());
+		SplatcraftComponents.WeaponPrecisionData data = getDeviationData(stack);
+		stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, data
+			.withAirborneDecreaseDelay(shotDeviationData.airborneContractDelay())
+			.withAirborneInfluence(1)
+			.withChance(shotDeviationData.deviationChanceWhenAirborne())
+		);
 	}
 	public static float getModifiedAirInfluence(float airborneInfluence)
 	{

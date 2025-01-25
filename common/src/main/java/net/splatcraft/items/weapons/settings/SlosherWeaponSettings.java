@@ -7,27 +7,34 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.ExtraSaveData.SloshExtraData;
 import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.entities.InkProjectileEntity.ExtraDataList;
+import net.splatcraft.items.weapons.settings.BlasterWeaponSettings.DetonationRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.OptionalProjectileDataRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
+import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.DataRecord;
 import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.WeaponTooltip.Metrics;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponSettings, SlosherWeaponSettings.DataRecord>
+public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponSettings, DataRecord>
 {
 	public static final SlosherWeaponSettings DEFAULT = new SlosherWeaponSettings("default");
 	public boolean bypassesMobDamage;
 	public SlosherShotDataRecord shotData = SlosherShotDataRecord.DEFAULT;
-	public CommonRecords.ProjectileDataRecord baseProjectile = SingularSloshShotData.SLOSHER_PROJECTILE_DEFAULT;
+	public ProjectileDataRecord baseProjectile = SingularSloshShotData.SLOSHER_PROJECTILE_DEFAULT;
 	public float lowestStartup;
-	public CommonRecords.ProjectileDataRecord[] mergedProjectileData = new CommonRecords.ProjectileDataRecord[0];
+	public ProjectileDataRecord[] mergedProjectileData = new ProjectileDataRecord[0];
 	public SlosherWeaponSettings(String name)
 	{
 		super(name);
 	}
-	private static float getDamage(CommonRecords.ProjectileDataRecord projectileData, float relativeY)
+	private static float getDamage(ProjectileDataRecord projectileData, float relativeY)
 	{
 		float minDamageHeight = projectileData.damageDecayPerTick();
 		float damageDecayStartHeight = projectileData.damageDecayStartTick();
@@ -40,12 +47,12 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		return damage;
 	}
 	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
+	public float calculateDamage(InkProjectileEntity projectile, ExtraDataList list)
 	{
-		ExtraSaveData.SloshExtraData sloshData = list.getFirstExtraData(ExtraSaveData.SloshExtraData.class);
+		SloshExtraData sloshData = list.getFirstExtraData(SloshExtraData.class);
 		if (sloshData != null)
 		{
-			CommonRecords.ProjectileDataRecord projectileData = getProjectileDataAtIndex(sloshData.sloshDataIndex);
+			ProjectileDataRecord projectileData = getProjectileDataAtIndex(sloshData.sloshDataIndex);
 			if (projectileData.minDamage() == projectileData.baseDamage())
 				return projectileData.baseDamage();
 			
@@ -58,9 +65,9 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 	public List<WeaponTooltip<SlosherWeaponSettings>> tooltipsToRegister()
 	{
 		return List.of(
-			new WeaponTooltip<>("speed", WeaponTooltip.Metrics.BPT, settings -> settings.baseProjectile.speed(), WeaponTooltip.RANKER_ASCENDING),
-			new WeaponTooltip<>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.baseProjectile.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-			new WeaponTooltip<>("handling", WeaponTooltip.Metrics.TICKS, settings -> settings.shotData.endlagTicks, WeaponTooltip.RANKER_DESCENDING)
+			new WeaponTooltip<>("speed", Metrics.BPT, settings -> settings.shotData.baseSpeed, WeaponTooltip.RANKER_ASCENDING),
+			new WeaponTooltip<>("damage", Metrics.HEALTH, settings -> settings.baseProjectile.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
+			new WeaponTooltip<>("handling", Metrics.TICKS, settings -> settings.shotData.endlagTicks, WeaponTooltip.RANKER_DESCENDING)
 		);
 	}
 	@Override
@@ -69,19 +76,19 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		return DataRecord.CODEC;
 	}
 	@Override
-	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
+	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
+		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
 	public void processData(DataRecord data)
 	{
 		shotData = SplatcraftConvertors.convert(data.shot);
 		baseProjectile = SplatcraftConvertors.convert(data.baseProjectile);
-		mergedProjectileData = new CommonRecords.ProjectileDataRecord[shotData.sloshes.size()];
+		mergedProjectileData = new ProjectileDataRecord[shotData.sloshes.size()];
 		for (int i = 0; i < shotData.sloshes.size(); i++)
 		{
-			mergedProjectileData[i] = CommonRecords.OptionalProjectileDataRecord.mergeWithBase(shotData.sloshes.get(i).projectileModifications, baseProjectile);
+			mergedProjectileData[i] = OptionalProjectileDataRecord.mergeWithBase(shotData.sloshes.get(i).projectileModifications, baseProjectile);
 		}
 		
 		for (var slosh : shotData.sloshes)
@@ -108,34 +115,33 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		this.bypassesMobDamage = bypassesMobDamage;
 		return this;
 	}
-	public CommonRecords.ProjectileDataRecord getProjectileDataAtIndex(int sloshDataIndex)
+	public ProjectileDataRecord getProjectileDataAtIndex(int sloshDataIndex)
 	{
 		return mergedProjectileData[sloshDataIndex];
 	}
 	public record DataRecord(
 		SlosherShotDataRecord shot,
-		CommonRecords.ProjectileDataRecord baseProjectile,
+		ProjectileDataRecord baseProjectile,
 		float mobility,
 		boolean bypassesMobDamage,
 		boolean isSecret
 	)
 	{
-		public static final Codec<CommonRecords.ProjectileDataRecord> BASE_SLOSHER_PROJECTILE_CODEC = RecordCodecBuilder.create(
+		public static final Codec<ProjectileDataRecord> BASE_SLOSHER_PROJECTILE_CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.fieldOf("size").forGetter(CommonRecords.ProjectileDataRecord::size),
+				Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize())),
-				Codec.FLOAT.fieldOf("speed").forGetter(CommonRecords.ProjectileDataRecord::speed),
-				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(CommonRecords.ProjectileDataRecord::delaySpeedMult),
-				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.88f).forGetter(CommonRecords.ProjectileDataRecord::horizontalDrag),
-				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(CommonRecords.ProjectileDataRecord::straightShotTicks),
-				Codec.FLOAT.optionalFieldOf("gravity", 0.5f).forGetter(CommonRecords.ProjectileDataRecord::gravity),
+				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(ProjectileDataRecord::delaySpeedMult),
+				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.88f).forGetter(ProjectileDataRecord::horizontalDrag),
+				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(ProjectileDataRecord::straightShotTicks),
+				Codec.FLOAT.optionalFieldOf("gravity", 0.5f).forGetter(ProjectileDataRecord::gravity),
 				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact())),
-				Codec.FLOAT.optionalFieldOf("ink_drop_coverage", 0f).forGetter(CommonRecords.ProjectileDataRecord::inkDropCoverage),
-				Codec.FLOAT.optionalFieldOf("distance_between_drops", 4f).forGetter(CommonRecords.ProjectileDataRecord::distanceBetweenInkDrops),
-				Codec.FLOAT.fieldOf("direct_damage").forGetter(CommonRecords.ProjectileDataRecord::baseDamage),
+				Codec.FLOAT.optionalFieldOf("ink_drop_coverage", 0f).forGetter(ProjectileDataRecord::inkDropCoverage),
+				Codec.FLOAT.optionalFieldOf("distance_between_drops", 4f).forGetter(ProjectileDataRecord::distanceBetweenInkDrops),
+				Codec.FLOAT.fieldOf("direct_damage").forGetter(ProjectileDataRecord::baseDamage),
 				Codec.FLOAT.optionalFieldOf("minimum_damage").forGetter(r -> Optional.of(r.minDamage())),
-				Codec.FLOAT.optionalFieldOf("fall_damage_start", 1f).forGetter(CommonRecords.ProjectileDataRecord::damageDecayStartTick),
-				Codec.FLOAT.optionalFieldOf("fall_damage_end", 5f).forGetter(CommonRecords.ProjectileDataRecord::damageDecayPerTick)
+				Codec.FLOAT.optionalFieldOf("fall_damage_start", 1f).forGetter(ProjectileDataRecord::damageDecayStartTick),
+				Codec.FLOAT.optionalFieldOf("fall_damage_end", 5f).forGetter(ProjectileDataRecord::damageDecayPerTick)
 			).apply(instance, DataRecord::createSlosherProjectile)
 		);
 		public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
@@ -147,11 +153,11 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
 			).apply(instance, DataRecord::create)
 		);
-		public static CommonRecords.ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, float speed, Float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, float inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
+		public static ProjectileDataRecord createSlosherProjectile(float size, Optional<Float> visualSize, Float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, float inkDropCoverage, float distanceBetweenInkDrops, float directDamage, Optional<Float> minDamage, float heightDecayStart, float heightDecayEnd)
 		{
-			return CommonRecords.ProjectileDataRecord.create(size, visualSize, 600, speed, delaySpeedMult, horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, Optional.of(inkDropCoverage), distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
+			return ProjectileDataRecord.create(size, visualSize, 600, delaySpeedMult, horizontalDrag, straightShotTicks, gravity, inkCoverageImpact, Optional.of(inkDropCoverage), distanceBetweenInkDrops, directDamage, minDamage, heightDecayStart, heightDecayEnd);
 		}
-		private static DataRecord create(SlosherShotDataRecord shot, CommonRecords.ProjectileDataRecord baseProjectile, float mobility, boolean bypassesMobDamage, boolean isSecret)
+		private static DataRecord create(SlosherShotDataRecord shot, ProjectileDataRecord baseProjectile, float mobility, boolean bypassesMobDamage, boolean isSecret)
 		{
 			return new DataRecord(shot, baseProjectile, mobility, bypassesMobDamage, isSecret);
 		}
@@ -160,6 +166,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		float endlagTicks,
 		int miscEndlagTicks,
 		List<SingularSloshShotData> sloshes,
+		float baseSpeed,
 		float pitchCompensation,
 		float inkConsumption,
 		float inkRecoveryCooldown,
@@ -171,56 +178,58 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 				Codec.FLOAT.optionalFieldOf("endlag_ticks", 1f).forGetter(SlosherShotDataRecord::endlagTicks),
 				Codec.INT.optionalFieldOf("other_actions_endlag_ticks", 1).forGetter(SlosherShotDataRecord::miscEndlagTicks),
 				SingularSloshShotData.CODEC.listOf().fieldOf("sloshes_data").forGetter(SlosherShotDataRecord::sloshes),
+				Codec.FLOAT.optionalFieldOf("base_speed", 1f).forGetter(SlosherShotDataRecord::baseSpeed),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(SlosherShotDataRecord::pitchCompensation),
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(SlosherShotDataRecord::inkConsumption),
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(SlosherShotDataRecord::inkRecoveryCooldown),
 				Codec.BOOL.optionalFieldOf("allow_flicking", true).forGetter(SlosherShotDataRecord::allowFlicking)
 			).apply(instance, SlosherShotDataRecord::new)
 		);
-		public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(1, 1, new ArrayList<>(), 0, 0, 0, true);
+		public static final SlosherShotDataRecord DEFAULT = new SlosherShotDataRecord(1, 1, new ArrayList<>(), 1f, 0, 0, 0, true);
 	}
 	public record SingularSloshShotData(
 		float startupTicks,
 		int count,
 		float delayBetweenProjectiles,
+		Optional<Float> modifiedSpeed,
 		float speedSubstract,
 		float offsetAngle,
-		Optional<CommonRecords.OptionalProjectileDataRecord> projectileModifications,
-		Optional<BlasterWeaponSettings.DetonationRecord> detonationData
+		Optional<OptionalProjectileDataRecord> projectileModifications,
+		Optional<DetonationRecord> detonationData
 	)
 	{
 		// this only renames some variables lol
-		public static final Codec<CommonRecords.OptionalProjectileDataRecord> PROJECTILE_MODIFICATIONS_CODEC = RecordCodecBuilder.create(
+		public static final Codec<OptionalProjectileDataRecord> PROJECTILE_MODIFICATIONS_CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.optionalFieldOf("size").forGetter(CommonRecords.OptionalProjectileDataRecord::size),
-				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(CommonRecords.OptionalProjectileDataRecord::visualSize),
-				Codec.FLOAT.optionalFieldOf("lifespan").forGetter(CommonRecords.OptionalProjectileDataRecord::lifeTicks),
-				Codec.FLOAT.optionalFieldOf("speed").forGetter(CommonRecords.OptionalProjectileDataRecord::speed),
-				Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(CommonRecords.OptionalProjectileDataRecord::delaySpeedMult),
-				Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(CommonRecords.OptionalProjectileDataRecord::horizontalDrag),
-				Codec.FLOAT.optionalFieldOf("straight_shot_ticks").forGetter(CommonRecords.OptionalProjectileDataRecord::straightShotTicks),
-				Codec.FLOAT.optionalFieldOf("gravity").forGetter(CommonRecords.OptionalProjectileDataRecord::gravity),
-				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(CommonRecords.OptionalProjectileDataRecord::inkCoverageImpact),
-				Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(CommonRecords.OptionalProjectileDataRecord::inkDropCoverage),
-				Codec.FLOAT.optionalFieldOf("distance_between_drops").forGetter(CommonRecords.OptionalProjectileDataRecord::distanceBetweenInkDrops),
-				Codec.FLOAT.optionalFieldOf("direct_damage").forGetter(CommonRecords.OptionalProjectileDataRecord::baseDamage),
-				Codec.FLOAT.optionalFieldOf("minimum_damage").forGetter(CommonRecords.OptionalProjectileDataRecord::minDamage),
-				Codec.FLOAT.optionalFieldOf("fall_damage_start").forGetter(CommonRecords.OptionalProjectileDataRecord::damageDecayStartTick),
-				Codec.FLOAT.optionalFieldOf("fall_damage_end").forGetter(CommonRecords.OptionalProjectileDataRecord::damageDecayPerTick)
-			).apply(instance, CommonRecords.OptionalProjectileDataRecord::new)
+				Codec.FLOAT.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
+				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileDataRecord::visualSize),
+				Codec.FLOAT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
+				Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delaySpeedMult),
+				Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),
+				Codec.FLOAT.optionalFieldOf("straight_shot_ticks").forGetter(OptionalProjectileDataRecord::straightShotTicks),
+				Codec.FLOAT.optionalFieldOf("gravity").forGetter(OptionalProjectileDataRecord::gravity),
+				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(OptionalProjectileDataRecord::inkCoverageImpact),
+				Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(OptionalProjectileDataRecord::inkDropCoverage),
+				Codec.FLOAT.optionalFieldOf("distance_between_drops").forGetter(OptionalProjectileDataRecord::distanceBetweenInkDrops),
+				Codec.FLOAT.optionalFieldOf("direct_damage").forGetter(OptionalProjectileDataRecord::baseDamage),
+				Codec.FLOAT.optionalFieldOf("minimum_damage").forGetter(OptionalProjectileDataRecord::minDamage),
+				Codec.FLOAT.optionalFieldOf("fall_damage_start").forGetter(OptionalProjectileDataRecord::damageDecayStartTick),
+				Codec.FLOAT.optionalFieldOf("fall_damage_end").forGetter(OptionalProjectileDataRecord::damageDecayPerTick)
+			).apply(instance, OptionalProjectileDataRecord::new)
 		);
 		public static final Codec<SingularSloshShotData> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(SingularSloshShotData::startupTicks),
 				Codec.INT.fieldOf("slosh_count").forGetter(SingularSloshShotData::count),
 				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("delay_between_projectiles", 1f).forGetter(SingularSloshShotData::delayBetweenProjectiles),
+				Codec.FLOAT.optionalFieldOf("overriden_base_speed").forGetter(SingularSloshShotData::modifiedSpeed),
 				Codec.FLOAT.optionalFieldOf("speed_substract_per_projectile", 0f).forGetter(SingularSloshShotData::speedSubstract),
 				Codec.FLOAT.optionalFieldOf("offset_angle", 0f).forGetter(SingularSloshShotData::offsetAngle),
 				PROJECTILE_MODIFICATIONS_CODEC.optionalFieldOf("slosh_projectile_modifications").forGetter(SingularSloshShotData::projectileModifications),
-				BlasterWeaponSettings.DetonationRecord.CODEC.optionalFieldOf("detonation_data").forGetter(SingularSloshShotData::detonationData)
+				DetonationRecord.CODEC.optionalFieldOf("detonation_data").forGetter(SingularSloshShotData::detonationData)
 			).apply(instance, SingularSloshShotData::new)
 		);
-		public static final CommonRecords.ProjectileDataRecord SLOSHER_PROJECTILE_DEFAULT = new CommonRecords.ProjectileDataRecord(0, 0, 600, 0, 1f, 0.729f, 0, 0.225f, 0, 0, 4, 0, 0, 1f, 5f);
-		public static final SingularSloshShotData DEFAULT = new SingularSloshShotData(0, 1, 1f, 0, 0, Optional.empty(), Optional.empty());
+		public static final ProjectileDataRecord SLOSHER_PROJECTILE_DEFAULT = new ProjectileDataRecord(0, 0, 600, 1f, 0.729f, 0, 0.225f, 0, 0, 4, 0, 0, 1f, 5f);
+		public static final SingularSloshShotData DEFAULT = new SingularSloshShotData(0, 1, 1f, Optional.empty(), 0, 0, Optional.empty(), Optional.empty());
 	}
 }

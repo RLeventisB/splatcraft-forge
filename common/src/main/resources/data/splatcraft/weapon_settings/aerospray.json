@@ -2,7 +2,6 @@
     "type": "splatcraft:shooter",
     "projectile": {
         "size": 2,
-        "speed": 22,
         "delay_speed_mult": 0.86,
         "ink_coverage_on_impact": 18.334,
         "ink_drop_coverage": 13.2,
@@ -17,6 +16,7 @@
         "startup_ticks": 3,
         "startup_ticks_from_squid": 10,
         "endlag_ticks": 1,
+        "speed": 22,
         "accuracy_data": {
             "ground_deviation_degrees": 13,
             "airborne_deviation_degrees": 16,
@@ -26,7 +26,6 @@
             "time_inactive_to_decrease": 4,
             "chance_decrease_when_inactive": 0.01
         },
-
         "ink_consumption": 0.5,
         "ink_recovery_cooldown": 15
     },

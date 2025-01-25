@@ -4,7 +4,6 @@
         "size": 2,
         "visual_size": 4,
         "straight_shot_ticks": 11,
-        "speed": 14,
         "ink_coverage_on_impact": 19,
         "ink_drop_coverage": 11,
         "distance_between_drops": 16.2,
@@ -15,6 +14,7 @@
         "startup_ticks": 12,
         "startup_ticks_from_squid": 21,
         "endlag_ticks": 28,
+        "speed": 14,
         "accuracy_data": {
             "ground_deviation_degrees": 0,
             "airborne_deviation_degrees": 8,

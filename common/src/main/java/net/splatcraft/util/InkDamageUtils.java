@@ -130,7 +130,7 @@ public class InkDamageUtils
 	}
 	public static boolean isSplatted(LivingEntity target)
 	{
-		return target instanceof SquidBumperEntity bumperEntity ? bumperEntity.getInkHealth() <= 0 : target.isDead();
+		return target instanceof SquidBumperEntity bumperEntity ? !bumperEntity.canHit() : target.isDead();
 	}
 	public static class InkDamageSource extends DamageSource
 	{

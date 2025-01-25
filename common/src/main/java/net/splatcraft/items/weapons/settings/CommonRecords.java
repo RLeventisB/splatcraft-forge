@@ -42,7 +42,6 @@ public class CommonRecords
 		float size,
 		float visualSize,
 		float lifeTicks,
-		float speed,
 		float delaySpeedMult,
 		float horizontalDrag,
 		float straightShotTicks,
@@ -61,7 +60,6 @@ public class CommonRecords
 				Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
 				Codec.FLOAT.optionalFieldOf("lifespan", 600f).forGetter(ProjectileDataRecord::lifeTicks),
-				Codec.FLOAT.fieldOf("speed").forGetter(ProjectileDataRecord::speed),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.5f).forGetter(ProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(ProjectileDataRecord::horizontalDrag),
 				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(ProjectileDataRecord::straightShotTicks),
@@ -76,13 +74,12 @@ public class CommonRecords
 			).apply(instance, ProjectileDataRecord::create)
 		);
 		public static final Codec<ProjectileDataRecord> CODEC = MAP_CODEC.codec();
-		public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
-		public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float speed, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
+		public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
+		public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
 		{
 			return new ProjectileDataRecord(size,
 				visualSize.orElse(size * 3),
 				lifeTicks,
-				speed,
 				delaySpeedMult,
 				horizontalDrag,
 				straightShotTicks,
@@ -118,7 +115,6 @@ public class CommonRecords
 		Optional<Float> size,
 		Optional<Float> visualSize,
 		Optional<Float> lifeTicks,
-		Optional<Float> speed,
 		Optional<Float> delaySpeedMult,
 		Optional<Float> horizontalDrag,
 		Optional<Float> straightShotTicks,
@@ -137,7 +133,6 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileDataRecord::visualSize),
 				Codec.FLOAT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
-				Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalProjectileDataRecord::speed),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),
 				Codec.FLOAT.optionalFieldOf("straight_shot_ticks").forGetter(OptionalProjectileDataRecord::straightShotTicks),
@@ -165,7 +160,6 @@ public class CommonRecords
 			Optional.empty(),
 			Optional.empty(),
 			Optional.empty(),
-			Optional.empty(),
 			Optional.empty()
 		);
 		public static Optional<OptionalProjectileDataRecord> from(ProjectileDataRecord projectile) // this is horrible
@@ -174,7 +168,6 @@ public class CommonRecords
 				Optional.of(projectile.size),
 				Optional.of(projectile.visualSize),
 				Optional.of(projectile.lifeTicks),
-				Optional.of(projectile.speed),
 				Optional.of(projectile.delaySpeedMult),
 				Optional.of(projectile.horizontalDrag),
 				Optional.of(projectile.straightShotTicks),
@@ -198,7 +191,6 @@ public class CommonRecords
 				modifiedGet.size().orElse(base.size()),
 				modifiedGet.visualSize().orElse(base.visualSize()),
 				modifiedGet.lifeTicks().orElse(base.lifeTicks()),
-				modifiedGet.speed().orElse(base.speed()),
 				modifiedGet.delaySpeedMult().orElse(base.delaySpeedMult()),
 				modifiedGet.horizontalDrag().orElse(base.horizontalDrag()),
 				modifiedGet.straightShotTicks().orElse(base.straightShotTicks()),
@@ -218,6 +210,7 @@ public class CommonRecords
 		float squidStartupTicks,
 		float endlagTicks,
 		float miscEndlagTicks,
+		float speed,
 		int projectileCount,
 		ShotDeviationDataRecord accuracyData,
 		float pitchCompensation,
@@ -231,6 +224,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(t -> Optional.of(t.squidStartupTicks)),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks", 1f).forGetter(ShotDataRecord::endlagTicks),
 				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks", 4f).forGetter(ShotDataRecord::miscEndlagTicks),
+				Codec.FLOAT.fieldOf("speed").forGetter(ShotDataRecord::speed),
 				Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
 				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation),
@@ -238,10 +232,10 @@ public class CommonRecords
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown)
 			).apply(instance, ShotDataRecord::create)
 		);
-		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
-		public static ShotDataRecord create(float startupTicks, Optional<Float> squidStartupTicks, float endlagTicks, float miscEndlagTicks, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, float inkRecoveryCooldown)
+		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, 0, 1, ShotDeviationDataRecord.PERFECT_DEFAULT, 0, 0, 0);
+		public static ShotDataRecord create(float startupTicks, Optional<Float> squidStartupTicks, float endlagTicks, float miscEndlagTicks, float speed, int projectileCount, ShotDeviationDataRecord accuracyData, float pitchCompensation, float inkConsumption, float inkRecoveryCooldown)
 		{
-			return new ShotDataRecord(startupTicks, squidStartupTicks.orElse(startupTicks), endlagTicks, miscEndlagTicks, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
+			return new ShotDataRecord(startupTicks, squidStartupTicks.orElse(startupTicks), endlagTicks, miscEndlagTicks, speed, projectileCount, accuracyData, pitchCompensation, inkConsumption, inkRecoveryCooldown);
 		}
 		public float getFiringSpeed()
 		{
@@ -257,6 +251,7 @@ public class CommonRecords
 		Optional<Float> squidStartupTicks,
 		Optional<Float> endlagTicks,
 		Optional<Float> miscEndlagTicks,
+		Optional<Float> speed,
 		Optional<Integer> projectileCount,
 		Optional<ShotDeviationDataRecord> accuracyData,
 		Optional<Float> pitchCompensation,
@@ -270,6 +265,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("startup_ticks_from_squid").forGetter(OptionalShotDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks").forGetter(OptionalShotDataRecord::endlagTicks),
 				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks").forGetter(OptionalShotDataRecord::miscEndlagTicks),
+				Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalShotDataRecord::speed),
 				Codec.INT.optionalFieldOf("shot_count").forGetter(OptionalShotDataRecord::projectileCount),
 				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data").forGetter(OptionalShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation").forGetter(OptionalShotDataRecord::pitchCompensation),
@@ -278,6 +274,7 @@ public class CommonRecords
 			).apply(instance, OptionalShotDataRecord::new)
 		);
 		public static final OptionalShotDataRecord DEFAULT = new OptionalShotDataRecord(
+			Optional.empty(),
 			Optional.empty(),
 			Optional.empty(),
 			Optional.empty(),
@@ -295,6 +292,7 @@ public class CommonRecords
 				Optional.of(shot.squidStartupTicks),
 				Optional.of(shot.endlagTicks),
 				Optional.of(shot.miscEndlagTicks),
+				Optional.of(shot.speed),
 				Optional.of(shot.projectileCount),
 				Optional.of(shot.accuracyData),
 				Optional.of(shot.pitchCompensation),
@@ -313,6 +311,7 @@ public class CommonRecords
 				modifiedGet.squidStartupTicks().orElse(base.squidStartupTicks()),
 				modifiedGet.endlagTicks().orElse(base.endlagTicks()),
 				modifiedGet.miscEndlagTicks().orElse(base.miscEndlagTicks()),
+				modifiedGet.speed().orElse(base.speed()),
 				modifiedGet.projectileCount().orElse(base.projectileCount()),
 				modifiedGet.accuracyData().orElse(base.accuracyData()),
 				modifiedGet.pitchCompensation().orElse(base.pitchCompensation()),

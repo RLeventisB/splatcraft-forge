@@ -7,7 +7,6 @@ import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.Item;
@@ -18,11 +17,10 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.IColoredEntity;
+import net.splatcraft.entities.ISetVelocityExtension;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
@@ -33,7 +31,7 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubDataRecord<Data>> extends ProjectileEntity implements IColoredEntity
+public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubDataRecord<Data>> extends ProjectileEntity implements IColoredEntity, ISetVelocityExtension
 {
 	protected static final RegistryKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(AbstractSubWeaponEntity.class, CommonUtils.INKCOLORDATAHANDLER);
@@ -115,30 +113,14 @@ public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubD
 		}
 	}
 	@Override
-	public void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float divergence)
+	public void setVelocity(Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
 	{
-		float f = -MathHelper.sin(yaw * 0.017453292F) * MathHelper.cos(pitch * 0.017453292F);
-		float g = -MathHelper.sin((pitch + pitchOffset) * 0.017453292F);
-		float h = MathHelper.cos(yaw * 0.017453292F) * MathHelper.cos(pitch * 0.017453292F);
-		setVelocity(f, g, h, speed, divergence);
-		
-		Vec3d posDiff = new Vec3d(0, 0, 0);
-		
-		if (thrower instanceof PlayerEntity player)
-		{
-			try
-			{
-				posDiff = thrower.getPos().subtract(player.getLerpedPos(0));
-				if (thrower.isOnGround())
-					posDiff.multiply(1, 0, 1);
-			}
-			catch (NullPointerException ignored)
-			{
-			}
-		}
-		
-		refreshPositionAfterTeleport(getPos().add(posDiff));
-		addVelocity(posDiff.multiply(0.8, 0.8, 0.8));
+		ISetVelocityExtension.super.setVelocity(shooter, pitch, yaw, roll, speed, divergence);
+	}
+	@Override
+	public void setVelocity(double x, double y, double z, float power, float uncertainty)
+	{
+		ISetVelocityExtension.super.setVelocity(x, y, z, power, uncertainty);
 	}
 	public double getGravity()
 	{

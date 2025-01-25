@@ -4,7 +4,6 @@
     "mobility": 0.72,
     "projectile": {
         "size": 2,
-        "speed": 23,
         "delay_speed_mult": 1,
         "ink_coverage_on_impact": 16.5,
         "ink_drop_coverage": 12,
@@ -19,6 +18,7 @@
         "startup_ticks": 3,
         "startup_ticks_from_squid": 12,
         "endlag_ticks": 9,
+        "speed": 23,
         "accuracy_data": {
             "ground_deviation_degrees": 4,
             "airborne_deviation_degrees": 8,
@@ -55,6 +55,6 @@
         }
     },
     "turret_projectile": {
-        "size": 0.3333
+        "size": 2.5
     }
 }

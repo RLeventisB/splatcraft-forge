@@ -44,7 +44,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public List<WeaponTooltip<DualieWeaponSettings>> tooltipsToRegister()
 	{
 		return List.of(
-			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.standardProjectileData), WeaponTooltip.RANKER_ASCENDING),
+			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.standardProjectileData, settings.standardShotData), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.standardProjectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("roll_distance", WeaponTooltip.Metrics.BLOCKS, settings -> settings.rollData.rollDistance, WeaponTooltip.RANKER_ASCENDING) //i used desmos to get that 6 B)
 		);
@@ -88,7 +88,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
 	{
-		return standardProjectileData.speed();
+		return getShotData(player).speed();
 	}
 	public DualieWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
 	{

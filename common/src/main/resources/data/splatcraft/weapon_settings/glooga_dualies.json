@@ -4,7 +4,6 @@
     "mobility": 0.6,
     "projectile": {
         "size": 2.5,
-        "speed": 28.5,
         "delay_speed_mult": 1,
         "ink_coverage_on_impact": 17.6,
         "ink_drop_coverage": 13.2,
@@ -19,6 +18,7 @@
         "startup_ticks": 3,
         "startup_ticks_from_squid": 12,
         "endlag_ticks": 15,
+        "speed": 28.5,
         "accuracy_data": {
             "ground_deviation_degrees": 3.2,
             "airborne_deviation_degrees": 8,
@@ -43,13 +43,13 @@
         "final_roll_turret_duration": 24
     },
     "turret_projectile": {
-        "speed": 32,
         "base_damage": 52,
         "decayed_damage": 26.3,
         "damage_decay_start_tick": 7,
         "damage_decay_per_tick": 0.79
     },
     "turret_shot": {
+        "speed": 32,
         "accuracy_data": {
             "ground_deviation_degrees": 3,
             "airborne_deviation_degrees": 3,

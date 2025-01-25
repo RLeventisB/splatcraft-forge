@@ -4,7 +4,6 @@
     "mobility": 0.8,
     "projectile": {
         "size": 2,
-        "speed": 23.7,
         "delay_speed_mult": 1,
         "ink_coverage_on_impact": 15.5,
         "ink_drop_coverage": 13.55,
@@ -19,6 +18,7 @@
         "startup_ticks": 3,
         "startup_ticks_from_squid": 12,
         "endlag_ticks": 7,
+        "speed": 23.7,
         "accuracy_data": {
             "ground_deviation_degrees": 2,
             "airborne_deviation_degrees": 7.5,

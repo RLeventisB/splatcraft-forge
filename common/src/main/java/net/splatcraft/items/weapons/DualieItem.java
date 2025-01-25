@@ -252,7 +252,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
 							
-							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), shotData.pitchCompensation(), projectileData.speed(), inaccuracy);
+							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
 							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
 							proj.setDualieStats(projectileData);
 							world.spawnEntity(proj);

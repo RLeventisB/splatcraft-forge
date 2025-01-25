@@ -3,11 +3,10 @@
     "base_projectile": {
         "size": 4,
         "visual_size": 7,
-        "speed": 14.105,
         "ink_coverage_on_impact": 0,
         "straight_shot_ticks": 8,
         "ink_drop_coverage": 13,
-        "distance_between_drops": 5,
+        "distance_between_drops": 12,
         "direct_damage": 55
     },
     "shot": {
@@ -16,6 +15,7 @@
         "ink_consumption": 11.7,
         "ink_recovery_cooldown": 70,
         "allow_flicking": false,
+        "base_speed": 14.1,
         "sloshes_data": [
             {
                 "startup_ticks": 16,

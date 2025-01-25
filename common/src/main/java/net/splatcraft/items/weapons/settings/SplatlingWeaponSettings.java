@@ -7,6 +7,8 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.WeaponTooltip;
 
@@ -28,6 +30,10 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	{
 		super(name);
 	}
+	private static float calculateSplatlingAproxRange(CommonRecords.ProjectileDataRecord projSettings, float speed)
+	{
+		return calculateAproximateRange(projSettings.straightShotTicks(), projSettings.horizontalDrag(), speed, projSettings.delaySpeedMult(), projSettings.lifeTicks());
+	}
 	@Override
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
 	{
@@ -43,8 +49,8 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	{
 		return List.of(
 			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings ->
-				Math.max(calculateAproximateRange(settings.firstChargeLevelProjectile),
-					calculateAproximateRange(settings.secondChargeLevelProjectile)), WeaponTooltip.RANKER_ASCENDING),
+				Math.max(calculateSplatlingAproxRange(settings.firstChargeLevelProjectile, settings.firstChargeLevelShot.projectileSpeed),
+					calculateSplatlingAproxRange(settings.secondChargeLevelProjectile, settings.secondChargeLevelShot.projectileSpeed)), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("charge_speed", WeaponTooltip.Metrics.SECONDS, settings -> (settings.chargeData.firstChargeTime + settings.chargeData.secondChargeTime) / 20f, WeaponTooltip.RANKER_DESCENDING),
 			new WeaponTooltip<>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.moveSpeed, WeaponTooltip.RANKER_ASCENDING)
 		);
@@ -57,7 +63,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	@Override
 	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return stack.get(SplatcraftComponents.CHARGE) > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
+		return stack.getOrDefault(SplatcraftComponents.CHARGE, 1f) > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
 	}
 	@Override
 	public void processData(DataRecord data)
@@ -82,7 +88,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
 	{
-		return firstChargeLevelProjectile.speed();
+		return firstChargeLevelShot.projectileSpeed();
 	}
 	public SplatlingWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
 	{
@@ -104,7 +110,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		return firstChargeLevelShot.firingSpeed / 2;
 	}
 	public record DataRecord(
-		CommonRecords.ProjectileDataRecord projectile,
+		ProjectileDataRecord projectile,
 		ShotDataRecord shot,
 		CommonRecords.ProjectileDataRecord secondChargeLevelProjectile,
 		ShotDataRecord secondChargeLevelShot,
@@ -169,6 +175,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		int startupTicks,
 		int firingSpeed,
 		int projectileCount,
+		float projectileSpeed,
 		CommonRecords.ShotDeviationDataRecord accuracyData,
 		float pitchCompensation
 	)
@@ -178,14 +185,15 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				Codec.INT.optionalFieldOf("startup_ticks", 0).forGetter(ShotDataRecord::startupTicks),
 				Codec.INT.fieldOf("firing_speed").forGetter(ShotDataRecord::firingSpeed),
 				Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
-				CommonRecords.ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
+				Codec.INT.optionalFieldOf("projectile_speed", 0).forGetter(ShotDataRecord::startupTicks),
+				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation)
 			).apply(instance, ShotDataRecord::create)
 		);
-		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, CommonRecords.ShotDeviationDataRecord.DEFAULT, 0);
-		public static ShotDataRecord create(int startupTicks, int firingSpeed, int projectileCount, CommonRecords.ShotDeviationDataRecord accuracyData, float pitchCompensation)
+		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, CommonRecords.ShotDeviationDataRecord.DEFAULT, 0);
+		public static ShotDataRecord create(int startupTicks, int firingSpeed, int projectileCount, float speed, CommonRecords.ShotDeviationDataRecord accuracyData, float pitchCompensation)
 		{
-			return new ShotDataRecord(startupTicks, firingSpeed, projectileCount, accuracyData, pitchCompensation);
+			return new ShotDataRecord(startupTicks, firingSpeed, projectileCount, speed, accuracyData, pitchCompensation);
 		}
 	}
 }

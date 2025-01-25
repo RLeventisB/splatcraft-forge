@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
-public class InkProjectileEntity extends ThrownItemEntity implements IColoredEntity
+public class InkProjectileEntity extends ThrownItemEntity implements IColoredEntity, ISetVelocityExtension
 {
 	private static final TrackedData<String> PROJ_TYPE = DataTracker.registerData(InkProjectileEntity.class, TrackedDataHandlerRegistry.STRING);
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(InkProjectileEntity.class, CommonUtils.INKCOLORDATAHANDLER);
@@ -308,7 +308,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				
 				float progress = accumulatedDrops / dropsTravelled;
 				
-				Vec3d dropPos = lastPosition.lerp(currentPosition, progress);
+				Vec3d dropPos = currentPosition.lerp(lastPosition, progress);
 				
 				if (doRayCheck && !getWorld().isSpaceEmpty(Box.of(dropPos, 1, 1, 1)))
 					break;
@@ -322,7 +322,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		InkDropEntity proj = new InkDropEntity(getWorld(), this, getColor(), inkType, dropImpactSize);
 		proj.refreshPositionAfterTeleport(dropX, dropY, dropZ);
 		getWorld().spawnEntity(proj);
-		proj.tick(1 - extraFrame);
+		proj.tick(extraFrame);
 	}
 	private Vec3d getShootVelocity(float timeDelta)
 	{
@@ -506,51 +506,57 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			discard();
 	}
 	@Override
-	public void setVelocity(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
+	public void setVelocity(Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
 	{
-		double f = -Math.sin(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
-		double f1 = -Math.sin((pitch + pitchOffset) * MathHelper.RADIANS_PER_DEGREE);
-		double f2 = Math.cos(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
-		setVelocity(f, f1, f2, velocity, inaccuracy);
-		
-		Vec3d posDiff = new Vec3d(0, 0, 0);
-		
-		try
-		{
-			posDiff = thrower.getMovement();
-			if (thrower.isOnGround())
-				posDiff.multiply(1, 0, 1);
-			posDiff = posDiff.multiply(0.8);
-		}
-		catch (NullPointerException ignored)
-		{
-		}
-		
-		addVelocity(posDiff);
+		ISetVelocityExtension.super.setVelocity(shooter, pitch, yaw, roll, speed, divergence);
 	}
 	@Override
-	public void setVelocity(double x, double y, double z, float velocity, float inaccuracy)
+	public void setVelocity(double x, double y, double z, float power, float uncertainty)
 	{
+		ISetVelocityExtension.super.setVelocity(x, y, z, power, uncertainty);
+	}
+	@Override
+	public Vec3d calculateShotDirection(double x, double y, double z, float inaccuracy)
+	{
+		if (inaccuracy == 0)
+			return new Vec3d(x, y, z).normalize();
+		
+		float xRand = 0, yRand = 0;
+		if (random.nextBoolean())
+		{
+			xRand = random.nextFloat() * 2f - 1;
+			yRand = random.nextBoolean() ? 1 : -1;
+		}
+		else
+		{
+			xRand = random.nextBoolean() ? 1 : -1;
+			yRand = random.nextFloat() * 2f - 1;
+		}
 		float usedInaccuracy = inaccuracy * MathHelper.RADIANS_PER_DEGREE;
-		Vec3d vec3 = new Vec3d(x, y, z)
-			.rotateY((random.nextFloat() * 2f - 1f) * usedInaccuracy)
-			.rotateX((random.nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();
-		
-		dataTracker.set(SHOOT_DIRECTION, vec3.toVector3f());
-		vec3 = vec3.multiply(velocity);
-		
+		return new Vec3d(x, y, z)
+			.rotateY(xRand * usedInaccuracy)
+			.rotateX(yRand * usedInaccuracy * 0.5625f).normalize();
+	}
+	@Override
+	public void onShotDirectionCalculated(Vec3d shotDirection)
+	{
+		dataTracker.set(SHOOT_DIRECTION, shotDirection.toVector3f());
+	}
+	@Override
+	public void onVelocityCalculated(Vec3d velocity, float speed)
+	{
 		velocityDirty = true;
 		
-		double d0 = vec3.horizontalLength();
-		float yaw = (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN);
-		float pitch = (float) (MathHelper.atan2(vec3.y, d0) * MathHelper.DEGREES_PER_RADIAN);
+		double d0 = velocity.horizontalLength();
+		float yaw = (float) (MathHelper.atan2(velocity.x, velocity.z) * MathHelper.DEGREES_PER_RADIAN);
+		float pitch = (float) (MathHelper.atan2(velocity.y, d0) * MathHelper.DEGREES_PER_RADIAN);
 		setYaw(yaw);
 		setPitch(pitch);
 		prevYaw = yaw;
 		prevPitch = pitch;
-		setVelocity(vec3);
+		setVelocity(velocity);
 		
-		dataTracker.set(SPEED, velocity);
+		dataTracker.set(SPEED, speed);
 	}
 	@Override
 	public void onCollision(HitResult result)

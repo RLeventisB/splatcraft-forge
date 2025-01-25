@@ -35,7 +35,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	public List<WeaponTooltip<BlasterWeaponSettings>> tooltipsToRegister()
 	{
 		return List.of(
-			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData), WeaponTooltip.RANKER_ASCENDING),
+			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData, settings.shotData), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.getFireRate(), WeaponTooltip.RANKER_DESCENDING)
 		);
@@ -74,7 +74,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
 	{
-		return projectileData.speed();
+		return shotData.speed();
 	}
 	public record DataRecord(
 		ProjectileDataRecord projectile,

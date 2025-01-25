@@ -33,7 +33,7 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(entityType.get(), world, entity, stack.copy());
 			
 			proj.setItem(stack.copy());
-			proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), subData.throwAngle(), subData.throwVelocity(), 0);
+			proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
 			proj.setVelocity(proj.getVelocity().add(entity.getVelocity().multiply(1, 0, 1)));
 			world.spawnEntity(proj);
 		}

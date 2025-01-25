@@ -74,7 +74,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 					if (reduceInk(entity, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 					{
 						InkProjectileEntity proj = new InkProjectileEntity(world, entity, data.useItem, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-						proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), 0, settings.projectileData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, world.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
+						proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), 0, settings.shotData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, world.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
 						proj.setBlasterStats(settings);
 						proj.setAttackId(AttackId.registerAttack().countProjectile());
 						proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));

@@ -3,7 +3,6 @@
     "base_projectile": {
         "size": 8,
         "visual_size": 12,
-        "speed": 17.609,
         "ink_coverage_on_impact": 13,
         "straight_shot_ticks": 2,
         "direct_damage": 70,
@@ -17,6 +16,7 @@
         "other_actions_endlag_ticks": 16,
         "ink_consumption": 7.3,
         "ink_recovery_cooldown": 13,
+        "base_speed": 17.609,
         "sloshes_data": [
             {
                 "startup_ticks": 12,
@@ -31,19 +31,17 @@
                 "slosh_count": 3,
                 "delay_between_projectiles": 1,
                 "speed_substract_per_projectile": 1.6,
-                "slosh_projectile_modifications": {
-                    "speed": 16.009
-                }
+                "overriden_base_speed": 16
             },
             {
                 "startup_ticks": 16,
                 "slosh_count": 5,
                 "delay_between_projectiles": 2,
                 "speed_substract_per_projectile": 2,
+                "overriden_base_speed": 11,
                 "slosh_projectile_modifications": {
                     "size": 4.5,
                     "visual_size": 6,
-                    "speed": 11,
                     "ink_coverage_on_impact": 10,
                     "direct_damage": 50,
                     "minimum_damage": 50

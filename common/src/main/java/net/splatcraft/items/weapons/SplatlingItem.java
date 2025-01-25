@@ -198,7 +198,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			for (int i = 0; i < firingData.projectileCount(); i++)
 			{
 				InkProjectileEntity proj = new InkProjectileEntity(world, player, stack, InkBlockUtils.getInkType(player), projectileData.size(), settings);
-				proj.setVelocity(player, player.getPitch(), player.getYaw(), firingData.pitchCompensation(), getScaledProjectileSettingFloat(settings, charge, CommonRecords.ProjectileDataRecord::speed),
+				proj.setVelocity(player, player.getPitch(), player.getYaw(), firingData.pitchCompensation(), getScaledShotSettingFloat(settings, charge, SplatlingWeaponSettings.ShotDataRecord::projectileSpeed),
 					inaccuracy);
 				proj.setSplatlingStats(settings, charge);
 				world.spawnEntity(proj);

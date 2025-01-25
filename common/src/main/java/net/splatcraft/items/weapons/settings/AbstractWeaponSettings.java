@@ -13,6 +13,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -29,9 +31,9 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	{
 		this.name = name;
 	}
-	public static float calculateAproximateRange(CommonRecords.ProjectileDataRecord settings)
+	public static float calculateAproximateRange(ProjectileDataRecord projSettings, ShotDataRecord shotSettings)
 	{
-		return calculateAproximateRange(settings.straightShotTicks(), settings.horizontalDrag(), settings.speed(), settings.delaySpeedMult(), settings.lifeTicks());
+		return calculateAproximateRange(projSettings.straightShotTicks(), projSettings.horizontalDrag(), shotSettings.speed(), projSettings.delaySpeedMult(), projSettings.lifeTicks());
 	}
 	public static float calculateAproximateRange(float straightShotTicks, float drag, float speed, float delaySpeedMult, float maxLifespan)
 	{
