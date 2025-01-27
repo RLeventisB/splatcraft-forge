@@ -1,6 +1,8 @@
 package net.splatcraft.neoforge;
 
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
@@ -9,6 +11,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.ChunkWatchEvent;
@@ -38,6 +41,7 @@ public final class SplatcraftNeoForge
 		Splatcraft.init();
 		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
 		modBus.addListener(SplatcraftNeoForge::onRegistryUnlocked);
+		modBus.addListener(SplatcraftNeoForge::beforeRegisterScreens);
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
@@ -49,6 +53,12 @@ public final class SplatcraftNeoForge
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
 		
 		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
+	}
+	@OnlyIn(Dist.CLIENT)
+	private static void beforeRegisterScreens(AddPackFindersEvent event)
+	{
+		// there is absolutely no more events that run after NewRegistryEvent but before RegisterMenuScreensEvent >:(
+		ClientSetupHandler.bindScreenContainers();
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{

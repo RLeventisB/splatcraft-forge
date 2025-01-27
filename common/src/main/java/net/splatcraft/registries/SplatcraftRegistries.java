@@ -1,5 +1,6 @@
 package net.splatcraft.registries;
 
+import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.worldgen.SplatcraftOreGen;
 
@@ -23,5 +24,7 @@ public class SplatcraftRegistries
 		SplatcraftStats.CRITERION_REGISTRY.register();
 		SplatcraftStats.STAT_REGISTRY.register();
 		SplatcraftParticleTypes.REGISTRY.register();
+		SplatcraftRecipeTypes.RECIPE_SERIALIZER_REGISTRY.register();
+		SplatcraftRecipeTypes.RECIPE_TYPE_REGISTRY.register();
 	}
 }

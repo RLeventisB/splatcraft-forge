@@ -12,7 +12,10 @@ import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.splatcraft.client.handlers.*;
+import net.splatcraft.client.handlers.JumpLureHudHandler;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
+import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.config.ConfigScreenProvider;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
@@ -87,7 +90,6 @@ public final class Splatcraft
 		
 		SplatcraftTileEntities.bindTESR();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
-		ClientSetupHandler.bindScreenContainers();
 		SplatcraftItems.registerModelProperties();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)

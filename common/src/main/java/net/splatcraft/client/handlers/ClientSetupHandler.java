@@ -40,6 +40,7 @@ import java.util.Optional;
 
 public class ClientSetupHandler
 {
+	private static boolean registeredScreens;
 	public static void onTextureStitch(Sprite sprite)
 	{
 		if (!sprite.getAtlasId().equals(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE))
@@ -77,8 +78,11 @@ public class ClientSetupHandler
 	}
 	public static void bindScreenContainers()
 	{
+		if(registeredScreens) // todo: find a method in forge that only runs this once but before RegisterMenuScreensEvent since we are using the architectury thingy!!! since AddPackFindersEvent runs for every world load, so this needs to be registered or something happens idk
+			return;
 		MenuRegistry.registerScreenFactory(SplatcraftTileEntities.inkVatContainer.get(), InkVatScreen::new);
 		MenuRegistry.registerScreenFactory(SplatcraftTileEntities.weaponWorkbenchContainer.get(), WeaponWorkbenchScreen::new);
+		registeredScreens = true;
 	}
 	// todo: me thinks these are handled by the rendering but just in case i will put a todo here
 	public static void initItemColors(ItemColors colors)
