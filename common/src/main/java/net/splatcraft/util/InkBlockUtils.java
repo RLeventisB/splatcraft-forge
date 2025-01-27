@@ -75,6 +75,7 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
+		
 		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		
@@ -98,6 +99,7 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
+		
 		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
@@ -209,6 +211,7 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;
+		
 		return ChunkInkCapability.get(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static ChunkInk.InkEntry getInkInFace(World world, BlockPos pos, Direction direction)

@@ -108,22 +108,25 @@ public class ChunkInkHandler
 	//Ink Removal
 	public static void onBlockUpdate(World world, BlockPos pos, List<Direction> directions)
 	{
-		checkForInkRemoval(world, pos);
-		directions.forEach(direction -> checkForInkRemoval(world, pos.offset(direction)));
+		checkForInkRemoval(world, pos, Direction.values());
+		directions.forEach(direction -> checkForInkRemoval(world, pos.offset(direction), new Direction[]{direction.getOpposite()}));
 	}
 	public static EventResult onBlockBreak(World level, BlockPos pos, BlockState state, ServerPlayerEntity player, @Nullable IntValue xp)
 	{
 		InkBlockUtils.clearBlock(level, pos, true);
 		return EventResult.pass();
 	}
-	private static void checkForInkRemoval(World world, BlockPos pos)
+	private static void checkForInkRemoval(World world, BlockPos pos, Direction[] directionsToCheck)
 	{
+		if(!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
+			return;
+		
 		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(world, pos);
 		if (inkBlock != null && inkBlock.isInkedAny())
 		{
-			for (int i = 0; i < 6; i++)
+			for (Direction dir : directionsToCheck)
 			{
-				if (inkBlock.isInked(i) && InkBlockUtils.isUninkable(world, pos, Direction.byId(i), true))
+				if (inkBlock.isInked(dir.getId()) && InkBlockUtils.isUninkable(world, pos, dir, true))
 				{
 					List<BlockPos> blockPos = INK_IGNORE_REMOVE.get(world);
 					if (INK_IGNORE_REMOVE.containsKey(world) && blockPos.contains(pos))
@@ -136,9 +139,9 @@ public class ChunkInkHandler
 					}
 					else
 					{
-						ColorUtils.addInkDestroyParticle(world, pos, inkBlock.color(i));
+						ColorUtils.addInkDestroyParticle(world, pos, inkBlock.color(dir.getId()));
 					}
-					InkBlockUtils.clearInk(world, pos, i, false);
+					InkBlockUtils.clearInk(world, pos, dir, false);
 				}
 			}
 		}
@@ -305,15 +308,7 @@ public class ChunkInkHandler
 	}
 	public static void addBlocksToIgnoreRemoveInk(World world, Collection<BlockPos> positions)
 	{
-		List<BlockPos> blocks;
-		if (INK_IGNORE_REMOVE.containsKey(world))
-		{
-			blocks = INK_IGNORE_REMOVE.get(world);
-		}
-		else
-		{
-			blocks = new ArrayList<>();
-		}
+		List<BlockPos> blocks = INK_IGNORE_REMOVE.computeIfAbsent(world, v -> new ArrayList<>());
 		blocks.addAll(positions);
 		INK_IGNORE_REMOVE.put(world, blocks);
 	}

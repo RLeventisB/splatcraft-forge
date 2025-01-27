@@ -20,7 +20,6 @@ import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class InkWaxerItem extends Item
 {
@@ -29,7 +28,7 @@ public class InkWaxerItem extends Item
 		super(new Settings().maxDamage(256));
 	}
 	// wait why does it work like this
-	public void onBlockStartBreak(BlockPos pos, World world, @Nullable Direction face)
+	public void onBlockStartBreak(BlockPos pos, World world, Direction face)
 	{
 		if (InkBlockUtils.isInkedAny(world, pos))
 		{
@@ -39,6 +38,8 @@ public class InkWaxerItem extends Item
 			world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), soundType.getBreakSound(), SoundCategory.PLAYERS, (soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
 			
 			InkBlockUtils.clearInk(world, pos, face, true);
+			BlockState state = world.getBlockState(pos);
+			world.updateListeners(pos, state, state, 0);
 		}
 	}
 	@Override
