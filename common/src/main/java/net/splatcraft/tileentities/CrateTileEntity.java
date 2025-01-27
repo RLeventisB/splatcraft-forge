@@ -11,7 +11,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameRules;
@@ -22,7 +21,6 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
 
 public class CrateTileEntity extends InkColorTileEntity implements LootableInventory
 {
@@ -93,6 +91,12 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 		maxHealth = nbt.getFloat("MaxHealth");
 		if (!readLootTable(nbt))
 			Inventories.readNbt(nbt, inventory, lookup);
+		
+		if (nbt.contains("LootTable"))
+		{
+			RegistryKey.createCodec(RegistryKeys.LOOT_TABLE).parse(NbtOps.INSTANCE, nbt.get("LootTable"))
+				.ifSuccess(encoded -> lootTable = encoded);
+		}
 	}
 	@Override
 	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
@@ -103,10 +107,9 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 		
 		if (hasLoot())
 		{
-			Optional<RegistryEntry.Reference<LootTable>> lootEntry = lookup.createRegistryLookup().getOptionalEntry(RegistryKeys.LOOT_TABLE, lootTable);
-			lootEntry.ifPresent(lootTableReference -> nbt.put("LootTable", LootTable.CODEC.encode(lootTableReference.value(), NbtOps.INSTANCE, nbt).getOrThrow()));
+			RegistryKey.createCodec(RegistryKeys.LOOT_TABLE).encodeStart(NbtOps.INSTANCE, lootTable)
+				.ifSuccess(encoded -> nbt.put("LootTable", encoded));
 		}
-		// WHAT THE FUCK please tell me there is an easier way to do this
 		
 		super.writeNbt(nbt, lookup);
 	}
