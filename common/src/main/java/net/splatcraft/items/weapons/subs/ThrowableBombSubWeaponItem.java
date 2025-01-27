@@ -34,7 +34,6 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 			
 			proj.setItem(stack.copy());
 			proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
-			proj.setVelocity(proj.getVelocity().add(entity.getVelocity().multiply(1, 0, 1)));
 			world.spawnEntity(proj);
 		}
 		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundCategory.PLAYERS, 0.7F, 1);

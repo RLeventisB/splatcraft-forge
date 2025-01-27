@@ -103,6 +103,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					action.isAttackQueued = true;
 				}
 			});
+			user.leaningPitch = 0.0F;
 		}
 		
 		super.usageTick(world, user, stack, remainingUseTicks);

@@ -17,6 +17,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.IColoredEntity;
@@ -122,6 +123,12 @@ public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubD
 	{
 		ISetVelocityExtension.super.setVelocity(x, y, z, power, uncertainty);
 	}
+
+	@Override
+	public void onVelocityCalculated(Vec3d velocity, float speed) {
+		setVelocity(velocity);
+	}
+
 	public double getGravity()
 	{
 		return 0.09;

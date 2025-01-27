@@ -67,6 +67,7 @@ public class GraphicsUtils
     {
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
         Matrix3f transformMatrix = new Matrix3f().rotation(camera.getRotation());
+        transformMatrix.scale(-1, 1,-1);
         transformMatrix.invert();
 
         Vector3f camSpace = relativePos.toVector3f();

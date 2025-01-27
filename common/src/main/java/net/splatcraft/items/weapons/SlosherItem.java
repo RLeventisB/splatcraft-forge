@@ -64,6 +64,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		if (remainingUseTicks != stack.getMaxUseTime(user)) // sloshers cannot be held to attack normally
 			return;
 		
+		user.leaningPitch = 0f;
 		Optional<EntityAction> action = EntityAction.getActionIf(user, EntityAction::preventWeaponUse);
 		boolean notPreventedByAction = action.isEmpty();
 		

@@ -45,6 +45,7 @@ accessible method net/minecraft/entity/Entity adjustMovementForCollisions (Lnet/
 accessible method net/minecraft/entity/Entity adjustMovementForCollisions (Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/List;)Lnet/minecraft/util/math/Vec3d; # adjustMovementForCollisions
 accessible method net/minecraft/entity/Entity findCollisionsForMovement (Lnet/minecraft/entity/Entity;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/util/math/Box;)Ljava/util/List; # adjustMovementForCollisions
 accessible field net/minecraft/entity/LivingEntity jumping Z
+accessible field net/minecraft/entity/LivingEntity leaningPitch F
 
 accessible method net/minecraft/entity/projectile/ProjectileEntity canHit (Lnet/minecraft/entity/Entity;)Z # canHitEntity
 accessible method net/minecraft/entity/projectile/ProjectileEntity updateRotation ()V # updateRotation
