@@ -348,7 +348,7 @@ public class ChunkInk
 				if (isInked(i))
 					list.add(i);
 			}
-			return list.toArray(new Byte[0]);
+			return list.toArray(Byte[]::new);
 		}
 		public void writeToBuffer(PacketByteBuf buffer)
 		{
