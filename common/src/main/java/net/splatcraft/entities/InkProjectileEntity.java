@@ -1,6 +1,7 @@
 package net.splatcraft.entities;
 
 import com.google.common.reflect.TypeToken;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
@@ -22,6 +23,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.ColoredBarrierBlock;
+import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
@@ -411,18 +413,9 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		if (!getWorld().isClient())
 		{
 			Entity target = result.getEntity();
-			float storedCrystalSoundIntensity = lastChimeIntensity;
-			
-			// idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
-			// lol i didnt even use it
-			
-			Vec3d nextPosition = getPos().add(getVelocity());
 			Vec3d impactPos = result.getPos();
 			
-			lastChimeIntensity = (float) CommonUtils.getDeltaBetweenVectors(impactPos, getPos(), nextPosition, 0.5);
-			setPosition(impactPos);
-			float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
-			lastChimeIntensity = storedCrystalSoundIntensity;
+			float dmg = calculateDamage(impactPos);
 			
 			if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 			{
@@ -462,6 +455,21 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 			}
 		}
 	}
+	private float calculateDamage(Vec3d impactPos)
+	{
+		float storedCrystalSoundIntensity = lastChimeIntensity;
+		
+		// idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
+		// lol i didnt even use it
+		
+		Vec3d nextPosition = getPos().add(getVelocity());
+		
+		lastChimeIntensity = (float) CommonUtils.getDeltaBetweenVectors(impactPos, getPos(), nextPosition, 0.5);
+		setPosition(impactPos);
+		float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
+		lastChimeIntensity = storedCrystalSoundIntensity;
+		return dmg;
+	}
 	@Override
 	protected void onBlockHit(@NotNull BlockHitResult result)
 	{
@@ -474,10 +482,16 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		if (InkBlockUtils.canInkPassthrough(getWorld(), result.getBlockPos()))
 			return;
 		
-		if (getWorld().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
+		BlockState state = getWorld().getBlockState(result.getBlockPos());
+		if (state.getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
 			coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
 			return;
 		
+		if (state.getBlock() instanceof IColoredBlock coloredBlock)
+		{
+			coloredBlock.inkBlock(getWorld(), result.getBlockPos(), getColor(), calculateDamage(result.getPos()), inkType);
+			return;
+		}
 		super.onBlockHit(result);
 		
 		Vec3d nextPosition = getPos().add(getVelocity());
