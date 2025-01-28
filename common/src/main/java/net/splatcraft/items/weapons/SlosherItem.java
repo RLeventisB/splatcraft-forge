@@ -256,10 +256,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), sloshData);
 			proj.setSlosherStats(projectileData);
 			
-			float xRotation = MathHelper.lerp(partialTick, yRotOld, yaw);
+			float xRotation = MathHelper.lerpAngleDegrees(partialTick, yRotOld, yaw);
 			proj.setVelocity(
 				entity,
-				MathHelper.lerp(partialTick, xRotOld, pitch),
+				MathHelper.lerpAngleDegrees(partialTick, xRotOld, pitch),
 				xRotation + projectileSetting.offsetAngle() - 3,
 				shotSetting.pitchCompensation(),
 				speed,
