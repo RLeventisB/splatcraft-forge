@@ -68,7 +68,7 @@ public class SplatcraftEntities
 	public static final RegistrySupplier<EntityType<SpawnShieldEntity>> SPAWN_SHIELD = create("spawn_shield", SpawnShieldEntity::new, SpawnGroup.MISC, 1, 1);
 	//Sub Weapons
 	public static final RegistrySupplier<EntityType<BurstBombEntity>> BURST_BOMB = create("burst_bomb", BurstBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
-	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, SpawnGroup.MISC, 0.3f, 0.3f);
 	public static final RegistrySupplier<EntityType<SplatBombEntity>> SPLAT_BOMB = create("splat_bomb", SplatBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
 	public static final RegistrySupplier<EntityType<CurlingBombEntity>> CURLING_BOMB = create("curling_bomb", CurlingBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
 	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, SpawnGroup classification, float width, float height)
