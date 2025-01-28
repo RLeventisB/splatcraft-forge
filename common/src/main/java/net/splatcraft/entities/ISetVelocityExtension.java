@@ -13,10 +13,16 @@ public interface ISetVelocityExtension
 	}
 	default void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy, double throwerImpulse)
 	{
-		double f = -Math.sin(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
-		double f1 = -Math.sin((pitch + pitchOffset) * MathHelper.RADIANS_PER_DEGREE);
-		double f2 = Math.cos(yaw * MathHelper.RADIANS_PER_DEGREE) * Math.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
+		pitch += pitchOffset;
+		pitch *= MathHelper.RADIANS_PER_DEGREE;
+		yaw *= MathHelper.RADIANS_PER_DEGREE;
+		double f = -Math.sin(yaw) * Math.cos(pitch);
+		double f1 = -Math.sin((pitch));
+		double f2 = Math.cos(yaw) * Math.cos(pitch);
 		setVelocity(f, f1, f2, speed, inaccuracy);
+		
+		if (throwerImpulse == 0)
+			return;
 		
 		Vec3d posDiff = new Vec3d(0, 0, 0);
 		
