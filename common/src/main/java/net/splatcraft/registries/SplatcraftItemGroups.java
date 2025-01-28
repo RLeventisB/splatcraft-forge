@@ -11,7 +11,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorGroups;
-import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.ColoredBlockItem;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -106,7 +105,7 @@ public class SplatcraftItemGroups
 			output.addAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
 		}).build());
 	public static final RegistrySupplier<ItemGroup> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.withInkColor(splattershot.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
+		.icon(() -> ColorUtils.withInkColor(splattershot.get().getDefaultStack(), ColorUtils.getOrange()))
 		.displayName(Text.translatable("itemGroup.splatcraft_weapons"))
 		.entries((parameters, output) ->
 		{
@@ -128,15 +127,18 @@ public class SplatcraftItemGroups
 			output.add(inkClothBoots.get());
 		}).build());
 	public static final RegistrySupplier<ItemGroup> GROUP_COLORS = REGISTRY.register("splatcraft_colors", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultStack(), InkColorRegistry.getColorByAliasOrHex("splatcraft:orange")))
+		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultStack(), ColorUtils.getOrange()))
 		.displayName(Text.translatable("itemGroup.splatcraft_colors"))
 		.noRenderedName()
 		.entries((parameters, output) ->
 		{
+			for (InkColor color : InkColorGroups.CREATIVE_TAB_COLORS.getAll())
+			{
+				for (Item item : colorTabItems)
+					output.add(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
+			}
 			for (Item item : colorTabItems)
 			{
-				for (InkColor color : InkColorGroups.CREATIVE_TAB_COLORS.getAll().stream().toList())
-					output.add(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
 				if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
 					output.add(ColorUtils.withInvertedColor(new ItemStack(item), true));
 			}

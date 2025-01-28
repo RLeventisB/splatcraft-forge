@@ -16,6 +16,7 @@ import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
+import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,7 @@ public class InkColorRegistry
 	}
 	public static void forceLoadIfNecessary()
 	{
-		if(Listener.hasLoaded)
+		if (Listener.hasLoaded)
 			return;
 //		Splatcraft.LOGGER.debug("Loaded the InkColor registry before than expected.");
 		
@@ -114,12 +115,13 @@ public class InkColorRegistry
 			REGISTRY.clear();
 			hasLoaded = false;
 			resourceList = super.prepare(manager, profiler);
+			InkVatColorRecipe.getOmniList().clear();
 			return resourceList;
 		}
 		@Override
 		protected void apply(Map<Identifier, JsonElement> resourceList, ResourceManager manager, Profiler profiler)
 		{
-			if(loading || hasLoaded)
+			if (loading || hasLoaded)
 				return;
 			
 			loading = true;
@@ -138,7 +140,7 @@ public class InkColorRegistry
 					}
 				}
 			}
-			InkColorGroups.Listener.doLoad();
+			InkColorGroups.Listener.doLoadIfNecessary();
 			loading = false;
 			hasLoaded = true;
 		}

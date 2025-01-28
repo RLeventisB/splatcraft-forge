@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -30,6 +32,10 @@ public class InkColorGroups
 	public static final InkColorGroups ENCHANTED = getOrCreateTag(Splatcraft.identifierOf("enchanted"));
 	public static final InkColorGroups CREATIVE_TAB_COLORS = getOrCreateTag(Splatcraft.identifierOf("creative_tab_colors"));
 	private final List<InkColor> list;
+	public InkColorGroups()
+	{
+		this(new ObjectArrayList<>());
+	}
 	public InkColorGroups(List<InkColor> list)
 	{
 		this.list = list;
@@ -44,10 +50,12 @@ public class InkColorGroups
 	}
 	public InkColor getRandom(Random random)
 	{
+		Listener.doLoadIfNecessary();
 		return list.isEmpty() ? ColorUtils.getDefaultColor() : list.get(random.nextInt(list.size()));
 	}
 	public Collection<InkColor> getAll()
 	{
+		Listener.doLoadIfNecessary();
 		return Collections.unmodifiableList(list);
 	}
 	public static class Listener extends JsonDataLoader
@@ -56,33 +64,43 @@ public class InkColorGroups
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "tags/ink_colors";
 		private static final List<Map.Entry<Identifier, JsonElement>> entries = new ArrayList<>(), entriesThatReferenceAnotherTag = new ArrayList<>();
+		private static boolean loaded;
 		public Listener()
 		{
 			super(GSON_INSTANCE, folder);
 		}
 		public static InkColorGroups getOrCreateTag(Identifier name)
 		{
-			if (REGISTRY.containsKey(name))
-				return REGISTRY.get(name);
-			
-			InkColorGroups result = new InkColorGroups(new ArrayList<>());
-			REGISTRY.put(name, result);
-			
-			return result;
+			return REGISTRY.computeIfAbsent(name, v -> new InkColorGroups());
 		}
-		public static void doLoad()
+		public static void doLoadIfNecessary()
 		{
-			for (var entry : REGISTRY.entrySet())
+			synchronized (REGISTRY) // i have traumas with parallel loading so this is just in case that happens
 			{
-				entry.getValue().clear();
-			}
-			for (Map.Entry<Identifier, JsonElement> entry : entries)
-			{
-				loadTag(entry.getKey(), entry.getValue(), false);
-			}
-			for (Map.Entry<Identifier, JsonElement> entry : entriesThatReferenceAnotherTag)
-			{
-				loadTag(entry.getKey(), entry.getValue(), true);
+				if (loaded)
+					return;
+				
+				// this literally exists so java loads the class for this lol
+				STARTER_COLORS.clear();
+				
+				loaded = true;
+				for (var entry : REGISTRY.entrySet())
+				{
+					entry.getValue().clear();
+				}
+				if (entries.isEmpty() && entriesThatReferenceAnotherTag.isEmpty())
+				{
+					Splatcraft.LOGGER.warn("The entries for the color groups is empty! Maybe this was called to early?");
+					return;
+				}
+				for (Map.Entry<Identifier, JsonElement> entry : entries)
+				{
+					loadTag(entry.getKey(), entry.getValue(), false);
+				}
+				for (Map.Entry<Identifier, JsonElement> entry : entriesThatReferenceAnotherTag)
+				{
+					loadTag(entry.getKey(), entry.getValue(), true);
+				}
 			}
 		}
 		private static void loadTag(Identifier key, JsonElement j, boolean hasReferenceToOtherTags)
@@ -114,9 +132,7 @@ public class InkColorGroups
 				
 				try
 				{
-					Identifier loc = Identifier.of(str);
-					if (InkColorRegistry.containsAlias(loc))
-						newColors.add(InkColorRegistry.getInkColorByAlias(loc));
+					InkColor.NAME_CODEC.parse(JsonOps.INSTANCE, jsonElement).ifSuccess(newColors::add);
 				}
 				catch (Exception ignored)
 				{
@@ -143,10 +159,16 @@ public class InkColorGroups
 			return false;
 		}
 		@Override
-		protected void apply(@NotNull Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull Profiler profilerIn)
+		protected Map<Identifier, JsonElement> prepare(ResourceManager resourceManager, Profiler profiler)
 		{
+			loaded = false;
 			entries.clear();
 			entriesThatReferenceAnotherTag.clear();
+			return super.prepare(resourceManager, profiler);
+		}
+		@Override
+		protected void apply(@NotNull Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull Profiler profilerIn)
+		{
 			for (Map.Entry<Identifier, JsonElement> entry : resourceList.entrySet())
 			{
 				Identifier key = entry.getKey();

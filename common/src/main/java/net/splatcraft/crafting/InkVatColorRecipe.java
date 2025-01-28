@@ -1,5 +1,6 @@
 package net.splatcraft.crafting;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -13,7 +14,9 @@ import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -21,23 +24,29 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 {
 	protected static final ArrayList<InkColor> omniColors = Lists.newArrayList();
 	protected final Ingredient ingredient;
-	protected final InkColor color;
+	protected final Identifier colorId;
+	protected final Supplier<InkColor> colorSupplier;
 	protected final boolean disableOmni;
-	public InkVatColorRecipe(Ingredient input, InkColor outputColor, boolean disableOmni)
+	public InkVatColorRecipe(Ingredient input, Identifier colorId, boolean disableOmni)
 	{
 		this.disableOmni = disableOmni;
 		ingredient = input;
-		color = outputColor;
-		
-		if (!disableOmni && !omniColors.contains(color))
+		this.colorId = colorId;
+		colorSupplier = Suppliers.memoize(() ->
 		{
-			omniColors.add(color);
-		}
+			InkColor outputColor = InkColorRegistry.getInkColorByAlias(colorId);
+			if (!disableOmni && !omniColors.contains(outputColor))
+			{
+				omniColors.add(outputColor);
+			}
+			return outputColor;
+		});
 	}
 	public static Collection<InkColor> getOmniList()
 	{
@@ -61,11 +70,15 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 	@Override
 	public ItemStack getResult(RegistryWrapper.WrapperLookup registriesLookup)
 	{
-		return ColorUtils.withInkColor(new ItemStack(SplatcraftBlocks.inkwell.get()), color);
+		return ColorUtils.withInkColor(new ItemStack(SplatcraftBlocks.inkwell.get()), colorSupplier.get());
 	}
 	public InkColor getOutputColor()
 	{
-		return color;
+		return colorSupplier.get();
+	}
+	private Identifier getOutputColorId()
+	{
+		return colorId;
 	}
 	public boolean isDisableOmni()
 	{
@@ -95,12 +108,12 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		public static final MapCodec<InkVatColorRecipe> CODEC = RecordCodecBuilder.mapCodec((instance) ->
 			instance.group(
 				Ingredient.ALLOW_EMPTY_CODEC.optionalFieldOf("filter", Ingredient.EMPTY).forGetter(v -> v.ingredient),
-				InkColor.CODEC.fieldOf("color").forGetter(v -> v.color),
+				Identifier.CODEC.fieldOf("color").forGetter(v -> v.colorId),
 				Codec.BOOL.optionalFieldOf("not_on_omni_filter", false).forGetter(v -> v.disableOmni)
 			).apply(instance, InkVatColorRecipe::new));
 		public static final PacketCodec<RegistryByteBuf, InkVatColorRecipe> PACKET_CODEC = PacketCodec.tuple(
 			Ingredient.PACKET_CODEC, InkVatColorRecipe::getIngredient,
-			InkColor.PACKET_CODEC, InkVatColorRecipe::getOutputColor,
+			Identifier.PACKET_CODEC, InkVatColorRecipe::getOutputColorId,
 			PacketCodecs.BOOL, InkVatColorRecipe::isDisableOmni,
 			InkVatColorRecipe::new);
 		@Override
