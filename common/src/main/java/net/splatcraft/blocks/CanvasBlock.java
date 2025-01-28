@@ -38,7 +38,7 @@ public class CanvasBlock extends Block implements IColoredBlock, BlockEntityProv
 	@Override
 	public BlockState getPlacementState(@NotNull ItemPlacementContext context)
 	{
-		return super.getPlacementState(context).with(INKED, ColorUtils.getInkColor(context.getStack()).isValid());
+		return super.getPlacementState(context).with(INKED, ColorUtils.getEffectiveColor(context.getStack()).isValid());
 	}
 	@Nullable
 	@Override

@@ -56,7 +56,7 @@ public class InkedGlassBlock extends TranslucentBlock implements IColoredBlock, 
 	{
 		if (stack.contains(SplatcraftComponents.ITEM_COLOR_DATA) && world.getBlockEntity(pos) instanceof InkColorTileEntity)
 		{
-			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getInkColor(stack));
+			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getEffectiveColor(stack));
 		}
 		super.onPlaced(world, pos, state, entity, stack);
 	}

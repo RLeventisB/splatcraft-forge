@@ -114,14 +114,35 @@ public class ColorUtils
 		);
 		return stack;
 	}
+	/**
+	 * Gets the direct {@link InkColor} stored in the specified {@link ItemStack}.
+	 *
+	 * @param stack The stack to check from.
+	 * @return The {@link InkColor} that was stored in this {@link ItemStack}'s {@link net.splatcraft.registries.SplatcraftComponents.ItemColorData} component, if present, otherwise {@code InkColor.INVALID}.
+	 */
 	public static @NotNull InkColor getInkColor(ItemStack stack)
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::color, InkColor.INVALID);
 	}
+	/**
+	 * Gets the effective {@link InkColor} stored in the specified {@link ItemStack}.
+	 * This means that if the {@link ItemStack} has the inverted boolean set as true, it returns the inverted color of the stored original color.
+	 *
+	 * @param stack The stack to check from.
+	 * @return The {@link InkColor} that was stored in this {@link ItemStack}'s {@link net.splatcraft.registries.SplatcraftComponents.ItemColorData} component with the specified convertions, if present, otherwise {@code InkColor.INVALID}.
+	 */
 	public static @NotNull InkColor getEffectiveColor(ItemStack stack)
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::getEffectiveColor, InkColor.INVALID);
 	}
+	/**
+	 * Gets the effective {@link InkColor} stored in the specified {@link ItemStack}.
+	 * This means that if the {@link ItemStack} has the inverted boolean set as true, it returns the inverted color of the stored original color. And if the color is {@code inkColor.INVALID}, it returns the {@link InkColor} of the specified {@link Entity}.
+	 *
+	 * @param stack  The stack to check from.
+	 * @param entity The entity to retrieve the color from, if the {@link ItemStack}'s color is {@code inkColor.INVALID}
+	 * @return The {@link InkColor} that was stored in this {@link ItemStack}'s {@link net.splatcraft.registries.SplatcraftComponents.ItemColorData} component with the specified convertions, if present, otherwise {@code InkColor.INVALID}.
+	 */
 	public static @NotNull InkColor getEffectiveColor(ItemStack stack, Entity entity)
 	{
 		if (entity == null)
