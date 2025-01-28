@@ -257,23 +257,6 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		return false;
 	}
 	@Override
-	public void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float divergence)
-	{
-		// no you're not supposed to have momentum like the other subs because i HATE fun (also it breaks paints since you can launch it pretty far lol)
-		float f = -MathHelper.sin(yaw * MathHelper.RADIANS_PER_DEGREE) * MathHelper.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
-		float g = -MathHelper.sin((pitch + pitchOffset) * MathHelper.RADIANS_PER_DEGREE);
-		float h = MathHelper.cos(yaw * MathHelper.RADIANS_PER_DEGREE) * MathHelper.cos(pitch * MathHelper.RADIANS_PER_DEGREE);
-		
-		Vec3d vec3d = new Vec3d(f, g, h).multiply(speed);
-		setVelocity(vec3d);
-		velocityDirty = true;
-		
-		setYaw(yaw);
-		setPitch(pitch);
-		prevYaw = getYaw();
-		prevPitch = getPitch();
-	}
-	@Override
 	public void readCustomDataFromNbt(NbtCompound nbt)
 	{
 		super.readCustomDataFromNbt(nbt);
