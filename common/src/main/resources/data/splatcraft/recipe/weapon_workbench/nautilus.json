@@ -1,0 +1,63 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/splatlings",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.47",
+            "advancement": "splatcraft:unlocks/nautilus_47",
+            "result": {
+                "id": "splatcraft:nautilus_47",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 15
+                },
+                {
+                    "id": "minecraft:iron_ingot",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                }
+            ]
+        },
+        {
+            "name": "weaponType.79",
+            "advancement": "splatcraft:unlocks/nautilus_79",
+            "result": {
+                "id": "splatcraft:nautilus_79",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 15
+                },
+                {
+                    "id": "minecraft:gold_ingot",
+                    "count": 15
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:black_dye",
+                    "count": 9
+                }
+            ]
+        }
+    ]
+}

@@ -28,7 +28,7 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		CodecUtils.hashMapCodec(Codec.STRING, PlaySession.CODEC).fieldOf("play_sessions").forGetter(SaveInfo::playSessions),
 		CodecUtils.hashMapCodec(Codec.STRING, Stage.CODEC).fieldOf("stages").forGetter(SaveInfo::stages),
-		CodecUtils.arrayList(InkColor.CODEC).fieldOf("color_scores").forGetter(SaveInfo::colorScores)
+		CodecUtils.arrayList(InkColor.HEX_CODEC).fieldOf("color_scores").forGetter(SaveInfo::colorScores)
 	).apply(inst, SaveInfo::new));
 	public SaveInfo()
 	{

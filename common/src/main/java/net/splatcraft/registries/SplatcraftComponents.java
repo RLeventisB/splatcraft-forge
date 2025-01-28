@@ -199,7 +199,7 @@ public class SplatcraftComponents
 		public static final Codec<ItemColorData> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.BOOL.optionalFieldOf("color_locked", false).forGetter(ItemColorData::colorLocked),
 			Codec.BOOL.optionalFieldOf("inverted", false).forGetter(ItemColorData::hasInvertedColor),
-			InkColor.NUMBER_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(ItemColorData::color)
+			InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(ItemColorData::color)
 		).apply(builder, ItemColorData::new));
 		public static final Supplier<ItemColorData> DEFAULT = () -> new ItemColorData(false, false, InkColor.INVALID);
 		public ItemColorData withColorLocked(boolean colorLocked)

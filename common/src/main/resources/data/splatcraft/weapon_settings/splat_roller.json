@@ -48,7 +48,6 @@
             "min_speed": 1.38,
             "max_speed": 2.82
         },
-
         "mobility": 0.48,
         "swing_angle": 18,
         "letal_angle": 16
@@ -60,7 +59,8 @@
             "delay_speed_mult": 0.9,
             "horizontal_drag": 0.65,
             "straight_shot_ticks": 2,
-            "ink_coverage_on_impact": 1.363,
+            "ink_coverage_on_impact": 12.8,
+            "distance_between_drops": 46,
             "damage_falloff_start_tick": 10,
             "damage_falloff_end_tick": 15,
             "damage_ranges": {

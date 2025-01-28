@@ -1,0 +1,99 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/shooters",
+    "pos": 1,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/splattershot",
+            "result": {
+                "id": "splatcraft:splattershot",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "name": "weaponType.tentatek",
+            "advancement": "splatcraft:unlocks/tentatek_splattershot",
+            "result": {
+                "id": "splatcraft:tentatek_splattershot",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 7
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 8
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                }
+            ]
+        },
+        {
+            "name": "weaponType.wasabi",
+            "advancement": "splatcraft:unlocks/wasabi_splattershot",
+            "result": {
+                "id": "splatcraft:wasabi_splattershot",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:green_dye",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "name": "weaponType.special",
+            "advancement": "splatcraft:story/get_all_weapons",
+            "result": {
+                "id": "splatcraft:ancient_splattershot",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "minecraft:netherite_scrap",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                }
+            ]
+        }
+    ]
+}

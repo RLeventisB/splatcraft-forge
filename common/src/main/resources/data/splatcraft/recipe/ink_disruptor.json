@@ -1,0 +1,26 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " # ",
+        "#S#",
+        "PAP"
+    ],
+    "key": {
+        "#": {
+            "item": "splatcraft:sardinium"
+        },
+        "P": {
+            "item": "splatcraft:power_egg"
+        },
+        "A": {
+            "item": "splatcraft:ammo_knights_scrap"
+        },
+        "S": {
+            "item": "minecraft:water_bucket"
+        }
+    },
+    "result": {
+        "id": "splatcraft:ink_disruptor",
+        "count": 1
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/chargers",
+    "pos": 1,
+    "recipes": [
+        {
+            "name": "weaponType.4k",
+            "advancement": "splatcraft:unlocks/e_liter_4k",
+            "result": {
+                "id": "splatcraft:e_liter_4k",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:iron_ingot",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "name": "weaponType.3k",
+            "advancement": "splatcraft:unlocks/e_liter_3k",
+            "result": {
+                "id": "splatcraft:e_liter_3k",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:iron_ingot",
+                    "count": 5
+                }
+            ]
+        }
+    ]
+}

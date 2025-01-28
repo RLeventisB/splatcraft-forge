@@ -1,0 +1,22 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "# #",
+        "EIE",
+        "###"
+    ],
+    "key": {
+        "#": {
+            "item": "splatcraft:sardinium"
+        },
+        "E": {
+            "item": "splatcraft:power_egg"
+        },
+        "I": {
+            "item": "splatcraft:empty_inkwell"
+        }
+    },
+    "result": {
+        "id": "splatcraft:ink_vat"
+    }
+}

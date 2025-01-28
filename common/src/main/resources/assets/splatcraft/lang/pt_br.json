@@ -66,9 +66,9 @@
     "weaponStat.ink_speed": "Ink Speed: %s%%",
     "weaponStat.mobility": "Mobility: %s%%",
     "weaponStat.charge_speed": "Charge Speed: %s%%",
-    "weaponTab.splatcraft:weapon_workbench_tabs/sub_weapons": "Armas secundárias",
-    "weaponTab.splatcraft:weapon_workbench_tabs/special_weapons": "Armas especiais",
-    "weaponTab.splatcraft:weapon_workbench_tabs/ink_tanks": "Tanques de tinta",
+    "weaponTab.splatcraft:weapon_workbench_tab/sub_weapons": "Armas secundárias",
+    "weaponTab.splatcraft:weapon_workbench_tab/special_weapons": "Armas especiais",
+    "weaponTab.splatcraft:weapon_workbench_tab/ink_tanks": "Tanques de tinta",
     "subtitle.shooter_firing": "Shooter Firing",
     "subtitle.blaster_firing": "Blaster Firing",
     "subtitle.blaster_explosion": "Blaster Projectile Explodes",
@@ -95,7 +95,6 @@
     "container.ink_vat": "Fabricação de tinteiros",
     "container.ammo_knights_workbench": "Fabricação de armas",
     "ink_color.invert": "%s invertido",
-
     "ink_color.splatcraft.orange": "Laranja",
     "ink_color.splatcraft.blue": "Azul",
     "ink_color.splatcraft.green": "Verde",
@@ -120,7 +119,6 @@
     "ink_color.splatcraft.mojang": "Coisa Vermelha",
     "ink_color.splatcraft.ice": "Hortelã Gelada",
     "ink_color.splatcraft.floral": "Rosa Floral",
-
     "ink_color.splatcraft.organic_white": "Branco orgânico",
     "ink_color.splatcraft.organic_orange": "Laranja orgânica",
     "ink_color.splatcraft.organic_magenta": "Magenta orgânica",
@@ -137,7 +135,6 @@
     "ink_color.splatcraft.organic_green": "Verde orgânico",
     "ink_color.splatcraft.organic_red": "Vermelho orgânico",
     "ink_color.splatcraft.organic_black": "Preto orgânico",
-
     "ink_color.splatcraft.default": "Undyed",
     "death.attack.splatcraft:water": "%1$s dissolvido em água",
     "death.attack.splatcraft:splat": "%1$s foi splatted por %2$s",

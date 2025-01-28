@@ -30,7 +30,7 @@ public class InkColor implements Comparable<InkColor>
 			PacketCodecs.INTEGER, InkColor::getColor,
 			InkColor::constructOrReuse
 		);
-	public static final Codec<InkColor> NUMBER_CODEC = new Codec<>()
+	public static final Codec<InkColor> RAW_INT_CODEC = new Codec<>()
 	{
 		@Override
 		public <T> DataResult<T> encode(InkColor input, DynamicOps<T> ops, T prefix)
@@ -52,10 +52,10 @@ public class InkColor implements Comparable<InkColor>
 				return DataResult.success(Pair.of(constructOrReuse(hexValue.map(Number::intValue).getOrThrow()), input));
 			}
 			
-			return DataResult.error(() -> "InkColor wasn't formatted correctly");
+			return DataResult.error(() -> "InkColor wasn't formatted correctly, should've been an raw number.");
 		}
 	};
-	public static final Codec<InkColor> CODEC = new Codec<>()
+	public static final Codec<InkColor> HEX_CODEC = new Codec<>()
 	{
 		@Override
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
@@ -66,10 +66,17 @@ public class InkColor implements Comparable<InkColor>
 			if (stringValue.isSuccess())
 			{
 				String hexCode = stringValue.getOrThrow();
-				inkColor = constructOrReuse(Integer.decode(hexCode));
+				try
+				{
+					inkColor = constructOrReuse(Integer.decode(hexCode));
+				}
+				catch (NumberFormatException ignored)
+				{
+				
+				}
 			}
 			if (inkColor == null)
-				return DataResult.error(() -> "Invalid InkColor color", Pair.of(INVALID, ops.empty()));
+				return DataResult.error(() -> "Invalid InkColor color");
 			return DataResult.success(Pair.of(inkColor, input));
 		}
 		@Override
@@ -82,6 +89,40 @@ public class InkColor implements Comparable<InkColor>
 			return DataResult.success(ops.createString("#" + Integer.toHexString(input.hexCode)));
 		}
 	};
+	public static final Codec<InkColor> NAME_CODEC = new Codec<>()
+	{
+		@Override
+		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
+		{
+			InkColor inkColor = null;
+			
+			DataResult<Identifier> idResult = Identifier.CODEC.parse(ops, input);
+			if (idResult.isSuccess())
+			{
+				Identifier name = idResult.getOrThrow();
+				inkColor = InkColorRegistry.getInkColorByAlias(name);
+			}
+			if (inkColor == null)
+				return DataResult.error(() -> "Invalid InkColor color, didn't find a valid alias");
+			return DataResult.success(Pair.of(inkColor, input));
+		}
+		@Override
+		public <T> DataResult<T> encode(InkColor input, DynamicOps<T> ops, T prefix)
+		{
+			if (input == null)
+			{
+				return DataResult.error(() -> "Input InkColor is not valid");
+			}
+			Identifier colorAliasId = InkColorRegistry.getColorAlias(input);
+			if (colorAliasId == null)
+			{
+				return DataResult.error(() -> "Input InkColor has no alias");
+			}
+			return DataResult.success(ops.createString(colorAliasId.toString()));
+		}
+	};
+	public static final Codec<InkColor> NUMBER_CODEC = Codec.withAlternative(RAW_INT_CODEC, HEX_CODEC);
+	public static final Codec<InkColor> CODEC = Codec.withAlternative(NAME_CODEC, NUMBER_CODEC);
 	static
 	{
 		try
@@ -100,13 +141,9 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public static InkColor constructOrReuse(int hexCode)
 	{
-		if (hexToColorMap.containsKey(hexCode))
-			return hexToColorMap.get(hexCode);
 		try
 		{
-			InkColor color = new InkColor(hexCode);
-			hexToColorMap.put(hexCode, color);
-			return color;
+			return hexToColorMap.computeIfAbsent(hexCode, InkColor::new);
 		}
 		catch (Exception e)
 		{
@@ -115,7 +152,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public static InkColor getFromNbt(NbtElement nbt)
 	{
-		return Codec.withAlternative(NUMBER_CODEC, CODEC).decode(NbtOps.INSTANCE, nbt).getOrThrow().getFirst();
+		return NUMBER_CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow();
 	}
 	public static InkColor getIfInversed(InkColor color, boolean inverted)
 	{

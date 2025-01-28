@@ -1,0 +1,51 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/ink_tanks",
+    "pos": 1,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/ink_tank",
+            "result": {
+                "id": "splatcraft:ink_tank",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "splatcraft:empty_inkwell",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.classic",
+            "advancement": "splatcraft:unlocks/classic_ink_tank",
+            "result": {
+                "id": "splatcraft:classic_ink_tank",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "splatcraft:empty_inkwell",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

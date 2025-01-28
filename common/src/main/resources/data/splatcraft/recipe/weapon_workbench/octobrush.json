@@ -1,0 +1,76 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/rollers",
+    "pos": 11,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/octobrush",
+            "result": {
+                "id": "splatcraft:octobrush",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:wheat",
+                    "count": 5
+                },
+                {
+                    "id": "minecraft:iron_nugget",
+                    "count": 16
+                }
+            ]
+        },
+        {
+            "name": "weaponType.kensa",
+            "advancement": "splatcraft:unlocks/kensa_octobrush",
+            "requires_other": true,
+            "result": {
+                "id": "splatcraft:kensa_octobrush",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:wheat",
+                    "count": 5
+                },
+                {
+                    "id": "minecraft:iron_nugget",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:black_dye",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:toni_kensa_pin",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

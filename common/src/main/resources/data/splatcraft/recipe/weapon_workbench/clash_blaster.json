@@ -1,0 +1,67 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/blasters",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/clash_blaster",
+            "result": {
+                "id": "splatcraft:clash_blaster",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 12
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 6
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:blue_dye",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "name": "weaponType.neo",
+            "advancement": "splatcraft:unlocks/clash_blaster_neo",
+            "result": {
+                "id": "splatcraft:clash_blaster_neo",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 16
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 6
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 5
+                },
+                {
+                    "id": "minecraft:blue_dye",
+                    "count": 2
+                }
+            ]
+        }
+    ]
+}

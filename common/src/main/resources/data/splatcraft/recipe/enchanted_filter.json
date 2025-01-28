@@ -1,0 +1,14 @@
+{
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {
+            "item": "splatcraft:filter"
+        },
+        {
+            "item": "minecraft:enchanted_golden_apple"
+        }
+    ],
+    "result": {
+        "id": "splatcraft:enchanted_filter"
+    }
+}

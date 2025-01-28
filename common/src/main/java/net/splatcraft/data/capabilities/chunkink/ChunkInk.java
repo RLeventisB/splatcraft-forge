@@ -389,7 +389,7 @@ public class ChunkInk
 	public record InkEntry(InkColor color, InkBlockUtils.InkType type)
 	{
 		public static final Codec<InkEntry> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-			InkColor.NUMBER_CODEC.fieldOf("color").forGetter(InkEntry::color),
+			InkColor.RAW_INT_CODEC.fieldOf("color").forGetter(InkEntry::color),
 			InkBlockUtils.InkType.CODEC.fieldOf("type").forGetter(InkEntry::type)
 		).apply(inst, InkEntry::new));
 	}

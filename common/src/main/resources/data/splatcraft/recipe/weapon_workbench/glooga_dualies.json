@@ -1,0 +1,101 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/dualies",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/glooga_dualies",
+            "result": {
+                "id": "splatcraft:glooga_dualies",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.deco",
+            "advancement": "splatcraft:unlocks/glooga_dualies_deco",
+            "result": {
+                "id": "splatcraft:glooga_dualies_deco",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 8
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 1
+                },
+                {
+                    "id": "minecraft:yellow_dye",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "name": "weaponType.kensa",
+            "advancement": "splatcraft:unlocks/kensa_glooga_dualies",
+            "result": {
+                "id": "splatcraft:kensa_glooga_dualies",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 1
+                },
+                {
+                    "id": "minecraft:white_dye",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:black_dye",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:toni_kensa_pin",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/blasters",
+    "pos": 4,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/rapid_blaster",
+            "result": {
+                "id": "splatcraft:rapid_blaster",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 16
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 16
+                }
+            ]
+        }
+    ]
+}

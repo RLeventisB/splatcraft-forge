@@ -1,0 +1,22 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "EEE",
+        "#S#",
+        "###"
+    ],
+    "key": {
+        "#": {
+            "item": "splatcraft:sardinium"
+        },
+        "E": {
+            "item": "minecraft:orange_concrete"
+        },
+        "S": {
+            "item": "splatcraft:ammo_knights_scrap"
+        }
+    },
+    "result": {
+        "id": "splatcraft:ammo_knights_workbench"
+    }
+}

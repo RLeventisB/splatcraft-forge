@@ -1,0 +1,45 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/rare",
+    "pos": 1,
+    "recipes": [
+        {
+            "name": "item.splatcraft.creative_filter",
+            "advancement": "splatcraft:story/every_ink_color",
+            "result": {
+                "id": "splatcraft:creative_filter",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:organic_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:neon_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:pastel_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:enchanted_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:overgrown_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:midnight_filter",
+                    "count": 1
+                },
+                {
+                    "id": "splatcraft:ammo_knights_scrap",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

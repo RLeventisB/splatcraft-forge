@@ -1,0 +1,33 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/rollers",
+    "pos": 11,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/inkbrush",
+            "result": {
+                "id": "splatcraft:inkbrush",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 7
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 7
+                },
+                {
+                    "id": "minecraft:wheat",
+                    "count": 3
+                }
+            ]
+        }
+    ]
+}

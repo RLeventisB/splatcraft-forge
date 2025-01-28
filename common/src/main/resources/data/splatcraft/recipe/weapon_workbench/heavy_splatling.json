@@ -1,0 +1,107 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/splatlings",
+    "pos": 1,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/heavy_splatling",
+            "result": {
+                "id": "splatcraft:heavy_splatling",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 20
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/heavy_splatling_deco",
+            "result": {
+                "id": "splatcraft:heavy_splatling_deco",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 16
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 8
+                },
+                {
+                    "id": "minecraft:diamond",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/heavy_splatling_remix",
+            "result": {
+                "id": "splatcraft:heavy_splatling_remix",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 20
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 8
+                },
+                {
+                    "id": "minecraft:purple_dye",
+                    "count": 3
+                },
+                {
+                    "id": "minecraft:magenta_dye",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/classic_heavy_splatling",
+            "result": {
+                "id": "splatcraft:classic_heavy_splatling",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 20
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 8
+                }
+            ]
+        }
+    ]
+}

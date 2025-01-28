@@ -21,7 +21,7 @@ public class EntityInfo
 	public static final int HIGHER_STARTUP_DURATION = 10;
 	public static final Codec<EntityInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.optionalFieldOf("dodge_count", 0).forGetter(EntityInfo::getDodgeCount),
-		InkColor.NUMBER_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(EntityInfo::getColor),
+		InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(EntityInfo::getColor),
 		Codec.BOOL.optionalFieldOf("is_squid", false).forGetter(EntityInfo::isSquid),
 		Codec.BOOL.optionalFieldOf("is_initialized", false).forGetter(EntityInfo::isInitialized),
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),

@@ -1,0 +1,63 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/dualies",
+    "pos": 0,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/splat_dualies",
+            "result": {
+                "id": "splatcraft:splat_dualies",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 7
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 3
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.enperry",
+            "advancement": "splatcraft:unlocks/enperry_splat_dualies",
+            "result": {
+                "id": "splatcraft:enperry_splat_dualies",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 2
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 7
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 3
+                },
+                {
+                    "id": "minecraft:gunpowder",
+                    "count": 1
+                },
+                {
+                    "id": "minecraft:gold_ingot",
+                    "count": 2
+                }
+            ]
+        }
+    ]
+}

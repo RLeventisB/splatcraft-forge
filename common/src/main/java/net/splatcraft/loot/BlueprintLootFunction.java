@@ -15,25 +15,22 @@ import java.util.List;
 
 public record BlueprintLootFunction(List<Identifier> advancementIds, String weaponType) implements LootFunction
 {
-
-    public static final MapCodec<BlueprintLootFunction> CODEC = RecordCodecBuilder.mapCodec(instance ->
-        instance.group(
-            Identifier.CODEC.listOf().fieldOf("advancementIds").forGetter(BlueprintLootFunction::advancementIds),
-            Codec.STRING.fieldOf("weaponType").forGetter(BlueprintLootFunction::weaponType)
-        ).apply(instance, BlueprintLootFunction::new)
-    );
-
-    @Override
-    public @NotNull LootFunctionType<? extends BlueprintLootFunction> getType()
-    {
-        return new LootFunctionType<>(CODEC);
-    }
-
-    @Override
-    public ItemStack apply(ItemStack stack, LootContext lootContext)
-    {
-        BlueprintItem.setPoolFromWeaponType(stack, weaponType);
-
-        return BlueprintItem.addToAdvancementPool(stack, advancementIds.stream());
-    }
+	public static final MapCodec<BlueprintLootFunction> CODEC = RecordCodecBuilder.mapCodec(instance ->
+		instance.group(
+			Identifier.CODEC.listOf().optionalFieldOf("advancements", List.of()).forGetter(BlueprintLootFunction::advancementIds),
+			Codec.STRING.optionalFieldOf("weapon_pool", "").forGetter(BlueprintLootFunction::weaponType)
+		).apply(instance, BlueprintLootFunction::new)
+	);
+	@Override
+	public @NotNull LootFunctionType<? extends BlueprintLootFunction> getType()
+	{
+		return new LootFunctionType<>(CODEC);
+	}
+	@Override
+	public ItemStack apply(ItemStack stack, LootContext lootContext)
+	{
+		BlueprintItem.setPoolFromWeaponType(stack, weaponType);
+		
+		return BlueprintItem.addToAdvancementPool(stack, advancementIds.stream());
+	}
 }

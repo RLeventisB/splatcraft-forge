@@ -1,0 +1,28 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/ink_tanks",
+    "pos": 0,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "result": {
+                "id": "splatcraft:ink_tank_jr",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:glass",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:empty_inkwell",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

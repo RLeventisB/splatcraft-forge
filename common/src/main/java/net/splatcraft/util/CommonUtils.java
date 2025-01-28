@@ -1,7 +1,10 @@
 package net.splatcraft.util;
 
+import com.google.common.base.Supplier;
 import com.mojang.serialization.DataResult;
 import dev.architectury.injectables.annotations.ExpectPlatform;
+import dev.architectury.platform.Platform;
+import dev.architectury.utils.GameInstance;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
@@ -28,12 +31,18 @@ import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.RecipeManager;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.input.RecipeInput;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
@@ -393,6 +402,20 @@ public class CommonUtils
 	public static boolean callCanHarvestBlock(BlockState state, BlockView level, BlockPos pos, PlayerEntity player)
 	{
 		return false;
+	}
+	public static <T> T getDistSpecificValue(Supplier<T> clientSupplier, Supplier<T> serverSupplier)
+	{
+		return (Platform.getEnv().equals(EnvType.CLIENT) ? clientSupplier : serverSupplier).get();
+	}
+	public static <I extends RecipeInput, T extends Recipe<I>> Identifier getRecipeId(T recipe)
+	{
+		RecipeManager recipeManager = getDistSpecificValue(() -> GameInstance.getClient().world.getRecipeManager(), () -> GameInstance.getServer().getRecipeManager());
+		for (RecipeEntry<?> recipeEntry : recipeManager.listAllOfType((RecipeType<T>) recipe.getType()))
+		{
+			if (recipeEntry.value() == recipe)
+				return recipeEntry.id();
+		}
+		return null;
 	}
 	// this only accepts a fallback in cases of some coordinate not being finite / startPos being equal to endPos
 	public static double getDeltaBetweenVectors(Vec3d pos, Vec3d startPos, Vec3d endPos, double fallback)

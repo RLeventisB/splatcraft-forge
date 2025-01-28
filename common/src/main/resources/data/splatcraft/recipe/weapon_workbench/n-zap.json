@@ -1,0 +1,51 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/shooters",
+    "pos": 5,
+    "recipes": [
+        {
+            "name": "weaponType.85",
+            "advancement": "splatcraft:unlocks/n-zap85",
+            "result": {
+                "id": "splatcraft:n-zap85",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "name": "weaponType.89",
+            "advancement": "splatcraft:unlocks/n-zap89",
+            "result": {
+                "id": "splatcraft:n-zap89",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 4
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 4
+                }
+            ]
+        }
+    ]
+}

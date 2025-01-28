@@ -1,0 +1,37 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/rollers",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/dynamo_roller",
+            "result": {
+                "id": "splatcraft:dynamo_roller",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 12
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:iron_ingot",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:white_wool",
+                    "count": 4
+                }
+            ]
+        }
+    ]
+}

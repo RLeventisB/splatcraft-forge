@@ -48,22 +48,12 @@ public class BlueprintItem extends Item
 	}};
 	public BlueprintItem()
 	{
-		super(new Settings().maxCount(16).component(SplatcraftComponents.BLUEPRINT_WEAPONS, new ArrayList<>()).component(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS, new ArrayList<>()));
+		super(new Settings().maxCount(16));
 	}
 	public static Predicate<Item> instanceOf(Class<? extends Item> clazz)
 	{
 		return clazz::isInstance;
 	}
-	//	@Override
-//	public void fillItemCategory(@NotNull ItemGroup tab, @NotNull DefaultedList<ItemStack> list)
-//	{
-//		if (tab == ItemGroup.TAB_SEARCH)
-//			weaponPools.forEach((key, value) -> list.add(setPoolFromWeaponType(new ItemStack(this), key)));
-//		else if (allowdedIn(tab))
-//		{
-//			list.add(setPoolFromWeaponType(new ItemStack(this), "wildcard"));
-//		}
-//	}
 	public static ItemStack addToAdvancementPool(ItemStack blueprint, Identifier... advancementIds)
 	{
 		return addToAdvancementPool(blueprint, Arrays.stream(advancementIds));
@@ -73,7 +63,7 @@ public class BlueprintItem extends Item
 		if (!weaponPools.containsKey(weaponType))
 			return blueprint;
 		
-		List<String> pools = blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS);
+		List<String> pools = blueprint.getOrDefault(SplatcraftComponents.BLUEPRINT_WEAPONS, new ArrayList<>());
 		pools.add(weaponType);
 		blueprint.set(SplatcraftComponents.BLUEPRINT_WEAPONS, pools);
 		
@@ -81,9 +71,10 @@ public class BlueprintItem extends Item
 	}
 	public static ItemStack addToAdvancementPool(ItemStack blueprint, Stream<Identifier> advancementIds)
 	{
-		List<Identifier> pool = blueprint.get(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS);
+		List<Identifier> pool = blueprint.getOrDefault(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS, new ArrayList<>());
 		
 		advancementIds.forEach(pool::add);
+		blueprint.set(SplatcraftComponents.BLUEPRINT_ADVANCEMENTS, pool);
 		
 		return blueprint;
 	}
@@ -102,11 +93,14 @@ public class BlueprintItem extends Item
 						output.add(entry);
 				}
 			);
-			for (String type : blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS))
+		}
+		if (blueprint.contains(SplatcraftComponents.BLUEPRINT_WEAPONS))
+		{
+			for (Predicate<Item> weaponPoolPredicate : blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS).stream().map(weaponPools::get).toList())
 			{
 				for (var weapon : SplatcraftItems.weapons)
 				{
-					if (weaponPools.get(type).test(weapon) && !weapon.arch$holder().isIn(SplatcraftTags.Items.BLUEPRINT_EXCLUDED))
+					if (weaponPoolPredicate.test(weapon) && !weapon.getDefaultStack().isIn(SplatcraftTags.Items.BLUEPRINT_EXCLUDED))
 					{
 						Identifier identifier = Identifier.of(weapon.arch$registryName().getNamespace(), "unlocks/" + weapon.arch$registryName().getPath());
 						AdvancementEntry advancementEntry = world.getServer().getAdvancementLoader().get(identifier);

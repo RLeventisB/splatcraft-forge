@@ -47,7 +47,7 @@ public class Stage implements Comparable<Stage>
 		BlockPos.CODEC.fieldOf("CornerB").forGetter(v -> v.cornerB),
 		Identifier.CODEC.fieldOf("Dimension").forGetter(v -> v.dimID),
 		CodecUtils.hashMapCodec(Codec.STRING, Codec.BOOL).fieldOf("Settings").forGetter(v -> v.settings),
-		CodecUtils.hashMapCodec(Codec.STRING, InkColor.CODEC).fieldOf("Teams").forGetter(v -> v.teams),
+		CodecUtils.hashMapCodec(Codec.STRING, InkColor.HEX_CODEC).fieldOf("Teams").forGetter(v -> v.teams),
 		CodecUtils.arrayList(BlockPos.CODEC).fieldOf("SpawnPads").forGetter(v -> v.spawnPadPositions),
 		TextCodecs.CODEC.fieldOf("Name").forGetter(v -> v.name),
 		Codec.STRING.fieldOf("Id").forGetter(v -> v.id)

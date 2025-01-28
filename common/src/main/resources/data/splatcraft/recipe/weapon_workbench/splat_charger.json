@@ -1,0 +1,81 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/chargers",
+    "pos": 0,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/splat_charger",
+            "result": {
+                "id": "splatcraft:splat_charger",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                }
+            ]
+        },
+        {
+            "name": "weaponType.kelp",
+            "advancement": "splatcraft:unlocks/kelp_splat_charger",
+            "result": {
+                "id": "splatcraft:kelp_splat_charger",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:kelp",
+                    "count": 32
+                }
+            ]
+        },
+        {
+            "name": "weaponType.bento",
+            "advancement": "splatcraft:unlocks/bento_splat_charger",
+            "result": {
+                "id": "splatcraft:bento_splat_charger",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 17
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:paper",
+                    "count": 2
+                }
+            ]
+        }
+    ]
+}

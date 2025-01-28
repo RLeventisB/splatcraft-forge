@@ -1,0 +1,89 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/rollers",
+    "pos": 0,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/splat_roller",
+            "result": {
+                "id": "splatcraft:splat_roller",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:white_wool",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "name": "weaponType.krak_on",
+            "advancement": "splatcraft:unlocks/krak_on_splat_roller",
+            "result": {
+                "id": "splatcraft:krak_on_splat_roller",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:white_wool",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:blue_dye",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "name": "weaponType.coro_coro",
+            "advancement": "splatcraft:unlocks/corocoro_splat_roller",
+            "result": {
+                "id": "splatcraft:corocoro_splat_roller",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 14
+                },
+                {
+                    "id": "minecraft:white_wool",
+                    "count": 4
+                }
+            ]
+        }
+    ]
+}

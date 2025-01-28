@@ -94,9 +94,9 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 	{
 		public static final MapCodec<InkVatColorRecipe> CODEC = RecordCodecBuilder.mapCodec((instance) ->
 			instance.group(
-				Ingredient.ALLOW_EMPTY_CODEC.fieldOf("filter").forGetter(v -> v.ingredient),
+				Ingredient.ALLOW_EMPTY_CODEC.optionalFieldOf("filter", Ingredient.EMPTY).forGetter(v -> v.ingredient),
 				InkColor.CODEC.fieldOf("color").forGetter(v -> v.color),
-				Codec.BOOL.fieldOf("not_on_omni_filter").forGetter(v -> v.disableOmni)
+				Codec.BOOL.optionalFieldOf("not_on_omni_filter", false).forGetter(v -> v.disableOmni)
 			).apply(instance, InkVatColorRecipe::new));
 		public static final PacketCodec<RegistryByteBuf, InkVatColorRecipe> PACKET_CODEC = PacketCodec.tuple(
 			Ingredient.PACKET_CODEC, InkVatColorRecipe::getIngredient,

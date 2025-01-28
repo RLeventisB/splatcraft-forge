@@ -9,7 +9,7 @@ import net.splatcraft.util.InkColor;
 public class InkOverlayInfo
 {
 	public static final Codec<InkOverlayInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		InkColor.CODEC.fieldOf("color").forGetter(InkOverlayInfo::getColor),
+		InkColor.HEX_CODEC.fieldOf("color").forGetter(InkOverlayInfo::getColor),
 		Codec.FLOAT.fieldOf("amount").forGetter(InkOverlayInfo::getAmount),
 		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayInfo::isInkproof),
 		Codec.DOUBLE.fieldOf("squid_rot").forGetter(InkOverlayInfo::getSquidRot),

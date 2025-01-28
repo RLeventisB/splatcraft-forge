@@ -1,19 +1,11 @@
 accessWidener v2 named
 
-#accessible net/minecraft/client/renderer/GameRenderer m_109141_(Lnet/minecraft/client/Camera;FZ)D
 accessible method net/minecraft/entity/Entity movementInputToVelocity (Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;
-# these dont work on release??? im building from gradle build btw
-
-#accessible class net/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionFace
-
-#accessible class net/minecraft/client/renderer/entity/layers/LayerRenderer/coloredCutoutModelCopyLayerRender
 
 accessible method net/minecraft/world/GameRules$BooleanRule create (Z)Lnet/minecraft/world/GameRules$Type; # create
-
 accessible method net/minecraft/world/GameRules$IntRule create (I)Lnet/minecraft/world/GameRules$Type; # create
 
 accessible method net/minecraft/scoreboard/ScoreboardCriterion <init> (Ljava/lang/String;)V # ObjectiveCriteria
-
 accessible field net/minecraft/scoreboard/ScoreboardCriterion CRITERIA Ljava/util/Map; # CRITERIA_CACHE
 accessible method net/minecraft/scoreboard/ScoreboardCriterion getOrCreateStatCriterion (Ljava/lang/String;)Ljava/util/Optional;
 
@@ -22,6 +14,7 @@ accessible method net/minecraft/scoreboard/ScoreboardCriterion getOrCreateStatCr
 
 #accessible net/minecraft/client/renderer/texture/TextureAtlas *
 
+accessible class net/minecraft/client/gui/screen/ingame/HandledScreens$Provider
 accessible field net/minecraft/client/render/entity/EntityRenderDispatcher renderers Ljava/util/Map;
 accessible method net/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity setText (Lnet/minecraft/text/Text;)V
 accessible method net/minecraft/entity/decoration/DisplayEntity setBillboardMode (Lnet/minecraft/entity/decoration/DisplayEntity$BillboardMode;)V

@@ -1,0 +1,93 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/buckets",
+    "pos": 0,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/slosher",
+            "result": {
+                "id": "splatcraft:slosher",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:bucket",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.classic",
+            "advancement": "splatcraft:unlocks/classic_slosher",
+            "result": {
+                "id": "splatcraft:classic_slosher",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 8
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:bucket",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "name": "weaponType.soda",
+            "advancement": "splatcraft:unlocks/soda_slosher",
+            "result": {
+                "id": "splatcraft:soda_slosher",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 6
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 10
+                },
+                {
+                    "id": "minecraft:bucket",
+                    "count": 1
+                },
+                {
+                    "id": "minecraft:yellow_dye",
+                    "count": 4
+                },
+                {
+                    "id": "minecraft:light_blue_dye",
+                    "count": 2
+                }
+            ]
+        }
+    ]
+}

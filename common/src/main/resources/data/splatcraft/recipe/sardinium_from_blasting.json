@@ -1,0 +1,11 @@
+{
+    "type": "minecraft:blasting",
+    "ingredient": {
+        "item": "splatcraft:raw_sardinium"
+    },
+    "result": {
+        "id": "splatcraft:sardinium"
+    },
+    "experience": 0.4,
+    "cookingtime": 100
+}

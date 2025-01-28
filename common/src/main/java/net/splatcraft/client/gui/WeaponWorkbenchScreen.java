@@ -21,8 +21,8 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.RecipeManager;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
@@ -107,7 +107,7 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			World world = player.getWorld();
 			List<RecipeEntry<WeaponWorkbenchTab>> tabList = world.getRecipeManager().getAllMatches(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, new WeaponWorkbenchRecipeInput(inventory), world);
 			tabList.removeIf(tab -> tab.value().hidden && tab.value().getTabRecipes(world, player).isEmpty());
-			tabList.sort((o, o2) -> o.value().compareTo(o2.value()));
+			tabList.sort(Comparator.comparing(RecipeEntry::value));
 			
 			List<WeaponWorkbenchRecipe> recipeList = tabList.get(tabPos).value().getTabRecipes(world, player);
 			recipeList.sort(WeaponWorkbenchRecipe::compareTo);
@@ -164,7 +164,8 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 		guiGraphics.drawTextWithShadow(textRenderer, inventory.getDisplayName(), titleX, titleY, 4210752);
 		
 		World world = player.getWorld();
-		List<RecipeEntry<WeaponWorkbenchTab>> tabList = world.getRecipeManager().getAllMatches(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, new WeaponWorkbenchRecipeInput(inventory), world);
+		RecipeManager recipeManager = world.getRecipeManager();
+		List<RecipeEntry<WeaponWorkbenchTab>> tabList = recipeManager.getAllMatches(SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE, new WeaponWorkbenchRecipeInput(inventory), world);
 		tabList.sort(Comparator.comparing(RecipeEntry::value));
 		tabList.removeIf(tab -> tab.value().hidden && tab.value().getTabRecipes(world, player).isEmpty());
 		List<WeaponWorkbenchRecipe> recipeList = tabList.get(tabPos).value().getTabRecipes(world, player);
@@ -197,8 +198,9 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			boolean hasMaterial = true;
 			for (int i = ingredientPos * 8; i < selectedRecipe.getInput().size() && i < ingredientPos * 8 + 8; i++)
 			{
-				Ingredient ingredient = selectedRecipe.getInput().get(i).getIngredient();
-				int count = selectedRecipe.getInput().get(i).getCount();
+				StackedIngredient stackIngredient = selectedRecipe.getInput().get(i);
+				StackedIngredient.RecipeIngredient ingredient = stackIngredient.getIngredient();
+				int count = stackIngredient.getCount();
 				if (!SplatcraftRecipeTypes.getItem(player, ingredient, count, false))
 				{
 					hasMaterial = false;
@@ -271,9 +273,10 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 		{
 			for (int i = ingredientPos * 8; i < selectedRecipe.getInput().size() && i < ingredientPos * 8 + 8; i++)
 			{
-				Ingredient ingredient = selectedRecipe.getInput().get(i).getIngredient();
-				int count = selectedRecipe.getInput().get(i).getCount();
-				ItemStack displayStack = ingredient.getMatchingStacks()[tickTime / 20 % ingredient.getMatchingStacks().length];
+				StackedIngredient stackIngredient = selectedRecipe.getInput().get(i);
+				StackedIngredient.RecipeIngredient ingredient = stackIngredient.getIngredient();
+				int count = stackIngredient.getCount();
+				ItemStack displayStack = ingredient.getStack();
 				
 				int j = i - ingredientPos * 6;
 				int ix = 17 + j * 18;
@@ -370,9 +373,7 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			//matrixStack.translate(0,0,500);
 			if (isPointWithinBounds(ix - 10, iy, 18, 18, mouseX, mouseY))
 			{
-				ArrayList<Text> tooltip = new ArrayList<>();
-				tooltip.add(tabList.get(i).value().getName());
-				guiGraphics.drawTooltip(textRenderer, tooltip, mouseX - x, mouseY - y);
+				guiGraphics.drawTooltip(textRenderer, tabList.get(i).value().getName(), mouseX - x, mouseY - y);
 			}
 			//matrixStack.translate(0,0,-500);
 		}
@@ -390,8 +391,8 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			if (isPointWithinBounds(ix, iy, 16, 16, mouseX, mouseY))
 			{
 				ArrayList<Text> tooltip = new ArrayList<>();
-				Text t = Text.translatable("weaponRecipe." + recipeList.get(i).getId());
-				if (t.getString().equals("weaponRecipe." + recipeList.get(i).getId()))
+				Text t = Text.translatable("weaponRecipe." + recipeList.get(i).getId(recipeManager));
+				if (t.getString().equals("weaponRecipe." + recipeList.get(i).getId(recipeManager)))
 				{
 					tooltip.add(getDisplayName(displayStack));
 				}
@@ -409,8 +410,8 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			//Draw Ingredient Tooltips
 			for (int i = ingredientPos * 8; i < selectedRecipe.getInput().size() && i < ingredientPos * 8 + 8; i++)
 			{
-				Ingredient ingredient = selectedRecipe.getInput().get(i).getIngredient();
-				ItemStack displayStack = ingredient.getMatchingStacks()[tickTime / 20 % ingredient.getMatchingStacks().length];
+				StackedIngredient.RecipeIngredient ingredient = selectedRecipe.getInput().get(i).getIngredient();
+				ItemStack displayStack = ingredient.getStack();
 				
 				int j = i - ingredientPos * 6;
 				int ix = 17 + j * 18;
@@ -438,7 +439,7 @@ public class WeaponWorkbenchScreen extends AbstractInventoryScreen<WeaponWorkben
 			craftButtonState = 0;
 			if (selectedRecipe != null && isPointWithinBounds(71, 93, 34, 12, mouseX, mouseY))
 			{
-				SplatcraftPacketHandler.sendToServer(new CraftWeaponPacket(selectedWeapon.getId(), subTypePos));
+				SplatcraftPacketHandler.sendToServer(new CraftWeaponPacket(selectedWeapon.getId(player.getWorld().getRecipeManager()), subTypePos));
 			}
 		}
 		return super.mouseReleased(mouseX, mouseY, button);

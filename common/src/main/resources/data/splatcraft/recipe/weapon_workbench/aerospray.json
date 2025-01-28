@@ -1,0 +1,59 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/shooters",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.mg",
+            "advancement": "splatcraft:unlocks/aerospray_mg",
+            "result": {
+                "id": "splatcraft:aerospray_mg",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:iron_ingot",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "name": "weaponType.rg",
+            "advancement": "splatcraft:unlocks/aerospray_rg",
+            "result": {
+                "id": "splatcraft:aerospray_rg",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 16
+                },
+                {
+                    "id": "minecraft:gold_ingot",
+                    "count": 5
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/shooters",
+    "pos": 4,
+    "recipes": [
+        {
+            "name": "weaponType.original",
+            "advancement": "splatcraft:unlocks/96_gal",
+            "result": {
+                "id": "splatcraft:96_gal",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 12
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 21
+                }
+            ]
+        },
+        {
+            "name": "weaponType.deco",
+            "advancement": "splatcraft:unlocks/96_gal_deco",
+            "result": {
+                "id": "splatcraft:96_gal_deco",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 9
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 15
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 21
+                },
+                {
+                    "id": "minecraft:diamond",
+                    "count": 1
+                }
+            ]
+        }
+    ]
+}

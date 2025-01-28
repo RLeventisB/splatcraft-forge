@@ -30,7 +30,7 @@ public class ChangeInkColorTrigger extends AbstractCriterion<ChangeInkColorTrigg
         public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(
             (instance) -> instance.group(
                 EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player),
-                InkColor.CODEC.optionalFieldOf("color").forGetter(Conditions::color)
+                InkColor.HEX_CODEC.optionalFieldOf("color").forGetter(Conditions::color)
             ).apply(instance, Conditions::new));
 
         public Conditions(Optional<LootContextPredicate> player, Optional<InkColor> color)

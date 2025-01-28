@@ -1,0 +1,59 @@
+{
+    "type": "splatcraft:weapon_workbench",
+    "tab": "splatcraft:weapon_workbench_tab/chargers",
+    "pos": 2,
+    "recipes": [
+        {
+            "name": "weaponType.mk1",
+            "advancement": "splatcraft:unlocks/bamboozler_14_mk1",
+            "result": {
+                "id": "splatcraft:bamboozler_14_mk1",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 5
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 12
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 18
+                },
+                {
+                    "id": "minecraft:bamboo",
+                    "count": 14
+                }
+            ]
+        },
+        {
+            "name": "weaponType.mk2",
+            "advancement": "splatcraft:unlocks/bamboozler_14_mk2",
+            "result": {
+                "id": "splatcraft:bamboozler_14_mk2",
+                "count": 1
+            },
+            "ingredients": [
+                {
+                    "id": "splatcraft:sardinium",
+                    "count": 10
+                },
+                {
+                    "id": "splatcraft:power_egg",
+                    "count": 8
+                },
+                {
+                    "id": "minecraft:ink_sac",
+                    "count": 20
+                },
+                {
+                    "id": "minecraft:bamboo",
+                    "count": 14
+                }
+            ]
+        }
+    ]
+}
