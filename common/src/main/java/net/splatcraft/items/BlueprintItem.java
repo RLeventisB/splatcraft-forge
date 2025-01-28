@@ -98,17 +98,13 @@ public class BlueprintItem extends Item
 		{
 			for (Predicate<Item> weaponPoolPredicate : blueprint.get(SplatcraftComponents.BLUEPRINT_WEAPONS).stream().map(weaponPools::get).toList())
 			{
+				for (var tank : InkTankItem.inkTanks)
+				{
+					tryAddItemToPool(world, weaponPoolPredicate, tank, output);
+				}
 				for (var weapon : SplatcraftItems.weapons)
 				{
-					if (weaponPoolPredicate.test(weapon) && !weapon.getDefaultStack().isIn(SplatcraftTags.Items.BLUEPRINT_EXCLUDED))
-					{
-						Identifier identifier = Identifier.of(weapon.arch$registryName().getNamespace(), "unlocks/" + weapon.arch$registryName().getPath());
-						AdvancementEntry advancementEntry = world.getServer().getAdvancementLoader().get(identifier);
-						if (advancementEntry != null)
-						{
-							output.add(advancementEntry);
-						}
-					}
+					tryAddItemToPool(world, weaponPoolPredicate, weapon, output);
 				}
 				// yeah i rewrote this into normal code because i couldn't understand it
 /*
@@ -123,6 +119,19 @@ public class BlueprintItem extends Item
 		}
 		
 		return output;
+	}
+	private static void tryAddItemToPool(World world, Predicate<Item> weaponPoolPredicate, Item item, List<AdvancementEntry> output)
+	{
+		if (weaponPoolPredicate.test(item) && !item.getDefaultStack().isIn(SplatcraftTags.Items.BLUEPRINT_EXCLUDED))
+		{
+			Identifier itemIdentifier = item.getRegistryEntry().registryKey().getValue();
+			Identifier identifier = itemIdentifier.withPrefixedPath("unlocks/");
+			AdvancementEntry advancementEntry = world.getServer().getAdvancementLoader().get(identifier);
+			if (advancementEntry != null)
+			{
+				output.add(advancementEntry);
+			}
+		}
 	}
 	@Environment(EnvType.CLIENT)
 	@Override

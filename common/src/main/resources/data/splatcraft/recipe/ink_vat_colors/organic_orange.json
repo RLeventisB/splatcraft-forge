@@ -1,6 +1,6 @@
 {
     "type": "splatcraft:ink_vat_color",
-    "color": 13061821,
+    "color": "splatcraft:organic_orange",
     "filter": {
         "item": "splatcraft:organic_filter"
     }
