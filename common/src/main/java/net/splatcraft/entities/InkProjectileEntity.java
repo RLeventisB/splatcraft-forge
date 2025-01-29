@@ -148,16 +148,16 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
-	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne)
+	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne, boolean weak)
 	{
 		setProjectileType(Types.ROLLER);
 		
 		if (airborne)
 		{
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
-			return setRollerProjectileStats(settings.flingData.projectileData(), true);
+			return setRollerProjectileStats(settings.flingData.projectileData(), true, weak);
 		}
-		return setRollerProjectileStats(settings.swingData.projectileData(), false);
+		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak);
 	}
 	public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
 	{
@@ -177,7 +177,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		return this;
 	}
-	public InkProjectileEntity setRollerProjectileStats(RollerWeaponSettings.RollerProjectileDataRecord settings, boolean airborne)
+	public InkProjectileEntity setRollerProjectileStats(RollerWeaponSettings.RollerProjectileDataRecord settings, boolean airborne, boolean weak)
 	{
 		dropImpactSize = settings.inkDropCoverage();
 		distanceBetweenDrops = settings.distanceBetweenInkDrops();
@@ -191,7 +191,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setHorizontalDrag(settings.horizontalDrag());
 		setGravitySpeedMult(settings.delaySpeedMult());
 		
-		addExtraData(new ExtraSaveData.RollerDistanceExtraData(getPos().toVector3f(), airborne));
+		addExtraData(new ExtraSaveData.RollerDistanceExtraData(getPos().toVector3f(), airborne, weak));
 		
 		return this;
 	}

@@ -10,6 +10,7 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.SimpleRegistry;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -196,26 +197,34 @@ public abstract class ExtraSaveData
 	{
 		public final Vector3f spawnPos;
 		public final boolean wasAirborneOnShoot;
-		public RollerDistanceExtraData(Vector3f position, boolean wasAirborneOnShoot)
+		public final boolean weakBullet;
+		public RollerDistanceExtraData(Vector3f position, boolean[] flags)
+		{
+			spawnPos = position;
+			wasAirborneOnShoot = flags[0];
+			weakBullet = flags[1];
+		}
+		public RollerDistanceExtraData(Vector3f position, boolean wasAirborneOnShoot, boolean isWeak)
 		{
 			spawnPos = position;
 			this.wasAirborneOnShoot = wasAirborneOnShoot;
+			weakBullet = isWeak;
 		}
 		@Override
 		public void save(@NotNull RegistryByteBuf buffer)
 		{
 			buffer.writeVector3f(spawnPos);
-			buffer.writeBoolean(wasAirborneOnShoot);
+			CommonUtils.writeBooleansCompact(buffer, wasAirborneOnShoot, weakBullet);
 		}
 		@Override
 		public RollerDistanceExtraData load(@NotNull RegistryByteBuf buffer)
 		{
-			return new RollerDistanceExtraData(buffer.readVector3f(), buffer.readBoolean());
+			return new RollerDistanceExtraData(buffer.readVector3f(), CommonUtils.readBooleansCompact(buffer, 2));
 		}
 		@Override
 		public RollerDistanceExtraData copy()
 		{
-			return new RollerDistanceExtraData(spawnPos, wasAirborneOnShoot);
+			return new RollerDistanceExtraData(spawnPos, wasAirborneOnShoot, weakBullet);
 		}
 	}
 	public static class SloshExtraData extends ExtraSaveData

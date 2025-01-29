@@ -5,6 +5,7 @@ import com.mojang.serialization.DataResult;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.platform.Platform;
 import dev.architectury.utils.GameInstance;
+import io.netty.buffer.ByteBuf;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
@@ -226,10 +227,6 @@ public class CommonUtils
 	{
 		return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
 	}
-	public static ChunkPos getChunkPos(BlockPos pos)
-	{
-		return new ChunkPos(pos.getX() >> 4, pos.getZ() >> 4);
-	}
 	public static BlockPos createBlockPos(Vec3d vec3)
 	{
 		return new BlockPos(round(vec3));
@@ -431,6 +428,54 @@ public class CommonUtils
 	public static float calculateStep(float width, float minStep)
 	{
 		return width / MathHelper.ceil(width / minStep);
+	}
+	public static void writeBooleansCompact(ByteBuf buffer, boolean... booleans)
+	{
+		if (booleans.length == 0)
+			return;
+		
+		byte currentByte = 0;
+		for (int index = 0; index < booleans.length; index++)
+		{
+			int bit = index % 8;
+			if (booleans[index])
+				currentByte |= (byte) (1 << bit);
+			if (bit == 7)
+			{
+				buffer.writeByte(currentByte);
+				currentByte = 0;
+			}
+		}
+		buffer.writeByte(currentByte);
+	}
+	public static void readBooleansCompact(ByteBuf buffer, Boolean... booleans)
+	{
+		int count = booleans.length;
+		if (count == 0)
+			return;
+		byte[] buf = new byte[count >> 3];
+		buffer.readBytes(buf);
+		for (int index = 0; index < count; index++)
+		{
+			int bit = index % 8;
+			byte currentByte = buf[index >> 3];
+			booleans[index] = (currentByte >> bit & 1) == 1;
+		}
+	}
+	public static boolean[] readBooleansCompact(ByteBuf buffer, int count)
+	{
+		if (count <= 0)
+			return new boolean[0];
+		byte[] buf = new byte[count >> 3];
+		boolean[] booleans = new boolean[count];
+		buffer.readBytes(buf);
+		for (int index = 0; index < count; index++)
+		{
+			int bit = index % 8;
+			byte currentByte = buf[index >> 3];
+			booleans[index] = (currentByte >> bit & 1) == 1;
+		}
+		return booleans;
 	}
 	public record Result(float delay, float value)
 	{

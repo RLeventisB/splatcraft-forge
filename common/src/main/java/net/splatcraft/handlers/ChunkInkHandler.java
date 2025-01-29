@@ -44,7 +44,10 @@ import net.splatcraft.network.s2c.IncrementalChunkBasedPacket;
 import net.splatcraft.network.s2c.UpdateInkPacket;
 import net.splatcraft.network.s2c.WatchInkPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkColor;
+import net.splatcraft.util.RelativeBlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -87,7 +90,7 @@ public class ChunkInkHandler
 		if (world.isClient)
 			return;
 		
-		ChunkPos chunkPos = CommonUtils.getChunkPos(pos);
+		ChunkPos chunkPos = new ChunkPos(pos);
 		HashMap<ChunkPos, List<IncrementalChunkBasedPacket>> chunkPackets = sharedPacket.computeIfAbsent(world, v -> new HashMap<>());
 		List<IncrementalChunkBasedPacket> existingPacketsInBlock = chunkPackets.computeIfAbsent(chunkPos, v -> new ArrayList<>());
 		T packet = null;
