@@ -4,15 +4,16 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec2f;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class CodecUtils
@@ -39,36 +40,44 @@ public class CodecUtils
 	).apply(inst, Vec2f::new));
 	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
-		return new UnboundedHashMapCodec<>(keyCodec, valueCodec);
+		return mapCodec(keyCodec, valueCodec, Object2ObjectOpenHashMap::new);
+	}
+	public static <K, V, M extends Map<K, V>> Codec<M> mapCodec(Codec<K> keyCodec, Codec<V> valueCodec, Supplier<M> mapCreator)
+	{
+		return new MapCodecNotToBeConfusedWithAMapCodec<>(keyCodec, valueCodec, mapCreator);
 	}
 	public static <E> Codec<ObjectArrayList<E>> arrayList(Codec<E> codec)
 	{
-		return new ArrayListCodec<>(codec);
+		return collection(codec, ObjectArrayList::new);
 	}
-	// this is literally UnboundedMapCodec but it gives the map raw.
-	public record UnboundedHashMapCodec<K, V>(
+	public static <E, C extends Collection<E>> Codec<C> collection(Codec<E> codec, Supplier<C> collectionCreator)
+	{
+		return new CollectionCodec<>(codec, collectionCreator);
+	}
+	public record MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>>(
 		Codec<K> keyCodec,
-		Codec<V> elementCodec
-	) implements Codec<Object2ObjectOpenHashMap<K, V>>
+		Codec<V> elementCodec,
+		Supplier<M> mapCreator
+	) implements Codec<M>
 	{
 		@Override
-		public <T> DataResult<Pair<Object2ObjectOpenHashMap<K, V>, T>> decode(final DynamicOps<T> ops, final T input)
+		public <T> DataResult<Pair<M, T>> decode(final DynamicOps<T> ops, final T input)
 		{
 			return ops.getMap(input).setLifecycle(Lifecycle.stable()).flatMap(map -> decode(ops, map)).map(r -> Pair.of(r, input));
 		}
 		@Override
-		public <T> DataResult<T> encode(final Object2ObjectOpenHashMap<K, V> input, final DynamicOps<T> ops, final T prefix)
+		public <T> DataResult<T> encode(final M input, final DynamicOps<T> ops, final T prefix)
 		{
 			return encode(input, ops, ops.mapBuilder()).build(prefix);
 		}
 		@Override
 		public String toString()
 		{
-			return "UnboundedHashMapCodec[" + keyCodec + " -> " + elementCodec + ']';
+			return mapCreator.getClass().getTypeParameters()[0].getGenericDeclaration().getSimpleName() + "Codec[" + keyCodec + " -> " + elementCodec + ']';
 		}
-		private <T> DataResult<Object2ObjectOpenHashMap<K, V>> decode(final DynamicOps<T> ops, final MapLike<T> input)
+		private <T> DataResult<M> decode(final DynamicOps<T> ops, final MapLike<T> input)
 		{
-			final Object2ObjectOpenHashMap<K, V> read = new Object2ObjectOpenHashMap<>();
+			final M read = mapCreator.get();
 			final Stream.Builder<Pair<T, T>> failed = Stream.builder();
 			
 			final DataResult<Unit> result = input.entries().reduce(
@@ -103,7 +112,7 @@ public class CodecUtils
 			
 			return result.map(unit -> read).setPartial(read).mapError(e -> e + " missed input: " + errors);
 		}
-		<T> RecordBuilder<T> encode(final Object2ObjectMap<K, V> input, final DynamicOps<T> ops, final RecordBuilder<T> prefix)
+		<T> RecordBuilder<T> encode(final M input, final DynamicOps<T> ops, final RecordBuilder<T> prefix)
 		{
 			for (final Map.Entry<K, V> entry : input.entrySet())
 			{
@@ -112,11 +121,11 @@ public class CodecUtils
 			return prefix;
 		}
 	}
-	// yes this one is too stolen from ListCodec
-	public record ArrayListCodec<E>(Codec<E> elementCodec) implements Codec<ObjectArrayList<E>>
+	public record CollectionCodec<E, C extends Collection<E>>(
+		Codec<E> elementCodec, Supplier<C> collectionCreator) implements Codec<C>
 	{
 		@Override
-		public <T> DataResult<T> encode(final ObjectArrayList<E> input, final DynamicOps<T> ops, final T prefix)
+		public <T> DataResult<T> encode(final C input, final DynamicOps<T> ops, final T prefix)
 		{
 			final ListBuilder<T> builder = ops.listBuilder();
 			for (final E element : input)
@@ -126,7 +135,7 @@ public class CodecUtils
 			return builder.build(prefix);
 		}
 		@Override
-		public <T> DataResult<Pair<ObjectArrayList<E>, T>> decode(final DynamicOps<T> ops, final T input)
+		public <T> DataResult<Pair<C, T>> decode(final DynamicOps<T> ops, final T input)
 		{
 			return ops.getList(input).setLifecycle(Lifecycle.stable()).flatMap(stream ->
 			{
@@ -138,13 +147,13 @@ public class CodecUtils
 		@Override
 		public String toString()
 		{
-			return "ArrayListCodec[" + elementCodec + ']';
+			return collectionCreator.getClass().getTypeParameters()[0].getGenericDeclaration().getSimpleName() + "Codec[" + elementCodec + ']';
 		}
 		private class DecoderState<T>
 		{
 			private static final DataResult<Unit> INITIAL_RESULT = DataResult.success(Unit.INSTANCE, Lifecycle.stable());
 			private final DynamicOps<T> ops;
-			private final ObjectArrayList<E> elements = new ObjectArrayList<>();
+			private final C elements = collectionCreator.get();
 			private final Stream.Builder<T> failed = Stream.builder();
 			private DataResult<Unit> result = INITIAL_RESULT;
 			private DecoderState(final DynamicOps<T> ops)
@@ -158,10 +167,10 @@ public class CodecUtils
 				elementResult.resultOrPartial().ifPresent(pair -> elements.add(pair.getFirst()));
 				result = result.apply2stable((result, element) -> result, elementResult);
 			}
-			public DataResult<Pair<ObjectArrayList<E>, T>> build()
+			public DataResult<Pair<C, T>> build()
 			{
 				final T errors = ops.createList(failed.build());
-				final Pair<ObjectArrayList<E>, T> pair = Pair.of(elements, errors);
+				final Pair<C, T> pair = Pair.of(elements, errors);
 				return result.map(ignored -> pair).setPartial(pair);
 			}
 		}
