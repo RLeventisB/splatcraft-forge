@@ -194,25 +194,28 @@ public abstract class ExtraSaveData
 	}
 	public static final class RollerDistanceExtraData extends ExtraSaveData
 	{
-		public Vector3f spawnPos;
-		public RollerDistanceExtraData(Vector3f position)
+		public final Vector3f spawnPos;
+		public final boolean wasAirborneOnShoot;
+		public RollerDistanceExtraData(Vector3f position, boolean wasAirborneOnShoot)
 		{
 			spawnPos = position;
+			this.wasAirborneOnShoot = wasAirborneOnShoot;
 		}
 		@Override
 		public void save(@NotNull RegistryByteBuf buffer)
 		{
 			buffer.writeVector3f(spawnPos);
+			buffer.writeBoolean(wasAirborneOnShoot);
 		}
 		@Override
 		public RollerDistanceExtraData load(@NotNull RegistryByteBuf buffer)
 		{
-			return new RollerDistanceExtraData(buffer.readVector3f());
+			return new RollerDistanceExtraData(buffer.readVector3f(), buffer.readBoolean());
 		}
 		@Override
 		public RollerDistanceExtraData copy()
 		{
-			return new RollerDistanceExtraData(spawnPos);
+			return new RollerDistanceExtraData(spawnPos, wasAirborneOnShoot);
 		}
 	}
 	public static class SloshExtraData extends ExtraSaveData
