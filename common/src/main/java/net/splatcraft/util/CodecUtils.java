@@ -1,5 +1,6 @@
 package net.splatcraft.util;
 
+import com.google.common.base.Suppliers;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
@@ -54,12 +55,19 @@ public class CodecUtils
 	{
 		return new CollectionCodec<>(codec, collectionCreator);
 	}
-	public record MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>>(
-		Codec<K> keyCodec,
-		Codec<V> elementCodec,
-		Supplier<M> mapCreator
-	) implements Codec<M>
+	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{
+		private final Codec<K> keyCodec;
+		private final Codec<V> elementCodec;
+		private final Supplier<M> mapCreator;
+		private final Supplier<String> classNameSupplier;
+		public MapCodecNotToBeConfusedWithAMapCodec(Codec<K> keyCodec, Codec<V> elementCodec, Supplier<M> mapCreator)
+		{
+			this.keyCodec = keyCodec;
+			this.elementCodec = elementCodec;
+			this.mapCreator = mapCreator;
+			classNameSupplier = Suppliers.memoize(() -> mapCreator.get().getClass().getSimpleName());
+		}
 		@Override
 		public <T> DataResult<Pair<M, T>> decode(final DynamicOps<T> ops, final T input)
 		{
@@ -73,7 +81,7 @@ public class CodecUtils
 		@Override
 		public String toString()
 		{
-			return mapCreator.getClass().getTypeParameters()[0].getGenericDeclaration().getSimpleName() + "Codec[" + keyCodec + " -> " + elementCodec + ']';
+			return classNameSupplier.get() + "Codec[" + keyCodec + " -> " + elementCodec + ']';
 		}
 		private <T> DataResult<M> decode(final DynamicOps<T> ops, final MapLike<T> input)
 		{
@@ -120,10 +128,45 @@ public class CodecUtils
 			}
 			return prefix;
 		}
+		public Codec<K> keyCodec()
+		{
+			return keyCodec;
+		}
+		public Codec<V> elementCodec()
+		{
+			return elementCodec;
+		}
+		public Supplier<M> mapCreator()
+		{
+			return mapCreator;
+		}
+		@Override
+		public boolean equals(Object obj)
+		{
+			if (obj == this) return true;
+			if (obj == null || obj.getClass() != getClass()) return false;
+			var that = (MapCodecNotToBeConfusedWithAMapCodec) obj;
+			return Objects.equals(keyCodec, that.keyCodec) &&
+				Objects.equals(elementCodec, that.elementCodec) &&
+				Objects.equals(mapCreator, that.mapCreator);
+		}
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(keyCodec, elementCodec, mapCreator);
+		}
 	}
-	public record CollectionCodec<E, C extends Collection<E>>(
-		Codec<E> elementCodec, Supplier<C> collectionCreator) implements Codec<C>
+	public static final class CollectionCodec<E, C extends Collection<E>> implements Codec<C>
 	{
+		private final Codec<E> elementCodec;
+		private final Supplier<C> collectionCreator;
+		private final Supplier<String> classNameSupplier;
+		public CollectionCodec(Codec<E> elementCodec, Supplier<C> collectionCreator)
+		{
+			this.elementCodec = elementCodec;
+			this.collectionCreator = collectionCreator;
+			classNameSupplier = Suppliers.memoize(() -> collectionCreator.get().getClass().getSimpleName());
+		}
 		@Override
 		public <T> DataResult<T> encode(final C input, final DynamicOps<T> ops, final T prefix)
 		{
@@ -147,7 +190,29 @@ public class CodecUtils
 		@Override
 		public String toString()
 		{
-			return collectionCreator.getClass().getTypeParameters()[0].getGenericDeclaration().getSimpleName() + "Codec[" + elementCodec + ']';
+			return classNameSupplier.get() + "Codec[" + elementCodec + ']';
+		}
+		public Codec<E> elementCodec()
+		{
+			return elementCodec;
+		}
+		public Supplier<C> collectionCreator()
+		{
+			return collectionCreator;
+		}
+		@Override
+		public boolean equals(Object obj)
+		{
+			if (obj == this) return true;
+			if (obj == null || obj.getClass() != getClass()) return false;
+			var that = (CollectionCodec) obj;
+			return Objects.equals(elementCodec, that.elementCodec) &&
+				Objects.equals(collectionCreator, that.collectionCreator);
+		}
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(elementCodec, collectionCreator);
 		}
 		private class DecoderState<T>
 		{
