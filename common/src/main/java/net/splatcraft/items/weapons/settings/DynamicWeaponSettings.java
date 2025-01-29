@@ -1,7 +1,6 @@
 package net.splatcraft.items.weapons.settings;
 
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.*;
@@ -15,7 +14,6 @@ import java.util.Map;
 
 public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<SELF, COMMONDATA>, COMMONDATA, DATA> extends AbstractWeaponSettings<SELF, COMMONDATA>
 {
-	public static final Gson GSON = new Gson();
 	private static final Map<Class<? extends DynamicWeaponSettings<?, ?, ?>>, Map<String, MapCodec<?>>> subTypeCodec = new HashMap<>();
 	private MapCodec<DATA> dynamicCodec;
 	private String subTypeName;
