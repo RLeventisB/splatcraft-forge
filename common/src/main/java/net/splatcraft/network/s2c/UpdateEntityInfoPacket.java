@@ -3,7 +3,7 @@ package net.splatcraft.network.s2c;
 import com.mojang.serialization.DataResult;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
@@ -18,15 +18,15 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 {
 	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateEntityInfoPacket.class);
 	UUID target;
-	NbtCompound nbt;
-	protected UpdateEntityInfoPacket(UUID player, NbtCompound nbt)
+	NbtElement nbt;
+	protected UpdateEntityInfoPacket(UUID player, NbtElement nbt)
 	{
 		target = player;
 		this.nbt = nbt;
 	}
 	public UpdateEntityInfoPacket(PlayerEntity target)
 	{
-		this(target.getUuid(), (NbtCompound) EntityInfo.CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target)).getOrThrow());
+		this(target.getUuid(), EntityInfo.CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target)).getOrThrow());
 	}
 	public static UpdateEntityInfoPacket decode(RegistryByteBuf buffer)
 	{
