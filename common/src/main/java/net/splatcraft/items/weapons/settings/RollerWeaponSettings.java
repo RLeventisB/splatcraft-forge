@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.DamageRangesRecord;
@@ -63,9 +64,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		bypassesMobDamage = data.fullDamageToMobs;
 		isSecret = data.isSecret;
 		
-		rollData = data.roll;
-		swingData = data.swing;
-		flingData = data.fling;
+		rollData = SplatcraftConvertors.convert(data.roll);
+		swingData = SplatcraftConvertors.convert(data.swing);
+		flingData = SplatcraftConvertors.convert(data.fling);
 	}
 	@Override
 	public DataRecord getDataToSerialize()

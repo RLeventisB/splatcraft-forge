@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static net.splatcraft.items.weapons.settings.CommonRecords.*;
+import static net.splatcraft.items.weapons.settings.RollerWeaponSettings.*;
 import static net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SingularSloshShotData;
 
 public class SplatcraftConvertors
@@ -52,7 +53,8 @@ public class SplatcraftConvertors
 			dataRecord.baseDamage() / SplatoonHealthPerMinecraftHealth,
 			dataRecord.minDamage() / SplatoonHealthPerMinecraftHealth,
 			dataRecord.damageDecayStartTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
-			dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick);
+			dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick
+		);
 	}
 	public static Optional<OptionalProjectileDataRecord> convert(Optional<OptionalProjectileDataRecord> optional)
 	{
@@ -236,6 +238,86 @@ public class SplatcraftConvertors
 				convert(dataRecord.projectileModifications()),
 				dataRecord.detonationData().map(SplatcraftConvertors::convert)
 			)).toList();
+	}
+	public static RollDataRecord convert(RollDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new RollDataRecord(
+			dataRecord.inkSize() / DistanceUnitsPerMinecraftSquare,
+			dataRecord.hitboxSize() / DistanceUnitsPerMinecraftSquare,
+			dataRecord.inkConsumption(),
+			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
+			dataRecord.damage() / SplatoonHealthPerMinecraftHealth,
+			dataRecord.mobility(),
+			dataRecord.dashMobility(),
+			dataRecord.dashConsumption(),
+			dataRecord.dashTime() / SplatoonFramesPerMinecraftTick
+		);
+	}
+	public static SwingDataRecord convert(SwingDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new SwingDataRecord(
+			convert(dataRecord.projectileData()),
+			convert(dataRecord.attackData()),
+			dataRecord.allowJumpingOnCharge(),
+			dataRecord.mobility(),
+			dataRecord.attackAngle(),
+			dataRecord.letalAngle(),
+			dataRecord.offAnglePenalty()
+		);
+	}
+	public static FlingDataRecord convert(FlingDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new FlingDataRecord(
+			convert(dataRecord.projectileData()),
+			convert(dataRecord.attackData()),
+			dataRecord.startPitchCompensation(),
+			dataRecord.endPitchCompensation()
+		);
+	}
+	private static RollerAttackDataRecord convert(RollerAttackDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new RollerAttackDataRecord(
+			dataRecord.inkConsumption(),
+			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
+			dataRecord.startupTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.minSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
+			dataRecord.maxSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick
+		);
+	}
+	private static RollerProjectileDataRecord convert(RollerProjectileDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new RollerProjectileDataRecord(
+			dataRecord.size() / DistanceUnitsPerMinecraftSquare * 2,
+			dataRecord.visualSize() / DistanceUnitsPerMinecraftSquare * 2,
+			dataRecord.delaySpeedMult(),
+			(float) Math.pow(dataRecord.horizontalDrag(), SplatoonFramesPerMinecraftTick),
+			dataRecord.straightShotTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.gravity() * SplatoonFramesPerMinecraftTick / DistanceUnitsPerMinecraftSquare,
+			dataRecord.inkCoverageImpact() / DistanceUnitsPerMinecraftSquare,
+			dataRecord.inkDropCoverage() / DistanceUnitsPerMinecraftSquare,
+			dataRecord.distanceBetweenInkDrops() / DistanceUnitsPerMinecraftSquare,
+			dataRecord.damageFalloffStartTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
+			dataRecord.damageFalloffEndTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
+			dataRecord.maxDamageFalloffPercent(),
+			convert(dataRecord.damageRanges()),
+			dataRecord.weakDamageRanges().map(SplatcraftConvertors::convert)
+		);
 	}
 	public static FloatRange convertLength(FloatRange range)
 	{
