@@ -57,11 +57,11 @@ import java.util.stream.StreamSupport;
 
 public class ChunkInkHandler
 {
+	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
 	private static final HashMap<World, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
 	private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
 	private static final int MAX_DECAYABLE_PER_CHUNK = 3;
 	private static final int MAX_DECAYABLE_CHUNKS = 10;
-	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
 	public static void registerEvents()
 	{
 		InteractionEvent.RIGHT_CLICK_BLOCK.register(ChunkInkHandler::onBlockPlace);
