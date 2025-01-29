@@ -1,6 +1,5 @@
 package net.splatcraft.handlers;
 
-import com.google.common.reflect.TypeToken;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.BlockEvent;
@@ -91,11 +90,10 @@ public class ChunkInkHandler
 		ChunkPos chunkPos = CommonUtils.getChunkPos(pos);
 		HashMap<ChunkPos, List<IncrementalChunkBasedPacket>> chunkPackets = sharedPacket.computeIfAbsent(world, v -> new HashMap<>());
 		List<IncrementalChunkBasedPacket> existingPacketsInBlock = chunkPackets.computeIfAbsent(chunkPos, v -> new ArrayList<>());
-		TypeToken<T> token = TypeToken.of(tClass);
 		T packet = null;
 		for (var extraData : existingPacketsInBlock)
 		{
-			if (token.isSupertypeOf(TypeToken.of(extraData.getClass())))
+			if (tClass.isAssignableFrom(extraData.getClass()))
 				packet = (T) extraData;
 		}
 		if (packet == null)
@@ -109,7 +107,7 @@ public class ChunkInkHandler
 	public static void onBlockUpdate(World world, BlockPos pos, List<Direction> directions)
 	{
 		checkForInkRemoval(world, pos, Direction.values());
-		directions.forEach(direction -> checkForInkRemoval(world, pos.offset(direction), new Direction[]{direction.getOpposite()}));
+		directions.forEach(direction -> checkForInkRemoval(world, pos.offset(direction), new Direction[] {direction.getOpposite()}));
 	}
 	public static EventResult onBlockBreak(World level, BlockPos pos, BlockState state, ServerPlayerEntity player, @Nullable IntValue xp)
 	{
@@ -118,7 +116,7 @@ public class ChunkInkHandler
 	}
 	private static void checkForInkRemoval(World world, BlockPos pos, Direction[] directionsToCheck)
 	{
-		if(!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
+		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
 			return;
 		
 		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(world, pos);

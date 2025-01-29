@@ -1,6 +1,5 @@
 package net.splatcraft.entities;
 
-import com.google.common.reflect.TypeToken;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.data.DataTracker;
@@ -294,6 +293,9 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	private void calculateDrops(Vec3d lastPosition, Vec3d currentPosition, float unitsTravelled, boolean doRayCheck)
 	{
+		if (distanceBetweenDrops < 0)
+			return;
+		
 		if (distanceBetweenDrops == 0)
 		{
 			createDrop(getX(), getY(), getZ(), 0, 0);
@@ -851,11 +853,9 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		}
 		public <T extends ExtraSaveData> T getFirstExtraData(Class<T> tClass)
 		{
-			TypeToken<T> token = TypeToken.of(tClass);
-			
 			for (ExtraSaveData extraData : this)
 			{
-				if (token.isSupertypeOf(TypeToken.of(extraData.getClass())))
+				if (tClass.isAssignableFrom(extraData.getClass()))
 					return (T) extraData;
 			}
 			return null;
