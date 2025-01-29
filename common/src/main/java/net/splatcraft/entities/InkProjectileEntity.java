@@ -68,8 +68,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	public boolean causesHurtCooldown;
 	public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
 	public InkBlockUtils.InkType inkType;
+	public float accumulatedDrops;
 	protected float straightShotTime = -1;
-	private float accumulatedDrops;
 	private AttackId attackId = AttackId.NONE;
 	public InkProjectileEntity(EntityType<InkProjectileEntity> type, World world)
 	{
@@ -154,7 +154,6 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		if (airborne)
 		{
-			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 			return setRollerProjectileStats(settings.flingData.projectileData(), true, weak);
 		}
 		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak);
