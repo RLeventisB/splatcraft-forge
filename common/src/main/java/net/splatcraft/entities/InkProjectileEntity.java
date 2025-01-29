@@ -156,9 +156,9 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		if (airborne)
 		{
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
-			return setRollerProjectileStats(settings.flingData.projectileData(), airborne);
+			return setRollerProjectileStats(settings.flingData.projectileData(), true);
 		}
-		return setRollerProjectileStats(settings.swingData.projectileData(), airborne);
+		return setRollerProjectileStats(settings.swingData.projectileData(), false);
 	}
 	public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
 	{
