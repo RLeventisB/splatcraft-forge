@@ -57,7 +57,7 @@
     "fling": {
         "projectile": {
             "size": 7.5,
-            "visual_size": 3.6,
+            "visual_size": 5,
             "horizontal_drag": 0.9,
             "straight_shot_ticks": 6,
             "ink_coverage_on_impact": 15,
@@ -81,8 +81,8 @@
         "attack_data": {
             "ink_consumption": 8.5,
             "ink_recovery_cooldown": 20,
-            "startup_ticks": 32,
-            "endlag_ticks": 25,
+            "startup_ticks": 26,
+            "endlag_ticks": 31,
             "min_speed": 10,
             "max_speed": 14.5
         }

@@ -1,39 +1,92 @@
 {
     "type": "splatcraft:roller",
     "roll": {
-        "ink_size": 4,
-        "hitbox_size": 7,
-        "ink_consumption": 0.06,
-        "ink_recovery_cooldown": 7,
-        "damage": 32,
-        "mobility": 0.88
+        "ink_size": 68,
+        "ink_recovery_cooldown": 20,
+        "damage": 125,
+        "mobility": 0.88,
+        "ink_consumption": 0.012,
+        "dash_mobility": 1.08,
+        "dash_consumption": 0.06,
+        "dash_time": 90
     },
     "swing": {
-        "swing_blob_count": 26,
-        "swing_attack_angle": 35,
-        "allow_jumping_on_charge": true,
+        "projectile": {
+            "size": 14,
+            "visual_size": 10,
+            "straight_shot_ticks": 9,
+            "ink_coverage_on_impact": 20,
+            "distance_between_drops": -1,
+            "damage_ranges": {
+                "points": [
+                    {
+                        "damage": 180,
+                        "max_range": 72
+                    },
+                    {
+                        "damage": 40,
+                        "max_range": 174
+                    }
+                ]
+            },
+            "weak_damage_ranges": {
+                "points": [
+                    {
+                        "damage": 120,
+                        "max_range": 2
+                    },
+                    {
+                        "damage": 40,
+                        "max_range": 122
+                    }
+                ]
+            },
+            "damage_falloff_start_tick": 30,
+            "damage_falloff_end_tick": 55
+        },
+        "attack_data": {
+            "ink_consumption": 18,
+            "ink_recovery_cooldown": 55,
+            "startup_ticks": 45,
+            "endlag_ticks": 20,
+            "min_speed": 7,
+            "max_speed": 14
+        },
         "mobility": 0.24,
-        "ink_consumption": 18,
-        "ink_recovery_cooldown": 22,
-        "projectile_speed": 2.5,
-        "startup_time": 15,
-        "base_damage": 36,
-        "letal_angle": 14.5,
-        "min_damage": 8,
-        "damage_decay_start_tick": 3,
-        "damage_decay_per_tick": 1.9,
-        "straight_ticks": 1,
-        "horizontal_drag": 0.93
+        "swing_angle": 40,
+        "letal_angle": 14.5
     },
     "fling": {
-        "ink_recovery_cooldown": 26,
-        "projectile_speed": 0.98,
-        "startup_time": 18,
-        "base_damage": 36,
-        "min_damage": 8,
-        "damage_decay_start_tick": 6,
-        "damage_decay_per_tick": 1.6,
-        "straight_ticks": 6,
-        "horizontal_drag": 0.9
+        "projectile": {
+            "size": 7,
+            "visual_size": 4.5,
+            "horizontal_drag": 0.9,
+            "straight_shot_ticks": 9,
+            "ink_coverage_on_impact": 20,
+            "distance_between_drops": 52,
+            "ink_drop_coverage": 18,
+            "damage_falloff_start_tick": 40,
+            "damage_falloff_end_tick": 65,
+            "damage_ranges": {
+                "points": [
+                    {
+                        "damage": 180,
+                        "max_range": 82
+                    },
+                    {
+                        "damage": 40,
+                        "max_range": 206
+                    }
+                ]
+            }
+        },
+        "attack_data": {
+            "ink_consumption": 18,
+            "ink_recovery_cooldown": 70,
+            "startup_ticks": 55,
+            "endlag_ticks": 28,
+            "min_speed": 11.6,
+            "max_speed": 16.4
+        }
     }
 }

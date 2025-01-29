@@ -135,10 +135,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 			instance -> instance.group(
 				Codec.FLOAT.fieldOf("size").forGetter(RollerProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
-				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(RollerProjectileDataRecord::delaySpeedMult),
+				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.7f).forGetter(RollerProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(RollerProjectileDataRecord::horizontalDrag),
 				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 2f).forGetter(RollerProjectileDataRecord::straightShotTicks),
-				Codec.FLOAT.optionalFieldOf("gravity", 0.7F).forGetter(RollerProjectileDataRecord::gravity),
+				Codec.FLOAT.optionalFieldOf("gravity", 0.4F).forGetter(RollerProjectileDataRecord::gravity),
 				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact)),
 				Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(r -> Optional.of(r.inkDropCoverage)),
 				Codec.FLOAT.optionalFieldOf("distance_between_drops", 30f).forGetter(RollerProjectileDataRecord::distanceBetweenInkDrops),
@@ -251,7 +251,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				RollerProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(FlingDataRecord::projectileData),
 				RollerAttackDataRecord.CODEC.fieldOf("attack_data").forGetter(FlingDataRecord::attackData),
 				Codec.FLOAT.optionalFieldOf("start_pitch_compensation", -7.5f).forGetter(FlingDataRecord::startPitchCompensation),
-				Codec.FLOAT.optionalFieldOf("end_pitch_compensation", 0f).forGetter(FlingDataRecord::endPitchCompensation),
+				Codec.FLOAT.optionalFieldOf("end_pitch_compensation", -4f).forGetter(FlingDataRecord::endPitchCompensation),
 				Codec.INT.optionalFieldOf("forced_projectile_count").forGetter(FlingDataRecord::forcedProjectileCount)
 			).apply(instance, FlingDataRecord::new)
 		);
