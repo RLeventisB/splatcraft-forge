@@ -267,8 +267,7 @@ public class SplatcraftConvertors
 			dataRecord.allowJumpingOnCharge(),
 			dataRecord.mobility(),
 			dataRecord.attackAngle(),
-			dataRecord.letalAngle(),
-			dataRecord.offAnglePenalty()
+			dataRecord.letalAngle()
 		);
 	}
 	public static FlingDataRecord convert(FlingDataRecord dataRecord)
@@ -280,7 +279,8 @@ public class SplatcraftConvertors
 			convert(dataRecord.projectileData()),
 			convert(dataRecord.attackData()),
 			dataRecord.startPitchCompensation(),
-			dataRecord.endPitchCompensation()
+			dataRecord.endPitchCompensation(),
+			dataRecord.forcedProjectileCount()
 		);
 	}
 	private static RollerAttackDataRecord convert(RollerAttackDataRecord dataRecord)

@@ -31,11 +31,17 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
 	{
 		ExtraSaveData.RollerDistanceExtraData data = list.getFirstExtraData(ExtraSaveData.RollerDistanceExtraData.class);
-		float distance = data == null ? 0 : data.spawnPos.distance(projectile.getPos().toVector3f());
+		if (data == null)
+		{
+			RollerProjectileDataRecord projectileData = swingData.projectileData;
+			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
+			return projectileData.damageRanges.getDamage(0) * timeDamagePercent;
+		}
+		float distance = data.spawnPos.distance(projectile.getPos().toVector3f());
 		
-		RollerProjectileDataRecord projectileData = data != null && data.wasAirborneOnShoot ? flingData.projectileData : swingData.projectileData;
+		RollerProjectileDataRecord projectileData = data.wasAirborneOnShoot ? flingData.projectileData : swingData.projectileData;
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
-		return projectileData.damageRanges.getDamage(distance) * timeDamagePercent;
+		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
 	}
 	@Override
 	public List<WeaponTooltip<RollerWeaponSettings>> tooltipsToRegister()
@@ -130,21 +136,21 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.FLOAT.fieldOf("size").forGetter(RollerProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 1f).forGetter(RollerProjectileDataRecord::delaySpeedMult),
-				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.262144F).forGetter(RollerProjectileDataRecord::horizontalDrag),
-				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 0F).forGetter(RollerProjectileDataRecord::straightShotTicks),
-				Codec.FLOAT.optionalFieldOf("gravity", 0.175F).forGetter(RollerProjectileDataRecord::gravity),
+				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(RollerProjectileDataRecord::horizontalDrag),
+				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 2f).forGetter(RollerProjectileDataRecord::straightShotTicks),
+				Codec.FLOAT.optionalFieldOf("gravity", 0.7F).forGetter(RollerProjectileDataRecord::gravity),
 				Codec.FLOAT.optionalFieldOf("ink_coverage_on_impact").forGetter(r -> Optional.of(r.inkCoverageImpact)),
 				Codec.FLOAT.optionalFieldOf("ink_drop_coverage").forGetter(r -> Optional.of(r.inkDropCoverage)),
-				Codec.FLOAT.optionalFieldOf("distance_between_drops", 4F).forGetter(RollerProjectileDataRecord::distanceBetweenInkDrops),
-				Codec.FLOAT.optionalFieldOf("damage_falloff_start_tick", 8.333333f).forGetter(RollerProjectileDataRecord::damageFalloffStartTick),
-				Codec.FLOAT.optionalFieldOf("damage_falloff_end_tick", 15f).forGetter(RollerProjectileDataRecord::damageFalloffEndTick),
-				Codec.FLOAT.optionalFieldOf("damage_falloff_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
+				Codec.FLOAT.optionalFieldOf("distance_between_drops", 30f).forGetter(RollerProjectileDataRecord::distanceBetweenInkDrops),
+				Codec.FLOAT.optionalFieldOf("damage_falloff_start_tick", 25.0f).forGetter(RollerProjectileDataRecord::damageFalloffStartTick),
+				Codec.FLOAT.optionalFieldOf("damage_falloff_end_tick", 45.0f).forGetter(RollerProjectileDataRecord::damageFalloffEndTick),
+				Codec.FLOAT.optionalFieldOf("max_falloff_damage_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
 				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
 				DamageRangesRecord.CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
 			
 			).apply(instance, RollerProjectileDataRecord::create)
 		);
-		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.729f, 0f, 0.16f, 1f, 0.5f, 1f, 8.3333f, 15f, 0.5f, DamageRangesRecord.DEFAULT, Optional.empty());
+		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, DamageRangesRecord.DEFAULT, Optional.empty());
 		public static RollerProjectileDataRecord create(float size,
 		                                                Optional<Float> visualSize,
 		                                                float delaySpeedMult,
@@ -175,10 +181,14 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				damageRanges,
 				weakDamageRanges);
 		}
+		public DamageRangesRecord getDamageRanges(boolean weakBullet)
+		{
+			return weakBullet && weakDamageRanges.isPresent() ? weakDamageRanges.get() : damageRanges;
+		}
 	}
 	public record RollDataRecord(
-		int inkSize,
-		int hitboxSize,
+		float inkSize,
+		float hitboxSize,
 		float inkConsumption,
 		int inkRecoveryCooldown,
 		float damage,
@@ -190,8 +200,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	{
 		public static final Codec<RollDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.INT.fieldOf("ink_size").forGetter(RollDataRecord::inkSize),
-				Codec.INT.optionalFieldOf("hitbox_size").forGetter(v -> Optional.of(v.hitboxSize())),
+				Codec.FLOAT.fieldOf("ink_size").forGetter(RollDataRecord::inkSize),
+				Codec.FLOAT.optionalFieldOf("hitbox_size").forGetter(v -> Optional.of(v.hitboxSize())),
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollDataRecord::inkConsumption),
 				Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(RollDataRecord::inkRecoveryCooldown),
 				Codec.FLOAT.fieldOf("damage").forGetter(RollDataRecord::damage),
@@ -202,9 +212,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 			).apply(instance, RollDataRecord::create)
 		);
 		public static final RollDataRecord DEFAULT = new RollDataRecord(3, 3, 1, 10, 20, 1, 2, 2, 10);
-		private static @NotNull RollDataRecord create(Integer inkSize, Optional<Integer> hitboxSize, Float inkConsumption, Integer inkRecoveryCooldown, Float damage, Float mobility, Optional<Float> dashMobility, Optional<Float> dashConsumption, float dashTime)
+		private static @NotNull RollDataRecord create(Float inkSize, Optional<Float> hitboxSize, Float inkConsumption, Integer inkRecoveryCooldown, Float damage, Float mobility, Optional<Float> dashMobility, Optional<Float> dashConsumption, float dashTime)
 		{
-			return new RollDataRecord(inkSize, hitboxSize.orElse(inkSize), inkConsumption, inkRecoveryCooldown, damage, mobility, dashMobility.orElse(mobility), dashConsumption.orElse(inkConsumption), dashTime);
+			return new RollDataRecord(inkSize, hitboxSize.orElse(inkSize * 0.9f), inkConsumption, inkRecoveryCooldown, damage, mobility, dashMobility.orElse(mobility), dashConsumption.orElse(inkConsumption), dashTime);
 		}
 	}
 	public record SwingDataRecord(
@@ -213,8 +223,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		boolean allowJumpingOnCharge,
 		float mobility,
 		float attackAngle,
-		float letalAngle,
-		float offAnglePenalty
+		float letalAngle
 	)
 	{
 		public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
@@ -224,17 +233,17 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.BOOL.optionalFieldOf("allow_jumping_on_charge", false).forGetter(SwingDataRecord::allowJumpingOnCharge),
 				Codec.FLOAT.fieldOf("mobility").forGetter(SwingDataRecord::mobility),
 				Codec.FLOAT.fieldOf("swing_angle").forGetter(SwingDataRecord::attackAngle),
-				Codec.FLOAT.optionalFieldOf("letal_angle", 16f).forGetter(SwingDataRecord::letalAngle),
-				Codec.FLOAT.optionalFieldOf("offangle_penalty", 0.5f).forGetter(SwingDataRecord::offAnglePenalty)
+				Codec.FLOAT.optionalFieldOf("letal_angle", 16f).forGetter(SwingDataRecord::letalAngle)
 			).apply(instance, SwingDataRecord::new)
 		);
-		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f, 0.5f);
+		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f);
 	}
 	public record FlingDataRecord(
 		RollerProjectileDataRecord projectileData,
 		RollerAttackDataRecord attackData,
 		float startPitchCompensation,
-		float endPitchCompensation
+		float endPitchCompensation,
+		Optional<Integer> forcedProjectileCount
 	)
 	{
 		public static final Codec<FlingDataRecord> CODEC = RecordCodecBuilder.create(
@@ -242,26 +251,29 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				RollerProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(FlingDataRecord::projectileData),
 				RollerAttackDataRecord.CODEC.fieldOf("attack_data").forGetter(FlingDataRecord::attackData),
 				Codec.FLOAT.optionalFieldOf("start_pitch_compensation", -7.5f).forGetter(FlingDataRecord::startPitchCompensation),
-				Codec.FLOAT.optionalFieldOf("end_pitch_compensation", 0f).forGetter(FlingDataRecord::endPitchCompensation)
+				Codec.FLOAT.optionalFieldOf("end_pitch_compensation", 0f).forGetter(FlingDataRecord::endPitchCompensation),
+				Codec.INT.optionalFieldOf("forced_projectile_count").forGetter(FlingDataRecord::forcedProjectileCount)
 			).apply(instance, FlingDataRecord::new)
 		);
-		public static final FlingDataRecord DEFAULT = new FlingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, -7.5f, 0f);
+		public static final FlingDataRecord DEFAULT = new FlingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, -7.5f, 0f, Optional.empty());
 		public int calculateProjectileCount()
 		{
-			return Math.round((
-				calculateAproximateRange(projectileData.straightShotTicks,
-					projectileData.horizontalDrag,
-					attackData.maxSpeed(),
-					projectileData.delaySpeedMult,
-					600)
-					-
-					calculateAproximateRange(
-						projectileData.straightShotTicks,
+			return forcedProjectileCount.orElse(
+				Math.round(
+					(calculateAproximateRange(projectileData.straightShotTicks,
 						projectileData.horizontalDrag,
-						attackData.minSpeed(),
+						attackData.maxSpeed(),
 						projectileData.delaySpeedMult,
 						600)
-			) / projectileData.size);
+						-
+						calculateAproximateRange(
+							projectileData.straightShotTicks,
+							projectileData.horizontalDrag,
+							attackData.minSpeed(),
+							projectileData.delaySpeedMult,
+							600)
+					) / projectileData.size)
+			);
 		}
 	}
 	public record RollerAttackDataRecord(
