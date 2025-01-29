@@ -3,6 +3,7 @@ package net.splatcraft.util.neoforge;
 import dev.architectury.registry.registries.DeferredRegister;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
@@ -17,6 +18,7 @@ import net.minecraft.world.WorldView;
 import net.neoforged.neoforge.client.ClientHooks;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.util.RecipeMatcher;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -43,6 +45,10 @@ public class CommonUtilsImpl
 	{
 		InputEvent.InteractionKeyMappingTriggered eventResult = ClientHooks.onClickInput(i, useKey, hand);
 		return new CommonUtils.InteractionEventResultDummy(eventResult.shouldSwingHand(), eventResult.isCanceled());
+	}
+	public static void doForgeEmptyClickEvent(ClientPlayerEntity player, Hand hand)
+	{
+		CommonHooks.onEmptyClick(player, hand);
 	}
 	public static ItemStack callGetPickItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
 	{
