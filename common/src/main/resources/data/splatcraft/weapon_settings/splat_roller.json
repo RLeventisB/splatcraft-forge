@@ -12,10 +12,10 @@
     },
     "swing": {
         "projectile": {
-            "size": 6,
-            "visual_size": 3,
+            "size": 10,
+            "visual_size": 9,
             "straight_shot_ticks": 7,
-            "ink_coverage_on_impact": 8,
+            "ink_coverage_on_impact": 14,
             "distance_between_drops": -1,
             "damage_ranges": {
                 "points": [
@@ -45,7 +45,8 @@
         "attack_data": {
             "ink_consumption": 8.5,
             "ink_recovery_cooldown": 45,
-            "startup_time": 21,
+            "startup_ticks": 24,
+            "endlag_ticks": 20,
             "min_speed": 7,
             "max_speed": 14
         },
@@ -61,7 +62,7 @@
             "straight_shot_ticks": 6,
             "ink_coverage_on_impact": 15,
             "distance_between_drops": 46,
-            "ink_drop_coverage": 14,
+            "ink_drop_coverage": 13,
             "damage_falloff_start_tick": 30,
             "damage_falloff_end_tick": 45,
             "damage_ranges": {
@@ -80,9 +81,10 @@
         "attack_data": {
             "ink_consumption": 8.5,
             "ink_recovery_cooldown": 20,
-            "startup_time": 26,
-            "min_speed": 12.3,
-            "max_speed": 18.3
+            "startup_ticks": 32,
+            "endlag_ticks": 25,
+            "min_speed": 10,
+            "max_speed": 14.5
         }
     }
 }

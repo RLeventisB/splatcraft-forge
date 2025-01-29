@@ -478,6 +478,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				hasAttacked = false;
 				isAttackQueued = false;
 				setTime(getTime() + getMaxTime());
+				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
 				return false;
 			}
 			return true;
