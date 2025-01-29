@@ -56,6 +56,7 @@ import java.util.stream.StreamSupport;
 
 public class ChunkInkHandler
 {
+	@Environment(EnvType.SERVER)
 	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
 	private static final HashMap<World, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
 	private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
