@@ -32,7 +32,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		ExtraSaveData.RollerDistanceExtraData data = list.getFirstExtraData(ExtraSaveData.RollerDistanceExtraData.class);
 		float distance = data == null ? 0 : data.spawnPos.distance(projectile.getPos().toVector3f());
 		
-		RollerProjectileDataRecord projectileData = projectile.throwerAirborne ? flingData.projectileData : swingData.projectileData;
+		RollerProjectileDataRecord projectileData = data != null && data.wasAirborneOnShoot ? flingData.projectileData : swingData.projectileData;
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
 		return projectileData.damageRanges.getDamage(distance) * timeDamagePercent;
 	}
@@ -247,7 +247,20 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		public static final FlingDataRecord DEFAULT = new FlingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, -7.5f, 0f);
 		public int calculateProjectileCount()
 		{
-			return (int) ((attackData.maxSpeed() - attackData.minSpeed()) / (projectileData.size / 3.3));
+			return Math.round((
+				calculateAproximateRange(projectileData.straightShotTicks,
+					projectileData.horizontalDrag,
+					attackData.maxSpeed(),
+					projectileData.delaySpeedMult,
+					600)
+					-
+					calculateAproximateRange(
+						projectileData.straightShotTicks,
+						projectileData.horizontalDrag,
+						attackData.minSpeed(),
+						projectileData.delaySpeedMult,
+						600)
+			) / projectileData.size);
 		}
 	}
 	public record RollerAttackDataRecord(
