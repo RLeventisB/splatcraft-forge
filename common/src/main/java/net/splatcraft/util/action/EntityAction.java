@@ -25,7 +25,7 @@ public interface EntityAction
 {
 	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_classes")), Lifecycle.stable());
 	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_codecs")), Lifecycle.stable());
-	MapCodec<EntityAction> SERIALIZER_CODEC = new MapCodec<>()
+	Codec<EntityAction> SERIALIZER_CODEC = new MapCodec<EntityAction>()
 	{
 		@Override
 		public <T> RecordBuilder<T> encode(EntityAction input, DynamicOps<T> ops, RecordBuilder<T> builder)
@@ -48,7 +48,7 @@ public interface EntityAction
 		{
 			return Stream.of(ops.createString("id"), ops.createString("data"));
 		}
-	};
+	}.codec();
 	/**
 	 * Retrieves an {@link EntityAction} from the specified {@link LivingEntity}.
 	 *

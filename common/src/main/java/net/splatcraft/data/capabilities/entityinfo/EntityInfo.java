@@ -26,7 +26,7 @@ public class EntityInfo
 		Codec.BOOL.optionalFieldOf("is_initialized", false).forGetter(EntityInfo::isInitialized),
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),
 		ItemStack.CODEC.listOf().optionalFieldOf("match_inventory", DefaultedList.ofSize(41, ItemStack.EMPTY)).forGetter(EntityInfo::getMatchInventory),
-		EntityAction.SERIALIZER_CODEC.codec().lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
+		EntityAction.SERIALIZER_CODEC.lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
