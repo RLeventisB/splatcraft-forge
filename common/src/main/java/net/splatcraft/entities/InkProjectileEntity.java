@@ -66,7 +66,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
 	public float impactCoverage, dropImpactSize, distanceBetweenDrops;
 	public float damageMultiplier = 1;
-	public boolean causesHurtCooldown, throwerAirborne;
+	public boolean causesHurtCooldown;
 	public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
 	public InkBlockUtils.InkType inkType;
 	protected float straightShotTime = -1;
@@ -82,7 +82,6 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setColor(color);
 		setProjectileSize(projectileSize);
 		impactCoverage = projectileSize * 0.85f;
-		throwerAirborne = !thrower.isOnGround();
 		this.damage = damage;
 		this.inkType = inkType;
 		this.sourceWeapon = sourceWeapon;
@@ -150,11 +149,11 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
-	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings)
+	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne)
 	{
 		setProjectileType(Types.ROLLER);
 		
-		if (throwerAirborne)
+		if (airborne)
 		{
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 			return setRollerProjectileStats(settings.flingData.projectileData());
