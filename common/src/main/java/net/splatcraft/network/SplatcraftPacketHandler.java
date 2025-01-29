@@ -31,6 +31,7 @@ public class SplatcraftPacketHandler
 	{
 		//INSTANCE.registerMessage(ID++, PlayerColorPacket.class, SplatcraftPacket::encode, PlayerColorPacket::decode, SplatcraftPacket::consume);
 		registerMessage(UpdateEntityInfoPacket.class, UpdateEntityInfoPacket::decode);
+		registerMessage(UpdateEntityActionOnlyPacket.class, UpdateEntityActionOnlyPacket::decode);
 		registerMessage(PlayerColorPacket.class, PlayerColorPacket::decode);
 		registerMessage(PlayerSetSquidC2SPacket.class, PlayerSetSquidC2SPacket::decode);
 		registerMessage(PlayerSetSquidS2CPacket.class, PlayerSetSquidS2CPacket::decode);
