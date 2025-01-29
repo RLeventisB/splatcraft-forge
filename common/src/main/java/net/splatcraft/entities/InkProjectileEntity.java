@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtFloat;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -643,7 +644,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		else if (sourceWeapon.getItem() instanceof WeaponBaseItem<?> weapon)
 			damage = weapon.getSettings(sourceWeapon);
 		if (nbt.contains("AttackId"))
-			attackId = AttackId.readNbt(nbt.getCompound("AttackId"));
+			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
 	}
 	@Override
 	public void writeCustomDataToNbt(NbtCompound nbt)
@@ -681,7 +682,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		nbt.putString("InkType", inkType.getSerializedName());
 		nbt.put("SourceWeapon", sourceWeapon.encode(getWorld().getRegistryManager()));
 		if (attackId != AttackId.NONE)
-			nbt.put("AttackId", attackId.serializeNbt());
+			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
 		
 		super.writeCustomDataToNbt(nbt);
 		nbt.remove("Item");
@@ -792,7 +793,8 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	@Override
 	public void remove(@NotNull RemovalReason pReason)
 	{
-		attackId.projectileRemoved();
+		if (!getWorld().isClient())
+			attackId.projectileRemoved();
 		super.remove(pReason);
 	}
 	@Deprecated //Modify sourceWeapon variable instead

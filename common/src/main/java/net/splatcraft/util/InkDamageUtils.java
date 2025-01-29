@@ -69,8 +69,12 @@ public class InkDamageUtils
 		InkColor color = ColorUtils.getEntityColor(projectile);
 		InkDamageSource damageSource = new InkDamageSource(SplatcraftDamageTypes.get(targetLevel, damageType), owner, projectile, sourceItem);
 		
-		boolean attackIdValid = attackId != null && !attackId.checkEntity(target);
-		if (attackIdValid || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
+		boolean attackIdIsNull = attackId == null;
+		if (!attackIdIsNull)
+		{
+			damage = attackId.getDamage(target, damage);
+		}
+		if (attackIdIsNull || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
 			return false;
 		
 		if (InkOverlayCapability.get(target).isInkproof())

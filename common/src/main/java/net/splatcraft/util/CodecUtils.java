@@ -3,7 +3,6 @@ package net.splatcraft.util;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.PrimitiveCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -38,7 +37,7 @@ public class CodecUtils
 		Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 		Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
 	).apply(inst, Vec2f::new));
-	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(PrimitiveCodec<K> keyCodec, Codec<V> valueCodec)
+	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
 		return new UnboundedHashMapCodec<>(keyCodec, valueCodec);
 	}
