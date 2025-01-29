@@ -38,6 +38,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
+import net.splatcraft.items.BlockItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.DeleteInkPacket;
 import net.splatcraft.network.s2c.IncrementalChunkBasedPacket;
@@ -56,12 +57,11 @@ import java.util.stream.StreamSupport;
 
 public class ChunkInkHandler
 {
-	@Environment(EnvType.SERVER)
-	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
 	private static final HashMap<World, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
 	private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
 	private static final int MAX_DECAYABLE_PER_CHUNK = 3;
 	private static final int MAX_DECAYABLE_CHUNKS = 10;
+	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
 	public static void registerEvents()
 	{
 		InteractionEvent.RIGHT_CLICK_BLOCK.register(ChunkInkHandler::onBlockPlace);
@@ -154,7 +154,7 @@ public class ChunkInkHandler
 		Direction direction = face == null ? Direction.UP : face;
 		if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), pos, SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
 			InkBlockUtils.isInked(player.getWorld(), pos.offset(direction).down(), direction) &&
-			player.getStackInHand(hand).getItem() instanceof net.splatcraft.items.BlockItem blockItem)
+			player.getStackInHand(hand).getItem() instanceof BlockItem blockItem)
 		{
 			ItemPlacementContext context = blockItem.getPlacementContext(new ItemPlacementContext(new ItemUsageContext(player, hand, new BlockHitResult(pos.toCenterPos(), face, pos, false))));
 			if (context != null)

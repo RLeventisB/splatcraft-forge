@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -18,6 +19,7 @@ import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
 import net.splatcraft.blocks.ColoredBarrierBlock;
@@ -29,13 +31,18 @@ import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import org.joml.Vector3f;
+import org.joml.sampling.PoissonSampling;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
@@ -103,7 +110,6 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					action.isAttackQueued = true;
 				}
 			});
-			user.leaningPitch = 0.0F;
 		}
 		
 		super.usageTick(world, user, stack, remainingUseTicks);
@@ -117,9 +123,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		int rollTime = getMaxUseTime(stack, entity) - remainingUseTicks;
 		if (rollTime < startupTicks)
 		{
-			if (enoughInk(entity, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
+			if (!world.isClient && enoughInk(entity, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
 			{
 				EntityAction.setEntityAction(entity, new InitialSwingAction(stack, startupTicks, attackData.endlagTicks(), entity));
+				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
 			}
 			return;
 		}
@@ -159,9 +166,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		
 		boolean doPush = false;
 		BlockInkedResult result = BlockInkedResult.FAIL;
-		for (int i = 0; i < settings.rollData.inkSize(); i++)
+		float step = CommonUtils.calculateStep(settings.rollData.inkSize(), 1);
+		for (float i = 0; i < settings.rollData.inkSize(); i += step)
 		{
-			double off = (double) i - (settings.rollData.inkSize() - 1) / 2d;
+			float off = i - settings.rollData.inkSize() / 2f;
+			boolean insideDamage = Math.abs(off) < settings.rollData.hitboxSize() / 2f;
 			double xOff = Math.cos(Math.toRadians(entity.getYaw())) * off;
 			double zOff = Math.sin(Math.toRadians(entity.getYaw())) * off;
 			
@@ -199,7 +208,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						}
 					}
 					
-					if (result != BlockInkedResult.FAIL && i < settings.rollData.hitboxSize())
+					if (result != BlockInkedResult.FAIL && insideDamage)
 					{
 						world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xOff + dxOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zOff + dzOff, 0, 0, 0);
 						if (i > 0)
@@ -219,7 +228,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				continue;
 			}
 			
-			if (i >= settings.rollData.hitboxSize())
+			if (!insideDamage)
 			{
 				continue;
 			}
@@ -319,6 +328,30 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			this.slotIndex = slotIndex;
 			this.hand = hand;
 		}
+		static List<Vector3f> poissonDiskSampling(Random random, float maxAngle, float radiusApart, float minSpeedSquared, float maxSpeed, int maxTries, float yaw)
+		{
+			List<Vector3f> points = new ObjectArrayList<>();
+			// todo: optimize this implementation so it doesn't process points that are outside the angle
+			new PoissonSampling.Disk(random.nextLong(), maxSpeed, radiusApart, maxTries, (x, y) ->
+			{
+				float dist = x * x + y * y;
+				if (dist < minSpeedSquared)
+					return;
+				
+				float thisAngle = (float) Math.atan2(y, x) * MathHelper.DEGREES_PER_RADIAN;
+				float distanceFromYaw = MathHelper.abs(MathHelper.wrapDegrees(yaw - thisAngle));
+				if (distanceFromYaw > maxAngle)
+					return;
+				
+				points.add(new Vector3f(thisAngle, distanceFromYaw, MathHelper.sqrt(dist)));
+			});
+			// wtf org.joml has everything
+			return points;
+		}
+		private static List<Vector3f> calculateAngleAndSpeeds(Random random, float minSpeed, float maxSpeed, float swingAngle, float projectileSize, float straightShotFrames, float yaw)
+		{
+			return poissonDiskSampling(random, swingAngle, projectileSize / straightShotFrames / 1.35f, minSpeed * minSpeed / (straightShotFrames * straightShotFrames), maxSpeed, 30, yaw);
+		}
 		public boolean isGrounded()
 		{
 			return isGrounded;
@@ -342,24 +375,28 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					if (world.isClient())
 						playRollSound(settings.isBrush);
 					
-					RollerWeaponSettings.RollerAttackDataRecord attackData = isGrounded() ? settings.swingData.attackData() : settings.flingData.attackData();
+					RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
+					RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
+					RollerWeaponSettings.RollerAttackDataRecord attackData = isGrounded() ? swingData.attackData() : flingData.attackData();
 					if (world.isClient() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getItemUseTimeLeft() % 4 == 0))
 						return;
-					
-					AttackId attackId = AttackId.registerAttack();
 					
 					if (settings.isBrush)
 					{
 						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
-						int total = settings.rollData.inkSize() * 2 + 1;
+						int total = (int) (settings.rollData.inkSize() * 2 + 1);
+						AttackId attackId = AttackId.registerSelectiveAttack(total);
+						attackId.countProjectile(total);
 						for (int i = 0; i < total; i++)
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), 1.6f, settings);
 							proj.setProjectileType(InkProjectileEntity.Types.ROLLER);
 							proj.dropImpactSize = proj.getProjectileSize() * 0.5f;
-							proj.setVelocity(entity, entity.getPitch(), entity.getYaw() + (i - total / 2f) * 20, 0, settings.swingData.attackData().maxSpeed(), 0.05f);
+							proj.setVelocity(entity, entity.getPitch(), entity.getYaw() + (i - total / 2f) * 20, 0, swingData.attackData().maxSpeed(), 0.05f);
 							proj.refreshPositionAfterTeleport(proj.getX(), proj.getY() - entity.getStandingEyeHeight() / 2f, proj.getZ());
+							proj.setAttackId(attackId);
 							world.spawnEntity(proj);
+							proj.tick(extraTime);
 						}
 					}
 					else
@@ -367,49 +404,58 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						if (isGrounded())
 						{
-							// TODO: use https://sighack.com/post/poisson-disk-sampling-bridsons-algorithm for better distribution
-
-                            /*
-                            for (float i = 0; i < settings.swingProjectileCount; i++)
-                            {
-                                float progress = 1 - (float) Math.pow(1 - i / (float) (settings.swingProjectileCount - 1), 2);
-                                InkProjectileEntity proj = new InkProjectileEntity(level, player, stack, InkBlockUtils.getInkType(player), 1.6f, settings);
-                                proj.throwerAirborne = false;
-                                float extraAngle = settings.swingAttackAngle * (float) (proj.getRandom().nextGaussian());
-                                proj.shootFromRotation(player, player.getPitch(), player.getYaw() + extraAngle * side, 0, settings.swingProjectileSpeed * progress, 0.05f);
-                                proj.refreshPositionAfterTeleport(proj.getX(), proj.getY() + 0.5, proj.getZ());
-			
-                                if (extraAngle > settings.swingLetalAngle)
-                                {
-                                    proj.damageMultiplier = settings.swingOffAnglePenalty;
-                                }
-                                proj.setRollerSwingStats(settings);
-                                level.spawnEntity(proj);
-			
-                                side = -side;
-                            }
-                            */
+							List<Vector3f> anglesAndVelocities = calculateAngleAndSpeeds(
+								entity.getRandom(),
+								swingData.attackData().minSpeed(),
+								swingData.attackData().maxSpeed(),
+								swingData.attackAngle(),
+								swingData.projectileData().size(),
+								swingData.projectileData().straightShotTicks(),
+								entity.getYaw(extraTime)
+							);
+							
+							AttackId attackId = AttackId.registerSelectiveAttack(anglesAndVelocities.size());
+							attackId.countProjectile(anglesAndVelocities);
+							for (Vector3f data : anglesAndVelocities)
+							{
+								// x is the projectile's yaw
+								// y is the distance between the player's yaw and the projectile's yaw
+								// z is the magnitude of the projectile's speed
+								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), settings);
+								
+								proj.setVelocity(entity, entity.getPitch(extraTime), data.x, 0, data.z, 0f);
+//								Vec3d offset = new Vec3d((entity.getRandom().nextFloat() * 2f - 1f) * 0.7f, 0.5f, 0.6f);
+								Vec3d offset = new Vec3d(0f, 0.5f, 0.6f);
+								offset = offset.rotateY(-entity.getYaw(extraTime) * MathHelper.RADIANS_PER_DEGREE);
+								proj.refreshPositionAfterTeleport(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
+								
+								proj.setRollerSwingStats(settings, false, data.y > swingData.letalAngle());
+								proj.setAttackId(attackId);
+								world.spawnEntity(proj);
+								proj.tick(extraTime);
+							}
 						}
 						else
 						{
-							int count = settings.flingData.calculateProjectileCount();
+							int count = flingData.calculateProjectileCount();
+							AttackId attackId = AttackId.registerSelectiveAttack(count);
 							attackId.countProjectile(count);
 							
 							for (int i = 0; i < count; i++)
 							{
 								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), 1.6f, settings);
-								proj.throwerAirborne = true;
 								
 								float progress = (float) i / Math.max(1, count - 1);
 								proj.setVelocity(
 									entity,
-									entity.getPitch() - MathHelper.lerp(progress, settings.flingData.startPitchCompensation(), settings.flingData.endPitchCompensation()),
+									entity.getPitch() - MathHelper.lerp(progress, flingData.startPitchCompensation(), flingData.endPitchCompensation()),
 									entity.getYaw(), 0,
 									MathHelper.lerp(progress, attackData.minSpeed(), attackData.maxSpeed()),
 									0.05f);
 								
+								proj.setRollerSwingStats(settings, true, false);
+								proj.accumulatedDrops = progress;
 								proj.refreshPositionAfterTeleport(proj.getPos().add(EntityAccessor.invokeMovementInputToVelocity(new Vec3d(0, 1, 0), 1.4f, proj.getYaw())));
-								proj.setRollerSwingStats(settings);
 								proj.setAttackId(attackId);
 								world.spawnEntity(proj);
 								proj.tick(extraTime);
