@@ -2,6 +2,7 @@ package net.splatcraft.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.client.particles.InkExplosionParticle;
@@ -25,7 +26,7 @@ public final class SplatcraftFabric implements ModInitializer
 		Splatcraft.init();
 		SplatcraftRegistries.register();
 		
-		ClientSetupHandler.bindScreenContainers();
+		ClientSetupHandler.bindScreenContainers((type, provider) -> HandledScreens.register(type, provider::create));
 		InkProjectileEntity.registerDataAccessors();
 		
 		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);

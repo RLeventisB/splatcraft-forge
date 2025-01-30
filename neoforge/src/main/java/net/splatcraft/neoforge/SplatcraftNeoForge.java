@@ -5,13 +5,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.ChunkWatchEvent;
@@ -55,10 +51,10 @@ public final class SplatcraftNeoForge
 		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
 	}
 	@OnlyIn(Dist.CLIENT)
-	private static void beforeRegisterScreens(AddPackFindersEvent event)
+	private static void beforeRegisterScreens(RegisterMenuScreensEvent event)
 	{
 		// there is absolutely no more events that run after NewRegistryEvent but before RegisterMenuScreensEvent >:(
-		ClientSetupHandler.bindScreenContainers();
+		ClientSetupHandler.bindScreenContainers((menuType, screenConstructor) -> event.register(menuType, screenConstructor::create));
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{
