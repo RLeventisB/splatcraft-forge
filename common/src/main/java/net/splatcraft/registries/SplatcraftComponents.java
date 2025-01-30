@@ -82,10 +82,6 @@ public class SplatcraftComponents
 		Splatcraft.identifierOf("blueprint_advancements"),
 		ComponentType.<List<Identifier>>builder().codec(Codec.list(Identifier.CODEC)).build()
 	);
-	public static void initialize()
-	{
-		// oh, components get registered by the field
-	}
 	public static <T> DataResult<T> getComponent(ItemStack stack, ComponentType<T> type)
 	{
 		if (stack.getComponents().contains(type))
