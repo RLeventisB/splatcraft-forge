@@ -29,17 +29,23 @@ public abstract class ProjectileMixin
 		@Inject(method = "getEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;F)Lnet/minecraft/util/hit/EntityHitResult;", at = @At(value = "INVOKE_ASSIGN", shift = At.Shift.AFTER, target = "Lnet/minecraft/util/math/Vec3d;squaredDistanceTo(Lnet/minecraft/util/math/Vec3d;)D"))
 		private static void splatcraft$obtainHitLocation(World world, Entity entity2, Vec3d pStartVec, Vec3d pEndVec, Box pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 0) double d0, @Local Optional<Vec3d> optional, @Local(ordinal = 1) double d1)
 		{
-			if (d1 < d0 && (entity2 instanceof InkProjectileEntity || entity2 instanceof InkDropEntity))
+			if (d1 < d0 && splatcraft$isEntityThatRequiresHitpos(entity2))
 			{
 				splatcraft$hitPos = optional.get();
 			}
 		}
-		@Inject(method = "getEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;F)Lnet/minecraft/util/hit/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
-		private static void splatcraft$addHitLocation(World pLevel, Entity pProjectile, Vec3d pStartVec, Vec3d pEndVec, Box pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 1) Entity entity)
+		@Unique
+		private static boolean splatcraft$isEntityThatRequiresHitpos(Entity entity)
 		{
-			if (entity != null && (pProjectile instanceof InkProjectileEntity || pProjectile instanceof InkDropEntity || pProjectile instanceof AbstractSubWeaponEntity<?>))
+			return entity instanceof InkProjectileEntity || entity instanceof InkDropEntity || entity instanceof AbstractSubWeaponEntity<?>;
+		}
+		@Inject(method = "getEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;F)Lnet/minecraft/util/hit/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
+		private static void splatcraft$addHitLocation(World world, Entity pProjectile, Vec3d pStartVec, Vec3d pEndVec, Box pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 1) Entity entity)
+		{
+			if (entity != null && splatcraft$isEntityThatRequiresHitpos(pProjectile) && splatcraft$hitPos != null)
 			{
 				cir.setReturnValue(new EntityHitResult(entity, splatcraft$hitPos));
+				splatcraft$hitPos = null;
 				cir.cancel();
 			}
 		}
