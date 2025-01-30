@@ -312,8 +312,8 @@ public class SplatcraftConvertors
 			dataRecord.inkCoverageImpact() / DistanceUnitsPerMinecraftSquare,
 			dataRecord.inkDropCoverage() / DistanceUnitsPerMinecraftSquare,
 			dataRecord.distanceBetweenInkDrops() / DistanceUnitsPerMinecraftSquare,
-			dataRecord.damageFalloffStartTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
-			dataRecord.damageFalloffEndTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick,
+			dataRecord.damageFalloffStartTick() / SplatoonHealthPerMinecraftHealth,
+			dataRecord.damageFalloffEndTick() / SplatoonHealthPerMinecraftHealth,
 			dataRecord.maxDamageFalloffPercent(),
 			convert(dataRecord.damageRanges()),
 			dataRecord.weakDamageRanges().map(SplatcraftConvertors::convert)

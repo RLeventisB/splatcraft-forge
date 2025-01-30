@@ -303,10 +303,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			Codec.BOOL.fieldOf("has_attacked").forGetter(v -> v.hasAttacked),
 			Codec.FLOAT.fieldOf("time").forGetter(InitialSwingAction::getTime)
 		).apply(inst, InitialSwingAction::new));
+		public final float attackFrame;
 		final ItemStack storedStack;
 		final int slotIndex;
 		final Hand hand;
-		final float attackFrame;
 		protected boolean isGrounded, isAttackQueued, hasAttacked;
 		public InitialSwingAction(ItemStack stack, float windupTime, float endlagTime, LivingEntity entity)
 		{

@@ -34,13 +34,13 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		if (data == null)
 		{
 			RollerProjectileDataRecord projectileData = swingData.projectileData;
-			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
+			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 			return projectileData.damageRanges.getDamage(0) * timeDamagePercent;
 		}
 		float distance = data.spawnPos.distance(projectile.getPos().toVector3f());
 		
 		RollerProjectileDataRecord projectileData = data.wasAirborneOnShoot ? flingData.projectileData : swingData.projectileData;
-		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.damageFalloffEndTick, projectileData.maxDamageFalloffPercent);
+		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
 	}
 	@Override
@@ -184,6 +184,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		public DamageRangesRecord getDamageRanges(boolean weakBullet)
 		{
 			return weakBullet && weakDamageRanges.isPresent() ? weakDamageRanges.get() : damageRanges;
+		}
+		public float calculatePercentageFallofPerTick()
+		{
+			return maxDamageFalloffPercent / (damageFalloffEndTick - damageFalloffStartTick);
 		}
 	}
 	public record RollDataRecord(
