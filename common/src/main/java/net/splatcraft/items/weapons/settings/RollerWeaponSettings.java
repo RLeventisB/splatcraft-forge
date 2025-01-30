@@ -39,7 +39,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		}
 		float distance = data.spawnPos.distance(projectile.getPos().toVector3f());
 		
-		RollerProjectileDataRecord projectileData = data.wasAirborneOnShoot ? flingData.projectileData : swingData.projectileData;
+		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot).projectileData();
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
 	}
@@ -72,12 +72,19 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		
 		rollData = SplatcraftConvertors.convert(data.roll);
 		swingData = SplatcraftConvertors.convert(data.swing);
-		flingData = SplatcraftConvertors.convert(data.fling);
+		if (!isBrush)
+		{
+			if (data.fling.isEmpty())
+				throw new AssertionError("Error upon reading roller weapon settings! Fling (or vertical swing) data is not present.");
+			flingData = SplatcraftConvertors.convert(data.fling.get());
+		}
+		else
+			flingData = null;
 	}
 	@Override
 	public DataRecord getDataToSerialize()
 	{
-		return new DataRecord(isBrush, rollData, swingData, flingData, bypassesMobDamage, isSecret);
+		return new DataRecord(isBrush, rollData, swingData, Optional.ofNullable(flingData), bypassesMobDamage, isSecret);
 	}
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
@@ -94,11 +101,22 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		isBrush = brush;
 		return this;
 	}
+	public RollerAttackDataBase getAttackData(boolean isGrounded)
+	{
+		if (isBrush)
+			return swingData;
+		return isGrounded ? swingData : flingData;
+	}
+	public interface RollerAttackDataBase
+	{
+		RollerProjectileDataRecord projectileData();
+		RollerAttackDataRecord attackData();
+	}
 	public record DataRecord(
 		boolean isBrush,
 		RollDataRecord roll,
 		SwingDataRecord swing,
-		FlingDataRecord fling,
+		Optional<FlingDataRecord> fling,
 		boolean fullDamageToMobs,
 		boolean isSecret
 	)
@@ -108,7 +126,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.BOOL.optionalFieldOf("is_brush", false).forGetter(DataRecord::isBrush),
 				RollDataRecord.CODEC.fieldOf("roll").forGetter(DataRecord::roll),
 				SwingDataRecord.CODEC.fieldOf("swing").forGetter(DataRecord::swing),
-				FlingDataRecord.CODEC.fieldOf("fling").forGetter(DataRecord::fling),
+				FlingDataRecord.CODEC.optionalFieldOf("fling").forGetter(DataRecord::fling),
 				Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::fullDamageToMobs),
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
 			).apply(instance, DataRecord::new)
@@ -228,7 +246,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		float mobility,
 		float attackAngle,
 		float letalAngle
-	)
+	) implements RollerAttackDataBase
 	{
 		public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
@@ -248,7 +266,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		float startPitchCompensation,
 		float endPitchCompensation,
 		Optional<Integer> forcedProjectileCount
-	)
+	) implements RollerAttackDataBase
 	{
 		public static final Codec<FlingDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(

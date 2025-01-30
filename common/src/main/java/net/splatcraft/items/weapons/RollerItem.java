@@ -118,7 +118,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
-		RollerWeaponSettings.RollerAttackDataRecord attackData = entity.isOnGround() ? settings.swingData.attackData() : settings.flingData.attackData();
+		RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(entity.isOnGround()).attackData();
 		float startupTicks = attackData.startupTime();
 		int rollTime = getMaxUseTime(stack, entity) - remainingUseTicks;
 		if (rollTime < startupTicks)
@@ -376,8 +376,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						playRollSound(settings.isBrush);
 					
 					RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
-					RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
-					RollerWeaponSettings.RollerAttackDataRecord attackData = isGrounded() ? swingData.attackData() : flingData.attackData();
+					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(isGrounded()).attackData();
 					if (world.isClient() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getItemUseTimeLeft() % 4 == 0))
 						return;
 					
@@ -395,12 +394,14 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 							proj.setVelocity(entity, entity.getPitch(), entity.getYaw() + (i - total / 2f) * 20, 0, swingData.attackData().maxSpeed(), 0.05f);
 							proj.refreshPositionAfterTeleport(proj.getX(), proj.getY() - entity.getStandingEyeHeight() / 2f, proj.getZ());
 							proj.setAttackId(attackId);
+							proj.setRollerSwingStats(settings, false, false);
 							world.spawnEntity(proj);
 							proj.tick(extraTime);
 						}
 					}
 					else
 					{
+						RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
 						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						if (isGrounded())
 						{

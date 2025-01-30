@@ -54,8 +54,6 @@ public class PlayerPosingHandler
 			|| (playerInfo != null && playerInfo.getEntityAction() != null && playerInfo.getEntityAction().getTime() > 0))
 		{
 			useTime = mainStack.getItem().getMaxUseTime(mainStack, player) - useTime;
-			float animTime;
-			float angle;
 			
 			switch (weaponBaseItem.getPose(player, mainStack))
 			{
@@ -103,18 +101,21 @@ public class PlayerPosingHandler
 					
 					break;
 				case BUCKET_SWING:
+				{
+					// todo: fix this lol, maybe with a taylor series that makes a slope when the player attacks
 					SlosherWeaponSettings settings = ((SlosherItem) mainStack.getItem()).getSettings(mainStack);
-					animTime = settings.shotData.endlagTicks();
+					float animTime = settings.shotData.endlagTicks();
 					mainHand.yaw = 0;
 					mainHand.pitch = -0.36f;
 					
 					if (EntityAction.hasEntityAction(player))
 					{
 						EntityAction action = EntityAction.getEntityAction(player);
-						angle = (action.getTime() - partialTicks) / action.getMaxTime();
+						float angle = (action.getTime() - partialTicks) / action.getMaxTime();
 						mainHand.pitch = -0.36f + 0.5f + MathHelper.cos(angle) * 0.5f;
 					}
-					break;
+				}
+				break;
 				case BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge 😭😭😭😭 sorry
 					if (mainHand == model.rightArm)
 					{
@@ -136,15 +137,10 @@ public class PlayerPosingHandler
 				{
 					mainHand.yaw = model.getHead().yaw;
 					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
-					if (optional.isEmpty())
+					optional.ifPresentOrElse(action ->
 					{
-						mainHand.pitch = (0.5F - MathHelper.PI) * 0.1F;
-					}
-					else
-					{
-						RollerItem.InitialSwingAction action = optional.get();
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
-						RollerWeaponSettings.RollerAttackDataRecord attackData = action.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
+						RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.getAttackData(action.isGrounded()).attackData();
 						
 						float currentFrame = action.getTime() - partialTicks;
 						float timeFromSwing = currentFrame - (action.attackFrame + 1);
@@ -161,24 +157,22 @@ public class PlayerPosingHandler
 							// approximately, when movingDownProgress < -3.7, it uses the (0.5 - pi) * 0.1 value.
 							mainHand.pitch = Math.min(-3 - movingDownProgress, (0.5F - MathHelper.PI) * 0.1F);
 						}
-					}
+					}, () -> mainHand.pitch = (0.5F - MathHelper.PI) * 0.1F);
 				}
 				break;
 				case BRUSH:
 				{
-					mainHand.pitch = 0.1F * 0.5F - ((float) Math.PI / 10F);
+					mainHand.pitch = (0.5F - MathHelper.PI) * 0.1f;
 					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
-					if (EntityAction.hasEntityAction(player))
+					optional.ifPresentOrElse(action ->
 					{
-						RollerItem.InitialSwingAction action = optional.get();
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
-						RollerWeaponSettings.RollerAttackDataRecord attackData = action.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
-						animTime = attackData.startupTime();
-						angle = (float) -((action.getMaxTime() - action.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
+						RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.swingData.attackData();
+						float animTime = attackData.startupTime();
+						float angle = (float) -((action.getMaxTime() - action.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
 						
 						mainHand.yaw = model.getHead().yaw + MathHelper.cos(angle);
-					}
-					else mainHand.yaw = model.getHead().yaw;
+					}, () -> mainHand.yaw = model.getHead().yaw);
 				}
 				break;
 			}
