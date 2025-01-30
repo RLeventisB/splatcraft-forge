@@ -90,11 +90,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					{
 						ItemStack weaponStack = action.getHand() == Hand.MAIN_HAND ? player.getInventory().main.get(action.getSlotIndex())
 							: entity.getOffHandStack();
-						return stack.equals(weaponStack) && (getSettings(stack).isBrush || action.isGrounded()) ? 1 : 0;
+						return stack.equals(weaponStack) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() < action.attackFrame - 2) ? 1 : 0;
 					}
 				}
 			}
-			return entity != null && entity.isUsingItem() && entity.getActiveItem() == stack ? 1 : 0;
+			return entity != null && entity.isUsingItem() && entity.getActiveItem() == stack && entity.getItemUseTime() > 10 ? 1 : 0;
 		};
 	}
 	@Override

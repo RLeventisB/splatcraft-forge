@@ -82,7 +82,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	@Override
 	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
 	{
-		return swingData.attackData().maxSpeed;
+		return 0;
 	}
 	public RollerWeaponSettings setName(String name)
 	{

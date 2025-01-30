@@ -138,7 +138,7 @@ public class PlayerPosingHandler
 					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
 					if (optional.isEmpty())
 					{
-						mainHand.pitch = 0.1F * 0.5F - ((float) Math.PI / 10F);
+						mainHand.pitch = (0.5F - MathHelper.PI) * 0.1F;
 					}
 					else
 					{
@@ -146,9 +146,21 @@ public class PlayerPosingHandler
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
 						RollerWeaponSettings.RollerAttackDataRecord attackData = action.isGrounded() ? rollerSettings.swingData.attackData() : rollerSettings.flingData.attackData();
 						
-						animTime = attackData.startupTime();
-						angle = (float) ((action.getMaxTime() - action.getTime() + partialTicks) / animTime * MathHelper.HALF_PI) + ((float) Math.PI) / 1.8f;
-						mainHand.pitch = MathHelper.cos(angle) * 2.4f + (0.05f - 0.31415927f);
+						float currentFrame = action.getTime() - partialTicks;
+						float timeFromSwing = currentFrame - (action.attackFrame + 1);
+						float startupTime = action.getMaxTime() - action.attackFrame;
+						if (timeFromSwing > 0) // is on the startup
+						{
+							float swingProgress = (action.getMaxTime() - currentFrame) / startupTime;
+							mainHand.pitch = (-1f + 1f / (float) Math.pow(1.4, 1 + swingProgress * 10f)) * 3;
+						}
+						else
+						{
+							// ok this becomes confusing but this value goes from 0 to -1 depending on how much time passed from 1 frame before the swing
+							float movingDownProgress = timeFromSwing;
+							// approximately, when movingDownProgress < -3.7, it uses the (0.5 - pi) * 0.1 value.
+							mainHand.pitch = Math.min(-3 - movingDownProgress, (0.5F - MathHelper.PI) * 0.1F);
+						}
 					}
 				}
 				break;
