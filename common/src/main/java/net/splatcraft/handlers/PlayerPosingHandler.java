@@ -136,7 +136,7 @@ public class PlayerPosingHandler
 				case ROLL:
 				{
 					mainHand.yaw = model.getHead().yaw;
-					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
+					Optional<RollerItem.InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
 					optional.ifPresentOrElse(action ->
 					{
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
@@ -163,7 +163,7 @@ public class PlayerPosingHandler
 				case BRUSH:
 				{
 					mainHand.pitch = (0.5F - MathHelper.PI) * 0.1f;
-					Optional<RollerItem.InitialSwingAction> optional = EntityAction.geSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
+					Optional<RollerItem.InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
 					optional.ifPresentOrElse(action ->
 					{
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);

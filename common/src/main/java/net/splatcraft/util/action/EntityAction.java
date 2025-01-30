@@ -86,7 +86,7 @@ public interface EntityAction
 	{
 		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getEntityAction);
 	}
-	static <T extends EntityAction> Optional<T> geSpecificEntityActionOptional(LivingEntity entity, Class<T> clazz)
+	static <T extends EntityAction> Optional<T> getSpecificEntityActionOptional(LivingEntity entity, Class<T> clazz)
 	{
 		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getEntityAction).map(v -> clazz.isInstance(v) ? (T) v : null);
 	}

@@ -318,5 +318,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 			).apply(instance, RollerAttackDataRecord::new)
 		);
 		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10, 1, 4);
+		public float attackTime()
+		{
+			return startupTime + endlagTicks;
+		}
 	}
 }

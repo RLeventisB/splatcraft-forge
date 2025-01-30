@@ -22,6 +22,7 @@ import java.util.List;
 
 public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, DATA>, DATA>
 {
+	public static final Identifier WEAPON_MOBILITY_ATTIBUTE_ID = Splatcraft.identifierOf("weapon_mobility");
 	private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
 	public String name;
 	public float moveSpeed = 1;
@@ -51,7 +52,9 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	public EntityAttributeModifier getSpeedModifier()
 	{
 		if (SPEED_MODIFIER == null)
-			SPEED_MODIFIER = new EntityAttributeModifier(Splatcraft.identifierOf("weapon_mobility"), moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		{
+			SPEED_MODIFIER = new EntityAttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		}
 		
 		return SPEED_MODIFIER;
 	}

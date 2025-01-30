@@ -49,6 +49,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 {
 	public static final ArrayList<RollerItem> rollers = Lists.newArrayList();
 	public boolean isMoving;
+	public boolean usedOnGround;
 	protected RollerItem(String settings)
 	{
 		super(settings);
@@ -102,12 +103,22 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	{
 		if (remainingUseTicks == stack.getMaxUseTime(user))
 		{
-			Optional<InitialSwingAction> optional = EntityAction.getSpecificActionIf(user, EntityAction::preventWeaponUse, InitialSwingAction.class);
-			optional.ifPresent(action ->
+			usedOnGround = user.isOnGround();
+			Optional<InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(user, InitialSwingAction.class);
+			optional.ifPresentOrElse(action ->
 			{
 				if (action.canQueueSwing())
 				{
 					action.isAttackQueued = true;
+				}
+			}, () ->
+			{
+				RollerWeaponSettings settings = getSettings(stack);
+				RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(usedOnGround).attackData();
+				if (!world.isClient && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
+				{
+					EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTime(), attackData.endlagTicks(), user));
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(user), user);
 				}
 			});
 		}
@@ -118,18 +129,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
-		RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(entity.isOnGround()).attackData();
-		float startupTicks = attackData.startupTime();
-		int rollTime = getMaxUseTime(stack, entity) - remainingUseTicks;
-		if (rollTime < startupTicks)
-		{
-			if (!world.isClient && enoughInk(entity, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
-			{
-				EntityAction.setEntityAction(entity, new InitialSwingAction(stack, startupTicks, attackData.endlagTicks(), entity));
-				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
-			}
-			return;
-		}
+		int rollTime = entity.getItemUseTime();
 		
 		float toConsume = MathHelper.lerp(Math.min(1, rollTime / settings.rollData.dashTime()), settings.rollData.inkConsumption(), settings.rollData.dashConsumption());
 		if (world.isClient)
@@ -257,7 +257,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	@Override
 	public boolean hasSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
-		if (entity instanceof PlayerEntity && EntityAction.hasEntityAction(entity) || !entity.getActiveItem().equals(stack))
+		if (EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || !entity.getActiveItem().equals(stack))
 			return false;
 		return super.hasSpeedModifier(entity, stack);
 	}
@@ -266,7 +266,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	{
 		RollerWeaponSettings settings = getSettings(stack);
 		double appliedMobility;
-		int useTime = entity.getItemUseTime() - entity.getItemUseTimeLeft();
+		float useTime = entity.getItemUseTime() - settings.getAttackData(usedOnGround).attackData().attackTime();
 		float dashProgress = Math.min(1, useTime / settings.rollData.dashTime());
 		
 		if (enoughInk(entity, this, Math.min(settings.rollData.dashConsumption(), settings.rollData.inkConsumption()), 0, false))

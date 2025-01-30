@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.input.Input;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -20,6 +21,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.SquidInputPacket;
@@ -91,9 +93,24 @@ public class PlayerMovementHandler
 				player.getInventory().selectedSlot = v.getSlotIndex();
 		});
 		
+		tickWeaponMobilityAttribute(player, speedAttribute);
+		
 		if (!player.getAbilities().flying)
 			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 				player.updateVelocity((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.isOnGround() ? 1 : 0.75f), new Vec3d(player.sidewaysSpeed, 0.0f, player.forwardSpeed).normalize());
+	}
+	private static void tickWeaponMobilityAttribute(LivingEntity entity, EntityAttributeInstance speedAttribute)
+	{
+		ItemStack useStack = entity.getActiveItem();
+		if (speedAttribute.hasModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID))
+			speedAttribute.removeModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID);
+		
+		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(entity, useStack))
+		{
+			var mod = weapon.getSpeedModifier(entity, useStack);
+			if (!speedAttribute.hasModifier(mod.id()))
+				speedAttribute.addTemporaryModifier(mod);
+		}
 	}
 	@Environment(EnvType.CLIENT)
 	public static void onInputUpdate(ClientPlayerEntity player, Input input)
@@ -102,7 +119,7 @@ public class PlayerMovementHandler
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
 		
-		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new InputWithData());
+		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
 		copyTo(input, clonedInput);
 		
 		float speedMod = !input.sneaking ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
@@ -256,9 +273,5 @@ public class PlayerMovementHandler
 		SplatcraftPacketHandler.sendToServer(new SquidInputPacket(
 			playerInfo.getClimbedDirection(),
 			playerInfo.getSquidSurgeCharge()));
-	}
-	@Environment(EnvType.CLIENT)
-	public static class InputWithData extends Input
-	{
 	}
 }
