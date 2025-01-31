@@ -133,7 +133,7 @@ public class PlayerPosingHandler
 						mainHand.pitch = (-MathHelper.HALF_PI) + model.getHead().pitch;
 					}
 					break;
-				case ROLL:
+				case ROLLER_SWING:
 				{
 					mainHand.yaw = model.getHead().yaw;
 					Optional<RollerItem.InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
@@ -184,7 +184,7 @@ public class PlayerPosingHandler
 		FIRE,
 		DUAL_FIRE,
 		TURRET_FIRE,
-		ROLL,
+		ROLLER_SWING,
 		BRUSH,
 		BOW_CHARGE,
 		BUCKET_SWING,

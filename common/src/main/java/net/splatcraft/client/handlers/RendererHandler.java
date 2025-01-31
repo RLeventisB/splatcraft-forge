@@ -43,6 +43,7 @@ import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -68,8 +69,6 @@ import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
 public class RendererHandler
 {
 	private static final Identifier WIDGETS = Splatcraft.identifierOf("textures/gui/widgets.png");
-	private static float oldCooldown = 0;
-	private static float tickTime = 0;
 	private static InkSquidRenderer squidRenderer;
 	//Render PlayerEntity HUD elements
 	private static float squidTime = 0;
@@ -133,22 +132,36 @@ public class RendererHandler
 		if (actionOptional.isPresent())
 		{
 			EntityAction action = actionOptional.get();
-			float time = action.getTime();
+			float time = action.getTime() - tickDelta;
 			float maxTime = action.getMaxTime();
-			if (time != oldCooldown)
-			{
-				oldCooldown = time;
-				tickTime = 0;
-			}
-			tickTime = (tickTime + 1) % 10;
-			float yOff = -0.5f * ((time - tickDelta) / maxTime);// - (tickTime/20f));
+			float yOff = -0.5f * (time / maxTime);
+			float weaponRotation = 0;
 			
 			if (player.getStackInHand(hand).getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
 			{
 				switch (weaponBaseItem.getPose(player, player.getStackInHand(hand)))
 				{
-					case ROLL:
-						yOff = -((time - tickDelta) / maxTime) + 0.5f;
+					case ROLLER_SWING:
+						if (actionOptional.get() instanceof RollerItem.InitialSwingAction swingAction)
+						{
+							float distFromSwingFrame = time - (swingAction.attackFrame + 0.4f);
+							float startupTime = maxTime - swingAction.attackFrame;
+							if (distFromSwingFrame >= 0)
+							{
+								yOff = Math.min(1.5f, (1f - MathHelper.square(distFromSwingFrame / startupTime)) * 3f);
+							}
+							else
+							{
+								yOff = Math.max(0f, 1.5f + distFromSwingFrame * 0.7f);
+							}
+							
+							if (!swingAction.isGrounded())
+							{
+								weaponRotation = yOff * 0.5f;
+								yOff = 0;
+							}
+						}
+						
 						break;
 					case BRUSH:
 						matrices.multiply(RotationAxis.NEGATIVE_Y.rotation(yOff * ((player.getMainArm() == Arm.RIGHT ? hand.equals(Hand.MAIN_HAND) : hand.equals(Hand.OFF_HAND)) ? 1 : -1)));
@@ -161,18 +174,15 @@ public class RendererHandler
 					case DUAL_FIRE:
 						if (actionOptional.get() instanceof DualieItem.DodgeRollAction dodgeRollAction && dodgeRollAction.preventWeaponUse())
 						{
-							yOff = -((time - tickDelta) - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
+							yOff = -(time - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
 						}
 						
 						break;
 				}
 			}
-			
+			if (weaponRotation != 0)
+				matrices.multiply(RotationAxis.POSITIVE_X.rotation(weaponRotation));
 			matrices.translate(0, yOff, 0);
-		}
-		else
-		{
-			tickTime = 0;
 		}
 		return true;
 	}
@@ -363,7 +373,7 @@ public class RendererHandler
 					// TODO: center this properly soon
 					GraphicsUtils.drawTexture(graphics, WIDGETS,
 						width / 2f - textureSize / 2 + screenPos.x,
-						height / 2f - textureSize / 2 + (screenPos.y * aspectRatio),
+						height / 2f - textureSize / 2 + screenPos.y * aspectRatio,
 						textureSize, textureSize, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
 				}
 			}
@@ -394,8 +404,8 @@ public class RendererHandler
 			
 			if (showCrosshairInkIndicator)
 			{
-				int heightAnim = Math.min(14, (int) (squidTime));
-				int glowAnim = Math.max(0, Math.min(18, (int) (squidTime) - 16));
+				int heightAnim = Math.min(14, (int) squidTime);
+				int glowAnim = Math.max(0, Math.min(18, (int) squidTime - 16));
 				
 				MatrixStack matrixStack = graphics.getMatrices();
 				matrixStack.push();

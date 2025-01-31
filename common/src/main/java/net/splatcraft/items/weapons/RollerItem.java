@@ -292,7 +292,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
 	{
-		return getSettings(stack).isBrush ? PlayerPosingHandler.WeaponPose.BRUSH : PlayerPosingHandler.WeaponPose.ROLL;
+		return getSettings(stack).isBrush ? PlayerPosingHandler.WeaponPose.BRUSH : PlayerPosingHandler.WeaponPose.ROLLER_SWING;
 	}
 	public static class InitialSwingAction extends EntityActionWithTime
 	{

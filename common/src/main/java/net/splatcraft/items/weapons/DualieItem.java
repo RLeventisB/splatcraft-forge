@@ -142,12 +142,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				return 0;
 			}
-			else
-			{
-				entity.getMainArm();
-			}
 			boolean mainLeft = entity.getMainArm().equals(Arm.LEFT);
-			return mainLeft && entity.getMainHandStack().equals(stack) || !mainLeft && entity.getOffHandStack().equals(stack) ? 1 : 0;
+			return
+				mainLeft && ItemStack.areItemsEqual(entity.getMainHandStack(), stack) ||
+					!mainLeft && ItemStack.areItemsEqual(entity.getOffHandStack(), stack) ? 1 : 0;
 		};
 	}
 	@Override

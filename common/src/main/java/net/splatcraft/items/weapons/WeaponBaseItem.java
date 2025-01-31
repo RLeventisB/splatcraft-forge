@@ -369,4 +369,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	{
 		return PlayerPosingHandler.WeaponPose.NONE;
 	}
+	@Override
+	public boolean phShouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
+	{
+		return !ItemStack.areItemsEqual(oldStack, newStack);
+	}
 }
