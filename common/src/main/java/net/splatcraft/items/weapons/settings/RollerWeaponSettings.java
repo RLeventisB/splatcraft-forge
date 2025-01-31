@@ -5,15 +5,20 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.MathHelper;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.DamageRangesRecord;
+import net.splatcraft.util.NumberRange.FloatRange;
 import net.splatcraft.util.WeaponTooltip;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+
+import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
+import static net.splatcraft.util.NumberRange.IntRange;
 
 public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSettings, RollerWeaponSettings.DataRecord>
 {
@@ -39,7 +44,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		}
 		float distance = data.spawnPos.distance(projectile.getPos().toVector3f());
 		
-		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot).projectileData();
+		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot || isBrush).projectileData();
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
 	}
@@ -47,7 +52,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public List<WeaponTooltip<RollerWeaponSettings>> tooltipsToRegister()
 	{
 		return List.of(
-			new WeaponTooltip<>("speed", WeaponTooltip.Metrics.BPT, settings -> settings.swingData.attackData.maxSpeed, WeaponTooltip.RANKER_ASCENDING),
+			new WeaponTooltip<>("speed", WeaponTooltip.Metrics.BPT, settings -> settings.swingData.attackData.speedRange().max(), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("mobility", WeaponTooltip.Metrics.MULTIPLIER, settings -> settings.rollData.dashMobility(), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.rollData.damage, WeaponTooltip.RANKER_ASCENDING)
 		);
@@ -58,9 +63,9 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		return DataRecord.CODEC;
 	}
 	@Override
-	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
+	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT;
+		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
 	public void processData(DataRecord data)
@@ -245,7 +250,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		boolean allowJumpingOnCharge,
 		float mobility,
 		float attackAngle,
-		float letalAngle
+		float letalAngle,
+		IntRange blobCount
 	) implements RollerAttackDataBase
 	{
 		public static final Codec<SwingDataRecord> CODEC = RecordCodecBuilder.create(
@@ -254,11 +260,16 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				RollerAttackDataRecord.CODEC.fieldOf("attack_data").forGetter(SwingDataRecord::attackData),
 				Codec.BOOL.optionalFieldOf("allow_jumping_on_charge", false).forGetter(SwingDataRecord::allowJumpingOnCharge),
 				Codec.FLOAT.fieldOf("mobility").forGetter(SwingDataRecord::mobility),
-				Codec.FLOAT.fieldOf("swing_angle").forGetter(SwingDataRecord::attackAngle),
-				Codec.FLOAT.optionalFieldOf("letal_angle", 16f).forGetter(SwingDataRecord::letalAngle)
+				Codec.FLOAT.optionalFieldOf("swing_angle", 30f).forGetter(SwingDataRecord::attackAngle),
+				Codec.FLOAT.optionalFieldOf("letal_angle", 16f).forGetter(SwingDataRecord::letalAngle),
+				IntRange.CODEC.optionalFieldOf("brush_blob_count_range", new IntRange(2, 3)).forGetter(SwingDataRecord::blobCount)
 			).apply(instance, SwingDataRecord::new)
 		);
-		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f);
+		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f, new IntRange(2, 3));
+		public int calculateBrushProjectileCount()
+		{
+			return Math.round((attackAngle() * MathHelper.PI / 180f) * (attackData.speedRange.average()) * projectileData.straightShotTicks / (projectileData.size()));
+		}
 	}
 	public record FlingDataRecord(
 		RollerProjectileDataRecord projectileData,
@@ -284,14 +295,14 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Math.round(
 					(calculateAproximateRange(projectileData.straightShotTicks,
 						projectileData.horizontalDrag,
-						attackData.maxSpeed(),
+						attackData.speedRange.max(),
 						projectileData.delaySpeedMult,
 						600)
 						-
 						calculateAproximateRange(
 							projectileData.straightShotTicks,
 							projectileData.horizontalDrag,
-							attackData.minSpeed(),
+							attackData.speedRange.min(),
 							projectileData.delaySpeedMult,
 							600)
 					) / projectileData.size)
@@ -301,26 +312,24 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public record RollerAttackDataRecord(
 		float inkConsumption,
 		float inkRecoveryCooldown,
-		float startupTime,
+		float startupTicks,
 		float endlagTicks,
-		float minSpeed,
-		float maxSpeed
+		FloatRange speedRange
 	)
 	{
 		public static final Codec<RollerAttackDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.fieldOf("ink_consumption").forGetter(RollerAttackDataRecord::inkConsumption),
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(RollerAttackDataRecord::inkRecoveryCooldown),
-				Codec.FLOAT.fieldOf("startup_ticks").forGetter(RollerAttackDataRecord::startupTime),
+				Codec.FLOAT.fieldOf("startup_ticks").forGetter(RollerAttackDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks", 10f).forGetter(RollerAttackDataRecord::endlagTicks),
-				Codec.FLOAT.fieldOf("min_speed").forGetter(RollerAttackDataRecord::minSpeed),
-				Codec.FLOAT.fieldOf("max_speed").forGetter(RollerAttackDataRecord::maxSpeed)
+				FloatRange.CODEC.fieldOf("speed_range").forGetter(RollerAttackDataRecord::speedRange)
 			).apply(instance, RollerAttackDataRecord::new)
 		);
-		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10, 1, 4);
+		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10, FloatRange.ZERO);
 		public float attackTime()
 		{
-			return startupTime + endlagTicks;
+			return startupTicks + endlagTicks;
 		}
 	}
 }

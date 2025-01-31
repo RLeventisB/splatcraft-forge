@@ -6,10 +6,11 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.splatcraft.items.weapons.settings.CommonRecords.FloatRange;
 import net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.DamageRangesRecord;
+import net.splatcraft.util.NumberRange;
+import net.splatcraft.util.NumberRange.FloatRange;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.List;
@@ -113,7 +114,7 @@ public class SubWeaponRecords
 		FloatRange travelSpeedRange,
 		FloatRange trailSizeRange,
 		InkUsageDataRecord maxCookInkUsage,
-		CommonRecords.IntRange fuseTime,
+		NumberRange.IntRange fuseTime,
 		float contactDamage,
 		float maxCookRadiusBonus,
 		int warningFrame
@@ -123,11 +124,11 @@ public class SubWeaponRecords
 			inst -> inst.group(
 				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(CurlingBombDataRecord::damageRanges),
 				SplashAroundDataRecord.CODEC.fieldOf("ink_splashes").forGetter(CurlingBombDataRecord::inkSplashes),
-				FloatRange.CODEC.fieldOf("ink_explosion_range").forGetter(CurlingBombDataRecord::inkExplosionRange),
-				FloatRange.CODEC.fieldOf("travel_speed_range").forGetter(CurlingBombDataRecord::travelSpeedRange),
-				FloatRange.CODEC.fieldOf("trail_size_range").forGetter(CurlingBombDataRecord::trailSizeRange),
+				NumberRange.FloatRange.CODEC.fieldOf("ink_explosion_range").forGetter(CurlingBombDataRecord::inkExplosionRange),
+				NumberRange.FloatRange.CODEC.fieldOf("travel_speed_range").forGetter(CurlingBombDataRecord::travelSpeedRange),
+				NumberRange.FloatRange.CODEC.fieldOf("trail_size_range").forGetter(CurlingBombDataRecord::trailSizeRange),
 				InkUsageDataRecord.CODEC.fieldOf("max_cook_ink_usage").forGetter(CurlingBombDataRecord::maxCookInkUsage),
-				CommonRecords.IntRange.CODEC.fieldOf("fuse_time_range").forGetter(CurlingBombDataRecord::fuseTime),
+				NumberRange.IntRange.CODEC.fieldOf("fuse_time_range").forGetter(CurlingBombDataRecord::fuseTime),
 				Codec.FLOAT.optionalFieldOf("contact_damage", 20f).forGetter(CurlingBombDataRecord::contactDamage),
 				Codec.FLOAT.optionalFieldOf("max_cook_explosion_radius_bonus", 3f).forGetter(CurlingBombDataRecord::maxCookRadiusBonus),
 				Codec.INT.fieldOf("warning_frame").forGetter(CurlingBombDataRecord::warningFrame)
@@ -136,11 +137,11 @@ public class SubWeaponRecords
 		public static final CurlingBombDataRecord DEFAULT = new CurlingBombDataRecord(
 			DamageRangesRecord.DEFAULT,
 			SplashAroundDataRecord.DEFAULT,
-			FloatRange.ZERO,
-			FloatRange.ZERO,
-			FloatRange.ZERO,
+			NumberRange.FloatRange.ZERO,
+			NumberRange.FloatRange.ZERO,
+			NumberRange.FloatRange.ZERO,
 			InkUsageDataRecord.DEFAULT,
-			CommonRecords.IntRange.ZERO,
+			NumberRange.IntRange.ZERO,
 			20,
 			3,
 			60

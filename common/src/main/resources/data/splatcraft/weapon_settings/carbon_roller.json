@@ -49,8 +49,7 @@
             "ink_recovery_cooldown": 40,
             "startup_ticks": 13,
             "endlag_ticks": 20,
-            "min_speed": 5.5,
-            "max_speed": 10.4
+            "speed_range": [5.5, 10.4]
         },
         "mobility": 0.6,
         "swing_angle": 32,
@@ -86,8 +85,7 @@
             "ink_recovery_cooldown": 45,
             "startup_ticks": 12,
             "endlag_ticks": 28,
-            "min_speed": 8,
-            "max_speed": 12.3
+            "speed_range": [8, 12.3]
         }
     }
 }

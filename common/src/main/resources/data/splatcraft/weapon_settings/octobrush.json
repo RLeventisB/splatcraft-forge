@@ -2,22 +2,43 @@
     "type": "splatcraft:roller",
     "is_brush": true,
     "roll": {
-        "ink_size": 2,
-        "ink_consumption": 0.54,
-        "ink_recovery_cooldown": 7,
-        "damage": 5,
-        "mobility": 1.92
+        "ink_size": 18,
+        "ink_recovery_cooldown": 20,
+        "damage": 25,
+        "mobility": 1.68,
+        "ink_consumption": 0.09
     },
     "swing": {
-        "mobility": 0.24,
-        "ink_consumption": 3.2,
-        "ink_recovery_cooldown": 10,
-        "projectile_speed": 0.65,
-        "projectile_pitch_compensation": 0,
-        "startup_time": 3,
-        "base_damage": 8,
-        "min_damage": 4,
-        "damage_decay_start_tick": 8,
-        "damage_decay_per_tick": 0.57
+        "projectile": {
+            "size": 13,
+            "visual_size": 9,
+            "straight_shot_ticks": 8,
+            "ink_coverage_on_impact": 20,
+            "distance_between_drops": -1,
+            "damage_falloff_start_tick": 24,
+            "damage_falloff_end_tick": 45,
+            "damage_ranges": {
+                "points": [
+                    {
+                        "damage": 40,
+                        "max_range": 33
+                    },
+                    {
+                        "damage": 20,
+                        "max_range": 143
+                    }
+                ]
+            }
+        },
+        "attack_data": {
+            "ink_consumption": 3,
+            "ink_recovery_cooldown": 30,
+            "startup_ticks": 1,
+            "endlag_ticks": 9,
+            "speed_range": [7.1, 9.7]
+        },
+        "swing_angle": 80,
+        "brush_blob_count_range": 5,
+        "mobility": 0.3
     }
 }

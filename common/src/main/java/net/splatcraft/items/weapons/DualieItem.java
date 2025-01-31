@@ -268,7 +268,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
 	{
 		Optional<DodgeRollAction> optional = EntityAction.getSpecificActionIf(player, DodgeRollAction::forceCrouch, DodgeRollAction.class);
-		if (optional.isPresent() && ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire())
+		if (optional.isPresent())
 			return PlayerPosingHandler.WeaponPose.TURRET_FIRE;
 		return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
 	}
@@ -288,10 +288,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState),
 			Codec.BOOL.fieldOf("did_allow_flying").forGetter(v -> v.didAllowFlying)
 		).apply(inst, DodgeRollAction::new));
+		public final byte rollFrame, rollEndFrame, turretModeFrame;
 		final ItemStack storedStack;
 		final int slotIndex;
 		final Hand hand;
-		final byte rollFrame, rollEndFrame, turretModeFrame;
 		final Vec2f rollDirection;
 		final boolean canSlide, didAllowFlying;
 		RollState rollState = RollState.BEFORE_ROLL;

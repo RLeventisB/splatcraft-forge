@@ -10,13 +10,15 @@ import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.SubDataRecord;
+import net.splatcraft.util.NumberRange;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.splatcraft.items.weapons.settings.CommonRecords.*;
+import static net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
+import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
 public class SubWeaponSettings<T extends SubDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T>
 {
@@ -101,8 +103,8 @@ public class SubWeaponSettings<T extends SubDataRecord<T>> extends DynamicWeapon
 		public static final DataRecord DEFAULT = new DataRecord(DEFAULT_INK_USAGE, WeaponBaseItem.USE_DURATION, 1f, false);
 	}
 	public record SplashAroundDataRecord(
-		FloatRange splashVelocityRange,
-		FloatRange splashPitchRange,
+		NumberRange.FloatRange splashVelocityRange,
+		NumberRange.FloatRange splashPitchRange,
 		int splashCount,
 		float splashPaintRadius,
 		float angleRandomness,
@@ -111,14 +113,14 @@ public class SubWeaponSettings<T extends SubDataRecord<T>> extends DynamicWeapon
 	{
 		public static final Codec<SplashAroundDataRecord> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
-				FloatRange.CODEC.fieldOf("splash_velocity_range").forGetter(SplashAroundDataRecord::splashVelocityRange),
-				FloatRange.CODEC.optionalFieldOf("splash_pitch_range", new FloatRange(19, 33)).forGetter(SplashAroundDataRecord::splashPitchRange),
+				NumberRange.FloatRange.CODEC.fieldOf("splash_velocity_range").forGetter(SplashAroundDataRecord::splashVelocityRange),
+				NumberRange.FloatRange.CODEC.optionalFieldOf("splash_pitch_range", new NumberRange.FloatRange(19f, 33f)).forGetter(SplashAroundDataRecord::splashPitchRange),
 				Codec.INT.fieldOf("splash_count").forGetter(SplashAroundDataRecord::splashCount),
 				Codec.FLOAT.fieldOf("splash_paint_radius").forGetter(SplashAroundDataRecord::splashPaintRadius),
 				Codec.FLOAT.optionalFieldOf("angle_randomness", 20f).forGetter(SplashAroundDataRecord::angleRandomness),
 				Codec.BOOL.optionalFieldOf("distribute_evenly", true).forGetter(SplashAroundDataRecord::distributeEvenly)
 			).apply(inst, SplashAroundDataRecord::new)
 		);
-		public static final SplashAroundDataRecord DEFAULT = new SplashAroundDataRecord(FloatRange.ZERO, FloatRange.ZERO, 0, 0, 20, true);
+		public static final SplashAroundDataRecord DEFAULT = new SplashAroundDataRecord(NumberRange.FloatRange.ZERO, NumberRange.FloatRange.ZERO, 0, 0, 20, true);
 	}
 }

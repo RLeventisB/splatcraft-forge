@@ -3,7 +3,6 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.math.MathHelper;
 
 import java.util.Optional;
 
@@ -372,45 +371,5 @@ public class CommonRecords
 			).apply(instance, InkUsageDataRecord::new)
 		);
 		public static final InkUsageDataRecord DEFAULT = new InkUsageDataRecord(0, 20);
-	}
-	public record FloatRange(
-		float min,
-		float max
-	)
-	{
-		public static final FloatRange ZERO = new FloatRange(0, 0);
-		public static final Codec<FloatRange> SINGLE_NUMBER_CODEC = Codec.FLOAT.xmap(FloatRange::ofValue, v -> v.min);
-		public static final Codec<FloatRange> PAIR_CODEC = RecordCodecBuilder.create(
-			inst -> inst.group(
-				Codec.FLOAT.fieldOf("min").forGetter(FloatRange::min),
-				Codec.FLOAT.fieldOf("max").forGetter(FloatRange::max)
-			).apply(inst, FloatRange::new)
-		);
-		public static final Codec<FloatRange> CODEC = Codec.withAlternative(PAIR_CODEC, SINGLE_NUMBER_CODEC);
-		public static FloatRange ofValue(float value)
-		{
-			return new FloatRange(value, value);
-		}
-		public float getValue(float progress)
-		{
-			return MathHelper.lerp(progress, min, max);
-		}
-	}
-	public record IntRange(
-		int min,
-		int max
-	)
-	{
-		public static final IntRange ZERO = new IntRange(0, 0);
-		public static final Codec<IntRange> CODEC = RecordCodecBuilder.create(
-			inst -> inst.group(
-				Codec.INT.fieldOf("min").forGetter(IntRange::min),
-				Codec.INT.fieldOf("max").forGetter(IntRange::max)
-			).apply(inst, IntRange::new)
-		);
-		public int getValue(float progress)
-		{
-			return MathHelper.lerp(progress, min, max);
-		}
 	}
 }

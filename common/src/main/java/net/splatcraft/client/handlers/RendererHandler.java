@@ -41,6 +41,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
@@ -152,6 +153,17 @@ public class RendererHandler
 					case BRUSH:
 						matrices.multiply(RotationAxis.NEGATIVE_Y.rotation(yOff * ((player.getMainArm() == Arm.RIGHT ? hand.equals(Hand.MAIN_HAND) : hand.equals(Hand.OFF_HAND)) ? 1 : -1)));
 						yOff = 0;
+						break;
+					case TURRET_FIRE:
+						yOff = 0;
+						
+						break;
+					case DUAL_FIRE:
+						if (actionOptional.get() instanceof DualieItem.DodgeRollAction dodgeRollAction && dodgeRollAction.preventWeaponUse())
+						{
+							yOff = -((time - tickDelta) - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
+						}
+						
 						break;
 				}
 			}

@@ -162,14 +162,14 @@ public class PlayerPosingHandler
 				break;
 				case BRUSH:
 				{
-					mainHand.pitch = (0.5F - MathHelper.PI) * 0.1f;
+					mainHand.pitch = (0.3F - MathHelper.PI) * 0.1f;
 					Optional<RollerItem.InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(player, RollerItem.InitialSwingAction.class);
 					optional.ifPresentOrElse(action ->
 					{
 						RollerWeaponSettings rollerSettings = ((RollerItem) mainStack.getItem()).getSettings(mainStack);
 						RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.swingData.attackData();
-						float animTime = attackData.startupTime();
-						float angle = (float) -((action.getMaxTime() - action.getTime() + partialTicks) / animTime * Math.PI / 2f) + ((float) Math.PI) / 1.8f;
+						float animTime = attackData.attackTime();
+						float angle = (float) -((action.getMaxTime() - action.getTime() - partialTicks) / animTime * MathHelper.PI / 2f) + ((float) MathHelper.PI) / 1.8f;
 						
 						mainHand.yaw = model.getHead().yaw + MathHelper.cos(angle);
 					}, () -> mainHand.yaw = model.getHead().yaw);

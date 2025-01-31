@@ -30,6 +30,7 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftItems;
@@ -148,15 +149,21 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
+	public InkProjectileEntity setBrushSwingStats(RollerWeaponSettings settings, boolean weak)
+	{
+		setProjectileType(Types.ROLLER);
+		
+		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak, true);
+	}
 	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne, boolean weak)
 	{
 		setProjectileType(Types.ROLLER);
 		
 		if (airborne)
 		{
-			return setRollerProjectileStats(settings.flingData.projectileData(), true, weak);
+			return setRollerProjectileStats(settings.flingData.projectileData(), true, weak, false);
 		}
-		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak);
+		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak, false);
 	}
 	public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
 	{
@@ -176,7 +183,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		
 		return this;
 	}
-	public InkProjectileEntity setRollerProjectileStats(RollerWeaponSettings.RollerProjectileDataRecord settings, boolean airborne, boolean weak)
+	public InkProjectileEntity setRollerProjectileStats(RollerProjectileDataRecord settings, boolean airborne, boolean weak, boolean fromBrush)
 	{
 		dropImpactSize = settings.inkDropCoverage();
 		distanceBetweenDrops = settings.distanceBetweenInkDrops();
@@ -190,7 +197,15 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		setHorizontalDrag(settings.horizontalDrag());
 		setGravitySpeedMult(settings.delaySpeedMult());
 		
-		addExtraData(new ExtraSaveData.RollerDistanceExtraData(getPos().toVector3f(), airborne, weak));
+		addExtraData(new ExtraSaveData.RollerDistanceExtraData(getPos().toVector3f(), airborne, weak && !fromBrush));
+		
+		if (fromBrush && weak)
+		{
+			dropImpactSize *= 0.8f;
+			impactCoverage *= 0.8f;
+			setStraightShotTime(settings.straightShotTicks() * 0.6f);
+			setProjectileVisualSize(settings.visualSize() * 0.6f);
+		}
 		
 		return this;
 	}

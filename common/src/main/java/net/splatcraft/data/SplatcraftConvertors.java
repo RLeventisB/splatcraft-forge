@@ -8,6 +8,7 @@ import net.splatcraft.items.weapons.settings.SubWeaponRecords.SubDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.DamageRangesRecord;
+import net.splatcraft.util.NumberRange;
 
 import java.util.List;
 import java.util.Map;
@@ -267,7 +268,8 @@ public class SplatcraftConvertors
 			dataRecord.allowJumpingOnCharge(),
 			dataRecord.mobility(),
 			dataRecord.attackAngle(),
-			dataRecord.letalAngle()
+			dataRecord.letalAngle(),
+			dataRecord.blobCount()
 		);
 	}
 	public static FlingDataRecord convert(FlingDataRecord dataRecord)
@@ -291,10 +293,9 @@ public class SplatcraftConvertors
 		return new RollerAttackDataRecord(
 			dataRecord.inkConsumption(),
 			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
-			dataRecord.startupTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.startupTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
-			dataRecord.minSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
-			dataRecord.maxSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick
+			dataRecord.speedRange().mapBoth(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick)
 		);
 	}
 	private static RollerProjectileDataRecord convert(RollerProjectileDataRecord dataRecord)
@@ -319,32 +320,32 @@ public class SplatcraftConvertors
 			dataRecord.weakDamageRanges().map(SplatcraftConvertors::convert)
 		);
 	}
-	public static FloatRange convertLength(FloatRange range)
+	public static NumberRange.FloatRange convertLength(NumberRange.FloatRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new FloatRange(
+		return new NumberRange.FloatRange(
 			range.min() / DistanceUnitsPerMinecraftSquare,
 			range.max() / DistanceUnitsPerMinecraftSquare
 		);
 	}
-	public static FloatRange convertSpeed(FloatRange range)
+	public static NumberRange.FloatRange convertSpeed(NumberRange.FloatRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new FloatRange(
+		return new NumberRange.FloatRange(
 			range.min() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 			range.max() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static IntRange convertTime(IntRange range)
+	public static NumberRange.IntRange convertTime(NumberRange.IntRange range)
 	{
 		if (SkipConverting)
 			return range;
 		
-		return new IntRange(
+		return new NumberRange.IntRange(
 			range.min() / SplatoonFramesPerMinecraftTick,
 			range.max() / SplatoonFramesPerMinecraftTick
 		);
