@@ -47,8 +47,8 @@ import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
-import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
@@ -186,7 +186,7 @@ public class RendererHandler
 		}
 		return true;
 	}
-	public static <T extends SubWeaponRecords.SubDataRecord<T>> boolean renderSubWeapon(ItemStack stack, SubWeaponItem<T> subWeaponItem, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks, boolean leftHanded)
+	public static <T extends DynamicDataRecord<T>> boolean renderSubWeapon(ItemStack stack, SubWeaponItem<T> subWeaponItem, MatrixStack poseStack, VertexConsumerProvider source, int light, float partialTicks, boolean leftHanded)
 	{
 //		SubWeaponRenderer<?, ?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().renderers.get(subWeaponItem.entityType.get());
 		// ok i tried to render the sub models via getting their internal model instead of instantiating a whole entity but the entityrenderer thing does a lot of work about colors and those things since these models have 2 layers

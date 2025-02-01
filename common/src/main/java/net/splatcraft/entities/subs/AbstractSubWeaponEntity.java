@@ -22,7 +22,7 @@ import net.minecraft.world.World;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.ISetVelocityExtension;
-import net.splatcraft.items.weapons.settings.SubWeaponRecords;
+import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftDamageTypes;
@@ -32,7 +32,7 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubDataRecord<Data>> extends ProjectileEntity implements IColoredEntity, ISetVelocityExtension
+public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Data>> extends ProjectileEntity implements IColoredEntity, ISetVelocityExtension
 {
 	protected static final RegistryKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(AbstractSubWeaponEntity.class, CommonUtils.INKCOLORDATAHANDLER);
@@ -46,18 +46,18 @@ public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubD
 	{
 		super(type, world);
 	}
-	public static <Data extends SubWeaponRecords.SubDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, @NotNull LivingEntity thrower, ItemStack sourceWeapon)
+	public static <Data extends DynamicDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, @NotNull LivingEntity thrower, ItemStack sourceWeapon)
 	{
 		return create(type, world, thrower, ColorUtils.getInkColor(sourceWeapon), InkBlockUtils.getInkType(thrower), sourceWeapon);
 	}
-	public static <Data extends SubWeaponRecords.SubDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
+	public static <Data extends DynamicDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
 	{
 		A result = create(type, world, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
 		result.setOwner(thrower);
 		
 		return result;
 	}
-	public static <Data extends SubWeaponRecords.SubDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, double x, double y, double z, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
+	public static <Data extends DynamicDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, World world, double x, double y, double z, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
 	{
 		A result = type.create(world);
 		result.setPos(x, y, z);
@@ -123,12 +123,11 @@ public abstract class AbstractSubWeaponEntity<Data extends SubWeaponRecords.SubD
 	{
 		ISetVelocityExtension.super.setVelocity(x, y, z, power, uncertainty);
 	}
-
 	@Override
-	public void onVelocityCalculated(Vec3d velocity, float speed) {
+	public void onVelocityCalculated(Vec3d velocity, float speed)
+	{
 		setVelocity(velocity);
 	}
-
 	public double getGravity()
 	{
 		return 0.09;

@@ -11,22 +11,11 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataR
 import net.splatcraft.util.DamageRangesRecord;
 import net.splatcraft.util.NumberRange;
 import net.splatcraft.util.NumberRange.FloatRange;
-import net.splatcraft.util.WeaponTooltip;
-
-import java.util.List;
 
 import static net.splatcraft.data.SplatcraftConvertors.*;
 
 public class SubWeaponRecords
 {
-	public interface SubDataRecord<Self>
-	{
-		Self convertSelf();
-		default <T extends SubDataRecord<T>> void addTooltips(List<WeaponTooltip<SubWeaponSettings<T>>> weaponTooltips)
-		{
-		
-		}
-	}
 	public record ThrowableExplodingSubDataRecord(
 		DamageRangesRecord damageRanges,
 		SplashAroundDataRecord inkSplashes,
@@ -34,7 +23,7 @@ public class SubWeaponRecords
 		int fuseTime,
 		float throwVelocity,
 		float throwAngle
-	) implements SubDataRecord<ThrowableExplodingSubDataRecord>
+	) implements DynamicDataRecord<ThrowableExplodingSubDataRecord>
 	{
 		public static final MapCodec<ThrowableExplodingSubDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
@@ -74,7 +63,7 @@ public class SubWeaponRecords
 		float directDamage,
 		float throwVelocity,
 		float throwAngle
-	) implements SubDataRecord<BurstBombDataRecord>
+	) implements DynamicDataRecord<BurstBombDataRecord>
 	{
 		public static final MapCodec<BurstBombDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
@@ -118,7 +107,7 @@ public class SubWeaponRecords
 		float contactDamage,
 		float maxCookRadiusBonus,
 		int warningFrame
-	) implements SubDataRecord<CurlingBombDataRecord>
+	) implements DynamicDataRecord<CurlingBombDataRecord>
 	{
 		public static final MapCodec<CurlingBombDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
@@ -163,7 +152,7 @@ public class SubWeaponRecords
 			);
 		}
 	}
-	public static class EmptyDataRecord implements SubDataRecord<EmptyDataRecord>
+	public static class EmptyDataRecord implements DynamicDataRecord<EmptyDataRecord>
 	{
 		public static final EmptyDataRecord DEFAULT = new EmptyDataRecord();
 		public static final Codec<EmptyDataRecord> CODEC = new Codec<>()

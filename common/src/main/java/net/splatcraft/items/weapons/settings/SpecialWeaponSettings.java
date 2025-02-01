@@ -9,7 +9,6 @@ import net.minecraft.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.util.NumberRange;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -19,12 +18,12 @@ import java.util.Map;
 import static net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
-public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T>
+public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SpecialWeaponSettings<T>, SpecialWeaponSettings.DataRecord, T>
 {
-	public static final SubWeaponSettings<?> DEFAULT = new SubWeaponSettings<>("default");
-	public T subDataRecord;
+	public static final SpecialWeaponSettings<?> DEFAULT = new SpecialWeaponSettings<>("default");
+	public T specialDataRecord;
 	public DataRecord dataRecord = DataRecord.DEFAULT;
-	public SubWeaponSettings(String name)
+	public SpecialWeaponSettings(String name)
 	{
 		super(name);
 	}
@@ -32,15 +31,13 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	public Map.Entry<String, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
-			Map.entry("throwable_exploding", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
-			Map.entry("burst_bomb", SubWeaponRecords.BurstBombDataRecord.CODEC),
-			Map.entry("curling_bomb", SubWeaponRecords.CurlingBombDataRecord.CODEC)
+			Map.entry("sting_ray", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC)
 		};
 	}
 	@Override
 	public T getDynamicDataToSerialize()
 	{
-		return subDataRecord;
+		return specialDataRecord;
 	}
 	@Override
 	public DataRecord getDataToSerialize()
@@ -51,10 +48,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	protected void processResult(DataRecord dataRecord, T subData)
 	{
 		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
-		subDataRecord = SplatcraftConvertors.convert(subData);
-		
-		setSecret(dataRecord.isSecret);
-		setMoveSpeed(dataRecord.mobility);
+		specialDataRecord = SplatcraftConvertors.convert(subData);
 	}
 	@Override
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
@@ -62,13 +56,13 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		return 0;
 	}
 	@Override
-	public List<WeaponTooltip<SubWeaponSettings<T>>> tooltipsToRegister()
+	public List<WeaponTooltip<SpecialWeaponSettings<T>>> tooltipsToRegister()
 	{
-		List<WeaponTooltip<SubWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
+		List<WeaponTooltip<SpecialWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
 		
 		weaponTooltips.add(new WeaponTooltip<>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().consumption(), WeaponTooltip.RANKER_DESCENDING));
 		weaponTooltips.add(new WeaponTooltip<>("ink_recovery", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().recoveryCooldown(), WeaponTooltip.RANKER_DESCENDING));
-		subDataRecord.addTooltips(weaponTooltips);
+		specialDataRecord.addTooltips(weaponTooltips);
 		return weaponTooltips;
 	}
 	@Override
@@ -89,8 +83,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	public record DataRecord(
 		InkUsageDataRecord inkUsage,
 		int holdTime,
-		float mobility,
-		boolean isSecret
+		float mobility
 	)
 	{
 		public static final InkUsageDataRecord DEFAULT_INK_USAGE = new InkUsageDataRecord(70, 70);
@@ -103,26 +96,5 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 			).apply(inst, DataRecord::new)
 		);
 		public static final DataRecord DEFAULT = new DataRecord(DEFAULT_INK_USAGE, WeaponBaseItem.USE_DURATION, 1f, false);
-	}
-	public record SplashAroundDataRecord(
-		NumberRange.FloatRange splashVelocityRange,
-		NumberRange.FloatRange splashPitchRange,
-		int splashCount,
-		float splashPaintRadius,
-		float angleRandomness,
-		boolean distributeEvenly
-	)
-	{
-		public static final Codec<SplashAroundDataRecord> CODEC = RecordCodecBuilder.create(
-			inst -> inst.group(
-				NumberRange.FloatRange.CODEC.fieldOf("splash_velocity_range").forGetter(SplashAroundDataRecord::splashVelocityRange),
-				NumberRange.FloatRange.CODEC.optionalFieldOf("splash_pitch_range", new NumberRange.FloatRange(19f, 33f)).forGetter(SplashAroundDataRecord::splashPitchRange),
-				Codec.INT.fieldOf("splash_count").forGetter(SplashAroundDataRecord::splashCount),
-				Codec.FLOAT.fieldOf("splash_paint_radius").forGetter(SplashAroundDataRecord::splashPaintRadius),
-				Codec.FLOAT.optionalFieldOf("angle_randomness", 20f).forGetter(SplashAroundDataRecord::angleRandomness),
-				Codec.BOOL.optionalFieldOf("distribute_evenly", true).forGetter(SplashAroundDataRecord::distributeEvenly)
-			).apply(inst, SplashAroundDataRecord::new)
-		);
-		public static final SplashAroundDataRecord DEFAULT = new SplashAroundDataRecord(NumberRange.FloatRange.ZERO, NumberRange.FloatRange.ZERO, 0, 0, 20, true);
 	}
 }

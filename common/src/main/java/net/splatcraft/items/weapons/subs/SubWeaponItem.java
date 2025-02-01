@@ -24,7 +24,7 @@ import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
-import net.splatcraft.items.weapons.settings.SubWeaponRecords;
+import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SubWeaponItem<Data extends SubWeaponRecords.SubDataRecord<Data>> extends WeaponBaseItem<SubWeaponSettings<Data>>
+public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extends WeaponBaseItem<SubWeaponSettings<Data>>
 {
 	public static final ArrayList<SubWeaponItem<?>> subs = new ArrayList<>();
 	public final RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity<Data>>> entityType;

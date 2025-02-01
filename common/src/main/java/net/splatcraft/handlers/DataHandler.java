@@ -48,6 +48,7 @@ public class DataHandler
 			try
 			{
 				put(Splatcraft.MODID + ":sub_weapon", (Class<? extends AbstractWeaponSettings<?, ?>>) Class.forName("net.splatcraft.items.weapons.settings.SubWeaponSettings"));
+				put(Splatcraft.MODID + ":special_weapon", (Class<? extends AbstractWeaponSettings<?, ?>>) Class.forName("net.splatcraft.items.weapons.settings.SpecialWeaponSettings"));
 			}
 			catch (ClassNotFoundException ignored)
 			{

@@ -3,8 +3,8 @@ package net.splatcraft.data;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
+import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SlosherShotDataRecord;
-import net.splatcraft.items.weapons.settings.SubWeaponRecords.SubDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.DamageRangesRecord;
@@ -186,7 +186,7 @@ public class SplatcraftConvertors
 			dataRecord.isSecret()
 		);
 	}
-	public static <T extends SubDataRecord<T>> T convert(T dataRecord)
+	public static <T extends DynamicDataRecord<T>> T convert(T dataRecord)
 	{
 		if (SkipConverting || dataRecord == null)
 			return dataRecord;
