@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.architectury.registry.ReloadListenerRegistry;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.resource.ResourceType;
@@ -21,7 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class DataHandler
 {
@@ -55,15 +58,22 @@ public class DataHandler
 			}
 		}}; //TODO make better registry probably
 		public static final BiMap<Identifier, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
+		public static final ReseteableMemoizedPredicate<Class<? extends AbstractWeaponSettings<?, ?>>, List<Identifier>> CLASS_SETTINGS_MAP
+			= new ReseteableMemoizedPredicate<>((Class<? extends AbstractWeaponSettings<?, ?>> clazz) -> SETTINGS.entrySet().stream().filter(v -> clazz.isInstance(v.getValue())).map(Map.Entry::getKey).toList());
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "weapon_settings";
 		public WeaponStatsListener()
 		{
 			super(GSON_INSTANCE, folder);
 		}
+		public static List<Identifier> getSettingsForClass(Class<? extends AbstractWeaponSettings<?, ?>> clazz)
+		{
+			return CLASS_SETTINGS_MAP.apply(clazz);
+		}
 		@Override
 		protected void apply(Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager manager, @NotNull Profiler profilerIn)
 		{
+			CLASS_SETTINGS_MAP.reset();
 			SETTINGS.clear();
 			
 			resourceList.forEach((key, element) ->
@@ -88,6 +98,28 @@ public class DataHandler
 					throw new RuntimeException(e);
 				}
 			});
+		}
+		public static class ReseteableMemoizedPredicate<I, O> implements Function<I, O>
+		{
+			private final Function<I, O> function;
+			private final Map<I, O> cache = new Object2ObjectOpenHashMap<>();
+			public ReseteableMemoizedPredicate(Function<I, O> function)
+			{
+				this.function = function;
+			}
+			public O apply(I object)
+			{
+				return cache.computeIfAbsent(object, function);
+			}
+			public void reset()
+			{
+				cache.clear();
+			}
+			@Override
+			public String toString()
+			{
+				return "reseteablememoize/1[function=" + function + ", size=" + cache.size() + "]";
+			}
 		}
 	}
 }

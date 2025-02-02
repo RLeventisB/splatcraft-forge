@@ -1,9 +1,8 @@
 package net.splatcraft.items.weapons;
 
-import com.mojang.serialization.DataResult;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.LeveledCauldronBlock;
 import net.minecraft.block.cauldron.CauldronBehavior;
-import net.minecraft.component.ComponentMap;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
@@ -169,25 +168,27 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public abstract Class<S> getSettingsClass();
 	public S getSettings(ItemStack stack)
 	{
-		// ok this method was confusing so i rewrote it for now
-		ComponentMap components = stack.getComponents();
-		Identifier id = components.contains(SplatcraftComponents.WEAPON_SETTING_ID) ? components.get(SplatcraftComponents.WEAPON_SETTING_ID) : settingsId;
-		
-		DataResult<AbstractWeaponSettings<?, ?>> result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
-		if (result.isSuccess() && getSettingsClass().isInstance(result.getOrThrow()))
+		return getSettingsAndValidId(stack).getSecond();
+	}
+	public Pair<Identifier, S> getSettingsAndValidId(ItemStack stack)
+	{
+		Identifier id;
+		if (stack.contains(SplatcraftComponents.WEAPON_SETTING_ID))
 		{
-			return getSettingsClass().cast(result.getOrThrow());
-		}
-		else
-		{
-			id = settingsId;
-			result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
-			if (result.isSuccess() && getSettingsClass().isInstance(result.getOrThrow()))
+			id = stack.get(SplatcraftComponents.WEAPON_SETTING_ID);
+			AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(id);
+			if (settings != null && getSettingsClass().isInstance(settings))
 			{
-				return getSettingsClass().cast(result.getOrThrow());
+				return Pair.of(id, getSettingsClass().cast(settings));
 			}
-			return (S) DEFAULTS.get(getSettingsClass());
 		}
+		id = settingsId;
+		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(id);
+		if (settings != null && getSettingsClass().isInstance(settings))
+		{
+			return Pair.of(id, getSettingsClass().cast(settings));
+		}
+		return Pair.of(null, (S) DEFAULTS.get(getSettingsClass()));
 	}
 	public <T extends WeaponBaseItem<?>> T setSecret(boolean secret)
 	{

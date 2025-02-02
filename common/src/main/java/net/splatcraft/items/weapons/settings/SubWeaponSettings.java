@@ -6,6 +6,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -29,12 +31,12 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		super(name);
 	}
 	@Override
-	public Map.Entry<String, MapCodec<? extends T>>[] getDynamicCodecs()
+	public Map.Entry<Identifier, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
-			Map.entry("throwable_exploding", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
-			Map.entry("burst_bomb", SubWeaponRecords.BurstBombDataRecord.CODEC),
-			Map.entry("curling_bomb", SubWeaponRecords.CurlingBombDataRecord.CODEC)
+			Map.entry(Splatcraft.identifierOf("throwable_exploding"), SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
+			Map.entry(Splatcraft.identifierOf("burst_bomb"), SubWeaponRecords.BurstBombDataRecord.CODEC),
+			Map.entry(Splatcraft.identifierOf("curling_bomb"), SubWeaponRecords.CurlingBombDataRecord.CODEC)
 		};
 	}
 	@Override

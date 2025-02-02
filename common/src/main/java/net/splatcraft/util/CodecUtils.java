@@ -5,10 +5,15 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.InvalidIdentifierException;
 import net.minecraft.util.math.Vec2f;
+import net.splatcraft.Splatcraft;
 
 import java.util.Collection;
 import java.util.Map;
@@ -19,7 +24,21 @@ import java.util.stream.Stream;
 
 public class CodecUtils
 {
-	public static final Codec<Hand> HAND_NULL_IS_MAIN_CODEC = new Codec<>()
+	public static final Codec<Identifier> SPLATCRAFT_IDENTIFIER_CODEC = identifierCustomNamespace(Splatcraft.MODID);
+	public static final PacketCodec<ByteBuf, Hand> PACKET_HAND = new PacketCodec<>()
+	{
+		@Override
+		public Hand decode(ByteBuf buf)
+		{
+			return buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
+		}
+		@Override
+		public void encode(ByteBuf buf, Hand value)
+		{
+			buf.writeBoolean(Objects.equals(value, Hand.MAIN_HAND));
+		}
+	};
+	public static final Codec<Hand> HAND_CODEC = new Codec<>()
 	{
 		@Override
 		public <T> DataResult<Pair<Hand, T>> decode(DynamicOps<T> ops, T input)
@@ -54,6 +73,36 @@ public class CodecUtils
 	public static <E, C extends Collection<E>> Codec<C> collection(Codec<E> codec, Supplier<C> collectionCreator)
 	{
 		return new CollectionCodec<>(codec, collectionCreator);
+	}
+	public static Codec<Identifier> identifierCustomNamespace(String defaultNamespace)
+	{
+		return Codec.STRING.comapFlatMap(id -> validateId(id, defaultNamespace), Identifier::toString).stable();
+	}
+	private static DataResult<Identifier> validateId(String id, String defaultNamespace)
+	{
+		try
+		{
+			int i = id.indexOf(':');
+			if (i >= 0)
+			{
+				String path = id.substring(i + 1);
+				if (i != 0)
+				{
+					String namespace = id.substring(0, i);
+					return DataResult.success(Identifier.of(namespace, path));
+				}
+				else
+				{
+					return DataResult.success(Identifier.of(defaultNamespace, path));
+				}
+			}
+			
+			return DataResult.success(Identifier.of(defaultNamespace, id));
+		}
+		catch (InvalidIdentifierException var2)
+		{
+			return DataResult.error(() -> "Not a valid resource location: " + id + " " + var2.getMessage());
+		}
 	}
 	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{

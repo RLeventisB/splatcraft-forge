@@ -6,31 +6,31 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.*;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.util.CodecUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<SELF, COMMONDATA>, COMMONDATA, DATA> extends AbstractWeaponSettings<SELF, COMMONDATA>
 {
-	private static final Map<Class<? extends DynamicWeaponSettings<?, ?, ?>>, Map<String, MapCodec<?>>> subTypeCodec = new HashMap<>();
+	private static final Map<Class<? extends DynamicWeaponSettings<?, ?, ?>>, Map<Identifier, MapCodec<?>>> subTypeCodec = new HashMap<>();
 	private MapCodec<DATA> dynamicCodec;
-	private String subTypeName;
+	private Identifier subTypeName;
 	public DynamicWeaponSettings(String name)
 	{
 		super(name);
 		Class<? extends DynamicWeaponSettings<?, ?, ?>> clazz = (Class<? extends DynamicWeaponSettings<?, ?, ?>>) getClass();
 		subTypeCodec.computeIfAbsent(clazz, v -> Map.ofEntries(getDynamicCodecs()));
 	}
-	public abstract Map.Entry<String, MapCodec<? extends DATA>>[] getDynamicCodecs();
+	public abstract Map.Entry<Identifier, MapCodec<? extends DATA>>[] getDynamicCodecs();
 	protected abstract MapCodec<COMMONDATA> getMapCodec();
 	public abstract DATA getDynamicDataToSerialize();
 	@Override
 	public void deserialize(Identifier key, JsonObject json)
 	{
 		onStartReading(json);
-		subTypeName = JsonHelper.getString(json, "sub_type");
+		subTypeName = CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.parse(JsonOps.INSTANCE, json.get("sub_type")).getOrThrow();
 		dynamicCodec = (MapCodec<DATA>) subTypeCodec.get(getClass()).get(subTypeName);
 		DataResult<COMMONDATA> common = getCodec().parse(JsonOps.INSTANCE, json);
 		DataResult<DATA> dynamic = dynamicCodec.codec().parse(JsonOps.INSTANCE, json);
@@ -49,6 +49,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 	@Override
 	public final void processData(COMMONDATA o)
 	{
+	
 	}
 	@Override
 	public final void processResult(Object o)
@@ -61,7 +62,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 		// lazily stitch the json elements because i dont know how mapcodecs do encoding :(
 		RecordBuilder<JsonElement> builder = new RecordBuilder.MapBuilder<>(JsonOps.INSTANCE);
 		
-		Codec.STRING.fieldOf("sub_type").encode(subTypeName, JsonOps.INSTANCE, builder);
+		CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.fieldOf("sub_type").encode(subTypeName, JsonOps.INSTANCE, builder);
 		getMapCodec().encode(getDataToSerialize(), JsonOps.INSTANCE, builder);
 		dynamicCodec.encode(getDynamicDataToSerialize(), JsonOps.INSTANCE, builder);
 		

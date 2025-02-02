@@ -277,7 +277,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			Codec.FLOAT.fieldOf("time").forGetter(DodgeRollAction::getTime),
 			Codec.FLOAT.fieldOf("max_time").forGetter(DodgeRollAction::getMaxTime),
 			Codec.INT.fieldOf("slot_index").forGetter(DodgeRollAction::getSlotIndex),
-			CodecUtils.HAND_NULL_IS_MAIN_CODEC.fieldOf("hand").forGetter(EntityAction::getHand),
+			CodecUtils.HAND_CODEC.fieldOf("hand").forGetter(EntityAction::getHand),
 			Codec.BYTE.fieldOf("roll_frame").forGetter(v -> v.rollFrame),
 			Codec.BYTE.fieldOf("roll_end_frame").forGetter(v -> v.rollEndFrame),
 			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
