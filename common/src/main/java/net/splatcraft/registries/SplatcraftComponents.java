@@ -197,7 +197,7 @@ public class SplatcraftComponents
 			Codec.BOOL.optionalFieldOf("inverted", false).forGetter(ItemColorData::hasInvertedColor),
 			InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(ItemColorData::color)
 		).apply(builder, ItemColorData::new));
-		public static final Supplier<ItemColorData> DEFAULT = () -> new ItemColorData(false, false, InkColor.INVALID);
+		public static final ItemColorData DEFAULT = new ItemColorData(false, false, InkColor.INVALID);
 		public ItemColorData withColorLocked(boolean colorLocked)
 		{
 			return new ItemColorData(colorLocked, hasInvertedColor, color);

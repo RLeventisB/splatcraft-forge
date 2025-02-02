@@ -109,7 +109,7 @@ public class ColorUtils
 	{
 		stack.apply(
 			SplatcraftComponents.ITEM_COLOR_DATA,
-			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			SplatcraftComponents.ItemColorData.DEFAULT,
 			v -> v.withInvertedColor(inverted)
 		);
 		return stack;
@@ -154,7 +154,7 @@ public class ColorUtils
 		InkColor finalColor = color == null ? InkColor.INVALID : color;
 		stack.apply(
 			SplatcraftComponents.ITEM_COLOR_DATA,
-			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			SplatcraftComponents.ItemColorData.DEFAULT,
 			v -> v.withInkColor(finalColor)
 		);
 		return stack;
@@ -294,7 +294,7 @@ public class ColorUtils
 	{
 		stack.apply(
 			SplatcraftComponents.ITEM_COLOR_DATA,
-			SplatcraftComponents.ItemColorData.DEFAULT.get(),
+			SplatcraftComponents.ItemColorData.DEFAULT,
 			v -> v.withColorLocked(isLocked)
 		);
 		return stack;

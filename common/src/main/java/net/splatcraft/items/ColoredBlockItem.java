@@ -40,7 +40,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 	private boolean matchColor = true;
 	public ColoredBlockItem(Block block, Item.Settings properties, Item clearItem)
 	{
-		super(block, properties.component(SplatcraftComponents.ITEM_COLOR_DATA, SplatcraftComponents.ItemColorData.DEFAULT.get()));
+		super(block, properties.component(SplatcraftComponents.ITEM_COLOR_DATA, SplatcraftComponents.ItemColorData.DEFAULT));
 		SplatcraftItems.inkColoredItems.add(this);
 		InkwellBlock.inkCoatingRecipes.put(clearItem, this);
 		this.clearItem = clearItem;

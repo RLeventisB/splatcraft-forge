@@ -79,6 +79,7 @@ public final class Splatcraft
 		RendererHandler.registerEvents();
 		SplatcraftEntities.bindRenderers();
 		SplatcraftEntities.defineModelLayers();
+		SplatcraftKeyHandler.registerBindingsAndEvents();
 		
 		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClientAfter);
 	}
@@ -89,7 +90,6 @@ public final class Splatcraft
 		modInstance.registerConfigurationScreen(configProvider);
 		
 		SplatcraftTileEntities.bindTESR();
-		SplatcraftKeyHandler.registerBindingsAndEvents();
 		SplatcraftItems.registerModelProperties();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)

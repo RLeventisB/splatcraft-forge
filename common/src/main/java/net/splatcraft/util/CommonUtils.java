@@ -1,6 +1,7 @@
 package net.splatcraft.util;
 
 import com.google.common.base.Supplier;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.platform.Platform;
@@ -22,6 +23,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.data.TrackedDataHandler;
 import net.minecraft.entity.decoration.DisplayEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.network.RegistryByteBuf;
@@ -253,16 +255,72 @@ public class CommonUtils
 		ItemStack itemstack = RangedWeaponItem.getHeldProjectile(entity, predicate);
 		if (!itemstack.isEmpty())
 			return itemstack;
+		
+		for (int i = 0; i < entity.getInventory().size(); ++i)
+		{
+			ItemStack itemstack1 = entity.getInventory().getStack(i);
+			if (predicate.test(itemstack1))
+				return itemstack1;
+		}
+		
+		return ItemStack.EMPTY;
+	}
+	// horrible redaction incoming
+	/**
+	 * Finds and returns an specific {@link ItemStack} and their respective index that are from the entity's inventory.
+	 * The index may be negative if the {@link LivingEntity} passed is not a player, or if the respective stack was not found.
+	 * If the entity is not a player, the index may be -2 or -3 if the stack is found in the main hand or offhand, respectively.
+	 * If the entity is a player, and the stack is in the main hand, it returns the selected slot, if the item is in
+	 * the offhand, it returns {@code PlayerInventory.OFF_HAND_SLOT}, otherwise if the stack is found in another slot from
+	 * the player's inventory it returns the index that points to the inventory's slot from which you can find the same stack.
+	 * If the stack is not found, the index is -1, and the stack is {@code ItemStack.EMPTY}.
+	 *
+	 * @param entity    The entity from which their entire inventory will be tested.
+	 * @param predicate The predicate to test if an {@link ItemStack} is valid.
+	 * @return An {@link Pair} which consists of the found item, if any, or else {@code ItemStack.EMPTY}, and the index
+	 * of the found item.
+	 */
+	public static Pair<ItemStack, Integer> getStackAndIndexInInventory(LivingEntity entity, Predicate<ItemStack> predicate)
+	{
+		Pair<ItemStack, Integer> dataPair = getHeldProjectileAndIndex(entity, predicate);
+		if (dataPair.getSecond() != -1)
+			return dataPair;
+		
+		if (entity instanceof PlayerEntity player)
+		{
+			PlayerInventory inventory = player.getInventory();
+			for (int i = 0; i < inventory.size(); ++i)
+			{
+				ItemStack stack = inventory.getStack(i);
+				if (predicate.test(stack))
+					return Pair.of(stack, i);
+			}
+		}
+		
+		return Pair.of(ItemStack.EMPTY, -1);
+	}
+	/**
+	 * Checks both hands and returns an {@link ItemStack} and their respective index, if the stack passes the given predicate.
+	 * The index may be negative if the {@link LivingEntity} passed is not a player, or if the respective stack was not found.
+	 * If the entity is not a player, the index may be -2 or -3 if the stack is found in the main hand or offhand, respectively.
+	 * If the entity is a player, and the stack is in the main hand, it returns the selected slot, if the item is in
+	 * the offhand, it returns {@code PlayerInventory.OFF_HAND_SLOT}.
+	 * If the stack is not found, the index is -1, and the stack is {@code ItemStack.EMPTY}.
+	 *
+	 * @param entity    The entity from which their entire inventory will be tested.
+	 * @param predicate The predicate to test if an {@link ItemStack} is valid.
+	 * @return An {@link Pair} which consists of the found item, if any, or else {@code ItemStack.EMPTY}, and the index
+	 * of the found item.
+	 */
+	public static Pair<ItemStack, Integer> getHeldProjectileAndIndex(LivingEntity entity, Predicate<ItemStack> predicate)
+	{
+		if (predicate.test(entity.getStackInHand(Hand.OFF_HAND)))
+		{
+			return Pair.of(entity.getStackInHand(Hand.OFF_HAND), entity instanceof PlayerEntity ? PlayerInventory.OFF_HAND_SLOT : -3);
+		}
 		else
 		{
-			for (int i = 0; i < entity.getInventory().size(); ++i)
-			{
-				ItemStack itemstack1 = entity.getInventory().getStack(i);
-				if (predicate.test(itemstack1))
-					return itemstack1;
-			}
-			
-			return ItemStack.EMPTY;
+			return predicate.test(entity.getStackInHand(Hand.MAIN_HAND)) ? Pair.of(entity.getStackInHand(Hand.MAIN_HAND), entity instanceof PlayerEntity player ? player.getInventory().selectedSlot : -2) : Pair.of(ItemStack.EMPTY, -1);
 		}
 	}
 	public static boolean anyWeaponOnCooldown(PlayerEntity player)

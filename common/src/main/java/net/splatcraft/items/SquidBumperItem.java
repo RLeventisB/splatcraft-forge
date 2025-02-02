@@ -35,7 +35,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 {
 	public SquidBumperItem()
 	{
-		super(new Settings().maxCount(16).component(SplatcraftComponents.ITEM_COLOR_DATA, SplatcraftComponents.ItemColorData.DEFAULT.get()));
+		super(new Settings().maxCount(16).component(SplatcraftComponents.ITEM_COLOR_DATA, SplatcraftComponents.ItemColorData.DEFAULT));
 		SplatcraftItems.inkColoredItems.add(this);
 	}
 	@Override
