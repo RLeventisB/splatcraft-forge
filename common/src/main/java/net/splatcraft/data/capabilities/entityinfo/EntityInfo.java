@@ -185,7 +185,7 @@ public class EntityInfo
 	{
 		this.dodgeCount = dodgeCount;
 	}
-	private Integer getHigherStartupTicks()
+	private int getHigherStartupTicks()
 	{
 		return higherStartupTicks;
 	}

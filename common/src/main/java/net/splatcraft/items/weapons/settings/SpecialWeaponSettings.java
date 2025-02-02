@@ -3,19 +3,21 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.WeaponTooltip;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
 public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SpecialWeaponSettings<T>, SpecialWeaponSettings.DataRecord, T>
@@ -28,7 +30,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		super(name);
 	}
 	@Override
-	public Map.Entry<String, MapCodec<? extends T>>[] getDynamicCodecs()
+	public Map.Entry<Identifier, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
 			Map.entry("sting_ray", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC)
@@ -47,7 +49,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	@Override
 	protected void processResult(DataRecord dataRecord, T subData)
 	{
-		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
+		this.dataRecord = dataRecord;
 		specialDataRecord = SplatcraftConvertors.convert(subData);
 	}
 	@Override
@@ -60,8 +62,6 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	{
 		List<WeaponTooltip<SpecialWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
 		
-		weaponTooltips.add(new WeaponTooltip<>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().consumption(), WeaponTooltip.RANKER_DESCENDING));
-		weaponTooltips.add(new WeaponTooltip<>("ink_recovery", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().recoveryCooldown(), WeaponTooltip.RANKER_DESCENDING));
 		specialDataRecord.addTooltips(weaponTooltips);
 		return weaponTooltips;
 	}
@@ -81,20 +81,44 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		return 0;
 	}
 	public record DataRecord(
-		InkUsageDataRecord inkUsage,
-		int holdTime,
-		float mobility
+		boolean refillTank,
+		int specialDuration,
+		float mobility,
+		SpecialCostData costData
 	)
 	{
-		public static final InkUsageDataRecord DEFAULT_INK_USAGE = new InkUsageDataRecord(70, 70);
 		public static final MapCodec<DataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
-				InkUsageDataRecord.CODEC.optionalFieldOf("ink_usage", DEFAULT_INK_USAGE).forGetter(DataRecord::inkUsage),
-				Codec.INT.optionalFieldOf("hold_time", WeaponBaseItem.USE_DURATION).forGetter(DataRecord::holdTime),
+				Codec.BOOL.optionalFieldOf("refill_tank", true).forGetter(DataRecord::refillTank),
+				Codec.INT.fieldOf("special_duration").xmap(v -> v / SplatcraftConvertors.SplatoonFramesPerMinecraftTick, v -> v * SplatcraftConvertors.SplatoonFramesPerMinecraftTick).forGetter(DataRecord::specialDuration),
 				Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
-				Codec.BOOL.optionalFieldOf("isSecret", false).forGetter(DataRecord::isSecret)
+				SpecialCostData.CODEC.optionalFieldOf("cost_data", SpecialCostData.DEFAULT).forGetter(DataRecord::costData)
 			).apply(inst, DataRecord::new)
 		);
-		public static final DataRecord DEFAULT = new DataRecord(DEFAULT_INK_USAGE, WeaponBaseItem.USE_DURATION, 1f, false);
+		public static final DataRecord DEFAULT = new DataRecord(true, 140, 1f, SpecialCostData.DEFAULT);
+	}
+	public record SpecialCostData(
+		int defaultPoints,
+		Object2ObjectOpenHashMap<Identifier, Integer> pointOverride
+	)
+	{
+		public static final Codec<SpecialCostData> CODEC = RecordCodecBuilder.create(
+			inst -> inst.group(
+				Codec.INT.optionalFieldOf("default_points", 200).forGetter(SpecialCostData::defaultPoints),
+				CodecUtils.hashMapCodec(Identifier.CODEC, Codec.INT).optionalFieldOf("weapon_overrides", new Object2ObjectOpenHashMap<>(0)).forGetter(SpecialCostData::pointOverride)
+			).apply(inst, SpecialCostData::new)
+		);
+		public static final SpecialCostData DEFAULT = new SpecialCostData(200, new Object2ObjectOpenHashMap<>(0));
+		public int getCost(ItemStack stack)
+		{
+			if (!pointOverride.isEmpty() && stack.getItem() instanceof WeaponBaseItem<?> weaponItem)
+			{
+				Identifier settingId = weaponItem.getSettingsAndValidId(stack).getFirst();
+				Integer overridenPoints = pointOverride.get(settingId);
+				if (overridenPoints != null)
+					return overridenPoints;
+			}
+			return defaultPoints;
+		}
 	}
 }

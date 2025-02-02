@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Entity.class)
 public interface EntityAccessor
 {
-    @Invoker
-    static Vec3d invokeMovementInputToVelocity(Vec3d pRelative, float pMotionScaler, float pFacing)
-    {
-        throw new AssertionError();
-    }
+	@Invoker
+	static Vec3d invokeMovementInputToVelocity(Vec3d movementInput, float speed, float yaw)
+	{
+		throw new AssertionError();
+	}
 }

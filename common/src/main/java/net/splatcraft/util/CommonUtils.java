@@ -46,6 +46,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Uuids;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
@@ -71,6 +72,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 public class CommonUtils
@@ -92,22 +94,8 @@ public class CommonUtils
 			return new Vector2f(vec2.x, vec2.y);
 		}
 	};
-	public static final TrackedDataHandler<InkColor> INKCOLORDATAHANDLER = new TrackedDataHandler<>()
-	{
-		public static final PacketCodec<RegistryByteBuf, InkColor> PACKET_CODEC = PacketCodec.tuple(
-			PacketCodecs.INTEGER, InkColor::getColor,
-			InkColor::new);
-		@Override
-		public PacketCodec<? super RegistryByteBuf, InkColor> codec()
-		{
-			return PACKET_CODEC;
-		}
-		@Override
-		public @NotNull InkColor copy(@NotNull InkColor color)
-		{
-			return InkColor.constructOrReuse(color.getColor());
-		}
-	};
+	public static final TrackedDataHandler<InkColor> INKCOLORDATAHANDLER = TrackedDataHandler.create(InkColor.PACKET_CODEC);
+	public static final TrackedDataHandler<UUID> UUID_DATA_HANDLER = TrackedDataHandler.create(Uuids.PACKET_CODEC);
 	public static final TrackedDataHandler<Vec3d> VEC3DDATAHANDLER = new TrackedDataHandler<>()
 	{
 		public static final PacketCodec<RegistryByteBuf, Vec3d> PACKET_CODEC = PacketCodec.tuple(
@@ -534,6 +522,14 @@ public class CommonUtils
 			booleans[index] = (currentByte >> bit & 1) == 1;
 		}
 		return booleans;
+	}
+	public static int getSlot(LivingEntity entity)
+	{
+		if (entity instanceof PlayerEntity player)
+		{
+			return player.getInventory().selectedSlot;
+		}
+		return -1;
 	}
 	public record Result(float delay, float value)
 	{
