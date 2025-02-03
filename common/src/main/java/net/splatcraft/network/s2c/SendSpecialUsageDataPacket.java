@@ -6,6 +6,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -17,14 +18,16 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendSpecialUsageDataPacket.class);
 	final Identifier specialId;
 	final UUID target;
-	public SendSpecialUsageDataPacket(Identifier specialId, UUID targetUuid)
+	final EntitySlot providerSlot;
+	public SendSpecialUsageDataPacket(Identifier specialId, UUID targetUuid, EntitySlot slot)
 	{
 		this.specialId = specialId;
 		target = targetUuid;
+		providerSlot = slot;
 	}
 	public static SendSpecialUsageDataPacket decode(RegistryByteBuf buffer)
 	{
-		return new SendSpecialUsageDataPacket(Identifier.PACKET_CODEC.decode(buffer), buffer.readUuid());
+		return new SendSpecialUsageDataPacket(Identifier.PACKET_CODEC.decode(buffer), buffer.readUuid(), EntitySlot.SERIALIZER_PACKET_CODEC.decode(buffer));
 	}
 	@Override
 	public Id<? extends CustomPayload> getId()
@@ -36,6 +39,7 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 	{
 		Identifier.PACKET_CODEC.encode(buffer, specialId);
 		buffer.writeUuid(target);
+		EntitySlot.SERIALIZER_PACKET_CODEC.encode(buffer, providerSlot);
 	}
 	@Environment(EnvType.CLIENT)
 	@Override
@@ -44,7 +48,7 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 		PlayerEntity player = ClientUtils.getClient().world.getPlayerByUuid(target);
 		if (player != null)
 		{
-			SpecialHandler.startUsingSpecial(player, specialId);
+			SpecialHandler.startUsingSpecial(player, specialId, providerSlot);
 		}
 	}
 }

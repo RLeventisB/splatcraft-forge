@@ -9,6 +9,7 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.InvalidIdentifierException;
@@ -19,7 +20,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 public class CodecUtils
@@ -58,6 +61,12 @@ public class CodecUtils
 		Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 		Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
 	).apply(inst, Vec2f::new));
+	public static <T extends Enum<T>> PacketCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values)
+	{
+		final IntFunction<T> decoder = (index) -> values.get()[index];
+		final ToIntFunction<T> encoder = Enum::ordinal;
+		return PacketCodecs.indexed(decoder, encoder);
+	}
 	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
 		return mapCodec(keyCodec, valueCodec, Object2ObjectOpenHashMap::new);

@@ -1,6 +1,7 @@
 package net.splatcraft.items;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
@@ -13,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.*;
 import net.minecraft.world.World;
 import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -21,10 +23,13 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendSpecialUsageDataPacket;
 import net.splatcraft.registries.SplatcraftComponents.SpecialProviderData;
 import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static net.splatcraft.registries.SplatcraftComponents.SPECIAL_PROVIDER_DATA;
 
@@ -78,7 +83,18 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	public int getItemBarStep(ItemStack stack)
 	{
 		SpecialProviderData data = getData(stack);
-		return data == null ? 0 : (int) (Math.min(1, (float) data.storedPoints() / SpecialHandler.getRequiredSpecialPoints(ClientUtils.getClientPlayer().getActiveItem(), stack)) * 13);
+		float progress = 0;
+		ClientPlayerEntity player = ClientUtils.getClientPlayer();
+		Optional<BaseSpecialAction> optional = EntityAction.getSpecificActionIf(player, v -> v.isProviderStack(player, stack), BaseSpecialAction.class);
+		if (optional.isPresent())
+		{
+			progress = optional.get().getProgress();
+		}
+		else if (data != null)
+		{
+			progress = Math.min(1f, (float) data.storedPoints() / SpecialHandler.getRequiredSpecialPoints(player.getActiveItem(), stack));
+		}
+		return (int) (progress * 13f);
 	}
 	@Override
 	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand)
@@ -181,8 +197,8 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			return;
 		}
 		
-		SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack);
-		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUuid()), serverPlayer);
+		EntitySlot entitySlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack);
+		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUuid(), entitySlot), serverPlayer);
 		
 		entity.setCurrentHand(hand);
 	}

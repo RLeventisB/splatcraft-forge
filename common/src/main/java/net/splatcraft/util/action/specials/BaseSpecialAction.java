@@ -3,8 +3,10 @@ package net.splatcraft.util.action.specials;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.world.World;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -16,19 +18,29 @@ import java.util.Optional;
 
 public abstract class BaseSpecialAction extends EntityActionWithTime
 {
-	protected int slotIndex;
-	public BaseSpecialAction(float time, float duration, int slotIndex)
+	protected final EntitySlot providerEntitySlot;
+	protected final int slotIndex;
+	public BaseSpecialAction(float time, float duration, int slotIndex, EntitySlot providerEntitySlot)
 	{
 		super(time, duration);
 		this.slotIndex = slotIndex;
+		this.providerEntitySlot = providerEntitySlot;
 	}
-	public BaseSpecialAction(float duration, int slotIndex)
+	public BaseSpecialAction(float duration, int slotIndex, EntitySlot providerEntitySlot)
 	{
-		this(duration, duration, slotIndex);
+		this(duration, duration, slotIndex, providerEntitySlot);
 	}
 	public static <T extends BaseSpecialAction> RecordCodecBuilder<T, Integer> getSlotIndexCodec()
 	{
 		return Codec.INT.fieldOf("slot_index").forGetter(v -> v.slotIndex);
+	}
+	public static <T extends BaseSpecialAction> RecordCodecBuilder<T, EntitySlot> getProviderEntitySlotCodec()
+	{
+		return EntitySlot.SERIALIZER_CODEC.fieldOf("provider_slot_index").forGetter(v -> v.providerEntitySlot);
+	}
+	public boolean isProviderStack(LivingEntity entity, ItemStack stack)
+	{
+		return providerEntitySlot.isSlotFor(entity, stack);
 	}
 	public float getProgress()
 	{

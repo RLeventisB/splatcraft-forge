@@ -169,7 +169,14 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		{
 			if (getWorld().isClient)
 			{
-				getWorld().addParticle(new InkSplashParticleData(getColor(), 1f), getX(), getY(), getZ(), forward.x, forward.y, forward.z);
+				getWorld().addParticle(new InkSplashParticleData(getColor(), 0.4f),
+					getX(),
+					getY(),
+					getZ(),
+					forward.x + random.nextFloat() / 2f - 0.25f,
+					forward.y + random.nextFloat() / 2f - 0.25f,
+					forward.z + random.nextFloat() / 2f - 0.25f
+				);
 			}
 			else
 				doCollisions(forward);
