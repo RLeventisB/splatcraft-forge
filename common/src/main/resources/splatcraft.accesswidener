@@ -24,6 +24,7 @@ accessible field net/minecraft/client/render/Tessellator allocator Lnet/minecraf
 accessible field net/minecraft/client/network/ClientAdvancementManager advancementProgresses Ljava/util/Map;
 accessible field net/minecraft/client/gui/hud/InGameHud layeredDrawer Lnet/minecraft/client/gui/LayeredDrawer;
 accessible class net/minecraft/server/world/ServerEntityManager$Listener
+accessible method net/minecraft/world/World getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 accessible method net/minecraft/server/world/ServerWorld getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 
 #accessible net/minecraft/client/gui/components/AbstractWidget *

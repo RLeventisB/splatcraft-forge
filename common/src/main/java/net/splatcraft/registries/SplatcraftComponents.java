@@ -83,12 +83,13 @@ public class SplatcraftComponents
 		ComponentType.<List<Identifier>>builder().codec(Codec.list(Identifier.CODEC)).build()
 	);
 	public static <T> DataResult<T> getComponent(ItemStack stack, ComponentType<T> type)
+	public static <T> Optional<T> getOptional(ItemStack stack, ComponentType<T> type)
 	{
-		if (stack.getComponents().contains(type))
-		{
-			return DataResult.success(stack.getComponents().get(type));
-		}
-		return DataResult.error(() -> "This ItemStack doesn't have the specified component type");
+		return Optional.ofNullable(stack.get(type));
+	}
+	public static <T> void applyToComponentIfContains(ItemStack stack, ComponentType<T> type, Function<T, T> applier)
+	{
+		getOptional(stack, type).ifPresent(component -> stack.set(type, applier.apply(component)));
 	}
 	public record RemoteInfo(Optional<String> stageId, Optional<String> dimensionId, Optional<String> targets,
 	                         Optional<BlockPos> pointA, Optional<BlockPos> pointB, int modeIndex)
