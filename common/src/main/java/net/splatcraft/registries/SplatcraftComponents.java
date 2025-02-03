@@ -82,7 +82,6 @@ public class SplatcraftComponents
 		Splatcraft.identifierOf("blueprint_advancements"),
 		ComponentType.<List<Identifier>>builder().codec(Codec.list(Identifier.CODEC)).build()
 	);
-	public static <T> DataResult<T> getComponent(ItemStack stack, ComponentType<T> type)
 	public static <T> Optional<T> getOptional(ItemStack stack, ComponentType<T> type)
 	{
 		return Optional.ofNullable(stack.get(type));
