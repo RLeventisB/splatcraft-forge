@@ -5,12 +5,10 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.random.Random;
 
-import java.util.function.Supplier;
-
-public abstract class DynamicIdMovingSoundInstance implements TickableSoundInstance, SoundInstance
+public abstract class MovingSoundInstanceButTheIdCanBeChanged implements TickableSoundInstance, SoundInstance
 {
 	protected final SoundCategory category;
-	protected final Supplier<Identifier> idSupplier;
+	protected Identifier id;
 	protected Sound sound;
 	protected float volume;
 	protected float pitch;
@@ -23,12 +21,12 @@ public abstract class DynamicIdMovingSoundInstance implements TickableSoundInsta
 	protected boolean relative;
 	protected Random random;
 	private boolean done;
-	protected DynamicIdMovingSoundInstance(Supplier<Identifier> soundIdSuplier, SoundCategory category, Random random)
+	protected MovingSoundInstanceButTheIdCanBeChanged(Identifier id, SoundCategory category, Random random)
 	{
 		volume = 1.0F;
 		pitch = 1.0F;
 		attenuationType = AttenuationType.LINEAR;
-		idSupplier = soundIdSuplier;
+		this.id = id;
 		this.category = category;
 		this.random = random;
 	}
@@ -43,18 +41,18 @@ public abstract class DynamicIdMovingSoundInstance implements TickableSoundInsta
 	}
 	public Identifier getId()
 	{
-		return idSupplier.get();
+		return id;
 	}
 	public WeightedSoundSet getSoundSet(SoundManager soundManager)
 	{
-		if (idSupplier.get().equals(SoundManager.INTENTIONALLY_EMPTY_ID))
+		if (id.equals(SoundManager.INTENTIONALLY_EMPTY_ID))
 		{
 			sound = SoundManager.INTENTIONALLY_EMPTY_SOUND;
 			return SoundManager.INTENTIONALLY_EMPTY_SOUND_SET;
 		}
 		else
 		{
-			WeightedSoundSet weightedSoundSet = soundManager.get(idSupplier.get());
+			WeightedSoundSet weightedSoundSet = soundManager.get(id);
 			if (weightedSoundSet == null)
 			{
 				sound = SoundManager.MISSING_SOUND;
@@ -113,6 +111,6 @@ public abstract class DynamicIdMovingSoundInstance implements TickableSoundInsta
 	}
 	public String toString()
 	{
-		return "DynamicIdMovingSoundInstance[" + idSupplier + "]";
+		return "MovingSoundInstanceButTheIdCanBeChanged[" + id + "]";
 	}
 }
