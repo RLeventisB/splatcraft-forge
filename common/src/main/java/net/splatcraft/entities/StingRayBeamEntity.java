@@ -30,7 +30,6 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 {
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
 	private static final TrackedData<Integer> TIME_VALUES = DataTracker.registerData(StingRayBeamEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Byte> FLAGS = DataTracker.registerData(StingRayBeamEntity.class, TrackedDataHandlerRegistry.BYTE);
 	private final float turningValue, rayWidth, rayDamage;
 	private final float turningValueWithShockwave, shockwaveWidth, shockwaveDamage;
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, World world)
@@ -291,7 +290,6 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	{
 		builder.add(COLOR, ColorUtils.getDefaultColor());
 		builder.add(TIME_VALUES, 0);
-		builder.add(FLAGS, (byte) 0);
 	}
 	@Override
 	protected void readCustomDataFromNbt(NbtCompound nbt)
@@ -361,33 +359,19 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public boolean hasOwnerStopShooting()
 	{
-		return getFlag(0);
+		return getFlag(7);
 	}
 	public void markOwnerStopShooting()
 	{
-		setFlag(0, true);
-	}
-	public boolean getFlag(byte mask)
-	{
-		return (dataTracker.get(FLAGS) & mask) != 0;
-	}
-	public void setFlag(byte mask, boolean value)
-	{
-		byte i = dataTracker.get(FLAGS);
-		if (value)
-		{
-			i |= mask;
-		}
-		else
-		{
-			i &= ~mask;
-		}
-		
-		dataTracker.set(FLAGS, i);
+		setFlag(7, true);
 	}
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose pose)
 	{
 		return EntityDimensions.fixed(0, 0);
+	}
+	public byte getState()
+	{
+		return hasStartedToShowTheHellspawn() ? (byte) 2 : isBeamActive() ? (byte) 1 : 0;
 	}
 }

@@ -60,11 +60,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 	}
 	private void updateSound()
 	{
-		int state = 0;
-		if (beam.isBeamActive())
-			state++;
-		if (beam.hasStartedToShowTheHellspawn())
-			state++;
+		int state = beam.getState();
 		
 		if (beam.getOwner() instanceof LivingEntity entity)
 		{
