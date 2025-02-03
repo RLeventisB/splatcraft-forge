@@ -15,6 +15,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;
+import net.splatcraft.util.action.specials.StingRayAction;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -161,6 +162,7 @@ public interface EntityAction
 		register("slosh_action", SlosherItem.SloshAction.class, () -> SlosherItem.SloshAction.CODEC);
 		register("dodge_roll_action", DualieItem.DodgeRollAction.class, () -> DualieItem.DodgeRollAction.CODEC);
 		register("roller_swing_action", RollerItem.InitialSwingAction.class, () -> RollerItem.InitialSwingAction.CODEC);
+		register("sting_ray_special_action", StingRayAction.class, () -> StingRayAction.CODEC);
 	}
 	static <T extends EntityAction> void register(String name, Class<T> clazz, Supplier<Codec<T>> codecSupplier)
 	{

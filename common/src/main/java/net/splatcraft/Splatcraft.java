@@ -55,6 +55,7 @@ public final class Splatcraft
 		ShootingHandler.registerEvents();
 		SplatcraftCommonHandler.registerEvents();
 		SquidFormHandler.registerEvents();
+		SpecialHandler.registerSpecials();
 		PlayerMovementHandler.registerEvents();
 		EntityAction.registerActions();
 //		SplatcraftOreGen.registerOres();

@@ -1,0 +1,16 @@
+{
+    "type": "splatcraft:special_weapon",
+    "sub_type": "sting_ray",
+    "special_duration": 7.17,
+    "startup_ticks": 42,
+    "shockwave_delay": 90,
+    "painting_radius": 15,
+    "mobility_on_use": 0.6,
+    "damage_center": 1.8,
+    "damage_shockwave": 1.5,
+    "radius_center": 7,
+    "radius_shockwave": 14,
+    "turning_value": 0.02,
+    "turning_value_with_shockwave": 0.017,
+    "reveal_radius": 180
+}

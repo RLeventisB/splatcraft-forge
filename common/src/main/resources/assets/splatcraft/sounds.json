@@ -307,5 +307,35 @@
         "sounds": [
             "splatcraft:superjump_land"
         ]
+    },
+    "special_ready": {
+        "subtitle": "subtitle.special_ready",
+        "sounds": [
+            "splatcraft:special_ready"
+        ]
+    },
+    "special_use": {
+        "subtitle": "subtitle.special_use",
+        "sounds": [
+            "splatcraft:special_use"
+        ]
+    },
+    "sting_ray_prepare": {
+        "subtitle": "subtitle.sting_ray_prepare",
+        "sounds": [
+            "splatcraft:sting_ray_prepare"
+        ]
+    },
+    "sting_ray_loop": {
+        "subtitle": "subtitle.sting_ray_loop",
+        "sounds": [
+            "splatcraft:sting_ray_loop"
+        ]
+    },
+    "sting_ray_loop2": {
+        "subtitle": "subtitle.sting_ray_loop2",
+        "sounds": [
+            "splatcraft:sting_ray_loop2"
+        ]
     }
 }

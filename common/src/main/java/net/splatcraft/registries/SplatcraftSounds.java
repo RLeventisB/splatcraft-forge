@@ -41,6 +41,11 @@ public class SplatcraftSounds
 	public static SoundEvent subThrow;
 	public static SoundEvent subDetonating;
 	public static SoundEvent subDetonate;
+	public static SoundEvent specialReady;
+	public static SoundEvent specialUsage;
+	public static SoundEvent stingRayStart;
+	public static SoundEvent stingRayBeamUse;
+	public static SoundEvent stingRayShockwave;
 	public static SoundEvent remoteUse;
 	public static SoundEvent powerEggCanOpen;
 	public static SoundEvent squidBumperPlace;
@@ -112,6 +117,12 @@ public class SplatcraftSounds
 		
 		superjumpStart = createSoundEvent("superjump_start");
 		superjumpLand = createSoundEvent("superjump_land");
+		
+		specialReady = createSoundEvent("special_ready");
+		specialUsage = createSoundEvent("special_use");
+		stingRayStart = createSoundEvent("sting_ray_prepare");
+		stingRayBeamUse = createSoundEvent("sting_ray_loop");
+		stingRayShockwave = createSoundEvent("sting_ray_loop2");
 		
 		SOUND_TYPE_INK = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 		SOUND_TYPE_SWIMMING = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);

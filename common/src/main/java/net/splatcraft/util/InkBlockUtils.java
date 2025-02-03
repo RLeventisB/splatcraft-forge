@@ -32,6 +32,8 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.items.SpecialProviderItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
 import net.splatcraft.util.action.EntityAction;
@@ -41,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public class InkBlockUtils
 {
@@ -121,6 +124,39 @@ public class InkBlockUtils
 			return playerInkBlock(player, world, pos, color, face, inkType, damage);
 		}
 		return inkBlock(world, pos, color, face, inkType, damage);
+	}
+	public static void awardTurfPoints(LivingEntity entity, ItemStack weaponStack, int points)
+	{
+		applyFunctionToProviderIfAny(entity, weaponStack, v -> v.incrementStoredPoints(points));
+	}
+	public static void setTurfPoints(LivingEntity entity, ItemStack weaponStack, int points)
+	{
+		applyFunctionToProviderIfAny(entity, weaponStack, v -> v.withStoredPoints(points));
+	}
+	private static void applyFunctionToProviderIfAny(LivingEntity entity, ItemStack weaponStack, Function<SplatcraftComponents.SpecialProviderData, SplatcraftComponents.SpecialProviderData> applier)
+	{
+		if (!(weaponStack.getItem() instanceof WeaponBaseItem<?> weaponItem))
+			return;
+		
+		Identifier weaponId = weaponItem.getSettingsAndValidId(weaponStack).getFirst();
+		if (weaponId == null)
+			return;
+		
+		// todo: OPTIMIZE THIS!!!! i suspect this will be pretty expensive
+		ItemStack providerStack = CommonUtils.getStackAndIndexInInventory(entity, stack ->
+		{
+			if (stack.getItem() instanceof SpecialProviderItem provider)
+			{
+				SplatcraftComponents.SpecialProviderData data = provider.getData(stack);
+				return data != null && data.testWeapon(weaponStack);
+			}
+			return false;
+		}).getFirst();
+		if (providerStack.isEmpty())
+			return;
+		
+		SpecialProviderItem providerItem = (SpecialProviderItem) providerStack.getItem();
+		providerItem.setData(providerStack, applier.apply(providerItem.getData(providerStack)));
 	}
 	public static BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, Direction direction, InkType inkType, float damage)
 	{

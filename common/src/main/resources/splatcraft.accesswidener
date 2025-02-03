@@ -27,10 +27,10 @@ accessible class net/minecraft/server/world/ServerEntityManager$Listener
 accessible method net/minecraft/world/World getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 accessible method net/minecraft/server/world/ServerWorld getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 
-#accessible net/minecraft/client/gui/components/AbstractWidget *
-#accessible net/minecraft/client/gui/components/AbstractWidget *()
-
-#accessible net/minecraft/client/multiplayer/ClientAdvancements *
+accessible field net/minecraft/client/sound/SoundSystem sources Ljava/util/Map;
+accessible field net/minecraft/client/sound/SoundSystem channel Lnet/minecraft/client/sound/Channel;
+accessible field net/minecraft/client/sound/SoundSystem soundLoader Lnet/minecraft/client/sound/SoundLoader;
+accessible field net/minecraft/client/sound/SoundManager soundSystem Lnet/minecraft/client/sound/SoundSystem;
 
 accessible field net/minecraft/entity/Entity lastChimeIntensity F # dont ask why i used crystalSoundIntensity to store a value that shows the partialTick that an ink projectile hit a mob i want to save some memory ok
 accessible field net/minecraft/entity/Entity dimensions Lnet/minecraft/entity/EntityDimensions;

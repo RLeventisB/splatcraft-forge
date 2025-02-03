@@ -203,6 +203,7 @@ public class SplatcraftItems
 	public static final RegistrySupplier<Item> clearBand = REGISTRY.register("clear_ink_band", () -> new Item(new Item.Settings().maxCount(1)));
 	public static final RegistrySupplier<Item> waxApplicator = REGISTRY.register("wax_applicator", InkWaxerItem::new);
 	public static final RegistrySupplier<Item> superJumpLure = REGISTRY.register("super_jump_lure", JumpLureItem::new);
+	public static final RegistrySupplier<Item> specialProvider = REGISTRY.register("special_provider", SpecialProviderItem::new);
 	public static final RegistrySupplier<Item> stagePad = REGISTRY.register("stage_pad", StagePadItem::new);
 	public static Item register(String id, Supplier<Item> supplier)
 	{

@@ -55,6 +55,7 @@ public class SplatcraftItemGroups
 			
 			//Gear
 			output.add(superJumpLure.get());
+			output.add(specialProvider.get());
 			output.add(splatfestBand.get());
 			output.add(clearBand.get());
 			output.add(waxApplicator.get());

@@ -262,15 +262,22 @@ public class InkExplosion
 			}
 		}
 		
+		int pointsToAward = 0;
 		for (BlockFace blockFace : affectedBlockPositions)
 		{
 			BlockState blockstate = world.getBlockState(blockFace.pos());
 			if (!blockstate.isAir())
 			{
 				float dist = (float) Math.sqrt(blockFace.pos().getSquaredDistanceFromCenter(explosionPos.x, explosionPos.y, explosionPos.z));
-				InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getDamage(dist));
+				BlockInkedResult result = InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getDamage(dist));
+				if (result == BlockInkedResult.SUCCESS && blockFace.face().equals(Direction.UP))
+				{
+					pointsToAward++;
+				}
 			}
 		}
+		if (exploder instanceof LivingEntity living)
+			InkBlockUtils.awardTurfPoints(living, weapon, pointsToAward);
 	}
 	public Vec3d getPosition()
 	{

@@ -33,7 +33,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public Map.Entry<Identifier, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
-			Map.entry("sting_ray", SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC)
+			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC)
 		};
 	}
 	@Override
@@ -82,7 +82,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	}
 	public record DataRecord(
 		boolean refillTank,
-		int specialDuration,
+		float specialDuration,
 		float mobility,
 		SpecialCostData costData
 	)
@@ -90,7 +90,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		public static final MapCodec<DataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
 				Codec.BOOL.optionalFieldOf("refill_tank", true).forGetter(DataRecord::refillTank),
-				Codec.INT.fieldOf("special_duration").xmap(v -> v / SplatcraftConvertors.SplatoonFramesPerMinecraftTick, v -> v * SplatcraftConvertors.SplatoonFramesPerMinecraftTick).forGetter(DataRecord::specialDuration),
+				Codec.FLOAT.fieldOf("special_duration").xmap(v -> v * 20, v -> v / 20).forGetter(DataRecord::specialDuration),
 				Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::mobility),
 				SpecialCostData.CODEC.optionalFieldOf("cost_data", SpecialCostData.DEFAULT).forGetter(DataRecord::costData)
 			).apply(inst, DataRecord::new)

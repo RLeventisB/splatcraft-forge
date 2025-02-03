@@ -1,7 +1,6 @@
 package net.splatcraft.registries;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
@@ -9,16 +8,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class SplatcraftComponents
 {
@@ -81,6 +84,11 @@ public class SplatcraftComponents
 		Registries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("blueprint_advancements"),
 		ComponentType.<List<Identifier>>builder().codec(Codec.list(Identifier.CODEC)).build()
+	);
+	public static final ComponentType<SpecialProviderData> SPECIAL_PROVIDER_DATA = Registry.register(
+		Registries.DATA_COMPONENT_TYPE,
+		Splatcraft.identifierOf("special_provider_data"),
+		ComponentType.<SpecialProviderData>builder().codec(SpecialProviderData.CODEC).build()
 	);
 	public static <T> Optional<T> getOptional(ItemStack stack, ComponentType<T> type)
 	{
@@ -221,6 +229,69 @@ public class SplatcraftComponents
 				return InkColor.getIfInversed(ColorUtils.getEntityColor(entity), hasInvertedColor);
 			}
 			return InkColor.getIfInversed(color, hasInvertedColor);
+		}
+	}
+	public record SpecialProviderData(
+		Optional<Identifier> specialId,
+		Optional<Identifier> weaponId,
+		Optional<Integer> pointsPerSpecialOverride,
+		int storedPoints
+	)
+	{
+		public static final Codec<SpecialProviderData> CODEC = RecordCodecBuilder.create(
+			inst -> inst.group(
+				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
+				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id").forGetter(SpecialProviderData::weaponId),
+				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
+				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)
+			).apply(inst, SpecialProviderData::new)
+		);
+		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), 0);
+		public boolean testWeapon(ItemStack stack)
+		{
+			if (stack.isEmpty())
+				return false;
+			
+			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
+				return false;
+			
+			Identifier weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
+			if (weaponId == null)
+				return false;
+			
+			return this.weaponId.map(v -> Objects.equals(v, weaponId)).orElse(false);
+		}
+		public String getSpecialTranslationKey()
+		{
+			return specialId.map(identifier -> "special_weapon." + identifier.toTranslationKey()).orElse("special_weapon.none");
+		}
+		public Text getSpecialText()
+		{
+			return Text.translatable(getSpecialTranslationKey());
+		}
+		public Text getWeaponText()
+		{
+			return Text.translatable(weaponId.get().toTranslationKey("item"));
+		}
+		public SpecialProviderData withSpecialId(Identifier id)
+		{
+			return new SpecialProviderData(Optional.ofNullable(id), weaponId, pointsPerSpecialOverride, storedPoints);
+		}
+		public SpecialProviderData withWeaponId(Identifier id)
+		{
+			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, storedPoints);
+		}
+		public SpecialProviderData withOverridenSpecialCost(int cost)
+		{
+			return new SpecialProviderData(specialId, weaponId, Optional.of(cost), storedPoints);
+		}
+		public SpecialProviderData withStoredPoints(int points)
+		{
+			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, points);
+		}
+		public SpecialProviderData incrementStoredPoints(int points)
+		{
+			return withStoredPoints(storedPoints + points);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package net.splatcraft.client.handlers;
 
 import com.google.common.collect.Iterables;
+import com.mojang.datafixers.util.Pair;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -10,6 +11,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -22,12 +24,15 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.RequestSpecialUsageDataPacket;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
 import net.splatcraft.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
@@ -41,6 +46,7 @@ public class SplatcraftKeyHandler
 	public static final ToggleableKey SHOOT_KEYBIND = new ToggleableKey(MinecraftClient.getInstance().options.useKey);
 	public static final ToggleableKey SQUID_KEYBIND = new ToggleableKey(new KeyBinding("key.squidForm", GLFW.GLFW_KEY_Z, "key.categories.splatcraft"));
 	public static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
+	public static final ToggleableKey SPECIAL_WEAPON_KEYBIND = new ToggleableKey(new KeyBinding("key.specialWeaponHotkey", GLFW.GLFW_KEY_B, "key.categories.splatcraft"));
 	private static final ObjectArrayList<ToggleableKey> pressState = new ObjectArrayList<>();
 	public static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static int slot = -1;
@@ -49,6 +55,7 @@ public class SplatcraftKeyHandler
 	public static void registerBindingsAndEvents()
 	{
 		KeyMappingRegistry.register(SUB_WEAPON_KEYBIND.key);
+		KeyMappingRegistry.register(SPECIAL_WEAPON_KEYBIND.key);
 		KeyMappingRegistry.register(SQUID_KEYBIND.key);
 		ClientTickEvent.CLIENT_PRE.register(SplatcraftKeyHandler::onClientTick);
 	}
@@ -95,6 +102,7 @@ public class SplatcraftKeyHandler
 			ClientUtils.setSquid(info, false);
 		}
 		
+		PlayerInventory inventory = player.getInventory();
 		if (SUB_WEAPON_KEYBIND.equals(last))
 		{
 			ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
@@ -112,12 +120,12 @@ public class SplatcraftKeyHandler
 				{
 					if (!player.getStackInHand(Hand.OFF_HAND).equals(sub))
 					{
-						slot = player.getInventory().getSlotWithStack(sub);
+						slot = inventory.getSlotWithStack(sub);
 						SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 						
 						ItemStack stack = player.getOffHandStack();
-						player.setStackInHand(Hand.OFF_HAND, player.getInventory().getStack(slot));
-						player.getInventory().setStack(slot, stack);
+						player.setStackInHand(Hand.OFF_HAND, inventory.getStack(slot));
+						inventory.setStack(slot, stack);
 						player.stopUsingItem();
 					}
 					else if (!usingSubWeaponHotkey) slot = -1;
@@ -137,13 +145,45 @@ public class SplatcraftKeyHandler
 			if (slot != -1)
 			{
 				ItemStack stack = player.getOffHandStack();
-				player.setStackInHand(Hand.OFF_HAND, player.getInventory().getStack(slot));
-				player.getInventory().setStack(slot, stack);
+				player.setStackInHand(Hand.OFF_HAND, inventory.getStack(slot));
+				inventory.setStack(slot, stack);
 				player.stopUsingItem();
 				
 				SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 				usingSubWeaponHotkey = false;
 				slot = -1;
+			}
+		}
+		
+		if (SPECIAL_WEAPON_KEYBIND.equals(last))
+		{
+			Pair<ItemStack, Integer> providerPair = CommonUtils.getStackAndIndexInInventory(player, stack -> stack.getItem() instanceof SpecialProviderItem);
+			if (providerPair.getFirst().isEmpty())
+			{
+				player.sendMessage(Text.translatable("status.cant_use"), true);
+			}
+			else
+			{
+				SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
+				SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
+				Pair<ItemStack, Integer> weaponPair = null;
+				if (providerData.testWeapon(inventory.getMainHandStack()))
+				{
+					weaponPair = Pair.of(inventory.getMainHandStack(), inventory.selectedSlot);
+				}
+				else if (providerData.testWeapon(inventory.getStack(PlayerInventory.OFF_HAND_SLOT)))
+				{
+					weaponPair = Pair.of(inventory.getStack(PlayerInventory.OFF_HAND_SLOT), PlayerInventory.OFF_HAND_SLOT);
+				}
+				if (weaponPair == null)
+				{
+				
+				}
+				else
+				{
+					SQUID_KEYBIND.active = false;
+					SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
+				}
 			}
 		}
 		
@@ -189,6 +229,9 @@ public class SplatcraftKeyHandler
 		
 		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
+		
+		SPECIAL_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
+		updatePressState(SPECIAL_WEAPON_KEYBIND, 0);
 	}
 	private static void updatePressState(ToggleableKey key, int releaseDelay)
 	{

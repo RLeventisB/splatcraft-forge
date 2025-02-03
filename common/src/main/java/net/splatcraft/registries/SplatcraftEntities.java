@@ -71,6 +71,8 @@ public class SplatcraftEntities
 	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, SpawnGroup.MISC, 0.3f, 0.3f);
 	public static final RegistrySupplier<EntityType<SplatBombEntity>> SPLAT_BOMB = create("splat_bomb", SplatBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
 	public static final RegistrySupplier<EntityType<CurlingBombEntity>> CURLING_BOMB = create("curling_bomb", CurlingBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
+	// Special Weapons
+	public static final RegistrySupplier<EntityType<StingRayBeamEntity>> STING_RAY_PROJECTILE = create("sting_ray_beam", StingRayBeamEntity::new, SpawnGroup.MISC, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, SpawnGroup classification, float width, float height)
 	{
 		return REGISTRY.register(name, () -> EntityType.Builder.create(supplier, classification).dimensions(width, height).build(Splatcraft.identifierOf(name).toString()));
@@ -93,6 +95,8 @@ public class SplatcraftEntities
 		EntityRendererRegistry.register(CURLING_BOMB, CurlingBombRenderer::new);
 		
 		EntityRendererRegistry.register(SPAWN_SHIELD, SpawnShieldRenderer::new);
+		
+		EntityRendererRegistry.register(STING_RAY_PROJECTILE, StingRayBeamRenderer::new);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void defineModelLayers()
@@ -119,6 +123,7 @@ public class SplatcraftEntities
 	{
 		registerDataTracker("ink_color_handler", CommonUtils.INKCOLORDATAHANDLER);
 		registerDataTracker("vec3d_handler", CommonUtils.VEC3DDATAHANDLER);
+		registerDataTracker("uuid", CommonUtils.UUID_DATA_HANDLER);
 		registerDataTracker("vector2_handler", CommonUtils.VEC2DATAHANDLER);
 		registerDataTracker("extra_data_handler", ExtraSaveData.SERIALIZER);
 	}
