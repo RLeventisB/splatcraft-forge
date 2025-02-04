@@ -141,7 +141,9 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 					BlockPos side = CommonUtils.createBlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
 					if (InkBlockUtils.canInkFromFace(getWorld(), side, Direction.UP))
 					{
-						InkBlockUtils.inkBlock(getOwner(), getWorld(), side, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
+						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), getWorld(), side, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
+						if (result == BlockInkedResult.SUCCESS)
+							InkBlockUtils.awardTurfPoints((LivingEntity) getOwner(), sourceWeapon, 1);
 						break;
 					}
 				}

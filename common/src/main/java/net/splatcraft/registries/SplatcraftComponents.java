@@ -14,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -235,6 +236,7 @@ public class SplatcraftComponents
 		Optional<Identifier> specialId,
 		Optional<Identifier> weaponId,
 		Optional<Integer> pointsPerSpecialOverride,
+		boolean allowSubs,
 		int storedPoints
 	)
 	{
@@ -243,10 +245,11 @@ public class SplatcraftComponents
 				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
 				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id").forGetter(SpecialProviderData::weaponId),
 				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
+				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
 				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)
 			).apply(inst, SpecialProviderData::new)
 		);
-		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), 0);
+		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), true, 0);
 		public boolean testWeapon(ItemStack stack)
 		{
 			if (stack.isEmpty())
@@ -254,6 +257,9 @@ public class SplatcraftComponents
 			
 			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 				return false;
+			
+			if (allowSubs && weaponItem instanceof SubWeaponItem<?>)
+				return true;
 			
 			Identifier weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
 			if (weaponId == null)
@@ -275,19 +281,23 @@ public class SplatcraftComponents
 		}
 		public SpecialProviderData withSpecialId(Identifier id)
 		{
-			return new SpecialProviderData(Optional.ofNullable(id), weaponId, pointsPerSpecialOverride, storedPoints);
+			return new SpecialProviderData(Optional.ofNullable(id), weaponId, pointsPerSpecialOverride, allowSubs, storedPoints);
 		}
 		public SpecialProviderData withWeaponId(Identifier id)
 		{
-			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, storedPoints);
+			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedPoints);
 		}
 		public SpecialProviderData withOverridenSpecialCost(int cost)
 		{
-			return new SpecialProviderData(specialId, weaponId, Optional.of(cost), storedPoints);
+			return new SpecialProviderData(specialId, weaponId, Optional.of(cost), allowSubs, storedPoints);
 		}
 		public SpecialProviderData withStoredPoints(int points)
 		{
-			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, points);
+			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, allowSubs, points);
+		}
+		public SpecialProviderData withAllowedSubs(boolean allowedSubs)
+		{
+			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, allowedSubs, storedPoints);
 		}
 		public SpecialProviderData incrementStoredPoints(int points)
 		{
