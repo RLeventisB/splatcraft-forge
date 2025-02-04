@@ -81,30 +81,33 @@ public class SplatcraftCommonHandler
 			return;
 		}
 		
-		DefaultedList<ItemStack> matchInv = EntityInfoCapability.get(newPlayer).getMatchInventory();
-		
-		if (!matchInv.isEmpty())
+		EntityInfoCapability.getOptional(newPlayer).ifPresent(info ->
 		{
-			for (int i = 0; i < matchInv.size(); i++)
+			DefaultedList<ItemStack> matchInv = info.getMatchInventory();
+			if (!matchInv.isEmpty())
 			{
-				ItemStack stack = matchInv.get(i);
-				if (!stack.isEmpty() && !putStackInSlot(newPlayer.getInventory(), stack, i) && !newPlayer.getInventory().insertStack(stack))
+				PlayerInventory inventory = newPlayer.getInventory();
+				for (int i = 0; i < matchInv.size(); i++)
 				{
-					newPlayer.dropItem(stack, true, true);
+					ItemStack stack = matchInv.get(i);
+					if (!stack.isEmpty() && !putStackInSlot(inventory, stack, i) && !inventory.insertStack(stack))
+					{
+						newPlayer.dropItem(stack, true, true);
+					}
 				}
+				
+				info.setMatchInventory(DefaultedList.of());
 			}
-			
-			EntityInfoCapability.get(newPlayer).setMatchInventory(DefaultedList.of());
-		}
-		EntityAction.setEntityAction(newPlayer, null);
+			EntityAction.setEntityAction(newPlayer, null);
+		});
 	}
-	private static boolean putStackInSlot(PlayerInventory inventory, ItemStack stack, int i)
+	private static boolean putStackInSlot(PlayerInventory inventory, ItemStack stack, int slot)
 	{
-		ItemStack invStack = inventory.getStack(i);
+		ItemStack invStack = inventory.getStack(slot);
 		
 		if (invStack.isEmpty())
 		{
-			inventory.setStack(i, stack);
+			inventory.setStack(slot, stack);
 			return true;
 		}
 		if (invStack.isOf(stack.getItem()))
@@ -130,40 +133,24 @@ public class SplatcraftCommonHandler
 	}
 	public static void onLivingDeathDrops(LivingEntity entity, Collection<ItemEntity> drops)
 	{
-        /*
-        //handle inked wool drops (should've handled in the mixin)
-        if (event.getEntity() instanceof Sheep && InkOverlayCapability.hasCapability(event.getEntity()))
-        {
-            InkOverlayInfo info = InkOverlayCapability.get(event.getEntity());
-
-            if (info.getWoolColor().isValid())
-            {
-                for (ItemEntity itemEntity : event.getDrops())
-                {
-                    ItemStack stack = itemEntity.getItem();
-                    if (stack.is(ItemTags.WOOL))
-                    {
-                        itemEntity.setItem(ColorUtils.setColorLocked(ColorUtils.setInkColor(new ItemStack(SplatcraftItems.inkedWool.get(), stack.getCount()), info.getWoolColor()), true));
-                    }
-                }
-            }
-        }*/
-		
 		//Handle keepMatchItems
 		if (entity instanceof PlayerEntity player)
 		{
-			DefaultedList<ItemStack> matchInv = EntityInfoCapability.get(player).getMatchInventory();
-			
-			drops.removeIf(o -> matchInv.contains(o.getStack()));
-			
-			for (int i = 0; i < matchInv.size(); i++)
+			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
-				ItemStack stack = matchInv.get(i);
-				if (!stack.isEmpty() && !putStackInSlot(player.getInventory(), stack, i))
+				DefaultedList<ItemStack> matchInv = info.getMatchInventory();
+				
+				drops.removeIf(o -> matchInv.contains(o.getStack()));
+				
+				for (int i = 0; i < matchInv.size(); i++)
 				{
-					player.getInventory().insertStack(stack);
+					ItemStack stack = matchInv.get(i);
+					if (!stack.isEmpty() && !putStackInSlot(player.getInventory(), stack, i))
+					{
+						player.getInventory().insertStack(stack);
+					}
 				}
-			}
+			});
 		}
 	}
 	public static void onPlayerAboutToDie(LivingEntity entity, float amount)
@@ -175,27 +162,20 @@ public class SplatcraftCommonHandler
 		
 		if (!player.getWorld().getGameRules().getBoolean(GameRules.KEEP_INVENTORY) && SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
 		{
-			EntityInfo playerCapability;
-			try
+			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
-				playerCapability = EntityInfoCapability.get(player);
-			}
-			catch (NullPointerException e)
-			{
-				return;
-			}
-			
-			DefaultedList<ItemStack> matchInv = DefaultedList.ofSize(player.getInventory().size(), ItemStack.EMPTY);
-			
-			for (int i = 0; i < matchInv.size(); i++)
-			{
-				ItemStack stack = player.getInventory().getStack(i);
-				if (stack.isIn(SplatcraftTags.Items.MATCH_ITEMS))
+				DefaultedList<ItemStack> matchInv = DefaultedList.ofSize(player.getInventory().size(), ItemStack.EMPTY);
+				
+				for (int i = 0; i < matchInv.size(); i++)
 				{
-					matchInv.set(i, stack);
+					ItemStack stack = player.getInventory().getStack(i);
+					if (stack.isIn(SplatcraftTags.Items.MATCH_ITEMS))
+					{
+						matchInv.set(i, stack);
+					}
 				}
-			}
-			playerCapability.setMatchInventory(matchInv);
+				info.setMatchInventory(matchInv);
+			});
 		}
 	}
 	public static void onPlayerLoggedIn(ServerPlayerEntity player)

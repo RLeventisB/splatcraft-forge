@@ -26,6 +26,7 @@ import net.minecraft.world.World;
 import net.splatcraft.blocks.SpawnPadBlock;
 import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.commands.arguments.StageGameModeArgument;
+import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.StageGameMode;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -93,10 +94,10 @@ public class StageCommand
 					.then(CommandManager.argument("players", EntityArgumentType.players())
 						.executes(StageCommand::playWithPlayers)
 						.then(CommandManager.argument("assignTeams", BoolArgumentType.bool())
-							.executes(StageCommand::playWithSetAssignedTeams))
-						.then(CommandManager.argument("gamemode", StageGameModeArgument.stageGamemode())
-							.executes(StageCommand::play))
-					)))
+							.executes(StageCommand::playWithSetAssignedTeams)
+							.then(CommandManager.argument("gamemode", StageGameModeArgument.stageGamemode())
+								.executes(StageCommand::play))
+						))))
 		);
 	}
 	public static RequiredArgumentBuilder<ServerCommandSource, String> stageId(String argumentName)
@@ -194,23 +195,43 @@ public class StageCommand
 	}
 	private static int warpSelf(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		return warpPlayers(context.getSource(), StringArgumentType.getString(context, "stage"), Collections.singleton(context.getSource().getPlayerOrThrow()), false);
+		return warpPlayers(context.getSource(),
+			StringArgumentType.getString(context, "stage"),
+			Collections.singleton(context.getSource().getPlayerOrThrow()),
+			false);
 	}
 	private static int playRecon(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), Collections.singletonList(context.getSource().getPlayerOrThrow()), true, StageGameMode.RECON);
+		return playStage(context.getSource(),
+			StringArgumentType.getString(context, "stage"),
+			Collections.singletonList(context.getSource().getPlayerOrThrow()),
+			true,
+			StageGameMode.RECON);
 	}
 	private static int playWithPlayers(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgumentType.getPlayers(context, "players"), true, StageGameMode.TURF_WAR);
+		return playStage(context.getSource(),
+			StringArgumentType.getString(context, "stage"),
+			EntityArgumentType.getPlayers(context, "players"),
+			true,
+			StageGameMode.TURF_WAR);
 	}
 	private static int playWithSetAssignedTeams(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgumentType.getPlayers(context, "players"), BoolArgumentType.getBool(context, "assignTeams"), StageGameMode.TURF_WAR);
+		return playStage(context.getSource(),
+			StringArgumentType.getString(context, "stage"),
+			EntityArgumentType.getPlayers(context, "players"),
+			BoolArgumentType.getBool(context, "assignTeams"),
+			StageGameMode.TURF_WAR);
 	}
 	private static int play(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		return playStage(context.getSource(), StringArgumentType.getString(context, "stage"), EntityArgumentType.getPlayers(context, "players"), BoolArgumentType.getBool(context, "assignTeams"), StageGameModeArgument.getStageGameMode(context, "gamemode"));
+		return playStage(context.getSource(),
+			StringArgumentType.getString(context, "stage"),
+			EntityArgumentType.getPlayers(context, "players"),
+			BoolArgumentType.getBool(context, "assignTeams"),
+			StageGameModeArgument.getStageGameMode(context, "gamemode")
+		);
 	}
 	private static int add(ServerCommandSource source, String stageId, BlockPos from, BlockPos to) throws CommandSyntaxException
 	{

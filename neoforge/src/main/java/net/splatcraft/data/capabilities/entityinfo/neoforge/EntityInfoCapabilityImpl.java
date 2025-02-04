@@ -12,7 +12,7 @@ public class EntityInfoCapabilityImpl
 	}
 	public static boolean hasCapability(LivingEntity entity)
 	{
-		return entity.hasData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
+		return entity != null && entity.hasData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
 	}
 	public static void set(LivingEntity entity, EntityInfo newData)
 	{
