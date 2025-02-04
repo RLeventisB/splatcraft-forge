@@ -439,18 +439,24 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				getWorld().sendEntityStatus(this, BARRIER_DENY);
 			}
 			
+			Entity owner = getOwner();
 			if (target instanceof LivingEntity livingTarget)
 			{
 				if (InkDamageUtils.isSplatted(livingTarget)) return;
 				
-				boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
+				boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
 				if (!getWorld().isClient && didDamage)
 				{
 					ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
 					if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
 						Objects.equals(getProjectileType(), Types.BLASTER))
 					{
-						getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundCategory.PLAYERS, 0.8F, 1);
+						getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.shotDirectHit, SoundCategory.PLAYERS, 0.8F, 1);
+					}
+					else
+					{
+						if (owner != null)
+							getWorld().playSound(null, owner.getX(), owner.getY(), owner.getZ(), SplatcraftSounds.shotHit, SoundCategory.PLAYERS, 1f, 1f);
 					}
 				}
 			}
@@ -460,7 +466,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 				if (explodes && explosionData != null)
 				{
-					InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+					InkExplosion.createInkExplosion(owner, impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
 					getWorld().sendEntityStatus(this, BLAST_PARTICLE);
 					getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
 				}

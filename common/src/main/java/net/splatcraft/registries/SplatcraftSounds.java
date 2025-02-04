@@ -22,7 +22,8 @@ public class SplatcraftSounds
 	public static SoundEvent noInkSub;
 	public static SoundEvent shooterShot;
 	public static SoundEvent blasterShot;
-	public static SoundEvent blasterDirect;
+	public static SoundEvent shotHit;
+	public static SoundEvent shotDirectHit;
 	public static SoundEvent blasterExplosion;
 	public static SoundEvent rollerFling;
 	public static SoundEvent rollerRoll;
@@ -82,9 +83,10 @@ public class SplatcraftSounds
 		inkSurface = createSoundEvent("ink_surface");
 		noInkMain = createSoundEvent("no_ink");
 		noInkSub = createSoundEvent("no_ink_sub");
+		shotHit = createSoundEvent("shot_hit");
+		shotDirectHit = createSoundEvent("shot_direct_hit");
 		shooterShot = createSoundEvent("shooter_firing");
 		blasterShot = createSoundEvent("blaster_firing");
-		blasterDirect = createSoundEvent("blaster_direct");
 		blasterExplosion = createSoundEvent("blaster_explosion");
 		rollerFling = createSoundEvent("roller_fling");
 		rollerRoll = createSoundEvent("roller_roll");
@@ -127,6 +129,22 @@ public class SplatcraftSounds
 		SOUND_TYPE_INK = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 		SOUND_TYPE_SWIMMING = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 	}
+	/*
+		public static void playHitSoundEffect()
+		{
+			playHitSoundEffect(0.7f, 1f);
+		}
+		public static void playHitSoundEffect(float volume, float pitch)
+		{
+			ClientWorld world = ClientUtils.getClient().world;
+			if (world == null)
+				return;
+			Entity cameraEntity = ClientUtils.getClient().cameraEntity;
+			if (cameraEntity == null)
+				return;
+			world.playSound(null, cameraEntity.getX(), cameraEntity.getY(), cameraEntity.getZ(), shotHit, SoundCategory.PLAYERS, 0.7f, 1f);
+		}
+	*/
 	private static SoundEvent createSoundEvent(String id)
 	{
 		Identifier loc = Splatcraft.identifierOf(id);

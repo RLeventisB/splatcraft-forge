@@ -28,6 +28,8 @@ import net.splatcraft.util.action.specials.StingRayAction;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class StingRayBeamEntity extends ProjectileEntity implements IColoredEntity
 {
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
@@ -198,6 +200,7 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public void doCollisions(Vec3d forward)
 	{
+		AtomicBoolean canDoSound = new AtomicBoolean(getLifespan() % 4 == 0);
 		for (Entity entity : getWorld().getEntityLookup().iterate())
 		{
 			if (!canHit(entity))
@@ -231,16 +234,16 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 				
 				if (distance < getRayWidth())
 				{
-					hit(entity, rayDamage);
+					hit(entity, rayDamage, canDoSound);
 				}
 				else if (hasStartedToShowTheHellspawn() && distance < getShockwaveWidth())
 				{
-					hit(entity, shockwaveDamage);
+					hit(entity, shockwaveDamage, canDoSound);
 				}
 			}
 		}
 	}
-	private void hit(Entity target, float dmg)
+	private void hit(Entity target, float dmg, AtomicBoolean playSound)
 	{
 		if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
@@ -252,9 +255,10 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
 			
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
-			if (!getWorld().isClient && didDamage)
+			if (!getWorld().isClient && didDamage && playSound.get())
 			{
-				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterDirect, SoundCategory.PLAYERS, 0.8F, 1);
+				playSound.set(false);
+				getWorld().playSound(null, getOwner().getX(), getOwner().getY(), getOwner().getZ(), SplatcraftSounds.shotHit, SoundCategory.PLAYERS, 0.7f, 1f);
 			}
 		}
 	}

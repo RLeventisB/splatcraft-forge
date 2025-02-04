@@ -53,6 +53,18 @@
             "minecraft:block/honeyblock/slide4"
         ]
     },
+    "shot_hit": {
+        "subtitle": "subtitle.shot_hit",
+        "sounds": [
+            "splatcraft:shot_hit"
+        ]
+    },
+    "shot_direct_hit": {
+        "subtitle": "subtitle.shot_direct_hit",
+        "sounds": [
+            "splatcraft:shot_direct_hit"
+        ]
+    },
     "shooter_firing": {
         "subtitle": "subtitle.shooter_firing",
         "sounds": [
@@ -69,12 +81,6 @@
         "subtitle": "subtitle.blaster_explosion",
         "sounds": [
             "splatcraft:blaster_explosion"
-        ]
-    },
-    "blaster_direct": {
-        "subtitle": "subtitle.blaster_direct",
-        "sounds": [
-            "splatcraft:blaster_direct"
         ]
     },
     "roller_fling": {
