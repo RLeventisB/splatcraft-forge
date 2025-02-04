@@ -10,9 +10,7 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.server.network.EntityTrackerEntry;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -83,6 +81,10 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		setPitch(owner.getPitch());
 		setYaw(owner.getHeadYaw());
 		setShockwaveDelay(shockwaveDelay);
+		updatePosForward(owner);
+		updateRotation();
+		prevPitch = getPitch();
+		prevYaw = getYaw();
 	}
 	// this comes from https://stackoverflow.com/questions/34952680/distance-between-a-ray-and-a-bound-box
 	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who had access
@@ -167,8 +169,7 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public void tickRay(LivingEntity owner, int lifespan)
 	{
-		Vec3d forward = getRotationVector();
-		setPosition(owner.getEyePos().add(forward));
+		Vec3d forward = updatePosForward(owner);
 		
 		if (isBeamActive())
 		{
@@ -188,6 +189,12 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		}
 		
 		setLifespan(lifespan + 1);
+	}
+	private Vec3d updatePosForward(LivingEntity owner)
+	{
+		Vec3d forward = getRotationVector();
+		setPosition(owner.getEyePos().add(forward));
+		return forward;
 	}
 	public void doCollisions(Vec3d forward)
 	{
@@ -309,9 +316,14 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		builder.add(TURNING_VALUES, new Vector2f());
 	}
 	@Override
-	public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry)
+	public void onSpawnPacket(EntitySpawnS2CPacket packet)
 	{
-		return super.createSpawnPacket(entityTrackerEntry);
+		super.onSpawnPacket(packet);
+		updateRotation();
+		updatePosForward((LivingEntity) getOwner());
+		updateRotation();
+		prevPitch = getPitch();
+		prevYaw = getYaw();
 	}
 	@Override
 	protected void readCustomDataFromNbt(NbtCompound nbt)
