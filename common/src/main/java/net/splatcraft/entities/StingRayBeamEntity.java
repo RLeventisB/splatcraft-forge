@@ -10,6 +10,9 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -25,13 +28,15 @@ import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2f;
 
 public class StingRayBeamEntity extends ProjectileEntity implements IColoredEntity
 {
 	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
 	private static final TrackedData<Integer> TIME_VALUES = DataTracker.registerData(StingRayBeamEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private final float turningValue, rayWidth, rayDamage;
-	private final float turningValueWithShockwave, shockwaveWidth, shockwaveDamage;
+	private static final TrackedData<Vector2f> WIDTH_VALUES = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
+	private static final TrackedData<Vector2f> TURNING_VALUES = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
+	public float rayDamage, shockwaveDamage;
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, World world)
 	{
 		this(type, world, 0, 0, 0, 0, 0, 0);
@@ -49,10 +54,10 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		super(type, world);
 		calculateDimensions();
 		refreshPosition();
-		this.turningValue = turningValue;
-		this.turningValueWithShockwave = turningValueWithShockwave;
-		this.rayWidth = rayWidth;
-		this.shockwaveWidth = shockwaveWidth;
+		setTurningValue(turningValue);
+		setTurningValueWithShockwave(turningValueWithShockwave);
+		setRayWidth(rayWidth);
+		setShockwaveWidth(shockwaveWidth);
 		this.rayDamage = rayDamage;
 		this.shockwaveDamage = shockwaveDamage;
 	}
@@ -217,11 +222,11 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			{
 				double distance = getDistance(forward, relativeBox);
 				
-				if (distance < rayWidth)
+				if (distance < getRayWidth())
 				{
 					hit(entity, rayDamage);
 				}
-				else if (hasStartedToShowTheHellspawn() && distance < shockwaveWidth)
+				else if (hasStartedToShowTheHellspawn() && distance < getShockwaveWidth())
 				{
 					hit(entity, shockwaveDamage);
 				}
@@ -280,7 +285,10 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			return;
 		}
 		
-		float finalTurningValue = hasStartedToShowTheHellspawn() ? turningValueWithShockwave : turningValue;
+		prevPitch = getPitch();
+		prevYaw = getYaw();
+		
+		float finalTurningValue = hasStartedToShowTheHellspawn() ? getTurningValueWithShockwave() : getTurningValue();
 		setPitch(MathHelper.lerpAngleDegrees(finalTurningValue, getPitch(), owner.getPitch()));
 		setYaw(MathHelper.lerpAngleDegrees(finalTurningValue, getYaw(), owner.getYaw()));
 	}
@@ -297,6 +305,13 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	{
 		builder.add(COLOR, ColorUtils.getDefaultColor());
 		builder.add(TIME_VALUES, 0);
+		builder.add(WIDTH_VALUES, new Vector2f());
+		builder.add(TURNING_VALUES, new Vector2f());
+	}
+	@Override
+	public Packet<ClientPlayPacketListener> createSpawnPacket(EntityTrackerEntry entityTrackerEntry)
+	{
+		return super.createSpawnPacket(entityTrackerEntry);
 	}
 	@Override
 	protected void readCustomDataFromNbt(NbtCompound nbt)
@@ -305,6 +320,16 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
 		if (nbt.contains("TimeValues"))
 			setTimeValues(nbt.getInt("TimeValues"));
+		if (nbt.contains("RayValues"))
+		{
+			NbtCompound valuesNbt = (NbtCompound) nbt.get("RayValues");
+			setTurningValue(valuesNbt.getFloat("TurningValue"));
+			setTurningValueWithShockwave(valuesNbt.getFloat("TurningValueShockwave"));
+			setRayWidth(valuesNbt.getFloat("RayWidth"));
+			setShockwaveWidth(valuesNbt.getFloat("ShockwaveWidth"));
+			rayDamage = valuesNbt.getFloat("RayDmg");
+			shockwaveDamage = valuesNbt.getFloat("ShockwaveDmg");
+		}
 		super.readCustomDataFromNbt(nbt);
 	}
 	@Override
@@ -312,6 +337,14 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	{
 		nbt.put("Color", getColor().getNbt());
 		nbt.putInt("TimeValues", getTimeValues());
+		NbtCompound valuesNbt = new NbtCompound();
+		valuesNbt.putFloat("TurningValue", getTurningValue());
+		valuesNbt.putFloat("TurningValueShockwave", getTurningValueWithShockwave());
+		valuesNbt.putFloat("RayWidth", getRayWidth());
+		valuesNbt.putFloat("ShockwaveWidth", getShockwaveWidth());
+		valuesNbt.putFloat("RayDmg", rayDamage);
+		valuesNbt.putFloat("ShockwaveDmg", shockwaveDamage);
+		nbt.put("RayValues", valuesNbt);
 		super.writeCustomDataToNbt(nbt);
 	}
 	public boolean hasStartedToShowTheHellspawn()
@@ -380,5 +413,37 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	public byte getState()
 	{
 		return hasStartedToShowTheHellspawn() ? (byte) 2 : isBeamActive() ? (byte) 1 : 0;
+	}
+	public float getRayWidth()
+	{
+		return dataTracker.get(WIDTH_VALUES).x;
+	}
+	public void setRayWidth(float rayWidth)
+	{
+		dataTracker.set(WIDTH_VALUES, new Vector2f(rayWidth, getShockwaveWidth()));
+	}
+	public float getShockwaveWidth()
+	{
+		return dataTracker.get(WIDTH_VALUES).y;
+	}
+	public void setShockwaveWidth(float shockwaveWidth)
+	{
+		dataTracker.set(WIDTH_VALUES, new Vector2f(getRayWidth(), shockwaveWidth));
+	}
+	public float getTurningValue()
+	{
+		return dataTracker.get(TURNING_VALUES).x;
+	}
+	public void setTurningValue(float turningValue)
+	{
+		dataTracker.set(TURNING_VALUES, new Vector2f(turningValue, getTurningValueWithShockwave()));
+	}
+	public float getTurningValueWithShockwave()
+	{
+		return dataTracker.get(TURNING_VALUES).y;
+	}
+	public void setTurningValueWithShockwave(float turningValueWithShockwave)
+	{
+		dataTracker.set(TURNING_VALUES, new Vector2f(getTurningValue(), turningValueWithShockwave));
 	}
 }

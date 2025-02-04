@@ -136,7 +136,8 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			int index = data.weaponId().map(weaponIds::indexOf).orElse(-1);
 			index++;
 			index %= weaponIds.size();
-			setData(stack, data.withWeaponId(weaponIds.get(index)));
+			data = data.withWeaponId(weaponIds.get(index));
+			setData(stack, data);
 			
 			if (serverPlayer != null)
 				serverPlayer.sendMessageToClient(Text.literal("Set weapon to " + data.getWeaponText()).formatted(Formatting.RED), true);
