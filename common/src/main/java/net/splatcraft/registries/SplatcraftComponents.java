@@ -234,7 +234,7 @@ public class SplatcraftComponents
 	}
 	public record SpecialProviderData(
 		Optional<Identifier> specialId,
-		Optional<Identifier> weaponId,
+		Optional<Identifier> weaponIdFilter,
 		Optional<Integer> pointsPerSpecialOverride,
 		boolean allowSubs,
 		int storedPoints
@@ -243,7 +243,7 @@ public class SplatcraftComponents
 		public static final Codec<SpecialProviderData> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
 				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
-				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id").forGetter(SpecialProviderData::weaponId),
+				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id_filter").forGetter(SpecialProviderData::weaponIdFilter),
 				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
 				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
 				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)
@@ -255,6 +255,9 @@ public class SplatcraftComponents
 			if (stack.isEmpty())
 				return false;
 			
+			if (weaponIdFilter.isEmpty())
+				return true;
+			
 			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 				return false;
 			
@@ -265,7 +268,7 @@ public class SplatcraftComponents
 			if (weaponId == null)
 				return false;
 			
-			return this.weaponId.map(v -> Objects.equals(v, weaponId)).orElse(false);
+			return Objects.equals(weaponIdFilter.get(), weaponId);
 		}
 		public String getSpecialTranslationKey()
 		{
@@ -277,27 +280,27 @@ public class SplatcraftComponents
 		}
 		public Text getWeaponText()
 		{
-			return Text.translatable(weaponId.get().toTranslationKey("item"));
+			return Text.translatable(weaponIdFilter.get().toTranslationKey("item"));
 		}
 		public SpecialProviderData withSpecialId(Identifier id)
 		{
-			return new SpecialProviderData(Optional.ofNullable(id), weaponId, pointsPerSpecialOverride, allowSubs, storedPoints);
+			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, allowSubs, storedPoints);
 		}
-		public SpecialProviderData withWeaponId(Identifier id)
+		public SpecialProviderData withWeaponIdFilter(Identifier id)
 		{
 			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedPoints);
 		}
 		public SpecialProviderData withOverridenSpecialCost(int cost)
 		{
-			return new SpecialProviderData(specialId, weaponId, Optional.of(cost), allowSubs, storedPoints);
+			return new SpecialProviderData(specialId, weaponIdFilter, Optional.of(cost), allowSubs, storedPoints);
 		}
 		public SpecialProviderData withStoredPoints(int points)
 		{
-			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, allowSubs, points);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowSubs, points);
 		}
 		public SpecialProviderData withAllowedSubs(boolean allowedSubs)
 		{
-			return new SpecialProviderData(specialId, weaponId, pointsPerSpecialOverride, allowedSubs, storedPoints);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowedSubs, storedPoints);
 		}
 		public SpecialProviderData incrementStoredPoints(int points)
 		{

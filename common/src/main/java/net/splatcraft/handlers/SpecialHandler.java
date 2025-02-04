@@ -33,10 +33,14 @@ public class SpecialHandler
 				.toArray(Map.Entry[]::new))
 		);
 		specialExecutor.clear();
-		specialExecutor.put(SpecialWeaponRecords.StingRayDataRecord.ID, (entity, settings, slot) ->
+		registerSpecialExecutor(SpecialWeaponRecords.StingRayDataRecord.ID, (entity, settings, slot) ->
 		{
 			EntityAction.setEntityAction(entity, new StingRayAction(settings, CommonUtils.getSlot(entity), slot));
 		});
+	}
+	public static void registerSpecialExecutor(Identifier specialId, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot> delegate)
+	{
+		specialExecutor.put(specialId.withPrefixedPath("specials/"), delegate);
 	}
 	public static Map<Identifier, SpecialWeaponSettings<?>> getSpecialMap()
 	{
@@ -110,7 +114,7 @@ public class SpecialHandler
 	}
 	public static void startUsingSpecial(LivingEntity entity, Identifier specialId, EntitySlot slot)
 	{
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId.withPrefixedPath("specials/"));
+		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
 		if (settings instanceof SpecialWeaponSettings specialSettings)
 		{
 			specialExecutor.get(specialId).accept(entity, specialSettings, slot);

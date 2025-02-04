@@ -43,10 +43,9 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	@Override
 	public Text getName(ItemStack stack)
 	{
-		SpecialProviderData data = getData(stack);
-		if (data == null)
+		if (stack.contains(SPECIAL_PROVIDER_DATA))
 			return Text.translatable(getTranslationKey());
-		return Text.translatable(getTranslationKey() + ".active", data.getSpecialText());
+		return Text.translatable(getTranslationKey() + ".active", getData(stack).getSpecialText());
 	}
 	@Override
 	public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
@@ -54,16 +53,15 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		super.appendTooltip(stack, context, tooltip, type);
 		
 		SpecialProviderData data = getData(stack);
-		if (data == null || (data.specialId().isEmpty() && data.weaponId().isEmpty()))
+		if (data == null || (data.specialId().isEmpty() && data.weaponIdFilter().isEmpty()))
 		{
 			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip_none").formatted(Formatting.GRAY));
 			return;
 		}
 		
-		tooltip.add(data.weaponId().isEmpty() ?
-			Text.translatable(getTranslationKey() + ".tooltip_no_weapon").formatted(Formatting.GRAY) :
-			Text.translatable(getTranslationKey() + ".tooltip_linked_weapon", data.getWeaponText())
-		);
+		if (data.weaponIdFilter().isPresent())
+			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip_linked_weapon", data.getWeaponText()));
+		
 		tooltip.add(data.specialId().isEmpty() ?
 			Text.translatable(getTranslationKey() + ".tooltip_no_special").formatted(Formatting.GRAY) :
 			Text.translatable(getTranslationKey() + ".tooltip_linked_special", data.getSpecialText())
@@ -72,7 +70,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	@Override
 	public boolean isItemBarVisible(ItemStack stack)
 	{
-		return getData(stack) != null;
+		return stack.contains(SPECIAL_PROVIDER_DATA);
 	}
 	@Override
 	public int getItemBarColor(ItemStack stack)
@@ -133,10 +131,10 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(BlasterWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(SplatlingWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(DualieWeaponSettings.class));
-			int index = data.weaponId().map(weaponIds::indexOf).orElse(-1);
+			int index = data.weaponIdFilter().map(weaponIds::indexOf).orElse(-1);
 			index++;
 			index %= weaponIds.size();
-			data = data.withWeaponId(weaponIds.get(index));
+			data = data.withWeaponIdFilter(weaponIds.get(index));
 			setData(stack, data);
 			
 			if (serverPlayer != null)
@@ -153,7 +151,12 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	@Override
 	public boolean onStackClicked(ItemStack stack, Slot slot, ClickType clickType, PlayerEntity player)
 	{
-		return super.onStackClicked(stack, slot, clickType, player);
+		SpecialProviderData data = getData(stack);
+		if (data == null || data.specialId().isEmpty() && data.weaponIdFilter().isEmpty())
+			return false;
+		
+		setData(stack, data.withSpecialId(null).withWeaponIdFilter(null));
+		return true;
 	}
 	public void tryUsingSpecial(World world, LivingEntity entity, ItemStack providerStack, ItemStack weaponStack)
 	{
@@ -174,13 +177,6 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendMessageToClient(Text.translatable("status.provider_unassigned_special").formatted(Formatting.RED), true);
-			return;
-		}
-		
-		if (data.weaponId().isEmpty())
-		{
-			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.translatable("status.provider_unassigned_weapon").formatted(Formatting.RED), true);
 			return;
 		}
 		
