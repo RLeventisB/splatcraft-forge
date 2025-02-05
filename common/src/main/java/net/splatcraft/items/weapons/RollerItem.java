@@ -114,12 +114,19 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				}
 			}, () ->
 			{
-				RollerWeaponSettings settings = getSettings(stack);
-				RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(usedOnGround).attackData();
-				if (!world.isClient && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
+				boolean notPreventedByAction = !EntityAction.hasActionAnd(user, EntityAction::preventWeaponUse);
+				
+				if (notPreventedByAction && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
 				{
-					EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTicks(), attackData.endlagTicks(), user));
-					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(user), user);
+					RollerWeaponSettings settings = getSettings(stack);
+					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(usedOnGround).attackData();
+					if (!world.isClient && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
+					{
+						EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTicks(), attackData.endlagTicks(), user));
+						SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(user), user);
+					}
+					
+					user.setSprinting(false);
 				}
 			});
 		}
