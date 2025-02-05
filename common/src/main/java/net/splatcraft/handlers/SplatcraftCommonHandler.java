@@ -5,6 +5,7 @@ import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
@@ -17,7 +18,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.GameRules;
@@ -81,25 +81,27 @@ public class SplatcraftCommonHandler
 			return;
 		}
 		
-		EntityInfoCapability.getOptional(newPlayer).ifPresent(info ->
+		Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = EntityInfoCapability.get(oldPlayer).getMatchInventory();
+		
+		if (!matchInv.isEmpty())
 		{
-			DefaultedList<ItemStack> matchInv = info.getMatchInventory();
-			if (!matchInv.isEmpty())
+			tryToInsertItems(newPlayer, matchInv, true);
+			
+			EntityInfoCapability.get(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
+		}
+		EntityAction.setEntityAction(newPlayer, null);
+	}
+	private static void tryToInsertItems(PlayerEntity player, Object2ObjectOpenHashMap<Integer, ItemStack> matchInv, boolean dropItemIfFail)
+	{
+		PlayerInventory inventory = player.getInventory();
+		for (int i = 0; i < inventory.size(); i++)
+		{
+			ItemStack stack = matchInv.get(i);
+			if (stack != null && !stack.isEmpty() && !putStackInSlot(inventory, stack, i) && !inventory.insertStack(stack) && dropItemIfFail)
 			{
-				PlayerInventory inventory = newPlayer.getInventory();
-				for (int i = 0; i < matchInv.size(); i++)
-				{
-					ItemStack stack = matchInv.get(i);
-					if (!stack.isEmpty() && !putStackInSlot(inventory, stack, i) && !inventory.insertStack(stack))
-					{
-						newPlayer.dropItem(stack, true, true);
-					}
-				}
-				
-				info.setMatchInventory(DefaultedList.of());
+				player.dropItem(stack, true, true);
 			}
-			EntityAction.setEntityAction(newPlayer, null);
-		});
+		}
 	}
 	private static boolean putStackInSlot(PlayerInventory inventory, ItemStack stack, int slot)
 	{
@@ -138,18 +140,11 @@ public class SplatcraftCommonHandler
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
-				DefaultedList<ItemStack> matchInv = info.getMatchInventory();
+				Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = info.getMatchInventory();
 				
-				drops.removeIf(o -> matchInv.contains(o.getStack()));
+				drops.removeIf(o -> matchInv.containsValue(o.getStack()));
 				
-				for (int i = 0; i < matchInv.size(); i++)
-				{
-					ItemStack stack = matchInv.get(i);
-					if (!stack.isEmpty() && !putStackInSlot(player.getInventory(), stack, i))
-					{
-						player.getInventory().insertStack(stack);
-					}
-				}
+				tryToInsertItems(player, matchInv, false);
 			});
 		}
 	}
@@ -164,14 +159,15 @@ public class SplatcraftCommonHandler
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
-				DefaultedList<ItemStack> matchInv = DefaultedList.ofSize(player.getInventory().size(), ItemStack.EMPTY);
+				PlayerInventory inventory = player.getInventory();
+				Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = new Object2ObjectOpenHashMap<>(inventory.size());
 				
-				for (int i = 0; i < matchInv.size(); i++)
+				for (int i = 0; i < inventory.size(); i++)
 				{
-					ItemStack stack = player.getInventory().getStack(i);
+					ItemStack stack = inventory.getStack(i);
 					if (stack.isIn(SplatcraftTags.Items.MATCH_ITEMS))
 					{
-						matchInv.set(i, stack);
+						matchInv.put(i, stack);
 					}
 				}
 				info.setMatchInventory(matchInv);

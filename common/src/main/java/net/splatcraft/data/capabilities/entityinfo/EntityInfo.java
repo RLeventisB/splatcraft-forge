@@ -2,17 +2,13 @@ package net.splatcraft.data.capabilities.entityinfo;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.Direction;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
-import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -25,7 +21,7 @@ public class EntityInfo
 		Codec.BOOL.optionalFieldOf("is_squid", false).forGetter(EntityInfo::isSquid),
 		Codec.BOOL.optionalFieldOf("is_initialized", false).forGetter(EntityInfo::isInitialized),
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),
-		ItemStack.CODEC.listOf().optionalFieldOf("match_inventory", DefaultedList.ofSize(41, ItemStack.EMPTY)).forGetter(EntityInfo::getMatchInventory),
+		CodecUtils.hashMapCodec(Codec.STRING.comapFlatMap(v -> CodecUtils.exceptionCatchDataResult(() -> Integer.decode(v)), Object::toString), ItemStack.CODEC).optionalFieldOf("match_inventory", new Object2ObjectOpenHashMap<>(41)).forGetter(EntityInfo::getMatchInventory),
 		EntityAction.SERIALIZER_CODEC.lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
@@ -39,7 +35,7 @@ public class EntityInfo
 	private boolean isSquid = false;
 	private boolean initialized = false;
 	private Optional<Direction> climbedDirection = Optional.empty();
-	private DefaultedList<ItemStack> matchInventory = DefaultedList.of();
+	private Object2ObjectOpenHashMap<Integer, ItemStack> matchInventory = new Object2ObjectOpenHashMap<>();
 	private EntityAction entityAction = null;
 	private PlayerCharge playerCharge = null;
 	private ItemStack inkBand = ItemStack.EMPTY;
@@ -60,7 +56,7 @@ public class EntityInfo
 	                  boolean isSquid,
 	                  boolean initialized,
 	                  Optional<Direction> climbedDirection,
-	                  List<ItemStack> matchInventory,
+	                  Object2ObjectOpenHashMap<Integer, ItemStack> matchInventory,
 	                  Optional<EntityAction> entityAction,
 	                  Optional<PlayerCharge> playerCharge,
 	                  ItemStack inkBand,
@@ -74,7 +70,7 @@ public class EntityInfo
 		this.isSquid = isSquid;
 		this.initialized = initialized;
 		this.climbedDirection = climbedDirection;
-		this.matchInventory = DefaultedList.copyOf(ItemStack.EMPTY, matchInventory.toArray(new ItemStack[0]));
+		this.matchInventory = matchInventory;
 		this.entityAction = entityAction.orElse(null);
 		this.playerCharge = playerCharge.orElse(null);
 		this.inkBand = inkBand;
@@ -141,11 +137,11 @@ public class EntityInfo
 	{
 		return InkBlockUtils.getInkTypeFromStack(inkBand);
 	}
-	public DefaultedList<ItemStack> getMatchInventory()
+	public Object2ObjectOpenHashMap<Integer, ItemStack> getMatchInventory()
 	{
 		return matchInventory;
 	}
-	public void setMatchInventory(DefaultedList<ItemStack> inventory)
+	public void setMatchInventory(Object2ObjectOpenHashMap<Integer, ItemStack> inventory)
 	{
 		matchInventory = inventory;
 	}
@@ -222,11 +218,32 @@ public class EntityInfo
 	{
 		if (playingData == null)
 			playingData = PlayingData.DEFAULT.get();
-		return playingData.respawnTime;
+		
+		return playingData.respawnTime & 0x7fffffff;
 	}
 	public void setMatchRespawnTimeLeft(int time)
 	{
 		playingData = new PlayingData(isPlaying(), time);
+	}
+	public boolean isMatchRespawning()
+	{
+		if (playingData == null)
+			playingData = PlayingData.DEFAULT.get();
+		
+		return (playingData.respawnTime & 0x10000000) != 0;
+	}
+	public void setIsMatchRespawning(boolean respawning)
+	{
+		int lastBitActive = 0x1000000;
+		if (playingData != null)
+		{
+			if (respawning)
+				playingData = new PlayingData(isPlaying(), playingData.respawnTime | lastBitActive);
+			else
+				playingData = new PlayingData(isPlaying(), playingData.respawnTime & 0x7FFFFFFF);
+		}
+		else
+			playingData = new PlayingData(isPlaying(), respawning ? lastBitActive : 0);
 	}
 	public record PlayingData(
 		boolean isPlaying,
