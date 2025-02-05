@@ -8,12 +8,10 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.function.LazyIterationConsumer;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
-import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -34,23 +32,7 @@ public class WeaponHandler
 	{
 		EntityEvent.LIVING_DEATH.register((entity, dmgSource) ->
 		{
-			Optional<EntityInfo> info = EntityInfoCapability.getOptional(entity);
-			if (!entity.getWorld().isClient() && !entity.isSpectator() && entity instanceof LivingEntity target && (info.isEmpty() || !info.get().isPlaying() || info.get().getMatchRespawnTimeLeft() == 0))
-			{
-				InkColor color = ColorUtils.getEntityColor(target);
-				((ServerWorld) target.getWorld()).spawnParticles(new SquidSoulParticleData(color), target.getX(), target.getY() + 0.5f, target.getZ(), 1, 0, 0, 0, 1.5f);
-				
-				doScoreboardLogicOnDeath(dmgSource, target, color);
-				
-				if (info.isPresent() && info.get().isPlaying())
-				{
-					return EventResult.interruptFalse();
-				}
-				
-				prevPosMap.remove(entity);
-				return EventResult.pass();
-			}
-			
+			prevPosMap.remove(entity);
 			return EventResult.pass();
 		});
 		
@@ -87,7 +69,7 @@ public class WeaponHandler
 			return LazyIterationConsumer.NextIteration.CONTINUE;
 		}));
 	}
-	private static void doScoreboardLogicOnDeath(DamageSource dmgSource, LivingEntity target, InkColor color)
+	public static void doScoreboardLogicOnDeath(DamageSource dmgSource, LivingEntity target, InkColor color)
 	{
 		Scoreboard scoreboard = target.getWorld().getScoreboard();
 		if (ScoreboardHandler.hasColorCriterion(color))

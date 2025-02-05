@@ -5,8 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -27,6 +25,8 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendPlaySessionCreationPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.CodecUtils;
@@ -312,7 +312,6 @@ public class Stage implements Comparable<Stage>
 		
 		return SuperJumpCommand.superJump(player, new Vec3d(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.getWorld()), targetPos.getZ() + 0.5));
 	}
-	@Environment(EnvType.SERVER)
 	public boolean play(World world, Collection<ServerPlayerEntity> players, StageGameMode gameMode)
 	{
 		SaveInfo saveInfo = SaveInfoCapability.get();
@@ -324,7 +323,7 @@ public class Stage implements Comparable<Stage>
 		
 		PlaySession playSession = new PlaySession(world, players, this, gameMode);
 		saveInfo.playSessions().put(id, playSession);
-		
+		SplatcraftPacketHandler.sendToAll(new SendPlaySessionCreationPacket(playSession));
 		return true;
 	}
 	public ServerWorld getStageLevel(MinecraftServer server)

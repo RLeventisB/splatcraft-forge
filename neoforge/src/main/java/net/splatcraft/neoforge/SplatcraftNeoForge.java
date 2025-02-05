@@ -34,6 +34,7 @@ public final class SplatcraftNeoForge
 	public SplatcraftNeoForge(IEventBus modBus)
 	{
 		// Run our common setup.
+		
 		Splatcraft.init();
 		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
 		modBus.addListener(SplatcraftNeoForge::onRegistryUnlocked);

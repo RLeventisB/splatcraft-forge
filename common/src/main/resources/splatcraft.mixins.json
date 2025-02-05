@@ -5,40 +5,23 @@
     "refmap": "splatcraft-refmap.json",
     "plugin": "net.splatcraft.mixin.MixinInitializer",
     "mixins": [
-        "AxeWaxMixin",
-        "BlockUpdateMixins$ServerWorldMixin",
-        "BlockUpdateMixins$WorldMixin",
-        "EntityMixins$EntityMixin",
-        "EntityMixins$LivingEntityMixin",
-        "ItemRenderingMixins$HeldItemRendererMixin",
-        "PlayerListMixin",
-        "PlayerMixins$PlayerMixin",
-        "PlayerMixins$ServerPlayerMixinFabric",
-        "ProjectileMixin$InkProjectileDataMixin",
-        "SaveDataMixins$LevelStorageMixin",
-        "ServerGamePacketMixin",
-        "SquidPassthroughMixin",
-        "accessors.EntityAccessor"
+        "AxeWaxMixin", "BlockUpdateMixins$ServerWorldMixin", "BlockUpdateMixins$WorldMixin", "EntityMixins$EntityMixin",
+        "EntityMixins$LivingEntityMixin", "ItemRenderingMixins$HeldItemRendererMixin", "MatchMixins$LivingEntityMixin",
+        "MatchMixins$PlayerMixin", "PlayerListMixin", "PlayerMixins$PlayerMixin",
+        "PlayerMixins$ServerPlayerMixinFabric", "ProjectileMixin$InkProjectileDataMixin",
+        "SaveDataMixins$LevelStorageMixin", "ServerGamePacketMixin", "SquidPassthroughMixin", "accessors.EntityAccessor"
     ],
     "minVersion": "0.8",
     "injectors": {
         "defaultRequire": 1
     },
     "client": [
-        "CooldownSlotMixin",
-        "EntityLayerMixin",
-        "EntityMixins$EntityRendererMixin",
-        "GameRendererMixin",
-        "ItemRenderingMixins$ItemRendererMixin",
-        "PlayerMixins$LocalPlayerMixinFabric",
-        "PlayerMixins$PlayerRendererMixin",
-        "PlayerModelMixin",
-        "PlayerTabOverlayMixin",
-        "RecipeCategoryMixin",
-        "WeaponHotkeyMixin$MinecraftInstance",
-        "WeaponHotkeyMixin$PlayerControllerMix",
-        "accessors.ChunkRegionAccessor",
-        "accessors.GameRendererFovAccessor",
-        "accessors.MinecraftClientAccessor"
+        "CooldownSlotMixin", "EntityLayerMixin", "EntityMixins$EntityRendererMixin", "GameRendererMixin",
+        "ItemRenderingMixins$ItemRendererMixin", "MatchMixins$AbstractClientPlayerMixin",
+        "MatchMixins$ClientInteractionManagerMixin", "MatchMixins$ClientPlayerMixinCommon",
+        "MatchMixins$HeldItemRendererMixin", "MatchMixins$PlayerRendererMixin", "PlayerMixins$LocalPlayerMixinFabric",
+        "PlayerMixins$PlayerRendererMixin", "PlayerModelMixin", "PlayerTabOverlayMixin", "RecipeCategoryMixin",
+        "WeaponHotkeyMixin$MinecraftInstance", "WeaponHotkeyMixin$PlayerControllerMix", "accessors.ChunkRegionAccessor",
+        "accessors.GameRendererFovAccessor", "accessors.MinecraftClientAccessor"
     ]
 }

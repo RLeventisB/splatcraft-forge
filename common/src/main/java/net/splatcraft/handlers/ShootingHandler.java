@@ -87,6 +87,11 @@ public class ShootingHandler
 	{
 		for (Map.Entry<LivingEntity, EntityData> entry : shootingData.entrySet())
 		{
+			if (entry.getValue().entity.isDead())
+			{
+				shootingData.remove(entry.getKey());
+				return;
+			}
 			entry.getValue().usedThisTick = false;
 			entry.getValue().update();
 		}

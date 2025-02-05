@@ -98,6 +98,10 @@ public class StageCommand
 							.then(CommandManager.argument("gamemode", StageGameModeArgument.stageGamemode())
 								.executes(StageCommand::play))
 						))))
+			.then(CommandManager.literal("stopsession")
+				.then(stageId("stage")
+					.executes(StageCommand::stopSession))
+			)
 		);
 	}
 	public static RequiredArgumentBuilder<ServerCommandSource, String> stageId(String argumentName)
@@ -232,6 +236,22 @@ public class StageCommand
 			BoolArgumentType.getBool(context, "assignTeams"),
 			StageGameModeArgument.getStageGameMode(context, "gamemode")
 		);
+	}
+	private static int stopSession(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+	{
+		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectOpenHashMap<String, PlaySession> playSessions = SaveInfoCapability.get().playSessions();
+		String stageId = StringArgumentType.getString(context, "stage");
+		if (!stages.containsKey(stageId))
+			throw STAGE_NOT_FOUND.create(stageId);
+		
+		PlaySession session = playSessions.get(stageId);
+		if (session != null)
+		{
+			session.end(context.getSource().getServer(), PlaySession.EndReason.FORCED);
+		}
+		
+		return 1;
 	}
 	private static int add(ServerCommandSource source, String stageId, BlockPos from, BlockPos to) throws CommandSyntaxException
 	{

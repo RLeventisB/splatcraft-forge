@@ -10,7 +10,6 @@ import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class EntityInfo
 {
@@ -26,7 +25,7 @@ public class EntityInfo
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
-		PlayingData.CODEC.optionalFieldOf("playing_data", new PlayingData(false, 0)).forGetter(EntityInfo::playingData),
+		PlayingData.CODEC.optionalFieldOf("playing_data", PlayingData.DEFAULT).forGetter(EntityInfo::playingData),
 		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks),
 		SquidState.CODEC.optionalFieldOf("squid_state", SquidState.SURFACED).forGetter(EntityInfo::getSquidState)
 	).apply(inst, EntityInfo::new));
@@ -40,7 +39,7 @@ public class EntityInfo
 	private PlayerCharge playerCharge = null;
 	private ItemStack inkBand = ItemStack.EMPTY;
 	private float squidSurgeCharge = 0f;
-	private PlayingData playingData = PlayingData.DEFAULT.get();
+	private PlayingData playingData = PlayingData.DEFAULT;
 	private int higherStartupTicks;
 	private SquidState squidState = SquidState.SURFACED;
 	public EntityInfo(InkColor defaultColor)
@@ -90,7 +89,7 @@ public class EntityInfo
 	private PlayingData playingData()
 	{
 		if (playingData == null)
-			playingData = PlayingData.DEFAULT.get();
+			playingData = PlayingData.DEFAULT;
 		return playingData;
 	}
 	public boolean isInitialized()
@@ -208,54 +207,55 @@ public class EntityInfo
 	}
 	public boolean isPlaying()
 	{
-		return playingData != null && playingData.isPlaying;
+		return playingData != null && playingData.playingStageId != null;
 	}
-	public void setPlaying(boolean playing)
+	public String getPlayingStageId()
 	{
-		playingData = new PlayingData(playing, playingData != null ? playingData.respawnTime : 0);
+		return playingData != null ? playingData.playingStageId : null;
+	}
+	public void setPlayingStageId(String stageId)
+	{
+		playingData = new PlayingData(stageId, playingData != null ? (playingData.respawnTime & 0x7FFFFFFF) : 0);
 	}
 	public int getMatchRespawnTimeLeft()
 	{
 		if (playingData == null)
-			playingData = PlayingData.DEFAULT.get();
+			playingData = PlayingData.DEFAULT;
 		
-		return playingData.respawnTime & 0x7fffffff;
+		return playingData.respawnTime & 0b01111111111111111111111111111111;
 	}
 	public void setMatchRespawnTimeLeft(int time)
 	{
-		playingData = new PlayingData(isPlaying(), time);
+		playingData = new PlayingData(getPlayingStageId(), (playingData.respawnTime & 0x80000000) | (time & 0x7FFFFFFF));
 	}
 	public boolean isMatchRespawning()
 	{
-		if (playingData == null)
-			playingData = PlayingData.DEFAULT.get();
-		
-		return (playingData.respawnTime & 0x10000000) != 0;
+		return playingData != null && (playingData.respawnTime & 0x80000000) != 0;
 	}
 	public void setIsMatchRespawning(boolean respawning)
 	{
-		int lastBitActive = 0x1000000;
+		final int lastBitActive = 0x80000000;
 		if (playingData != null)
 		{
 			if (respawning)
-				playingData = new PlayingData(isPlaying(), playingData.respawnTime | lastBitActive);
+				playingData = new PlayingData(playingData.playingStageId, playingData.respawnTime | lastBitActive);
 			else
-				playingData = new PlayingData(isPlaying(), playingData.respawnTime & 0x7FFFFFFF);
+				playingData = new PlayingData(playingData.playingStageId, playingData.respawnTime & 0x7FFFFFFF);
 		}
 		else
-			playingData = new PlayingData(isPlaying(), respawning ? lastBitActive : 0);
+			playingData = new PlayingData(null, respawning ? lastBitActive : 0);
 	}
 	public record PlayingData(
-		boolean isPlaying,
+		String playingStageId,
 		int respawnTime
 	)
 	{
 		public static final Codec<PlayingData> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
-				Codec.BOOL.optionalFieldOf("is_playing", false).forGetter(PlayingData::isPlaying),
+				Codec.STRING.optionalFieldOf("playing_stage_id").forGetter(playingData1 -> Optional.ofNullable(playingData1.playingStageId())),
 				Codec.INT.optionalFieldOf("respawn_time", 0).forGetter(PlayingData::respawnTime)
-			).apply(inst, PlayingData::new)
+			).apply(inst, (Optional<String> playingStageId, Integer respawnTime) -> new PlayingData(playingStageId.orElse(null), respawnTime))
 		);
-		public static final Supplier<PlayingData> DEFAULT = () -> new PlayingData(false, 0);
+		public static final PlayingData DEFAULT = new PlayingData(null, 0);
 	}
 }

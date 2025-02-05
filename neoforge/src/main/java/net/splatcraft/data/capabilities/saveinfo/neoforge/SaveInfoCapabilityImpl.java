@@ -12,7 +12,7 @@ public class SaveInfoCapabilityImpl
 {
 	public static SaveInfo get()
 	{
-		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().isIntegratedServerRunning())
+		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().isInSingleplayer())
 			return SaveInfoCapability.clientSaveInfo;
 		return GameInstance.getServer().getOverworld().getData(SplatcraftNeoForgeDataAttachments.SAVE_INFO);
 	}

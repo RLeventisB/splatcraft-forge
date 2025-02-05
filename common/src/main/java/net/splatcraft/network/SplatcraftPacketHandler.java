@@ -55,6 +55,10 @@ public class SplatcraftPacketHandler
 		registerMessage(DeleteInkPacket.class, DeleteInkPacket::decode);
 		registerMessage(WatchInkPacket.class, WatchInkPacket::decode);
 		registerMessage(SendJumpLureDataPacket.class, SendJumpLureDataPacket::decode);
+		registerMessage(SendPlayerDeathMatchPacket.class, SendPlayerDeathMatchPacket::decode);
+		registerMessage(SendPlayerRespawnMatchPacket.class, SendPlayerRespawnMatchPacket::decode);
+		registerMessage(SendPlaySessionCreationPacket.class, SendPlaySessionCreationPacket::decode);
+		registerMessage(SendPlaySessionEndPacket.class, SendPlaySessionEndPacket::decode);
 		registerMessage(UseJumpLurePacket.class, UseJumpLurePacket::decode);
 		registerMessage(RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
 		registerMessage(SendSpecialUsageDataPacket.class, SendSpecialUsageDataPacket::decode);
