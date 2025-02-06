@@ -49,7 +49,8 @@ public class SpawnPadTileEntity extends InkColorTileEntity
 	}
 	public Vec3d getSuperJumpPos()
 	{
-		return new Vec3d(getPos().getX(), getPos().getY() + SuperJumpCommand.blockHeight(getPos(), world), getPos().getZ() + 0.5);
+		BlockPos pos = getPos();
+		return new Vec3d(pos.getX() + 0.5, pos.getY() + SuperJumpCommand.blockHeight(pos, world), pos.getZ() + 0.5);
 	}
 	@Override
 	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)

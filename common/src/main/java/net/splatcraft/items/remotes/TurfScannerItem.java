@@ -211,7 +211,7 @@ public class TurfScannerItem extends RemoteItem
 		
 		return (TurfScanResult) new TurfScanResult(true, Text.translatable("commands.scanturf.success", facesTotal), scores, facesTotal).setIntResults(winner.getColor(), (int) ((float) affectedBlockTotal / facesTotal * 15));
 	}
-	private static BlockPos getTopSolidOrLiquidBlock(int x, int z, World world, int min, int max)
+	public static BlockPos getTopSolidOrLiquidBlock(int x, int z, World world, int min, int max)
 	{
 		Chunk chunk = world.getChunk(ChunkSectionPos.getSectionCoord(x), ChunkSectionPos.getSectionCoord(z));
 		

@@ -11,8 +11,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -110,8 +108,8 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
-		if (info.dimensionId().isEmpty())
-			info = info.setDimensionId(world.getDimension().effects().toString());
+		if (info.worldKey().isEmpty())
+			info = info.setWorldKey(world.getRegistryKey());
 		else if (!world.equals(getLevel(world, stack)))
 			return false;
 		
@@ -123,9 +121,10 @@ public abstract class RemoteItem extends Item implements CommandOutput
 	{
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
-		World result = world.getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, info.stageId().isPresent() ?
-			SaveInfoCapability.get().stages().get(info.stageId().get()).dimID
-			: Identifier.of(info.dimensionId().get()))));
+		World result = world.getServer().getWorld(
+			info.stageId().isPresent() ?
+				SaveInfoCapability.get().stages().get(info.stageId().get()).worldKey :
+				info.worldKey().get());
 		
 		return result == null ? world : result;
 	}

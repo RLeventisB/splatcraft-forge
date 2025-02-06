@@ -1,10 +1,10 @@
 package net.splatcraft.network.c2s;
 
+import dev.architectury.utils.GameInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.server.world.ServerWorld;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.util.CommonUtils;
@@ -35,7 +35,7 @@ public class RequestClearInkPacket extends PlayC2SPacket
 	public void execute(PlayerEntity player)
 	{
 		Stage stage = Stage.getStage(stageId);
-		net.minecraft.server.world.ServerWorld stageLevel = player.getWorld().getServer().getWorld(RegistryKeys.toWorldKey(RegistryKey.of(RegistryKeys.DIMENSION, stage.dimID)));
-		player.sendMessage(InkDisruptorItem.clearInk(stageLevel, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
+		ServerWorld stageworld = stage.getStageWorld(GameInstance.getServer());
+		player.sendMessage(InkDisruptorItem.clearInk(stageworld, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
 	}
 }

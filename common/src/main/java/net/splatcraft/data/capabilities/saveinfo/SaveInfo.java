@@ -9,7 +9,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -77,25 +79,22 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	{
 		colorScores.remove(color);
 	}
-	public boolean createOrEditStage(World world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	public boolean createOrEditStage(MinecraftServer server, RegistryKey<World> worldKey, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
 	{
-		if (world.isClient())
-			return false;
-		
 		if (stages.containsKey(stageId))
 		{
 			Stage stage = stages.get(stageId);
+			stage.worldKey = worldKey;
 			stage.setStageName(stageName);
-			stage.updateBounds(world, corner1, corner2);
-			stage.dimID = world.getDimension().effects();
+			stage.updateBounds(stage.getStageWorld(server), corner1, corner2);
 		}
 		else
-			stages.put(stageId, new Stage(world, corner1, corner2, stageId, stageName));
+			stages.put(stageId, new Stage(server, worldKey, corner1, corner2, stageId, stageName));
 		
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		return true;
 	}
-	public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	public boolean createStage(ServerWorld world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
 	{
 		if (world.isClient())
 			return false;
@@ -103,11 +102,11 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 		if (stages.containsKey(stageId))
 			return false;
 		
-		stages.put(stageId, new Stage(world, corner1, corner2, stageId, stageName));
+		stages.put(stageId, new Stage(world.getServer(), world.getRegistryKey(), corner1, corner2, stageId, stageName));
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		return true;
 	}
-	public boolean createStage(World world, String stageId, BlockPos corner1, BlockPos corner2)
+	public boolean createStage(ServerWorld world, String stageId, BlockPos corner1, BlockPos corner2)
 	{
 		return createStage(world, stageId, corner1, corner2, Text.literal(stageId));
 	}

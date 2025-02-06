@@ -35,23 +35,23 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 				if (setCorner1)
 				{
 					stage.cornerA = pos;
-					if (!stage.dimID.equals(world.getDimension().effects()))
+					if (!stage.worldKey.equals(world.getRegistryKey()))
 					{
 						stage.cornerB = null;
-						stage.dimID = world.getDimension().effects();
+						stage.worldKey = world.getRegistryKey();
 					}
 				}
 				else
 				{
 					stage.cornerB = pos;
-					if (!stage.dimID.equals(world.getDimension().effects()))
+					if (!stage.worldKey.equals(world.getRegistryKey()))
 					{
 						stage.cornerA = null;
-						stage.dimID = world.getDimension().effects();
+						stage.worldKey = world.getRegistryKey();
 					}
 				}
 				
-				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, stage.getStageName(), stage.cornerA, stage.cornerB, stage.dimID));
+				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, stage.getStageName(), stage.cornerA, stage.cornerB, stage.worldKey));
 			}
 			
 			MinecraftClient.getInstance().setScreen(this);
@@ -98,7 +98,7 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 					stage.cornerA = pos;
 				else
 					stage.cornerB = pos;
-				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, stage.getStageName(), stage.cornerA, stage.cornerB, stage.dimID));
+				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, stage.getStageName(), stage.cornerA, stage.cornerB, stage.worldKey));
 			}
 		}
 		else
@@ -123,7 +123,7 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 	private void saveChanges()
 	{
 		if (!stage.getStageName().toString().equals(stageName.getText()))
-			SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Text.literal(stageName.getText()), stage.cornerA, stage.cornerB, stage.dimID));
+			SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Text.literal(stageName.getText()), stage.cornerA, stage.cornerB, stage.worldKey));
 	}
 	@Override
 	public void handleWidgets(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)

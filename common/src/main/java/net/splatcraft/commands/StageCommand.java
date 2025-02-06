@@ -339,7 +339,7 @@ public class StageCommand
 			throw STAGE_NOT_FOUND.create(stageId);
 		
 		Stage stage = stages.get(stageId);
-		World stageLevel = stage.getStageLevel(source.getServer());
+		World stageLevel = stage.getStageWorld(source.getServer());
 		
 		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
@@ -401,7 +401,7 @@ public class StageCommand
 		
 		InkColor teamColor = stage.getTeamColor(teamId);
 		
-		World stageLevel = stage.getStageLevel(source.getServer());
+		World stageLevel = stage.getStageWorld(source.getServer());
 		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		
@@ -441,8 +441,8 @@ public class StageCommand
 			throw STAGE_NOT_FOUND.create(stageId);
 		
 		Stage stage = stages.get(stageId);
-		HashMap<InkColor, ArrayList<SpawnPadTileEntity>> spawnPads = stage.getSpawnPads(source.getWorld());
-		ServerWorld stageLevel = stage.getStageLevel(source.getServer());
+		Map<InkColor, List<SpawnPadTileEntity>> spawnPads = stage.getSpawnPads(source.getServer());
+		ServerWorld stageLevel = stage.getStageWorld(source.getServer());
 		
 		if (spawnPads.isEmpty())
 			throw NO_SPAWN_PADS_FOUND.create(stageId);
@@ -491,8 +491,8 @@ public class StageCommand
 			throw STAGE_NOT_FOUND.create(stageId);
 		
 		Stage stage = stages.get(stageId);
-		ServerWorld stageLevel = stage.getStageLevel(source.getServer());
-		ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(stageLevel));
+		ServerWorld stageLevel = stage.getStageWorld(source.getServer());
+		ArrayList<SpawnPadTileEntity> spawnPads = new ArrayList<>(stage.getAllSpawnPads(source.getServer()));
 		
 		if (spawnPads.isEmpty())
 			throw NO_SPAWN_PADS_FOUND.create(stageId);
@@ -532,7 +532,7 @@ public class StageCommand
 			throw STAGE_NOT_FOUND.create(stageId);
 		
 		Stage stage = stages.get(stageId);
-		World stageLevel = stage.getStageLevel(source.getServer());
+		World stageWorld = stage.getStageWorld(source.getServer());
 		Collection<String> teamIds = stage.getTeamIds();
 		
 		if (teamIds.size() < 2)
@@ -545,7 +545,7 @@ public class StageCommand
 			List<String> availableTeams = new ArrayList<>(teamIds);
 			for (ServerPlayerEntity player : players)
 			{
-				String teamId = Util.getRandom(availableTeams, stageLevel.getRandom());
+				String teamId = Util.getRandom(availableTeams, stageWorld.getRandom());
 				ColorUtils.setPlayerColor(player, stage.getTeamColor(teamId), true);
 				availableTeams.remove(teamId);
 				
@@ -556,7 +556,7 @@ public class StageCommand
 		
 		int playersTeleported = warpPlayers(source, stageId, players, true);
 		
-		if (!stage.play(stageLevel, players, gameMode))
+		if (!stage.play(source.getServer(), players, gameMode))
 			throw ALREADY_PLAYING.create(stageId);
 		
 		return playersTeleported;

@@ -5,10 +5,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
@@ -25,7 +27,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 	private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_create.png");
 	public static BlockPos corner1;
 	public static BlockPos corner2;
-	public static Identifier dimension;
+	public static RegistryKey<World> worldKey;
 	static String savedName = "";
 	@Nullable
 	//null when stage creation screen was closed via escape key, opens creation menu back up without setting a corner pos
@@ -43,18 +45,18 @@ public class StageCreationScreen extends AbstractStagePadScreen
 				if (setCorner1)
 				{
 					corner1 = pos;
-					if (!level.getDimension().effects().equals(dimension))
+					if (!level.getDimension().effects().equals(worldKey))
 					{
-						dimension = level.getDimension().effects();
+						worldKey = level.getRegistryKey();
 						corner2 = null;
 					}
 				}
 				else
 				{
 					corner2 = pos;
-					if (!level.getDimension().effects().equals(dimension))
+					if (!level.getDimension().effects().equals(worldKey))
 					{
-						dimension = level.getDimension().effects();
+						worldKey = level.getRegistryKey();
 						corner1 = null;
 					}
 				}
@@ -74,7 +76,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 		{
 			if (canCreate())
 			{
-				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, Text.literal(stageName.getText()), corner1, corner2, dimension));
+				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, Text.literal(stageName.getText()), corner1, corner2, worldKey));
 				
 				buttons.forEach(button -> button.active = false);
 				stageName.setFocused(false);
@@ -117,7 +119,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 	{
 		if (hasShiftDown())
 		{
-			String[] coords = client.keyboard.getClipboard().replaceAll(",+\\s+|\\s+|,", " ").replaceAll("[^\\.\\d\\s-]", "").split(" ");
+			String[] coords = client.keyboard.getClipboard().replaceAll(",+\\s+|\\s+|,", " ").replaceAll("[^.\\d\\s-]", "").split(" ");
 			BlockPos pos = null;
 			
 			if (coords.length >= 3)

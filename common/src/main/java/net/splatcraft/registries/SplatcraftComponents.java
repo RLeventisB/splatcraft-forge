@@ -8,9 +8,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -99,13 +102,13 @@ public class SplatcraftComponents
 	{
 		getOptional(stack, type).ifPresent(component -> stack.set(type, applier.apply(component)));
 	}
-	public record RemoteInfo(Optional<String> stageId, Optional<String> dimensionId, Optional<String> targets,
+	public record RemoteInfo(Optional<String> stageId, Optional<RegistryKey<World>> worldKey, Optional<String> targets,
 	                         Optional<BlockPos> pointA, Optional<BlockPos> pointB, int modeIndex)
 	{
 		public static final Codec<RemoteInfo> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.STRING.optionalFieldOf("stage_id").forGetter(RemoteInfo::stageId),
-			Codec.STRING.optionalFieldOf("dimension_id").forGetter(RemoteInfo::dimensionId),
-			Codec.STRING.optionalFieldOf("targets").forGetter(RemoteInfo::dimensionId),
+			RegistryKey.createCodec(RegistryKeys.WORLD).optionalFieldOf("world_key").forGetter(RemoteInfo::worldKey),
+			Codec.STRING.optionalFieldOf("targets").forGetter(RemoteInfo::targets),
 			BlockPos.CODEC.optionalFieldOf("point_a").forGetter(RemoteInfo::pointA),
 			BlockPos.CODEC.optionalFieldOf("point_b").forGetter(RemoteInfo::pointB),
 			Codec.INT.optionalFieldOf("mode_state", 0).forGetter(RemoteInfo::modeIndex)
@@ -113,27 +116,27 @@ public class SplatcraftComponents
 		public static final RemoteInfo DEFAULT = new RemoteInfo(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 0);
 		public RemoteInfo setStageId(String stageId)
 		{
-			return new RemoteInfo(Optional.ofNullable(stageId), dimensionId, targets, pointA, pointB, modeIndex);
+			return new RemoteInfo(Optional.ofNullable(stageId), worldKey, targets, pointA, pointB, modeIndex);
 		}
-		public RemoteInfo setDimensionId(String dimensionId)
+		public RemoteInfo setWorldKey(RegistryKey<World> worldKey)
 		{
-			return new RemoteInfo(stageId, Optional.ofNullable(dimensionId), targets, pointA, pointB, modeIndex);
+			return new RemoteInfo(stageId, Optional.ofNullable(worldKey), targets, pointA, pointB, modeIndex);
 		}
 		public RemoteInfo setTargets(String targets)
 		{
-			return new RemoteInfo(stageId, dimensionId, Optional.ofNullable(targets), pointA, pointB, modeIndex);
+			return new RemoteInfo(stageId, worldKey, Optional.ofNullable(targets), pointA, pointB, modeIndex);
 		}
 		public RemoteInfo setPointA(BlockPos pointA)
 		{
-			return new RemoteInfo(stageId, dimensionId, targets, Optional.ofNullable(pointA), pointB, modeIndex);
+			return new RemoteInfo(stageId, worldKey, targets, Optional.ofNullable(pointA), pointB, modeIndex);
 		}
 		public RemoteInfo setPointB(BlockPos pointB)
 		{
-			return new RemoteInfo(stageId, dimensionId, targets, pointA, Optional.ofNullable(pointB), modeIndex);
+			return new RemoteInfo(stageId, worldKey, targets, pointA, Optional.ofNullable(pointB), modeIndex);
 		}
 		public RemoteInfo setModeIndex(int modeIndex)
 		{
-			return new RemoteInfo(stageId, dimensionId, targets, pointA, pointB, modeIndex);
+			return new RemoteInfo(stageId, worldKey, targets, pointA, pointB, modeIndex);
 		}
 		public RemoteInfo setPoint(BlockPos pos)
 		{
