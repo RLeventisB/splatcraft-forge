@@ -2,11 +2,13 @@ package net.splatcraft.data.capabilities.saveinfo;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.TickEvent;
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -39,6 +41,15 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	public static void registerEvents()
 	{
 		TickEvent.SERVER_POST.register(SaveInfo::tickPlaySessions);
+		ClientTickEvent.CLIENT_LEVEL_POST.register(SaveInfo::tickPlaySessionsClient);
+	}
+	private static void tickPlaySessionsClient(ClientWorld world)
+	{
+		SaveInfo info = SaveInfoCapability.get();
+		for (PlaySession session : info.playSessions().values())
+		{
+			session.tick(null);
+		}
 	}
 	private static void tickPlaySessions(MinecraftServer server)
 	{

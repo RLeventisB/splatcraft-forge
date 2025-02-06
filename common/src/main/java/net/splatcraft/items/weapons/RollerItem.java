@@ -308,7 +308,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			Codec.FLOAT.fieldOf("total_time").forGetter(InitialSwingAction::getMaxTime),
 			Codec.FLOAT.fieldOf("attack_frame").forGetter(v -> v.attackFrame),
 			Codec.INT.fieldOf("slot_index").forGetter(InitialSwingAction::getSlotIndex),
-			CodecUtils.HAND_CODEC.fieldOf("used_hand").forGetter(InitialSwingAction::getHand),
+			CodecUtils.Codecs.HAND_CODEC.fieldOf("used_hand").forGetter(InitialSwingAction::getHand),
 			Codec.BOOL.fieldOf("is_grounded").forGetter(InitialSwingAction::isGrounded),
 			Codec.BOOL.fieldOf("is_action_queued").forGetter(v -> v.isAttackQueued),
 			Codec.BOOL.fieldOf("has_attacked").forGetter(v -> v.hasAttacked),

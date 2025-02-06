@@ -242,8 +242,8 @@ public class SplatcraftComponents
 	{
 		public static final Codec<SpecialProviderData> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
-				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
-				CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id_filter").forGetter(SpecialProviderData::weaponIdFilter),
+				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
+				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id_filter").forGetter(SpecialProviderData::weaponIdFilter),
 				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
 				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
 				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)

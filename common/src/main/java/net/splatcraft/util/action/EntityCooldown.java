@@ -14,7 +14,7 @@ public class EntityCooldown extends EntityActionWithTime
 		Codec.BOOL.optionalFieldOf("cancellable", false).forGetter(v -> v.cancellable),
 		getMaxTimeCodec(),
 		Codec.INT.fieldOf("slot_index").forGetter(v -> v.slotIndex),
-		CodecUtils.HAND_CODEC.fieldOf("used_hand").forGetter(v -> v.hand),
+		CodecUtils.Codecs.HAND_CODEC.fieldOf("used_hand").forGetter(v -> v.hand),
 		Codec.BOOL.fieldOf("can_move").forGetter(v -> v.canMove),
 		Codec.BOOL.fieldOf("force_crouch").forGetter(v -> v.forceCrouch),
 		Codec.BOOL.fieldOf("prevent_weapon_use").forGetter(v -> v.preventWeaponUse),

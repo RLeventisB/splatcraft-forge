@@ -160,11 +160,11 @@ public interface EntitySlot
 	class EntityHandSlot implements EntitySlot
 	{
 		public static final MapCodec<EntityHandSlot> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-			CodecUtils.HAND_CODEC.fieldOf("hand").forGetter(v -> v.hand),
+			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(v -> v.hand),
 			StackComparator.CODEC.fieldOf("comparator").forGetter(v -> v.comparator)
 		).apply(inst, EntityHandSlot::new));
 		public static final PacketCodec<ByteBuf, EntityHandSlot> PACKET_CODEC = PacketCodec.tuple(
-			CodecUtils.PACKET_HAND, v -> v.hand,
+			CodecUtils.Codecs.PACKET_HAND, v -> v.hand,
 			StackComparator.PACKET_CODEC, v -> v.comparator,
 			EntityHandSlot::new
 		);

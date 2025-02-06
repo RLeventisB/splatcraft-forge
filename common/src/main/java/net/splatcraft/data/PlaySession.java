@@ -12,6 +12,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Uuids;
+import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.world.World;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
@@ -19,6 +20,8 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendPlaySessionEndPacket;
 import net.splatcraft.util.CodecUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -30,20 +33,20 @@ public final class PlaySession
 		Uuids.CODEC.listOf().fieldOf("players").forGetter(v -> v.playerUuids),
 		StageGameMode.CODEC.fieldOf("game_mode").forGetter(v -> v.gameMode),
 		Codec.STRING.fieldOf("stage_id").forGetter(v -> v.stageId),
-		Codec.INT.fieldOf("timer").forGetter(v -> v.timer),
+		Codecs.INSTANT.fieldOf("session_end_instant").forGetter(v -> v.sessionEndInstant),
 		RegistryKey.createCodec(RegistryKeys.WORLD).fieldOf("world").forGetter(v -> v.worldKey)
 	).apply(inst, PlaySession::new));
 	public static final PacketCodec<ByteBuf, PlaySession> PACKET_CODEC = PacketCodec.tuple(
 		Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), v -> v.playerUuids,
 		CodecUtils.createEnumPacketCodec(StageGameMode::values), v -> v.gameMode,
 		PacketCodecs.STRING, v -> v.stageId,
-		PacketCodecs.INTEGER, v -> v.timer,
+		CodecUtils.Codecs.INSTANT_PACKET_CODEC, v -> v.sessionEndInstant,
 		RegistryKey.createPacketCodec(RegistryKeys.WORLD), v -> v.worldKey,
 		PlaySession::new);
 	public final List<UUID> playerUuids;
 	public final StageGameMode gameMode;
 	public final String stageId;
-	public int timer; // wahoo world has done irreparable damage to my brain
+	public Instant sessionEndInstant;
 	public RegistryKey<World> worldKey;
 	public PlaySession(World world, Collection<ServerPlayerEntity> players, Stage stage, StageGameMode gameMode)
 	{
@@ -56,14 +59,14 @@ public final class PlaySession
 		this.gameMode = gameMode;
 		stageId = stage.id;
 		worldKey = world.getRegistryKey();
-		timer = gameMode.DEFAULT_TIME;
+		sessionEndInstant = Instant.now().plus(gameMode.DEFAULT_TIME_SECONDS, ChronoUnit.SECONDS);
 	}
-	public PlaySession(List<UUID> playerUuids, StageGameMode gameMode, String stageId, Integer timer, RegistryKey<World> worldKey)
+	public PlaySession(List<UUID> playerUuids, StageGameMode gameMode, String stageId, Instant sessionEndInstant, RegistryKey<World> worldKey)
 	{
 		this.playerUuids = playerUuids;
 		this.gameMode = gameMode;
 		this.stageId = stageId;
-		this.timer = timer;
+		this.sessionEndInstant = sessionEndInstant;
 		this.worldKey = worldKey;
 	}
 	/**
@@ -73,37 +76,42 @@ public final class PlaySession
 	 */
 	public boolean tick(MinecraftServer server)
 	{
-		if (playerUuids.isEmpty() || playerUuids.stream().allMatch(v -> server.getWorld(worldKey).getPlayerByUuid(v) == null))
+		if (server != null)
 		{
-			end(server, EndReason.NO_PLAYERS);
-			return false;
+			if (playerUuids.isEmpty() || playerUuids.stream().allMatch(v -> server.getWorld(worldKey).getPlayerByUuid(v) == null))
+			{
+				end(server, EndReason.NO_PLAYERS);
+				return false;
+			}
 		}
-		if (timer <= 0 && !gameMode.overtimeChecker.apply(this))
+		if (Instant.now().isAfter(sessionEndInstant) && !gameMode.overtimeChecker.apply(this))
 		{
 			end(server, EndReason.NORMAL);
 			return false;
 		}
 		gameMode.tick.accept(this);
-		timer--;
 		return true;
 	}
 	public void end(MinecraftServer server, EndReason endReason)
 	{
 		gameMode.onEnd.accept(this);
-		playerUuids.forEach(uuid ->
+		if (server != null)
 		{
-			ServerWorld world = server.getWorld(worldKey);
-			if (world == null)
-				return;
-			
-			PlayerEntity plr = world.getPlayerByUuid(uuid);
-			if (plr == null)
-				return;
-			
-			EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
-		});
-		SaveInfoCapability.get().playSessions().remove(stageId);
-		SplatcraftPacketHandler.sendToAll(new SendPlaySessionEndPacket(stageId, playerUuids));
+			playerUuids.forEach(uuid ->
+			{
+				ServerWorld world = server.getWorld(worldKey);
+				if (world == null)
+					return;
+				
+				PlayerEntity plr = world.getPlayerByUuid(uuid);
+				if (plr == null)
+					return;
+				
+				EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
+			});
+			SaveInfoCapability.get().playSessions().remove(stageId);
+			SplatcraftPacketHandler.sendToAll(new SendPlaySessionEndPacket(stageId, playerUuids));
+		}
 	}
 	@Override
 	public boolean equals(Object obj)

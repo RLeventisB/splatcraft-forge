@@ -113,7 +113,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			Codec.FLOAT.fieldOf("time").forGetter(SloshAction::getTime),
 			Codec.FLOAT.fieldOf("max_time").forGetter(SloshAction::getMaxTime),
 			Codec.INT.fieldOf("slot_index").forGetter(SloshAction::getSlotIndex),
-			CodecUtils.HAND_CODEC.fieldOf("hand").forGetter(SloshAction::getHand),
+			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(SloshAction::getHand),
 			Identifier.CODEC.fieldOf("slosh_setting_id").forGetter(v -> DataHandler.WeaponStatsListener.SETTINGS.inverse().get(v.sloshData)),
 			Codec.BOOL.fieldOf("did_sound").forGetter(v -> v.didSound),
 			Codec.BOOL.fieldOf("do_action").forGetter(v -> v.doAction),

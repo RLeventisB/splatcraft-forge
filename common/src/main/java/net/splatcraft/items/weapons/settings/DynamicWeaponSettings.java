@@ -30,7 +30,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 	public void deserialize(Identifier key, JsonObject json)
 	{
 		onStartReading(json);
-		subTypeName = CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.parse(JsonOps.INSTANCE, json.get("sub_type")).getOrThrow();
+		subTypeName = CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.parse(JsonOps.INSTANCE, json.get("sub_type")).getOrThrow();
 		dynamicCodec = (MapCodec<DATA>) subTypeCodec.get(getClass()).get(subTypeName);
 		DataResult<COMMONDATA> common = getCodec().parse(JsonOps.INSTANCE, json);
 		DataResult<DATA> dynamic = dynamicCodec.codec().parse(JsonOps.INSTANCE, json);
@@ -62,7 +62,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 		// lazily stitch the json elements because i dont know how mapcodecs do encoding :(
 		RecordBuilder<JsonElement> builder = new RecordBuilder.MapBuilder<>(JsonOps.INSTANCE);
 		
-		CodecUtils.SPLATCRAFT_IDENTIFIER_CODEC.fieldOf("sub_type").encode(subTypeName, JsonOps.INSTANCE, builder);
+		CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.fieldOf("sub_type").encode(subTypeName, JsonOps.INSTANCE, builder);
 		getMapCodec().encode(getDataToSerialize(), JsonOps.INSTANCE, builder);
 		dynamicCodec.encode(getDynamicDataToSerialize(), JsonOps.INSTANCE, builder);
 		
