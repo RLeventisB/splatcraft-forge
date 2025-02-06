@@ -159,9 +159,6 @@ public class MatchMixins
 	@Mixin(ClientPlayerInteractionManager.class)
 	public static class ClientInteractionManagerMixin
 	{
-		@Shadow
-		@Final
-		private MinecraftClient client;
 		@Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$prohibitBlockInteractionWhenOnMatch(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir)
 		{
