@@ -230,9 +230,8 @@ public class ColorUtils
 			: getColorLockHostile()
 			: InkColor.INVALID;
 	}
-	public static void forEachColoredBlockInBounds(World world, Box bounds, ColoredBlockConsumer action)
+	public static void forEachColoredBlockInBounds(World world, final Box bounds, ColoredBlockConsumer action)
 	{
-		final Box expandedBounds = bounds.stretch(1, 1, 1);
 		int chunkMinX = (int) bounds.minX >> 4;
 		int chunkMinZ = (int) bounds.minZ >> 4;
 		int chunkmaxX = (int) bounds.maxX >> 4;
@@ -240,7 +239,7 @@ public class ColorUtils
 		for (int x = chunkMinX; x <= chunkmaxX; x++)
 			for (int z = chunkMinZ; z <= chunkmaxZ; z++)
 			{
-				world.getChunk(x, z).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getCachedState().getBlock() instanceof IColoredBlock && expandedBounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
+				world.getChunk(x, z).getBlockEntities().entrySet().stream().filter(entry -> entry.getValue().getCachedState().getBlock() instanceof IColoredBlock && bounds.contains(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ()))
 					.forEach(entry -> action.accept(entry.getKey(), (IColoredBlock) entry.getValue().getCachedState().getBlock(), entry.getValue()));
 			}
 		{
