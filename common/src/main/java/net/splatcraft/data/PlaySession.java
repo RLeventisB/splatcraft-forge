@@ -46,6 +46,10 @@ public final class PlaySession
 	public final List<UUID> playerUuids;
 	public final StageGameMode gameMode;
 	public final String stageId;
+	// todo: implement pausing for singleplayer, but at the same time who will pause a match on singleplayer????
+	// i put instants because they are pretty much epoch seconds and so if someone receives the
+	// packet for when the server starts a play session but the receiver get a lag spike, they wont be delayed
+	// and the match timer wont desync
 	public Instant sessionEndInstant;
 	public RegistryKey<World> worldKey;
 	public PlaySession(World world, Collection<ServerPlayerEntity> players, Stage stage, StageGameMode gameMode)
