@@ -1,11 +1,8 @@
 package net.splatcraft.client.particles;
 
 import net.minecraft.client.particle.*;
-import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
@@ -42,77 +39,63 @@ public class SquidSoulParticle extends SpriteBillboardParticle
 		}
 		else
 		{
-			velocityY += 0.04D * (double) gravityStrength;
+			velocityY += 0.04f * gravityStrength;
 			move(0, velocityY, 0);
 			velocityY *= 0.98F;
 		}
 	}
 	@Override
-	public @NotNull ParticleTextureSheet getType()
+	protected int getBrightness(float tint)
 	{
-		return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
+		return 0xf000f0;
 	}
 	@Override
-	public void buildGeometry(VertexConsumer vertexConsumer, Camera camera, float tickDelta)
+	protected void method_60374(VertexConsumer vertexConsumer, Quaternionf rotation, float x, float y, float z, float tickDelta)
 	{
-		Vec3d renderPos = camera.getPos();
-		float lvt_5_1_ = (float) (MathHelper.lerp(tickDelta, prevPosX, x) - renderPos.getX());
-		float lvt_6_1_ = (float) (MathHelper.lerp(tickDelta, prevPosY, y) - renderPos.getY());
-		float lvt_7_1_ = (float) (MathHelper.lerp(tickDelta, prevPosZ, z) - renderPos.getZ());
-		Quaternionf rotation = new Quaternionf();
-//        if (this.angle == 0.0F)
-//        {
-//            rotation = camera.getRotation();
-//        }
-//        else
-//        {
-//            rotation = new Quaternionf(camera.getRotation());
-//            float lvt_9_1_ = MathHelper.lerp(tickDelta, this.angle, this.prevAngle);
-//            rotation.mul(RotationAxis.POSITIVE_Z.rotation(lvt_9_1_));
-//        }
-		getRotator().setRotation(rotation, camera, tickDelta);
-		if (angle != 0.0F)
+		Vector3f[] vertexPositions = new Vector3f[]
+			{
+				new Vector3f(1.0F, -1.0F, 0.0F),
+				new Vector3f(1.0F, 1.0F, 0.0F),
+				new Vector3f(-1.0F, 1.0F, 0.0F),
+				new Vector3f(-1.0F, -1.0F, 0.0F)
+			};
+		float size = getSize(tickDelta);
+		
+		for (int corner = 0; corner < 4; ++corner)
 		{
-			rotation.rotateZ(MathHelper.lerp(tickDelta, prevAngle, angle));
+			Vector3f uv = vertexPositions[corner];
+			vertexPositions[corner] = rotation.transform(uv, new Vector3f()).mul(size).add(x, y, z);
 		}
 		
-		Vector3f lvt_9_2_ = new Vector3f(-1.0F, -1.0F, 0.0F);
-		lvt_9_2_ = rotation.transform(lvt_9_2_);
-		Vector3f[] lvt_10_1_ = new Vector3f[] {new Vector3f(-1.0F, -1.0F, 0.0F), new Vector3f(-1.0F, 1.0F, 0.0F), new Vector3f(1.0F, 1.0F, 0.0F), new Vector3f(1.0F, -1.0F, 0.0F)};
-		float lvt_11_1_ = getSize(tickDelta);
-		
-		for (int lvt_12_1_ = 0; lvt_12_1_ < 4; ++lvt_12_1_)
+		for (int layer = 0; layer < 3; layer++)
 		{
-			Vector3f lvt_13_1_ = lvt_10_1_[lvt_12_1_];
-			lvt_13_1_ = rotation.transform(lvt_13_1_);
-			lvt_13_1_.mul(lvt_11_1_);
-			lvt_13_1_.add(lvt_5_1_, lvt_6_1_, lvt_7_1_);
-		}
-		
-		for (int i = 0; i < 3; i++)
-		{
-			float r = i == 1 ? red : 1;
-			float g = i == 1 ? green : 1;
-			float b = i == 1 ? blue : 1;
+			float r = layer == 1 ? red : 1;
+			float g = layer == 1 ? green : 1;
+			float b = layer == 1 ? blue : 1;
 			float a = alpha;
 			if (age > maxAge - 5)
 			{
 				a = (1f - Math.max(0, age - maxAge + 5) - tickDelta) * 0.2f;
 			}
 			
-			setSprite(spriteProvider.getSprite(i + 1, 3));
+			setSprite(spriteProvider.getSprite(layer + 1, 3));
 			
-			float lvt_12_2_ = getMinU();
-			float lvt_13_2_ = getMaxU();
-			float lvt_14_1_ = getMinV();
-			float lvt_15_1_ = getMaxV();
-			int lvt_16_1_ = 15728880;//this.getBrightnessForRender(partialTicks);
+			float minU = getMinU();
+			float maxU = getMaxU();
+			float minV = getMinV();
+			float maxV = getMaxV();
+			int brightness = 15728880;
 			
-			vertexConsumer.vertex(lvt_10_1_[0].x(), lvt_10_1_[0].y(), lvt_10_1_[0].z()).texture(lvt_13_2_, lvt_15_1_).color(r, g, b, a).light(lvt_16_1_);
-			vertexConsumer.vertex(lvt_10_1_[1].x(), lvt_10_1_[1].y(), lvt_10_1_[1].z()).texture(lvt_13_2_, lvt_14_1_).color(r, g, b, a).light(lvt_16_1_);
-			vertexConsumer.vertex(lvt_10_1_[2].x(), lvt_10_1_[2].y(), lvt_10_1_[2].z()).texture(lvt_12_2_, lvt_14_1_).color(r, g, b, a).light(lvt_16_1_);
-			vertexConsumer.vertex(lvt_10_1_[3].x(), lvt_10_1_[3].y(), lvt_10_1_[3].z()).texture(lvt_12_2_, lvt_15_1_).color(r, g, b, a).light(lvt_16_1_);
+			vertexConsumer.vertex(vertexPositions[0].x(), vertexPositions[0].y(), vertexPositions[0].z()).texture(maxU, maxV).color(r, g, b, a).light(brightness);
+			vertexConsumer.vertex(vertexPositions[1].x(), vertexPositions[1].y(), vertexPositions[1].z()).texture(maxU, minV).color(r, g, b, a).light(brightness);
+			vertexConsumer.vertex(vertexPositions[2].x(), vertexPositions[2].y(), vertexPositions[2].z()).texture(minU, minV).color(r, g, b, a).light(brightness);
+			vertexConsumer.vertex(vertexPositions[3].x(), vertexPositions[3].y(), vertexPositions[3].z()).texture(minU, maxV).color(r, g, b, a).light(brightness);
 		}
+	}
+	@Override
+	public @NotNull ParticleTextureSheet getType()
+	{
+		return ParticleTextureSheet.PARTICLE_SHEET_TRANSLUCENT;
 	}
 	public static class Factory implements ParticleFactory<SquidSoulParticleData>
 	{
