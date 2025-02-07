@@ -67,12 +67,13 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		ChargerWeaponSettings settings = getSettings(stack);
 		
 		InkProjectileEntity proj = new InkProjectileEntity(world, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
-		proj.setVelocity(player, player.getPitch(), player.getYaw(), 0.0f, settings.projectileData.speed(), 0.1f);
+		proj.setVelocity(player, player.getPitch(), player.getYaw(), 0.0f, settings.projectileData.speed().getValue(charge), 0f, 0f);
 		proj.setChargerStats(charge, settings.projectileData);
 		proj.addExtraData(new ExtraSaveData.ChargeExtraData(charge));
 		world.spawnEntity(proj);
 		world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.chargerShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
-		reduceInk(player, this, getInkConsumption(stack, charge), settings.shotData.inkRecoveryCooldown(), false, true);
+		
+		reduceInk(player, this, settings.shotData.inkConsumption().getValue(charge), settings.shotData.inkRecoveryCooldown(), false, true);
 		EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, player.getActiveHand(), true, false, false, player.isOnGround()));
 		player.getItemCooldownManager().set(this, 7);
 	}
@@ -104,7 +105,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			if (!entity.isOnGround())
 				chargeThisFrame *= settings.chargeData.airborneChargeRate();
 			
-			if (!enoughInk(entity, this, getInkConsumption(stack, prevCharge + chargeThisFrame), 0, remainingUseTicks % 4 == 0))
+			if (!enoughInk(entity, this, settings.shotData.inkConsumption().getValue(prevCharge + chargeThisFrame), 0, remainingUseTicks % 4 == 0))
 			{
 				float rechargeMult = InkTankItem.rechargeMult(player.getEquippedStack(EquipmentSlot.CHEST), true);
 				
@@ -146,7 +147,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	public float getInkConsumption(ItemStack stack, float charge)
 	{
 		ChargerWeaponSettings settings = getSettings(stack);
-		return settings.shotData.minInkConsumption() + (settings.shotData.maxInkConsumption() - settings.shotData.minInkConsumption()) * charge;
+		return settings.shotData.inkConsumption().getValue(charge);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)

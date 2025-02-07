@@ -208,7 +208,7 @@ public class SplatcraftKeyHandler
 				autoSquidDelay = optional.map(
 					entityAction -> (int) (entityAction.getTime() + 10)
 				).orElseGet(
-					() -> (player.getActiveItem().getItem() instanceof IChargeableWeapon ? 100 : 5)
+					() -> (player.getActiveItem().getItem() instanceof IChargeableWeapon ? 20 : 5)
 				);
 			}
 			else if (autoSquidDelay > 0)
@@ -352,11 +352,11 @@ public class SplatcraftKeyHandler
 	}
 	public static class ToggleableKey
 	{
-		private final KeyBinding key;
-		private boolean active;
-		private boolean previousKeyDown;
-		private boolean pressed;
-		private boolean released;
+		public final KeyBinding key;
+		public boolean active;
+		public boolean previousKeyDown;
+		public boolean pressed;
+		public boolean released;
 		public ToggleableKey(KeyBinding key)
 		{
 			this.key = key;

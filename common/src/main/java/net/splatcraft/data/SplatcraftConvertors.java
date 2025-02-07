@@ -1,11 +1,9 @@
 package net.splatcraft.data;
 
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
-import net.splatcraft.items.weapons.settings.DynamicDataRecord;
+import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.items.weapons.settings.ChargerWeaponSettings.ChargeDataRecord;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SlosherShotDataRecord;
-import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.DamageRangesRecord;
 import net.splatcraft.util.NumberRange;
@@ -15,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import static net.splatcraft.items.weapons.settings.ChargerWeaponSettings.ChargerProjectileDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.*;
 import static net.splatcraft.items.weapons.settings.RollerWeaponSettings.*;
 import static net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SingularSloshShotData;
@@ -318,6 +317,47 @@ public class SplatcraftConvertors
 			dataRecord.maxDamageFalloffPercent(),
 			convert(dataRecord.damageRanges()),
 			dataRecord.weakDamageRanges().map(SplatcraftConvertors::convert)
+		);
+	}
+	public static ChargerProjectileDataRecord convert(ChargerProjectileDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new ChargerProjectileDataRecord(
+			dataRecord.size() / DistanceUnitsPerMinecraftSquare * 2,
+			dataRecord.speed().map(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
+			dataRecord.range().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.inkCoverageImpact().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.inkDropCoverage().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.distanceBetweenInkDrops().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.damage().map(v -> v / SplatoonHealthPerMinecraftHealth),
+			dataRecord.piercesAtCharge()
+		);
+	}
+	public static ChargerWeaponSettings.ShotDataRecord convert(ChargerWeaponSettings.ShotDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new ChargerWeaponSettings.ShotDataRecord(
+			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.inkConsumption(),
+			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
+			dataRecord.shotsCount()
+		);
+	}
+	public static ChargeDataRecord convert(ChargerWeaponSettings.ChargeDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+		
+		return new ChargeDataRecord(
+			dataRecord.minChargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.airborneChargeRate(),
+			dataRecord.emptyTankChargeRate(),
+			dataRecord.chargeStorageTime() / SplatoonFramesPerMinecraftTick
 		);
 	}
 	public static NumberRange.FloatRange convertLength(NumberRange.FloatRange range)

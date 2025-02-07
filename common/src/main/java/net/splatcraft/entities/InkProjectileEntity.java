@@ -102,13 +102,12 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 	}
 	public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings.ChargerProjectileDataRecord settings)
 	{
-		dropImpactSize = settings.inkDropCoverage();
-		distanceBetweenDrops = settings.distanceBetweenInkDrops();
+		dropImpactSize = settings.inkDropCoverage().getValue(charge);
+		distanceBetweenDrops = settings.distanceBetweenInkDrops().getValue(charge);
 		if (distanceBetweenDrops > 0)
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
-		float range = charge == 1 ? settings.fullyChargedRange() : settings.minChargeRange() + (settings.maxChargeRange() - settings.minChargeRange()) * charge;
-		lifespan = range / settings.size();
-		impactCoverage = settings.inkCoverageImpact();
+		lifespan = settings.range().getValue(charge) / settings.speed().getValue(charge);
+		impactCoverage = settings.inkCoverageImpact().getValue(charge);
 		
 		setGravity(0);
 		canPierce = charge >= settings.piercesAtCharge();
