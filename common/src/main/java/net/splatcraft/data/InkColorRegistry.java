@@ -9,9 +9,6 @@ import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import dev.architectury.platform.Platform;
-import dev.architectury.utils.GameInstance;
-import net.fabricmc.api.EnvType;
 import net.minecraft.resource.JsonDataLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -28,7 +25,6 @@ public class InkColorRegistry
 	public static final BiMap<Identifier, InkColor> REGISTRY = HashBiMap.create();
 	public static InkColor getInkColorByAlias(Identifier location)
 	{
-		forceLoadIfNecessary();
 		return REGISTRY.get(location);
 	}
 	public static boolean containsAlias(Identifier location)
@@ -85,15 +81,6 @@ public class InkColorRegistry
 		}
 		return null;
 	}
-	public static void forceLoadIfNecessary()
-	{
-		if (Listener.hasLoaded)
-			return;
-//		Splatcraft.LOGGER.debug("Loaded the InkColor registry before than expected.");
-		
-		Listener horribleHackButResourceManagersOrdersArentModifiableSooo = new Listener();
-		horribleHackButResourceManagersOrdersArentModifiableSooo.apply(Listener.resourceList, Platform.getEnv().equals(EnvType.SERVER) ? GameInstance.getServer().getResourceManager() : GameInstance.getClient().getResourceManager(), null);
-	}
 	public static Set<Identifier> getAllAliases()
 	{
 		return new HashSet<>(REGISTRY.keySet());
@@ -102,8 +89,6 @@ public class InkColorRegistry
 	{
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "ink_colors";
-		public static boolean loading = false;
-		public static boolean hasLoaded;
 		public static Map<Identifier, JsonElement> resourceList;
 		public Listener()
 		{
@@ -113,7 +98,6 @@ public class InkColorRegistry
 		protected @NotNull Map<Identifier, JsonElement> prepare(@NotNull ResourceManager manager, @NotNull Profiler profiler)
 		{
 			REGISTRY.clear();
-			hasLoaded = false;
 			resourceList = super.prepare(manager, profiler);
 			InkVatColorRecipe.getOmniList().clear();
 			return resourceList;
@@ -121,10 +105,6 @@ public class InkColorRegistry
 		@Override
 		protected void apply(Map<Identifier, JsonElement> resourceList, ResourceManager manager, Profiler profiler)
 		{
-			if (loading || hasLoaded)
-				return;
-			
-			loading = true;
 			for (Map.Entry<Identifier, JsonElement> entry : resourceList.entrySet())
 			{
 				Identifier key = entry.getKey();
@@ -141,8 +121,6 @@ public class InkColorRegistry
 				}
 			}
 			InkColorGroups.Listener.doLoadIfNecessary();
-			loading = false;
-			hasLoaded = true;
 		}
 	}
 }

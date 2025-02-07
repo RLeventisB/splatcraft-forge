@@ -3,8 +3,8 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.splatcraft.Splatcraft;
@@ -84,7 +84,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
-	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
 	{
 		return 0;
 	}

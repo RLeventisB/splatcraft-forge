@@ -3,9 +3,9 @@ package net.splatcraft.items.weapons.settings;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.network.RegistryByteBuf;
@@ -91,7 +91,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	{
 		buffer.encodeAsJson(getCodec(), getDataToSerialize());
 	}
-	public abstract float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem);
+	public abstract float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem);
 	public void onStartReading(JsonObject json)
 	{
 	

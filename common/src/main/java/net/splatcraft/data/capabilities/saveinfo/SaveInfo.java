@@ -4,10 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.TickEvent;
+import dev.architectury.platform.Platform;
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import net.fabricmc.api.EnvType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
@@ -43,7 +45,8 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	public static void registerEvents()
 	{
 		TickEvent.SERVER_POST.register(SaveInfo::tickPlaySessions);
-		ClientTickEvent.CLIENT_LEVEL_POST.register(SaveInfo::tickPlaySessionsClient);
+		if (Platform.getEnv().equals(EnvType.CLIENT))
+			ClientTickEvent.CLIENT_LEVEL_POST.register(SaveInfo::tickPlaySessionsClient);
 	}
 	private static void tickPlaySessionsClient(ClientWorld world)
 	{

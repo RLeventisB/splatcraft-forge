@@ -4,8 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.splatcraft.data.SplatcraftConvertors;
@@ -76,7 +76,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
-	public float getSpeedForRender(ClientPlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
 	{
 		return 0;
 	}

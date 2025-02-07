@@ -1,7 +1,8 @@
 package net.splatcraft.items;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
@@ -77,12 +78,13 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	{
 		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getItemBarColor(stack) : getItemBarStep(stack) == 1 ? 0xfab311 : 0xecf4c6;
 	}
+	@Environment(EnvType.CLIENT)
 	@Override
 	public int getItemBarStep(ItemStack stack)
 	{
 		SpecialProviderData data = getData(stack);
 		float progress = 0;
-		ClientPlayerEntity player = ClientUtils.getClientPlayer();
+		PlayerEntity player = ClientUtils.getClientPlayer();
 		Optional<BaseSpecialAction> optional = EntityAction.getSpecificActionIf(player, v -> v.isProviderStack(player, stack), BaseSpecialAction.class);
 		if (optional.isPresent())
 		{
