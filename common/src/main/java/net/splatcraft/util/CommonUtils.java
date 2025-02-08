@@ -56,6 +56,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
+import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
@@ -69,10 +70,12 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 public class CommonUtils
@@ -114,6 +117,22 @@ public class CommonUtils
 			return new Vec3d(vec.x, vec.y, vec.z);
 		}
 	};
+	public static boolean isEntityMatchImmobile(LivingEntity entity, EntityInfo info)
+	{
+		if (entity == null || info == null)
+			return false;
+		
+		AtomicBoolean isImmobile = new AtomicBoolean(false);
+		
+		PlaySession.getPlaySession(entity).ifPresent(session ->
+		{
+			Instant now = Instant.now();
+			if (now.isBefore(session.getMatchStartInstant()) || now.isAfter(session.getMatchEndInstant()) || info.isMatchRespawning())
+				isImmobile.set(true);
+		});
+		
+		return isImmobile.get();
+	}
 	public static CustomPayload.Id<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPayload.Id<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));

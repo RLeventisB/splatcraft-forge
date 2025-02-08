@@ -4,6 +4,9 @@ import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
@@ -21,10 +24,8 @@ import net.splatcraft.util.CodecUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public final class PlaySession
@@ -57,6 +58,7 @@ public final class PlaySession
 		playerUuids = players.stream().map(PlayerEntity::getUuid).toList();
 		players.forEach(player ->
 		{
+			player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, 20, 1, false, false));
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				info.setIsSquid(true);
@@ -78,6 +80,20 @@ public final class PlaySession
 		this.sessionEndInstant = sessionEndInstant;
 		matchStartInstantSupplier = Suppliers.memoize(() -> sessionEndInstant.minus(END_DURATION).minusSeconds(gameMode.DEFAULT_TIME_SECONDS));
 		matchEndInstantSupplier = Suppliers.memoize(() -> sessionEndInstant.minus(END_DURATION));
+	}
+	public static Optional<PlaySession> getPlaySession(LivingEntity entity)
+	{
+		AtomicReference<PlaySession> result = new AtomicReference<>(null);
+		EntityInfoCapability.getOptional(entity).ifPresent(info ->
+		{
+			if (info.isPlaying() && info.getPlayingStageId() != null)
+			{
+				PlaySession session = SaveInfoCapability.get().playSessions().get(info.getPlayingStageId());
+				if (session != null && session.playerUuids.contains(entity.getUuid()))
+					result.set(session);
+			}
+		});
+		return Optional.ofNullable(result.get());
 	}
 	/**
 	 * Ticks all the play session related actions.

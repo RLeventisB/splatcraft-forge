@@ -27,6 +27,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.SquidInputPacket;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftItems;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 
@@ -115,59 +116,64 @@ public class PlayerMovementHandler
 	@Environment(EnvType.CLIENT)
 	public static void onInputUpdate(ClientPlayerEntity player, Input input)
 	{
-		EntityInfo playerInfo = EntityInfoCapability.get(player);
-		if (playerInfo == null)
-			playerInfo = new EntityInfo();
-		
-		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
-		copyTo(input, clonedInput);
-		
-		float speedMod = !input.sneaking ? playerInfo.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
-		
-		input.movementForward *= speedMod;
-		//input = player.movementInput;
-		input.movementSideways *= speedMod;
-		//input = player.movementInput;
-		
-		if (playerInfo.isSquid())
+		EntityInfoCapability.getOptional(player).ifPresent(info ->
 		{
-			handleSquidMovement(playerInfo, player, input.movementSideways, input.movementForward, input.jumping, input.sneaking, input);
-		}
-		
-		if (player.isUsingItem())
-		{
-			ItemStack stack = player.getActiveItem();
-			if (!stack.isEmpty())
+			Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
+			copyTo(input, clonedInput);
+			
+			if (CommonUtils.isEntityMatchImmobile(player, info))
 			{
-				if (stack.getItem() instanceof WeaponBaseItem)
+				input.movementSideways = 0;
+				input.movementForward = 0;
+				input.jumping = false;
+				input.sneaking = false;
+				return;
+			}
+			
+			float speedMod = !input.sneaking ? info.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
+			
+			input.movementForward *= speedMod;
+			input.movementSideways *= speedMod;
+			
+			if (info.isSquid())
+			{
+				handleSquidMovement(info, player, input.movementSideways, input.movementForward, input.jumping, input.sneaking, input);
+			}
+			
+			if (player.isUsingItem())
+			{
+				ItemStack stack = player.getActiveItem();
+				if (!stack.isEmpty())
 				{
-					input.movementSideways *= 5.0F;
-					input.movementForward *= 5.0F;
+					if (stack.getItem() instanceof WeaponBaseItem)
+					{
+						input.movementSideways *= 5.0F;
+						input.movementForward *= 5.0F;
+					}
 				}
 			}
-		}
-		
-		Optional<EntityAction> optional = EntityAction.getEntityActionOptional(player);
-		optional.ifPresent(action ->
-		{
-			if (!action.canMove())
+			
+			EntityAction.getEntityActionOptional(player).ifPresent(action ->
 			{
-				if (!(action instanceof DualieItem.DodgeRollAction))
+				if (!action.canMove())
 				{
-					input.jumping = false;
-					input.movementForward = 0;
-					input.movementSideways = 0;
+					if (!(action instanceof DualieItem.DodgeRollAction))
+					{
+						input.jumping = false;
+						input.movementForward = 0;
+						input.movementSideways = 0;
+					}
 				}
-			}
-			else if (action.getStoredStack().getItem() instanceof RollerItem rollerItem)
-			{
-				input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
-				input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
-			}
-			if (action.forceCrouch())
-			{
-				input.sneaking = !player.getAbilities().flying;
-			}
+				else if (action.getStoredStack().getItem() instanceof RollerItem rollerItem)
+				{
+					input.movementForward = Math.min(1, Math.abs(input.movementForward)) * Math.signum(input.movementForward) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
+					input.movementSideways = Math.min(1, Math.abs(input.movementSideways)) * Math.signum(input.movementSideways) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
+				}
+				if (action.forceCrouch())
+				{
+					input.sneaking = !player.getAbilities().flying;
+				}
+			});
 		});
 	}
 	private static void copyTo(Input from, Input to)

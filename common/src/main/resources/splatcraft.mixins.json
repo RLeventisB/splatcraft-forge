@@ -19,9 +19,10 @@
         "CooldownSlotMixin", "EntityLayerMixin", "EntityMixins$EntityRendererMixin", "GameRendererMixin",
         "ItemRenderingMixins$ItemRendererMixin", "MatchMixins$AbstractClientPlayerMixin",
         "MatchMixins$ClientInteractionManagerMixin", "MatchMixins$ClientPlayerMixinCommon",
-        "MatchMixins$HeldItemRendererMixin", "MatchMixins$PlayerRendererMixin", "PlayerMixins$LocalPlayerMixinFabric",
-        "PlayerMixins$PlayerRendererMixin", "PlayerModelMixin", "PlayerTabOverlayMixin", "RecipeCategoryMixin",
-        "WeaponHotkeyMixin$MinecraftInstance", "WeaponHotkeyMixin$PlayerControllerMix", "accessors.ChunkRegionAccessor",
-        "accessors.GameRendererFovAccessor", "accessors.MinecraftClientAccessor"
+        "MatchMixins$HeldItemRendererMixin", "MatchMixins$MatchCameraMixin", "MatchMixins$PlayerRendererMixin",
+        "PlayerMixins$LocalPlayerMixinFabric", "PlayerMixins$PlayerRendererMixin", "PlayerModelMixin",
+        "PlayerTabOverlayMixin", "RecipeCategoryMixin", "WeaponHotkeyMixin$MinecraftInstance",
+        "WeaponHotkeyMixin$PlayerControllerMix", "accessors.ChunkRegionAccessor", "accessors.GameRendererFovAccessor",
+        "accessors.MinecraftClientAccessor"
     ]
 }

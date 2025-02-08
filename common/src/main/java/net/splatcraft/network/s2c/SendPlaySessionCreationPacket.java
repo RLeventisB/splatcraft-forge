@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.world.World;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
@@ -43,6 +44,12 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 		Object2ObjectOpenHashMap<String, PlaySession> map = new Object2ObjectOpenHashMap<>(SaveInfoCapability.clientSaveInfo.playSessions());
 		map.put(session.stageId, session);
 		SaveInfoCapability.clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.stages(), SaveInfoCapability.clientSaveInfo.colorScores());
+		ClientUtils.matchStartCameraPosProvider.reset();
+		if (session.playerUuids.contains(ClientUtils.getClientPlayer().getUuid()))
+		{
+			SplatcraftKeyHandler.SQUID_KEYBIND.active = true;
+			ClientUtils.killCamData = null;
+		}
 		
 		session.playerUuids.forEach(uuid ->
 		{
@@ -54,7 +61,11 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 			if (plr == null)
 				return;
 			
-			EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(session.stageId));
+			EntityInfoCapability.getOptional(plr).ifPresent(info ->
+			{
+				info.setIsSquid(true);
+				info.setPlayingStageId(session.stageId);
+			});
 		});
 	}
 }
