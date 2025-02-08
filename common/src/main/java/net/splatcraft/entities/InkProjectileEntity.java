@@ -699,7 +699,7 @@ public class InkProjectileEntity extends ThrownItemEntity implements IColoredEnt
 		nbt.putBoolean("Invisible", isInvisible());
 		
 		nbt.putString("ProjectileType", getProjectileType());
-		nbt.putString("InkType", inkType.getSerializedName());
+		nbt.putString("InkType", inkType.getIdString());
 		nbt.put("SourceWeapon", sourceWeapon.encode(getWorld().getRegistryManager()));
 		if (attackId != AttackId.NONE)
 			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));

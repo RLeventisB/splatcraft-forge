@@ -94,7 +94,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 		if (hasPermanentColor())
 		{
 			nbt.putInt("PermanentColor", permanentColor);
-			nbt.putString("PermanentInkType", permanentInkType.getSerializedName());
+			nbt.putString("PermanentInkType", permanentInkType.getIdString());
 		}
 		super.writeNbt(nbt, wrapperLookup);
 	}

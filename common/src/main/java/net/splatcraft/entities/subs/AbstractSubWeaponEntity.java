@@ -145,7 +145,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		nbt.put("Color", getColor().getNbt());
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
-		nbt.putString("InkType", inkType.getSerializedName());
+		nbt.putString("InkType", inkType.getIdString());
 		nbt.put("SourceWeapon", sourceWeapon.encode(getRegistryManager()));
 		
 		ItemStack itemstack = getItemRaw();

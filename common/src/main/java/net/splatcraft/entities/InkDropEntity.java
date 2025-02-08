@@ -217,7 +217,7 @@ public class InkDropEntity extends ThrownEntity implements IColoredEntity
 		
 		nbt.putBoolean("Invisible", isInvisible());
 		
-		nbt.putString("InkType", inkType.getSerializedName());
+		nbt.putString("InkType", inkType.getIdString());
 		
 		super.writeCustomDataToNbt(nbt);
 	}

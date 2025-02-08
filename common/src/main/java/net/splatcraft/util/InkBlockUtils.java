@@ -481,13 +481,7 @@ public class InkBlockUtils
 		}
 		public static InkType fromId(int id)
 		{
-			return switch (id)
-			{
-				case 0 -> NORMAL;
-				case 1 -> GLOWING;
-				case 2 -> CLEAR;
-				default -> throw new IllegalStateException("Unexpected value: " + id);
-			};
+			return values()[id];
 		}
 		public Identifier getName()
 		{
@@ -502,7 +496,7 @@ public class InkBlockUtils
 		{
 			return name.toString();
 		}
-		public String getSerializedName()
+		public String getIdString()
 		{
 			return getName().toString();
 		}
