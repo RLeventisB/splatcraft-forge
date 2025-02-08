@@ -26,6 +26,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
+import net.splatcraft.data.Stage;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftBlocks;
@@ -126,7 +127,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 		return stack;
 	}
 	@Override
-	public boolean canPathfindThrough(@NotNull BlockState p_196266_1_, NavigationType type)
+	public boolean canPathfindThrough(@NotNull BlockState state, NavigationType type)
 	{
 		return false;
 	}
@@ -138,14 +139,17 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 	@Override
 	public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
 	{
-		if (!world.isClient() && !stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPadTile)
+		if (!world.isClient() && !stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
 		{
 			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getEffectiveColor(stack, entity));
 			
 			SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getEffectiveColor(stack));
-			spawnPadTile.setSpawnShield(shield);
+			spawnPad.setSpawnShield(shield);
 			
 			world.spawnEntity(shield);
+			
+			for (Stage stage : Stage.getStagesForPosition(world, pos.toCenterPos()))
+				stage.addSpawnPad(spawnPad);
 		}
 		
 		for (Direction dir : Direction.values())
@@ -168,9 +172,13 @@ public class SpawnPadBlock extends Block implements IColoredBlock, Waterloggable
 		super.onPlaced(world, pos, state, entity, stack);
 	}
 	@Override
-	public BlockState onBreak(@NotNull World p_176208_1_, @NotNull BlockPos p_176208_2_, @NotNull BlockState p_176208_3_, @NotNull PlayerEntity p_176208_4_)
+	public BlockState onBreak(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull PlayerEntity player)
 	{
-		return super.onBreak(p_176208_1_, p_176208_2_, p_176208_3_, p_176208_4_);
+		if (!world.isClient() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
+			for (Stage stage : Stage.getStagesForPosition(world, pos.toCenterPos()))
+				stage.removeSpawnPad(spawnPad);
+		
+		return super.onBreak(world, pos, state, player);
 	}
 	@Override
 	public boolean canClimb()

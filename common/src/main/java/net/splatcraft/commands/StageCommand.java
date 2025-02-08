@@ -534,6 +534,8 @@ public class StageCommand
 		Stage stage = stages.get(stageId);
 		World stageWorld = stage.getStageWorld(source.getServer());
 		Collection<String> teamIds = stage.getTeamIds();
+		if (stage.needSpawnPadUpdate())
+			stage.updateSpawnPads(stageWorld);
 		
 		if (teamIds.size() < 2)
 			throw NOT_ENOUGH_TEAMS.create(stageId);

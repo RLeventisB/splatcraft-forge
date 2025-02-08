@@ -117,17 +117,6 @@ public class Stage implements Comparable<Stage>
 		
 		updateBounds(server.getWorld(worldKey), posA, posB);
 	}
-	public Stage(Stage stage, String id)
-	{
-		worldKey = stage.worldKey;
-		settings = stage.settings;
-		teams = stage.teams;
-		spawnPadPositions = stage.spawnPadPositions;
-		name = stage.name;
-		cornerA = stage.cornerA;
-		cornerB = stage.cornerB;
-		this.id = id;
-	}
 	public Stage(BlockPos cornerA, BlockPos cornerB, RegistryKey<World> worldKey, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Text name, String id)
 	{
 		this.worldKey = worldKey;
@@ -158,7 +147,7 @@ public class Stage implements Comparable<Stage>
 	public static ArrayList<Stage> getStagesForPosition(World world, Vec3d pos)
 	{
 		ArrayList<Stage> stages = getAllStages();
-		stages.removeIf(stage -> stage == null || !stage.worldKey.equals(world.getDimension().effects()) || !stage.getBounds().contains(pos));
+		stages.removeIf(stage -> stage == null || !stage.worldKey.equals(world.getRegistryKey()) || !stage.getBounds().contains(pos));
 		return stages;
 	}
 	public boolean hasSetting(String key)
@@ -247,8 +236,7 @@ public class Stage implements Comparable<Stage>
 				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
 				{
 					BlockPos pos = new BlockPos(x, y, z);
-					if (world
-						.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
+					if (world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
 						addSpawnPad(spawnPad);
 				}
 		

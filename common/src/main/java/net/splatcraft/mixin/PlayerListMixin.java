@@ -8,7 +8,9 @@ import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.TeleportTarget;
+import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendColorRegistryPacket;
 import net.splatcraft.network.s2c.UpdateWeaponSettingsPacket;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
@@ -56,5 +58,6 @@ public abstract class PlayerListMixin
 	public void splatcraft$onDatapackReload(CallbackInfo ci)
 	{
 		SplatcraftPacketHandler.sendToAll(new UpdateWeaponSettingsPacket());
+		SplatcraftPacketHandler.sendToAll(new SendColorRegistryPacket(InkColorRegistry.REGISTRY));
 	}
 }

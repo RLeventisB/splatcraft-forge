@@ -1,5 +1,6 @@
 package net.splatcraft.neoforge;
 
+import dev.architectury.platform.Platform;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -38,7 +39,8 @@ public final class SplatcraftNeoForge
 		Splatcraft.init();
 		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
 		modBus.addListener(SplatcraftNeoForge::onRegistryUnlocked);
-		modBus.addListener(SplatcraftNeoForge::beforeRegisterScreens);
+		if (Platform.getEnv().equals(Dist.CLIENT))
+			modBus.addListener(SplatcraftNeoForge::beforeRegisterScreens);
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);

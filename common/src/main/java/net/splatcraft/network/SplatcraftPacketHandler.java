@@ -45,6 +45,7 @@ public class SplatcraftPacketHandler
 		registerMessage(SquidInputPacket.class, SquidInputPacket::decode);
 		registerMessage(CraftWeaponPacket.class, CraftWeaponPacket::decode);
 		registerMessage(UpdateClientColorsPacket.class, UpdateClientColorsPacket::decode);
+		registerMessage(SendColorRegistryPacket.class, SendColorRegistryPacket::decode);
 		registerMessage(UpdateInkOverlayPacket.class, UpdateInkOverlayPacket::decode);
 		registerMessage(ReleaseChargePacket.class, ReleaseChargePacket::decode);
 		registerMessage(UpdateChargeStatePacket.class, UpdateChargeStatePacket::decode);
