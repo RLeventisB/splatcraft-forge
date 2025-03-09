@@ -1,17 +1,17 @@
 package net.splatcraft.network.s2c;
 
-import dev.architectury.networking.NetworkManager;
-import dev.architectury.utils.Env;
+import commonnetwork.networking.data.PacketContext;
+import commonnetwork.networking.data.Side;
 import net.splatcraft.network.SplatcraftPacket;
 
 public abstract class PlayS2CPacket extends SplatcraftPacket
 {
 	@Override
-	public <T extends SplatcraftPacket> void consume(NetworkManager.PacketContext ctx)
+	public <T extends SplatcraftPacket> void consume(PacketContext<T> ctx)
 	{
-		if (ctx.getEnvironment() == Env.CLIENT)
+		if (ctx.side() == Side.CLIENT)
 		{
-			ctx.queue(this::execute);
+			execute();
 		}
 //        ctx.get().setPacketHandled(true);
 	}

@@ -1,6 +1,6 @@
 package net.splatcraft.network;
 
-import dev.architectury.networking.NetworkManager;
+import commonnetwork.networking.data.PacketContext;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
@@ -11,5 +11,5 @@ public abstract class SplatcraftPacket implements CustomPacketPayload
 	
 	}
 	public abstract void encode(RegistryFriendlyByteBuf buffer);
-	public abstract <T extends SplatcraftPacket> void consume(NetworkManager.PacketContext ctx);
+	public abstract <T extends SplatcraftPacket> void consume(PacketContext<T> ctx);
 }
