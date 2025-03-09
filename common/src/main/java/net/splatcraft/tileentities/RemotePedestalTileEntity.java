@@ -1,26 +1,26 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RemotePedestalTileEntity extends InkColorTileEntity implements SidedInventory, CommandOutput
+public class RemotePedestalTileEntity extends InkColorTileEntity implements WorldlyContainer, CommandSource
 {
 	protected ItemStack remote = ItemStack.EMPTY;
 	protected int signal = 0;
@@ -37,51 +37,51 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Side
 			return;
 		}
 		
-		RemoteItem.RemoteResult result = remote.onRemoteUse(world, this.remote, getInkColor(), pos.toCenterPos(), null);
+		RemoteItem.RemoteResult result = remote.onRemoteUse(level, this.remote, getInkColor(), worldPosition.getCenter(), null);
 		signal = result.getComparatorResult();
 		remoteResult = result.getCommandResult();
 	}
 	@Override
-	public @NotNull NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup lookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider lookup)
 	{
-		return new NbtCompound()
+		return new CompoundTag()
 		{{
-			writeNbt(this, lookup);
+			saveAdditional(this, lookup);
 		}};
 	}
 	@Override
-	public Packet<ClientPlayPacketListener> toUpdatePacket()
+	public Packet<ClientGamePacketListener> getUpdatePacket()
 	{
 		// Will get tag from #toInitialChunkDataNbt
-		return BlockEntityUpdateS2CPacket.create(this);
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	@Override
-	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void phOnDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider wrapperLookup)
 	{
-		if (world != null)
+		if (level != null)
 		{
-			BlockState state = world.getBlockState(getPos());
-			world.updateListeners(getPos(), state, state, 2);
-			phHandleUpdateTag(pkt.getNbt(), wrapperLookup);
+			BlockState state = level.getBlockState(getBlockPos());
+			level.sendBlockUpdated(getBlockPos(), state, state, 2);
+			phHandleUpdateTag(pkt.getTag(), wrapperLookup);
 		}
 	}
 	@Override
-	public int @NotNull [] getAvailableSlots(@NotNull Direction direction)
+	public int @NotNull [] getSlotsForFace(@NotNull Direction direction)
 	{
 		return new int[] {0};
 	}
 	@Override
-	public boolean canInsert(int i, ItemStack itemStack, @Nullable Direction direction)
+	public boolean canPlaceItemThroughFace(int i, ItemStack itemStack, @Nullable Direction direction)
 	{
-		return itemStack.isIn(SplatcraftTags.Items.REMOTES);
+		return itemStack.is(SplatcraftTags.Items.REMOTES);
 	}
 	@Override
-	public boolean canExtract(int i, @NotNull ItemStack itemStack, @NotNull Direction direction)
+	public boolean canTakeItemThroughFace(int i, @NotNull ItemStack itemStack, @NotNull Direction direction)
 	{
 		return true;
 	}
 	@Override
-	public int size()
+	public int getContainerSize()
 	{
 		return 1;
 	}
@@ -91,84 +91,84 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Side
 		return remote.isEmpty();
 	}
 	@Override
-	public @NotNull ItemStack getStack(int i)
+	public @NotNull ItemStack getItem(int i)
 	{
 		return remote;
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int i, int count)
+	public @NotNull ItemStack removeItem(int i, int count)
 	{
 		return remote.split(count);
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int i)
+	public @NotNull ItemStack removeItemNoUpdate(int i)
 	{
 		ItemStack copy = remote.copy();
 		remote = ItemStack.EMPTY;
 		return copy;
 	}
 	@Override
-	public void setStack(int i, @NotNull ItemStack itemStack)
+	public void setItem(int i, @NotNull ItemStack itemStack)
 	{
 		remote = itemStack;
 	}
 	@Override
-	public boolean canPlayerUse(@NotNull PlayerEntity player)
+	public boolean stillValid(@NotNull Player player)
 	{
-		if (world.getBlockEntity(getPos()) != this)
+		if (level.getBlockEntity(getBlockPos()) != this)
 			return false;
-		return !(player.squaredDistanceTo((double) getPos().getX() + 0.5D, (double) getPos().getY() + 0.5D, (double) getPos().getZ() + 0.5D) > 64.0D);
+		return !(player.distanceToSqr((double) getBlockPos().getX() + 0.5D, (double) getBlockPos().getY() + 0.5D, (double) getBlockPos().getZ() + 0.5D) > 64.0D);
 	}
 	@Override
-	public void clear()
+	public void clearContent()
 	{
 		remote = ItemStack.EMPTY;
 	}
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
 	{
-		super.readNbt(nbt, lookup);
+		super.loadAdditional(nbt, lookup);
 		
 		signal = nbt.getInt("Signal");
 		
 		if (nbt.contains("Remote"))
-			remote = ItemStack.fromNbtOrEmpty(lookup, nbt.getCompound("Remote"));
+			remote = ItemStack.parseOptional(lookup, nbt.getCompound("Remote"));
 		
 		if (nbt.contains("RemoteResult"))
 			remoteResult = nbt.getInt("RemoteResult");
 	}
 	@Override
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
 	{
 		nbt.putInt("Signal", signal);
 		
 		if (!remote.isEmpty())
-			nbt.put("Remote", remote.encode(lookup, new NbtCompound()));
+			nbt.put("Remote", remote.save(lookup, new CompoundTag()));
 		if (remoteResult != 0)
 			nbt.putInt("RemoteResult", remoteResult);
 		
-		super.writeNbt(nbt, lookup);
+		super.saveAdditional(nbt, lookup);
 	}
 	public int getSignal()
 	{
 		return signal;
 	}
 	@Override
-	public void sendMessage(@NotNull Text message)
+	public void sendSystemMessage(@NotNull Component message)
 	{
 	}
 	@Override
-	public boolean shouldReceiveFeedback()
-	{
-		return false;
-	}
-	@Override
-	public boolean shouldTrackOutput()
+	public boolean acceptsSuccess()
 	{
 		return false;
 	}
 	@Override
-	public boolean shouldBroadcastConsoleToOps()
+	public boolean acceptsFailure()
+	{
+		return false;
+	}
+	@Override
+	public boolean shouldInformAdmins()
 	{
 		return false;
 	}

@@ -1,10 +1,10 @@
 package net.splatcraft.data;
 
-import net.minecraft.block.Block;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.TagKey;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.InkTankItem;
 
@@ -54,7 +54,7 @@ public class SplatcraftTags
 
         private static TagKey<Item> createTag(String name)
         {
-            return TagKey.of(Registries.ITEM.getKey(), Splatcraft.identifierOf(name));
+            return TagKey.create(BuiltInRegistries.ITEM.key(), Splatcraft.identifierOf(name));
         }
     }
 
@@ -72,7 +72,7 @@ public class SplatcraftTags
 
         private static TagKey<Block> createTag(String name)
         {
-            return TagKey.of(Registries.BLOCK.getKey(), Splatcraft.identifierOf(name));
+            return TagKey.create(BuiltInRegistries.BLOCK.key(), Splatcraft.identifierOf(name));
         }
     }
 
@@ -83,7 +83,7 @@ public class SplatcraftTags
 
         private static TagKey<EntityType<?>> createTag(String name)
         {
-            return TagKey.of(Registries.ENTITY_TYPE.getKey(), Splatcraft.identifierOf(name));
+            return TagKey.create(BuiltInRegistries.ENTITY_TYPE.key(), Splatcraft.identifierOf(name));
         }
     }
 }

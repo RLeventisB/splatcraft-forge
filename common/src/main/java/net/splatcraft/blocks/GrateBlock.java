@@ -1,93 +1,91 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.block.*;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
-public class GrateBlock extends Block implements Waterloggable
+public class GrateBlock extends Block implements SimpleWaterloggedBlock
 {
-    public static final DirectionProperty FACING = Properties.FACING;
-    public static final BooleanProperty WATERLOGGED = Properties.WATERLOGGED;
-    public static final Settings PROPERTIES = Settings.create().mapColor(MapColor.IRON_GRAY).nonOpaque().requiresTool().strength(4.0f).sounds(BlockSoundGroup.METAL);
-    protected static final HashMap<Direction, VoxelShape> AABBS = new HashMap<>()
-    {{
-        put(Direction.NORTH, createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D));
-        put(Direction.SOUTH, createCuboidShape(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D));
-        put(Direction.WEST, createCuboidShape(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D));
-        put(Direction.EAST, createCuboidShape(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D));
-        put(Direction.DOWN, createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D));
-        put(Direction.UP, createCuboidShape(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D));
-    }};
-
-    public GrateBlock()
-    {
-        super(PROPERTIES);
-        setDefaultState(getStateManager().getDefaultState().with(FACING, Direction.DOWN).with(WATERLOGGED, false));
-    }
-
-    @Override
-    public VoxelShape getOutlineShape(BlockState state, @NotNull BlockView levelIn, @NotNull BlockPos pos, @NotNull ShapeContext context)
-    {
-        return AABBS.get(state.get(FACING));
-    }
-
-    @Override
-    public BlockState getPlacementState(ItemPlacementContext context)
-    {
-        BlockState blockstate = getDefaultState();
-        FluidState fluidstate = context.getWorld().getFluidState(context.getBlockPos());
-        Direction direction = context.getSide();
-
-        if (context.getPlayer() != null && context.getPlayer().isSneaking())
-            blockstate = blockstate.with(FACING, direction.getOpposite());
-        else if (!context.canReplaceExisting() && direction.getAxis().isHorizontal())
-            blockstate = blockstate.with(FACING, context.getHitPos().y - (double) context.getBlockPos().getY() > 0.5D ? Direction.UP : Direction.DOWN);
-        else
-            blockstate = blockstate.with(FACING, direction == Direction.UP ? Direction.DOWN : Direction.UP);
-
-        return blockstate.with(WATERLOGGED, fluidstate.getRegistryEntry() == Fluids.WATER);
-    }
-
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
-    {
-        builder.add(FACING, WATERLOGGED);
-    }
-
-    @Override
-    public @NotNull FluidState getFluidState(BlockState state)
-    {
-        return state.get(WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
-    }
-
-    /**
-     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
-     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately
-     * returns its solidified counterpart.
-     * Note that this method should ideally consider only the specific face passed in.
-     */
-    @Override
-    public @NotNull BlockState getStateForNeighborUpdate(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
-    {
-        if (stateIn.get(WATERLOGGED))
-        {
-            levelIn.scheduleFluidTick(currentPos, Fluids.WATER, Fluids.WATER.getTickRate(levelIn));
-        }
-
-        return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
-    }
+	public static final DirectionProperty FACING = BlockStateProperties.FACING;
+	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+	public static final Properties PROPERTIES = Properties.of().mapColor(MapColor.METAL).noOcclusion().requiresCorrectToolForDrops().strength(4.0f).sound(SoundType.METAL);
+	protected static final HashMap<Direction, VoxelShape> AABBS = new HashMap<>()
+	{{
+		put(Direction.NORTH, box(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D));
+		put(Direction.SOUTH, box(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D));
+		put(Direction.WEST, box(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D));
+		put(Direction.EAST, box(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D));
+		put(Direction.DOWN, box(0.0D, 0.0D, 0.0D, 16.0D, 3.0D, 16.0D));
+		put(Direction.UP, box(0.0D, 13.0D, 0.0D, 16.0D, 16.0D, 16.0D));
+	}};
+	public GrateBlock()
+	{
+		super(PROPERTIES);
+		registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.DOWN).setValue(WATERLOGGED, false));
+	}
+	@Override
+	public VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	{
+		return AABBS.get(state.getValue(FACING));
+	}
+	@Override
+	public BlockState getStateForPlacement(BlockPlaceContext context)
+	{
+		BlockState blockstate = defaultBlockState();
+		FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
+		Direction direction = context.getClickedFace();
+		
+		if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown())
+			blockstate = blockstate.setValue(FACING, direction.getOpposite());
+		else if (!context.replacingClickedOnBlock() && direction.getAxis().isHorizontal())
+			blockstate = blockstate.setValue(FACING, context.getClickLocation().y - (double) context.getClickedPos().getY() > 0.5D ? Direction.UP : Direction.DOWN);
+		else
+			blockstate = blockstate.setValue(FACING, direction == Direction.UP ? Direction.DOWN : Direction.UP);
+		
+		return blockstate.setValue(WATERLOGGED, fluidstate.holder() == Fluids.WATER);
+	}
+	@Override
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
+	{
+		builder.add(FACING, WATERLOGGED);
+	}
+	@Override
+	public @NotNull FluidState getFluidState(BlockState state)
+	{
+		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+	}
+	/**
+	 * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+	 * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately
+	 * returns its solidified counterpart.
+	 * Note that this method should ideally consider only the specific face passed in.
+	 */
+	@Override
+	public @NotNull BlockState updateShape(BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, @NotNull LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+	{
+		if (stateIn.getValue(WATERLOGGED))
+		{
+			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
+		}
+		
+		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+	}
 }

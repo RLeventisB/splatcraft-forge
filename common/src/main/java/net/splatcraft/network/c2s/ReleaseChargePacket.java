@@ -1,16 +1,16 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
 
 public class ReleaseChargePacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(ReleaseChargePacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(ReleaseChargePacket.class);
 	private final float charge;
 	private final ItemStack stack;
 	private final boolean resetCharge;
@@ -24,17 +24,17 @@ public class ReleaseChargePacket extends PlayC2SPacket
 		this.stack = stack;
 		this.resetCharge = resetCharge;
 	}
-	public static ReleaseChargePacket decode(RegistryByteBuf buffer)
+	public static ReleaseChargePacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new ReleaseChargePacket(buffer.readFloat(), ItemStack.PACKET_CODEC.decode(buffer), buffer.readBoolean());
+		return new ReleaseChargePacket(buffer.readFloat(), ItemStack.STREAM_CODEC.decode(buffer), buffer.readBoolean());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
 		if (!PlayerCharge.hasCharge(player))
 		{
@@ -45,17 +45,17 @@ public class ReleaseChargePacket extends PlayC2SPacket
 		
 		if (stack.getItem() instanceof IChargeableWeapon weapon)
 		{
-			weapon.onReleaseCharge(player.getWorld(), player, stack, charge);
+			weapon.onReleaseCharge(player.level(), player, stack, charge);
 		}
 		
 		if (resetCharge)
 			PlayerCharge.updateServerMap(player, false);
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeFloat(charge);
-		ItemStack.PACKET_CODEC.encode(buffer, stack);
+		ItemStack.STREAM_CODEC.encode(buffer, stack);
 		buffer.writeBoolean(resetCharge);
 	}
 }

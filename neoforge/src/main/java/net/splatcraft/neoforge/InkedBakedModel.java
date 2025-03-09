@@ -1,16 +1,16 @@
 package net.splatcraft.neoforge;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.util.InkBlockUtils;
@@ -20,16 +20,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public record InkedBakedModel(BakedModel original, World world, BlockPos blockPos) implements BakedModel
+public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPos) implements BakedModel
 {
 	@Override
-	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, @NotNull Random random, @NotNull ModelData data, @Nullable RenderLayer renderType)
+	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType)
 	{
 		List<BakedQuad> quads = original.getQuads(state, face, random, data, renderType);
 		return processQuads(quads, face);
 	}
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random)
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random)
 	{
 		List<BakedQuad> quads = original.getQuads(state, face, random);
 		return processQuads(quads, face);
@@ -46,10 +46,10 @@ public record InkedBakedModel(BakedModel original, World world, BlockPos blockPo
 					List<BakedQuad> inkedQuads = new ArrayList<>(quads.size());
 					for (BakedQuad quad : quads)
 					{
-						if (quad.getFace() == null)
+						if (quad.getDirection() == null)
 							continue;
 						
-						ChunkInk.InkEntry entry = ink.get(quad.getFace().getId());
+						ChunkInk.InkEntry entry = ink.get(quad.getDirection().get3DDataValue());
 						if (entry != null)
 						{
 							inkedQuads.addAll(withSetData(quad, entry));
@@ -122,7 +122,7 @@ public record InkedBakedModel(BakedModel original, World world, BlockPos blockPo
 		ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(world, blockPos);
 		if (ink != null)
 		{
-			return ink.get(face.getId());
+			return ink.get(face.get3DDataValue());
 		}
 		return null;
 	}
@@ -132,32 +132,32 @@ public record InkedBakedModel(BakedModel original, World world, BlockPos blockPo
 		return original.useAmbientOcclusion();
 	}
 	@Override
-	public boolean hasDepth()
+	public boolean isGui3d()
 	{
-		return original.hasDepth();
+		return original.isGui3d();
 	}
 	@Override
-	public boolean isSideLit()
+	public boolean usesBlockLight()
 	{
-		return original.isSideLit();
+		return original.usesBlockLight();
 	}
 	@Override
-	public boolean isBuiltin()
+	public boolean isCustomRenderer()
 	{
 		return true;
 	}
 	@Override
-	public Sprite getParticleSprite()
+	public TextureAtlasSprite getParticleIcon()
 	{
-		return original.getParticleSprite();
+		return original.getParticleIcon();
 	}
 	@Override
-	public ModelTransformation getTransformation()
+	public ItemTransforms getTransforms()
 	{
-		return original.getTransformation();
+		return original.getTransforms();
 	}
 	@Override
-	public ModelOverrideList getOverrides()
+	public ItemOverrides getOverrides()
 	{
 		return original.getOverrides();
 	}

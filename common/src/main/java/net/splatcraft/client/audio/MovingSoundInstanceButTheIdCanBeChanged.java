@@ -1,14 +1,19 @@
 package net.splatcraft.client.audio;
 
-import net.minecraft.client.sound.*;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.resources.sounds.Sound;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class MovingSoundInstanceButTheIdCanBeChanged implements TickableSoundInstance, SoundInstance
 {
-	protected final SoundCategory category;
-	protected Identifier id;
+	protected final SoundSource category;
+	protected ResourceLocation id;
 	protected Sound sound;
 	protected float volume;
 	protected float pitch;
@@ -17,20 +22,20 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 	protected double z;
 	protected boolean repeat;
 	protected int repeatDelay;
-	protected SoundInstance.AttenuationType attenuationType;
+	protected SoundInstance.Attenuation attenuationType;
 	protected boolean relative;
-	protected Random random;
+	protected RandomSource random;
 	private boolean done;
-	protected MovingSoundInstanceButTheIdCanBeChanged(Identifier id, SoundCategory category, Random random)
+	protected MovingSoundInstanceButTheIdCanBeChanged(ResourceLocation id, SoundSource category, RandomSource random)
 	{
 		volume = 1.0F;
 		pitch = 1.0F;
-		attenuationType = AttenuationType.LINEAR;
+		attenuationType = Attenuation.LINEAR;
 		this.id = id;
 		this.category = category;
 		this.random = random;
 	}
-	public boolean isDone()
+	public boolean isStopped()
 	{
 		return done;
 	}
@@ -39,23 +44,23 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 		done = true;
 		repeat = false;
 	}
-	public Identifier getId()
+	public @NotNull ResourceLocation getLocation()
 	{
 		return id;
 	}
-	public WeightedSoundSet getSoundSet(SoundManager soundManager)
+	public WeighedSoundEvents resolve(SoundManager soundManager)
 	{
-		if (id.equals(SoundManager.INTENTIONALLY_EMPTY_ID))
+		if (id.equals(SoundManager.INTENTIONALLY_EMPTY_SOUND_LOCATION))
 		{
 			sound = SoundManager.INTENTIONALLY_EMPTY_SOUND;
-			return SoundManager.INTENTIONALLY_EMPTY_SOUND_SET;
+			return SoundManager.INTENTIONALLY_EMPTY_SOUND_EVENT;
 		}
 		else
 		{
-			WeightedSoundSet weightedSoundSet = soundManager.get(id);
+			WeighedSoundEvents weightedSoundSet = soundManager.getSoundEvent(id);
 			if (weightedSoundSet == null)
 			{
-				sound = SoundManager.MISSING_SOUND;
+				sound = SoundManager.EMPTY_SOUND;
 			}
 			else
 			{
@@ -65,29 +70,29 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 			return weightedSoundSet;
 		}
 	}
-	public Sound getSound()
+	public @NotNull Sound getSound()
 	{
 		return sound;
 	}
-	public SoundCategory getCategory()
+	public @NotNull SoundSource getSource()
 	{
 		return category;
 	}
-	public boolean isRepeatable()
+	public boolean isLooping()
 	{
 		return repeat;
 	}
-	public int getRepeatDelay()
+	public int getDelay()
 	{
 		return repeatDelay;
 	}
 	public float getVolume()
 	{
-		return volume * sound.getVolume().get(random);
+		return volume * sound.getVolume().sample(random);
 	}
 	public float getPitch()
 	{
-		return pitch * sound.getPitch().get(random);
+		return pitch * sound.getPitch().sample(random);
 	}
 	public double getX()
 	{
@@ -101,7 +106,7 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 	{
 		return z;
 	}
-	public SoundInstance.AttenuationType getAttenuationType()
+	public SoundInstance.@NotNull Attenuation getAttenuation()
 	{
 		return attenuationType;
 	}

@@ -1,30 +1,30 @@
 package net.splatcraft.mixin;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
-import net.minecraft.client.render.item.HeldItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
+import net.minecraft.client.Camera;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -50,7 +50,7 @@ public class MatchMixins
 	@Mixin(LivingEntity.class)
 	public static class LivingEntityMixin
 	{
-		@Inject(method = "updatePostDeath", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathTimerOnMatch(CallbackInfo ci)
 		{
 			EntityInfoCapability.getOptional((LivingEntity) (Object) this).ifPresent(info ->
@@ -61,7 +61,7 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "setCurrentHand", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "startUsingItem", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventItemUsageWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
@@ -73,7 +73,7 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "tickActiveItemStack", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "updatingUsingItem", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventItemUsageAgainWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
@@ -86,7 +86,7 @@ public class MatchMixins
 			});
 		}
 	}
-	@Mixin(AbstractClientPlayerEntity.class)
+	@Mixin(AbstractClientPlayer.class)
 	public static class AbstractClientPlayerMixin
 	{
 		@Inject(method = "isSpectator", at = @At("HEAD"), cancellable = true)
@@ -112,10 +112,10 @@ public class MatchMixins
 			});
 		}
 	}
-	@Mixin(PlayerEntity.class)
+	@Mixin(Player.class)
 	public static class PlayerMixin
 	{
-		@Inject(method = "tickMovement", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "aiStep", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$inhibitMovementWhenDead(CallbackInfo ci)
 		{
 			EntityInfoCapability.getOptional((LivingEntity) (Object) this).ifPresent(info ->
@@ -126,8 +126,8 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "isBlockBreakingRestricted", at = @At("HEAD"), cancellable = true)
-		public void splatcraft$prohibitBlockBreakingWhenDead(World world, BlockPos pos, GameMode gameMode, CallbackInfoReturnable<Boolean> cir)
+		@Inject(method = "blockActionRestricted", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$prohibitBlockBreakingWhenDead(Level world, BlockPos pos, GameType gameMode, CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
 			EntityInfoCapability.getOptional(entity).ifPresent(info ->
@@ -139,13 +139,13 @@ public class MatchMixins
 			});
 		}
 	}
-	@Mixin(ClientPlayerEntity.class)
+	@Mixin(LocalPlayer.class)
 	public static class ClientPlayerMixinCommon
 	{
-		@Inject(method = "showsDeathScreen", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "shouldShowDeathScreen", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathScreenOnMatch(CallbackInfoReturnable<Boolean> cir)
 		{
-			EntityInfoCapability.getOptional((ClientPlayerEntity) (Object) this).ifPresent(info ->
+			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -153,10 +153,10 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "requestRespawn", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "respawn", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventRespawnOnMatch(CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional((ClientPlayerEntity) (Object) this).ifPresent(info ->
+			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -164,10 +164,10 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "updatePostDeath", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$WHYARETHERETWOIMeanpreventDeathTimerOnMatch(CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional((ClientPlayerEntity) (Object) this).ifPresent(info ->
+			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -176,26 +176,26 @@ public class MatchMixins
 			});
 		}
 	}
-	@Mixin(ClientPlayerInteractionManager.class)
+	@Mixin(MultiPlayerGameMode.class)
 	public static class ClientInteractionManagerMixin
 	{
-		@Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
-		public void splatcraft$prohibitBlockInteractionWhenOnMatch(ClientPlayerEntity player, Hand hand, BlockHitResult hitResult, CallbackInfoReturnable<ActionResult> cir)
+		@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$prohibitBlockInteractionWhenOnMatch(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir)
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				if (CommonUtils.isEntityMatchImmobile(player, info))
 				{
-					cir.setReturnValue(ActionResult.FAIL);
+					cir.setReturnValue(InteractionResult.FAIL);
 				}
 			});
 		}
 	}
-	@Mixin(HeldItemRenderer.class)
+	@Mixin(ItemInHandRenderer.class)
 	public static class HeldItemRendererMixin
 	{
-		@Inject(method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "HEAD"), cancellable = true)
-		public void splatcraft$cancelPlayerRenderIfDead(LivingEntity entity, ItemStack stack, ModelTransformationMode renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci)
+		@Inject(method = "renderItem", at = @At(value = "HEAD"), cancellable = true)
+		public void splatcraft$cancelPlayerRenderIfDead(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci)
 		{
 			EntityInfoCapability.getOptional(entity).ifPresent(info ->
 			{
@@ -211,11 +211,11 @@ public class MatchMixins
 			});
 		}
 	}
-	@Mixin(PlayerEntityRenderer.class)
+	@Mixin(PlayerRenderer.class)
 	public static class PlayerRendererMixin
 	{
-		@Inject(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "HEAD"), cancellable = true)
-		public void splatcraft$cancelPlayerRenderIfDead(AbstractClientPlayerEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci)
+		@Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "HEAD"), cancellable = true)
+		public void splatcraft$cancelPlayerRenderIfDead(AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i, CallbackInfo ci)
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
@@ -225,8 +225,8 @@ public class MatchMixins
 				}
 			});
 		}
-		@Inject(method = "renderArm", at = @At(value = "HEAD"), cancellable = true)
-		public void splatcraft$cancelHeldItemRenderIfDead(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, AbstractClientPlayerEntity player, ModelPart arm, ModelPart sleeve, CallbackInfo ci)
+		@Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
+		public void splatcraft$cancelHeldItemRenderIfDead(PoseStack matrices, MultiBufferSource vertexConsumers, int light, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve, CallbackInfo ci)
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
@@ -241,25 +241,25 @@ public class MatchMixins
 	public static abstract class MatchCameraMixin
 	{
 		@Shadow
-		private boolean ready;
+		private boolean initialized;
 		@Shadow
-		private BlockView area;
+		private BlockGetter level;
 		@Shadow
-		private float lastTickDelta;
+		private float partialTickTime;
 		@Shadow
-		private boolean thirdPerson;
+		private boolean detached;
 		@Shadow
-		private Entity focusedEntity;
+		private Entity entity;
 		@Shadow
-		protected abstract void setPos(double x, double y, double z);
+		protected abstract void setPosition(double x, double y, double z);
 		@Shadow
 		protected abstract void setRotation(float yaw, float pitch);
 		@Shadow
-		protected abstract float clipToSpace(float f);
-		@Inject(method = "update", at = @At(value = "HEAD"), cancellable = true)
-		public void splatcraft$doCameraIntroPos(BlockView area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci)
+		protected abstract float getMaxZoom(float f);
+		@Inject(method = "setup", at = @At(value = "HEAD"), cancellable = true)
+		public void splatcraft$doCameraIntroPos(BlockGetter area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci)
 		{
-			if (focusedEntity instanceof PlayerEntity player)
+			if (focusedEntity instanceof Player player)
 			{
 				EntityInfoCapability.getOptional(player).ifPresent(info ->
 				{
@@ -273,14 +273,14 @@ public class MatchMixins
 						if (secondsBeforeStart > 0)
 						{
 							float secondsAfterInit = PlaySession.INTRO_DURATION.getSeconds() - secondsBeforeStart;
-							Pair<Vec3d, Vec2f>[] cameraPositions = ClientUtils.getMatchIntroData(stage);
+							Pair<Vec3, Vec2>[] cameraPositions = ClientUtils.getMatchIntroData(stage);
 							if (secondsAfterInit < 5)
 							{
-								Vec3d matchCenterPos = cameraPositions[0].getFirst();
+								Vec3 matchCenterPos = cameraPositions[0].getFirst();
 								matchCenterPos = matchCenterPos.add(0, 5 + 20 * (1 - 1 / (1 + secondsAfterInit)), 0);
 								
-								setPos(matchCenterPos.x, matchCenterPos.y, matchCenterPos.z);
-								setRotation(MathHelper.sqrt(secondsAfterInit * (90 / MathHelper.sqrt(5))), 90);
+								setPosition(matchCenterPos.x, matchCenterPos.y, matchCenterPos.z);
+								setRotation(Mth.sqrt(secondsAfterInit * (90 / Mth.sqrt(5))), 90);
 								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
@@ -288,8 +288,8 @@ public class MatchMixins
 							if (secondsAfterInit < 12)
 							{
 								int i = 1 + (int) (((secondsAfterInit - 5f) / 7f) * (cameraPositions.length - 1));
-								Pair<Vec3d, Vec2f> lookData = cameraPositions[i];
-								setPos(lookData.getFirst().x, lookData.getFirst().y, lookData.getFirst().z);
+								Pair<Vec3, Vec2> lookData = cameraPositions[i];
+								setPosition(lookData.getFirst().x, lookData.getFirst().y, lookData.getFirst().z);
 								setRotation(lookData.getSecond().y, lookData.getSecond().x);
 								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
@@ -299,21 +299,21 @@ public class MatchMixins
 						Pair<UUID, Vector3f> killCamData = ClientUtils.killCamData;
 						if (killCamData != null && info.isMatchRespawning() && info.getMatchRespawnTimeLeft() > 60)
 						{
-							PlayerEntity killerPlayer = focusedEntity.getWorld().getPlayerByUuid(ClientUtils.killCamData.getFirst());
+							Player killerPlayer = focusedEntity.level().getPlayerByUUID(ClientUtils.killCamData.getFirst());
 							if (killerPlayer != null)
 							{
 								Vector3f killCamDirection = killCamData.getSecond();
 								float delta = 1f - Math.min(info.getMatchRespawnTimeLeft() - 55, 0) / 5f;
-								Vec3d camStartPos = focusedEntity.getPos();
-								Vec3d camEndPos = killerPlayer.getPos().subtract(killCamDirection.x, killCamDirection.y, killCamDirection.z);
-								Vec3d camPos = camStartPos.lerp(camEndPos, delta);
+								Vec3 camStartPos = focusedEntity.position();
+								Vec3 camEndPos = killerPlayer.position().subtract(killCamDirection.x, killCamDirection.y, killCamDirection.z);
+								Vec3 camPos = camStartPos.lerp(camEndPos, delta);
 								
 								float horizontalLength = killCamDirection.x * killCamDirection.x + killCamDirection.z * killCamDirection.z;
-								float pitch = (float) (MathHelper.atan2(killCamDirection.y, horizontalLength) * MathHelper.DEGREES_PER_RADIAN);
-								float yaw = (float) (MathHelper.atan2(killCamDirection.x, killCamDirection.z) * MathHelper.DEGREES_PER_RADIAN);
+								float pitch = (float) (Mth.atan2(killCamDirection.y, horizontalLength) * Mth.RAD_TO_DEG);
+								float yaw = (float) (Mth.atan2(killCamDirection.x, killCamDirection.z) * Mth.RAD_TO_DEG);
 								
-								setPos(camPos.x, camPos.y, camPos.z);
-								setRotation(MathHelper.lerp(delta, focusedEntity.getYaw(tickDelta), yaw), MathHelper.lerp(delta, focusedEntity.getPitch(tickDelta), pitch));
+								setPosition(camPos.x, camPos.y, camPos.z);
+								setRotation(Mth.lerp(delta, focusedEntity.getViewYRot(tickDelta), yaw), Mth.lerp(delta, focusedEntity.getViewXRot(tickDelta), pitch));
 								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 							}
@@ -325,13 +325,13 @@ public class MatchMixins
 		// could have made the inject be after these instructions! unfortunatelly neoforge changes the method so it is separate between loaders
 		// :(
 		@Unique
-		private void splatcraft$doCancel(CallbackInfo ci, BlockView area, Entity focusedEntity, float tickDelta)
+		private void splatcraft$doCancel(CallbackInfo ci, BlockGetter area, Entity focusedEntity, float tickDelta)
 		{
-			ready = true;
-			this.area = area;
-			this.focusedEntity = focusedEntity;
-			thirdPerson = true;
-			lastTickDelta = tickDelta;
+			initialized = true;
+			this.level = area;
+			this.entity = focusedEntity;
+			detached = true;
+			partialTickTime = tickDelta;
 			ci.cancel();
 		}
 	}

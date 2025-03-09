@@ -2,8 +2,8 @@ package net.splatcraft.util.action;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.util.CodecUtils;
 
 public class EntityCooldown extends EntityActionWithTime
@@ -27,11 +27,11 @@ public class EntityCooldown extends EntityActionWithTime
 	final boolean isGrounded;
 	final boolean preventStopUsing;
 	final int slotIndex;
-	final Hand hand;
+	final InteractionHand hand;
 	final boolean canMove;
 	public ItemStack storedStack;
 	public boolean cancellable = false;
-	public EntityCooldown(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+	public EntityCooldown(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
 	{
 		super(time, maxTime);
 		storedStack = stack;
@@ -43,11 +43,11 @@ public class EntityCooldown extends EntityActionWithTime
 		this.isGrounded = isGrounded;
 		preventStopUsing = false;
 	}
-	public EntityCooldown(ItemStack stack, float time, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
+	public EntityCooldown(ItemStack stack, float time, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded)
 	{
 		this(stack, time, time, slotIndex, hand, canMove, forceCrouch, preventWeaponUse, isGrounded);
 	}
-	public EntityCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, Hand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time, boolean preventStopUsing)
+	public EntityCooldown(ItemStack storedStack, boolean cancellable, float maxTime, int slotIndex, InteractionHand hand, boolean canMove, boolean forceCrouch, boolean preventWeaponUse, boolean isGrounded, float time, boolean preventStopUsing)
 	{
 		super(time, maxTime);
 		this.storedStack = storedStack;
@@ -93,7 +93,7 @@ public class EntityCooldown extends EntityActionWithTime
 	{
 		return slotIndex;
 	}
-	public Hand getHand()
+	public InteractionHand getHand()
 	{
 		return hand;
 	}

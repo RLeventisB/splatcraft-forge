@@ -1,19 +1,15 @@
 package net.splatcraft.registries;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import net.minecraft.registry.Registries;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.block.SoundType;
 import net.splatcraft.Splatcraft;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.splatcraft.platform.DeferredRegister;
 
 public class SplatcraftSounds
 {
-	public static final DeferredRegister<SoundEvent> REGISTRY = Splatcraft.deferredRegistryOf(Registries.SOUND_EVENT);
-	private static final List<SoundEvent> sounds = new ArrayList<>();
+	public static final DeferredRegister<SoundEvent> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.SOUND_EVENT);
 	public static SoundEvent squidTransform;
 	public static SoundEvent squidRevert;
 	public static SoundEvent inkSubmerge;
@@ -64,11 +60,11 @@ public class SplatcraftSounds
 	public static SoundEvent inkedBlockPlace;
 	public static SoundEvent inkedBlockHit;
 	public static SoundEvent inkedBlockFall;
-	public static BlockSoundGroup SOUND_TYPE_INK;
-	public static BlockSoundGroup SOUND_TYPE_SWIMMING;
+	public static SoundType SOUND_TYPE_INK;
+	public static SoundType SOUND_TYPE_SWIMMING;
 	public static SoundEvent superjumpStart;
 	public static SoundEvent superjumpLand;
-	public static void initSounds()
+	static
 	{
 		inkedBlockBreak = createSoundEvent("block.inked_block.break");
 		inkedBlockStep = createSoundEvent("block.inked_block.step");
@@ -126,8 +122,8 @@ public class SplatcraftSounds
 		stingRayBeamUse = createSoundEvent("sting_ray_loop");
 		stingRayShockwave = createSoundEvent("sting_ray_loop2");
 		
-		SOUND_TYPE_INK = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
-		SOUND_TYPE_SWIMMING = new BlockSoundGroup(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
+		SOUND_TYPE_INK = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
+		SOUND_TYPE_SWIMMING = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 	}
 	/*
 		public static void playHitSoundEffect()
@@ -147,18 +143,9 @@ public class SplatcraftSounds
 	*/
 	private static SoundEvent createSoundEvent(String id)
 	{
-		Identifier loc = Splatcraft.identifierOf(id);
-		SoundEvent sound = SoundEvent.of(loc);
-		sounds.add(sound);
+		ResourceLocation loc = Splatcraft.identifierOf(id);
+		SoundEvent sound = SoundEvent.createVariableRangeEvent(loc);
+		REGISTRY.register(loc, () -> sound);
 		return sound;
-	}
-	public static void register()
-	{
-		initSounds();
-		for (SoundEvent sound : sounds)
-		{
-			REGISTRY.register(sound.getId(), () -> sound);
-		}
-		REGISTRY.register();
 	}
 }

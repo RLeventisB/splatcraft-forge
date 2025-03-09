@@ -3,46 +3,45 @@ package net.splatcraft.crafting;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.*;
-import net.minecraft.recipe.input.SingleStackRecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record WeaponWorkbenchRecipe(Identifier tab, List<WeaponWorkbenchSubtypeRecipe> subRecipes,
-                                    int pos) implements Recipe<SingleStackRecipeInput>, Comparable<WeaponWorkbenchRecipe>
+public record WeaponWorkbenchRecipe(ResourceLocation tab, List<WeaponWorkbenchSubtypeRecipe> subRecipes,
+                                    int pos) implements Recipe<SingleRecipeInput>, Comparable<WeaponWorkbenchRecipe>
 {
 	@Override
-	public boolean matches(@NotNull SingleStackRecipeInput inv, @NotNull World levelIn)
+	public boolean matches(@NotNull SingleRecipeInput inv, @NotNull Level levelIn)
 	{
 		return true;
 	}
 	@Override
-	public @NotNull ItemStack craft(@NotNull SingleStackRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
+	public @NotNull ItemStack assemble(@NotNull SingleRecipeInput inv, @NotNull HolderLookup.Provider access)
 	{
 		return ItemStack.EMPTY;
 	}
 	@Override
-	public boolean fits(int width, int height)
+	public boolean canCraftInDimensions(int width, int height)
 	{
 		return false;
 	}
 	@Override
-	public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
+	public @NotNull ItemStack getResultItem(@NotNull HolderLookup.Provider access)
 	{
 		return subRecipes.isEmpty() ? ItemStack.EMPTY : subRecipes.getFirst().getOutput().copy();
 	}
-	public Identifier getId(RecipeManager manager)
+	public ResourceLocation getId(RecipeManager manager)
 	{
-		List<RecipeEntry<WeaponWorkbenchRecipe>> recipeEntries = new ArrayList<>(manager.listAllOfType(SplatcraftRecipeTypes.WEAPON_STATION_TYPE));
+		List<RecipeHolder<WeaponWorkbenchRecipe>> recipeEntries = new ArrayList<>(manager.getAllRecipesFor(SplatcraftRecipeTypes.WEAPON_STATION_TYPE));
 		recipeEntries.removeIf(v -> v.value() != this);
 		return recipeEntries.getFirst().id();
 	}
@@ -61,44 +60,44 @@ public record WeaponWorkbenchRecipe(Identifier tab, List<WeaponWorkbenchSubtypeR
 	{
 		return pos - o.pos;
 	}
-	public RecipeEntry<?> getTab(World world)
+	public RecipeHolder<?> getTab(Level world)
 	{
-		return world.getRecipeManager().get(tab).orElse(null);
+		return world.getRecipeManager().byKey(tab).orElse(null);
 	}
-	public WeaponWorkbenchSubtypeRecipe getRecipeFromIndex(PlayerEntity player, int subTypePos)
+	public WeaponWorkbenchSubtypeRecipe getRecipeFromIndex(Player player, int subTypePos)
 	{
 		return getAvailableRecipes(player).get(subTypePos);
 	}
-	public int getAvailableRecipesTotal(PlayerEntity player)
+	public int getAvailableRecipesTotal(Player player)
 	{
 		return getAvailableRecipes(player).size();
 	}
-	public List<WeaponWorkbenchSubtypeRecipe> getAvailableRecipes(PlayerEntity player)
+	public List<WeaponWorkbenchSubtypeRecipe> getAvailableRecipes(Player player)
 	{
 		return subRecipes.stream().filter(weaponWorkbenchSubtypeRecipe -> weaponWorkbenchSubtypeRecipe.isAvailable(player)).toList();
 	}
 	public static class Serializer implements RecipeSerializer<WeaponWorkbenchRecipe>
 	{
-		public static final PacketCodec<RegistryByteBuf, WeaponWorkbenchRecipe> PACKET_CODEC = PacketCodec.of((recipe, buffer) ->
+		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchRecipe> PACKET_CODEC = StreamCodec.ofMember((recipe, buffer) ->
 		{
-			buffer.writeIdentifier(recipe.tab);
+			buffer.writeResourceLocation(recipe.tab);
 			WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.encode(buffer, recipe.subRecipes);
 			buffer.writeInt(recipe.pos);
-		}, (buffer) -> new WeaponWorkbenchRecipe(buffer.readIdentifier(), WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.decode(buffer), buffer.readInt()));
+		}, (buffer) -> new WeaponWorkbenchRecipe(buffer.readResourceLocation(), WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.decode(buffer), buffer.readInt()));
 		public static final MapCodec<WeaponWorkbenchRecipe> CODEC = RecordCodecBuilder.mapCodec(inst ->
 			inst.group(
-				Identifier.CODEC.fieldOf("tab").forGetter(WeaponWorkbenchRecipe::tab),
+				ResourceLocation.CODEC.fieldOf("tab").forGetter(WeaponWorkbenchRecipe::tab),
 				WeaponWorkbenchSubtypeRecipe.CODEC.listOf().fieldOf("recipes").forGetter(WeaponWorkbenchRecipe::subRecipes),
 				Codec.INT.fieldOf("pos").forGetter(WeaponWorkbenchRecipe::pos)
 			).apply(inst, WeaponWorkbenchRecipe::new)
 		);
 		@Override
-		public MapCodec<WeaponWorkbenchRecipe> codec()
+		public @NotNull MapCodec<WeaponWorkbenchRecipe> codec()
 		{
 			return CODEC;
 		}
 		@Override
-		public PacketCodec<RegistryByteBuf, WeaponWorkbenchRecipe> packetCodec()
+		public @NotNull StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchRecipe> streamCodec()
 		{
 			return PACKET_CODEC;
 		}

@@ -1,8 +1,8 @@
 package net.splatcraft.dummys;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 
 public interface ISplatcraftForgeItemDummy
 {
@@ -12,11 +12,11 @@ public interface ISplatcraftForgeItemDummy
 	}
 	default boolean phIsRepairable(ItemStack stack)
 	{
-		return stack.contains(DataComponentTypes.MAX_DAMAGE);
+		return stack.has(DataComponents.MAX_DAMAGE);
 	}
 	default int phGetMaxStackSize(ItemStack stack)
 	{
-		return stack.getOrDefault(DataComponentTypes.MAX_STACK_SIZE, 1);
+		return stack.getOrDefault(DataComponents.MAX_STACK_SIZE, 1);
 	}
 	default boolean phShouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
 	{

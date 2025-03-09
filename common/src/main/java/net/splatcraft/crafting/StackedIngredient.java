@@ -2,16 +2,15 @@ package net.splatcraft.crafting;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-
 import java.util.List;
 import java.util.function.Predicate;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class StackedIngredient implements Predicate<ItemStack>
 {
@@ -21,16 +20,16 @@ public class StackedIngredient implements Predicate<ItemStack>
             Codec.INT.fieldOf("count").forGetter(v -> v.count)
         ).apply(inst, StackedIngredient::new)
     );
-    public static final PacketCodec<RegistryByteBuf, StackedIngredient> PACKET_CODEC = PacketCodec.ofStatic(
+    public static final StreamCodec<RegistryFriendlyByteBuf, StackedIngredient> PACKET_CODEC = StreamCodec.of(
         (buffer, ingredient) ->
         {
             RecipeIngredient.PACKET_CODEC.encode(buffer, ingredient.ingredient);
-            PacketCodecs.INTEGER.encode(buffer, ingredient.count);
+            ByteBufCodecs.INT.encode(buffer, ingredient.count);
         },
         (buffer) ->
-            new StackedIngredient(RecipeIngredient.PACKET_CODEC.decode(buffer), PacketCodecs.INTEGER.decode(buffer))
+            new StackedIngredient(RecipeIngredient.PACKET_CODEC.decode(buffer), ByteBufCodecs.INT.decode(buffer))
     );
-    public static final PacketCodec<RegistryByteBuf, List<StackedIngredient>> LIST_PACKET_CODEC = PACKET_CODEC.collect(PacketCodecs.toList());
+    public static final StreamCodec<RegistryFriendlyByteBuf, List<StackedIngredient>> LIST_PACKET_CODEC = PACKET_CODEC.apply(ByteBufCodecs.list());
     protected final RecipeIngredient ingredient;
     protected final int count;
 
@@ -55,16 +54,16 @@ public class StackedIngredient implements Predicate<ItemStack>
     {
         return getIngredient().test(itemStack);
     }
-    public record RecipeIngredient(Identifier itemId)
+    public record RecipeIngredient(ResourceLocation itemId)
     {
-        public static final PacketCodec<RegistryByteBuf, RecipeIngredient> PACKET_CODEC = PacketCodec.tuple(
-            Identifier.PACKET_CODEC, RecipeIngredient::itemId,
+        public static final StreamCodec<RegistryFriendlyByteBuf, RecipeIngredient> PACKET_CODEC = StreamCodec.composite(
+            ResourceLocation.STREAM_CODEC, RecipeIngredient::itemId,
             RecipeIngredient::new
         );
-        public static final Codec<RecipeIngredient> CODEC = Identifier.CODEC.xmap(RecipeIngredient::new, RecipeIngredient::itemId);
+        public static final Codec<RecipeIngredient> CODEC = ResourceLocation.CODEC.xmap(RecipeIngredient::new, RecipeIngredient::itemId);
         public boolean test(ItemStack stack)
         {
-            return Registries.ITEM.getId(stack.getItem().asItem()).equals(itemId);
+            return BuiltInRegistries.ITEM.getKey(stack.getItem().asItem()).equals(itemId);
         }
         public boolean test(ItemStack stack, int count)
         {
@@ -72,7 +71,7 @@ public class StackedIngredient implements Predicate<ItemStack>
         }
         public Item getItem()
         {
-            return Registries.ITEM.get(itemId);
+            return BuiltInRegistries.ITEM.get(itemId);
         }
         public ItemStack getStack()
         {

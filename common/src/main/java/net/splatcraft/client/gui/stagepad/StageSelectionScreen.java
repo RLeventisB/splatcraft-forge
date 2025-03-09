@@ -2,13 +2,13 @@ package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.StagePadItem;
@@ -23,7 +23,7 @@ import java.util.*;
 public class StageSelectionScreen extends AbstractStagePadScreen
 {
 	static final TreeMap<Stage, Pair<MenuButton, SuperJumpMenuButton>> stages = new TreeMap<>();
-	private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_select.png");
+	private static final ResourceLocation TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_select.png");
 	public static StageSelectionScreen instance;
 	MenuTextBox searchBar;
 	MenuButton createStageButton;
@@ -32,7 +32,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 	String prevSearchBarText = "";
 	private double scroll = 0;
 	private boolean scrollBarHeld = false;
-	public StageSelectionScreen(Text title)
+	public StageSelectionScreen(Component title)
 	{
 		super(title, StagePadItem.OPEN_MAIN_MENU);
 		
@@ -40,7 +40,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		
 		createStageButton = addButton(new MenuButton(10, 0, 178, 12,
 			goToScreen(() -> new StageCreationScreen(title, this, "", null, null)), MenuButton.NO_TOOLTIP,
-			drawText(Text.translatable("gui.stage_pad.button.create_stage"), false), MenuButton.ButtonColor.LIME));
+			drawText(Component.translatable("gui.stage_pad.button.create_stage"), false), MenuButton.ButtonColor.LIME));
 		stages.clear();
 		
 		toggleSearchBarButton = addButton(new ToggleMenuButton(176, 12, 24, 12, (b) ->
@@ -48,12 +48,12 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 			searchBar.visible = !searchBar.visible;
 			searchBar.setFocused(searchBar.visible);
 			if (!searchBar.visible)
-				searchBar.setText("");
-		}, showText(Text.translatable("gui.stage_pad.button.search_stage")), drawToggleIcon(WIDGETS, 0, 0, 232, 12, 12, 12, false), MenuButton.ButtonColor.PURPLE, false));
+				searchBar.setValue("");
+		}, showText(Component.translatable("gui.stage_pad.button.search_stage")), drawToggleIcon(WIDGETS, 0, 0, 232, 12, 12, 12, false), MenuButton.ButtonColor.PURPLE, false));
 		
 		addTextBox(textRenderer ->
 		{
-			searchBar = new MenuTextBox(textRenderer, 11, 13, 175, 10, Text.translatable("gui.stage_pad.textbox.search_stage"), false);
+			searchBar = new MenuTextBox(textRenderer, 11, 13, 175, 10, Component.translatable("gui.stage_pad.textbox.search_stage"), false);
 			searchBar.setFocused(true);
 			searchBar.visible = false;
 			return searchBar;
@@ -88,13 +88,13 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		MenuButton stageButton = new MenuButton(10, 0, 166, goToScreen(() -> new StageSettingsScreen(getTitle(), stage.id, this)), MenuButton.NO_TOOLTIP, drawText(false), MenuButton.ButtonColor.GREEN)
 		{
 			@Override
-			public @NotNull Text getMessage()
+			public @NotNull Component getMessage()
 			{
 				return Stage.getStage(stage.id).getStageName();
 			}
 		};
 		SuperJumpMenuButton jumpButton = new SuperJumpMenuButton(176, 0, 12,
-			(button, poseStack, mx, my, partialTicks) -> poseStack.drawTooltip(MinecraftClient.getInstance().textRenderer, List.of(((SuperJumpMenuButton) button).state.tooltipText), Optional.empty(), mx, my),
+			(button, poseStack, mx, my, partialTicks) -> poseStack.renderTooltip(Minecraft.getInstance().font, List.of(((SuperJumpMenuButton) button).state.tooltipText), Optional.empty(), mx, my),
 			(guiGraphics, button) -> drawIcon(guiGraphics, WIDGETS, 0, 0, 244, ((SuperJumpMenuButton) button).state == SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE ? 12 : 0, 12, 12).apply(guiGraphics, button), stage);
 		jumpButton.active = false;
 		
@@ -102,9 +102,9 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		{
 			Pair<MenuButton, SuperJumpMenuButton> pair = stages.get(stage);
 			buttons.remove(pair.getFirst());
-			remove(pair.getFirst());
+			removeWidget(pair.getFirst());
 			buttons.remove(pair.getSecond());
-			remove(pair.getSecond());
+			removeWidget(pair.getSecond());
 		}
 		
 		stages.put(stage, new Pair<>(stageButton, jumpButton));
@@ -112,10 +112,10 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		addButton(jumpButton);
 	}
 	@Override
-	public void handleWidgets(DrawContext matrixStack, int mouseX, int mouseY, float partialTicks)
+	public void handleWidgets(GuiGraphics matrixStack, int mouseX, int mouseY, float partialTicks)
 	{
 		List<Pair<MenuButton, SuperJumpMenuButton>> stageButtons = stages.keySet().stream().sorted(Comparator.comparing(s -> s.getStageName().getString()))
-			.filter(s -> s.getStageName().getString().toLowerCase().contains(searchBar.getText().toLowerCase()))
+			.filter(s -> s.getStageName().getString().toLowerCase().contains(searchBar.getValue().toLowerCase()))
 			.map(stages::get).toList();
 		
 		buttonListSize = stageButtons.size() + 1;
@@ -184,7 +184,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		int y = (height - backgroundHeight) / 2;
 		
 		if (scrollBarHeld)
-			scroll = MathHelper.clamp((mouseY - (y + 24)) / 96f, 0, 1);
+			scroll = Mth.clamp((mouseY - (y + 24)) / 96f, 0, 1);
 		
 		return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
 	}
@@ -192,17 +192,17 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
 	{
 		if (stages.size() > 7)
-			scroll = MathHelper.clamp(scroll - Math.signum(verticalAmount) / (buttonListSize - 7), 0.0f, 1.0f);
+			scroll = Mth.clamp(scroll - Math.signum(verticalAmount) / (buttonListSize - 7), 0.0f, 1.0f);
 		
 		return true;
 	}
 	@Override
-	public void renderBackground(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float delta)
+	public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float delta)
 	{
-		if (!searchBar.getText().equals(prevSearchBarText))
+		if (!searchBar.getValue().equals(prevSearchBarText))
 		{
 			scroll = 0;
-			prevSearchBarText = searchBar.getText();
+			prevSearchBarText = searchBar.getValue();
 		}
 		
 		super.renderBackground(guiGraphics, mouseX, mouseY, delta);
@@ -213,29 +213,29 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		int x = (width - backgroundWidth) / 2;
 		int y = (height - backgroundHeight) / 2;
 		
-		guiGraphics.drawTexture(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
+		guiGraphics.blit(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
 		
 		if (searchBar.visible)
-			guiGraphics.drawTexture(TEXTURES, x + 10, y + 12, 0, 244, 178, 12);
+			guiGraphics.blit(TEXTURES, x + 10, y + 12, 0, 244, 178, 12);
 		else
 		{
-			Text label = Text.translatable("gui.stage_pad.label.stage_select");
-			guiGraphics.drawTextWithShadow(textRenderer, label, x + 105 - textRenderer.getWidth(label) / 2, y + 14, 0xFFFFFF);
+			Component label = Component.translatable("gui.stage_pad.label.stage_select");
+			guiGraphics.drawString(font, label, x + 105 - font.width(label) / 2, y + 14, 0xFFFFFF);
 		}
 		
 		RenderSystem.setShaderTexture(0, WIDGETS);
-		guiGraphics.drawTexture(WIDGETS, x + 188, y + 24 + (int) (scroll * 81), 196 + (buttonListSize > 7 ? (scrollBarHeld ? 2 : 1) * 12 : 0), 0, 12, 15);
+		guiGraphics.blit(WIDGETS, x + 188, y + 24 + (int) (scroll * 81), 196 + (buttonListSize > 7 ? (scrollBarHeld ? 2 : 1) * 12 : 0), 0, 12, 15);
 	}
 	public static class ToggleMenuButton extends MenuButton
 	{
 		boolean toggle;
 		boolean renderBackground = true;
-		public ToggleMenuButton(int x, int y, int width, PressAction onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color, boolean defaultState)
+		public ToggleMenuButton(int x, int y, int width, OnPress onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color, boolean defaultState)
 		{
 			super(x, y, width, onPress, onTooltip, draw, color);
 			toggle = defaultState;
 		}
-		public ToggleMenuButton(int x, int y, int width, int height, PressAction onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color, boolean defaultState)
+		public ToggleMenuButton(int x, int y, int width, int height, OnPress onPress, OnTooltip onTooltip, PostDraw draw, ButtonColor color, boolean defaultState)
 		{
 			super(x, y, width, height, onPress, onTooltip, draw, color);
 			toggle = defaultState;
@@ -252,12 +252,12 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 			return this;
 		}
 		@Override
-		public void renderWidget(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+		public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
 		{
 			if (!visible)
 				return;
 			
-			RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
 			RenderSystem.setShaderTexture(0, WIDGETS);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
 			RenderSystem.enableBlend();
@@ -266,29 +266,29 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 			
 			if (renderBackground)
 			{
-				guiGraphics.drawTexture(WIDGETS, getX(), relativeY, 0, getColor().ordinal() * 36, width / 2, height);
-				guiGraphics.drawTexture(WIDGETS, getX() + width / 2, getY(), 180 - width / 2, getColor().ordinal() * 36, width / 2, height);
+				guiGraphics.blit(WIDGETS, getX(), relativeY, 0, getColor().ordinal() * 36, width / 2, height);
+				guiGraphics.blit(WIDGETS, getX() + width / 2, getY(), 180 - width / 2, getColor().ordinal() * 36, width / 2, height);
 			}
 			
 			if (active)
 			{
-				int i = getYImage(isSelected());
-				guiGraphics.drawTexture(WIDGETS, getX() + (toggle ? width / 2 : 0), getY(), 0, getColor().ordinal() * 36 + i * 12, width / 4, height);
-				guiGraphics.drawTexture(WIDGETS, getX() + (toggle ? width / 2 : 0) + width / 4, getY(), 180 - width / 4, getColor().ordinal() * 36 + i * 12, width / 2, height);
+				int i = getYImage(isHoveredOrFocused());
+				guiGraphics.blit(WIDGETS, getX() + (toggle ? width / 2 : 0), getY(), 0, getColor().ordinal() * 36 + i * 12, width / 4, height);
+				guiGraphics.blit(WIDGETS, getX() + (toggle ? width / 2 : 0) + width / 4, getY(), 180 - width / 4, getColor().ordinal() * 36 + i * 12, width / 2, height);
 			}
 			draw.apply(guiGraphics, this);
 		}
 	}
 	public static class HiddenButton extends MenuButton
 	{
-		public HiddenButton(int x, int y, int width, int height, PressAction onPress, OnTooltip onTooltip, PostDraw draw)
+		public HiddenButton(int x, int y, int width, int height, OnPress onPress, OnTooltip onTooltip, PostDraw draw)
 		{
 			super(x, y, width, height, onPress, onTooltip, draw, ButtonColor.GREEN);
 		}
 		@Override
-		public void renderWidget(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+		public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
 		{
-			RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
 			RenderSystem.setShaderTexture(0, WIDGETS);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
 			RenderSystem.enableBlend();
@@ -318,7 +318,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 				else
 				{
 					SplatcraftPacketHandler.sendToServer(new SuperJumpToStagePacket(stage.id));
-					MinecraftClient.getInstance().setScreen(null);
+					Minecraft.getInstance().setScreen(null);
 				}
 			}, onTooltip, draw, ButtonColor.CYAN);
 			
@@ -335,15 +335,15 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 		}
 		public enum ButtonState
 		{
-			REQUESTING(false, ButtonColor.YELLOW, Text.translatable("gui.stage_pad.button.superjump_to.requesting")),
-			OUT_OF_RANGE(false, ButtonColor.RED, Text.translatable("gui.stage_pad.button.superjump_to.out_of_range").formatted(Formatting.RED)),
-			NO_SPAWN_PADS(false, ButtonColor.RED, Text.translatable("gui.stage_pad.button.superjump_to.no_pads_found").formatted(Formatting.RED)),
-			VALID(true, ButtonColor.CYAN, Text.translatable("gui.stage_pad.button.superjump_to")),
-			REQUIRES_UPDATE(true, ButtonColor.YELLOW, Text.translatable("gui.stage_pad.button.superjump_to.requires_update").formatted(Formatting.YELLOW));
+			REQUESTING(false, ButtonColor.YELLOW, Component.translatable("gui.stage_pad.button.superjump_to.requesting")),
+			OUT_OF_RANGE(false, ButtonColor.RED, Component.translatable("gui.stage_pad.button.superjump_to.out_of_range").withStyle(ChatFormatting.RED)),
+			NO_SPAWN_PADS(false, ButtonColor.RED, Component.translatable("gui.stage_pad.button.superjump_to.no_pads_found").withStyle(ChatFormatting.RED)),
+			VALID(true, ButtonColor.CYAN, Component.translatable("gui.stage_pad.button.superjump_to")),
+			REQUIRES_UPDATE(true, ButtonColor.YELLOW, Component.translatable("gui.stage_pad.button.superjump_to.requires_update").withStyle(ChatFormatting.YELLOW));
 			final boolean valid;
-			final Text tooltipText;
+			final Component tooltipText;
 			final ButtonColor color;
-			ButtonState(boolean valid, ButtonColor color, Text tooltipText)
+			ButtonState(boolean valid, ButtonColor color, Component tooltipText)
 			{
 				this.valid = valid;
 				this.tooltipText = tooltipText;

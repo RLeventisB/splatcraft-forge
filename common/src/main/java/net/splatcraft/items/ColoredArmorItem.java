@@ -1,22 +1,22 @@
 package net.splatcraft.items;
 
-import net.minecraft.block.cauldron.CauldronBehavior;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.DyedColorComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.ArmorMaterial;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.cauldron.CauldronInteraction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.DyedItemColor;
+import net.minecraft.world.level.Level;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
@@ -28,33 +28,33 @@ import java.util.List;
 
 public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatcraftForgeItemDummy
 {
-	public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType, Item.Settings settings)
+	public ColoredArmorItem(Holder<ArmorMaterial> material, ArmorItem.Type armorType, Item.Properties settings)
 	{
 		super(material, armorType, settings);
 		SplatcraftItems.inkColoredItems.add(this);
 		
-		CauldronBehavior.registerBehavior();
-		CauldronBehavior.WATER_CAULDRON_BEHAVIOR.map().put(this, CauldronBehavior.CLEAN_DYEABLE_ITEM);
+		CauldronInteraction.bootStrap();
+		CauldronInteraction.WATER.map().put(this, CauldronInteraction.DYED_ITEM);
 	}
-	public ColoredArmorItem(RegistryEntry<ArmorMaterial> material, ArmorItem.Type armorType)
+	public ColoredArmorItem(Holder<ArmorMaterial> material, ArmorItem.Type armorType)
 	{
-		this(material, armorType, new Item.Settings().maxCount(1).component(DataComponentTypes.DYED_COLOR, new DyedColorComponent(0, false)));
+		this(material, armorType, new Item.Properties().stacksTo(1).component(DataComponents.DYED_COLOR, new DyedItemColor(0, false)));
 	}
 	@Override
-	public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType flag)
+	public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
 	{
-		super.appendTooltip(stack, context, tooltip, flag);
+		super.appendHoverText(stack, context, tooltip, flag);
 		
-		if (I18n.hasTranslation(getTranslationKey() + ".tooltip"))
-			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip").formatted(Formatting.GRAY));
+		if (I18n.exists(getDescriptionId() + ".tooltip"))
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
 		
 		if (ColorUtils.isColorLocked(stack))
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
 		else
-			tooltip.add(Text.translatable("item.splatcraft.tooltip.matches_color").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.splatcraft.tooltip.matches_color").withStyle(ChatFormatting.GRAY));
 	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 		
@@ -67,14 +67,14 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 	@Override
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
-		BlockPos pos = entity.getBlockPos().down();
+		BlockPos pos = entity.blockPosition().below();
 		
-		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
+		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos));
-				ColorUtils.withColorLocked(entity.getStack(), true);
+				ColorUtils.withInkColor(entity.getItem(), ColorUtils.getEffectiveColor(entity.level(), pos));
+				ColorUtils.withColorLocked(entity.getItem(), true);
 			}
 		}
 		

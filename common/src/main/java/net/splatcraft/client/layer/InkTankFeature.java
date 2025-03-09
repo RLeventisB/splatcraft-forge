@@ -1,79 +1,78 @@
 package net.splatcraft.client.layer;
 
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayer;
-import net.minecraft.client.render.entity.model.EntityModelLoader;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Pair;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.InkTankItem;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> extends FeatureRenderer<T, M>
+public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M>
 {
-	private static final Map<InkTankItem, Pair<EntityModelLayer, Function<ModelPart, AbstractInkTankModel>>> MAP = new HashMap<>();
+	private static final Map<InkTankItem, Tuple<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>>> MAP = new HashMap<>();
 	private static final Map<InkTankItem, AbstractInkTankModel> MODEL_CACHE = new HashMap<>();
-	private final EntityModelLoader modelLoader;
+	private final EntityModelSet modelLoader;
 	private String id;
-	public InkTankFeature(FeatureRendererContext<T, M> context, EntityModelLoader modelLoader)
+	public InkTankFeature(RenderLayerParent<T, M> context, EntityModelSet modelLoader)
 	{
 		super(context);
 		this.modelLoader = modelLoader;
 	}
-	public static void register(InkTankItem item, EntityModelLayer layer, Function<ModelPart, AbstractInkTankModel> constructor)
+	public static void register(InkTankItem item, ModelLayerLocation layer, Function<ModelPart, AbstractInkTankModel> constructor)
 	{
-		MAP.put(item, new Pair<>(layer, constructor));
+		MAP.put(item, new Tuple<>(layer, constructor));
 	}
 	@Override
-	public void render(MatrixStack matrixStack, VertexConsumerProvider provider, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch)
+	public void render(PoseStack matrixStack, MultiBufferSource provider, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch)
 	{
-		ItemStack itemStack = entity.getEquippedStack(EquipmentSlot.CHEST);
+		ItemStack itemStack = entity.getItemBySlot(EquipmentSlot.CHEST);
 		if (itemStack.getItem() instanceof InkTankItem item)
 		{
 			AbstractInkTankModel model = MODEL_CACHE.getOrDefault(item, createModel(item));
-			matrixStack.push();
+			matrixStack.pushPose();
 			
-			getContextModel().copyStateTo((EntityModel<T>) model);
+			getParentModel().copyPropertiesTo((EntityModel<T>) model);
 			model.setInkLevels(InkTankItem.getInkAmount(itemStack) / item.capacity);
-			model.setAngles(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
-			model.notifyState(getContextModel());
+			model.setupAnim(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
+			model.notifyState(getParentModel());
 			
-			VertexConsumer vertexConsumer = ItemRenderer.getArmorGlintConsumer(provider, RenderLayer.getEntityTranslucent(
+			VertexConsumer vertexConsumer = ItemRenderer.getArmorFoilBuffer(provider, RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1_overlay.png")
-			), itemStack.hasGlint());
-			model.render(matrixStack, vertexConsumer, light, OverlayTexture.DEFAULT_UV, -1);
+			), itemStack.hasFoil());
+			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, -1);
 			
-			matrixStack.pop();
-			matrixStack.push();
+			matrixStack.popPose();
+			matrixStack.pushPose();
 			
-			vertexConsumer = provider.getBuffer(RenderLayer.getEntityTranslucent(
+			vertexConsumer = provider.getBuffer(RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1.png")
 			));
-			model.render(matrixStack, vertexConsumer, light, OverlayTexture.DEFAULT_UV, EntityInfoCapability.get(entity).getColor().getColorWithAlpha(255));
-			matrixStack.pop();
+			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, EntityInfoCapability.get(entity).getColor().getColorWithAlpha(255));
+			matrixStack.popPose();
 		}
 	}
 	private AbstractInkTankModel createModel(InkTankItem item)
 	{
-		Pair<EntityModelLayer, Function<ModelPart, AbstractInkTankModel>> data = MAP.get(item);
-		id = data.getLeft().getId().getPath();
-		AbstractInkTankModel model = data.getRight().apply(modelLoader.getModelPart(data.getLeft()));
+		Tuple<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>> data = MAP.get(item);
+		id = data.getA().getModel().getPath();
+		AbstractInkTankModel model = data.getB().apply(modelLoader.bakeLayer(data.getA()));
 		MODEL_CACHE.put(item, model);
 		return model;
 	}

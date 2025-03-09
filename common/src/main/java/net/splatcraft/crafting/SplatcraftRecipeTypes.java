@@ -1,29 +1,29 @@
 package net.splatcraft.crafting;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.*;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.platform.DeferredRegister;
 
 public class SplatcraftRecipeTypes
 {
-	public static final DeferredRegister<RecipeType<?>> RECIPE_TYPE_REGISTRY = Splatcraft.deferredRegistryOf(Registries.RECIPE_TYPE);
-	public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER_REGISTRY = Splatcraft.deferredRegistryOf(Registries.RECIPE_SERIALIZER);
+	public static final DeferredRegister<RecipeType<?>> RECIPE_TYPE_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.RECIPE_TYPE);
+	public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZER_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.RECIPE_SERIALIZER);
 	public static final RecipeSerializer<InkVatColorRecipe> INK_VAT_COLOR_CRAFTING = new InkVatColorRecipe.InkVatColorSerializer();
 	public static final RecipeSerializer<WeaponWorkbenchTab> WEAPON_STATION_TAB = new WeaponWorkbenchTab.WeaponWorkbenchTabSerializer();
 	public static final RecipeSerializer<WeaponWorkbenchRecipe> WEAPON_STATION = new WeaponWorkbenchRecipe.Serializer();
-	public static final RecipeSerializer<SingleUseSubRecipe> SINGLE_USE_SUB = new SpecialRecipeSerializer<>(SingleUseSubRecipe::new);
+	public static final RecipeSerializer<SingleUseSubRecipe> SINGLE_USE_SUB = new SimpleCraftingRecipeSerializer<>(SingleUseSubRecipe::new);
 	public static final RecipeSerializer<ShapedRecipe> COLORED_SHAPED_CRAFTING = new ColoredShapedRecipe.Serializer();
 	public static RecipeType<WeaponWorkbenchRecipe> WEAPON_STATION_TYPE;
 	public static RecipeType<WeaponWorkbenchTab> WEAPON_STATION_TAB_TYPE;
 	public static RecipeType<InkVatColorRecipe> INK_VAT_COLOR_CRAFTING_TYPE;
-	public static boolean getItem(PlayerEntity player, StackedIngredient.RecipeIngredient ingredient, int count, boolean takeItems)
+	public static boolean getItem(Player player, StackedIngredient.RecipeIngredient ingredient, int count, boolean takeItems)
 	{
-		for (int i = 0; i < player.getInventory().size(); ++i)
+		for (int i = 0; i < player.getInventory().getContainerSize(); ++i)
 		{
-			ItemStack invStack = player.getInventory().getStack(i);
+			ItemStack invStack = player.getInventory().getItem(i);
 			if (!takeItems)
 			{
 				invStack = invStack.copy();

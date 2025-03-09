@@ -1,10 +1,9 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.platform.Platform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.util.InkColor;
@@ -21,22 +20,19 @@ public class SaveInfoCapability
 	}
 	// todo: create an "register" method so get doesn't automatically instantiates a saveinfo
 	@Contract
-	@ExpectPlatform
 	public static SaveInfo get()
 	{
 		throw new AssertionError();
 	}
-	@ExpectPlatform
 	public static void set(SaveInfo newData)
 	{
 		throw new AssertionError();
 	}
-	@ExpectPlatform
 	public static void markUpdated()
 	{
 		throw new AssertionError();
 	}
-	public static boolean loadLegacy(NbtCompound nbt)
+	public static boolean loadLegacy(CompoundTag nbt)
 	{
 		return SaveInfo.CODEC.decode(NbtOps.INSTANCE, nbt).ifSuccess(v ->
 		{

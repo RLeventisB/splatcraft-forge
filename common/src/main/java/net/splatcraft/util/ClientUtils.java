@@ -3,18 +3,22 @@ package net.splatcraft.util;
 import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.*;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -34,13 +38,13 @@ public class ClientUtils
 	@Environment(EnvType.CLIENT)
 	protected static final TreeMap<UUID, InkColor> clientColors = new TreeMap<>();
 	@Environment(EnvType.CLIENT)
-	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, Pair<Vec3d, Vec2f>[]> matchStartCameraPosProvider =
+	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, Pair<Vec3, Vec2>[]> matchStartCameraPosProvider =
 		new DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<>((stage) ->
 		{
-			ClientWorld world = getClient().world;
+			ClientLevel world = getClient().level;
 			// if the current world isn't the same as the stage's world, do nothing, we are the client, and thus we cant
 			// retrieve other worlds :(
-			if (world.getRegistryKey() != stage.worldKey)
+			if (world.dimension() != stage.worldKey)
 				return new Pair[0];
 			
 			// gets the stage's (horizontal) center and find the highest y
@@ -48,9 +52,9 @@ public class ClientUtils
 			float stageCenterZ = (stage.cornerA.getZ() + stage.cornerB.getZ()) / 2f;
 			int minY = Math.min(stage.cornerA.getY(), stage.cornerB.getY());
 			int maxY = Math.max(stage.cornerA.getY(), stage.cornerB.getY());
-			ArrayList<Pair<Vec3d, Vec2f>> posAndRotations = new ArrayList<>();
+			ArrayList<Pair<Vec3, Vec2>> posAndRotations = new ArrayList<>();
 			
-			Vec3d stageFloorCenter = new Vec3d(
+			Vec3 stageFloorCenter = new Vec3(
 				stageCenterX,
 				Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stage.cornerA.getY(), stage.cornerB.getY(), world, minY, maxY)).map(v -> (float) v.getY()).orElse((float) Math.min(stage.cornerA.getY(), stage.cornerB.getY())) + 2,
 				stageCenterZ
@@ -62,7 +66,7 @@ public class ClientUtils
 			Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
 			
 			// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
-			InkColor clientPlayerColor = getClientPlayerColor(getClientPlayer().getUuid());
+			InkColor clientPlayerColor = getClientPlayerColor(getClientPlayer().getUUID());
 			List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
 			
 			if (clientSpawnPads != null)
@@ -86,15 +90,15 @@ public class ClientUtils
 		);
 	@Environment(EnvType.CLIENT)
 	public static Pair<UUID, Vector3f> killCamData;
-	private static void addPadToList(SpawnPadTileEntity randomPad, Vec3d stageFloorCenter, ArrayList<Pair<Vec3d, Vec2f>> posAndRotations)
+	private static void addPadToList(SpawnPadTileEntity randomPad, Vec3 stageFloorCenter, ArrayList<Pair<Vec3, Vec2>> posAndRotations)
 	{
-		Vec3d spawnPadCenter = randomPad.getSuperJumpPos().add(0, 1, 0);
-		Vec3d dirCenterToPad = spawnPadCenter.subtract(stageFloorCenter).normalize();
-		Vec3d lookPosition = spawnPadCenter.subtract(dirCenterToPad.multiply(3));
-		float pitch = (float) (MathHelper.atan2(dirCenterToPad.y, dirCenterToPad.horizontalLength()) * MathHelper.DEGREES_PER_RADIAN);
-		float yaw = (float) (MathHelper.atan2(dirCenterToPad.x, dirCenterToPad.z) * MathHelper.DEGREES_PER_RADIAN);
+		Vec3 spawnPadCenter = randomPad.getSuperJumpPos().add(0, 1, 0);
+		Vec3 dirCenterToPad = spawnPadCenter.subtract(stageFloorCenter).normalize();
+		Vec3 lookPosition = spawnPadCenter.subtract(dirCenterToPad.scale(3));
+		float pitch = (float) (Mth.atan2(dirCenterToPad.y, dirCenterToPad.horizontalDistance()) * Mth.RAD_TO_DEG);
+		float yaw = (float) (Mth.atan2(dirCenterToPad.x, dirCenterToPad.z) * Mth.RAD_TO_DEG);
 		
-		posAndRotations.add(Pair.of(lookPosition, new Vec2f(-pitch, -yaw)));
+		posAndRotations.add(Pair.of(lookPosition, new Vec2(-pitch, -yaw)));
 	}
 	@Environment(EnvType.CLIENT)
 	public static void resetClientColors()
@@ -117,25 +121,25 @@ public class ClientUtils
 		clientColors.putAll(map);
 	}
 	@Environment(EnvType.CLIENT)
-	public static ClientPlayerEntity getClientPlayer()
+	public static LocalPlayer getClientPlayer()
 	{
-		return MinecraftClient.getInstance().player;
+		return Minecraft.getInstance().player;
 	}
 	public static boolean showDurabilityBar(ItemStack stack)
 	{
 		return (SplatcraftConfig.get("splatcraft.inkIndicator").equals(SplatcraftConfig.InkIndicator.BOTH) || SplatcraftConfig.get("splatcraft.inkIndicator").equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
-			getClientPlayer().getStackInHand(Hand.MAIN_HAND).equals(stack) && getDurabilityForDisplay() > 0;
+			getClientPlayer().getItemInHand(InteractionHand.MAIN_HAND).equals(stack) && getDurabilityForDisplay() > 0;
 	}
 	public static double getDurabilityForDisplay()
 	{
-		PlayerEntity player = getClientPlayer();
+		Player player = getClientPlayer();
 		
-		if (!SplatcraftGameRules.getLocalizedRule(player.getWorld(), player.getBlockPos(), SplatcraftGameRules.REQUIRE_INK_TANK))
+		if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
 		{
 			return 0;
 		}
 		
-		ItemStack chestpiece = player.getEquippedStack(EquipmentSlot.CHEST);
+		ItemStack chestpiece = player.getItemBySlot(EquipmentSlot.CHEST);
 		if (chestpiece.getItem() instanceof InkTankItem item)
 		{
 			return InkTankItem.getInkAmount(chestpiece) / item.capacity;
@@ -144,21 +148,21 @@ public class ClientUtils
 	}
 	public static boolean shouldRenderSide(BlockEntity te, Direction direction)
 	{
-		if (te.getWorld() == null)
+		if (te.getLevel() == null)
 			return false;
 		
-		BlockPos tePos = te.getPos();
+		BlockPos tePos = te.getBlockPos();
 		
-		Vector3f lookVec = MinecraftClient.getInstance().gameRenderer.getCamera().getHorizontalPlane();
-		Vec3d blockVec = Vec3d.ofBottomCenter(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
+		Vector3f lookVec = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
+		Vec3 blockVec = Vec3.atBottomCenterOf(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
 		
-		Vec3d directionVec3d = blockVec.subtract(MinecraftClient.getInstance().gameRenderer.getCamera().getPos()).normalize();
+		Vec3 directionVec3d = blockVec.subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).normalize();
 		Vector3f directionVec = new Vector3f((float) directionVec3d.x, (float) directionVec3d.y, (float) directionVec3d.z);
 		if (lookVec.dot(directionVec) > 0)
 		{
 			if (direction == null) return true;
-			BlockState offset = te.getWorld().getBlockState(tePos.offset(direction));
-			return offset.equals(Blocks.BARRIER.getDefaultState()) || !offset.isSolid() || !offset.isSolidBlock(te.getWorld(), tePos.offset(direction));
+			BlockState offset = te.getLevel().getBlockState(tePos.relative(direction));
+			return offset.equals(Blocks.BARRIER.defaultBlockState()) || !offset.isSolid() || !offset.isRedstoneConductor(te.getLevel(), tePos.relative(direction));
 		}
 		
 		return false;
@@ -175,12 +179,12 @@ public class ClientUtils
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
 	}
 	@Environment(EnvType.CLIENT)
-	public static MinecraftClient getClient()
+	public static Minecraft getClient()
 	{
-		return MinecraftClient.getInstance();
+		return Minecraft.getInstance();
 	}
 	@Environment(EnvType.CLIENT)
-	public static Pair<Vec3d, Vec2f>[] getMatchIntroData(Stage stage)
+	public static Pair<Vec3, Vec2>[] getMatchIntroData(Stage stage)
 	{
 		return matchStartCameraPosProvider.apply(stage);
 	}

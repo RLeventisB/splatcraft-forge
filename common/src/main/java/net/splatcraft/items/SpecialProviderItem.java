@@ -3,17 +3,21 @@ package net.splatcraft.items;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.StackReference;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.*;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
@@ -39,52 +43,52 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	public boolean selectingItem;
 	public SpecialProviderItem()
 	{
-		super(new Settings().maxDamage(1).component(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT));
+		super(new Properties().durability(1).component(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT));
 	}
 	@Override
-	public Text getName(ItemStack stack)
+	public Component getName(ItemStack stack)
 	{
-		if (stack.contains(SPECIAL_PROVIDER_DATA))
-			return Text.translatable(getTranslationKey());
-		return Text.translatable(getTranslationKey() + ".active", getData(stack).getSpecialText());
+		if (stack.has(SPECIAL_PROVIDER_DATA))
+			return Component.translatable(getDescriptionId());
+		return Component.translatable(getDescriptionId() + ".active", getData(stack).getSpecialText());
 	}
 	@Override
-	public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
+	public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 		
 		SpecialProviderData data = getData(stack);
 		if (data == null || (data.specialId().isEmpty() && data.weaponIdFilter().isEmpty()))
 		{
-			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip_none").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_none").withStyle(ChatFormatting.GRAY));
 			return;
 		}
 		
 		if (data.weaponIdFilter().isPresent())
-			tooltip.add(Text.translatable(getTranslationKey() + ".tooltip_linked_weapon", data.getWeaponText()));
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_linked_weapon", data.getWeaponText()));
 		
 		tooltip.add(data.specialId().isEmpty() ?
-			Text.translatable(getTranslationKey() + ".tooltip_no_special").formatted(Formatting.GRAY) :
-			Text.translatable(getTranslationKey() + ".tooltip_linked_special", data.getSpecialText())
+			Component.translatable(getDescriptionId() + ".tooltip_no_special").withStyle(ChatFormatting.GRAY) :
+			Component.translatable(getDescriptionId() + ".tooltip_linked_special", data.getSpecialText())
 		);
 	}
 	@Override
-	public boolean isItemBarVisible(ItemStack stack)
+	public boolean isBarVisible(ItemStack stack)
 	{
-		return stack.contains(SPECIAL_PROVIDER_DATA);
+		return stack.has(SPECIAL_PROVIDER_DATA);
 	}
 	@Override
-	public int getItemBarColor(ItemStack stack)
+	public int getBarColor(ItemStack stack)
 	{
-		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getItemBarColor(stack) : getItemBarStep(stack) == 1 ? 0xfab311 : 0xecf4c6;
+		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getBarColor(stack) : getBarWidth(stack) == 1 ? 0xfab311 : 0xecf4c6;
 	}
 	@Environment(EnvType.CLIENT)
 	@Override
-	public int getItemBarStep(ItemStack stack)
+	public int getBarWidth(ItemStack stack)
 	{
 		SpecialProviderData data = getData(stack);
 		float progress = 0;
-		PlayerEntity player = ClientUtils.getClientPlayer();
+		Player player = ClientUtils.getClientPlayer();
 		Optional<BaseSpecialAction> optional = EntityAction.getSpecificActionIf(player, v -> v.isProviderStack(player, stack), BaseSpecialAction.class);
 		if (optional.isPresent())
 		{
@@ -92,32 +96,32 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		}
 		else if (data != null)
 		{
-			progress = Math.min(1f, (float) data.storedPoints() / SpecialHandler.getRequiredSpecialPoints(player.getActiveItem(), stack));
+			progress = Math.min(1f, (float) data.storedPoints() / SpecialHandler.getRequiredSpecialPoints(player.getUseItem(), stack));
 		}
 		return (int) (progress * 13f);
 	}
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand)
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand)
 	{
-		ItemStack stack = user.getStackInHand(hand);
+		ItemStack stack = user.getItemInHand(hand);
 		
-		if (world.isClient)
-			return TypedActionResult.pass(stack);
+		if (world.isClientSide)
+			return InteractionResultHolder.pass(stack);
 		
-		ServerPlayerEntity serverPlayer = user instanceof ServerPlayerEntity ? (ServerPlayerEntity) user : null;
+		ServerPlayer serverPlayer = user instanceof ServerPlayer ? (ServerPlayer) user : null;
 		
-		if (user.isSneaking())
+		if (user.isShiftKeyDown())
 		{
 			SpecialProviderData data = getData(stack);
 			if (data == null)
 				data = SpecialProviderData.DEFAULT;
-			List<Identifier> specialIds = SpecialHandler.getSpecialMap().keySet().stream().toList();
+			List<ResourceLocation> specialIds = SpecialHandler.getSpecialMap().keySet().stream().toList();
 			int index = data.specialId().map(specialIds::indexOf).orElse(-1);
 			index++;
 			index %= specialIds.size();
 			setData(stack, data.withSpecialId(specialIds.get(index)));
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.literal("Set special to" + specialIds.get(index)).formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.literal("Set special to" + specialIds.get(index)).withStyle(ChatFormatting.RED), true);
 		}
 		else
 		{
@@ -125,7 +129,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			if (data == null)
 				data = SpecialProviderData.DEFAULT;
 			
-			List<Identifier> weaponIds = new ObjectArrayList<>();
+			List<ResourceLocation> weaponIds = new ObjectArrayList<>();
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(ShooterWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(RollerWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(ChargerWeaponSettings.class));
@@ -140,18 +144,18 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			setData(stack, data);
 			
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.literal("Set weapon to " + data.getWeaponText()).formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.literal("Set weapon to " + data.getWeaponText()).withStyle(ChatFormatting.RED), true);
 		}
 		
-		return TypedActionResult.pass(stack);
+		return InteractionResultHolder.pass(stack);
 	}
 	@Override
-	public boolean onClicked(ItemStack stack, ItemStack otherStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference)
+	public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack otherStack, Slot slot, ClickAction clickType, Player player, SlotAccess cursorStackReference)
 	{
-		return super.onClicked(stack, otherStack, slot, clickType, player, cursorStackReference);
+		return super.overrideOtherStackedOnMe(stack, otherStack, slot, clickType, player, cursorStackReference);
 	}
 	@Override
-	public boolean onStackClicked(ItemStack stack, Slot slot, ClickType clickType, PlayerEntity player)
+	public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction clickType, Player player)
 	{
 		SpecialProviderData data = getData(stack);
 		if (data == null || data.specialId().isEmpty() && data.weaponIdFilter().isEmpty())
@@ -160,51 +164,51 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		setData(stack, data.withSpecialId(null).withWeaponIdFilter(null));
 		return true;
 	}
-	public void tryUsingSpecial(World world, LivingEntity entity, ItemStack providerStack, ItemStack weaponStack)
+	public void tryUsingSpecial(Level world, LivingEntity entity, ItemStack providerStack, ItemStack weaponStack)
 	{
-		if (world.isClient())
+		if (world.isClientSide())
 			return;
 		
-		Hand hand = entity.getActiveHand();
+		InteractionHand hand = entity.getUsedItemHand();
 		SpecialProviderData data = getData(providerStack);
-		ServerPlayerEntity serverPlayer = entity instanceof ServerPlayerEntity ? (ServerPlayerEntity) entity : null;
+		ServerPlayer serverPlayer = entity instanceof ServerPlayer ? (ServerPlayer) entity : null;
 		if (data == null)
 		{
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.translatable("status.provider_inactive").formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.translatable("status.provider_inactive").withStyle(ChatFormatting.RED), true);
 			return;
 		}
 		
 		if (data.specialId().isEmpty())
 		{
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.translatable("status.provider_unassigned_special").formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.translatable("status.provider_unassigned_special").withStyle(ChatFormatting.RED), true);
 			return;
 		}
 		
 		if (!data.testWeapon(weaponStack))
 		{
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.translatable("status.provider_wrong_weapon").formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.translatable("status.provider_wrong_weapon").withStyle(ChatFormatting.RED), true);
 			return;
 		}
 		
 		if (!SpecialHandler.passesSpecialCost(weaponStack, providerStack, data.specialId().get()))
 		{
 			if (serverPlayer != null)
-				serverPlayer.sendMessageToClient(Text.translatable("status.not_enough_points_special").formatted(Formatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.translatable("status.not_enough_points_special").withStyle(ChatFormatting.RED), true);
 			return;
 		}
 		
 		EntitySlot entitySlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack);
-		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUuid(), entitySlot), serverPlayer);
+		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUUID(), entitySlot), serverPlayer);
 		
-		entity.setCurrentHand(hand);
+		entity.startUsingItem(hand);
 	}
 	@Override
 	public boolean phShouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
 	{
-		return !ItemStack.areItemsEqual(oldStack, newStack);
+		return !ItemStack.isSameItem(oldStack, newStack);
 	}
 	public SpecialProviderData getData(ItemStack stack)
 	{

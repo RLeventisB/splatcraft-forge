@@ -9,10 +9,10 @@ import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -22,25 +22,25 @@ import java.util.*;
 
 public class InkColorRegistry
 {
-	public static final BiMap<Identifier, InkColor> REGISTRY = HashBiMap.create();
-	public static InkColor getInkColorByAlias(Identifier location)
+	public static final BiMap<ResourceLocation, InkColor> REGISTRY = HashBiMap.create();
+	public static InkColor getInkColorByAlias(ResourceLocation location)
 	{
 		return REGISTRY.get(location);
 	}
-	public static boolean containsAlias(Identifier location)
+	public static boolean containsAlias(ResourceLocation location)
 	{
 		return REGISTRY.containsKey(location);
 	}
 	/**
 	 * @param value The identifier of the color, or the hex code
-	 * @return The corresponding {@link InkColor}, or {@code ColorUtils.getDefaultColor()} if the value wasn't a valid {@link Identifier}, or was not registered, or the text wasn't a valid hex color.
+	 * @return The corresponding {@link InkColor}, or {@code ColorUtils.getDefaultColor()} if the value wasn't a valid {@link ResourceLocation}, or was not registered, or the text wasn't a valid hex color.
 	 */
 	public static InkColor getColorByAliasOrHex(String value)
 	{
-		DataResult<Identifier> parsedIdentifier = Identifier.validate(value);
+		DataResult<ResourceLocation> parsedIdentifier = ResourceLocation.read(value);
 		if (parsedIdentifier.isSuccess())
 		{
-			Identifier location = parsedIdentifier.getOrThrow();
+			ResourceLocation location = parsedIdentifier.getOrThrow();
 			if (containsAlias(location))
 				return getInkColorByAlias(location);
 		}
@@ -53,9 +53,9 @@ public class InkColorRegistry
 		}
 		return ColorUtils.getDefaultColor();
 	}
-	public static List<Identifier> getAliasesForColor(int color)
+	public static List<ResourceLocation> getAliasesForColor(int color)
 	{
-		List<Identifier> result = new ArrayList<>();
+		List<ResourceLocation> result = new ArrayList<>();
 		REGISTRY.forEach((key, value) ->
 		{
 			if (value.getColor() == color)
@@ -64,15 +64,15 @@ public class InkColorRegistry
 		
 		return result;
 	}
-	public static Identifier getColorAlias(InkColor color)
+	public static ResourceLocation getColorAlias(InkColor color)
 	{
 		return REGISTRY.inverse().get(color);
 	}
-	public static Identifier getFirstAliasForColor(int color)
+	public static ResourceLocation getFirstAliasForColor(int color)
 	{
-		for (Map.Entry<Identifier, InkColor> entry : REGISTRY.entrySet())
+		for (Map.Entry<ResourceLocation, InkColor> entry : REGISTRY.entrySet())
 		{
-			Identifier alias = entry.getKey();
+			ResourceLocation alias = entry.getKey();
 			InkColor c = entry.getValue();
 			if (c.getColor() == color)
 			{
@@ -81,21 +81,21 @@ public class InkColorRegistry
 		}
 		return null;
 	}
-	public static Set<Identifier> getAllAliases()
+	public static Set<ResourceLocation> getAllAliases()
 	{
 		return new HashSet<>(REGISTRY.keySet());
 	}
-	public static class Listener extends JsonDataLoader
+	public static class Listener extends SimpleJsonResourceReloadListener
 	{
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "ink_colors";
-		public static Map<Identifier, JsonElement> resourceList;
+		public static Map<ResourceLocation, JsonElement> resourceList;
 		public Listener()
 		{
 			super(GSON_INSTANCE, folder);
 		}
 		@Override
-		protected @NotNull Map<Identifier, JsonElement> prepare(@NotNull ResourceManager manager, @NotNull Profiler profiler)
+		protected @NotNull Map<ResourceLocation, JsonElement> prepare(@NotNull ResourceManager manager, @NotNull ProfilerFiller profiler)
 		{
 			REGISTRY.clear();
 			resourceList = super.prepare(manager, profiler);
@@ -103,11 +103,11 @@ public class InkColorRegistry
 			return resourceList;
 		}
 		@Override
-		protected void apply(Map<Identifier, JsonElement> resourceList, ResourceManager manager, Profiler profiler)
+		protected void apply(Map<ResourceLocation, JsonElement> resourceList, ResourceManager manager, ProfilerFiller profiler)
 		{
-			for (Map.Entry<Identifier, JsonElement> entry : resourceList.entrySet())
+			for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
 			{
-				Identifier key = entry.getKey();
+				ResourceLocation key = entry.getKey();
 				JsonElement j = entry.getValue();
 				JsonObject json = j.getAsJsonObject();
 				if (json.has("value"))

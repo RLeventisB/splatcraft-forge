@@ -1,22 +1,20 @@
 package net.splatcraft.items.weapons;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.client.audio.SplatlingChargingTickableSound;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -48,7 +46,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public SplatlingChargingTickableSound chargingSound;
 	protected SplatlingItem(String settingsId)
 	{
-		super(settingsId, new Item.Settings().maxCount(1)
+		super(settingsId, new Item.Properties().stacksTo(1)
 			.component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT)
 			.component(SplatcraftComponents.CHARGE, 0f)
 		);
@@ -62,35 +60,35 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		return register.register(name, () -> new SplatlingItem(parent.get().settingsId.toString()));
 	}
 	@Environment(EnvType.CLIENT)
-	protected static void playChargeReadySound(PlayerEntity player, float pitch)
+	protected static void playChargeReadySound(Player player, float pitch)
 	{
-		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUuid().equals(player.getUuid()))
-			MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SplatcraftSounds.splatlingReady, pitch, MinecraftClient.getInstance().options.getSoundVolume(SoundCategory.PLAYERS)));
+		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()))
+			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.splatlingReady, pitch, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
 	}
 	// its time for boilerplate code
 	public static float getScaledShotSettingFloat(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Float> getter)
 	{
 		float min = getter.apply(settings.firstChargeLevelShot);
 		float max = getter.apply(settings.secondChargeLevelShot);
-		return min + (max - min) * MathHelper.clamp(charge, 0, 1);
+		return min + (max - min) * Mth.clamp(charge, 0, 1);
 	}
 	public static float getScaledProjectileSettingFloat(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Float> getter)
 	{
 		float min = getter.apply(settings.firstChargeLevelProjectile);
 		float max = getter.apply(settings.secondChargeLevelProjectile);
-		return min + (max - min) * MathHelper.clamp(charge, 0, 1);
+		return min + (max - min) * Mth.clamp(charge, 0, 1);
 	}
 	public static int getScaledShotSettingInt(SplatlingWeaponSettings settings, float charge, Function<SplatlingWeaponSettings.ShotDataRecord, Integer> getter)
 	{
 		float min = getter.apply(settings.firstChargeLevelShot);
 		float max = getter.apply(settings.secondChargeLevelShot);
-		return Math.round(min + (max - min) * MathHelper.clamp(charge, 0, 1));
+		return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
 	}
 	public static int getScaledProjectileSettingInt(SplatlingWeaponSettings settings, float charge, Function<CommonRecords.ProjectileDataRecord, Integer> getter)
 	{
 		float min = getter.apply(settings.firstChargeLevelProjectile);
 		float max = getter.apply(settings.secondChargeLevelProjectile);
-		return Math.round(min + (max - min) * MathHelper.clamp(charge, 0, 1));
+		return Math.round(min + (max - min) * Mth.clamp(charge, 0, 1));
 	}
 	@Override
 	public Class<SplatlingWeaponSettings> getSettingsClass()
@@ -98,9 +96,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		return SplatlingWeaponSettings.class;
 	}
 	@Environment(EnvType.CLIENT)
-	protected void playChargingSound(PlayerEntity player, ItemStack stack)
+	protected void playChargingSound(Player player, ItemStack stack)
 	{
-		ClientPlayerEntity clientPlayer = ClientUtils.getClientPlayer();
+		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 		if (!Objects.equals(clientPlayer, player))
 		{
 			return;
@@ -108,7 +106,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		SoundEvent soundEvent = PlayerCharge.getChargeValue(player, stack) > 1 ? SplatcraftSounds.splatlingChargeSecondLevel : SplatcraftSounds.splatlingCharge;
 		
-		if (chargingSound == null || chargingSound.isDone() || !chargingSound.getSoundEvent().equals(soundEvent))
+		if (chargingSound == null || chargingSound.isStopped() || !chargingSound.getSoundEvent().equals(soundEvent))
 		{
 			boolean soundExists = chargingSound != null;
 			if (soundExists)
@@ -116,13 +114,13 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			chargingSound = new SplatlingChargingTickableSound(clientPlayer, soundEvent);
 			if (soundExists)
 				chargingSound.fadeIn();
-			MinecraftClient.getInstance().getSoundManager().play(chargingSound);
+			Minecraft.getInstance().getSoundManager().play(chargingSound);
 		}
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		if (!(entity instanceof PlayerEntity player))
+		if (!(entity instanceof Player player))
 			return;
 		
 		if (EntityAction.hasEntityAction(player))
@@ -130,14 +128,14 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		
 		SplatlingWeaponSettings settings = getSettings(stack);
 		
-		if (world.isClient)
+		if (world.isClientSide)
 		{
 			float prevCharge = PlayerCharge.getChargeValue(player, stack);
 			float newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.secondChargeTime() : settings.chargeData.firstChargeTime());
 			
-			if (!enoughInk(entity, this, MathHelper.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, remainingUseTicks % 4 == 0))
+			if (!enoughInk(entity, this, Mth.lerp(newCharge * 0.5f, 0, settings.inkConsumption), 0, remainingUseTicks % 4 == 0))
 			{
-				float rechargeMult = InkTankItem.rechargeMult(player.getEquippedStack(EquipmentSlot.CHEST), true);
+				float rechargeMult = InkTankItem.rechargeMult(player.getItemBySlot(EquipmentSlot.CHEST), true);
 				if (!hasInkInTank(player, this) || rechargeMult == 0)
 					return;
 				newCharge = prevCharge + 1f / (prevCharge >= 1 ? settings.chargeData.emptyTankSecondChargeTime() : settings.chargeData.emptyTankFirstChargeTime()) * rechargeMult;
@@ -154,17 +152,17 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			playNoInkSound(player, SplatcraftSounds.noInkMain);
 	}
 	@Override
-	public void onPlayerCooldownEnd(World world, PlayerEntity player, ItemStack stack, EntityAction action)
+	public void onPlayerCooldownEnd(Level world, Player player, ItemStack stack, EntityAction action)
 	{
 		if (action.getTime() > 0)
 		{
-			if (!world.isClient)
+			if (!world.isClientSide)
 			{
 				SplatlingWeaponSettings settings = getSettings(stack);
 				
 				float chargeLevel = action.getMaxTime() / (float) settings.chargeData.firingDuration(); //yeah idk about this
 				float cooldownLeft = action.getTime() / action.getMaxTime();
-				float inkConsumed = MathHelper.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
+				float inkConsumed = Mth.lerp(chargeLevel * 0.5f, 0, settings.inkConsumption);
 				float inkRefunded = inkConsumed * cooldownLeft;
 				
 				refundInk(player, inkRefunded);
@@ -178,9 +176,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		}
 	}
 	@Override
-	public void onPlayerCooldownTick(World world, PlayerEntity player, ItemStack stack, EntityAction action)
+	public void onPlayerCooldownTick(Level world, Player player, ItemStack stack, EntityAction action)
 	{
-		if (world.isClient)
+		if (world.isClientSide)
 			return;
 		
 		SplatlingWeaponSettings settings = getSettings(stack);
@@ -198,32 +196,32 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			for (int i = 0; i < firingData.projectileCount(); i++)
 			{
 				InkProjectileEntity proj = new InkProjectileEntity(world, player, stack, InkBlockUtils.getInkType(player), projectileData.size(), settings);
-				proj.setVelocity(player, player.getPitch(), player.getYaw(), firingData.pitchCompensation(), getScaledShotSettingFloat(settings, charge, SplatlingWeaponSettings.ShotDataRecord::projectileSpeed),
+				proj.shootFromRotation(player, player.getXRot(), player.getYRot(), firingData.pitchCompensation(), getScaledShotSettingFloat(settings, charge, SplatlingWeaponSettings.ShotDataRecord::projectileSpeed),
 					inaccuracy);
 				proj.setSplatlingStats(settings, charge);
-				world.spawnEntity(proj);
+				world.addFreshEntity(proj);
 			}
 			
-			world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.splatlingShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+			world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.splatlingShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 		}
 	}
 	@Override
-	public void onReleaseCharge(World world, PlayerEntity player, ItemStack stack, float charge)
+	public void onReleaseCharge(Level world, Player player, ItemStack stack, float charge)
 	{
 		SplatlingWeaponSettings settings = getSettings(stack);
 		
 		stack.set(SplatcraftComponents.CHARGE, charge);
 		
 		int cooldownTime = (int) (getDecayTicks(stack) * charge);
-		reduceInk(player, this, MathHelper.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
-		EntityAction.setEntityAction(player, new EntityCooldown(stack, cooldownTime, player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
+		reduceInk(player, this, Mth.lerp(charge * 0.5f, 0, settings.inkConsumption), cooldownTime + settings.inkRecoveryCooldown, true, true);
+		EntityAction.setEntityAction(player, new EntityCooldown(stack, cooldownTime, player.getInventory().selected, player.getUsedItemHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.onGround()).setCancellable());
 	}
 	@Override
-	public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
+	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, LivingEntity entity, int timeLeft)
 	{
-		super.onStoppedUsing(stack, world, entity, timeLeft);
+		super.releaseUsing(stack, world, entity, timeLeft);
 		
-		if (world.isClient && entity instanceof PlayerEntity player && player.equals(ClientUtils.getClientPlayer()))
+		if (world.isClientSide && entity instanceof Player player && player.equals(ClientUtils.getClientPlayer()))
 		{
 			if (EntityAction.hasActionAnd(player, EntityAction::preventWeaponUse))
 				return;
@@ -235,13 +233,13 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 			if (!SplatcraftKeyHandler.isSquidKeyDown() && charge.charge > 0.05f) //checking for squid key press so it doesn't immediately release charge when squidding
 			{
 				SplatlingWeaponSettings settings = getSettings(stack);
-				EntityAction.setEntityAction(player, new EntityCooldown(stack, (int) (settings.chargeData.firingDuration() * charge.charge), player.getInventory().selectedSlot, player.getActiveHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.isOnGround()).setCancellable());
+				EntityAction.setEntityAction(player, new EntityCooldown(stack, (int) (settings.chargeData.firingDuration() * charge.charge), player.getInventory().selected, player.getUsedItemHand(), true, false, !settings.chargeData.canRechargeWhileFiring(), player.onGround()).setCancellable());
 				SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack, false));
 			}
 		}
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return PlayerPosingHandler.WeaponPose.SPLATLING;
 	}
@@ -256,12 +254,12 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		return getSettings(stack).chargeData.firingDuration();
 	}
 	@Override
-	public EntityAttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
+	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
 		SplatlingWeaponSettings settings = getSettings(stack);
 		
-		double appliedMobility = entity.getActiveItem().equals(stack) && settings.chargeData.moveSpeed().isPresent() ? settings.chargeData.moveSpeed().get() : settings.moveSpeed;
+		double appliedMobility = entity.getUseItem().equals(stack) && settings.chargeData.moveSpeed().isPresent() ? settings.chargeData.moveSpeed().get() : settings.moveSpeed;
 		
-		return new EntityAttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		return new AttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 }

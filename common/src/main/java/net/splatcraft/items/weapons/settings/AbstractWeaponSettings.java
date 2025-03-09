@@ -3,14 +3,14 @@ package net.splatcraft.items.weapons.settings;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
@@ -22,12 +22,12 @@ import java.util.List;
 
 public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, DATA>, DATA>
 {
-	public static final Identifier WEAPON_MOBILITY_ATTIBUTE_ID = Splatcraft.identifierOf("weapon_mobility");
+	public static final ResourceLocation WEAPON_MOBILITY_ATTIBUTE_ID = Splatcraft.identifierOf("weapon_mobility");
 	private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
 	public String name;
 	public float moveSpeed = 1;
 	public boolean isSecret = false;
-	private EntityAttributeModifier SPEED_MODIFIER;
+	private AttributeModifier SPEED_MODIFIER;
 	public AbstractWeaponSettings(String name)
 	{
 		this.name = name;
@@ -44,16 +44,16 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
 	}
 	public abstract float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list);
-	public void addStatsToTooltip(List<Text> tooltip, TooltipType flag)
+	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{
 		for (WeaponTooltip<SELF> stat : statTooltips)
 			tooltip.add(stat.getTextComponent((SELF) this, flag.isAdvanced()));
 	}
-	public EntityAttributeModifier getSpeedModifier()
+	public AttributeModifier getSpeedModifier()
 	{
 		if (SPEED_MODIFIER == null)
 		{
-			SPEED_MODIFIER = new EntityAttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+			SPEED_MODIFIER = new AttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		}
 		
 		return SPEED_MODIFIER;
@@ -87,16 +87,16 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	}
 	public abstract void processData(DATA o);
 	public abstract DATA getDataToSerialize();
-	public void serializeToBuffer(RegistryByteBuf buffer)
+	public void serializeToBuffer(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.encodeAsJson(getCodec(), getDataToSerialize());
+		buffer.writeJsonWithCodec(getCodec(), getDataToSerialize());
 	}
-	public abstract float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem);
+	public abstract float getSpeedForRender(Player player, ItemStack mainHandItem);
 	public void onStartReading(JsonObject json)
 	{
 	
 	}
-	public void deserialize(Identifier key, JsonObject json)
+	public void deserialize(ResourceLocation key, JsonObject json)
 	{
 		onStartReading(json);
 		getCodec().parse(JsonOps.INSTANCE, json).resultOrPartial(msg -> Splatcraft.LOGGER.error("Failed to load weapon settings for %s: %s".formatted(key, msg))).ifPresent(

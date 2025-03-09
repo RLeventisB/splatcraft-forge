@@ -1,18 +1,14 @@
 package net.splatcraft.entities;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.registries.SplatcraftEntities;
@@ -24,43 +20,43 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpawnShieldEntity extends Entity implements IColoredEntity
 {
-	private static final TrackedData<Integer> ACTIVE_TIME = DataTracker.registerData(SpawnShieldEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(SpawnShieldEntity.class, CommonUtils.INKCOLORDATAHANDLER);
-	private static final TrackedData<Float> SIZE = DataTracker.registerData(SpawnShieldEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final EntityDataAccessor<Integer> ACTIVE_TIME = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(SpawnShieldEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.FLOAT);
 	public final int MAX_ACTIVE_TIME = 20;
 	private BlockPos spawnPadPos;
-	public SpawnShieldEntity(EntityType<SpawnShieldEntity> type, World world)
+	public SpawnShieldEntity(EntityType<SpawnShieldEntity> type, Level world)
 	{
 		super(type, world);
-		calculateDimensions();
-		refreshPosition();
+		refreshDimensions();
+		reapplyPosition();
 	}
-	public SpawnShieldEntity(World world, BlockPos pos, InkColor color)
+	public SpawnShieldEntity(Level world, BlockPos pos, InkColor color)
 	{
 		this(SplatcraftEntities.SPAWN_SHIELD.get(), world);
 		setColor(color);
-		setPos(pos.getX() + .5, pos.getY() - 1, pos.getZ() + .5);
+		setPosRaw(pos.getX() + .5, pos.getY() - 1, pos.getZ() + .5);
 		setSpawnPadPos(pos);
-		calculateDimensions();
-		refreshPosition();
+		refreshDimensions();
+		reapplyPosition();
 	}
 	@Override
-	public void onTrackedDataSet(TrackedData<?> data)
+	public void onSyncedDataUpdated(EntityDataAccessor<?> data)
 	{
 		if (SIZE.equals(data))
-			calculateDimensions();
+			refreshDimensions();
 		
-		super.onTrackedDataSet(data);
+		super.onSyncedDataUpdated(data);
 	}
 	@Override
 	public void tick()
 	{
 		super.tick();
 		
-		if (getWorld().isClient())
+		if (level().isClientSide())
 			return;
 		
-		if (!(getSpawnPadPos() != null && getWorld().getBlockEntity(getSpawnPadPos()) instanceof SpawnPadTileEntity spawnPad &&
+		if (!(getSpawnPadPos() != null && level().getBlockEntity(getSpawnPadPos()) instanceof SpawnPadTileEntity spawnPad &&
 			spawnPad.isSpawnShield(this)))
 		{
 			discard();
@@ -73,9 +69,9 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		if (getActiveTime() > 0)
 			setActiveTime(getActiveTime() - 1);
 		
-		for (Entity entity : getWorld().getOtherEntities(this, getBoundingBox(), EntityPredicates.EXCEPT_SPECTATOR))
+		for (Entity entity : level().getEntities(this, getBoundingBox(), EntitySelector.NO_SPECTATORS))
 		{
-			if (!(entity.getType().isIn(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(getWorld(), getBlockPos(), ColorUtils.getEntityColor(entity), getColor())))
+			if (!(entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor())))
 			{
 				setActiveTime(MAX_ACTIVE_TIME);
 				
@@ -86,16 +82,16 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 				}
 				if (entity instanceof AbstractSubWeaponEntity || entity instanceof InkProjectileEntity)
 				{
-					getWorld().sendEntityStatus(entity, (byte) -1);
+					level().broadcastEntityEvent(entity, (byte) -1);
 					entity.discard();
 				}
 				else
 				{
-					if (entity instanceof PlayerEntity player && player.hasVehicle())
+					if (entity instanceof Player player && player.isPassenger())
 						player.stopRiding();
 					
-					entity.setVelocity(entity.getPos().subtract(getPos().x, getPos().y, getPos().z).normalize().multiply(.5));
-					entity.velocityModified = true;
+					entity.setDeltaMovement(entity.position().subtract(position().x, position().y, position().z).normalize().scale(.5));
+					entity.hurtMarked = true;
 				}
 			}
 		}
@@ -108,14 +104,14 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 			super.kill();
 	}
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder)
+	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
-		builder.add(ACTIVE_TIME, 0);
-		builder.add(COLOR, ColorUtils.getDefaultColor());
-		builder.add(SIZE, 4f);
+		builder.define(ACTIVE_TIME, 0);
+		builder.define(COLOR, ColorUtils.getDefaultColor());
+		builder.define(SIZE, 4f);
 	}
 	@Override
-	protected void readCustomDataFromNbt(NbtCompound nbt)
+	protected void readAdditionalSaveData(CompoundTag nbt)
 	{
 		if (nbt.contains("Size"))
 			setSize(nbt.getFloat("Size"));
@@ -125,7 +121,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 			setSpawnPadPos(BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("SpawnPadPos")).getOrThrow());
 	}
 	@Override
-	protected void writeCustomDataToNbt(NbtCompound nbt)
+	protected void addAdditionalSaveData(CompoundTag nbt)
 	{
 		nbt.putFloat("Size", getSize());
 		nbt.put("Color", getColor().getNbt());
@@ -135,35 +131,35 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 	@Override
 	public InkColor getColor()
 	{
-		return dataTracker.get(COLOR);
+		return entityData.get(COLOR);
 	}
 	@Override
 	public void setColor(InkColor color)
 	{
-		dataTracker.set(COLOR, color);
+		entityData.set(COLOR, color);
 	}
 	public int getActiveTime()
 	{
-		return dataTracker.get(ACTIVE_TIME);
+		return entityData.get(ACTIVE_TIME);
 	}
 	public void setActiveTime(int activeTime)
 	{
-		dataTracker.set(ACTIVE_TIME, activeTime);
+		entityData.set(ACTIVE_TIME, activeTime);
 	}
 	public float getSize()
 	{
-		return dataTracker.get(SIZE);
+		return entityData.get(SIZE);
 	}
 	public void setSize(float size)
 	{
-		dataTracker.set(SIZE, size);
-		refreshPosition();
-		calculateDimensions();
+		entityData.set(SIZE, size);
+		reapplyPosition();
+		refreshDimensions();
 	}
 	@Override
-	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose pose)
+	public @NotNull EntityDimensions getDimensions(@NotNull Pose pose)
 	{
-		return super.getDimensions(pose).scaled(getSize());
+		return super.getDimensions(pose).scale(getSize());
 	}
 	public BlockPos getSpawnPadPos()
 	{

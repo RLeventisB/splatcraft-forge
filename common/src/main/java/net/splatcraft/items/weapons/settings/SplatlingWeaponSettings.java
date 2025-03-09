@@ -2,9 +2,9 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
@@ -86,7 +86,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		return new DataRecord(firstChargeLevelProjectile, firstChargeLevelShot, secondChargeLevelProjectile, secondChargeLevelShot, chargeData, inkConsumption, inkRecoveryCooldown, moveSpeed, (bypassesMobDamage), (isSecret));
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return firstChargeLevelShot.projectileSpeed();
 	}

@@ -1,26 +1,26 @@
 package net.splatcraft.crafting;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeInput;
 
 public class InkVatRecipeInput implements RecipeInput
 {
-    private final DefaultedList<ItemStack> inventory;
+    private final NonNullList<ItemStack> inventory;
 
-    public InkVatRecipeInput(DefaultedList<ItemStack> list)
+    public InkVatRecipeInput(NonNullList<ItemStack> list)
     {
         inventory = list;
     }
 
     @Override
-    public ItemStack getStackInSlot(int slot)
+    public ItemStack getItem(int slot)
     {
         return inventory.get(slot);
     }
 
     @Override
-    public int getSize()
+    public int size()
     {
         return 5;
     }

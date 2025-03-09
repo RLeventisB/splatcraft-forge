@@ -1,6 +1,5 @@
 package net.splatcraft;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.utils.Env;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import org.jetbrains.annotations.NotNull;
@@ -39,17 +38,14 @@ public class SplatcraftConfig
 		settingsMap.put("splatcraft.coloredPlayerNames", new Setting<>(Boolean.class));
 		settingsMap.put("splatcraft.inkTankGuiScale", new Setting<>(Boolean.class));
 	}
-	@ExpectPlatform
 	public static Path getModConfigPath()
 	{
 		throw new AssertionError();
 	}
-	@ExpectPlatform
 	public static void loadConfig()
 	{
 		throw new AssertionError();
 	}
-	@ExpectPlatform
 	public static void initializeConfigs()
 	{
 		throw new AssertionError();

@@ -1,13 +1,13 @@
 package net.splatcraft.items.weapons.subs;
 
 import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
@@ -21,26 +21,26 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 		super(entityType, settings);
 	}
 	@Override
-	public void useSub(@NotNull ItemStack stack, @NotNull World world, @NotNull LivingEntity entity, int remainingUseTicks)
+	public void useSub(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
-		entity.swingHand(entity.getOffHandStack().equals(stack) ? Hand.OFF_HAND : Hand.MAIN_HAND, false);
+		entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
 		
 		SubWeaponSettings<SubWeaponRecords.ThrowableExplodingSubDataRecord> settings = getSettings(stack);
 		SubWeaponRecords.ThrowableExplodingSubDataRecord subData = settings.subDataRecord;
 		SubWeaponSettings.DataRecord data = settings.dataRecord;
-		if (!world.isClient())
+		if (!world.isClientSide())
 		{
 			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(entityType.get(), world, entity, stack.copy());
 			
 			proj.setItem(stack.copy());
-			proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
-			world.spawnEntity(proj);
+			proj.setDeltaMovement(entity, entity.getXRot(), entity.getYRot(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
+			world.addFreshEntity(proj);
 		}
-		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundCategory.PLAYERS, 0.7F, 1);
+		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
 		if (singleUse(stack))
 		{
-			if (entity instanceof PlayerEntity player && !player.isCreative())
-				stack.decrement(1);
+			if (entity instanceof Player player && !player.isCreative())
+				stack.shrink(1);
 		}
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);

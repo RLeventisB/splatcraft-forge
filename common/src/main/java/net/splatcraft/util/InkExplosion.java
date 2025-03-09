@@ -1,21 +1,25 @@
 package net.splatcraft.util;
 
 import com.google.common.collect.Lists;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.SheepEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
@@ -40,7 +44,7 @@ public class InkExplosion
 	private final Entity exploder;
 	private final float paintRadius;
 	private final List<BlockFace> affectedBlockPositions = Lists.newArrayList();
-	private final Vec3d position;
+	private final Vec3 position;
 	private final InkBlockUtils.InkType inkType;
 	private final DamageRangesRecord dmgCalculator;
 	private final ItemStack weapon;
@@ -53,37 +57,37 @@ public class InkExplosion
 		this.y = y;
 		this.z = z;
 		this.attackId = attackId;
-		position = new Vec3d(this.x, this.y, this.z);
+		position = new Vec3(this.x, this.y, this.z);
 		
 		this.inkType = inkType;
 		dmgCalculator = damageCalculator;
 		this.weapon = weapon;
 		color = ColorUtils.getEntityColor(exploder);
 	}
-	public static Vec3d adjustPosition(final Vec3d pos, Direction normal, Entity entity)
+	public static Vec3 adjustPosition(final Vec3 pos, Direction normal, Entity entity)
 	{
 		final float modifier = entity == null ? 0.01f : switch (normal.getAxis())
 		{
-			case X, Z -> entity.getWidth() / 2;
-			case Y -> entity.getHeight() / 2;
+			case X, Z -> entity.getBbWidth() / 2;
+			case Y -> entity.getBbHeight() / 2;
 		};
-		return pos.offset(normal, modifier);
+		return pos.relative(normal, modifier);
 	}
-	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(damage, damageRadius), type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3d pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
-		if (source == null || source.getWorld().isClient)
+		if (source == null || source.level().isClientSide)
 			return;
 		
 		InkExplosion inksplosion = new InkExplosion(source, pos.x, pos.y, pos.z, damageManager, paintRadius, type, weapon, attackId);
@@ -91,13 +95,13 @@ public class InkExplosion
 		inksplosion.doExplosionA();
 		inksplosion.doExplosionCosmetics(false);
 	}
-	public static void doSplashes(@Nullable Entity owner, Vec3d center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType)
+	public static void doSplashes(@Nullable Entity owner, Vec3 center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType)
 	{
 		if (owner == null)
 			return;
 		
-		World world = owner.getWorld();
-		Random random = world.getRandom();
+		Level world = owner.level();
+		RandomSource random = world.getRandom();
 		// this is not because i feel this is nice in terms of syntax this is because im a dumbass microoptimizer and i do this in c# too
 		Function<Integer, Float> yawGetter = splashData.distributeEvenly() ?
 			(count) -> (float) count / splashData.splashCount() :
@@ -106,21 +110,21 @@ public class InkExplosion
 		{
 			createDrop(
 				world, owner, center,
-				yawGetter.apply(i) * MathHelper.TAU, -splashData.splashPitchRange().getValue(random.nextFloat()) * MathHelper.PI,
+				yawGetter.apply(i) * Mth.TWO_PI, -splashData.splashPitchRange().getValue(random.nextFloat()) * Mth.PI,
 				splashData.splashVelocityRange().getValue(random.nextFloat()),
 				splashData.splashPaintRadius(), color, inkType
 			);
 		}
 	}
-	static void createDrop(World world, Entity owner, Vec3d center, float yaw, float pitch, float speed, float splashSize, InkColor color, InkBlockUtils.InkType type)
+	static void createDrop(Level world, Entity owner, Vec3 center, float yaw, float pitch, float speed, float splashSize, InkColor color, InkBlockUtils.InkType type)
 	{
-		InkDropEntity drop = new InkDropEntity(owner.getWorld(), center, owner, color, type, splashSize);
-		float f = -MathHelper.sin(yaw) * MathHelper.cos(pitch);
-		float g = -MathHelper.sin(pitch);
-		float h = MathHelper.cos(yaw) * MathHelper.cos(pitch);
-		drop.setVelocity(f, g, h, speed, 0);
+		InkDropEntity drop = new InkDropEntity(owner.level(), center, owner, color, type, splashSize);
+		float f = -Mth.sin(yaw) * Mth.cos(pitch);
+		float g = -Mth.sin(pitch);
+		float h = Mth.cos(yaw) * Mth.cos(pitch);
+		drop.shoot(f, g, h, speed, 0);
 		
-		world.spawnEntity(drop);
+		world.addFreshEntity(drop);
 	}
 	/**
 	 * Does the first part of the explosion (destroy blocks)
@@ -128,23 +132,23 @@ public class InkExplosion
 	public void doExplosionA()
 	{
 		List<BlockFace> set = new ArrayList<>();
-		ServerWorld world = (ServerWorld) exploder.getWorld();
+		ServerLevel world = (ServerLevel) exploder.level();
 		getBlocksInSphereWithNoise(set, world);
 		
 		affectedBlockPositions.addAll(set);
 		if (DamageRangesRecord.isInsignificant(dmgCalculator))
 			return;
 		float radiusSquared = dmgCalculator.getMaxDistance() * dmgCalculator.getMaxDistance();
-		int k1 = MathHelper.floor(x - dmgCalculator.getMaxDistance() - 1F);
-		int l1 = MathHelper.floor(x + dmgCalculator.getMaxDistance() + 1F);
-		int i2 = MathHelper.floor(y - dmgCalculator.getMaxDistance() - 1F);
-		int i1 = MathHelper.floor(y + dmgCalculator.getMaxDistance() + 1F);
-		int j2 = MathHelper.floor(z - dmgCalculator.getMaxDistance() - 1F);
-		int j1 = MathHelper.floor(z + dmgCalculator.getMaxDistance() + 1F);
-		Box box = new Box(k1, i2, j2, l1, i1, j1);
+		int k1 = Mth.floor(x - dmgCalculator.getMaxDistance() - 1F);
+		int l1 = Mth.floor(x + dmgCalculator.getMaxDistance() + 1F);
+		int i2 = Mth.floor(y - dmgCalculator.getMaxDistance() - 1F);
+		int i1 = Mth.floor(y + dmgCalculator.getMaxDistance() + 1F);
+		int j2 = Mth.floor(z - dmgCalculator.getMaxDistance() - 1F);
+		int j1 = Mth.floor(z + dmgCalculator.getMaxDistance() + 1F);
+		AABB box = new AABB(k1, i2, j2, l1, i1, j1);
 		List<LivingEntity> livingEntities = new ArrayList<>();
 		List<SpawnShieldEntity> spawnShields = new ArrayList<>();
-		world.getEntityLookup().forEachIntersects(box, (v) ->
+		world.getEntities().get(box, (v) ->
 		{
 			if (!v.isSpectator())
 			{
@@ -161,24 +165,24 @@ public class InkExplosion
 		
 		for (LivingEntity entity : livingEntities)
 		{
-			Box boundingBox = entity.getBoundingBox();
-			Vec3d closestPos = new Vec3d(MathHelper.clamp(x, boundingBox.minX, boundingBox.maxX), MathHelper.clamp(y, boundingBox.minY, boundingBox.maxY), MathHelper.clamp(z, boundingBox.minZ, boundingBox.maxZ));
+			AABB boundingBox = entity.getBoundingBox();
+			Vec3 closestPos = new Vec3(Mth.clamp(x, boundingBox.minX, boundingBox.maxX), Mth.clamp(y, boundingBox.minY, boundingBox.maxY), Mth.clamp(z, boundingBox.minZ, boundingBox.maxZ));
 			
-			float distance = (float) position.squaredDistanceTo(closestPos);
+			float distance = (float) position.distanceToSqr(closestPos);
 			if (distance > radiusSquared) // still collides even in the center isn't in radius
 				continue;
 			InkColor targetColor = ColorUtils.getEntityColor(entity);
 			if (!targetColor.isValid() || (color != targetColor && targetColor.isValid()))
 			{
-				Vec3d boundingBoxCenter = boundingBox.getCenter();
+				Vec3 boundingBoxCenter = boundingBox.getCenter();
 				
 				// find shields that can protect entities of same color
 				boolean spawnShieldBlocked = false;
 				for (SpawnShieldEntity shieldEntity : spawnShields)
 				{
-					Box shieldBb = shieldEntity.getBoundingBox();
+					AABB shieldBb = shieldEntity.getBoundingBox();
 					// if using shieldBb.contains(boundingBox) some accuracy might be lost!!! since an entity can be damage even if they're obstructed (but not inside) the shield thingy
-					if (shieldEntity.getColor() == ColorUtils.getEntityColor(entity) && shieldBb.contains(position) || shieldBb.raycast(position, boundingBoxCenter).isPresent())
+					if (shieldEntity.getColor() == ColorUtils.getEntityColor(entity) && shieldBb.contains(position) || shieldBb.clip(position, boundingBoxCenter).isPresent())
 					{
 						spawnShieldBlocked = true;
 						break;
@@ -187,22 +191,22 @@ public class InkExplosion
 				if (spawnShieldBlocked)
 					continue;
 				
-				float seenPercent = Explosion.getExposure(position, entity);
-				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getDamage(MathHelper.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
+				float seenPercent = Explosion.getSeenPercent(position, entity);
+				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getDamage(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
 			}
 			
 			DyeColor dyeColor = color.getDyeColor();
 			
-			if (dyeColor != null && entity instanceof SheepEntity sheep)
+			if (dyeColor != null && entity instanceof Sheep sheep)
 			{
 				sheep.setColor(dyeColor);
 			}
 		}
 	}
-	private void getBlocksInSphereWithNoise(List<BlockFace> set, ServerWorld world)
+	private void getBlocksInSphereWithNoise(List<BlockFace> set, ServerLevel world)
 	{
 		// explosion is inside a block, everything is occluded
-		if (!world.isSpaceEmpty(new Box(position, position)))
+		if (!world.noCollision(new AABB(position, position)))
 			return;
 		
 		final float noiseRange = 0.2f;
@@ -220,10 +224,10 @@ public class InkExplosion
 						continue;
 					
 					VoxelShape shape = blockState.getCollisionShape(world, pos);
-					Vec3d relativePos = position.subtract(pos.toCenterPos());
+					Vec3 relativePos = position.subtract(pos.getCenter());
 					
 					double dist = relativePos.length();
-					if (dist <= paintRadius + MathHelper.SQUARE_ROOT_OF_TWO)
+					if (dist <= paintRadius + Mth.SQRT_OF_TWO)
 					{
 						map.register(pos, blockState, shape);
 					}
@@ -232,7 +236,7 @@ public class InkExplosion
 		map.processAndCull();
 		set.addAll(map.faces.stream().map(v -> new BlockFace(map.blockPositions.get(v.blockPosIndex), v.faceNormalDir)).collect(Collectors.toSet()));
 	}
-	private boolean canPassIfBarrier(InkColor color, WorldView worldView, BlockPos pos, BlockState state)
+	private boolean canPassIfBarrier(InkColor color, LevelReader worldView, BlockPos pos, BlockState state)
 	{
 		if (state.getBlock() instanceof ColoredBarrierBlock barrier)
 		{
@@ -246,9 +250,9 @@ public class InkExplosion
 	 */
 	public void doExplosionCosmetics(boolean spawnParticles)
 	{
-		Vec3d explosionPos = new Vec3d(x + 0.5f, y + 0.5f, z + 0.5f);
+		Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
 		
-		World world = exploder.getWorld();
+		Level world = exploder.level();
 		
 		if (spawnParticles)
 		{
@@ -268,7 +272,7 @@ public class InkExplosion
 			BlockState blockstate = world.getBlockState(blockFace.pos());
 			if (!blockstate.isAir())
 			{
-				float dist = (float) Math.sqrt(blockFace.pos().getSquaredDistanceFromCenter(explosionPos.x, explosionPos.y, explosionPos.z));
+				float dist = (float) Math.sqrt(blockFace.pos().distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z));
 				BlockInkedResult result = InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getDamage(dist));
 				if (result == BlockInkedResult.SUCCESS && blockFace.face().equals(Direction.UP))
 				{
@@ -279,7 +283,7 @@ public class InkExplosion
 		if (exploder instanceof LivingEntity living)
 			InkBlockUtils.awardTurfPoints(living, weapon, pointsToAward);
 	}
-	public Vec3d getPosition()
+	public Vec3 getPosition()
 	{
 		return position;
 	}
@@ -461,12 +465,12 @@ public class InkExplosion
 	{
 		private final float paintRange;
 		private final float noiseRange;
-		private final Random random;
+		private final RandomSource random;
 		public Vector3d worldOrigin;
-		public World world;
+		public Level world;
 		public ArrayList<FaceData> faces = new ArrayList<>();
 		public List<BlockPos> blockPositions = new ArrayList<>();
-		public FaceMap(Vec3d point, World world, float paintRange, float noiseRange, Random random)
+		public FaceMap(Vec3 point, Level world, float paintRange, float noiseRange, RandomSource random)
 		{
 			worldOrigin = new Vector3d(point.x, point.y, point.z);
 			this.world = world;
@@ -476,7 +480,7 @@ public class InkExplosion
 		}
 		public void register(BlockPos pos, BlockState state, VoxelShape shape)
 		{
-			shape.forEachBox((xmin, ymin, zmin, xmax, ymax, zmax) ->
+			shape.forAllBoxes((xmin, ymin, zmin, xmax, ymax, zmax) ->
 			{
 				double minX = -worldOrigin.x + xmin + pos.getX();
 				double minY = -worldOrigin.y + ymin + pos.getY();
@@ -500,13 +504,13 @@ public class InkExplosion
 			if (face.centroid.point.length() < paintRange + noiseValue)
 			{
 				// if close enough check if there isn't another block fully occluding the face
-				BlockPos forwardPos = pos.offset(face.faceNormalDir);
+				BlockPos forwardPos = pos.relative(face.faceNormalDir);
 				
 				BlockState occludingBlockState = world.getBlockState(forwardPos);
-				VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFace(face.faceNormalDir);
-				VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, forwardPos).getFace(face.faceNormalDir.getOpposite());
+				VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFaceShape(face.faceNormalDir);
+				VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, forwardPos).getFaceShape(face.faceNormalDir.getOpposite());
 				
-				return !VoxelShapes.isSideCovered(blockCollision, occludingCollision, face.faceNormalDir);
+				return !Shapes.blockOccudes(blockCollision, occludingCollision, face.faceNormalDir);
 			}
 			return false;
 		}
@@ -603,7 +607,7 @@ public class InkExplosion
 				up.setFor3Point(midpoints, 2);
 				right.setFor3Point(midpoints, 3);
 				Direction normalDir = face.faceNormalDir;
-				backQuad.setForPointAndNormal(face.getCentroid().point, new Vector3i(normalDir.getOffsetX(), normalDir.getOffsetY(), normalDir.getOffsetZ()));
+				backQuad.setForPointAndNormal(face.getCentroid().point, new Vector3i(normalDir.getStepX(), normalDir.getStepY(), normalDir.getStepZ()));
 			}
 			public boolean isPointObstructed(FaceData.PointData point)
 			{

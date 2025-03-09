@@ -3,11 +3,6 @@
     "package": "net.splatcraft.neoforge.mixin",
     "compatibilityLevel": "JAVA_21",
     "refmap": "splatcraft-refmap.json",
-    "mixins": [
-        "ForgeDummyInjections$BlockEntityMixin",
-        "ForgeDummyInjections$BlockMixin",
-        "ForgeDummyInjections$ItemMixin"
-    ],
     "minVersion": "0.8",
     "injectors": {
         "defaultRequire": 1
@@ -15,7 +10,6 @@
     "client": [
         "BlockModelRendererMixin",
         "BlockRenderMixinForge$BlockRenderManagerMixin",
-        "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
-        "ForgeDummyInjections$ClientBlockMixin"
+        "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge"
     ]
 }

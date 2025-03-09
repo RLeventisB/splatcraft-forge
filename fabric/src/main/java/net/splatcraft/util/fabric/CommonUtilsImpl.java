@@ -1,16 +1,16 @@
 package net.splatcraft.util.fabric;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.WorldView;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
 
 public class CommonUtilsImpl
 {
@@ -134,12 +134,12 @@ public class CommonUtilsImpl
 		
 		return false;
 	}
-	public static ItemStack callGetPickItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
+	public static ItemStack callGetPickItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player)
 	{
-		return state.getBlock().getPickStack(level, pos, state);
+		return state.getBlock().getCloneItemStack(level, pos, state);
 	}
-	public static boolean callCanHarvestBlock(BlockState state, BlockView level, BlockPos pos, PlayerEntity player)
+	public static boolean callCanHarvestBlock(BlockState state, BlockGetter level, BlockPos pos, Player player)
 	{
-		return player.canHarvest(state);
+		return player.hasCorrectToolForDrops(state);
 	}
 }

@@ -2,14 +2,14 @@ package net.splatcraft.network.s2c;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
@@ -21,7 +21,7 @@ import java.util.Map;
 
 public class UpdateInkPacket extends IncrementalChunkBasedPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_ink_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("update_ink_packet"));
 	protected final HashMap<BlockPos, ChunkInk.BlockEntry> dirty;
 	public UpdateInkPacket(ChunkPos chunkPos)
 	{
@@ -32,7 +32,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		super(chunkPos);
 		this.dirty = dirty;
 	}
-	public static UpdateInkPacket decode(RegistryByteBuf buffer)
+	public static UpdateInkPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		ChunkPos chunkPos = buffer.readChunkPos();
 		int changedBlocks = buffer.readInt();
@@ -48,12 +48,12 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		return new UpdateInkPacket(chunkPos, dirty);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void add(World world, BlockPos pos)
+	public void add(Level world, BlockPos pos)
 	{
 		add(pos, InkBlockUtils.getInkBlock(world, pos));
 	}
@@ -65,7 +65,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 			Splatcraft.LOGGER.warn("Tried adding null ink object"); // lmfao in any given moment if the inkBlock reference becomes null this dies
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
@@ -81,7 +81,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 	@Environment(EnvType.CLIENT)
 	public void execute()
 	{
-		ClientWorld world = MinecraftClient.getInstance().world;
+		ClientLevel world = Minecraft.getInstance().level;
 		
 		if (world != null)
 		{
@@ -92,9 +92,9 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 				BlockPos pos = entry.getKey();
 				entry.getValue().apply(chunkInk, RelativeBlockPos.fromAbsolute(pos));
 				BlockState state = world.getBlockState(pos);
-				world.updateListeners(pos, state, state, 0);
+				world.sendBlockUpdated(pos, state, state, 0);
 			}
-			world.getChunk(chunkPos.x, chunkPos.z).setNeedsSaving(true);
+			world.getChunk(chunkPos.x, chunkPos.z).setUnsaved(true);
 		}
 	}
 }

@@ -1,14 +1,14 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class DeleteInkPacket extends IncrementalChunkBasedPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("delete_ink_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("delete_ink_packet"));
 	public final List<BlockPos> toDelete;
 	public DeleteInkPacket(ChunkPos chunkPos)
 	{
@@ -31,7 +31,7 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 		super(chunkPos);
 		this.toDelete = toDelete;
 	}
-	public static DeleteInkPacket decode(RegistryByteBuf buffer)
+	public static DeleteInkPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		ChunkPos chunkPos = buffer.readChunkPos();
 		int changedBlocks = buffer.readInt();
@@ -44,17 +44,17 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 		return new DeleteInkPacket(chunkPos, toDelete);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void add(World world, BlockPos pos)
+	public void add(Level world, BlockPos pos)
 	{
 		toDelete.add(pos);
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(toDelete.size());
@@ -66,10 +66,10 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 	@Override
 	public void execute()
 	{
-		ClientWorld level = MinecraftClient.getInstance().world;
+		ClientLevel level = Minecraft.getInstance().level;
 		if (level != null)
 		{
-			WorldChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
+			LevelChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
 			if (ChunkInkCapability.hasAndNotEmpty(chunk))
 			{
 				ChunkInk chunkInk = ChunkInkCapability.get(chunk);
@@ -78,7 +78,7 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 					if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))
 					{
 						BlockState state = level.getBlockState(blockPos);
-						level.updateListeners(blockPos, state, state, 0);
+						level.sendBlockUpdated(blockPos, state, state, 0);
 					}
 				}
 			}

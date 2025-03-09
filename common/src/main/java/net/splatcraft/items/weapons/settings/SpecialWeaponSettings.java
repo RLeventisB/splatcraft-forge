@@ -4,10 +4,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -30,7 +30,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		super(name);
 	}
 	@Override
-	public Map.Entry<Identifier, MapCodec<? extends T>>[] getDynamicCodecs()
+	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
 			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC)
@@ -76,7 +76,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return 0;
 	}
@@ -99,13 +99,13 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	}
 	public record SpecialCostData(
 		int defaultPoints,
-		Object2ObjectOpenHashMap<Identifier, Integer> pointOverride
+		Object2ObjectOpenHashMap<ResourceLocation, Integer> pointOverride
 	)
 	{
 		public static final Codec<SpecialCostData> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
 				Codec.INT.optionalFieldOf("default_points", 200).forGetter(SpecialCostData::defaultPoints),
-				CodecUtils.hashMapCodec(Identifier.CODEC, Codec.INT).optionalFieldOf("weapon_overrides", new Object2ObjectOpenHashMap<>(0)).forGetter(SpecialCostData::pointOverride)
+				CodecUtils.hashMapCodec(ResourceLocation.CODEC, Codec.INT).optionalFieldOf("weapon_overrides", new Object2ObjectOpenHashMap<>(0)).forGetter(SpecialCostData::pointOverride)
 			).apply(inst, SpecialCostData::new)
 		);
 		public static final SpecialCostData DEFAULT = new SpecialCostData(200, new Object2ObjectOpenHashMap<>(0));
@@ -113,7 +113,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		{
 			if (!pointOverride.isEmpty() && stack.getItem() instanceof WeaponBaseItem<?> weaponItem)
 			{
-				Identifier settingId = weaponItem.getSettingsAndValidId(stack).getFirst();
+				ResourceLocation settingId = weaponItem.getSettingsAndValidId(stack).getFirst();
 				Integer overridenPoints = pointOverride.get(settingId);
 				if (overridenPoints != null)
 					return overridenPoints;

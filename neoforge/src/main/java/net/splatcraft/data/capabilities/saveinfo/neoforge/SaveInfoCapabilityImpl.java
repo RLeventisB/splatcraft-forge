@@ -12,15 +12,15 @@ public class SaveInfoCapabilityImpl
 {
 	public static SaveInfo get()
 	{
-		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().isInSingleplayer())
+		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().isLocalServer())
 			return SaveInfoCapability.clientSaveInfo;
-		return GameInstance.getServer().getOverworld().getData(SplatcraftNeoForgeDataAttachments.SAVE_INFO);
+		return GameInstance.getServer().overworld().getData(SplatcraftNeoForgeDataAttachments.SAVE_INFO);
 	}
 	public static void set(SaveInfo newData)
 	{
-		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().isIntegratedServerRunning())
+		if (Platform.getEnvironment() == Env.CLIENT && !GameInstance.getClient().hasSingleplayerServer())
 			throw new NotImplementedException("SaveInfo cannot be set on the client");
-		GameInstance.getServer().getOverworld().setData(SplatcraftNeoForgeDataAttachments.SAVE_INFO, newData);
+		GameInstance.getServer().overworld().setData(SplatcraftNeoForgeDataAttachments.SAVE_INFO, newData);
 	}
 	public static void markUpdated()
 	{

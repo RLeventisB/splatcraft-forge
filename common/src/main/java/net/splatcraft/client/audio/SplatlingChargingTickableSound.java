@@ -1,40 +1,40 @@
 package net.splatcraft.client.audio;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.util.PlayerCharge;
 import org.jetbrains.annotations.Nullable;
 
-public class SplatlingChargingTickableSound extends MovingSoundInstance
+public class SplatlingChargingTickableSound extends AbstractTickableSoundInstance
 {
     private static final int maxFadeTime = 30;
-    private final PlayerEntity player;
+    private final Player player;
     private final SoundEvent soundEvent;
     private int fadeTime = -1;
     private boolean isFadeIn = false;
     @Nullable
     private Boolean playingSecondLevel = null;
 
-    public SplatlingChargingTickableSound(PlayerEntity player, SoundEvent sound)
+    public SplatlingChargingTickableSound(Player player, SoundEvent sound)
     {
-        super(sound, SoundCategory.PLAYERS, player.getRandom());
-        attenuationType = AttenuationType.NONE;
-        repeat = true;
-        repeatDelay = 0;
+        super(sound, SoundSource.PLAYERS, player.getRandom());
+        attenuation = Attenuation.NONE;
+        looping = true;
+        delay = 0;
 
         this.player = player;
         soundEvent = sound;
     }
 
     @Override
-    public boolean shouldAlwaysPlay()
+    public boolean canStartSilent()
     {
         return true;
     }
@@ -46,12 +46,12 @@ public class SplatlingChargingTickableSound extends MovingSoundInstance
         y = player.getY();
         z = player.getZ();
 
-        if (player.isAlive() && player.getActiveItem().getItem() instanceof IChargeableWeapon && EntityInfoCapability.hasCapability(player))
+        if (player.isAlive() && player.getUseItem().getItem() instanceof IChargeableWeapon && EntityInfoCapability.hasCapability(player))
         {
             EntityInfo info = EntityInfoCapability.get(player);
-            if (!info.isSquid() && PlayerCharge.chargeMatches(player, player.getActiveItem()))
+            if (!info.isSquid() && PlayerCharge.chargeMatches(player, player.getUseItem()))
             {
-                float charge = PlayerCharge.getChargeValue(player, player.getActiveItem());
+                float charge = PlayerCharge.getChargeValue(player, player.getUseItem());
                 float prevCharge = info.getPlayerCharge().prevCharge;
 
                 if (playingSecondLevel == null)
@@ -59,7 +59,7 @@ public class SplatlingChargingTickableSound extends MovingSoundInstance
 
                 if (!isFadeIn && fadeTime == 0)
                 {
-                    setDone();
+                    stop();
                     return;
                 }
                 else if (fadeTime > maxFadeTime)
@@ -70,11 +70,11 @@ public class SplatlingChargingTickableSound extends MovingSoundInstance
                     volume = fadeTime / (float) maxFadeTime;
                 }
 
-                pitch = (MathHelper.lerp(MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
+                pitch = (Mth.lerp(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
                 return;
             }
         }
-        setDone();
+        stop();
     }
 
     public SoundEvent getSoundEvent()

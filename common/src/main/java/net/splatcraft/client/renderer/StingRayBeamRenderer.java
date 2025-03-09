@@ -1,12 +1,16 @@
 package net.splatcraft.client.renderer;
 
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
+import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.util.InkColor;
@@ -17,28 +21,28 @@ import java.util.Arrays;
 
 public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 {
-	private static final Identifier MAGIC_PIXEL = Identifier.ofVanilla("textures/misc/white.png");
-	private static final Identifier SHOCKWAVE_TEXTURE = Splatcraft.identifierOf("textures/entity/special/sting_ray_beam_shockwave.png");
+	private static final ResourceLocation MAGIC_PIXEL = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
+	private static final ResourceLocation SHOCKWAVE_TEXTURE = Splatcraft.identifierOf("textures/entity/special/sting_ray_beam_shockwave.png");
 	private static final float RAY_LENGTH = 1024f;
-	public StingRayBeamRenderer(EntityRendererFactory.Context context)
+	public StingRayBeamRenderer(EntityRendererProvider.Context context)
 	{
 		super(context);
 	}
 	private static Vector3f getRotationVector(float pitch, float yaw)
 	{
-		float f = pitch * MathHelper.RADIANS_PER_DEGREE;
-		float g = -yaw * MathHelper.RADIANS_PER_DEGREE;
-		float h = MathHelper.cos(g);
-		float i = MathHelper.sin(g);
-		float j = MathHelper.cos(f);
-		float k = MathHelper.sin(f);
+		float f = pitch * Mth.DEG_TO_RAD;
+		float g = -yaw * Mth.DEG_TO_RAD;
+		float h = Mth.cos(g);
+		float i = Mth.sin(g);
+		float j = Mth.cos(f);
+		float k = Mth.sin(f);
 		return new Vector3f(i * j, -k, h * j);
 	}
 	@Override
-	public void render(StingRayBeamEntity entity, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider buffer, int packedLight)
+	public void render(StingRayBeamEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int packedLight)
 	{
 		float lifespan = entity.getLifespan() + partialTicks;
-		float worldTimeMod10 = Math.floorMod(entity.getWorld().getTime(), 10) + partialTicks;
+		float worldTimeMod10 = Math.floorMod(entity.level().getGameTime(), 10) + partialTicks;
 		InkColor color = entity.getColor();
 		byte state = entity.getState();
 		
@@ -48,16 +52,16 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			{
 				float progress = lifespan / entity.getStartup();
 				
-				VertexConsumer builder = buffer.getBuffer(RenderLayer.getBeaconBeam(getTexture(entity), true));
-				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), ColorHelper.Argb.lerp(0.8f, 0, color.getColorWithAlpha(255)), partialTicks, 0);
+				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), true));
+				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(255)), partialTicks, 0);
 				
-				builder = buffer.getBuffer(RenderLayer.getBeaconBeam(SHOCKWAVE_TEXTURE, true));
-				renderBeam(builder, matrixStack, entity, 8, 0f, 1f, MathHelper.lerp((float) Math.pow(progress, 1.3f), 3f, entity.getRayWidth()), ColorHelper.Argb.lerp(0.8f, 0, color.getColorWithAlpha(128)), partialTicks, worldTimeMod10 * 6.4f);
+				builder = buffer.getBuffer(RenderType.beaconBeam(SHOCKWAVE_TEXTURE, true));
+				renderBeam(builder, matrixStack, entity, 8, 0f, 1f, Mth.lerp((float) Math.pow(progress, 1.3f), 3f, entity.getRayWidth()), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(128)), partialTicks, worldTimeMod10 * 6.4f);
 			}
 			break;
 			case 1:
 			{
-				VertexConsumer builder = buffer.getBuffer(RenderLayer.getBeaconBeam(getTexture(entity), false));
+				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), false));
 				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0);
 			}
 			
@@ -66,12 +70,12 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			{
 				float progress = Math.min(1f, (lifespan - entity.getShockwaveDelay()) / 10f);
 				
-				VertexConsumer builder = buffer.getBuffer(RenderLayer.getBeaconBeam(getTexture(entity), false));
+				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), false));
 				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0);
 				
-				builder = buffer.getBuffer(RenderLayer.getBeaconBeam(SHOCKWAVE_TEXTURE, true));
+				builder = buffer.getBuffer(RenderType.beaconBeam(SHOCKWAVE_TEXTURE, true));
 				int colorRGB = color.getColorWithAlpha((int) (progress * progress * 128));
-				colorRGB = ColorHelper.Argb.lerp(progress * 0.7f, -1, colorRGB);
+				colorRGB = FastColor.ARGB32.lerp(progress * 0.7f, -1, colorRGB);
 				float zOffset = -worldTimeMod10 * 6.4f * 5f;
 				float roll = worldTimeMod10 * 36;
 				renderBeam(builder, matrixStack, entity, 8, roll, 1f, entity.getShockwaveWidth(), colorRGB, partialTicks, zOffset);
@@ -79,16 +83,16 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			break;
 		}
 	}
-	public void renderBeam(VertexConsumer builder, MatrixStack stack, StingRayBeamEntity entity, final int sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
+	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final int sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
 	{
 		renderBeam(builder, stack, entity, (byte) sides, roll, firstRingDistance, beamWidth, color, partialTicks, vOffset);
 	}
-	public void renderBeam(VertexConsumer builder, MatrixStack stack, StingRayBeamEntity entity, final byte sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
+	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final byte sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
 	{
 		final Vector3f ZERO = new Vector3f();
 		
-		float pitch = entity.getPitch(partialTicks);
-		float yaw = entity.getYaw(partialTicks);
+		float pitch = entity.getViewXRot(partialTicks);
+		float yaw = entity.getViewYRot(partialTicks);
 		
 		Vector3f forward = getRotationVector(pitch, yaw);
 		
@@ -111,35 +115,35 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			drawVertices(firstRingPoints[i], firstRingPoints[nextI], endPoints[i], endPoints[nextI], builder, stack, color, firstRingDistance + vOffset, RAY_LENGTH + vOffset);
 		}
 	}
-	private void drawVertices(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, VertexConsumer builder, MatrixStack stack, final int color, final float minV, final float maxV)
+	private void drawVertices(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, VertexConsumer builder, PoseStack stack, final int color, final float minV, final float maxV)
 	{
-		builder.vertex(stack.peek(), p1)
-			.color(color)
-			.texture(0, minV)
-			.overlay(OverlayTexture.DEFAULT_UV)
-			.light(0, 240)
-			.normal(0.0F, 1.0F, 0.0F)
+		builder.addVertex(stack.last(), p1)
+			.setColor(color)
+			.setUv(0, minV)
+			.setOverlay(OverlayTexture.NO_OVERLAY)
+			.setUv2(0, 240)
+			.setNormal(0.0F, 1.0F, 0.0F)
 		;
-		builder.vertex(stack.peek(), p2)
-			.color(color)
-			.texture(0, minV)
-			.overlay(OverlayTexture.DEFAULT_UV)
-			.light(0, 240)
-			.normal(0.0F, 1.0F, 0.0F)
+		builder.addVertex(stack.last(), p2)
+			.setColor(color)
+			.setUv(0, minV)
+			.setOverlay(OverlayTexture.NO_OVERLAY)
+			.setUv2(0, 240)
+			.setNormal(0.0F, 1.0F, 0.0F)
 		;
-		builder.vertex(stack.peek(), p4)
-			.color(color)
-			.texture(0, maxV)
-			.overlay(OverlayTexture.DEFAULT_UV)
-			.light(0, 240)
-			.normal(0.0F, 1.0F, 0.0F)
+		builder.addVertex(stack.last(), p4)
+			.setColor(color)
+			.setUv(0, maxV)
+			.setOverlay(OverlayTexture.NO_OVERLAY)
+			.setUv2(0, 240)
+			.setNormal(0.0F, 1.0F, 0.0F)
 		;
-		builder.vertex(stack.peek(), p3)
-			.color(color)
-			.texture(0, maxV)
-			.overlay(OverlayTexture.DEFAULT_UV)
-			.light(0, 240)
-			.normal(0.0F, 1.0F, 0.0F)
+		builder.addVertex(stack.last(), p3)
+			.setColor(color)
+			.setUv(0, maxV)
+			.setOverlay(OverlayTexture.NO_OVERLAY)
+			.setUv2(0, 240)
+			.setNormal(0.0F, 1.0F, 0.0F)
 		;
 	}
 	@Override
@@ -150,7 +154,7 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 		return true;
 	}
 	@Override
-	public @NotNull Identifier getTexture(@NotNull StingRayBeamEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull StingRayBeamEntity entity)
 	{
 		return MAGIC_PIXEL;
 	}

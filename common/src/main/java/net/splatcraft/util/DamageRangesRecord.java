@@ -3,7 +3,7 @@ package net.splatcraft.util;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -104,7 +104,7 @@ public class DamageRangesRecord
 		float floorDistance = floor == null ? 0 : floor.getKey();
 		float floorDamage = floor == null ? ceiling.getValue() : floor.getValue();
 		
-		return MathHelper.lerp(MathHelper.getLerpProgress(distance, floorDistance, ceiling.getKey()), floorDamage, ceiling.getValue());
+		return Mth.lerp(Mth.inverseLerp(distance, floorDistance, ceiling.getKey()), floorDamage, ceiling.getValue());
 	}
 	public float getMaxDistance()
 	{

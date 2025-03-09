@@ -1,15 +1,15 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Hand;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.util.CommonUtils;
 
 public class SwapSlotWithOffhandPacket extends PlayC2SPacket
 {
-    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SwapSlotWithOffhandPacket.class);
+    public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SwapSlotWithOffhandPacket.class);
     final int slot;
     final boolean stopUsing;
 
@@ -19,28 +19,28 @@ public class SwapSlotWithOffhandPacket extends PlayC2SPacket
         this.stopUsing = stopUsing;
     }
 
-    public static SwapSlotWithOffhandPacket decode(RegistryByteBuf buffer)
+    public static SwapSlotWithOffhandPacket decode(RegistryFriendlyByteBuf buffer)
     {
         return new SwapSlotWithOffhandPacket(buffer.readInt(), buffer.readBoolean());
     }
 
     @Override
-    public Id<? extends CustomPayload> getId()
+    public Type<? extends CustomPacketPayload> type()
     {
         return ID;
     }
 
     @Override
-    public void execute(PlayerEntity player)
+    public void execute(Player player)
     {
-        ItemStack stack = player.getOffHandStack();
-        player.setStackInHand(Hand.OFF_HAND, player.getInventory().getStack(slot));
-        player.getInventory().setStack(slot, stack);
-        player.stopUsingItem();
+        ItemStack stack = player.getOffhandItem();
+        player.setItemInHand(InteractionHand.OFF_HAND, player.getInventory().getItem(slot));
+        player.getInventory().setItem(slot, stack);
+        player.releaseUsingItem();
     }
 
     @Override
-    public void encode(RegistryByteBuf buffer)
+    public void encode(RegistryFriendlyByteBuf buffer)
     {
         buffer.writeInt(slot);
         buffer.writeBoolean(stopUsing);

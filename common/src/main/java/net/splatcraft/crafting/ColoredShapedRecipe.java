@@ -1,15 +1,10 @@
 package net.splatcraft.crafting;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.RawShapedRecipe;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.ShapedRecipe;
-import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.recipe.input.CraftingRecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.level.Level;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -19,19 +14,19 @@ import java.util.Optional;
 
 public class ColoredShapedRecipe extends ShapedRecipe
 {
-	public ColoredShapedRecipe(String group, int width, int height, DefaultedList<Ingredient> ingredients, ItemStack result)
+	public ColoredShapedRecipe(String group, int width, int height, NonNullList<Ingredient> ingredients, ItemStack result)
 	{
-		super(group, CraftingRecipeCategory.MISC, new RawShapedRecipe(width, height, ingredients, Optional.empty()), result);
+		super(group, CraftingBookCategory.MISC, new ShapedRecipePattern(width, height, ingredients, Optional.empty()), result);
 	}
 	@Override
-	public @NotNull ItemStack craft(CraftingRecipeInput inventory, @NotNull RegistryWrapper.WrapperLookup access)
+	public @NotNull ItemStack assemble(CraftingInput inventory, @NotNull HolderLookup.Provider access)
 	{
 		int color = 0, j = 0, curColor = 0;
 		boolean colorLock = false;
 		
-		for (int i = 0; i < inventory.getSize(); i++)
+		for (int i = 0; i < inventory.size(); i++)
 		{
-			ItemStack stack = inventory.getStackInSlot(i);
+			ItemStack stack = inventory.getItem(i);
 			
 			if (stack.getItem() == SplatcraftItems.inkwell.get() && ColorUtils.getInkColor(stack).isValid())
 			{
@@ -48,10 +43,10 @@ public class ColoredShapedRecipe extends ShapedRecipe
 		if (!colorLock)
 			color = curColor;
 		
-		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.craft(inventory, access), j == 0 ? InkColor.INVALID : InkColor.constructOrReuse(color / j)), colorLock);
+		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.assemble(inventory, access), j == 0 ? InkColor.INVALID : InkColor.constructOrReuse(color / j)), colorLock);
 	}
 	@Override
-	public boolean matches(@NotNull CraftingRecipeInput recipe, @NotNull World world)
+	public boolean matches(@NotNull CraftingInput recipe, @NotNull Level world)
 	{
 		return super.matches(recipe, world);
 	}

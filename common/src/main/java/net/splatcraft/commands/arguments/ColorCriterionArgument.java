@@ -6,8 +6,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
 import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.util.InkColor;
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class ColorCriterionArgument extends InkColorArgument
 {
-    public static final DynamicCommandExceptionType CRITERION_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Text.translatable("arg.colorCriterion.notFound", p_208663_0_));
+    public static final DynamicCommandExceptionType CRITERION_NOT_FOUND = new DynamicCommandExceptionType(p_208663_0_ -> Component.translatable("arg.colorCriterion.notFound", p_208663_0_));
 
     private ColorCriterionArgument()
     {
@@ -43,6 +43,6 @@ public class ColorCriterionArgument extends InkColorArgument
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
     {
-        return CommandSource.suggestMatching(ScoreboardHandler.getCriteriaSuggestions(), builder);
+        return SharedSuggestionProvider.suggest(ScoreboardHandler.getCriteriaSuggestions(), builder);
     }
 }

@@ -1,9 +1,9 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class PlayerColorPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_color_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("player_color_packet"));
 	private final InkColor color;
 	UUID target;
 	String playerName;
@@ -23,34 +23,34 @@ public class PlayerColorPacket extends PlayS2CPacket
 		target = player;
 		playerName = name;
 	}
-	public PlayerColorPacket(PlayerEntity player, InkColor color)
+	public PlayerColorPacket(Player player, InkColor color)
 	{
-		this(player.getUuid(), player.getDisplayName().getString(), color);
+		this(player.getUUID(), player.getDisplayName().getString(), color);
 	}
-	public static PlayerColorPacket decode(RegistryByteBuf buffer)
+	public static PlayerColorPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		int color = buffer.readInt();
-		String name = buffer.readString();
-		UUID player = buffer.readUuid();
+		String name = buffer.readUtf();
+		UUID player = buffer.readUUID();
 		return new PlayerColorPacket(player, name, InkColor.constructOrReuse(color));
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeInt(color.getColor());
-		buffer.writeString(playerName);
-		buffer.writeUuid(target);
+		buffer.writeUtf(playerName);
+		buffer.writeUUID(target);
 	}
 	@Override
 	public void execute()
 	{
-		PlayerEntity player = MinecraftClient.getInstance().world.getPlayerByUuid(target);
+		Player player = Minecraft.getInstance().level.getPlayerByUUID(target);
 		if (player != null)
 			ColorUtils.setPlayerColor(player, color, false);
 		ClientUtils.setClientPlayerColor(target, color);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

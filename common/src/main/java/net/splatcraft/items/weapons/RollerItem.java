@@ -3,25 +3,27 @@ package net.splatcraft.items.weapons;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.client.audio.RollerRollTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
@@ -66,45 +68,45 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	}
 	public static void applyRecoilKnockback(LivingEntity entity, double pow)
 	{
-		entity.setVelocity(new Vec3d(Math.cos(Math.toRadians(entity.getYaw() + 90)) * -pow, entity.getVelocity().y, Math.sin(Math.toRadians(entity.getYaw() + 90)) * -pow));
-		entity.velocityModified = true;
+		entity.setDeltaMovement(new Vec3(Math.cos(Math.toRadians(entity.getYRot() + 90)) * -pow, entity.getDeltaMovement().y, Math.sin(Math.toRadians(entity.getYRot() + 90)) * -pow));
+		entity.hurtMarked = true;
 	}
 	@Environment(EnvType.CLIENT)
 	protected static void playRollSound(boolean isBrush)
 	{
-		MinecraftClient.getInstance().getSoundManager().playNextTick(new RollerRollTickableSound(ClientUtils.getClientPlayer(), isBrush));
+		Minecraft.getInstance().getSoundManager().queueTickingSound(new RollerRollTickableSound(ClientUtils.getClientPlayer(), isBrush));
 	}
 	@Override
 	public Class<RollerWeaponSettings> getSettingsClass()
 	{
 		return RollerWeaponSettings.class;
 	}
-	public ClampedModelPredicateProvider getUnfolded()
+	public ClampedItemPropertyFunction getUnfolded()
 	{
 		return (stack, level, entity, seed) ->
 		{
-			if (entity instanceof PlayerEntity player)
+			if (entity instanceof Player player)
 			{
 				InitialSwingAction action = EntityAction.getSpecificEntityAction(player, InitialSwingAction.class);
 				if (action != null)
 				{
 					if (action.getSlotIndex() > -1)
 					{
-						ItemStack weaponStack = action.getHand() == Hand.MAIN_HAND ? player.getInventory().main.get(action.getSlotIndex())
-							: entity.getOffHandStack();
+						ItemStack weaponStack = action.getHand() == InteractionHand.MAIN_HAND ? player.getInventory().items.get(action.getSlotIndex())
+							: entity.getOffhandItem();
 						return stack.equals(weaponStack) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() < action.attackFrame - 2) ? 1 : 0;
 					}
 				}
 			}
-			return entity != null && entity.isUsingItem() && entity.getActiveItem() == stack && entity.getItemUseTime() > 10 ? 1 : 0;
+			return entity != null && entity.isUsingItem() && entity.getUseItem() == stack && entity.getTicksUsingItem() > 10 ? 1 : 0;
 		};
 	}
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
-		if (remainingUseTicks == stack.getMaxUseTime(user))
+		if (remainingUseTicks == stack.getUseDuration(user))
 		{
-			usedOnGround = user.isOnGround();
+			usedOnGround = user.onGround();
 			Optional<InitialSwingAction> optional = EntityAction.getSpecificEntityActionOptional(user, InitialSwingAction.class);
 			optional.ifPresentOrElse(action ->
 			{
@@ -116,11 +118,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			{
 				boolean notPreventedByAction = !EntityAction.hasActionAnd(user, EntityAction::preventWeaponUse);
 				
-				if (notPreventedByAction && ((!(user instanceof PlayerEntity player) || !CommonUtils.anyWeaponOnCooldown(player))))
+				if (notPreventedByAction && ((!(user instanceof Player player) || !CommonUtils.anyWeaponOnCooldown(player))))
 				{
 					RollerWeaponSettings settings = getSettings(stack);
 					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(usedOnGround).attackData();
-					if (!world.isClient && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
+					if (!world.isClientSide && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
 					{
 						EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTicks(), attackData.endlagTicks(), user));
 						SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(user), user);
@@ -131,26 +133,26 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			});
 		}
 		
-		super.usageTick(world, user, stack, remainingUseTicks);
+		super.onUseTick(world, user, stack, remainingUseTicks);
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
 		
-		int rollTime = entity.getItemUseTime() - Math.round(settings.getAttackData(usedOnGround).attackData().attackTime());
+		int rollTime = entity.getTicksUsingItem() - Math.round(settings.getAttackData(usedOnGround).attackData().attackTime());
 		if (rollTime <= 0)
 			return;
 		
-		float toConsume = MathHelper.lerp(Math.min(1, rollTime / settings.rollData.dashTime()), settings.rollData.inkConsumption(), settings.rollData.dashConsumption());
-		if (world.isClient)
+		float toConsume = Mth.lerp(Math.min(1, rollTime / settings.rollData.dashTime()), settings.rollData.inkConsumption(), settings.rollData.dashConsumption());
+		if (world.isClientSide)
 		{
-			isMoving = Math.abs(entity.prevHeadYaw - entity.headYaw) > 0 || (entity.forwardSpeed != 0 || entity.sidewaysSpeed != 0);
+			isMoving = Math.abs(entity.yHeadRotO - entity.yHeadRot) > 0 || (entity.zza != 0 || entity.xxa != 0);
 		}
 		else
 		{
 			WeaponHandler.OldEntityTransformData oldData = WeaponHandler.getEntityPrevPos(entity);
-			isMoving = oldData.oldOldPosition.squaredDistanceTo(entity.getPos()) > 0 || Math.abs(oldData.oldOldRot.y - entity.getYaw()) > 0;
+			isMoving = oldData.oldOldPosition.distanceToSqr(entity.position()) > 0 || Math.abs(oldData.oldOldRot.y - entity.getYRot()) > 0;
 		}
 		
 		boolean doPush = false;
@@ -161,14 +163,14 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		if (doPush)
 			applyRecoilKnockback(entity, 0.8);
 	}
-	private boolean doRoll(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks, RollerWeaponSettings settings, float inkConsumption)
+	private boolean doRoll(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks, RollerWeaponSettings settings, float inkConsumption)
 	{
 		double dxOff = 0;
 		double dzOff = 0;
 		for (int i = 1; i <= 2; i++)
 		{
-			dxOff = Math.cos(Math.toRadians(entity.getYaw() + 90)) * i;
-			dzOff = Math.sin(Math.toRadians(entity.getYaw() + 90)) * i;
+			dxOff = Math.cos(Math.toRadians(entity.getYRot() + 90)) * i;
+			dzOff = Math.sin(Math.toRadians(entity.getYRot() + 90)) * i;
 			
 			BlockPos pos = CommonUtils.createBlockPos(entity.getX() + dxOff, entity.getY(), entity.getZ() + dzOff);
 			if (!InkBlockUtils.canInkPassthrough(world, pos))
@@ -182,8 +184,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		{
 			float off = i - settings.rollData.inkSize() / 2f;
 			boolean insideDamage = Math.abs(off) < settings.rollData.hitboxSize() / 2f;
-			double xOff = Math.cos(Math.toRadians(entity.getYaw())) * off;
-			double zOff = Math.sin(Math.toRadians(entity.getYaw())) * off;
+			double xOff = Math.cos(Math.toRadians(entity.getYRot())) * off;
+			double zOff = Math.sin(Math.toRadians(entity.getYRot())) * off;
 			
 			for (float yOff = 0; yOff >= -3; yOff--)
 			{
@@ -194,8 +196,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				
 				if (yOff == -3)
 				{
-					dxOff = Math.cos(Math.toRadians(entity.getYaw() + 90));
-					dzOff = Math.sin(Math.toRadians(entity.getYaw() + 90));
+					dxOff = Math.cos(Math.toRadians(entity.getYRot() + 90));
+					dzOff = Math.sin(Math.toRadians(entity.getYRot() + 90));
 				}
 				
 				BlockPos pos = CommonUtils.createBlockPos(entity.getX() + xOff + dxOff, entity.getY() + yOff, entity.getZ() + zOff + dzOff);
@@ -208,11 +210,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					VoxelShape shape = world.getBlockState(pos).getCollisionShape(world, pos);
 					
 					result = InkBlockUtils.inkBlock(entity, world, pos, ColorUtils.getInkColor(stack), Direction.UP, InkBlockUtils.getInkType(entity), settings.rollData.damage());
-					double blockHeight = shape.isEmpty() ? 0 : shape.getBoundingBox().maxY;
+					double blockHeight = shape.isEmpty() ? 0 : shape.bounds().maxY;
 					
-					if (yOff != -3 && !(shape.getBoundingBox().minX <= 0 && shape.getBoundingBox().minZ <= 0 && shape.getBoundingBox().maxX >= 1 && shape.getBoundingBox().maxZ >= 1))
+					if (yOff != -3 && !(shape.bounds().minX <= 0 && shape.bounds().minZ <= 0 && shape.bounds().maxX >= 1 && shape.bounds().maxZ >= 1))
 					{
-						BlockInkedResult secondResult = InkBlockUtils.inkBlock(entity, world, pos.down(), ColorUtils.getInkColor(stack), Direction.UP, InkBlockUtils.getInkType(entity), settings.rollData.damage());
+						BlockInkedResult secondResult = InkBlockUtils.inkBlock(entity, world, pos.below(), ColorUtils.getInkColor(stack), Direction.UP, InkBlockUtils.getInkType(entity), settings.rollData.damage());
 						if (result == BlockInkedResult.FAIL)
 						{
 							result = secondResult;
@@ -224,8 +226,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xOff + dxOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zOff + dzOff, 0, 0, 0);
 						if (i > 0)
 						{
-							double xhOff = dxOff + Math.cos(Math.toRadians(entity.getYaw())) * (off - 0.5);
-							double zhOff = dzOff + Math.sin(Math.toRadians(entity.getYaw())) * (off - 0.5);
+							double xhOff = dxOff + Math.cos(Math.toRadians(entity.getYRot())) * (off - 0.5);
+							double zhOff = dzOff + Math.sin(Math.toRadians(entity.getYRot())) * (off - 0.5);
 							world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xhOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zhOff, 0, 0, 0);
 						}
 					}
@@ -233,7 +235,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				}
 			}
 			
-			if (world.isClient())
+			if (world.isClientSide())
 			{
 				// Damage and knockback are dealt server-side
 				continue;
@@ -245,7 +247,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			}
 			
 			BlockPos attackPos = CommonUtils.createBlockPos(entity.getX() + xOff + dxOff, entity.getY() - 1, entity.getZ() + zOff + dzOff);
-			for (LivingEntity target : world.getEntitiesByClass(LivingEntity.class, Box.enclosing(attackPos, attackPos.add(1, 2, 1)), EntityPredicates.EXCEPT_SPECTATOR.and(e ->
+			for (LivingEntity target : world.getEntitiesOfClass(LivingEntity.class, AABB.encapsulatingFullBlocks(attackPos, attackPos.offset(1, 2, 1)), EntitySelector.NO_SPECTATORS.and(e ->
 			{
 				if (e instanceof LivingEntity target)
 				{
@@ -268,21 +270,21 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	@Override
 	public boolean hasSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
-		if (EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || !entity.getActiveItem().equals(stack))
+		if (EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || !entity.getUseItem().equals(stack))
 			return false;
 		return super.hasSpeedModifier(entity, stack);
 	}
 	@Override
-	public EntityAttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
+	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
 		double appliedMobility;
-		float useTime = entity.getItemUseTime() - settings.getAttackData(usedOnGround).attackData().attackTime();
+		float useTime = entity.getTicksUsingItem() - settings.getAttackData(usedOnGround).attackData().attackTime();
 		float dashProgress = Math.min(1, useTime / settings.rollData.dashTime());
 		
 		if (enoughInk(entity, this, Math.min(settings.rollData.dashConsumption(), settings.rollData.inkConsumption()), 0, false))
 		{
-			if (entity instanceof PlayerEntity && EntityAction.hasEntityAction(entity))
+			if (entity instanceof Player && EntityAction.hasEntityAction(entity))
 				appliedMobility = settings.swingData.mobility();
 			else
 			{
@@ -294,10 +296,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			appliedMobility = 0.7;
 		}
 		
-		return new EntityAttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		return new AttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return getSettings(stack).isBrush ? PlayerPosingHandler.WeaponPose.BRUSH : PlayerPosingHandler.WeaponPose.ROLLER_SWING;
 	}
@@ -317,18 +319,18 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		public final float attackFrame;
 		final ItemStack storedStack;
 		final int slotIndex;
-		final Hand hand;
+		final InteractionHand hand;
 		protected boolean isGrounded, isAttackQueued, hasAttacked;
 		public InitialSwingAction(ItemStack stack, float windupTime, float endlagTime, LivingEntity entity)
 		{
 			super(windupTime + endlagTime);
-			isGrounded = entity.isOnGround();
+			isGrounded = entity.onGround();
 			storedStack = stack;
 			attackFrame = endlagTime;
-			slotIndex = entity instanceof PlayerEntity player ? player.getInventory().selectedSlot : -1;
-			hand = entity.getActiveHand();
+			slotIndex = entity instanceof Player player ? player.getInventory().selected : -1;
+			hand = entity.getUsedItemHand();
 		}
-		public InitialSwingAction(ItemStack stack, float totalTime, float attackFrame, int slotIndex, Hand hand, boolean isGrounded, boolean isAttackQueued, boolean hasAttacked, float time)
+		public InitialSwingAction(ItemStack stack, float totalTime, float attackFrame, int slotIndex, InteractionHand hand, boolean isGrounded, boolean isAttackQueued, boolean hasAttacked, float time)
 		{
 			super(time, totalTime);
 			this.attackFrame = attackFrame;
@@ -339,7 +341,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			this.slotIndex = slotIndex;
 			this.hand = hand;
 		}
-		static List<Vector3f> poissonDiskSampling(Random random, float maxAngle, float radiusApart, float minSpeedSquared, float maxSpeed, int maxTries, float yaw)
+		static List<Vector3f> poissonDiskSampling(RandomSource random, float maxAngle, float radiusApart, float minSpeedSquared, float maxSpeed, int maxTries, float yaw)
 		{
 			List<Vector3f> points = new ObjectArrayList<>();
 			// todo: optimize this implementation so it doesn't process points that are outside the angle
@@ -349,17 +351,17 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				if (dist < minSpeedSquared)
 					return;
 				
-				float thisAngle = (float) Math.atan2(y, x) * MathHelper.DEGREES_PER_RADIAN;
-				float distanceFromYaw = MathHelper.abs(MathHelper.wrapDegrees(yaw - thisAngle));
+				float thisAngle = (float) Math.atan2(y, x) * Mth.RAD_TO_DEG;
+				float distanceFromYaw = Mth.abs(Mth.wrapDegrees(yaw - thisAngle));
 				if (distanceFromYaw > maxAngle)
 					return;
 				
-				points.add(new Vector3f(thisAngle, distanceFromYaw, MathHelper.sqrt(dist)));
+				points.add(new Vector3f(thisAngle, distanceFromYaw, Mth.sqrt(dist)));
 			});
 			// wtf org.joml has everything
 			return points;
 		}
-		private static List<Vector3f> calculateAngleAndSpeeds(Random random, FloatRange speedRange, float swingAngle, float projectileSize, float straightShotFrames, float yaw)
+		private static List<Vector3f> calculateAngleAndSpeeds(RandomSource random, FloatRange speedRange, float swingAngle, float projectileSize, float straightShotFrames, float yaw)
 		{
 			return poissonDiskSampling(random, swingAngle, projectileSize / straightShotFrames / 1.35f, speedRange.min() * speedRange.min() / (straightShotFrames * straightShotFrames), speedRange.max(), 30, yaw);
 		}
@@ -381,26 +383,26 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						return;
 					}
 					RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
-					World world = entity.getWorld();
+					Level world = entity.level();
 					
-					if (world.isClient())
+					if (world.isClientSide())
 						playRollSound(settings.isBrush);
 					
 					RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
 					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(isGrounded()).attackData();
-					if (world.isClient() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getItemUseTimeLeft() % 4 == 0))
+					if (world.isClientSide() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getUseItemRemainingTicks() % 4 == 0))
 						return;
 					
 					if (settings.isBrush)
 					{
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						int total = swingData.blobCount().getRandom(entity.getRandom());
 						int countSmall = Math.round(total * 0.4f);
 						int countNormal = total - countSmall;
 						AttackId attackId = AttackId.registerSelectiveAttack(total);
 						attackId.countProjectile(total);
 						
-						Random random = entity.getRandom();
+						RandomSource random = entity.getRandom();
 						
 						List<Float> blobAngles = new ObjectArrayList<>(countNormal);
 						List<Float> weakBlobAngles = new ObjectArrayList<>(countSmall);
@@ -428,7 +430,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					else
 					{
 						RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						if (isGrounded())
 						{
 							List<Vector3f> anglesAndVelocities = calculateAngleAndSpeeds(
@@ -437,7 +439,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								swingData.attackAngle(),
 								swingData.projectileData().size(),
 								swingData.projectileData().straightShotTicks(),
-								entity.getYaw(extraTime)
+								entity.getViewYRot(extraTime)
 							);
 							
 							AttackId attackId = AttackId.registerSelectiveAttack(anglesAndVelocities.size());
@@ -449,15 +451,15 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								// z is the magnitude of the projectile's speed
 								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), settings);
 								
-								proj.setVelocity(entity, entity.getPitch(extraTime), data.x, 0, data.z, 0f);
+								proj.shootFromRotation(entity, entity.getViewXRot(extraTime), data.x, 0, data.z, 0f);
 //								Vec3d offset = new Vec3d((entity.getRandom().nextFloat() * 2f - 1f) * 0.7f, 0.5f, 0.6f);
-								Vec3d offset = new Vec3d(0f, 0.5f, 0.6f);
-								offset = offset.rotateY(-entity.getYaw(extraTime) * MathHelper.RADIANS_PER_DEGREE);
-								proj.refreshPositionAfterTeleport(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
+								Vec3 offset = new Vec3(0f, 0.5f, 0.6f);
+								offset = offset.yRot(-entity.getViewYRot(extraTime) * Mth.DEG_TO_RAD);
+								proj.moveTo(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
 								
 								proj.setRollerSwingStats(settings, false, data.y > swingData.letalAngle());
 								proj.setAttackId(attackId);
-								world.spawnEntity(proj);
+								world.addFreshEntity(proj);
 								proj.tick(extraTime);
 							}
 						}
@@ -472,18 +474,18 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), flingData.projectileData().size(), settings);
 								
 								float progress = (float) i / Math.max(1, count - 1);
-								proj.setVelocity(
+								proj.shootFromRotation(
 									entity,
-									entity.getPitch() - MathHelper.lerp(progress, flingData.startPitchCompensation(), flingData.endPitchCompensation()),
-									entity.getYaw(), 0,
+									entity.getXRot() - Mth.lerp(progress, flingData.startPitchCompensation(), flingData.endPitchCompensation()),
+									entity.getYRot(), 0,
 									attackData.speedRange().getValue(progress),
 									0.05f);
 								
 								proj.setRollerSwingStats(settings, true, false);
 								proj.accumulatedDrops = progress;
-								proj.refreshPositionAfterTeleport(proj.getPos().add(EntityAccessor.invokeMovementInputToVelocity(new Vec3d(0, 1, 0), 1.4f, proj.getYaw())));
+								proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
 								proj.setAttackId(attackId);
-								world.spawnEntity(proj);
+								world.addFreshEntity(proj);
 								proj.tick(extraTime);
 							}
 						}
@@ -491,10 +493,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				}
 			}
 		}
-		private void createBrushBlobs(LivingEntity entity, List<Float> preparedAngles, int count, World world, RollerWeaponSettings settings, AttackId attackId, float extraTime, boolean weak)
+		private void createBrushBlobs(LivingEntity entity, List<Float> preparedAngles, int count, Level world, RollerWeaponSettings settings, AttackId attackId, float extraTime, boolean weak)
 		{
 			RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
-			Random random = entity.getRandom();
+			RandomSource random = entity.getRandom();
 			for (int i = 0; i < count; i++)
 			{
 				InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), settings);
@@ -503,11 +505,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				if (angle == null)
 					angle = 0f;
 				
-				proj.setVelocity(entity, entity.getPitch(), entity.getYaw() + angle, 0, swingData.attackData().speedRange().getRandom(random) * (weak ? 0.6f : 1f), 0f);
-				proj.refreshPositionAfterTeleport(proj.getX(), proj.getY() - entity.getStandingEyeHeight() / 2f, proj.getZ());
+				proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot() + angle, 0, swingData.attackData().speedRange().getRandom(random) * (weak ? 0.6f : 1f), 0f);
+				proj.moveTo(proj.getX(), proj.getY() - entity.getEyeHeight() / 2f, proj.getZ());
 				proj.setAttackId(attackId);
 				proj.setBrushSwingStats(settings, weak);
-				world.spawnEntity(proj);
+				world.addFreshEntity(proj);
 				proj.tick(extraTime);
 			}
 		}
@@ -520,7 +522,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		{
 			if (isAttackQueued)
 			{
-				isGrounded = entity.isOnGround();
+				isGrounded = entity.onGround();
 				hasAttacked = false;
 				isAttackQueued = false;
 				setTime(getTime() + getMaxTime());
@@ -545,7 +547,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			return slotIndex;
 		}
 		@Override
-		public Hand getHand()
+		public InteractionHand getHand()
 		{
 			return hand;
 		}

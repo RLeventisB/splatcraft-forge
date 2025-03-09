@@ -41,7 +41,6 @@ public class MixinInitializer implements IMixinConfigPlugin
 		{
 			return isOnClient;
 		}
-		
 		if (mixinClassName.contains("Forge"))
 		{
 			return isOnNeoForge;

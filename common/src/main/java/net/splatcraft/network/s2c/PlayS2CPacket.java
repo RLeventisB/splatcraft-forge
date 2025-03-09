@@ -7,7 +7,7 @@ import net.splatcraft.network.SplatcraftPacket;
 public abstract class PlayS2CPacket extends SplatcraftPacket
 {
 	@Override
-	public void consume(NetworkManager.PacketContext ctx)
+	public <T extends SplatcraftPacket> void consume(NetworkManager.PacketContext ctx)
 	{
 		if (ctx.getEnvironment() == Env.CLIENT)
 		{

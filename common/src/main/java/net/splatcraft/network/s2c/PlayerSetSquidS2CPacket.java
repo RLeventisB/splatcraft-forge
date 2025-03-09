@@ -1,9 +1,9 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("player_set_squid_s2c_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("player_set_squid_s2c_packet"));
 	private final boolean squid;
 	UUID target;
 	public PlayerSetSquidS2CPacket(UUID player, boolean squid)
@@ -20,25 +20,25 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 		this.squid = squid;
 		target = player;
 	}
-	public static PlayerSetSquidS2CPacket decode(RegistryByteBuf buffer)
+	public static PlayerSetSquidS2CPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new PlayerSetSquidS2CPacket(buffer.readUuid(), buffer.readBoolean());
+		return new PlayerSetSquidS2CPacket(buffer.readUUID(), buffer.readBoolean());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeUuid(target);
+		buffer.writeUUID(target);
 		buffer.writeBoolean(squid);
 	}
 	@Override
 	public void execute()
 	{
-		PlayerEntity player = MinecraftClient.getInstance().world.getPlayerByUuid(target);
+		Player player = Minecraft.getInstance().level.getPlayerByUUID(target);
 		if (player == null)
 		{
 			return;

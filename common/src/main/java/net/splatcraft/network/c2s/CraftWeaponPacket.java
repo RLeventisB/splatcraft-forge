@@ -1,13 +1,13 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.crafting.StackedIngredient;
 import net.splatcraft.crafting.WeaponWorkbenchRecipe;
@@ -19,35 +19,35 @@ import java.util.Optional;
 
 public class CraftWeaponPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(CraftWeaponPacket.class);
-	Identifier recipeID;
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(CraftWeaponPacket.class);
+	ResourceLocation recipeID;
 	int subtype;
-	public CraftWeaponPacket(Identifier recipeID, int subtype)
+	public CraftWeaponPacket(ResourceLocation recipeID, int subtype)
 	{
 		this.recipeID = recipeID;
 		this.subtype = subtype;
 	}
-	public static CraftWeaponPacket decode(RegistryByteBuf buffer)
+	public static CraftWeaponPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new CraftWeaponPacket(buffer.readIdentifier(), buffer.readInt());
+		return new CraftWeaponPacket(buffer.readResourceLocation(), buffer.readInt());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeIdentifier(recipeID);
+		buffer.writeResourceLocation(recipeID);
 		buffer.writeInt(subtype);
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
-		Optional<? extends RecipeEntry<?>> recipeOptional = player.getWorld().getRecipeManager().get(recipeID);
+		Optional<? extends RecipeHolder<?>> recipeOptional = player.level().getRecipeManager().byKey(recipeID);
 		
-		if (recipeOptional.isPresent() && recipeOptional.get().value() instanceof WeaponWorkbenchRecipe workbenchRecipe)
+		if (recipeOptional.isPresent() && recipeOptional.get().get() instanceof WeaponWorkbenchRecipe workbenchRecipe)
 		{
 			WeaponWorkbenchSubtypeRecipe recipe = workbenchRecipe.getRecipeFromIndex(player, subtype);
 			for (StackedIngredient ing : recipe.getInput())
@@ -66,21 +66,21 @@ public class CraftWeaponPacket extends PlayC2SPacket
 			
 			if (!output.isEmpty())
 			{
-				SplatcraftStats.CRAFT_WEAPON_TRIGGER.get().trigger((net.minecraft.server.network.ServerPlayerEntity) player, output.copy());
-				player.incrementStat(Stats.CRAFTED.getOrCreateStat(output.copy().getItem()));
-				player.incrementStat(SplatcraftStats.WEAPONS_CRAFTED);
+				SplatcraftStats.CRAFT_WEAPON_TRIGGER.get().trigger((net.minecraft.server.level.ServerPlayer) player, output.copy());
+				player.awardStat(Stats.ITEM_CRAFTED.get(output.copy().getItem()));
+				player.awardStat(SplatcraftStats.WEAPONS_CRAFTED);
 				
-				if (!player.giveItemStack(output))
+				if (!player.addItem(output))
 				{
-					ItemEntity item = player.dropItem(output, false);
+					ItemEntity item = player.drop(output, false);
 					if (item != null)
 					{
-						item.resetPickupDelay();
+						item.setNoPickUpDelay();
 					}
 				}
 				else
 				{
-					player.playerScreenHandler.sendContentUpdates();
+					player.inventoryMenu.broadcastChanges();
 				}
 			}
 		}

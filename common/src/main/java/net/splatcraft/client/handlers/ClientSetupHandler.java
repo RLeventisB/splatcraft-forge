@@ -1,25 +1,25 @@
 package net.splatcraft.client.handlers;
 
-import dev.architectury.registry.menu.MenuRegistry;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.color.block.BlockColorProvider;
+import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.color.item.ItemColorProvider;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.ScreenHandlerProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.client.gui.InkVatScreen;
 import net.splatcraft.client.gui.WeaponWorkbenchScreen;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.services.MenuScreenFactory;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
@@ -36,10 +36,10 @@ import java.util.function.BiConsumer;
 
 public class ClientSetupHandler
 {
-	public static <H extends ScreenHandler, S extends Screen & ScreenHandlerProvider<H>> void bindScreenContainers(BiConsumer<ScreenHandlerType<? extends H>, MenuRegistry.ScreenFactory<H, S>> register)
+	public static <H extends AbstractContainerMenu, S extends Screen & MenuAccess<H>> void bindScreenContainers(BiConsumer<MenuType<? extends H>, MenuScreenFactory<H, S>> register)
 	{
-		register.accept((ScreenHandlerType<? extends H>) SplatcraftTileEntities.inkVatContainer.get(), (a, e, i) -> (S) new InkVatScreen((InkVatContainer) a, e, i));
-		register.accept((ScreenHandlerType<? extends H>) SplatcraftTileEntities.weaponWorkbenchContainer.get(), (a, e, i) -> (S) new WeaponWorkbenchScreen((WeaponWorkbenchContainer) a, e, i));
+		register.accept((MenuType<? extends H>) SplatcraftTileEntities.inkVatContainer.get(), (a, e, i) -> (S) new InkVatScreen((InkVatContainer) a, e, i));
+		register.accept((MenuType<? extends H>) SplatcraftTileEntities.weaponWorkbenchContainer.get(), (a, e, i) -> (S) new WeaponWorkbenchScreen((WeaponWorkbenchContainer) a, e, i));
 	}
 	// todo: me thinks these are handled by the rendering but just in case i will put a todo here
 	public static void initItemColors(ItemColors colors)
@@ -51,7 +51,7 @@ public class ClientSetupHandler
 	}
 	public static void initBlockColors(BlockColors colors)
 	{
-		colors.registerColorProvider(new ColoredTileEntityColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
+		colors.register(new ColoredTileEntityColor(), SplatcraftBlocks.inkColoredBlocks.toArray(new Block[0]));
 	}
 	// https://github.com/MinecraftForge/MinecraftForge/blob/1.20.1/src/test/java/net/minecraftforge/debug/client/CustomTASTest.java
     /*@SubscribeEvent
@@ -59,17 +59,17 @@ public class ClientSetupHandler
     {
         event.register("weapon_loader", new WeaponLoader()); // so the gal deco texture has this!!! idk why but ok here it is
     }*/
-	protected static class InkItemColor implements ItemColorProvider
+	protected static class InkItemColor implements ItemColor
 	{
 		@Override
 		public int getColor(@NotNull ItemStack stack, int i)
 		{
-			if (i != 0 || !stack.contains(SplatcraftComponents.ITEM_COLOR_DATA))
+			if (i != 0 || !stack.has(SplatcraftComponents.ITEM_COLOR_DATA))
 				return -1;
 			
 			SplatcraftComponents.ItemColorData colorData = stack.get(SplatcraftComponents.ITEM_COLOR_DATA);
 			boolean isDefault = colorData.color().isInvalid() && !colorData.colorLocked();
-			InkColor color = (stack.isIn(SplatcraftTags.Items.INK_BANDS) || !stack.isIn(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
+			InkColor color = (stack.is(SplatcraftTags.Items.INK_BANDS) || !stack.is(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
 				? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : colorData.color();
 			color = ColorUtils.getColorLockedIfConfig(color);
 			
@@ -79,10 +79,10 @@ public class ClientSetupHandler
 			return color.getColorWithAlpha(255);
 		}
 	}
-	public static class ColoredTileEntityColor implements BlockColorProvider
+	public static class ColoredTileEntityColor implements BlockColor
 	{
 		@Override
-		public int getColor(@NotNull BlockState blockState, @Nullable BlockRenderView iBlockDisplayReader, @Nullable BlockPos blockPos, int i)
+		public int getColor(@NotNull BlockState blockState, @Nullable BlockAndTintGetter iBlockDisplayReader, @Nullable BlockPos blockPos, int i)
 		{
 			if (i != 0 || iBlockDisplayReader == null || blockPos == null)
 				return -1;
@@ -94,7 +94,7 @@ public class ClientSetupHandler
 			
 			InkColor color = ColorUtils.getInkColor(te);
 			
-			if (ColorUtils.isInverted(te.getWorld(), blockPos))
+			if (ColorUtils.isInverted(te.getLevel(), blockPos))
 				color = color.getInverted();
 			
 			color = ColorUtils.getColorLockedIfConfig(color);

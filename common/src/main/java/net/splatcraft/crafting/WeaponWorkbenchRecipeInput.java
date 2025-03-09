@@ -1,20 +1,20 @@
 package net.splatcraft.crafting;
 
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.input.RecipeInput;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeInput;
 
-public record WeaponWorkbenchRecipeInput(PlayerInventory inventory) implements RecipeInput
+public record WeaponWorkbenchRecipeInput(Inventory inventory) implements RecipeInput
 {
     @Override
-    public ItemStack getStackInSlot(int slot)
+    public ItemStack getItem(int slot)
     {
-        return inventory.getStack(slot);
+        return inventory.getItem(slot);
     }
 
     @Override
-    public int getSize()
+    public int size()
     {
-        return inventory.size();
+        return inventory.getContainerSize();
     }
 }

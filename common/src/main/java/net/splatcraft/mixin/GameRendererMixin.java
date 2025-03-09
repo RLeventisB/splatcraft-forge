@@ -1,7 +1,7 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.GameRenderer;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
@@ -18,7 +18,7 @@ public abstract class GameRendererMixin
      * Disables view bobbing if configured.
      */
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-    private void onBobView(MatrixStack matrices, float f, CallbackInfo ci)
+    private void onBobView(PoseStack matrices, float f, CallbackInfo ci)
     {
         if (ClientUtils.getClientPlayer() != null)
         {

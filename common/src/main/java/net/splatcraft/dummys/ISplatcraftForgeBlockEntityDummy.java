@@ -1,10 +1,10 @@
 package net.splatcraft.dummys;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public interface ISplatcraftForgeBlockEntityDummy
 {
@@ -12,16 +12,16 @@ public interface ISplatcraftForgeBlockEntityDummy
 	{
 		return (BlockEntity) this;
 	}
-	default void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookupProvider)
+	default void phOnDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider)
 	{
-		NbtCompound compoundtag = pkt.getNbt();
+		CompoundTag compoundtag = pkt.getTag();
 		if (!compoundtag.isEmpty())
 		{
-			self().read(compoundtag, lookupProvider);
+			self().loadWithComponents(compoundtag, lookupProvider);
 		}
 	}
-	default void phHandleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup lookupProvider)
+	default void phHandleUpdateTag(CompoundTag tag, HolderLookup.Provider lookupProvider)
 	{
-		self().read(tag, lookupProvider);
+		self().loadWithComponents(tag, lookupProvider);
 	}
 }

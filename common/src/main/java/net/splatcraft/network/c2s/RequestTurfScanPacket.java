@@ -1,12 +1,12 @@
 package net.splatcraft.network.c2s;
 
 import dev.architectury.utils.GameInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.predicate.entity.EntityPredicates;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.util.CommonUtils;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 
 public class RequestTurfScanPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestTurfScanPacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(RequestTurfScanPacket.class);
 	final String stageId;
 	final boolean isTopDown;
 	public RequestTurfScanPacket(String stageId, boolean isTopDown)
@@ -23,31 +23,31 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 		this.stageId = stageId;
 		this.isTopDown = isTopDown;
 	}
-	public static RequestTurfScanPacket decode(RegistryByteBuf buffer)
+	public static RequestTurfScanPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new RequestTurfScanPacket(buffer.readString(), buffer.readBoolean());
+		return new RequestTurfScanPacket(buffer.readUtf(), buffer.readBoolean());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeString(stageId);
+		buffer.writeUtf(stageId);
 		buffer.writeBoolean(isTopDown);
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
 		Stage stage = Stage.getStage(stageId);
-		ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+		ServerPlayer serverPlayer = (ServerPlayer) player;
 		
-		ServerWorld stageworld = stage.getStageWorld(GameInstance.getServer());
-		ArrayList<ServerPlayerEntity> playerList = new ArrayList<>(stageworld.getEntitiesByClass(ServerPlayerEntity.class, stage.getBounds(), EntityPredicates.EXCEPT_SPECTATOR));
+		ServerLevel stageworld = stage.getStageWorld(GameInstance.getServer());
+		ArrayList<ServerPlayer> playerList = new ArrayList<>(stageworld.getEntitiesOfClass(ServerPlayer.class, stage.getBounds(), EntitySelector.NO_SPECTATORS));
 		if (!playerList.contains(serverPlayer))
 			playerList.addFirst(serverPlayer);
-		player.sendMessage(TurfScannerItem.scanTurf(stageworld, stageworld, stage.cornerA, stage.cornerB, isTopDown ? 0 : 1, playerList).getOutput(), true);
+		player.displayClientMessage(TurfScannerItem.scanTurf(stageworld, stageworld, stage.cornerA, stage.cornerB, isTopDown ? 0 : 1, playerList).getOutput(), true);
 	}
 }

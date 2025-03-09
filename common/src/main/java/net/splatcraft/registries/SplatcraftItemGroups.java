@@ -1,14 +1,12 @@
 package net.splatcraft.registries;
 
 import dev.architectury.registry.CreativeTabRegistry;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.items.ColoredBlockItem;
@@ -26,128 +24,128 @@ import static net.splatcraft.registries.SplatcraftItems.*;
 public class SplatcraftItemGroups
 {
 	public static final ArrayList<Item> colorTabItems = new ArrayList<>();
-	protected static final DeferredRegister<ItemGroup> REGISTRY = Splatcraft.deferredRegistryOf(Registries.ITEM_GROUP);
-	public static final RegistrySupplier<ItemGroup> GROUP_GENERAL = REGISTRY.register(Splatcraft.identifierOf("splatcraft_general"), () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> sardiniumBlock.get().getDefaultStack())
-		.displayName(Text.translatable("itemGroup.splatcraft_general"))
-		.entries((parameters, output) ->
+	protected static final DeferredRegister<CreativeModeTab> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.CREATIVE_MODE_TAB);
+	public static final RegistrySupplier<CreativeModeTab> GROUP_GENERAL = REGISTRY.<CreativeModeTab>register(Splatcraft.identifierOf("splatcraft_general"), () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
+		.icon(() -> sardiniumBlock.get().getDefaultInstance())
+		.title(Component.translatable("itemGroup.splatcraft_general"))
+		.displayItems((parameters, output) ->
 		{
 			//Materials
-			output.add(sardinium.get());
-			output.add(sardiniumBlock.get());
-			output.add(rawSardinium.get());
-			output.add(rawSardiniumBlock.get());
-			output.add(sardiniumOre.get());
-			output.add(powerEgg.get());
-			output.add(powerEggCan.get());
-			output.add(powerEggBlock.get());
-			output.add(emptyInkwell.get());
-			output.add(ammoKnightsScrap.get());
-			output.add(blueprint.get());
-			output.add(kensaPin.get());
+			output.accept(sardinium.get());
+			output.accept(sardiniumBlock.get());
+			output.accept(rawSardinium.get());
+			output.accept(rawSardiniumBlock.get());
+			output.accept(sardiniumOre.get());
+			output.accept(powerEgg.get());
+			output.accept(powerEggCan.get());
+			output.accept(powerEggBlock.get());
+			output.accept(emptyInkwell.get());
+			output.accept(ammoKnightsScrap.get());
+			output.accept(blueprint.get());
+			output.accept(kensaPin.get());
 			
 			//Remotes
-			output.add(stagePad.get());
-			output.add(turfScanner.get());
-			output.add(inkDisruptor.get());
-			output.add(colorChanger.get());
-			output.add(remotePedestal.get());
+			output.accept(stagePad.get());
+			output.accept(turfScanner.get());
+			output.accept(inkDisruptor.get());
+			output.accept(colorChanger.get());
+			output.accept(remotePedestal.get());
 			
 			//Gear
-			output.add(superJumpLure.get());
-			output.add(specialProvider.get());
-			output.add(splatfestBand.get());
-			output.add(clearBand.get());
-			output.add(waxApplicator.get());
+			output.accept(superJumpLure.get());
+			output.accept(specialProvider.get());
+			output.accept(splatfestBand.get());
+			output.accept(clearBand.get());
+			output.accept(waxApplicator.get());
 			
 			//Filters
-			output.add(emptyFilter.get());
-			output.add(pastelFilter.get());
-			output.add(organicFilter.get());
-			output.add(neonFilter.get());
-			output.add(overgrownFilter.get());
-			output.add(midnightFilter.get());
-			output.add(enchantedFilter.get());
-			output.add(creativeFilter.get());
+			output.accept(emptyFilter.get());
+			output.accept(pastelFilter.get());
+			output.accept(organicFilter.get());
+			output.accept(neonFilter.get());
+			output.accept(overgrownFilter.get());
+			output.accept(midnightFilter.get());
+			output.accept(enchantedFilter.get());
+			output.accept(creativeFilter.get());
 			
 			//Crafting Stations
-			output.add(inkVat.get());
-			output.add(weaponWorkbench.get());
+			output.accept(inkVat.get());
+			output.accept(weaponWorkbench.get());
 			
 			//Colored Items
-			output.addAll(ColorUtils.getColorVariantsForItem(inkwell.get(), true, true, true));
-			output.addAll(ColorUtils.getColorVariantsForItem(spawnPad.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(squidBumper.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(inkedWool.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(inkedCarpet.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(inkedGlass.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(inkedGlassPane.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(inkwell.get(), true, true, true));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(spawnPad.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(squidBumper.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(inkedWool.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(inkedCarpet.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(inkedGlass.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(inkedGlassPane.get(), true, true, false));
 			
 			//Decor Blocks
-			output.add(canvas.get());
-			output.add(coralite.get());
-			output.add(coraliteSlab.get());
-			output.add(coraliteStairs.get());
-			output.add(grate.get());
-			output.add(grateRamp.get());
-			output.add(barrierBar.get());
-			output.add(platedBarrierBar.get());
-			output.add(cautionBarrierBar.get());
-			output.add(tarp.get());
-			output.add(glassCover.get());
-			output.add(crate.get());
-			output.add(sunkenCrate.get());
-			output.add(splatSwitch.get());
+			output.accept(canvas.get());
+			output.accept(coralite.get());
+			output.accept(coraliteSlab.get());
+			output.accept(coraliteStairs.get());
+			output.accept(grate.get());
+			output.accept(grateRamp.get());
+			output.accept(barrierBar.get());
+			output.accept(platedBarrierBar.get());
+			output.accept(cautionBarrierBar.get());
+			output.accept(tarp.get());
+			output.accept(glassCover.get());
+			output.accept(crate.get());
+			output.accept(sunkenCrate.get());
+			output.accept(splatSwitch.get());
 			
 			//Stage Barriers
-			output.add(stageBarrier.get());
-			output.add(stageVoid.get());
-			output.addAll(ColorUtils.getColorVariantsForItem(allowedColorBarrier.get(), true, true, false));
-			output.addAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
+			output.accept(stageBarrier.get());
+			output.accept(stageVoid.get());
+			output.acceptAll(ColorUtils.getColorVariantsForItem(allowedColorBarrier.get(), true, true, false));
+			output.acceptAll(ColorUtils.getColorVariantsForItem(deniedColorBarrier.get(), true, true, false));
 		}).build());
-	public static final RegistrySupplier<ItemGroup> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.withInkColor(splattershot.get().getDefaultStack(), ColorUtils.getOrange()))
-		.displayName(Text.translatable("itemGroup.splatcraft_weapons"))
-		.entries((parameters, output) ->
+	public static final RegistrySupplier<CreativeModeTab> GROUP_WEAPONS = REGISTRY.register("splatcraft_weapons", () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
+		.icon(() -> ColorUtils.withInkColor(splattershot.get().getDefaultInstance(), ColorUtils.getOrange()))
+		.title(Component.translatable("itemGroup.splatcraft_weapons"))
+		.displayItems((parameters, output) ->
 		{
 			List<WeaponBaseItem<?>> visibleWeapons = weapons.stream().filter(weapon -> !weapon.isSecret).toList();
-			output.addAll(visibleWeapons.stream().filter(weapon -> !(weapon instanceof SubWeaponItem)).map(Item::getDefaultStack).toList());
+			output.acceptAll(visibleWeapons.stream().filter(weapon -> !(weapon instanceof SubWeaponItem)).map(Item::getDefaultInstance).toList());
 			List<WeaponBaseItem<?>> subWeapons = visibleWeapons.stream().filter(weapon -> weapon instanceof SubWeaponItem).toList();
-			output.addAll(subWeapons.stream().map(Item::getDefaultStack).toList());
-			output.addAll(subWeapons.stream().map(weaponBaseItem ->
+			output.acceptAll(subWeapons.stream().map(Item::getDefaultInstance).toList());
+			output.acceptAll(subWeapons.stream().map(weaponBaseItem ->
 			{
-				ItemStack stack = weaponBaseItem.getDefaultStack();
+				ItemStack stack = weaponBaseItem.getDefaultInstance();
 				stack.set(SplatcraftComponents.SINGLE_USE, true);
 				return stack;
 			}).toList());
-			output.addAll(InkTankItem.inkTanks.stream().map(Item::getDefaultStack).toList());
+			output.acceptAll(InkTankItem.inkTanks.stream().map(Item::getDefaultInstance).toList());
 			
-			output.add(inkClothHelmet.get());
-			output.add(inkClothChestplate.get());
-			output.add(inkClothLeggings.get());
-			output.add(inkClothBoots.get());
+			output.accept(inkClothHelmet.get());
+			output.accept(inkClothChestplate.get());
+			output.accept(inkClothLeggings.get());
+			output.accept(inkClothBoots.get());
 		}).build());
-	public static final RegistrySupplier<ItemGroup> GROUP_COLORS = REGISTRY.register("splatcraft_colors", () -> ItemGroup.create(ItemGroup.Row.TOP, 1)
-		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultStack(), ColorUtils.getOrange()))
-		.displayName(Text.translatable("itemGroup.splatcraft_colors"))
-		.noRenderedName()
-		.entries((parameters, output) ->
+	public static final RegistrySupplier<CreativeModeTab> GROUP_COLORS = REGISTRY.<CreativeModeTab>register("splatcraft_colors", () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
+		.icon(() -> ColorUtils.withInkColor(inkwell.get().getDefaultInstance(), ColorUtils.getOrange()))
+		.title(Component.translatable("itemGroup.splatcraft_colors"))
+		.hideTitle()
+		.displayItems((parameters, output) ->
 		{
 			for (InkColor color : InkColorGroups.CREATIVE_TAB_COLORS.getAll())
 			{
 				for (Item item : colorTabItems)
-					output.add(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
+					output.accept(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
 			}
 			for (Item item : colorTabItems)
 			{
 				if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())
-					output.add(ColorUtils.withInvertedColor(new ItemStack(item), true));
+					output.accept(ColorUtils.withInvertedColor(new ItemStack(item), true));
 			}
 		})
 		.build());
 	public static void addSplatcraftItemsToVanillaGroups()
 	{
-		CreativeTabRegistry.append(ItemGroups.REDSTONE, splatSwitch);
-		CreativeTabRegistry.append(ItemGroups.REDSTONE, remotePedestal);
+		CreativeTabRegistry.append(CreativeModeTabs.REDSTONE_BLOCKS, splatSwitch);
+		CreativeTabRegistry.append(CreativeModeTabs.REDSTONE_BLOCKS, remotePedestal);
 	}
 }

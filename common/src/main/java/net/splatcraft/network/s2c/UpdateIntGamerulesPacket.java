@@ -1,8 +1,8 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.world.GameRules;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.GameRules;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
 
@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class UpdateIntGamerulesPacket extends PlayS2CPacket
 {
-    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
+    public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
     public TreeMap<Integer, Integer> intRules;
 
     public UpdateIntGamerulesPacket(TreeMap<Integer, Integer> intRules)
@@ -20,13 +20,13 @@ public class UpdateIntGamerulesPacket extends PlayS2CPacket
         this.intRules = intRules;
     }
 
-    public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntRule> rule, int value)
+    public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntegerValue> rule, int value)
     {
         intRules = new TreeMap<>();
         intRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
     }
 
-    public static UpdateIntGamerulesPacket decode(RegistryByteBuf buffer)
+    public static UpdateIntGamerulesPacket decode(RegistryFriendlyByteBuf buffer)
     {
         TreeMap<Integer, Integer> intRules = new TreeMap<>();
         int entrySize = buffer.readInt();
@@ -40,13 +40,13 @@ public class UpdateIntGamerulesPacket extends PlayS2CPacket
     }
 
     @Override
-    public Id<? extends CustomPayload> getId()
+    public Type<? extends CustomPacketPayload> type()
     {
         return ID;
     }
 
     @Override
-    public void encode(RegistryByteBuf buffer)
+    public void encode(RegistryFriendlyByteBuf buffer)
     {
         Set<Map.Entry<Integer, Integer>> entrySet = intRules.entrySet();
 

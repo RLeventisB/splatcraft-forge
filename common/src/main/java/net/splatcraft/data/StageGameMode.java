@@ -1,17 +1,17 @@
 package net.splatcraft.data;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 
 import java.util.Objects;
 
-public enum StageGameMode implements StringIdentifiable
+public enum StageGameMode implements StringRepresentable
 {
 	RECON(60 * 60, (session, world) -> true, (session, world) -> false, (session, world) ->
 	{
@@ -36,7 +36,7 @@ public enum StageGameMode implements StringIdentifiable
 	}, (session, world) ->
 	{
 	});
-	public static final Codec<StageGameMode> CODEC = StringIdentifiable.createCodec(StageGameMode::values);
+	public static final Codec<StageGameMode> CODEC = StringRepresentable.fromEnum(StageGameMode::values);
 	public final int DEFAULT_TIME_SECONDS;
 	public final GamemodeStagePredicateCallback playChecker;
 	public final GamemodePredicateCallback overtimeChecker;
@@ -54,35 +54,35 @@ public enum StageGameMode implements StringIdentifiable
 		this.tick = tick;
 		this.onEnd = onEnd;
 	}
-	public boolean canDoOn(Stage stage, World world)
+	public boolean canDoOn(Stage stage, Level world)
 	{
-		return playChecker.test(stage, (ServerWorld) world);
+		return playChecker.test(stage, (ServerLevel) world);
 	}
 	@Override
-	public String asString()
+	public String getSerializedName()
 	{
 		return name();
 	}
 	public interface GamemodeConsumerCallback
 	{
-		void consume(PlaySession session, ServerWorld world);
+		void consume(PlaySession session, ServerLevel world);
 	}
 	public interface GamemodePredicateCallback
 	{
-		boolean test(PlaySession session, ServerWorld world);
+		boolean test(PlaySession session, ServerLevel world);
 	}
 	public interface GamemodeStagePredicateCallback
 	{
-		boolean test(Stage stage, ServerWorld world);
+		boolean test(Stage stage, ServerLevel world);
 	}
 	public static class TurfWar
 	{
-		private static void onEnd(PlaySession session, ServerWorld world)
+		private static void onEnd(PlaySession session, ServerLevel world)
 		{
 			Stage stage = SaveInfoCapability.get().stages().get(session.stageId);
-			TurfScannerItem.scanTurf(world, world, stage.cornerA, stage.cornerB, 0, session.playerUuids.stream().map(uuid -> (ServerPlayerEntity) world.getPlayerByUuid(uuid)).filter(Objects::nonNull).toList());
+			TurfScannerItem.scanTurf(world, world, stage.cornerA, stage.cornerB, 0, session.playerUuids.stream().map(uuid -> (ServerPlayer) world.getPlayerByUUID(uuid)).filter(Objects::nonNull).toList());
 		}
-		public static boolean canStart(Stage stage, ServerWorld world)
+		public static boolean canStart(Stage stage, ServerLevel world)
 		{
 			InkDisruptorItem.clearInk(world, stage.cornerA, stage.cornerB, false);
 			

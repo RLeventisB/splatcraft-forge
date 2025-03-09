@@ -1,16 +1,16 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MovementType;
-import net.minecraft.item.Item;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.ThrowableExplodingSubDataRecord;
@@ -27,7 +27,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	protected int fuseTime = 0;
 	protected int prevFuseTime = 0;
 	protected boolean playedActivationSound = false;
-	public SplatBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, World world)
+	public SplatBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, Level world)
 	{
 		super(type, world);
 	}
@@ -44,18 +44,18 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		prevFuseTime = fuseTime;
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
 		
-		if (!isOnGround() || squaredDistanceTo(getVelocity()) > (double) 1.0E-5F)
+		if (!onGround() || distanceToSqr(getDeltaMovement()) > (double) 1.0E-5F)
 		{
 			float f1 = 0.98F;
-			if (isOnGround())
-				f1 = getWorld().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getSlipperiness();
+			if (onGround())
+				f1 = level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getFriction();
 			
 			f1 = (float) Math.min(0.98, f1 * 1.5f);
 			
-			setVelocity(getVelocity().multiply(f1, 0.98D, f1));
+			setDeltaMovement(getDeltaMovement().multiply(f1, 0.98D, f1));
 		}
 		
-		if (isOnGround())
+		if (onGround())
 		{
 			fuseTime++;
 		}
@@ -66,80 +66,80 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		}
 		else if (!playedActivationSound && fuseTime >= settings.subDataRecord.fuseTime() - 18)
 		{
-			getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundCategory.PLAYERS, 0.8F, 1f);
+			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
 		
-		move(MovementType.SELF, getVelocity());
+		move(MoverType.SELF, getDeltaMovement());
 	}
-	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings, Vec3d impactPos)
+	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings, Vec3 impactPos)
 	{
-		if (!getWorld().isClient())
+		if (!level().isClientSide())
 		{
 			InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
-			getWorld().sendEntityStatus(this, (byte) 1);
+			level().broadcastEntityEvent(this, (byte) 1);
 			discard();
 		}
-		getWorld().playSound(null, impactPos.x, impactPos.y, impactPos.z, SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
+		level().playSound(null, impactPos.x, impactPos.y, impactPos.z, SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 	}
 	@Override
 	public void handleMovement()
 	{
 	}
 	@Override
-	public void handleStatus(byte id)
+	public void handleEntityEvent(byte id)
 	{
-		super.handleStatus(id);
+		super.handleEntityEvent(id);
 		if (id == 1)
 		{
-			getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
 	@Override
-	protected void onEntityHit(EntityHitResult result)
+	protected void onHitEntity(EntityHitResult result)
 	{
-		super.onEntityHit(result);
+		super.onHitEntity(result);
 		
-		double velocityX = getVelocity().x * 0.3;
-		double velocityY = getVelocity().y;
-		double velocityZ = getVelocity().z * 0.3;
+		double velocityX = getDeltaMovement().x * 0.3;
+		double velocityY = getDeltaMovement().y;
+		double velocityZ = getDeltaMovement().z * 0.3;
 		double absVelocityX = Math.abs(velocityX);
 		double absVelocityY = Math.abs(velocityY);
 		double absVelocityZ = Math.abs(velocityZ);
 		
 		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
-			setVelocity(-velocityX, velocityY, velocityZ);
+			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (absVelocityY >= .02 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
-			setVelocity(velocityX, -velocityY * .5, velocityZ);
+			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
 		if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
-			setVelocity(velocityX, velocityY, -velocityZ);
+			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 	@Override
-	protected void onBlockHit(BlockHitResult result)
+	protected void onHitBlock(BlockHitResult result)
 	{
-		if (getWorld().getBlockState(result.getBlockPos()).getCollisionShape(getWorld(), result.getBlockPos()).getBoundingBox().maxY - (getBlockY() - getBlockY()) <= 0)
+		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (getBlockY() - getBlockY()) <= 0)
 			return;
 		
-		double velocityX = getVelocity().x;
-		double velocityY = getVelocity().y;
-		double velocityZ = getVelocity().z;
+		double velocityX = getDeltaMovement().x;
+		double velocityY = getDeltaMovement().y;
+		double velocityZ = getDeltaMovement().z;
 		
-		Direction blockFace = result.getSide();
+		Direction blockFace = result.getDirection();
 		
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
-			setVelocity(-velocityX, velocityY, velocityZ);
+			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (blockFace == Direction.DOWN)
-			setVelocity(velocityX, -velocityY * .3, velocityZ);
+			setDeltaMovement(velocityX, -velocityY * .3, velocityZ);
 		if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
-			setVelocity(velocityX, velocityY, -velocityZ);
+			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 	public float getFlashIntensity(float partialTicks)
 	{
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
 		if (settings.subDataRecord == null)
 			return 0;
-		return Math.max(0, MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+		return Math.max(0, Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
 	}
 	@Override
 	public void onCollidedWithObjectEntity(Entity entity)

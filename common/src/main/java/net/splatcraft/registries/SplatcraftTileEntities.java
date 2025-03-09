@@ -2,18 +2,16 @@ package net.splatcraft.registries;
 
 import com.google.common.base.Suppliers;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
 import net.splatcraft.client.renderer.tileentity.StageBarrierTileEntityRenderer;
@@ -26,10 +24,10 @@ import static net.splatcraft.registries.SplatcraftBlocks.*;
 // why does this file fuck up the formatter?????
 public class SplatcraftTileEntities
 {
-	protected static final DeferredRegister<BlockEntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(Registries.BLOCK_ENTITY_TYPE);
-	protected static final DeferredRegister<ScreenHandlerType<?>> CONTAINER_REGISTRY = Splatcraft.deferredRegistryOf(Registries.SCREEN_HANDLER);
+	protected static final DeferredRegister<BlockEntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.BLOCK_ENTITY_TYPE);
+	protected static final DeferredRegister<MenuType<?>> CONTAINER_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.MENU);
 	@SafeVarargs
-	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> registerTileEntity(String name, BlockEntityType.BlockEntityFactory<T> factoryIn, RegistrySupplier<? extends Block>... allowedBlocks)
+	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> registerTileEntity(String name, BlockEntityType.BlockEntitySupplier<T> factoryIn, RegistrySupplier<? extends Block>... allowedBlocks)
 	{
 		return REGISTRY.register(name, Suppliers.memoize(() ->
 		{
@@ -37,12 +35,12 @@ public class SplatcraftTileEntities
 			for (int i = 0; i < blocks.length; i++)
 				blocks[i] = allowedBlocks[i].get();
 			
-			return BlockEntityType.Builder.create(factoryIn, blocks).build(null);
+			return BlockEntityType.Builder.of(factoryIn, blocks).build(null);
 		}));
 	}
-	private static <T extends ScreenHandler> RegistrySupplier<ScreenHandlerType<T>> registerContainer(String name, ScreenHandlerType.Factory<T> factoryIn)
+	private static <T extends AbstractContainerMenu> RegistrySupplier<MenuType<T>> registerContainer(String name, MenuType.MenuSupplier<T> factoryIn)
 	{
-		return CONTAINER_REGISTRY.register(name, () -> new ScreenHandlerType<>(factoryIn, FeatureSet.empty()));
+		return CONTAINER_REGISTRY.register(name, () -> new MenuType<>(factoryIn, FeatureFlagSet.of()));
 	}
 	@Environment(EnvType.CLIENT)
 	public static void bindTESR()
@@ -52,8 +50,8 @@ public class SplatcraftTileEntities
 		BlockEntityRendererRegistry.register(colorBarrierTileEntity.get(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
 		BlockEntityRendererRegistry.register(remotePedestalTileEntity.get(), context -> new RemotePedestalTileEntityRenderer());
 	}
-	public static final RegistrySupplier<ScreenHandlerType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
-	public static final RegistrySupplier<ScreenHandlerType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);
+	public static final RegistrySupplier<MenuType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
+	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);
 	public static final RegistrySupplier<BlockEntityType<StageBarrierTileEntity>> stageBarrierTileEntity = registerTileEntity("stage_barrier", StageBarrierTileEntity::new, stageBarrier, stageVoid);
 	public static final RegistrySupplier<BlockEntityType<InkColorTileEntity>> colorTileEntity = registerTileEntity("color", InkColorTileEntity::new, inkedWool, inkedGlass, inkedGlassPane, inkedCarpet, canvas, splatSwitch, inkwell);
 	public static final RegistrySupplier<BlockEntityType<InkVatTileEntity>> inkVatTileEntity = registerTileEntity("ink_vat", InkVatTileEntity::new, inkVat);

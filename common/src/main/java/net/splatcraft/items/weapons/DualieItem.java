@@ -3,21 +3,19 @@ package net.splatcraft.items.weapons;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Hand;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.world.World;
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec2;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
@@ -25,6 +23,8 @@ import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
+import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -41,9 +41,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Optional;
-
-import static net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
-import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 
 @SuppressWarnings("UnusedReturnValue")
 public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
@@ -88,53 +85,53 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public static int getMaxRollCount(LivingEntity player)
 	{
 		float maxRolls = 0;
-		if (player.getMainHandStack().getItem() instanceof DualieItem dualieItem)
+		if (player.getMainHandItem().getItem() instanceof DualieItem dualieItem)
 		{
-			maxRolls += dualieItem.getSettings(player.getMainHandStack()).rollData.count();
+			maxRolls += dualieItem.getSettings(player.getMainHandItem()).rollData.count();
 		}
-		if (player.getOffHandStack().getItem() instanceof DualieItem dualieItem)
+		if (player.getOffhandItem().getItem() instanceof DualieItem dualieItem)
 		{
-			maxRolls += dualieItem.getSettings(player.getOffHandStack()).rollData.count();
+			maxRolls += dualieItem.getSettings(player.getOffhandItem()).rollData.count();
 		}
 		return (int) maxRolls;
 	}
-	public static Vec2f getDodgeRollVector(LivingEntity entity, float rollSpeed)
+	public static Vec2 getDodgeRollVector(LivingEntity entity, float rollSpeed)
 	{
-		Vec2f direction = new Vec2f(entity.sidewaysSpeed, entity.forwardSpeed);
-		float p_20018_ = entity.getYaw(); // Entity::getInputVector
-		Vec2f vec3 = direction.normalize().multiply(rollSpeed);
-		float f = MathHelper.sin(p_20018_ * (0.017453292f));
-		float f1 = MathHelper.cos(p_20018_ * (0.017453292f));
-		return new Vec2f(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
+		Vec2 direction = new Vec2(entity.xxa, entity.zza);
+		float p_20018_ = entity.getYRot(); // Entity::getInputVector
+		Vec2 vec3 = direction.normalized().scale(rollSpeed);
+		float f = Mth.sin(p_20018_ * (0.017453292f));
+		float f1 = Mth.cos(p_20018_ * (0.017453292f));
+		return new Vec2(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
 	}
 	public static boolean canPerformRoll(LivingEntity entity)
 	{
-		return (!EntityAction.hasEntityAction(entity) || (EntityAction.getEntityAction(entity) instanceof DodgeRollAction dodgeRoll && dodgeRoll.canCancelRoll())) && entity.jumping && (entity.sidewaysSpeed != 0 || entity.forwardSpeed != 0);
+		return (!EntityAction.hasEntityAction(entity) || (EntityAction.getEntityAction(entity) instanceof DodgeRollAction dodgeRoll && dodgeRoll.canCancelRoll())) && entity.jumping && (entity.xxa != 0 || entity.zza != 0);
 	}
 	@Override
 	public Class<DualieWeaponSettings> getSettingsClass()
 	{
 		return DualieWeaponSettings.class;
 	}
-	public void performRoll(LivingEntity entity, ItemStack activeDualie, Hand hand, int maxRolls, Vec2f rollPotency, boolean local)
+	public void performRoll(LivingEntity entity, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
 	{
 		int rollCount = getRollCount(entity);
 		
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
 		
-		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.getWorld().isClient()))
+		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()))
 		{
 			ShootingHandler.notifyForceEndShooting(entity);
 			int turretDuration = getRollTurretDuration(activeDualie);
-			if (entity instanceof PlayerEntity player)
-				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selectedSlot, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), player.getAbilities().allowFlying));
+			if (entity instanceof Player player)
+				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), player.getAbilities().mayfly));
 			else
 				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, -1, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), false));
 			
 			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
 	}
-	public ClampedModelPredicateProvider getIsLeft()
+	public ClampedItemPropertyFunction getIsLeft()
 	{
 		return (stack, level, entity, seed) ->
 		{
@@ -142,48 +139,48 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				return 0;
 			}
-			boolean mainLeft = entity.getMainArm().equals(Arm.LEFT);
+			boolean mainLeft = entity.getMainArm().equals(HumanoidArm.LEFT);
 			return
-				mainLeft && ItemStack.areItemsEqual(entity.getMainHandStack(), stack) ||
-					!mainLeft && ItemStack.areItemsEqual(entity.getOffHandStack(), stack) ? 1 : 0;
+				mainLeft && ItemStack.isSameItem(entity.getMainHandItem(), stack) ||
+					!mainLeft && ItemStack.isSameItem(entity.getOffhandItem(), stack) ? 1 : 0;
 		};
 	}
 	@Override
-	public @NotNull String getTranslationKey(ItemStack stack)
+	public @NotNull String getDescriptionId(ItemStack stack)
 	{
 		if (Boolean.TRUE.equals(stack.get(SplatcraftComponents.IS_PLURAL)))
 		{
-			return getTranslationKey() + ".plural";
+			return getDescriptionId() + ".plural";
 		}
-		return super.getTranslationKey(stack);
+		return super.getDescriptionId(stack);
 	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 		
 		if (entity instanceof LivingEntity livingEntity)
 		{
-			Hand hand = livingEntity.getStackInHand(Hand.MAIN_HAND).equals(stack) ? Hand.MAIN_HAND : Hand.OFF_HAND;
+			InteractionHand hand = livingEntity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 			
-			if (livingEntity.getStackInHand(hand).equals(stack) && livingEntity.getStackInHand(Hand.values()[(hand.ordinal() + 1) % Hand.values().length]).getItem().equals(stack.getItem()))
+			if (livingEntity.getItemInHand(hand).equals(stack) && livingEntity.getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
 			{
 				stack.set(SplatcraftComponents.IS_PLURAL, true);
 			}
 		}
 	}
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		doDodgeRollTick(user, stack);
-		super.usageTick(world, user, stack, remainingUseTicks);
+		super.onUseTick(world, user, stack, remainingUseTicks);
 	}
 	private void doDodgeRollTick(LivingEntity user, ItemStack stack)
 	{
 		ItemStack offhandDualie = ItemStack.EMPTY;
-		if (user.getActiveHand().equals(Hand.OFF_HAND) && user.getOffHandStack().equals(stack) && user.getOffHandStack().getItem() instanceof DualieItem)
+		if (user.getUsedItemHand().equals(InteractionHand.OFF_HAND) && user.getOffhandItem().equals(stack) && user.getOffhandItem().getItem() instanceof DualieItem)
 		{
-			offhandDualie = user.getOffHandStack();
+			offhandDualie = user.getOffhandItem();
 		}
 		
 		int rollCount = getRollCount(user);
@@ -209,18 +206,18 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			
 			if (enoughInk(user, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
 			{
-				Vec2f rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
+				Vec2 rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
 				
-				performRoll(user, stack, user.getActiveHand(), maxRolls, rollPotency, true);
-				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUuid(), activeDualie, user.getActiveHand(), maxRolls, rollPotency));
+				performRoll(user, stack, user.getUsedItemHand(), maxRolls, rollPotency, true);
+				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUUID(), activeDualie, user.getUsedItemHand(), maxRolls, rollPotency));
 			}
 		}
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		PlayerEntity player = (PlayerEntity) entity;
-		player.setBodyYaw(player.getBodyYaw()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
+		Player player = (Player) entity;
+		player.setYBodyRot(player.getVisualRotationYInDegrees()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 		
 		ShootingHandler.notifyStartShooting(entity);
 	}
@@ -228,12 +225,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
 	{
 		DualieWeaponSettings settings = getSettings(stack);
-		World world = entity.getWorld();
+		Level world = entity.level();
 		return ShootingHandler.FiringStatData.createFromShotData(settings.getShotData(entity),
 			null,
 			(data, accumulatedTime, entity1) ->
 			{
-				if (!world.isClient())
+				if (!world.isClientSide())
 				{
 					ShotDataRecord shotData = settings.getShotData(entity);
 					ProjectileDataRecord projectileData = settings.getProjectileData(entity);
@@ -241,7 +238,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 					{
 						float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), shotData.accuracyData());
-						ItemStack otherHand = entity.getStackInHand(CommonUtils.otherHand(data.hand));
+						ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(data.hand));
 						if (!otherHand.isEmpty() && otherHand.getItem() instanceof DualieItem)
 						{
 							stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, ShotDeviationHelper.getDeviationData(otherHand));
@@ -250,20 +247,20 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
 							
-							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
+							proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
 							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
 							proj.setDualieStats(projectileData);
-							world.spawnEntity(proj);
+							world.addFreshEntity(proj);
 							proj.tick(accumulatedTime);
 						}
 						
-						world.playSoundFromEntity(entity, SplatcraftSounds.dualieShot, SoundCategory.PLAYERS, 0.7F, (float) world.getRandom().nextTriangular(0.95f, 0.095f));
+						world.playLocalSound(entity, SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, (float) world.getRandom().triangle(0.95f, 0.095f));
 					}
 				}
 			}, null);
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		Optional<DodgeRollAction> optional = EntityAction.getSpecificActionIf(player, DodgeRollAction::forceCrouch, DodgeRollAction.class);
 		if (optional.isPresent())
@@ -289,11 +286,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		public final byte rollFrame, rollEndFrame, turretModeFrame;
 		final ItemStack storedStack;
 		final int slotIndex;
-		final Hand hand;
-		final Vec2f rollDirection;
+		final InteractionHand hand;
+		final Vec2 rollDirection;
 		final boolean canSlide, didAllowFlying;
 		RollState rollState = RollState.BEFORE_ROLL;
-		public DodgeRollAction(ItemStack stack, int slotIndex, Hand hand, Vec2f rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
 		{
 			super(startupFrames + rollDuration + endlagFrames + turretModeFrames);
 			storedStack = stack;
@@ -306,7 +303,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			this.canSlide = canSlide;
 			this.didAllowFlying = didAllowFlying;
 		}
-		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, Hand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2f rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2 rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
 		{
 			super(time, maxTime);
 			storedStack = stack;
@@ -323,16 +320,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		@Override
 		public void onStart(LivingEntity entity)
 		{
-			if (entity instanceof PlayerEntity player)
+			if (entity instanceof Player player)
 			{
-				player.getAbilities().allowFlying = false;
+				player.getAbilities().mayfly = false;
 				player.getAbilities().flying = false;
 			}
 		}
 		@Override
 		public void tick(LivingEntity entity)
 		{
-			boolean local = entity.getWorld().isClient;
+			boolean local = entity.level().isClientSide;
 			boolean doLogic = true;
 			while (doLogic)
 			{
@@ -343,12 +340,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (!local)
 							{
-								entity.getWorld().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(entity.getWorld().random, 0.95f, 0.095f));
-								InkExplosion.createInkExplosion(entity, entity.getPos(), 0.9f, InkBlockUtils.getInkType(entity), storedStack);
+								entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(entity.level().random, 0.95f, 0.095f));
+								InkExplosion.createInkExplosion(entity, entity.position(), 0.9f, InkBlockUtils.getInkType(entity), storedStack);
 							}
-							entity.setNoDrag(true);
+							entity.setDiscardFriction(true);
 							
-							entity.setVelocity(rollDirection.x, -0.5, rollDirection.y);
+							entity.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
 							rollState = RollState.ROLL;
 							break;
 						}
@@ -357,7 +354,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					case ROLL:
 						if (getTime() <= rollEndFrame)
 						{
-							entity.setNoDrag(false);
+							entity.setDiscardFriction(false);
 							
 							rollState = RollState.AFTER_ROLL;
 							break;
@@ -382,16 +379,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		public boolean canEnd(LivingEntity entity)
 		{
 			boolean endedTurretMode = entity.jumping ||
-				entity.forwardSpeed != 0 || entity.sidewaysSpeed != 0 || // these work in the client side
-				WeaponHandler.getEntityPrevPos(entity).oldOldPosition.squaredDistanceTo(entity.getPos()) > 0.01 || // this works in the server side
-				!entity.isUsingItem() || entity.getVelocity().y > 0.1;
+				entity.zza != 0 || entity.xxa != 0 || // these work in the client side
+				WeaponHandler.getEntityPrevPos(entity).oldOldPosition.distanceToSqr(entity.position()) > 0.01 || // this works in the server side
+				!entity.isUsingItem() || entity.getDeltaMovement().y > 0.1;
 			if (endedTurretMode)
 			{
 				EntityInfoCapability.get(entity).setDodgeCount(0);
 				ShootingHandler.notifyRecalculateShootingData(entity);
-				if (entity instanceof PlayerEntity player)
+				if (entity instanceof Player player)
 				{
-					player.getAbilities().allowFlying = didAllowFlying;
+					player.getAbilities().mayfly = didAllowFlying;
 				}
 				return true;
 			}
@@ -428,24 +425,24 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			return slotIndex;
 		}
 		@Override
-		public Hand getHand()
+		public InteractionHand getHand()
 		{
 			return hand;
 		}
-		public enum RollState implements StringIdentifiable
+		public enum RollState implements StringRepresentable
 		{
 			BEFORE_ROLL(0),
 			ROLL(1),
 			AFTER_ROLL(2),
 			TURRET(3);
-			public static final Codec<RollState> CODEC = StringIdentifiable.createCodec(RollState::values);
+			public static final Codec<RollState> CODEC = StringRepresentable.fromEnum(RollState::values);
 			final byte value;
 			RollState(int value)
 			{
 				this.value = (byte) value;
 			}
 			@Override
-			public String asString()
+			public String getSerializedName()
 			{
 				return name();
 			}

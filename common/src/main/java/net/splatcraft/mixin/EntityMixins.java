@@ -3,25 +3,25 @@ package net.splatcraft.mixin;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
@@ -66,7 +66,7 @@ public class EntityMixins
 		public void setSprinting(boolean sprinting, CallbackInfo ci)
 		{
 			Entity entity = (Entity) (Object) this;
-			if (!(entity instanceof PlayerEntity player) || !EntityInfoCapability.hasCapability(player))
+			if (!(entity instanceof Player player) || !EntityInfoCapability.hasCapability(player))
 			{
 				return;
 			}
@@ -76,17 +76,17 @@ public class EntityMixins
 				ci.cancel();
 			}
 		}
-		@WrapOperation(method = "spawnSprintingParticles", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;getRenderType()Lnet/minecraft/block/BlockRenderType;"))
-		public BlockRenderType addRunningEffects(BlockState instance, Operation<BlockRenderType> original)
+		@WrapOperation(method = "spawnSprintParticle", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getRenderShape()Lnet/minecraft/world/level/block/RenderShape;"))
+		public RenderShape addRunningEffects(BlockState instance, Operation<RenderShape> original)
 		{
 			Entity entity = ((Entity) (Object) this);
-			World world = entity.getWorld();
-			BlockPos pos = entity.getLandingPos();
+			Level world = entity.level();
+			BlockPos pos = entity.getOnPosLegacy();
 			if (InkBlockUtils.isInked(world, pos, Direction.UP))
 			{
-				ColorUtils.addInkSplashParticle(world, InkBlockUtils.getInkBlock(world, pos).color(Direction.UP.getId()), entity.getX() + world.getRandom().nextFloat() * entity.getWidth() - entity.getWidth() * 0.5,
-					entity.getBodyY(world.getRandom().nextFloat() * 0.3f), entity.getZ() + world.getRandom().nextFloat() * entity.getWidth() - entity.getWidth() * 0.5, 0.3f + world.random.nextFloat() * 0.4f);
-				return BlockRenderType.MODEL;
+				ColorUtils.addInkSplashParticle(world, InkBlockUtils.getInkBlock(world, pos).color(Direction.UP.get3DDataValue()), entity.getX() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5,
+					entity.getY(world.getRandom().nextFloat() * 0.3f), entity.getZ() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5, 0.3f + world.random.nextFloat() * 0.4f);
+				return RenderShape.MODEL;
 			}
 			
 			return original.call(instance);
@@ -96,14 +96,14 @@ public class EntityMixins
 		{
 			splatcraft$stepBlockPos = pos;
 		}
-		@WrapOperation(method = "playStepSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;playSound(Lnet/minecraft/sound/SoundEvent;FF)V"))
+		@WrapOperation(method = "playStepSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;playSound(Lnet/minecraft/sounds/SoundEvent;FF)V"))
 		public void getRunningSound(Entity instance, SoundEvent sound, float volume, float pitch, Operation<Void> original)
 		{
 			Entity entity = (Entity) (Object) this;
-			World world = entity.getWorld();
+			Level world = entity.level();
 			if (InkBlockUtils.isInked(world, splatcraft$stepBlockPos, Direction.UP))
 			{
-				BlockSoundGroup soundGroup = entity instanceof LivingEntity living && EntityInfoCapability.isSquid(living) && InkBlockUtils.canSquidSwim(living) ?
+				SoundType soundGroup = entity instanceof LivingEntity living && EntityInfoCapability.isSquid(living) && InkBlockUtils.canSquidSwim(living) ?
 					SplatcraftSounds.SOUND_TYPE_SWIMMING : SplatcraftSounds.SOUND_TYPE_INK;
 				original.call(instance, soundGroup.getFallSound(), volume, pitch);
 				return;
@@ -117,8 +117,8 @@ public class EntityMixins
 			SquidFormHandler.doSquidRotation(entity);
 			SplatcraftCommonHandler.onLivingTick(entity);
 		}
-		@Inject(method = "updateVelocity", at = @At("HEAD"), cancellable = true)
-		public void splatcraft$cancelMovementIfRoll(float speed, Vec3d movementInput, CallbackInfo ci)
+		@Inject(method = "moveRelative", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$cancelMovementIfRoll(float speed, Vec3 movementInput, CallbackInfo ci)
 		{
 			Entity entity = (Entity) (Object) this;
 			if (entity instanceof LivingEntity living)
@@ -132,22 +132,22 @@ public class EntityMixins
 	@Mixin(LivingEntity.class)
 	public static class LivingEntityMixin
 	{
-		@Inject(method = "damage", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;applyDamage(Lnet/minecraft/entity/damage/DamageSource;F)V"))
+		@Inject(method = "hurt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;actuallyHurt(Lnet/minecraft/world/damagesource/DamageSource;F)V"))
 		public void splatcraft$onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir)
 		{
 			SplatcraftCommonHandler.onPlayerAboutToDie((LivingEntity) (Object) this, amount);
 		}
-		@Inject(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getVelocity()Lnet/minecraft/util/math/Vec3d;"))
+		@Inject(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeltaMovement()Lnet/minecraft/world/phys/Vec3;"))
 		public void onJump(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			if (entity instanceof PlayerEntity player)
+			if (entity instanceof Player player)
 			{
-				for (var item : player.getInventory().main)
+				for (var item : player.getInventory().items)
 				{
 					splatcraft$processItemForJumpRng(item, entity);
 				}
-				for (var item : player.getInventory().offHand)
+				for (var item : player.getInventory().offhand)
 				{
 					splatcraft$processItemForJumpRng(item, entity);
 				}
@@ -158,19 +158,19 @@ public class EntityMixins
 			}
 			else
 			{
-				splatcraft$processItemForJumpRng(entity.getMainHandStack(), entity);
-				splatcraft$processItemForJumpRng(entity.getOffHandStack(), entity);
+				splatcraft$processItemForJumpRng(entity.getMainHandItem(), entity);
+				splatcraft$processItemForJumpRng(entity.getOffhandItem(), entity);
 			}
 			
 			SplatcraftCommonHandler.onPlayerJump(entity);
 			SquidFormHandler.modifyJumpSpeed(entity);
 		}
-		@Inject(method = "damage", at = @At("HEAD"))
+		@Inject(method = "hurt", at = @At("HEAD"))
 		public void splatcraft$failsafeDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir)
 		{
 			SquidFormHandler.onLivingHurt((LivingEntity) (Object) this, source, cir);
 		}
-		@Inject(method = "handleFallDamage", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir)
 		{
 			SquidFormHandler.cancelDamageIfSquid((LivingEntity) (Object) this, fallDistance, cir);
@@ -185,40 +185,40 @@ public class EntityMixins
 				ShotDeviationHelper.registerJumpForShotDeviation(stack, deviationData);
 			}
 		}
-		@ModifyReturnValue(method = "getAttackDistanceScalingFactor", at = @At("RETURN"))
+		@ModifyReturnValue(method = "getVisibilityPercent", at = @At("RETURN"))
 		public double splatcraft$modifyVisibility(double original)
 		{
 			SquidFormHandler.modifyVisibility((LivingEntity) (Object) this, original);
 			return original;
 		}
-		@WrapOperation(method = "fall", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnParticles(Lnet/minecraft/particle/ParticleEffect;DDDIDDDD)I"))
-		public int addLandingEffects(ServerWorld instance, ParticleEffect j, double v, double clientboundlevelparticlespacket, double i, int particle, double x, double y, double z, double count, Operation<Integer> original)
+		@WrapOperation(method = "checkFallDamage", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;sendParticles(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I"))
+		public int addLandingEffects(ServerLevel instance, ParticleOptions j, double v, double clientboundlevelparticlespacket, double i, int particle, double x, double y, double z, double count, Operation<Integer> original)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			BlockPos pos = entity.getLandingPos();
+			BlockPos pos = entity.getOnPosLegacy();
 			
-			if (InkBlockUtils.isInked(entity.getWorld(), pos, Direction.UP))
+			if (InkBlockUtils.isInked(entity.level(), pos, Direction.UP))
 			{
-				ColorUtils.addInkSplashParticle(entity.getWorld(), InkBlockUtils.getInkBlock(entity.getWorld(), pos).color(Direction.UP.getId()), entity.getX(), entity.getBodyY(entity.getWorld().getRandom().nextFloat() * 0.3f), entity.getZ(), (float) (Math.sqrt(i) * 0.3f));
+				ColorUtils.addInkSplashParticle(entity.level(), InkBlockUtils.getInkBlock(entity.level(), pos).color(Direction.UP.get3DDataValue()), entity.getX(), entity.getY(entity.level().getRandom().nextFloat() * 0.3f), entity.getZ(), (float) (Math.sqrt(i) * 0.3f));
 				return 0;
 			}
 			return original.call(instance, j, v, clientboundlevelparticlespacket, i, particle, x, y, z, count);
 		}
-		@WrapOperation(method = "playBlockFallSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;playSound(Lnet/minecraft/sound/SoundEvent;FF)V"))
+		@WrapOperation(method = "playBlockFallSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;playSound(Lnet/minecraft/sounds/SoundEvent;FF)V"))
 		public void splatcraft$getFallSound(LivingEntity instance, SoundEvent soundEvent, float volume, float pitch, Operation<Void> original)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			if (InkBlockUtils.isInked(entity.getWorld(), entity.getLandingPos(), Direction.UP))
+			if (InkBlockUtils.isInked(entity.level(), entity.getOnPosLegacy(), Direction.UP))
 			{
 				original.call(instance, SplatcraftSounds.SOUND_TYPE_INK.getFallSound(), volume, pitch);
 				return;
 			}
 			original.call(instance, soundEvent, volume, pitch);
 		}
-		@WrapOperation(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getJumpVelocity()F"))
+		@WrapOperation(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getJumpPower()F"))
 		public float splatcraft$cancelJumpIfRolling(LivingEntity instance, Operation<Float> original)
 		{
-			if (instance.isUsingItem() && instance.getActiveItem().getItem() instanceof DualieItem && (instance.sidewaysSpeed != 0 || instance.forwardSpeed != 0) || EntityAction.getSpecificActionIf(instance, dodgeRollAction -> !dodgeRollAction.canMove(), DualieItem.DodgeRollAction.class).isPresent())
+			if (instance.isUsingItem() && instance.getUseItem().getItem() instanceof DualieItem && (instance.xxa != 0 || instance.zza != 0) || EntityAction.getSpecificActionIf(instance, dodgeRollAction -> !dodgeRollAction.canMove(), DualieItem.DodgeRollAction.class).isPresent())
 				return 0;
 			return original.call(instance);
 		}
@@ -226,8 +226,8 @@ public class EntityMixins
 	@Mixin(EntityRenderer.class)
 	public static class EntityRendererMixin
 	{
-		@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderer;renderLabelIfPresent(Lnet/minecraft/entity/Entity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IF)V"))
-		public void splatcraft$colorLabel(EntityRenderer instance, Entity entity, Text text, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int light, float tickDelta, Operation<Void> original)
+		@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;renderNameTag(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V"))
+		public void splatcraft$colorLabel(EntityRenderer instance, Entity entity, Component text, PoseStack matrixStack, MultiBufferSource consumerProvider, int light, float tickDelta, Operation<Void> original)
 		{
 			original.call(instance, entity, RendererHandler.modifyNameplate(entity, text), matrixStack, consumerProvider, light, tickDelta);
 		}

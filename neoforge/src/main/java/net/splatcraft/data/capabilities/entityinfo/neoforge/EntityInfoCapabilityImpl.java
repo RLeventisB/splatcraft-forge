@@ -1,6 +1,6 @@
 package net.splatcraft.data.capabilities.entityinfo.neoforge;
 
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.neoforge.SplatcraftNeoForgeDataAttachments;
 

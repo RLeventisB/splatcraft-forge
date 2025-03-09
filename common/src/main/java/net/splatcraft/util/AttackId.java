@@ -5,12 +5,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.entity.Entity;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.splatcraft.Splatcraft;
 
 import java.util.Collection;
@@ -21,9 +21,9 @@ public abstract class AttackId
 {
 	public static final AttackId NONE = new EmptyAttackId();
 	public static final List<AttackId> attackIdList = new ObjectArrayList<>();
-	private static final RegistryKey<Registry<Class<?>>> REGISTRY_KEY = RegistryKey.ofRegistry(Splatcraft.identifierOf("attack_id"));
-	private static final SimpleRegistry<Class<?>> REGISTRY = new SimpleRegistry<>(REGISTRY_KEY, Lifecycle.stable());
-	private static final Object2ObjectOpenHashMap<Identifier, MapCodec<? extends AttackId>> ID_TO_CODEC_MAP = new Object2ObjectOpenHashMap<>();
+	private static final ResourceKey<Registry<Class<?>>> REGISTRY_KEY = ResourceKey.createRegistryKey(Splatcraft.identifierOf("attack_id"));
+	private static final MappedRegistry<Class<?>> REGISTRY = new MappedRegistry<>(REGISTRY_KEY, Lifecycle.stable());
+	private static final Object2ObjectOpenHashMap<ResourceLocation, MapCodec<? extends AttackId>> ID_TO_CODEC_MAP = new Object2ObjectOpenHashMap<>();
 	private static short nextAttackId = 0;
 	static
 	{
@@ -33,7 +33,7 @@ public abstract class AttackId
 	}
 	private static <T extends AttackId> void register(String name, MapCodec<? extends T> codec, Class<T> clazz)
 	{
-		Identifier id = Splatcraft.identifierOf(name);
+		ResourceLocation id = Splatcraft.identifierOf(name);
 		Registry.register(REGISTRY, id, clazz);
 		ID_TO_CODEC_MAP.put(id, codec);
 	}
@@ -69,7 +69,7 @@ public abstract class AttackId
 			throw new AssertionError("Error upon reading Identifier for an AttackId, field was not found.\n" + identifierField.error().get().message());
 		}
 		
-		DataResult<Identifier> identifierDataResult = Identifier.CODEC.parse(ops, identifierField.getOrThrow());
+		DataResult<ResourceLocation> identifierDataResult = ResourceLocation.CODEC.parse(ops, identifierField.getOrThrow());
 		if (identifierDataResult.isError())
 		{
 			throw new AssertionError("Error upon reading Identifier for an AttackId.\n" + identifierDataResult.error().get().message());
@@ -88,13 +88,13 @@ public abstract class AttackId
 	}
 	public static <T, A extends AttackId> T encodeAttackId(DynamicOps<T> ops, A attackId)
 	{
-		Identifier id = REGISTRY.getId(attackId.getClass());
+		ResourceLocation id = REGISTRY.getKey(attackId.getClass());
 		if (id == null)
 		{
 			throw new AssertionError("AttackId failed encoding, invalid id.");
 		}
 		
-		DataResult<T> identifierDataResult = Identifier.CODEC.encodeStart(ops, id);
+		DataResult<T> identifierDataResult = ResourceLocation.CODEC.encodeStart(ops, id);
 		if (identifierDataResult.isError())
 		{
 			throw new AssertionError("AttackId failed encoding, error upon encoding id %s.\n%s".formatted(id, identifierDataResult.error().get().message()));
@@ -167,7 +167,7 @@ public abstract class AttackId
 		public static final MapCodec<DefaultAttackId> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
 			Codec.SHORT.fieldOf("id").forGetter(DefaultAttackId::getId),
 			Codec.BYTE.fieldOf("projectile_count").forGetter(DefaultAttackId::getRemainingHits),
-			CodecUtils.collection(Uuids.CODEC, ObjectOpenHashSet::new).fieldOf("hit_enemies").forGetter(v -> v.hitEnemies)
+			CodecUtils.collection(UUIDUtil.AUTHLIB_CODEC, ObjectOpenHashSet::new).fieldOf("hit_enemies").forGetter(v -> v.hitEnemies)
 		).apply(inst, DefaultAttackId::new));
 		public final ObjectOpenHashSet<UUID> hitEnemies;
 		public DefaultAttackId(Short id)
@@ -190,9 +190,9 @@ public abstract class AttackId
 		}
 		public float getDamage(Entity entity, float damage)
 		{
-			if (!hitEnemies.contains(entity.getUuid()))
+			if (!hitEnemies.contains(entity.getUUID()))
 			{
-				hitEnemies.add(entity.getUuid());
+				hitEnemies.add(entity.getUUID());
 				return damage;
 			}
 			return 0;

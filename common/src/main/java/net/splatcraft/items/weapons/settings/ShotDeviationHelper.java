@@ -1,8 +1,8 @@
 package net.splatcraft.items.weapons.settings;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.CommonUtils;
 
@@ -17,16 +17,16 @@ public class ShotDeviationHelper
 		
 		stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, data
 			.withChanceDecreaseDelay(actualChanceResult.delay())
-			.withChance(actualChanceResult.value())
+			.withChance(actualChanceResult.get())
 			.withAirborneDecreaseDelay(airInfluenceResult.delay())
-			.withAirborneInfluence(airInfluenceResult.value())
+			.withAirborneInfluence(airInfluenceResult.get())
 		);
 	}
 	public static SplatcraftComponents.WeaponPrecisionData getDeviationData(ItemStack stack)
 	{
 		return stack.get(SplatcraftComponents.WEAPON_PRECISION_DATA);
 	}
-	public static float updateShotDeviation(ItemStack stack, Random random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
+	public static float updateShotDeviation(ItemStack stack, RandomSource random, CommonRecords.ShotDeviationDataRecord shotDeviationData)
 	{
 		SplatcraftComponents.WeaponPrecisionData data = getDeviationData(stack);
 		float chance = data.chance();
@@ -35,7 +35,7 @@ public class ShotDeviationHelper
 		
 		if (random.nextFloat() <= chance)
 		{
-			maxAngle = MathHelper.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
+			maxAngle = Mth.lerp(getModifiedAirInfluence(airborneInfluence), shotDeviationData.airborneShotDeviation(), shotDeviationData.groundShotDeviation());
 		}
 		
 		if (chance < shotDeviationData.maxDeviateChance())
@@ -46,7 +46,7 @@ public class ShotDeviationHelper
 	}
 	public static void registerJumpForShotDeviation(ItemStack stack, CommonRecords.ShotDeviationDataRecord shotDeviationData)
 	{
-		stack.apply(
+		stack.update(
 			SplatcraftComponents.WEAPON_PRECISION_DATA,
 			SplatcraftComponents.WeaponPrecisionData.DEFAULT,
 			v -> v.registerJump(shotDeviationData)

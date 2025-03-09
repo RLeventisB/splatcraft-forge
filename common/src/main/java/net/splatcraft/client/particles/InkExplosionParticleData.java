@@ -3,11 +3,11 @@ package net.splatcraft.client.particles;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.util.dynamic.Codecs;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.ExtraCodecs;
 import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +19,13 @@ public class InkExplosionParticleData extends InkSplashParticleData
 			Codec.FLOAT.fieldOf("r").forGetter(InkSplashParticleData::getRed),
 			Codec.FLOAT.fieldOf("g").forGetter(InkSplashParticleData::getGreen),
 			Codec.FLOAT.fieldOf("b").forGetter(InkSplashParticleData::getBlue),
-			Codecs.POSITIVE_FLOAT.fieldOf("scale").forGetter(InkSplashParticleData::getScale)
+			ExtraCodecs.POSITIVE_FLOAT.fieldOf("scale").forGetter(InkSplashParticleData::getScale)
 		).apply(instance, InkExplosionParticleData::new));
-	public static final PacketCodec<RegistryByteBuf, InkExplosionParticleData> PACKET_CODEC = PacketCodec.tuple(
-		PacketCodecs.FLOAT, InkSplashParticleData::getRed,
-		PacketCodecs.FLOAT, InkSplashParticleData::getGreen,
-		PacketCodecs.FLOAT, InkSplashParticleData::getBlue,
-		PacketCodecs.FLOAT, InkSplashParticleData::getScale,
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkExplosionParticleData> PACKET_CODEC = StreamCodec.composite(
+		ByteBufCodecs.FLOAT, InkSplashParticleData::getRed,
+		ByteBufCodecs.FLOAT, InkSplashParticleData::getGreen,
+		ByteBufCodecs.FLOAT, InkSplashParticleData::getBlue,
+		ByteBufCodecs.FLOAT, InkSplashParticleData::getScale,
 		InkExplosionParticleData::new);
 	public InkExplosionParticleData(InkColor color, float scale)
 	{

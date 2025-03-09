@@ -3,28 +3,28 @@ package net.splatcraft.loot;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.loot.function.LootFunction;
-import net.minecraft.loot.function.LootFunctionType;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.splatcraft.items.BlueprintItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public record BlueprintLootFunction(List<Identifier> advancementIds, String weaponType) implements LootFunction
+public record BlueprintLootFunction(List<ResourceLocation> advancementIds, String weaponType) implements LootItemFunction
 {
 	public static final MapCodec<BlueprintLootFunction> CODEC = RecordCodecBuilder.mapCodec(instance ->
 		instance.group(
-			Identifier.CODEC.listOf().optionalFieldOf("advancements", List.of()).forGetter(BlueprintLootFunction::advancementIds),
+			ResourceLocation.CODEC.listOf().optionalFieldOf("advancements", List.of()).forGetter(BlueprintLootFunction::advancementIds),
 			Codec.STRING.optionalFieldOf("weapon_pool", "").forGetter(BlueprintLootFunction::weaponType)
 		).apply(instance, BlueprintLootFunction::new)
 	);
 	@Override
-	public @NotNull LootFunctionType<? extends BlueprintLootFunction> getType()
+	public @NotNull LootItemFunctionType<? extends BlueprintLootFunction> getType()
 	{
-		return new LootFunctionType<>(CODEC);
+		return new LootItemFunctionType<>(CODEC);
 	}
 	@Override
 	public ItemStack apply(ItemStack stack, LootContext lootContext)

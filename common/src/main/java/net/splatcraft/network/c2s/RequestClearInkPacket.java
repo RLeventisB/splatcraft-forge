@@ -1,41 +1,41 @@
 package net.splatcraft.network.c2s;
 
 import dev.architectury.utils.GameInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.util.CommonUtils;
 
 public class RequestClearInkPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestClearInkPacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(RequestClearInkPacket.class);
 	final String stageId;
 	public RequestClearInkPacket(String stageId)
 	{
 		this.stageId = stageId;
 	}
-	public static RequestClearInkPacket decode(RegistryByteBuf buffer)
+	public static RequestClearInkPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new RequestClearInkPacket(buffer.readString());
+		return new RequestClearInkPacket(buffer.readUtf());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeString(stageId);
+		buffer.writeUtf(stageId);
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
 		Stage stage = Stage.getStage(stageId);
-		ServerWorld stageworld = stage.getStageWorld(GameInstance.getServer());
-		player.sendMessage(InkDisruptorItem.clearInk(stageworld, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
+		ServerLevel stageworld = stage.getStageWorld(GameInstance.getServer());
+		player.displayClientMessage(InkDisruptorItem.clearInk(stageworld, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
 	}
 }

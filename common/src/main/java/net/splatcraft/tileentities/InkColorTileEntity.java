@@ -1,16 +1,16 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -34,49 +34,49 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 		super(type, pos, state);
 	}
 	@Override
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
+	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup)
 	{
 		if (!team.isEmpty())
 			nbt.putString("Team", team);
 		// no i wont save them like a normal person instead i will make an ItemColorData for each one of them
 		nbt.put("ColorData", SplatcraftComponents.ItemColorData.CODEC.encode(new SplatcraftComponents.ItemColorData(true, inverted, color), NbtOps.INSTANCE, nbt).getOrThrow());
-		super.writeNbt(nbt, registryLookup);
+		super.saveAdditional(nbt, registryLookup);
 	}
 	//Nbt Read
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider registryLookup)
 	{
-		super.readNbt(nbt, registryLookup);
+		super.loadAdditional(nbt, registryLookup);
 		SplatcraftComponents.ItemColorData colorData = SplatcraftComponents.ItemColorData.CODEC.decode(NbtOps.INSTANCE, nbt.get("ColorData")).getOrThrow().getFirst();
 		color = colorData.color();
 		inverted = colorData.hasInvertedColor();
 		team = nbt.getString("Team");
 	}
 	@Override
-	public @Nullable Packet<ClientPlayPacketListener> toUpdatePacket()
+	public @Nullable Packet<ClientGamePacketListener> getUpdatePacket()
 	{
-		return BlockEntityUpdateS2CPacket.create(this);
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	@Override
-	public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup)
+	public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup)
 	{
-		NbtCompound nbt = new NbtCompound();
-		writeNbt(nbt, registryLookup);
+		CompoundTag nbt = new CompoundTag();
+		saveAdditional(nbt, registryLookup);
 		return nbt;
 	}
 	@Override
-	public void phHandleUpdateTag(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup)
+	public void phHandleUpdateTag(CompoundTag tag, HolderLookup.Provider registryLookup)
 	{
-		read(tag, registryLookup);
+		loadWithComponents(tag, registryLookup);
 	}
 	@Override
-	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookupProvider)
+	public void phOnDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider)
 	{
-		if (world != null)
+		if (level != null)
 		{
-			BlockState state = world.getBlockState(getPos());
-			world.updateListeners(getPos(), state, state, 2);
-			phHandleUpdateTag(pkt.getNbt(), lookupProvider);
+			BlockState state = level.getBlockState(getBlockPos());
+			level.sendBlockUpdated(getBlockPos(), state, state, 2);
+			phHandleUpdateTag(pkt.getTag(), lookupProvider);
 		}
 	}
 	public InkColor getInkColor()

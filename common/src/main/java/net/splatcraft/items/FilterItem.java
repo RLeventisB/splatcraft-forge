@@ -1,17 +1,17 @@
 package net.splatcraft.items;
 
 import com.google.common.collect.Lists;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Rarity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
 
 public class FilterItem extends Item
 {
@@ -21,7 +21,7 @@ public class FilterItem extends Item
 
     public FilterItem(Rarity rarity, boolean isGlowing, boolean isOmni)
     {
-        super(new Settings().maxCount(1).rarity(rarity));
+        super(new Properties().stacksTo(1).rarity(rarity));
         this.isGlowing = isGlowing;
         this.isOmni = isOmni;
 
@@ -34,14 +34,14 @@ public class FilterItem extends Item
     }
 
     @Override
-    public void appendTooltip(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType isAdvanced)
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag isAdvanced)
     {
-        super.appendTooltip(stack, context, tooltip, isAdvanced);
-        tooltip.add(Text.translatable("item.splatcraft.filter.tooltip").formatted(Formatting.GRAY));
+        super.appendHoverText(stack, context, tooltip, isAdvanced);
+        tooltip.add(Component.translatable("item.splatcraft.filter.tooltip").withStyle(ChatFormatting.GRAY));
     }
 
     @Override
-    public boolean hasGlint(@NotNull ItemStack stack)
+    public boolean isFoil(@NotNull ItemStack stack)
     {
         return isGlowing;
     }

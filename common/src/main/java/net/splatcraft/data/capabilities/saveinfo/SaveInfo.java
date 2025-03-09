@@ -10,13 +10,13 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.fabricmc.api.EnvType;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -48,7 +48,7 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 		if (Platform.getEnv().equals(EnvType.CLIENT))
 			ClientTickEvent.CLIENT_LEVEL_POST.register(SaveInfo::tickPlaySessionsClient);
 	}
-	private static void tickPlaySessionsClient(ClientWorld world)
+	private static void tickPlaySessionsClient(ClientLevel world)
 	{
 		SaveInfo info = SaveInfoCapability.get();
 		for (PlaySession session : info.playSessions().values())
@@ -82,7 +82,7 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	{
 		colorScores.remove(color);
 	}
-	public boolean createOrEditStage(MinecraftServer server, RegistryKey<World> worldKey, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	public boolean createOrEditStage(MinecraftServer server, ResourceKey<Level> worldKey, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
 	{
 		if (stages.containsKey(stageId))
 		{
@@ -97,21 +97,21 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		return true;
 	}
-	public boolean createStage(ServerWorld world, String stageId, BlockPos corner1, BlockPos corner2, Text stageName)
+	public boolean createStage(ServerLevel world, String stageId, BlockPos corner1, BlockPos corner2, Component stageName)
 	{
-		if (world.isClient())
+		if (world.isClientSide())
 			return false;
 		
 		if (stages.containsKey(stageId))
 			return false;
 		
-		stages.put(stageId, new Stage(world.getServer(), world.getRegistryKey(), corner1, corner2, stageId, stageName));
+		stages.put(stageId, new Stage(world.getServer(), world.dimension(), corner1, corner2, stageId, stageName));
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		return true;
 	}
-	public boolean createStage(ServerWorld world, String stageId, BlockPos corner1, BlockPos corner2)
+	public boolean createStage(ServerLevel world, String stageId, BlockPos corner1, BlockPos corner2)
 	{
-		return createStage(world, stageId, corner1, corner2, Text.literal(stageId));
+		return createStage(world, stageId, corner1, corner2, Component.literal(stageId));
 	}
 	// this is mostly so if i do something funny
 	public static class ImmutableObjectArrayList<A> extends ObjectArrayList<A>

@@ -1,10 +1,10 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
@@ -17,14 +17,14 @@ import java.util.Map;
 
 public class WatchInkPacket extends IncrementalChunkBasedPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(WatchInkPacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(WatchInkPacket.class);
 	private final HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty;
 	public WatchInkPacket(ChunkPos chunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty)
 	{
 		super(chunkPos);
 		this.dirty = dirty;
 	}
-	public static WatchInkPacket decode(RegistryByteBuf buffer)
+	public static WatchInkPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		ChunkPos pos = buffer.readChunkPos();
 		HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
@@ -35,12 +35,12 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 		return new WatchInkPacket(pos, dirty);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void add(World world, BlockPos pos)
+	public void add(Level world, BlockPos pos)
 	{
 		add(pos, InkBlockUtils.getInkBlock(world, pos));
 	}
@@ -52,7 +52,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 			Splatcraft.LOGGER.warn("Tried adding null ink object");
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());

@@ -1,20 +1,20 @@
 package net.splatcraft.items.remotes;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.text.Texts;
-import net.minecraft.util.Rarity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.data.Stage;
@@ -39,17 +39,17 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 {
 	public ColorChangerItem()
 	{
-		super(new Settings().maxCount(1).rarity(Rarity.UNCOMMON), 3);
+		super(new Properties().stacksTo(1).rarity(Rarity.UNCOMMON), 3);
 		SplatcraftItems.inkColoredItems.add(this);
 	}
-	public static RemoteResult replaceColor(World world, BlockPos from, BlockPos to, InkColor color, int mode, InkColor affectedColor, String stage, String affectedTeam)
+	public static RemoteResult replaceColor(Level world, BlockPos from, BlockPos to, InkColor color, int mode, InkColor affectedColor, String stage, String affectedTeam)
 	{
-		if (!world.isInBuildLimit(from) || !world.isInBuildLimit(to))
-			return createResult(false, Text.translatable("status.change_color.out_of_world"));
+		if (!world.isInWorldBounds(from) || !world.isInWorldBounds(to))
+			return createResult(false, Component.translatable("status.change_color.out_of_world"));
 		
-		Box bounds = Box.enclosing(from, to);
+		AABB bounds = AABB.encapsulatingFullBlocks(from, to);
 		AtomicInteger count = new AtomicInteger();
-		int blockTotal = (int) (bounds.getLengthX() * bounds.getLengthY() * bounds.getLengthZ());
+		int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
 		
 		ColorUtils.forEachColoredBlockInBounds(world, bounds, ((pos, coloredBlock, blockEntity) ->
 		{
@@ -67,27 +67,27 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 		{
 			Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 			stages.get(stage).setTeamColor(affectedTeam, color);
-			if (!world.isClient())
+			if (!world.isClientSide())
 				SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		}
 		
-		return createResult(true, Text.translatable("status.change_color.success", count, world.isClient() ? ColorUtils.getFormatedColorName(color, false) : InkColorCommand.getColorName(color))).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
+		return createResult(true, Component.translatable("status.change_color.success", count, world.isClientSide() ? ColorUtils.getFormatedColorName(color, false) : InkColorCommand.getColorName(color))).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
 	}
 	@Override
-	public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
+	public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 		
-		ComponentMap components = stack.getComponents();
+		DataComponentMap components = stack.getComponents();
 		
-		if (components.contains(SplatcraftComponents.TEAM_ID))
+		if (components.has(SplatcraftComponents.TEAM_ID))
 		{
 			String teamId = components.get(SplatcraftComponents.TEAM_ID);
 			if (!teamId.isEmpty())
 			{
 				InkColor color = InkColor.INVALID;
 				
-				if (components.contains(SplatcraftComponents.REMOTE_INFO))
+				if (components.has(SplatcraftComponents.REMOTE_INFO))
 				{
 					String stage = components.get(SplatcraftComponents.REMOTE_INFO).stageId().get();
 					if (SaveInfoCapability.get().stages().containsKey(stage))
@@ -95,7 +95,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 						color = SaveInfoCapability.get().stages().get(stage).getTeamColor(teamId);
 					}
 				}
-				tooltip.add(Texts.setStyleIfAbsent(Text.literal(teamId), !color.isValid() ? TARGETS_STYLE : TARGETS_STYLE.withColor(TextColor.fromRgb(color.getColorWithAlpha(255)))));
+				tooltip.add(ComponentUtils.mergeStyles(Component.literal(teamId), !color.isValid() ? TARGETS_STYLE : TARGETS_STYLE.withColor(TextColor.fromRgb(color.getColorWithAlpha(255)))));
 			}
 		}
 		
@@ -103,11 +103,11 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
 	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 		
-		if (entity instanceof PlayerEntity player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
+		if (entity instanceof Player player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
 			&& EntityInfoCapability.hasCapability(player))
 		{
 			ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
@@ -116,31 +116,31 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 	@Override
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
-		BlockPos pos = entity.getBlockPos().down();
+		BlockPos pos = entity.blockPosition().below();
 		
-		if (entity.getWorld().getBlockState(pos).getBlock() instanceof InkwellBlock)
+		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
-			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.getWorld(), pos))
+			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
 			{
-				ColorUtils.withInkColor(entity.getStack(), ColorUtils.getEffectiveColor(entity.getWorld(), pos));
-				ColorUtils.withColorLocked(entity.getStack(), true);
+				ColorUtils.withInkColor(entity.getItem(), ColorUtils.getEffectiveColor(entity.level(), pos));
+				ColorUtils.withColorLocked(entity.getItem(), true);
 			}
 		}
 		
 		return false;
 	}
 	@Override
-	public RemoteResult onRemoteUse(World usedOnWorld, BlockPos from, BlockPos to, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayerEntity> targets)
+	public RemoteResult onRemoteUse(Level usedOnWorld, BlockPos from, BlockPos to, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayer> targets)
 	{
 		String stage = "";
 		String team = "";
 		
-		ComponentMap components = stack.getComponents();
-		if (!components.contains(SplatcraftComponents.TEAM_ID))
+		DataComponentMap components = stack.getComponents();
+		if (!components.has(SplatcraftComponents.TEAM_ID))
 		{
 			team = components.get(SplatcraftComponents.TEAM_ID);
 		}
-		if (!components.contains(SplatcraftComponents.REMOTE_INFO))
+		if (!components.has(SplatcraftComponents.REMOTE_INFO))
 		{
 			stage = components.get(SplatcraftComponents.REMOTE_INFO).stageId().get();
 		}

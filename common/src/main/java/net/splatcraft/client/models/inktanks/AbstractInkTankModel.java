@@ -1,13 +1,12 @@
 package net.splatcraft.client.models.inktanks;
 
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.world.entity.LivingEntity;
 
 public abstract class AbstractInkTankModel extends EntityModel<LivingEntity>
 {
@@ -42,11 +41,11 @@ public abstract class AbstractInkTankModel extends EntityModel<LivingEntity>
 				continue;
 			}
 			box.visible = true;
-			box.pivotY = 23.25F - Math.min(i * inkPctg, i);
+			box.y = 23.25F - Math.min(i * inkPctg, i);
 		}
 	}
 	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color)
+	public void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, int color)
 	{
 		Iterable<ModelPart> parts = (color == -1 ? getTankParts() : getInkLevelParts());
 		parts.forEach((modelPart) ->

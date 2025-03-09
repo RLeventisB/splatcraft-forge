@@ -1,40 +1,44 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.enums.NoteBlockInstrument;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContextParameterSet;
-import net.minecraft.loot.context.LootContextParameters;
-import net.minecraft.loot.context.LootContextTypes;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.stat.Stats;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftGameRules;
@@ -51,46 +55,46 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvider
+public class CrateBlock extends Block implements IColoredBlock, EntityBlock
 {
-	public static final IntProperty STATE = IntProperty.of("state", 0, 4);
-	public static final RegistryKey<LootTable> STORAGE_SUNKEN_CRATE = RegistryKey.of(RegistryKeys.LOOT_TABLE, Splatcraft.identifierOf("storage/sunken_crate"));
-	public static final RegistryKey<LootTable> STORAGE_EGG_CRATE = RegistryKey.of(RegistryKeys.LOOT_TABLE, Splatcraft.identifierOf("storage/egg_crate"));
+	public static final IntegerProperty STATE = IntegerProperty.create("state", 0, 4);
+	public static final ResourceKey<LootTable> STORAGE_SUNKEN_CRATE = ResourceKey.create(Registries.LOOT_TABLE, Splatcraft.identifierOf("storage/sunken_crate"));
+	public static final ResourceKey<LootTable> STORAGE_EGG_CRATE = ResourceKey.create(Registries.LOOT_TABLE, Splatcraft.identifierOf("storage/egg_crate"));
 	public final boolean isSunken;
 	public CrateBlock(String name, boolean isSunken)
 	{
-		super(AbstractBlock.Settings.create().mapColor(MapColor.BROWN).burnable().instrument(NoteBlockInstrument.BASS).sounds(BlockSoundGroup.WOOD).strength(2.0f));
+		super(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).ignitedByLava().instrument(NoteBlockInstrument.BASS).sound(SoundType.WOOD).strength(2.0f));
 		
 		this.isSunken = isSunken;
 		
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 	}
-	public static List<ItemStack> generateLoot(World world, CrateTileEntity crate, BlockState state, float luckValue)
+	public static List<ItemStack> generateLoot(Level world, CrateTileEntity crate, BlockState state, float luckValue)
 	{
-		if (!(world instanceof ServerWorld serverWorld))
+		if (!(world instanceof ServerLevel serverWorld))
 			return Collections.emptyList();
 		
-		BlockPos pos = crate.getPos();
+		BlockPos pos = crate.getBlockPos();
 		
-		LootContextParameterSet.Builder contextBuilder = new LootContextParameterSet.Builder(serverWorld);
-		return serverWorld.getServer().getReloadableRegistries().getLootTable(crate.getLootTable()).generateLoot(contextBuilder.luck(luckValue)
-			.add(LootContextParameters.BLOCK_STATE, state).add(LootContextParameters.TOOL, ItemStack.EMPTY).add(LootContextParameters.ORIGIN, new Vec3d(pos.getX(), pos.getY(), pos.getZ())).build(LootContextTypes.BLOCK));
+		LootParams.Builder contextBuilder = new LootParams.Builder(serverWorld);
+		return serverWorld.getServer().reloadableRegistries().getLootTable(crate.getLootTable()).getRandomItems(contextBuilder.withLuck(luckValue)
+			.withParameter(LootContextParams.BLOCK_STATE, state).withParameter(LootContextParams.TOOL, ItemStack.EMPTY).withParameter(LootContextParams.ORIGIN, new Vec3(pos.getX(), pos.getY(), pos.getZ())).create(LootContextParamSets.BLOCK));
 	}
 	@Override
-	public void appendTooltip(@NotNull ItemStack stack, @Nullable Item.TooltipContext levelIn, @NotNull List<Text> tooltip, @NotNull TooltipType type)
+	public void appendHoverText(@NotNull ItemStack stack, @Nullable Item.TooltipContext levelIn, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
-		super.appendTooltip(stack, levelIn, tooltip, type);
-		NbtCompound nbt = stack.getOrDefault(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.of(new NbtCompound())).copyNbt();
+		super.appendHoverText(stack, levelIn, tooltip, type);
+		CompoundTag nbt = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(new CompoundTag())).copyTag();
 		if (!isSunken && nbt == null)
 			return;
 		
 		if (isSunken || nbt.contains("LootTable"))
-			tooltip.add(Text.translatable("block.splatcraft.crate.loot"));
-		else if (nbt.contains("Items", NbtElement.LIST_TYPE))
+			tooltip.add(Component.translatable("block.splatcraft.crate.loot"));
+		else if (nbt.contains("Items", Tag.TAG_LIST))
 		{
-			DefaultedList<ItemStack> nonnulllist = DefaultedList.ofSize(27, ItemStack.EMPTY);
+			NonNullList<ItemStack> nonnulllist = NonNullList.withSize(27, ItemStack.EMPTY);
 			
-			Inventories.readNbt(nbt, nonnulllist, levelIn.getRegistryLookup());
+			ContainerHelper.loadAllItems(nbt, nonnulllist, levelIn.registries());
 			int i = 0;
 			int j = 0;
 			
@@ -102,7 +106,7 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 					if (i <= 4)
 					{
 						++i;
-						MutableText iformattabletextcomponent = itemstack.getName().copy();
+						MutableComponent iformattabletextcomponent = itemstack.getHoverName().copy();
 						iformattabletextcomponent.append(" x").append(String.valueOf(itemstack.getCount()));
 						tooltip.add(iformattabletextcomponent);
 					}
@@ -111,66 +115,66 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 			
 			if (j - i > 0)
 			{
-				tooltip.add(Text.translatable("container.shulkerBox.more", j - i).formatted(Formatting.ITALIC));
+				tooltip.add(Component.translatable("container.shulkerBox.more", j - i).withStyle(ChatFormatting.ITALIC));
 			}
 		}
 	}
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
 	{
 		builder.add(STATE);
 	}
 	@Override
-	public @NotNull BlockState getStateForNeighborUpdate(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, WorldAccess levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
+	public @NotNull BlockState updateShape(@NotNull BlockState stateIn, @NotNull Direction facing, @NotNull BlockState facingState, LevelAccessor levelIn, @NotNull BlockPos currentPos, @NotNull BlockPos facingPos)
 	{
 		if (levelIn.getBlockEntity(currentPos) instanceof CrateTileEntity crateTile)
 		{
-			return stateIn.with(STATE, crateTile.getState());
+			return stateIn.setValue(STATE, crateTile.getState());
 		}
 		
-		return super.getStateForNeighborUpdate(stateIn, facing, facingState, levelIn, currentPos, facingPos);
+		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 	@Override
-	public boolean hasComparatorOutput(@NotNull BlockState state)
+	public boolean hasAnalogOutputSignal(@NotNull BlockState state)
 	{
 		return !isSunken;
 	}
 	@Override
-	public int getComparatorOutput(@NotNull BlockState blockState, @NotNull World levelIn, @NotNull BlockPos pos)
+	public int getAnalogOutputSignal(@NotNull BlockState blockState, @NotNull Level levelIn, @NotNull BlockPos pos)
 	{
 		
 		if (isSunken || !(levelIn.getBlockEntity(pos) instanceof CrateTileEntity crateTile))
 		{
 			return 0;
 		}
-		ItemStack stack = crateTile.getStack(0);
-		return (int) Math.ceil(stack.getCount() / (float) stack.getMaxCount() * 15);
+		ItemStack stack = crateTile.getItem(0);
+		return (int) Math.ceil(stack.getCount() / (float) stack.getMaxStackSize() * 15);
 	}
 	@Override
-	public void afterBreak(World world, PlayerEntity player, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable BlockEntity te, @NotNull ItemStack stack)
+	public void playerDestroy(Level world, Player player, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable BlockEntity te, @NotNull ItemStack stack)
 	{
-		player.incrementStat(Stats.MINED.getOrCreateStat(this));
-		player.addExhaustion(0.005F);
+		player.awardStat(Stats.BLOCK_MINED.get(this));
+		player.causeFoodExhaustion(0.005F);
 		
-		if (world.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && EnchantmentHelper.getLevel(CommonUtils.getEnchantmentEntry(world, Enchantments.SILK_TOUCH), stack) <= 0 && world.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
+		if (world.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && EnchantmentHelper.getItemEnchantmentLevel(CommonUtils.getEnchantmentEntry(world, Enchantments.SILK_TOUCH), stack) <= 0 && world.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
 		{
 			crateTileEntity.dropInventory();
 		}
 		else
 		{
-			dropStacks(state, world, pos, te, player, stack);
+			dropResources(state, world, pos, te, player, stack);
 		}
 	}
 	@Override
-	public @NotNull List<ItemStack> getDroppedStacks(@NotNull BlockState state, LootContextParameterSet.Builder builder)
+	public @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.Builder builder)
 	{
-		ItemStack tool = builder.getOptional(LootContextParameters.TOOL);
-		World world = builder.getWorld();
-		BlockEntity te = builder.getOptional(LootContextParameters.BLOCK_ENTITY);
+		ItemStack tool = builder.getOptionalParameter(LootContextParams.TOOL);
+		Level world = builder.getLevel();
+		BlockEntity te = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
 		
 		if (te instanceof CrateTileEntity crate)
 		{
-			boolean silkTouched = tool != null && EnchantmentHelper.getLevel(CommonUtils.getEnchantmentEntry(world, Enchantments.SILK_TOUCH), tool) > 0;
+			boolean silkTouched = tool != null && EnchantmentHelper.getItemEnchantmentLevel(CommonUtils.getEnchantmentEntry(world, Enchantments.SILK_TOUCH), tool) > 0;
 			
 			if (world.getGameRules().getBoolean(SplatcraftGameRules.DROP_CRATE_LOOT) && !silkTouched)
 			{
@@ -178,10 +182,10 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 			}
 		}
 		
-		return super.getDroppedStacks(state, builder);
+		return super.getDrops(state, builder);
 	}
 	@Override
-	public BlockInkedResult inkBlock(World world, BlockPos pos, InkColor color, float damage, InkBlockUtils.InkType inkType)
+	public BlockInkedResult inkBlock(Level world, BlockPos pos, InkColor color, float damage, InkBlockUtils.InkType inkType)
 	{
 		if (world.getBlockEntity(pos) instanceof CrateTileEntity crateTileEntity)
 		{
@@ -206,12 +210,12 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 		return false;
 	}
 	@Override
-	public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
+	public boolean remoteColorChange(Level world, BlockPos pos, InkColor newColor)
 	{
 		return false;
 	}
 	@Override
-	public boolean remoteInkClear(World world, BlockPos pos)
+	public boolean remoteInkClear(Level world, BlockPos pos)
 	{
 		if (world.getBlockEntity(pos) instanceof CrateTileEntity crate)
 		{
@@ -220,15 +224,15 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 				return false;
 			}
 			crate.resetHealth();
-			world.setBlockState(pos, crate.getCachedState().with(STATE, crate.getState()), 2);
+			world.setBlock(pos, crate.getBlockState().setValue(STATE, crate.getState()), 2);
 			return true;
 		}
 		return false;
 	}
 	@Override
-	public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, @NotNull ItemStack stack)
+	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, @NotNull ItemStack stack)
 	{
-		super.onPlaced(world, pos, state, entity, stack);
+		super.setPlacedBy(world, pos, state, entity, stack);
 		
 		if (world.getBlockEntity(pos) instanceof CrateTileEntity crate)
 			if (isSunken)
@@ -236,9 +240,9 @@ public class CrateBlock extends Block implements IColoredBlock, BlockEntityProvi
 	}
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+	public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
 	{
-		CrateTileEntity te = SplatcraftTileEntities.crateTileEntity.get().instantiate(pos, state);
+		CrateTileEntity te = SplatcraftTileEntities.crateTileEntity.get().create(pos, state);
 		
 		if (te != null)
 		{

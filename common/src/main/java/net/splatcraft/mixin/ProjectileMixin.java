@@ -1,12 +1,12 @@
 package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.projectile.ProjectileUtil;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
@@ -25,9 +25,9 @@ public abstract class ProjectileMixin
 	public abstract static class InkProjectileDataMixin
 	{
 		@Unique
-		private static Vec3d splatcraft$hitPos = new Vec3d(0, 0, 0);
-		@Inject(method = "getEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;F)Lnet/minecraft/util/hit/EntityHitResult;", at = @At(value = "INVOKE_ASSIGN", shift = At.Shift.AFTER, target = "Lnet/minecraft/util/math/Vec3d;squaredDistanceTo(Lnet/minecraft/util/math/Vec3d;)D"))
-		private static void splatcraft$obtainHitLocation(World world, Entity entity2, Vec3d pStartVec, Vec3d pEndVec, Box pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 0) double d0, @Local Optional<Vec3d> optional, @Local(ordinal = 1) double d1)
+		private static Vec3 splatcraft$hitPos = new Vec3(0, 0, 0);
+		@Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", at = @At(value = "INVOKE_ASSIGN", shift = At.Shift.AFTER, target = "Lnet/minecraft/world/phys/Vec3;distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D"))
+		private static void splatcraft$obtainHitLocation(Level world, Entity entity2, Vec3 pStartVec, Vec3 pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 0) double d0, @Local Optional<Vec3> optional, @Local(ordinal = 1) double d1)
 		{
 			if (d1 < d0 && splatcraft$isEntityThatRequiresHitpos(entity2))
 			{
@@ -39,8 +39,8 @@ public abstract class ProjectileMixin
 		{
 			return entity instanceof InkProjectileEntity || entity instanceof InkDropEntity || entity instanceof AbstractSubWeaponEntity<?>;
 		}
-		@Inject(method = "getEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;F)Lnet/minecraft/util/hit/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
-		private static void splatcraft$addHitLocation(World world, Entity pProjectile, Vec3d pStartVec, Vec3d pEndVec, Box pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 1) Entity entity)
+		@Inject(method = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
+		private static void splatcraft$addHitLocation(Level world, Entity pProjectile, Vec3 pStartVec, Vec3 pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 1) Entity entity)
 		{
 			if (entity != null && splatcraft$isEntityThatRequiresHitpos(pProjectile) && splatcraft$hitPos != null)
 			{

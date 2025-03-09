@@ -1,10 +1,10 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ColorUtils;
@@ -23,8 +23,8 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 	@Override
 	public void onEntityCollide(Entity entity)
 	{
-		if (ColorUtils.getEntityColor(entity).isValid() && (getCachedState().getBlock() instanceof ColoredBarrierBlock block &&
-			!block.canAllowThrough(getPos(), entity)))
+		if (ColorUtils.getEntityColor(entity).isValid() && (getBlockState().getBlock() instanceof ColoredBarrierBlock block &&
+			!block.canAllowThrough(getBlockPos(), entity)))
 			resetActiveTime();
 	}
 	public InkColor getColor()
@@ -36,20 +36,20 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 		this.color = color;
 	}
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider wrapperLookup)
 	{
-		super.readNbt(nbt, wrapperLookup);
+		super.loadAdditional(nbt, wrapperLookup);
 		setColor(InkColor.getFromNbt(nbt.get("Color")));
 		setTeam(nbt.getString("Team"));
 		setInverted(nbt.getBoolean("Inverted"));
 	}
 	@Override
-	public void writeNbt(NbtCompound compound, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void saveAdditional(CompoundTag compound, HolderLookup.Provider wrapperLookup)
 	{
 		compound.put("Color", getColor().getNbt());
 		compound.putString("Team", getTeam());
 		compound.putBoolean("Inverted", inverted);
-		super.writeNbt(compound, wrapperLookup);
+		super.saveAdditional(compound, wrapperLookup);
 	}
 	public boolean isInverted()
 	{

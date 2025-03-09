@@ -3,38 +3,34 @@ package net.splatcraft.handlers;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.client.ClientTickEvent;
 import dev.architectury.event.events.common.BlockEvent;
-import dev.architectury.event.events.common.ChunkEvent;
 import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.networking.NetworkManager;
-import dev.architectury.platform.Platform;
-import dev.architectury.utils.Env;
 import dev.architectury.utils.value.IntValue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.color.block.BlockColorProvider;
-import net.minecraft.client.render.model.json.ModelElementTexture;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ChunkHolder;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.block.model.BlockFaceUV;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ChunkHolder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.phys.BlockHitResult;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
@@ -44,6 +40,8 @@ import net.splatcraft.network.s2c.DeleteInkPacket;
 import net.splatcraft.network.s2c.IncrementalChunkBasedPacket;
 import net.splatcraft.network.s2c.UpdateInkPacket;
 import net.splatcraft.network.s2c.WatchInkPacket;
+import net.splatcraft.platform.ModSide;
+import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
@@ -57,8 +55,8 @@ import java.util.stream.StreamSupport;
 
 public class ChunkInkHandler
 {
-	public static final HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
-	private static final HashMap<World, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
+	public static final HashMap<Level, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> sharedPacket = new HashMap<>();
+	private static final HashMap<Level, List<BlockPos>> INK_IGNORE_REMOVE = new HashMap<>();
 	private static final HashMap<ChunkPos, HashMap<RelativeBlockPos, ChunkInk.BlockEntry>> INK_CACHE = new HashMap<>();
 	private static final int MAX_DECAYABLE_PER_CHUNK = 3;
 	private static final int MAX_DECAYABLE_CHUNKS = 10;
@@ -68,9 +66,8 @@ public class ChunkInkHandler
 		BlockEvent.BREAK.register(ChunkInkHandler::onBlockBreak);
 		TickEvent.SERVER_LEVEL_PRE.register(ChunkInkHandler::onWorldTickStart);
 		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
-		ChunkEvent.LOAD_DATA.register(ChunkInkCapability::tryReadLegacyData);
 		
-		if (Platform.getEnvironment().equals(Env.CLIENT))
+		if (Services.PLATFORM.getEnv().equals(ModSide.CLIENT))
 			registerClientEvent();
 	}
 	@Environment(EnvType.CLIENT)
@@ -78,17 +75,17 @@ public class ChunkInkHandler
 	{
 		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
 	}
-	public static void addInkToRemove(World world, BlockPos pos)
+	public static void addInkToRemove(Level world, BlockPos pos)
 	{
 		addIncrementalPacket(world, pos, DeleteInkPacket.class, DeleteInkPacket::new);
 	}
-	public static void addInkToUpdate(World world, BlockPos pos)
+	public static void addInkToUpdate(Level world, BlockPos pos)
 	{
 		addIncrementalPacket(world, pos, UpdateInkPacket.class, UpdateInkPacket::new);
 	}
-	public static <T extends IncrementalChunkBasedPacket> void addIncrementalPacket(World world, BlockPos pos, Class<T> tClass, Function<ChunkPos, T> factory)
+	public static <T extends IncrementalChunkBasedPacket> void addIncrementalPacket(Level world, BlockPos pos, Class<T> tClass, Function<ChunkPos, T> factory)
 	{
-		if (world.isClient)
+		if (world.isClientSide)
 			return;
 		
 		ChunkPos chunkPos = new ChunkPos(pos);
@@ -108,17 +105,17 @@ public class ChunkInkHandler
 		packet.add(world, pos);
 	}
 	//Ink Removal
-	public static void onBlockUpdate(World world, BlockPos pos, List<Direction> directions)
+	public static void onBlockUpdate(Level world, BlockPos pos, List<Direction> directions)
 	{
 		checkForInkRemoval(world, pos, Direction.values());
-		directions.forEach(direction -> checkForInkRemoval(world, pos.offset(direction), new Direction[] {direction.getOpposite()}));
+		directions.forEach(direction -> checkForInkRemoval(world, pos.relative(direction), new Direction[] {direction.getOpposite()}));
 	}
-	public static EventResult onBlockBreak(World level, BlockPos pos, BlockState state, ServerPlayerEntity player, @Nullable IntValue xp)
+	public static EventResult onBlockBreak(Level level, BlockPos pos, BlockState state, ServerPlayer player, @Nullable IntValue xp)
 	{
 		InkBlockUtils.clearBlock(level, pos, true);
 		return EventResult.pass();
 	}
-	private static void checkForInkRemoval(World world, BlockPos pos, Direction[] directionsToCheck)
+	private static void checkForInkRemoval(Level world, BlockPos pos, Direction[] directionsToCheck)
 	{
 		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
 			return;
@@ -128,7 +125,7 @@ public class ChunkInkHandler
 		{
 			for (Direction dir : directionsToCheck)
 			{
-				if (inkBlock.isInked(dir.getId()) && InkBlockUtils.isUninkable(world, pos, dir, true))
+				if (inkBlock.isInked(dir.get3DDataValue()) && InkBlockUtils.isUninkable(world, pos, dir, true))
 				{
 					List<BlockPos> blockPos = INK_IGNORE_REMOVE.get(world);
 					if (INK_IGNORE_REMOVE.containsKey(world) && blockPos.contains(pos))
@@ -141,7 +138,7 @@ public class ChunkInkHandler
 					}
 					else
 					{
-						ColorUtils.addInkDestroyParticle(world, pos, inkBlock.color(dir.getId()));
+						ColorUtils.addInkDestroyParticle(world, pos, inkBlock.color(dir.get3DDataValue()));
 					}
 					InkBlockUtils.clearInk(world, pos, dir, false);
 				}
@@ -149,17 +146,17 @@ public class ChunkInkHandler
 		}
 	}
 	//prevent foliage placement on ink if inkDestroysFoliage is on
-	public static EventResult onBlockPlace(PlayerEntity player, Hand hand, BlockPos pos, Direction face)
+	public static EventResult onBlockPlace(Player player, InteractionHand hand, BlockPos pos, Direction face)
 	{
 		Direction direction = face == null ? Direction.UP : face;
-		if (SplatcraftGameRules.getLocalizedRule(player.getWorld(), pos, SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
-			InkBlockUtils.isInked(player.getWorld(), pos.offset(direction).down(), direction) &&
-			player.getStackInHand(hand).getItem() instanceof BlockItem blockItem)
+		if (SplatcraftGameRules.getLocalizedRule(player.level(), pos, SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
+			InkBlockUtils.isInked(player.level(), pos.relative(direction).below(), direction) &&
+			player.getItemInHand(hand).getItem() instanceof BlockItem blockItem)
 		{
-			ItemPlacementContext context = blockItem.getPlacementContext(new ItemPlacementContext(new ItemUsageContext(player, hand, new BlockHitResult(pos.toCenterPos(), face, pos, false))));
+			BlockPlaceContext context = blockItem.updatePlacementContext(new BlockPlaceContext(new UseOnContext(player, hand, new BlockHitResult(pos.getCenter(), face, pos, false))));
 			if (context != null)
 			{
-				BlockState state = blockItem.getBlock().getPlacementState(context);
+				BlockState state = blockItem.getBlock().getStateForPlacement(context);
 				if (state != null && InkBlockUtils.isBlockFoliage(state))
 					return EventResult.interruptTrue();
 			}
@@ -167,14 +164,14 @@ public class ChunkInkHandler
 		return EventResult.pass();
 	}
 	//Ink Decay
-	public static void onWorldTickEnd(ServerWorld world)
+	public static void onWorldTickEnd(ServerLevel world)
 	{
-		if (world.getPlayers().isEmpty())
+		if (world.players().isEmpty())
 			return;
 		
 		if (sharedPacket.isEmpty())
 			return;
-		HashMap<World, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> clonedPackets;
+		HashMap<Level, HashMap<ChunkPos, List<IncrementalChunkBasedPacket>>> clonedPackets;
 		synchronized (sharedPacket)
 		{
 			clonedPackets = new HashMap<>(sharedPacket);
@@ -185,8 +182,8 @@ public class ChunkInkHandler
 		{
 			for (var chunkPackets : levelPackets.getValue().entrySet())
 			{
-				WorldChunk chunk = levelPackets.getKey().getChunk(chunkPackets.getKey().x, chunkPackets.getKey().z);
-				chunk.setNeedsSaving(true);
+				LevelChunk chunk = levelPackets.getKey().getChunk(chunkPackets.getKey().x, chunkPackets.getKey().z);
+				chunk.setUnsaved(true);
 				for (var packet : chunkPackets.getValue())
 				{
 					SplatcraftPacketHandler.sendToTrackers(packet, chunk);
@@ -194,18 +191,18 @@ public class ChunkInkHandler
 			}
 		}
 	}
-	public static void onWorldTickStart(ServerWorld world)
+	public static void onWorldTickStart(ServerLevel world)
 	{
-		if (world.getPlayers().isEmpty())
+		if (world.players().isEmpty())
 			return;
 		
-		List<WorldChunk> chunks = StreamSupport.stream(world.getChunkManager().chunkLoadingManager.entryIterator().spliterator(), false).map(ChunkHolder::getWorldChunk)
+		List<LevelChunk> chunks = StreamSupport.stream(world.getChunkSource().chunkMap.getChunks().spliterator(), false).map(ChunkHolder::getTickingChunk)
 			.filter(Objects::nonNull).filter(ChunkInkCapability::hasAndNotEmpty).toList();
 		int maxChunkCheck = Math.min(world.random.nextInt(MAX_DECAYABLE_CHUNKS), chunks.size());
 		
 		for (int i = 0; i < maxChunkCheck; i++)
 		{
-			WorldChunk chunk = chunks.get(world.random.nextInt(chunks.size()));
+			LevelChunk chunk = chunks.get(world.random.nextInt(chunks.size()));
 			ChunkInk worldInk = ChunkInkCapability.get(chunk);
 			HashMap<RelativeBlockPos, ChunkInk.BlockEntry> decayableInk = new HashMap<>(worldInk.getInkInChunk());
 			
@@ -225,7 +222,7 @@ public class ChunkInkHandler
 				
 				int adjacentInk = 0;
 				for (Direction dir : Direction.values())
-					if (InkBlockUtils.isInkedAny(world, clearPos.offset(dir)))
+					if (InkBlockUtils.isInkedAny(world, clearPos.relative(dir)))
 						adjacentInk++;
 				
 				if (adjacentInk <= 0 || world.random.nextInt(adjacentInk * 2) == 0)
@@ -242,11 +239,11 @@ public class ChunkInkHandler
 		}
 	}
 	@Environment(EnvType.CLIENT)
-	public static void onClientWorldTickStart(ClientWorld world)
+	public static void onClientWorldTickStart(ClientLevel world)
 	{
 		new ArrayList<>(INK_CACHE.keySet()).forEach(chunkPos ->
 		{
-			if (world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.FULL, false) instanceof WorldChunk chunk)
+			if (world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.FULL, false) instanceof LevelChunk chunk)
 			{
 				updateClientInkForChunk(world, chunk);
 			}
@@ -278,15 +275,15 @@ public class ChunkInkHandler
 			}
 		}
 	}*/
-	public static void sendChunkData(ServerPlayNetworkHandler handler, World world, WorldChunk chunk)
+	public static void sendChunkData(ServerGamePacketListenerImpl handler, Level world, LevelChunk chunk)
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(chunk))
 			return;
 		ChunkInk worldInk = ChunkInkCapability.get(chunk);
-		handler.send(SplatcraftPacketHandler.CHANNEL.toPacket(NetworkManager.Side.S2C, new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.getRegistryManager()), null);
+		handler.send(SplatcraftPacketHandler.CHANNEL.toPacket(Side.S2C, new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.registryAccess()), null);
 	}
 	@Environment(EnvType.CLIENT)
-	public static void updateClientInkForChunk(World world, WorldChunk chunk)
+	public static void updateClientInkForChunk(Level world, LevelChunk chunk)
 	{
 		ChunkPos chunkPos = chunk.getPos();
 		if (INK_CACHE.containsKey(chunkPos))
@@ -298,8 +295,8 @@ public class ChunkInkHandler
 				BlockPos pos = relativePos.toAbsolute(chunkPos);
 				entry.apply(chunkInk, relativePos);
 				BlockState state = world.getBlockState(pos);
-				world.updateListeners(pos, state, state, 0);
-				world.getChunk(chunkPos.x, chunkPos.z).setNeedsSaving(true);
+				world.sendBlockUpdated(pos, state, state, 0);
+				world.getChunk(chunkPos.x, chunkPos.z).setUnsaved(true);
 			});
 			INK_CACHE.remove(chunkPos);
 		}
@@ -308,7 +305,7 @@ public class ChunkInkHandler
 	{
 		INK_CACHE.put(pos, map);
 	}
-	public static void addBlocksToIgnoreRemoveInk(World world, Collection<BlockPos> positions)
+	public static void addBlocksToIgnoreRemoveInk(Level world, Collection<BlockPos> positions)
 	{
 		List<BlockPos> blocks = INK_IGNORE_REMOVE.computeIfAbsent(world, v -> new ArrayList<>());
 		blocks.addAll(positions);
@@ -317,11 +314,11 @@ public class ChunkInkHandler
 	@Environment(EnvType.CLIENT)
 	public static class Render
 	{
-		public static final Identifier INKED_BLOCK_LOCATION = Splatcraft.identifierOf("block/inked_block");
-		public static final ModelElementTexture defaultUv = new ModelElementTexture(new float[] {0, 0, 1, 1}, 0);
-		private static BlockColorProvider splatcraftColorProvider;
-		private static Sprite inkedBlockSprite;
-		public static BlockColorProvider getSplatcraftColorProvider()
+		public static final ResourceLocation INKED_BLOCK_LOCATION = Splatcraft.identifierOf("block/inked_block");
+		public static final BlockFaceUV defaultUv = new BlockFaceUV(new float[] {0, 0, 1, 1}, 0);
+		private static BlockColor splatcraftColorProvider;
+		private static TextureAtlasSprite inkedBlockSprite;
+		public static BlockColor getSplatcraftColorProvider()
 		{
 			if (splatcraftColorProvider == null)
 			{
@@ -330,7 +327,7 @@ public class ChunkInkHandler
 					switch (tint)
 					{
 						case 0: // the actual ink
-							ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock((World) view, pos);
+							ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock((Level) view, pos);
 							int index = 0;
 							InkColor color = InkColor.INVALID;
 							if (ink != null && ink.isInked(index))
@@ -347,19 +344,19 @@ public class ChunkInkHandler
 			}
 			return splatcraftColorProvider;
 		}
-		public static Sprite getInkedBlockSprite()
+		public static TextureAtlasSprite getInkedBlockSprite()
 		{
 			if (inkedBlockSprite == null)
-				inkedBlockSprite = MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(INKED_BLOCK_LOCATION);
+				inkedBlockSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(INKED_BLOCK_LOCATION);
 			return inkedBlockSprite;
 		}
-		public static Sprite getGlitterSprite()
+		public static TextureAtlasSprite getGlitterSprite()
 		{
-			return MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(Splatcraft.identifierOf("block/glitter"));
+			return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(Splatcraft.identifierOf("block/glitter"));
 		}
-		public static Sprite getPermanentInkSprite()
+		public static TextureAtlasSprite getPermanentInkSprite()
 		{
-			return MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(Splatcraft.identifierOf("block/permanent_ink_overlay"));
+			return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(Splatcraft.identifierOf("block/permanent_ink_overlay"));
 		}
 	}
 }

@@ -1,38 +1,38 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.util.CommonUtils;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SuperJumpToStagePacket.class);
 	final String stageId;
 	public SuperJumpToStagePacket(String stageId)
 	{
 		this.stageId = stageId;
 	}
-	public static SuperJumpToStagePacket decode(PacketByteBuf buf)
+	public static SuperJumpToStagePacket decode(FriendlyByteBuf buf)
 	{
-		return new SuperJumpToStagePacket(buf.readString());
+		return new SuperJumpToStagePacket(buf.readUtf());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeString(stageId);
+		buffer.writeUtf(stageId);
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
-		Stage.getStage(stageId).superJumpToStage((ServerPlayerEntity) player);
+		Stage.getStage(stageId).superJumpToStage((ServerPlayer) player);
 	}
 }

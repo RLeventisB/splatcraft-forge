@@ -1,30 +1,27 @@
 package net.splatcraft.registries;
 
-import dev.architectury.injectables.annotations.ExpectPlatform;
 import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.level.entity.EntityAttributeRegistry;
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.render.entity.model.PlayerEntityModel;
-import net.minecraft.client.util.SkinTextures;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.data.TrackedDataHandler;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.Registries;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkAccessoryLayer;
 import net.splatcraft.client.layer.InkOverlayLayer;
@@ -53,6 +50,7 @@ import net.splatcraft.entities.subs.BurstBombEntity;
 import net.splatcraft.entities.subs.CurlingBombEntity;
 import net.splatcraft.entities.subs.SplatBombEntity;
 import net.splatcraft.entities.subs.SuctionBombEntity;
+import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
 
 import java.util.Map;
@@ -60,24 +58,24 @@ import java.util.Objects;
 
 public class SplatcraftEntities
 {
-	protected static final DeferredRegister<EntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(Registries.ENTITY_TYPE);
-	public static final RegistrySupplier<EntityType<InkSquidEntity>> INK_SQUID = create("ink_squid", InkSquidEntity::new, SpawnGroup.AMBIENT, 0.6f, 0.5f);
-	public static final RegistrySupplier<EntityType<InkDropEntity>> INK_DROP = create("ink_drop", InkDropEntity::new, SpawnGroup.MISC, InkDropEntity.DROP_SIZE, InkDropEntity.DROP_SIZE);
-	public static final RegistrySupplier<EntityType<InkProjectileEntity>> INK_PROJECTILE = create("ink_projectile", InkProjectileEntity::new, SpawnGroup.MISC);
-	public static final RegistrySupplier<EntityType<SquidBumperEntity>> SQUID_BUMPER = create("squid_bumper", SquidBumperEntity::new, SpawnGroup.MISC, 0.6f, 1.8f);
-	public static final RegistrySupplier<EntityType<SpawnShieldEntity>> SPAWN_SHIELD = create("spawn_shield", SpawnShieldEntity::new, SpawnGroup.MISC, 1, 1);
+	protected static final DeferredRegister<EntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.ENTITY_TYPE);
+	public static final RegistrySupplier<EntityType<InkSquidEntity>> INK_SQUID = create("ink_squid", InkSquidEntity::new, MobCategory.AMBIENT, 0.6f, 0.5f);
+	public static final RegistrySupplier<EntityType<InkDropEntity>> INK_DROP = create("ink_drop", InkDropEntity::new, MobCategory.MISC, InkDropEntity.DROP_SIZE, InkDropEntity.DROP_SIZE);
+	public static final RegistrySupplier<EntityType<InkProjectileEntity>> INK_PROJECTILE = create("ink_projectile", InkProjectileEntity::new, MobCategory.MISC);
+	public static final RegistrySupplier<EntityType<SquidBumperEntity>> SQUID_BUMPER = create("squid_bumper", SquidBumperEntity::new, MobCategory.MISC, 0.6f, 1.8f);
+	public static final RegistrySupplier<EntityType<SpawnShieldEntity>> SPAWN_SHIELD = create("spawn_shield", SpawnShieldEntity::new, MobCategory.MISC, 1, 1);
 	//Sub Weapons
-	public static final RegistrySupplier<EntityType<BurstBombEntity>> BURST_BOMB = create("burst_bomb", BurstBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
-	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, SpawnGroup.MISC, 0.3f, 0.3f);
-	public static final RegistrySupplier<EntityType<SplatBombEntity>> SPLAT_BOMB = create("splat_bomb", SplatBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
-	public static final RegistrySupplier<EntityType<CurlingBombEntity>> CURLING_BOMB = create("curling_bomb", CurlingBombEntity::new, SpawnGroup.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<BurstBombEntity>> BURST_BOMB = create("burst_bomb", BurstBombEntity::new, MobCategory.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, MobCategory.MISC, 0.3f, 0.3f);
+	public static final RegistrySupplier<EntityType<SplatBombEntity>> SPLAT_BOMB = create("splat_bomb", SplatBombEntity::new, MobCategory.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<CurlingBombEntity>> CURLING_BOMB = create("curling_bomb", CurlingBombEntity::new, MobCategory.MISC, 0.5f, 0.5f);
 	// Special Weapons
-	public static final RegistrySupplier<EntityType<StingRayBeamEntity>> STING_RAY_PROJECTILE = create("sting_ray_beam", StingRayBeamEntity::new, SpawnGroup.MISC, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
-	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, SpawnGroup classification, float width, float height)
+	public static final RegistrySupplier<EntityType<StingRayBeamEntity>> STING_RAY_PROJECTILE = create("sting_ray_beam", StingRayBeamEntity::new, MobCategory.MISC, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, MobCategory classification, float width, float height)
 	{
-		return REGISTRY.register(name, () -> EntityType.Builder.create(supplier, classification).dimensions(width, height).build(Splatcraft.identifierOf(name).toString()));
+		return REGISTRY.register(name, () -> EntityType.Builder.of(supplier, classification).sized(width, height).build(Splatcraft.identifierOf(name).toString()));
 	}
-	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, SpawnGroup classification)
+	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, MobCategory classification)
 	{
 		return create(name, supplier, classification, 1, 1);
 	}
@@ -127,12 +125,11 @@ public class SplatcraftEntities
 		registerDataTracker("vector2_handler", CommonUtils.VEC2DATAHANDLER);
 		registerDataTracker("extra_data_handler", ExtraSaveData.SERIALIZER);
 	}
-	@ExpectPlatform
-	private static void registerDataTracker(String name, TrackedDataHandler<?> handler)
+	private static void registerDataTracker(String name, EntityDataSerializer<?> handler)
 	{
-		throw new AssertionError();
+		Services.PLATFORM.registerDataTracker(name, handler);
 	}
-	public static DefaultAttributeContainer.Builder injectPlayerAttributes(DefaultAttributeContainer.Builder builder)
+	public static AttributeSupplier.Builder injectPlayerAttributes(AttributeSupplier.Builder builder)
 	{
 		builder.add(SplatcraftAttributes.inkSwimSpeed, SplatcraftAttributes.inkSwimSpeed.get().getDefaultValue());
 		builder.add(SplatcraftAttributes.superJumpTravelTime, SplatcraftAttributes.superJumpTravelTime.get().getDefaultValue());
@@ -143,17 +140,17 @@ public class SplatcraftEntities
 	@Environment(EnvType.CLIENT)
 	private static <T extends LivingEntity, M extends EntityModel<T>> void attachInkOverlay(LivingEntityRenderer<T, M> renderer)
 	{
-		renderer.addFeature(new InkOverlayLayer<>(renderer));
+		renderer.addLayer(new InkOverlayLayer<>(renderer));
 	}
 	@Environment(EnvType.CLIENT)
-	public static void addRenderLayers(Map<EntityType<?>, EntityRenderer<?>> renderers, Map<SkinTextures.Model, EntityRenderer<? extends PlayerEntity>> skinMap, EntityRendererFactory.Context context)
+	public static void addRenderLayers(Map<EntityType<?>, EntityRenderer<?>> renderers, Map<PlayerSkin.Model, EntityRenderer<? extends Player>> skinMap, EntityRendererProvider.Context context)
 	{
 		skinMap.keySet().forEach(renderer ->
 		{
-			LivingEntityRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> skin = (LivingEntityRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>) skinMap.get(renderer);
-			skin.addFeature(new InkAccessoryLayer(skin, new BipedEntityModel<>(context.getModelLoader().getModelPart(EntityModelLayers.PLAYER_OUTER_ARMOR))));
-			skin.addFeature(new PlayerInkColoredSkinLayer(skin, new PlayerEntityModel<>(context.getModelLoader().getModelPart(renderer.equals(SkinTextures.Model.SLIM) ? EntityModelLayers.PLAYER_SLIM : EntityModelLayers
-				.PLAYER), renderer.equals(SkinTextures.Model.SLIM))));
+			LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> skin = (LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>>) skinMap.get(renderer);
+			skin.addLayer(new InkAccessoryLayer(skin, new HumanoidModel<>(context.getModelSet().bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR))));
+			skin.addLayer(new PlayerInkColoredSkinLayer(skin, new PlayerModel<>(context.getModelSet().bakeLayer(renderer.equals(PlayerSkin.Model.SLIM) ? ModelLayers.PLAYER_SLIM : ModelLayers
+				.PLAYER), renderer.equals(PlayerSkin.Model.SLIM))));
 			attachInkOverlay(Objects.requireNonNull(skin));
 		});
 		renderers

@@ -4,14 +4,14 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.scoreboard.ScoreHolder;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.scores.ScoreHolder;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.remotes.RemoteItem;
@@ -24,38 +24,38 @@ import java.util.Collections;
 
 public class ScanTurfCommand
 {
-	public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
 	{
-		dispatcher.register(CommandManager.literal("scanturf").requires(commandSource -> commandSource.hasPermissionLevel(2)).then(CommandManager.argument("from", BlockPosArgumentType.blockPos()).then(CommandManager.argument("to", BlockPosArgumentType.blockPos())
+		dispatcher.register(Commands.literal("scanturf").requires(commandSource -> commandSource.hasPermission(2)).then(Commands.argument("from", BlockPosArgument.blockPos()).then(Commands.argument("to", BlockPosArgument.blockPos())
 				.executes(ScanTurfCommand::executeOnSelf)
-				.then(CommandManager.argument("target", EntityArgumentType.players()).executes(context -> execute(context, 0))
-					.then(CommandManager.literal("topDown").executes(context -> execute(context, 0)))
-					.then(CommandManager.literal("multiLayered").executes(context -> execute(context, 1))))
+				.then(Commands.argument("target", EntityArgument.players()).executes(context -> execute(context, 0))
+					.then(Commands.literal("topDown").executes(context -> execute(context, 0)))
+					.then(Commands.literal("multiLayered").executes(context -> execute(context, 1))))
 			))
 			.then(StageCommand.stageId("stage").executes(ScanTurfCommand::executeStageOnSelf)
-				.then(CommandManager.argument("target", EntityArgumentType.players()).executes(context -> executeStage(context, 0))
-					.then(CommandManager.literal("topDown").executes(context -> executeStage(context, 0)))
-					.then(CommandManager.literal("multiLayered").executes(context -> executeStage(context, 1))))));
+				.then(Commands.argument("target", EntityArgument.players()).executes(context -> executeStage(context, 0))
+					.then(Commands.literal("topDown").executes(context -> executeStage(context, 0)))
+					.then(Commands.literal("multiLayered").executes(context -> executeStage(context, 1))))));
 	}
-	private static int executeStageOnSelf(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+	private static int executeStageOnSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return executeStage(context.getSource(), StringArgumentType.getString(context, "stage"), 0,
-			context.getSource().getEntity() instanceof ServerPlayerEntity player ? Collections.singletonList(player) : RemoteItem.ALL_TARGETS);
+			context.getSource().getEntity() instanceof ServerPlayer player ? Collections.singletonList(player) : RemoteItem.ALL_TARGETS);
 	}
-	private static int executeOnSelf(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+	private static int executeOnSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		return execute(context.getSource(), StageCommand.getOrLoadBlockPos(context, "from"), StageCommand.getOrLoadBlockPos(context, "to"), 0,
-			context.getSource().getEntity() instanceof ServerPlayerEntity ? Collections.singletonList((ServerPlayerEntity) context.getSource().getEntity()) : RemoteItem.ALL_TARGETS);
+			context.getSource().getEntity() instanceof ServerPlayer ? Collections.singletonList((ServerPlayer) context.getSource().getEntity()) : RemoteItem.ALL_TARGETS);
 	}
-	private static int executeStage(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
+	private static int executeStage(CommandContext<CommandSourceStack> context, int mode) throws CommandSyntaxException
 	{
-		return executeStage(context.getSource(), StringArgumentType.getString(context, "stage"), mode, EntityArgumentType.getPlayers(context, "target"));
+		return executeStage(context.getSource(), StringArgumentType.getString(context, "stage"), mode, EntityArgument.getPlayers(context, "target"));
 	}
-	private static int execute(CommandContext<ServerCommandSource> context, int mode) throws CommandSyntaxException
+	private static int execute(CommandContext<CommandSourceStack> context, int mode) throws CommandSyntaxException
 	{
-		return execute(context.getSource(), StageCommand.getOrLoadBlockPos(context, "from"), StageCommand.getOrLoadBlockPos(context, "to"), mode, EntityArgumentType.getPlayers(context, "target"));
+		return execute(context.getSource(), StageCommand.getOrLoadBlockPos(context, "from"), StageCommand.getOrLoadBlockPos(context, "to"), mode, EntityArgument.getPlayers(context, "target"));
 	}
-	private static int executeStage(ServerCommandSource source, String stageId, int mode, Collection<ServerPlayerEntity> targets) throws CommandSyntaxException
+	private static int executeStage(CommandSourceStack source, String stageId, int mode, Collection<ServerPlayer> targets) throws CommandSyntaxException
 	{
 		Stage stage = SaveInfoCapability.get().stages().get(stageId);
 		
@@ -67,16 +67,16 @@ public class ScanTurfCommand
 		for (String team : stage.getTeamIds())
 		{
 			if (stage.getTeamColor(team) == InkColor.constructOrReuse(result))
-				source.getWorld().getScoreboard().forEachScore(Stats.CUSTOM.getOrCreateStat(SplatcraftStats.TURF_WARS_WON), ScoreHolder.fromName("[" + team + "]"), score -> score.incrementScore(1));
+				source.getLevel().getScoreboard().forAllObjectives(Stats.CUSTOM.get(SplatcraftStats.TURF_WARS_WON), ScoreHolder.forNameOnly("[" + team + "]"), score -> score.add(1));
 		}
 		
 		return result;
 	}
-	private static int execute(ServerCommandSource source, BlockPos from, BlockPos to, int mode, Collection<ServerPlayerEntity> targets)
+	private static int execute(CommandSourceStack source, BlockPos from, BlockPos to, int mode, Collection<ServerPlayer> targets)
 	{
-		RemoteItem.RemoteResult result = TurfScannerItem.scanTurf(source.getWorld(), source.getWorld(), from, to, mode, targets);
+		RemoteItem.RemoteResult result = TurfScannerItem.scanTurf(source.getLevel(), source.getLevel(), from, to, mode, targets);
 		
-		source.sendFeedback(result::getOutput, true);
+		source.sendSuccess(result::getOutput, true);
 		
 		return result.getCommandResult();
 	}

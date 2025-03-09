@@ -4,17 +4,17 @@ import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.dynamic.Codecs;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -33,15 +33,15 @@ public final class PlaySession
 	public static final Duration INTRO_DURATION = Duration.of(15, ChronoUnit.SECONDS);
 	public static final Duration END_DURATION = Duration.of(3, ChronoUnit.SECONDS);
 	public static final Codec<PlaySession> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		Uuids.CODEC.listOf().fieldOf("players").forGetter(v -> v.playerUuids),
+		UUIDUtil.AUTHLIB_CODEC.listOf().fieldOf("players").forGetter(v -> v.playerUuids),
 		StageGameMode.CODEC.fieldOf("game_mode").forGetter(v -> v.gameMode),
 		Codec.STRING.fieldOf("stage_id").forGetter(v -> v.stageId),
-		Codecs.INSTANT.fieldOf("session_end_instant").forGetter(v -> v.sessionEndInstant)
+		ExtraCodecs.INSTANT_ISO8601.fieldOf("session_end_instant").forGetter(v -> v.sessionEndInstant)
 	).apply(inst, PlaySession::new));
-	public static final PacketCodec<ByteBuf, PlaySession> PACKET_CODEC = PacketCodec.tuple(
-		Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), v -> v.playerUuids,
+	public static final StreamCodec<ByteBuf, PlaySession> PACKET_CODEC = StreamCodec.composite(
+		UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), v -> v.playerUuids,
 		CodecUtils.createEnumPacketCodec(StageGameMode::values), v -> v.gameMode,
-		PacketCodecs.STRING, v -> v.stageId,
+		ByteBufCodecs.STRING_UTF8, v -> v.stageId,
 		CodecUtils.Codecs.INSTANT_PACKET_CODEC, v -> v.sessionEndInstant,
 		PlaySession::new);
 	public final List<UUID> playerUuids;
@@ -53,12 +53,12 @@ public final class PlaySession
 	// and the match timer wont desync
 	public final Instant sessionEndInstant;
 	private final Supplier<Instant> matchStartInstantSupplier, matchEndInstantSupplier;
-	public PlaySession(Collection<ServerPlayerEntity> players, Stage stage, StageGameMode gameMode)
+	public PlaySession(Collection<ServerPlayer> players, Stage stage, StageGameMode gameMode)
 	{
-		playerUuids = players.stream().map(PlayerEntity::getUuid).toList();
+		playerUuids = players.stream().map(Player::getUUID).toList();
 		players.forEach(player ->
 		{
-			player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, 20, 1, false, false));
+			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				info.setIsSquid(true);
@@ -89,7 +89,7 @@ public final class PlaySession
 			if (info.isPlaying() && info.getPlayingStageId() != null)
 			{
 				PlaySession session = SaveInfoCapability.get().playSessions().get(info.getPlayingStageId());
-				if (session != null && session.playerUuids.contains(entity.getUuid()))
+				if (session != null && session.playerUuids.contains(entity.getUUID()))
 					result.set(session);
 			}
 		});
@@ -108,10 +108,10 @@ public final class PlaySession
 			end(server, EndReason.STAGE_NOT_FOUND);
 			return false;
 		}
-		ServerWorld world = server != null ? stage.getStageWorld(server) : null;
+		ServerLevel world = server != null ? stage.getStageWorld(server) : null;
 		if (server != null)
 		{
-			if (playerUuids.isEmpty() || playerUuids.stream().allMatch(v -> world.getPlayerByUuid(v) == null))
+			if (playerUuids.isEmpty() || playerUuids.stream().allMatch(v -> world.getPlayerByUUID(v) == null))
 			{
 				end(server, EndReason.NO_PLAYERS);
 				return false;
@@ -130,7 +130,7 @@ public final class PlaySession
 		if (server != null)
 		{
 			Stage stage = SaveInfoCapability.get().stages().get(stageId);
-			ServerWorld world = stage.getStageWorld(server);
+			ServerLevel world = stage.getStageWorld(server);
 			gameMode.onEnd.consume(this, world);
 			
 			playerUuids.forEach(uuid ->
@@ -138,7 +138,7 @@ public final class PlaySession
 				if (world == null)
 					return;
 				
-				PlayerEntity plr = world.getPlayerByUuid(uuid);
+				Player plr = world.getPlayerByUUID(uuid);
 				if (plr == null)
 					return;
 				

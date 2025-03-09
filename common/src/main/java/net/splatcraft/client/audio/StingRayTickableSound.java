@@ -1,10 +1,15 @@
 package net.splatcraft.client.audio;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.*;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.audio.Channel;
+import com.mojang.blaze3d.audio.Library;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.sounds.ChannelAccess;
+import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.action.EntityAction;
@@ -18,7 +23,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 	private int oldState = 0;
 	public StingRayTickableSound(StingRayBeamEntity beam)
 	{
-		super(SplatcraftSounds.stingRayStart.getId(), SoundCategory.PLAYERS, beam.getRandom());
+		super(SplatcraftSounds.stingRayStart.getLocation(), SoundSource.PLAYERS, beam.getRandom());
 		repeat = true;
 		repeatDelay = 0;
 		
@@ -29,7 +34,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 		this.beam = beam;
 	}
 	@Override
-	public boolean shouldAlwaysPlay()
+	public boolean canStartSilent()
 	{
 		return true;
 	}
@@ -42,8 +47,8 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 			
 			try
 			{
-				Vec3d cameraPos = MinecraftClient.getInstance().cameraEntity.getEyePos();
-				Vec3d closestRelativePoint = StingRayBeamEntity.getClosestPoint(beam.getRotationVector(), cameraPos.subtract(beam.getPos()));
+				Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition();
+				Vec3 closestRelativePoint = StingRayBeamEntity.getClosestPoint(beam.getLookAngle(), cameraPos.subtract(beam.position()));
 				x = closestRelativePoint.x + cameraPos.x;
 				y = closestRelativePoint.y + cameraPos.y;
 				z = closestRelativePoint.z + cameraPos.z;
@@ -78,18 +83,18 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 		{
 			try
 			{
-				SoundManager soundManager = MinecraftClient.getInstance().getSoundManager();
+				SoundManager soundManager = Minecraft.getInstance().getSoundManager();
 				if (soundManager == null)
 					return;
 				
 				id = switch (state)
 				{
-					case 0 -> SplatcraftSounds.stingRayStart.getId();
-					case 1 -> SplatcraftSounds.stingRayBeamUse.getId();
-					case 2 -> SplatcraftSounds.stingRayShockwave.getId();
+					case 0 -> SplatcraftSounds.stingRayStart.getLocation();
+					case 1 -> SplatcraftSounds.stingRayBeamUse.getLocation();
+					case 2 -> SplatcraftSounds.stingRayShockwave.getLocation();
 					default -> null;
 				};
-				WeightedSoundSet weightedSoundSet = soundManager.get(id);
+				WeighedSoundEvents weightedSoundSet = soundManager.getSoundEvent(id);
 				if (weightedSoundSet == null)
 					return;
 				
@@ -110,31 +115,31 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 	}
 	private void reassignSound(SoundManager soundManager)
 	{
-		SoundSystem soundSystem = soundManager.soundSystem;
-		CompletableFuture<Channel.SourceManager> completableFuture = soundSystem.channel.createSource(sound.isStreamed() ? SoundEngine.RunMode.STREAMING : SoundEngine.RunMode.STATIC);
-		Channel.SourceManager sourceManager = completableFuture.join();
-		Channel.SourceManager old = soundSystem.sources.put(this, sourceManager);
+		SoundEngine soundSystem = soundManager.soundEngine;
+		CompletableFuture<ChannelAccess.ChannelHandle> completableFuture = soundSystem.channelAccess.createHandle(sound.shouldStream() ? Library.Pool.STREAMING : Library.Pool.STATIC);
+		ChannelAccess.ChannelHandle sourceManager = completableFuture.join();
+		ChannelAccess.ChannelHandle old = soundSystem.instanceToChannel.put(this, sourceManager);
 		if (old != null)
-			old.run(Source::stop);
+			old.execute(Channel::stop);
 		
-		if (sound.isStreamed())
+		if (sound.shouldStream())
 		{
-			soundSystem.soundLoader.loadStatic(sound.getLocation()).thenAccept((soundx) ->
+			soundSystem.soundBuffers.getCompleteBuffer(sound.getPath()).thenAccept((soundx) ->
 			{
-				sourceManager.run((source) ->
+				sourceManager.execute((source) ->
 				{
-					source.setBuffer(soundx);
+					source.attachStaticBuffer(soundx);
 					source.play();
 				});
 			});
 		}
 		else
 		{
-			soundSystem.soundLoader.loadStreamed(sound.getLocation(), true).thenAccept((stream) ->
+			soundSystem.soundBuffers.getStream(sound.getPath(), true).thenAccept((stream) ->
 			{
-				sourceManager.run((source) ->
+				sourceManager.execute((source) ->
 				{
-					source.setStream(stream);
+					source.attachBufferStream(stream);
 					source.play();
 				});
 			});

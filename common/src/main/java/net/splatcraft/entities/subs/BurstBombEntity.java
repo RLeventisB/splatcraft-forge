@@ -1,15 +1,15 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.BurstBombDataRecord;
@@ -23,53 +23,53 @@ import net.splatcraft.util.InkExplosion;
 
 public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord> implements ObjectCollideListenerEntity
 {
-	public BurstBombEntity(EntityType<? extends AbstractSubWeaponEntity<BurstBombDataRecord>> type, World world)
+	public BurstBombEntity(EntityType<? extends AbstractSubWeaponEntity<BurstBombDataRecord>> type, Level world)
 	{
 		super(type, world);
 	}
-	protected void onEntityHit(EntityHitResult result)
+	protected void onHitEntity(EntityHitResult result)
 	{
-		super.onEntityHit(result);
+		super.onHitEntity(result);
 		
 		SubWeaponSettings<BurstBombDataRecord> settings = getSettings();
 		
 		if (result.getEntity() instanceof LivingEntity target)
 			InkDamageUtils.doDamage(target, settings.subDataRecord.directDamage(), getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
-		explode(settings, result.getPos());
+		explode(settings, result.getLocation());
 	}
 	@Override
-	protected void onBlockHit(BlockHitResult result)
+	protected void onHitBlock(BlockHitResult result)
 	{
 		SubWeaponSettings<BurstBombDataRecord> settings = getSettings();
-		Vec3d impactPos = InkExplosion.adjustPosition(result.getPos(), result.getSide(), this);
+		Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this);
 		explode(settings, impactPos);
 	}
-	public void explode(SubWeaponSettings<BurstBombDataRecord> settings, Vec3d impactPos)
+	public void explode(SubWeaponSettings<BurstBombDataRecord> settings, Vec3 impactPos)
 	{
-		if (!getWorld().isClient())
+		if (!level().isClientSide())
 		{
 			InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
-			getWorld().sendEntityStatus(this, (byte) 1);
+			level().broadcastEntityEvent(this, (byte) 1);
 			discard();
 		}
-		getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
+		level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 	}
 	@Override
-	public void handleStatus(byte id)
+	public void handleEntityEvent(byte id)
 	{
-		super.handleStatus(id);
+		super.handleEntityEvent(id);
 		if (id == 1)
 		{
-			getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override
 	public void updateRotation()
 	{
-		float angle = -age * MathHelper.DEGREES_PER_RADIAN * 0.4f;
-		Vec3d vec3 = getVelocity();
-		setPitch(angle);
-		setYaw(updateRotation(prevYaw, (float) (MathHelper.atan2(vec3.x, vec3.z) * MathHelper.DEGREES_PER_RADIAN)));
+		float angle = -tickCount * Mth.RAD_TO_DEG * 0.4f;
+		Vec3 vec3 = getDeltaMovement();
+		setXRot(angle);
+		setYRot(lerpRotation(yRotO, (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG)));
 	}
 	@Override
 	public void tick()

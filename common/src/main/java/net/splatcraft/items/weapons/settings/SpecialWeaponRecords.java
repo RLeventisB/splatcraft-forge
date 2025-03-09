@@ -3,7 +3,7 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
 
@@ -38,7 +38,7 @@ public class SpecialWeaponRecords
 				Codec.FLOAT.fieldOf("painting_radius").forGetter(StingRayDataRecord::paintingRadius)
 			).apply(inst, StingRayDataRecord::new)
 		);
-		public static final Identifier ID = Splatcraft.identifierOf("sting_ray");
+		public static final ResourceLocation ID = Splatcraft.identifierOf("sting_ray");
 		@Override
 		public StingRayDataRecord convertSelf()
 		{

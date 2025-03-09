@@ -1,15 +1,15 @@
 package net.splatcraft.client.renderer;
 
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.projectiles.BlasterInkProjectileModel;
@@ -24,29 +24,29 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.TreeMap;
 
-public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> implements FeatureRendererContext<InkProjectileEntity, InkProjectileModel>
+public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> implements RenderLayerParent<InkProjectileEntity, InkProjectileModel>
 {
 	private final TreeMap<String, InkProjectileModel> MODELS;
-	public InkProjectileRenderer(EntityRendererFactory.Context context)
+	public InkProjectileRenderer(EntityRendererProvider.Context context)
 	{
 		super(context);
 		
 		MODELS = new TreeMap<>()
 		{{
-			put(InkProjectileEntity.Types.DEFAULT, new InkProjectileModel(context.getPart(InkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.SHOOTER, new ShooterInkProjectileModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.CHARGER, new ShooterInkProjectileModel(context.getPart(ShooterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.BLASTER, new BlasterInkProjectileModel(context.getPart(BlasterInkProjectileModel.LAYER_LOCATION)));
-			put(InkProjectileEntity.Types.ROLLER, new RollerInkProjectileModel(context.getPart(RollerInkProjectileModel.LAYER_LOCATION)));
+			put(InkProjectileEntity.Types.DEFAULT, new InkProjectileModel(context.bakeLayer(InkProjectileModel.LAYER_LOCATION)));
+			put(InkProjectileEntity.Types.SHOOTER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
+			put(InkProjectileEntity.Types.CHARGER, new ShooterInkProjectileModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION)));
+			put(InkProjectileEntity.Types.BLASTER, new BlasterInkProjectileModel(context.bakeLayer(BlasterInkProjectileModel.LAYER_LOCATION)));
+			put(InkProjectileEntity.Types.ROLLER, new RollerInkProjectileModel(context.bakeLayer(RollerInkProjectileModel.LAYER_LOCATION)));
 		}};
 	}
 	@Override
-	public void render(InkProjectileEntity entityIn, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStackIn, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
+	public void render(InkProjectileEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
 		if (entityIn.isInvisible())
 			return;
 		
-		if (dispatcher.camera.getPos().squaredDistanceTo(entityIn.getLerpedPos(partialTicks)) >= 2D)
+		if (entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.getPosition(partialTicks)) >= 2D)
 		{
 			float visualSize = entityIn.getProjectileVisualSize();
 			float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
@@ -58,32 +58,32 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 				byte[] colorValues = color.getRGBBytes();
 				float[] hslValues = new float[3];
 				Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
-				hslValues[2] = MathHelper.lerp(0.9f, hslValues[2], 1);
-				hslValues[1] = MathHelper.lerp(0.5f, hslValues[1], 0);
+				hslValues[2] = Mth.lerp(0.9f, hslValues[2], 1);
+				hslValues[1] = Mth.lerp(0.5f, hslValues[1], 0);
 				
 				color = InkColor.constructOrReuse(Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]) | 0xFF000000);
 				packedLightIn = 0x00F00000;
 			}
 			
 			//0.30000001192092896D
-			matrixStackIn.push();
+			matrixStackIn.pushPose();
 			matrixStackIn.translate(0.0D, visualSize / 4, 0.0D);
-			matrixStackIn.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(entityYaw - 180.0F));
-			matrixStackIn.multiply(RotationAxis.POSITIVE_X.rotationDegrees(entityIn.getPitch(partialTicks)));
+			matrixStackIn.mulPose(Axis.YP.rotationDegrees(entityYaw - 180.0F));
+			matrixStackIn.mulPose(Axis.XP.rotationDegrees(entityIn.getViewXRot(partialTicks)));
 			matrixStackIn.scale(scale, scale, scale);
 			
 			InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
 			
-			model.setAngles(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getPitch(partialTicks));
-			model.render(matrixStackIn, bufferIn.getBuffer(model.getLayer(getTexture(entityIn))), shinier ? LightmapTextureManager.MAX_LIGHT_COORDINATE : packedLightIn, OverlayTexture.DEFAULT_UV, color.getColorWithAlpha(255));
-			matrixStackIn.pop();
+			model.setupAnim(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getViewXRot(partialTicks));
+			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), shinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, color.getColorWithAlpha(255));
+			matrixStackIn.popPose();
 			
 			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
 		}
 	}
 	protected float handleRotationFloat(InkProjectileEntity livingBase, float partialTicks)
 	{
-		return (float) livingBase.age + partialTicks;
+		return (float) livingBase.tickCount + partialTicks;
 	}
 	@Override
 	public @NotNull InkProjectileModel getModel()
@@ -91,7 +91,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 		return MODELS.get(InkProjectileEntity.Types.DEFAULT);
 	}
 	@Override
-	public @NotNull Identifier getTexture(InkProjectileEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(InkProjectileEntity entity)
 	{
 		return Splatcraft.identifierOf("textures/entity/ink_projectile_" + entity.getProjectileType() + ".png");
 	}

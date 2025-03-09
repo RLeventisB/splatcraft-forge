@@ -1,13 +1,13 @@
 package net.splatcraft.util.action;
 
 import com.mojang.serialization.*;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -24,16 +24,16 @@ import java.util.stream.Stream;
 
 public interface EntityAction
 {
-	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_classes")), Lifecycle.stable());
-	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new SimpleRegistry<>(RegistryKey.ofRegistry(Splatcraft.identifierOf("player_cooldown_codecs")), Lifecycle.stable());
+	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("player_cooldown_classes")), Lifecycle.stable());
+	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("player_cooldown_codecs")), Lifecycle.stable());
 	Codec<EntityAction> SERIALIZER_CODEC = new MapCodec<EntityAction>()
 	{
 		@Override
 		public <T> RecordBuilder<T> encode(EntityAction input, DynamicOps<T> ops, RecordBuilder<T> builder)
 		{
-			Identifier id = CLASS_REGISTRY.getId(input.getClass());
+			ResourceLocation id = CLASS_REGISTRY.getKey(input.getClass());
 			
-			builder.add("id", Identifier.CODEC.encodeStart(ops, id));
+			builder.add("id", ResourceLocation.CODEC.encodeStart(ops, id));
 			builder.add("data", ops.withEncoder(CODEC_REGISTRY.get(id).get()).apply(input));
 			
 			return builder;
@@ -41,7 +41,7 @@ public interface EntityAction
 		@Override
 		public <T> DataResult<EntityAction> decode(DynamicOps<T> ops, MapLike<T> input)
 		{
-			Identifier cooldownClass = Identifier.CODEC.parse(ops, input.get("id")).getOrThrow();
+			ResourceLocation cooldownClass = ResourceLocation.CODEC.parse(ops, input.get("id")).getOrThrow();
 			return CODEC_REGISTRY.get(cooldownClass).get().parse(ops, input.get("data"));
 		}
 		@Override
@@ -166,7 +166,7 @@ public interface EntityAction
 	}
 	static <T extends EntityAction> void register(String name, Class<T> clazz, Supplier<Codec<T>> codecSupplier)
 	{
-		Identifier id = Splatcraft.identifierOf(name);
+		ResourceLocation id = Splatcraft.identifierOf(name);
 		Registry.register(CLASS_REGISTRY, id, clazz);
 		Registry.register(CODEC_REGISTRY, id, (Supplier<Codec<EntityAction>>) (Object) codecSupplier); // >:(
 	}
@@ -202,9 +202,9 @@ public interface EntityAction
 	{
 		return -1;
 	}
-	default Hand getHand()
+	default InteractionHand getHand()
 	{
-		return Hand.MAIN_HAND;
+		return InteractionHand.MAIN_HAND;
 	}
 	default void tick(LivingEntity entity)
 	{

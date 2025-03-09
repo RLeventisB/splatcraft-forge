@@ -2,10 +2,10 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData.SloshExtraData;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -43,7 +43,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		if (relativeY < -minDamageHeight)
 			damage = projectileData.minDamage();
 		else if (relativeY < -damageDecayStartHeight)
-			damage = MathHelper.lerp(MathHelper.getLerpProgress(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
+			damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
 		return damage;
 	}
 	@Override
@@ -106,7 +106,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		return new DataRecord(shotData, baseProjectile, moveSpeed, bypassesMobDamage, isSecret);
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return Float.POSITIVE_INFINITY;
 	}

@@ -1,69 +1,69 @@
 package net.splatcraft.entities;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 public interface ISetVelocityExtension
 {
-	default void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy)
+	default void setDeltaMovement(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy)
 	{
-		setVelocity(thrower, pitch, yaw, pitchOffset, speed, inaccuracy, 0.8f);
+		setDeltaMovement(thrower, pitch, yaw, pitchOffset, speed, inaccuracy, 0.8f);
 	}
-	default void setVelocity(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy, double throwerImpulse)
+	default void setDeltaMovement(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy, double throwerImpulse)
 	{
 		pitch += pitchOffset;
-		pitch *= MathHelper.RADIANS_PER_DEGREE;
-		yaw *= MathHelper.RADIANS_PER_DEGREE;
+		pitch *= Mth.DEG_TO_RAD;
+		yaw *= Mth.DEG_TO_RAD;
 		double f = -Math.sin(yaw) * Math.cos(pitch);
 		double f1 = -Math.sin((pitch));
 		double f2 = Math.cos(yaw) * Math.cos(pitch);
-		setVelocity(f, f1, f2, speed, inaccuracy);
+		setDeltaMovement(f, f1, f2, speed, inaccuracy);
 		
 		if (throwerImpulse == 0)
 			return;
 		
-		Vec3d posDiff = new Vec3d(0, 0, 0);
+		Vec3 posDiff = new Vec3(0, 0, 0);
 		
 		if (thrower != null)
 		{
-			posDiff = thrower.getMovement();
-			if (thrower.isOnGround())
+			posDiff = thrower.getKnownMovement();
+			if (thrower.onGround())
 				posDiff.multiply(1, 0, 1);
-			posDiff = posDiff.multiply(throwerImpulse);
+			posDiff = posDiff.scale(throwerImpulse);
 		}
 		
-		addVelocity(posDiff);
+		addDeltaMovement(posDiff);
 	}
-	default void setVelocity(double x, double y, double z, float speed, float inaccuracy)
+	default void setDeltaMovement(double x, double y, double z, float speed, float inaccuracy)
 	{
-		Vec3d shotDirection = calculateShotDirection(x, y, z, inaccuracy);
+		Vec3 shotDirection = calculateShotDirection(x, y, z, inaccuracy);
 		onShotDirectionCalculated(shotDirection);
-		shotDirection = shotDirection.multiply(speed);
+		shotDirection = shotDirection.scale(speed);
 		onVelocityCalculated(shotDirection, speed);
 	}
-	default void onVelocityCalculated(Vec3d velocity, float speed)
+	default void onVelocityCalculated(Vec3 velocity, float speed)
 	{
 	
 	}
-	default void setVelocity(float x, float y, float z)
+	default void setDeltaMovement(float x, float y, float z)
 	{
-		setVelocity((double) x, y, z);
+		setDeltaMovement((double) x, y, z);
 	}
-	default void onShotDirectionCalculated(Vec3d shotDirection)
+	default void onShotDirectionCalculated(Vec3 shotDirection)
 	{
 	
 	}
-	default Vec3d calculateShotDirection(double x, double y, double z, float inaccuracy)
+	default Vec3 calculateShotDirection(double x, double y, double z, float inaccuracy)
 	{
-		float usedInaccuracy = inaccuracy * MathHelper.RADIANS_PER_DEGREE;
-		return new Vec3d(x, y, z)
-			.rotateY((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy)
-			.rotateX((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();
+		float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD;
+		return new Vec3(x, y, z)
+			.yRot((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy)
+			.xRot((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();
 	}
-	void setVelocity(double x, double y, double z);
-	void setVelocity(Vec3d vec3);
-	void addVelocity(Vec3d vec3);
-	Random getRandom();
+	void setDeltaMovement(double x, double y, double z);
+	void setDeltaMovement(Vec3 vec3);
+	void addDeltaMovement(Vec3 vec3);
+	RandomSource getRandom();
 }

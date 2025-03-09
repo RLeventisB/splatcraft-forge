@@ -1,18 +1,18 @@
 package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.EditBoxWidget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.MultiLineEditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.StagePadItem;
 import net.splatcraft.util.ColorUtils;
@@ -25,10 +25,10 @@ import java.util.Optional;
 
 public abstract class AbstractStagePadScreen extends Screen
 {
-    protected static final Identifier COMMON_TEXTURE = Splatcraft.identifierOf("textures/gui/stage_pad/common.png");
-    protected static final Identifier CONTROLLERS_TEXTURE = Splatcraft.identifierOf("textures/gui/stage_pad/controllers.png");
-    protected static final Identifier WIDGETS = Splatcraft.identifierOf("textures/gui/stage_pad/widgets.png");
-    public final StagePadItem.UseAction OPEN_SELF = (level, player, hand, stack, pos) -> client.setScreen(this);
+    protected static final ResourceLocation COMMON_TEXTURE = Splatcraft.identifierOf("textures/gui/stage_pad/common.png");
+    protected static final ResourceLocation CONTROLLERS_TEXTURE = Splatcraft.identifierOf("textures/gui/stage_pad/controllers.png");
+    protected static final ResourceLocation WIDGETS = Splatcraft.identifierOf("textures/gui/stage_pad/widgets.png");
+    public final StagePadItem.UseAction OPEN_SELF = (level, player, hand, stack, pos) -> minecraft.setScreen(this);
     protected final ArrayList<MenuButton> buttons = new ArrayList<>();
     protected final ArrayList<MenuTextBox> textFields = new ArrayList<>();
     protected final ArrayList<MenuTextBox.Factory> textFieldFactories = new ArrayList<>();
@@ -36,15 +36,15 @@ public abstract class AbstractStagePadScreen extends Screen
     protected int backgroundHeight = 130;
     protected StagePadItem.UseAction useAction;
 
-    protected AbstractStagePadScreen(Text label, @Nullable StagePadItem.UseAction useAction)
+    protected AbstractStagePadScreen(Component label, @Nullable StagePadItem.UseAction useAction)
     {
         super(label);
 
         this.useAction = useAction == null ? OPEN_SELF : useAction;
-        client = MinecraftClient.getInstance();
+        minecraft = Minecraft.getInstance();
     }
 
-    protected AbstractStagePadScreen(Text label)
+    protected AbstractStagePadScreen(Component label)
     {
         this(label, null);
     }
@@ -53,7 +53,7 @@ public abstract class AbstractStagePadScreen extends Screen
     {
         buttons.add(button);
 
-        addSelectableChild(button);
+        addWidget(button);
         return button;
     }
 
@@ -70,11 +70,11 @@ public abstract class AbstractStagePadScreen extends Screen
         StagePadItem.clientUseAction = useAction;
 
         if (textFields.isEmpty())
-            textFieldFactories.forEach(factory -> textFields.add(factory.newInstance(textRenderer)));
+            textFieldFactories.forEach(factory -> textFields.add(factory.newInstance(font)));
     }
 
     @Override
-    public boolean shouldPause()
+    public boolean isPauseScreen()
     {
         return false;
     }
@@ -82,7 +82,7 @@ public abstract class AbstractStagePadScreen extends Screen
     @Override
     public boolean keyPressed(int mouseX, int mouseY, int key)
     {
-        for (EditBoxWidget textField : textFields)
+        for (MultiLineEditBox textField : textFields)
         {
             if (textField.isFocused())
                 textField.keyPressed(mouseX, mouseY, key);
@@ -93,7 +93,7 @@ public abstract class AbstractStagePadScreen extends Screen
     @Override
     public boolean charTyped(char c, int p_94684_)
     {
-        for (EditBoxWidget textField : textFields)
+        for (MultiLineEditBox textField : textFields)
             if (textField.isFocused())
                 textField.charTyped(c, p_94684_);
         return super.charTyped(c, p_94684_);
@@ -104,7 +104,7 @@ public abstract class AbstractStagePadScreen extends Screen
     {
         if (canClickButtons())
             for (MenuButton button : buttons)
-                if (button.isSelected() && button.isHovered())
+                if (button.isHoveredOrFocused() && button.isHovered())
                     button.mouseClicked(mouseX, mouseY, clickButton);
         return super.mouseClicked(mouseX, mouseY, clickButton);
     }
@@ -128,7 +128,7 @@ public abstract class AbstractStagePadScreen extends Screen
         return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
     }
 
-    private void renderTooltips(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+    private void renderTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
         for (MenuButton button : buttons)
             if (button.visible && button.isHovered())
@@ -136,7 +136,7 @@ public abstract class AbstractStagePadScreen extends Screen
     }
 
     @Override
-    public void render(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
     {
         MenuButton hoveredButton = null;
 
@@ -177,7 +177,7 @@ public abstract class AbstractStagePadScreen extends Screen
     }
 
     @Override
-    public void renderBackground(DrawContext guiGraphics, int mouseX, int mouseY, float delta)
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta)
     {
         super.renderBackground(guiGraphics, mouseX, mouseY, delta);
 
@@ -186,18 +186,18 @@ public abstract class AbstractStagePadScreen extends Screen
 
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
-        ItemStack stagePad = client.player.getStackInHand(client.player.getMainHandStack().getItem() instanceof StagePadItem ? Hand.MAIN_HAND : Hand.OFF_HAND);
+        ItemStack stagePad = minecraft.player.getItemInHand(minecraft.player.getMainHandItem().getItem() instanceof StagePadItem ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND);
 
         float[] rgb = ColorUtils.getInkColor(stagePad).getRGB();
         RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 1);
         RenderSystem.setShaderTexture(0, CONTROLLERS_TEXTURE);
-        guiGraphics.drawTexture(CONTROLLERS_TEXTURE, x - 52, y, 0, 0, 54, 130);
-        guiGraphics.drawTexture(CONTROLLERS_TEXTURE, x + backgroundWidth - 2, y, 62, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x - 52, y, 0, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x + backgroundWidth - 2, y, 62, 0, 54, 130);
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        guiGraphics.drawTexture(CONTROLLERS_TEXTURE, x - 52, y, 116, 0, 54, 130);
-        guiGraphics.drawTexture(CONTROLLERS_TEXTURE, x + backgroundWidth - 2, y, 178, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x - 52, y, 116, 0, 54, 130);
+        guiGraphics.blit(CONTROLLERS_TEXTURE, x + backgroundWidth - 2, y, 178, 0, 54, 130);
         RenderSystem.setShaderTexture(0, COMMON_TEXTURE);
-        guiGraphics.drawTexture(COMMON_TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
+        guiGraphics.blit(COMMON_TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
     }
 
     public boolean isMouseOver(double mouseX, double mouseY, MenuButton button)
@@ -210,10 +210,10 @@ public abstract class AbstractStagePadScreen extends Screen
         return mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
     }
 
-    public MenuButton.OnTooltip showText(Text... lines)
+    public MenuButton.OnTooltip showText(Component... lines)
     {
         return (button, guiGraphics, x, y, partialTicks) ->
-            guiGraphics.drawTooltip(MinecraftClient.getInstance().textRenderer, Arrays.stream(lines).toList(), Optional.empty(), x, y);
+            guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.stream(lines).toList(), Optional.empty(), x, y);
     }
 
     public MenuButton.OnTooltip showCopyPos(BlockPosGetter pos)
@@ -221,33 +221,33 @@ public abstract class AbstractStagePadScreen extends Screen
         return (button, guiGraphics, x, y, partialTicks) ->
         {
             if (pos.get() != null)
-                guiGraphics.drawTooltip(MinecraftClient.getInstance().textRenderer, Arrays.asList(Text.translatable("gui.stage_pad.button.position", pos.get().getX(), pos.get().getY(), pos.get().getZ()), Text.translatable("gui.stage_pad.button.copy_position").formatted(Formatting.YELLOW)),
+                guiGraphics.renderTooltip(Minecraft.getInstance().font, Arrays.asList(Component.translatable("gui.stage_pad.button.position", pos.get().getX(), pos.get().getY(), pos.get().getZ()), Component.translatable("gui.stage_pad.button.copy_position").withStyle(ChatFormatting.YELLOW)),
                     Optional.empty(), x, y);
         };
     }
 
-    public ButtonWidget.PressAction copyPos(BlockPosGetter pos)
+    public Button.OnPress copyPos(BlockPosGetter pos)
     {
         return (button) ->
         {
             if (pos.get() != null)
-                client.keyboard.setClipboard(pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ());
+                minecraft.keyboardHandler.setClipboard(pos.get().getX() + " " + pos.get().getY() + " " + pos.get().getZ());
         };
     }
 
-    public MenuButton.PostDraw drawIcon(DrawContext guiGraphics, Identifier location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight)
+    public MenuButton.PostDraw drawIcon(GuiGraphics guiGraphics, ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight)
     {
         return (no, button) ->
         {
             float color = button.active ? 1 : 0.5f;
             RenderSystem.setShaderColor(color, color, color, button.getAlpha());
             RenderSystem.setShaderTexture(0, location);
-            guiGraphics.drawTexture(location, button.getX() + xOff, button.getY() + yOff, texX, texY, texWidth, texHeight);
+            guiGraphics.blit(location, button.getX() + xOff, button.getY() + yOff, texX, texY, texWidth, texHeight);
             RenderSystem.setShaderColor(1, 1, 1, 1);
         };
     }
 
-    public MenuButton.PostDraw drawToggleIcon(Identifier location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight, boolean offsetTx)
+    public MenuButton.PostDraw drawToggleIcon(ResourceLocation location, int xOff, int yOff, int texX, int texY, int texWidth, int texHeight, boolean offsetTx)
     {
         return (guiGraphics, button) ->
         {
@@ -259,7 +259,7 @@ public abstract class AbstractStagePadScreen extends Screen
             float color = button.active ? 1 : 0.5f;
             RenderSystem.setShaderColor(color, color, color, button.getAlpha());
             RenderSystem.setShaderTexture(0, location);
-            guiGraphics.drawTexture(location, button.getX() + xOff + (t.toggle ? button.getWidth() / 2 : 0), button.getY() + yOff, texX + (offsetTx & t.toggle ? texWidth : 0), texY, texWidth, texHeight);
+            guiGraphics.blit(location, button.getX() + xOff + (t.toggle ? button.getWidth() / 2 : 0), button.getY() + yOff, texX + (offsetTx & t.toggle ? texWidth : 0), texY, texWidth, texHeight);
             RenderSystem.setShaderColor(1, 1, 1, 1);
         };
     }
@@ -269,18 +269,18 @@ public abstract class AbstractStagePadScreen extends Screen
         return (guiGraphics, button) -> drawText(button.getMessage(), centeredText).apply(guiGraphics, button);
     }
 
-    public MenuButton.PostDraw drawText(Text label, boolean centeredText)
+    public MenuButton.PostDraw drawText(Component label, boolean centeredText)
     {
         return (guiGraphics, button) ->
         {
             int j = button.getFGColor();
-            guiGraphics.drawTextWithShadow(textRenderer, label, button.getX() + (centeredText ? (button.getWidth() - textRenderer.getWidth(label)) / 2 : 3), button.getY() + (button.getHeight() - 8) / 2, j | MathHelper.ceil(button.getAlpha() * 255.0F) << 24);
+            guiGraphics.drawString(font, label, button.getX() + (centeredText ? (button.getWidth() - font.width(label)) / 2 : 3), button.getY() + (button.getHeight() - 8) / 2, j | Mth.ceil(button.getAlpha() * 255.0F) << 24);
         };
     }
 
-    public ButtonWidget.PressAction goToScreen(ScreenFactory screen)
+    public Button.OnPress goToScreen(ScreenFactory screen)
     {
-        return (b) -> client.setScreen(screen.create());
+        return (b) -> minecraft.setScreen(screen.create());
     }
 
     public boolean canClickButtons()
@@ -290,15 +290,15 @@ public abstract class AbstractStagePadScreen extends Screen
 
     public abstract void onStagesUpdate();
 
-    public abstract void handleWidgets(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks);
+    public abstract void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks);
 
-    protected void addOptionsTabs(Text label, String stageId, Screen mainMenu)
+    protected void addOptionsTabs(Component label, String stageId, Screen mainMenu)
     {
         addButton(new MenuButton(10, 12, 14, 12, goToScreen(() -> mainMenu), MenuButton.NO_TOOLTIP, (v, y) -> drawIcon(v, WIDGETS, 1, 0, 244, 24, 12, 12), MenuButton.ButtonColor.GREEN));
-        addButton(new MenuButton(24, 12, 44, 12, goToScreen(() -> new StageSettingsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Text.translatable("gui.stage_pad.tab.settings"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(68, 12, 44, 12, goToScreen(() -> new StageRulesScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Text.translatable("gui.stage_pad.tab.rules"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(112, 12, 44, 12, goToScreen(() -> new StageTeamsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Text.translatable("gui.stage_pad.tab.teams"), true), MenuButton.ButtonColor.PURPLE));
-        addButton(new MenuButton(156, 12, 44, 12, goToScreen(() -> new StageActionsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Text.translatable("gui.stage_pad.tab.actions"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(24, 12, 44, 12, goToScreen(() -> new StageSettingsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.settings"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(68, 12, 44, 12, goToScreen(() -> new StageRulesScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.rules"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(112, 12, 44, 12, goToScreen(() -> new StageTeamsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.teams"), true), MenuButton.ButtonColor.PURPLE));
+        addButton(new MenuButton(156, 12, 44, 12, goToScreen(() -> new StageActionsScreen(label, stageId, mainMenu)), MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.tab.actions"), true), MenuButton.ButtonColor.PURPLE));
     }
 
     public interface BlockPosGetter

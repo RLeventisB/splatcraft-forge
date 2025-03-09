@@ -1,18 +1,22 @@
 package net.splatcraft.blocks;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.enums.NoteBlockInstrument;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.HitResult;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -23,46 +27,46 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkedGlassPaneBlock extends PaneBlock implements IColoredBlock, Waterloggable, BlockEntityProvider, ISplatcraftForgeBlockDummy
+public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock, SimpleWaterloggedBlock, EntityBlock, ISplatcraftForgeBlockDummy
 {
 	public InkedGlassPaneBlock()
 	{
-		super(AbstractBlock.Settings.create().instrument(NoteBlockInstrument.HAT).solidBlock(SplatcraftBlocks::noRedstoneConduct).strength(0.3F).sounds(BlockSoundGroup.GLASS).nonOpaque());
+		super(BlockBehaviour.Properties.of().instrument(NoteBlockInstrument.HAT).isRedstoneConductor(SplatcraftBlocks::noRedstoneConduct).strength(0.3F).sound(SoundType.GLASS).noOcclusion());
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 	}
 	@Override
-	public boolean hasSidedTransparency(@NotNull BlockState state)
+	public boolean useShapeForLightOcclusion(@NotNull BlockState state)
 	{
 		return true;
 	}
 	@Override
-	public Integer phGetBeaconColorMultiplier(BlockState state, WorldView level, BlockPos pos, BlockPos beaconPos)
+	public Integer phGetBeaconColorMultiplier(BlockState state, LevelReader level, BlockPos pos, BlockPos beaconPos)
 	{
 		return getColor(level, pos).getColor();
 	}
 	@Override
-	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, WorldView level, BlockPos pos, PlayerEntity player)
+	public ItemStack phGetCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player)
 	{
 		return ColorUtils.withColorLocked(ColorUtils.withInkColor(ISplatcraftForgeBlockDummy.super.phGetCloneItemStack(state, target, level, pos, player), getColor(level, pos)), true);
 	}
 	@Override
-	public void onPlaced(@NotNull World world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
 	{
-		if (stack.contains(SplatcraftComponents.ITEM_COLOR_DATA) && world.getBlockEntity(pos) instanceof InkColorTileEntity)
+		if (stack.has(SplatcraftComponents.ITEM_COLOR_DATA) && world.getBlockEntity(pos) instanceof InkColorTileEntity)
 		{
 			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getEffectiveColor(stack));
 		}
-		super.onPlaced(world, pos, state, entity, stack);
+		super.setPlacedBy(world, pos, state, entity, stack);
 	}
 	@Override
-	public BlockState getPlacementState(@NotNull ItemPlacementContext context)
+	public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
 	{
-		return super.getPlacementState(context).with(WATERLOGGED, context.getWorld().getFluidState(context.getBlockPos()).getRegistryEntry() == Fluids.WATER);
+		return super.getStateForPlacement(context).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).holder() == Fluids.WATER);
 	}
 	@Override
-	public @NotNull ItemStack getPickStack(@NotNull WorldView reader, @NotNull BlockPos pos, @NotNull BlockState state)
+	public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
-		ItemStack stack = super.getPickStack(reader, pos, state);
+		ItemStack stack = super.getCloneItemStack(reader, pos, state);
 		
 		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity)
 			ColorUtils.withColorLocked(ColorUtils.withInkColor(stack, ColorUtils.getInkColor(reader.getBlockEntity(pos))), true);
@@ -85,7 +89,7 @@ public class InkedGlassPaneBlock extends PaneBlock implements IColoredBlock, Wat
 		return false;
 	}
 	@Override
-	public InkColor getColor(WorldView world, BlockPos pos)
+	public InkColor getColor(LevelReader world, BlockPos pos)
 	{
 		if (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
 		{
@@ -94,26 +98,26 @@ public class InkedGlassPaneBlock extends PaneBlock implements IColoredBlock, Wat
 		return InkColor.INVALID;
 	}
 	@Override
-	public boolean remoteColorChange(World world, BlockPos pos, InkColor newColor)
+	public boolean remoteColorChange(Level world, BlockPos pos, InkColor newColor)
 	{
 		BlockState state = world.getBlockState(pos);
 		if (world.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity && colorTileEntity.getInkColor() != newColor)
 		{
 			colorTileEntity.setColor(newColor);
-			world.updateListeners(pos, state, state, 2);
+			world.sendBlockUpdated(pos, state, state, 2);
 			return true;
 		}
 		return false;
 	}
 	@Override
-	public boolean remoteInkClear(World world, BlockPos pos)
+	public boolean remoteInkClear(Level world, BlockPos pos)
 	{
 		return false;
 	}
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
+	public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
 	{
-		return SplatcraftTileEntities.colorTileEntity.get().instantiate(pos, state);
+		return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
 	}
 }

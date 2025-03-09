@@ -2,10 +2,10 @@ package net.splatcraft.network.s2c;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.gui.stagepad.StageCreationScreen;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
@@ -13,7 +13,7 @@ import net.splatcraft.client.gui.stagepad.StageSettingsScreen;
 
 public class NotifyStageCreatePacket extends PlayS2CPacket
 {
-    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("notify_stage_create_packet"));
+    public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("notify_stage_create_packet"));
     final String stageId;
 
     public NotifyStageCreatePacket(String stageId)
@@ -21,28 +21,28 @@ public class NotifyStageCreatePacket extends PlayS2CPacket
         this.stageId = stageId;
     }
 
-    public static NotifyStageCreatePacket decode(PacketByteBuf buf)
+    public static NotifyStageCreatePacket decode(FriendlyByteBuf buf)
     {
-        return new NotifyStageCreatePacket(buf.readString());
+        return new NotifyStageCreatePacket(buf.readUtf());
     }
 
     @Override
-    public Id<? extends CustomPayload> getId()
+    public Type<? extends CustomPacketPayload> type()
     {
         return ID;
     }
 
     @Override
-    public void encode(RegistryByteBuf buffer)
+    public void encode(RegistryFriendlyByteBuf buffer)
     {
-        buffer.writeString(stageId);
+        buffer.writeUtf(stageId);
     }
 
     @Environment(EnvType.CLIENT)
     @Override
     public void execute()
     {
-        if (MinecraftClient.getInstance().currentScreen instanceof StageCreationScreen screen && stageId.equals(screen.getStageId()))
-            MinecraftClient.getInstance().setScreen(new StageSettingsScreen(screen.getTitle(), stageId, StageSelectionScreen.instance));
+        if (Minecraft.getInstance().screen instanceof StageCreationScreen screen && stageId.equals(screen.getStageId()))
+            Minecraft.getInstance().setScreen(new StageSettingsScreen(screen.getTitle(), stageId, StageSelectionScreen.instance));
     }
 }

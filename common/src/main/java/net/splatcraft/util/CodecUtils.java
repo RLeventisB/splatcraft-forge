@@ -8,12 +8,12 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.ResourceLocationException;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.Vec2;
 import net.splatcraft.Splatcraft;
 
 import java.time.Instant;
@@ -39,11 +39,11 @@ public class CodecUtils
 			return DataResult.error(() -> supplier + " threw an exception");
 		}
 	}
-	public static <T extends Enum<T>> PacketCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values)
+	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values)
 	{
 		final IntFunction<T> decoder = (index) -> values.get()[index];
 		final ToIntFunction<T> encoder = Enum::ordinal;
-		return PacketCodecs.indexed(decoder, encoder);
+		return ByteBufCodecs.idMapper(decoder, encoder);
 	}
 	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
@@ -69,11 +69,11 @@ public class CodecUtils
 	{
 		return new CollectionCodec<>(codec, collectionCreator);
 	}
-	public static Codec<Identifier> identifierCustomNamespace(String defaultNamespace)
+	public static Codec<ResourceLocation> identifierCustomNamespace(String defaultNamespace)
 	{
-		return Codec.STRING.comapFlatMap(id -> validateId(id, defaultNamespace), Identifier::toString).stable();
+		return Codec.STRING.comapFlatMap(id -> validateId(id, defaultNamespace), ResourceLocation::toString).stable();
 	}
-	private static DataResult<Identifier> validateId(String id, String defaultNamespace)
+	private static DataResult<ResourceLocation> validateId(String id, String defaultNamespace)
 	{
 		try
 		{
@@ -84,62 +84,62 @@ public class CodecUtils
 				if (i != 0)
 				{
 					String namespace = id.substring(0, i);
-					return DataResult.success(Identifier.of(namespace, path));
+					return DataResult.success(ResourceLocation.fromNamespaceAndPath(namespace, path));
 				}
 				else
 				{
-					return DataResult.success(Identifier.of(defaultNamespace, path));
+					return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, path));
 				}
 			}
 			
-			return DataResult.success(Identifier.of(defaultNamespace, id));
+			return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, id));
 		}
-		catch (InvalidIdentifierException var2)
+		catch (ResourceLocationException var2)
 		{
 			return DataResult.error(() -> "Not a valid resource location: " + id + " " + var2.getMessage());
 		}
 	}
 	public static class Codecs
 	{
-		public static final PacketCodec<ByteBuf, Instant> INSTANT_PACKET_CODEC = PacketCodec.tuple(
-			PacketCodecs.VAR_LONG, Instant::getEpochSecond,
-			PacketCodecs.VAR_INT, Instant::getNano,
+		public static final StreamCodec<ByteBuf, Instant> INSTANT_PACKET_CODEC = StreamCodec.composite(
+			ByteBufCodecs.VAR_LONG, Instant::getEpochSecond,
+			ByteBufCodecs.VAR_INT, Instant::getNano,
 			Instant::ofEpochSecond
 		);
-		public static final Codec<Identifier> SPLATCRAFT_IDENTIFIER_CODEC = identifierCustomNamespace(Splatcraft.MODID);
-		public static final PacketCodec<ByteBuf, Hand> PACKET_HAND = new PacketCodec<>()
+		public static final Codec<ResourceLocation> SPLATCRAFT_IDENTIFIER_CODEC = identifierCustomNamespace(Splatcraft.MODID);
+		public static final StreamCodec<ByteBuf, InteractionHand> PACKET_HAND = new StreamCodec<>()
 		{
 			@Override
-			public Hand decode(ByteBuf buf)
+			public InteractionHand decode(ByteBuf buf)
 			{
-				return buf.readBoolean() ? Hand.MAIN_HAND : Hand.OFF_HAND;
+				return buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 			}
 			@Override
-			public void encode(ByteBuf buf, Hand value)
+			public void encode(ByteBuf buf, InteractionHand value)
 			{
-				buf.writeBoolean(Objects.equals(value, Hand.MAIN_HAND));
+				buf.writeBoolean(Objects.equals(value, InteractionHand.MAIN_HAND));
 			}
 		};
-		public static final Codec<Hand> HAND_CODEC = new Codec<>()
+		public static final Codec<InteractionHand> HAND_CODEC = new Codec<>()
 		{
 			@Override
-			public <T> DataResult<Pair<Hand, T>> decode(DynamicOps<T> ops, T input)
+			public <T> DataResult<Pair<InteractionHand, T>> decode(DynamicOps<T> ops, T input)
 			{
 				DataResult<Boolean> result = ops.getBooleanValue(input);
 				if (result.isSuccess())
-					return DataResult.success(Pair.of(result.getOrThrow() ? Hand.MAIN_HAND : Hand.OFF_HAND, input));
+					return DataResult.success(Pair.of(result.getOrThrow() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, input));
 				return DataResult.error(() -> "Invalid input.");
 			}
 			@Override
-			public <T> DataResult<T> encode(Hand input, DynamicOps<T> ops, T prefix)
+			public <T> DataResult<T> encode(InteractionHand input, DynamicOps<T> ops, T prefix)
 			{
-				return DataResult.success(ops.createBoolean(Objects.equals(input, Hand.MAIN_HAND)));
+				return DataResult.success(ops.createBoolean(Objects.equals(input, InteractionHand.MAIN_HAND)));
 			}
 		};
-		public static final Codec<Vec2f> VEC_2_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		public static final Codec<Vec2> VEC_2_CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 			Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
-		).apply(inst, Vec2f::new));
+		).apply(inst, Vec2::new));
 	}
 	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{

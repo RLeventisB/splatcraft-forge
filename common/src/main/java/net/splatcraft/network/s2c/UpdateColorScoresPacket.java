@@ -1,9 +1,9 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.util.CommonUtils;
@@ -13,8 +13,8 @@ import java.util.List;
 
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
-	public static final PacketCodec<RegistryByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.PACKET_CODEC.collect(PacketCodecs.toList());
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
+	public static final StreamCodec<RegistryFriendlyByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.PACKET_CODEC.apply(ByteBufCodecs.list());
 	List<InkColor> colors;
 	boolean add;
 	boolean clear;
@@ -24,12 +24,12 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 		colors = color;
 		this.add = add;
 	}
-	public static UpdateColorScoresPacket decode(RegistryByteBuf buffer)
+	public static UpdateColorScoresPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return new UpdateColorScoresPacket(buffer.readBoolean(), buffer.readBoolean(), COLOR_LIST_CODEC.decode(buffer));
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -58,7 +58,7 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 		}
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeBoolean(clear);
 		buffer.writeBoolean(add);

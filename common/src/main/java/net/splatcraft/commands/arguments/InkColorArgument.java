@@ -7,10 +7,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.InkColor;
 
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class InkColorArgument implements ArgumentType<InkColor>
 {
-	public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(input -> Text.translatable("arg.inkColor.notFound", input));
+	public static final DynamicCommandExceptionType COLOR_NOT_FOUND = new DynamicCommandExceptionType(input -> Component.translatable("arg.inkColor.notFound", input));
 	public static final int max = 0xFFFFFF;
 	private static final Collection<String> EXAMPLES = Arrays.asList("splatcraft:orange", "blue", "#C83D79", "4234555");
 	protected InkColorArgument()
@@ -32,7 +32,7 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	{
 		return new InkColorArgument();
 	}
-	public static InkColor getInkColor(CommandContext<ServerCommandSource> context, String name)
+	public static InkColor getInkColor(CommandContext<CommandSourceStack> context, String name)
 	{
 		return context.getArgument(name, InkColor.class);
 	}
@@ -40,7 +40,7 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	{
 		final int start = reader.getCursor();
 		
-		Identifier resourceLocation = Identifier.fromCommandInputNonEmpty(reader);
+		ResourceLocation resourceLocation = ResourceLocation.readNonEmpty(reader);
 		if (!InkColorRegistry.containsAlias(resourceLocation))
 		{
 			try
@@ -87,7 +87,7 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
 	{
 //        CommandSource.suggestMatching() what
-		return CommandSource.suggestMatching(InkColorRegistry.getAllAliases().stream().map(Identifier::toString).collect(Collectors.toSet()), builder);
+		return SharedSuggestionProvider.suggest(InkColorRegistry.getAllAliases().stream().map(ResourceLocation::toString).collect(Collectors.toSet()), builder);
 	}
 	@Override
 	public Collection<String> getExamples()

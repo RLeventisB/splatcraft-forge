@@ -1,11 +1,11 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec2;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.DualieItem;
 
@@ -13,13 +13,13 @@ import java.util.UUID;
 
 public class DodgeRollPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("dodge_roll_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("dodge_roll_packet"));
 	UUID target;
 	ItemStack activeDualie;
 	int maxRolls;
-	Vec2f rollPotency;
-	Hand hand;
-	public DodgeRollPacket(UUID target, ItemStack activeDualie, Hand hand, int maxRolls, Vec2f rollPotency)
+	Vec2 rollPotency;
+	InteractionHand hand;
+	public DodgeRollPacket(UUID target, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency)
 	{
 		this.target = target;
 		this.activeDualie = activeDualie;
@@ -27,28 +27,28 @@ public class DodgeRollPacket extends PlayC2SPacket
 		this.rollPotency = rollPotency;
 		this.hand = hand;
 	}
-	public static DodgeRollPacket decode(RegistryByteBuf buffer)
+	public static DodgeRollPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new DodgeRollPacket(buffer.readUuid(), ItemStack.PACKET_CODEC.decode(buffer), buffer.readBoolean() ? Hand.OFF_HAND : Hand.MAIN_HAND, buffer.readInt(), new Vec2f(buffer.readFloat(), buffer.readFloat()));
+		return new DodgeRollPacket(buffer.readUUID(), ItemStack.STREAM_CODEC.decode(buffer), buffer.readBoolean() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, buffer.readInt(), new Vec2(buffer.readFloat(), buffer.readFloat()));
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
-		PlayerEntity target = player.getWorld().getPlayerByUuid(this.target);
+		Player target = player.level().getPlayerByUUID(this.target);
 		((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, hand, maxRolls, rollPotency, false);
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeUuid(target);
-		ItemStack.PACKET_CODEC.encode(buffer, activeDualie);
-		buffer.writeBoolean(hand == Hand.OFF_HAND);
+		buffer.writeUUID(target);
+		ItemStack.STREAM_CODEC.encode(buffer, activeDualie);
+		buffer.writeBoolean(hand == InteractionHand.OFF_HAND);
 		buffer.writeInt(maxRolls);
 		buffer.writeFloat(rollPotency.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3d uses doubles)
 		buffer.writeFloat(rollPotency.y);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

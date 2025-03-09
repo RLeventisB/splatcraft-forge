@@ -4,8 +4,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.*;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.util.CodecUtils;
 
@@ -14,20 +14,20 @@ import java.util.Map;
 
 public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<SELF, COMMONDATA>, COMMONDATA, DATA> extends AbstractWeaponSettings<SELF, COMMONDATA>
 {
-	private static final Map<Class<? extends DynamicWeaponSettings<?, ?, ?>>, Map<Identifier, MapCodec<?>>> subTypeCodec = new HashMap<>();
+	private static final Map<Class<? extends DynamicWeaponSettings<?, ?, ?>>, Map<ResourceLocation, MapCodec<?>>> subTypeCodec = new HashMap<>();
 	private MapCodec<DATA> dynamicCodec;
-	private Identifier subTypeName;
+	private ResourceLocation subTypeName;
 	public DynamicWeaponSettings(String name)
 	{
 		super(name);
 		Class<? extends DynamicWeaponSettings<?, ?, ?>> clazz = (Class<? extends DynamicWeaponSettings<?, ?, ?>>) getClass();
 		subTypeCodec.computeIfAbsent(clazz, v -> Map.ofEntries(getDynamicCodecs()));
 	}
-	public abstract Map.Entry<Identifier, MapCodec<? extends DATA>>[] getDynamicCodecs();
+	public abstract Map.Entry<ResourceLocation, MapCodec<? extends DATA>>[] getDynamicCodecs();
 	protected abstract MapCodec<COMMONDATA> getMapCodec();
 	public abstract DATA getDynamicDataToSerialize();
 	@Override
-	public void deserialize(Identifier key, JsonObject json)
+	public void deserialize(ResourceLocation key, JsonObject json)
 	{
 		onStartReading(json);
 		subTypeName = CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.parse(JsonOps.INSTANCE, json.get("sub_type")).getOrThrow();
@@ -57,7 +57,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 	}
 	protected abstract void processResult(COMMONDATA commondata, DATA data);
 	@Override
-	public final void serializeToBuffer(RegistryByteBuf buffer)
+	public final void serializeToBuffer(RegistryFriendlyByteBuf buffer)
 	{
 		// lazily stitch the json elements because i dont know how mapcodecs do encoding :(
 		RecordBuilder<JsonElement> builder = new RecordBuilder.MapBuilder<>(JsonOps.INSTANCE);
@@ -67,6 +67,6 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 		dynamicCodec.encode(getDynamicDataToSerialize(), JsonOps.INSTANCE, builder);
 		
 		DataResult<JsonElement> result = builder.build(new JsonObject());
-		result.ifSuccess(v -> buffer.writeString(v.toString()));
+		result.ifSuccess(v -> buffer.writeUtf(v.toString()));
 	}
 }

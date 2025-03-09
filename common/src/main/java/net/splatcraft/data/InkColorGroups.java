@@ -6,11 +6,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -58,18 +58,18 @@ public class InkColorGroups
 		Listener.doLoadIfNecessary();
 		return Collections.unmodifiableList(list);
 	}
-	public static class Listener extends JsonDataLoader
+	public static class Listener extends SimpleJsonResourceReloadListener
 	{
-		private static final HashMap<Identifier, InkColorGroups> REGISTRY = new HashMap<>();
+		private static final HashMap<ResourceLocation, InkColorGroups> REGISTRY = new HashMap<>();
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "tags/ink_colors";
-		private static final List<Map.Entry<Identifier, JsonElement>> entries = new ArrayList<>(), entriesThatReferenceAnotherTag = new ArrayList<>();
+		private static final List<Map.Entry<ResourceLocation, JsonElement>> entries = new ArrayList<>(), entriesThatReferenceAnotherTag = new ArrayList<>();
 		private static boolean loaded;
 		public Listener()
 		{
 			super(GSON_INSTANCE, folder);
 		}
-		public static InkColorGroups getOrCreateTag(Identifier name)
+		public static InkColorGroups getOrCreateTag(ResourceLocation name)
 		{
 			return REGISTRY.computeIfAbsent(name, v -> new InkColorGroups());
 		}
@@ -93,32 +93,32 @@ public class InkColorGroups
 					Splatcraft.LOGGER.warn("The entries for the color groups is empty! Maybe this was called to early?");
 					return;
 				}
-				for (Map.Entry<Identifier, JsonElement> entry : entries)
+				for (Map.Entry<ResourceLocation, JsonElement> entry : entries)
 				{
 					loadTag(entry.getKey(), entry.getValue(), false);
 				}
-				for (Map.Entry<Identifier, JsonElement> entry : entriesThatReferenceAnotherTag)
+				for (Map.Entry<ResourceLocation, JsonElement> entry : entriesThatReferenceAnotherTag)
 				{
 					loadTag(entry.getKey(), entry.getValue(), true);
 				}
 			}
 		}
-		private static void loadTag(Identifier key, JsonElement j, boolean hasReferenceToOtherTags)
+		private static void loadTag(ResourceLocation key, JsonElement j, boolean hasReferenceToOtherTags)
 		{
 			InkColorGroups tag = getOrCreateTag(key);
 			JsonObject json = j.getAsJsonObject();
 			
-			if (JsonHelper.getBoolean(json, "replace", false))
+			if (GsonHelper.getAsBoolean(json, "replace", false))
 				tag.clear();
 			
 			ArrayList<InkColor> newColors = new ArrayList<>();
 			
-			for (JsonElement jsonElement : JsonHelper.getArray(json, "values"))
+			for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
 			{
 				String str = jsonElement.getAsString();
 				if (hasReferenceToOtherTags && str.indexOf('#') == 0 && str.contains(":"))
 				{
-					Identifier referencedKey = Identifier.of(str.substring(1));
+					ResourceLocation referencedKey = ResourceLocation.parse(str.substring(1));
 					if (REGISTRY.containsKey(referencedKey))
 					{
 						for (InkColor color : REGISTRY.get(referencedKey).getAll())
@@ -148,7 +148,7 @@ public class InkColorGroups
 		}
 		public static boolean hasReferenceToAnotherTag(JsonObject json)
 		{
-			for (JsonElement jsonElement : JsonHelper.getArray(json, "values"))
+			for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
 			{
 				String str = jsonElement.getAsString();
 				if (str.indexOf('#') == 0 && str.contains(":")) // very weak condition but it does what its supposed to do
@@ -159,7 +159,7 @@ public class InkColorGroups
 			return false;
 		}
 		@Override
-		protected Map<Identifier, JsonElement> prepare(ResourceManager resourceManager, Profiler profiler)
+		protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profiler)
 		{
 			loaded = false;
 			entries.clear();
@@ -167,11 +167,11 @@ public class InkColorGroups
 			return super.prepare(resourceManager, profiler);
 		}
 		@Override
-		protected void apply(@NotNull Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull Profiler profilerIn)
+		protected void apply(@NotNull Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager resourceManagerIn, @NotNull ProfilerFiller profilerIn)
 		{
-			for (Map.Entry<Identifier, JsonElement> entry : resourceList.entrySet())
+			for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
 			{
-				Identifier key = entry.getKey();
+				ResourceLocation key = entry.getKey();
 				JsonElement j = entry.getValue();
 				JsonObject json = j.getAsJsonObject();
 				if (json.has("values"))

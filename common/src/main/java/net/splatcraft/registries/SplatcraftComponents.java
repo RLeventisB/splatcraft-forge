@@ -2,18 +2,18 @@ package net.splatcraft.registries;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.component.ComponentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -29,85 +29,85 @@ import java.util.function.Function;
 
 public class SplatcraftComponents
 {
-	public static final ComponentType<TankData> TANK_DATA = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<TankData> TANK_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("tank_data"),
-		ComponentType.<TankData>builder().codec(TankData.CODEC).build()
+		DataComponentType.<TankData>builder().persistent(TankData.CODEC).build()
 	);
-	public static final ComponentType<ItemColorData> ITEM_COLOR_DATA = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<ItemColorData> ITEM_COLOR_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("item_color_data"),
-		ComponentType.<ItemColorData>builder().codec(ItemColorData.CODEC).build()
+		DataComponentType.<ItemColorData>builder().persistent(ItemColorData.CODEC).build()
 	);
-	public static final ComponentType<WeaponPrecisionData> WEAPON_PRECISION_DATA = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<WeaponPrecisionData> WEAPON_PRECISION_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("current_weapon_precision_data"),
-		ComponentType.<WeaponPrecisionData>builder().codec(WeaponPrecisionData.CODEC).build()
+		DataComponentType.<WeaponPrecisionData>builder().persistent(WeaponPrecisionData.CODEC).build()
 	);
-	public static final ComponentType<Identifier> WEAPON_SETTING_ID = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<ResourceLocation> WEAPON_SETTING_ID = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("weapon_settings"),
-		ComponentType.<Identifier>builder().codec(Identifier.CODEC).build()
+		DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).build()
 	);
-	public static final ComponentType<Boolean> SINGLE_USE = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<Boolean> SINGLE_USE = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("single_use"),
-		ComponentType.<Boolean>builder().codec(Codec.BOOL).build()
+		DataComponentType.<Boolean>builder().persistent(Codec.BOOL).build()
 	);
-	public static final ComponentType<String> TEAM_ID = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<String> TEAM_ID = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("team_id"),
-		ComponentType.<String>builder().codec(Codec.STRING).build()
+		DataComponentType.<String>builder().persistent(Codec.STRING).build()
 	);
-	public static final ComponentType<RemoteInfo> REMOTE_INFO = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<RemoteInfo> REMOTE_INFO = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("remote_info"),
-		ComponentType.<RemoteInfo>builder().codec(RemoteInfo.CODEC).build()
+		DataComponentType.<RemoteInfo>builder().persistent(RemoteInfo.CODEC).build()
 	);
-	public static final ComponentType<Float> CHARGE = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<Float> CHARGE = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("charge"),
-		ComponentType.<Float>builder().codec(Codec.FLOAT).build()
+		DataComponentType.<Float>builder().persistent(Codec.FLOAT).build()
 	);
-	public static final ComponentType<NbtCompound> SUB_WEAPON_DATA = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<CompoundTag> SUB_WEAPON_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("sub_weapon_data"),
-		ComponentType.<NbtCompound>builder().codec(NbtCompound.CODEC).build()
+		DataComponentType.<CompoundTag>builder().persistent(CompoundTag.CODEC).build()
 	);
-	public static final ComponentType<Boolean> IS_PLURAL = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<Boolean> IS_PLURAL = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("is_plural"),
-		ComponentType.<Boolean>builder().codec(Codec.BOOL).build()
+		DataComponentType.<Boolean>builder().persistent(Codec.BOOL).build()
 	);
-	public static final ComponentType<List<String>> BLUEPRINT_WEAPONS = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<List<String>> BLUEPRINT_WEAPONS = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("blueprint_weapons"),
-		ComponentType.<List<String>>builder().codec(Codec.list(Codec.STRING)).build()
+		DataComponentType.<List<String>>builder().persistent(Codec.list(Codec.STRING)).build()
 	);
-	public static final ComponentType<List<Identifier>> BLUEPRINT_ADVANCEMENTS = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<List<ResourceLocation>> BLUEPRINT_ADVANCEMENTS = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("blueprint_advancements"),
-		ComponentType.<List<Identifier>>builder().codec(Codec.list(Identifier.CODEC)).build()
+		DataComponentType.<List<ResourceLocation>>builder().persistent(Codec.list(ResourceLocation.CODEC)).build()
 	);
-	public static final ComponentType<SpecialProviderData> SPECIAL_PROVIDER_DATA = Registry.register(
-		Registries.DATA_COMPONENT_TYPE,
+	public static final DataComponentType<SpecialProviderData> SPECIAL_PROVIDER_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("special_provider_data"),
-		ComponentType.<SpecialProviderData>builder().codec(SpecialProviderData.CODEC).build()
+		DataComponentType.<SpecialProviderData>builder().persistent(SpecialProviderData.CODEC).build()
 	);
-	public static <T> Optional<T> getOptional(ItemStack stack, ComponentType<T> type)
+	public static <T> Optional<T> getOptional(ItemStack stack, DataComponentType<T> type)
 	{
 		return Optional.ofNullable(stack.get(type));
 	}
-	public static <T> void applyToComponentIfContains(ItemStack stack, ComponentType<T> type, Function<T, T> applier)
+	public static <T> void applyToComponentIfContains(ItemStack stack, DataComponentType<T> type, Function<T, T> applier)
 	{
 		getOptional(stack, type).ifPresent(component -> stack.set(type, applier.apply(component)));
 	}
-	public record RemoteInfo(Optional<String> stageId, Optional<RegistryKey<World>> worldKey, Optional<String> targets,
+	public record RemoteInfo(Optional<String> stageId, Optional<ResourceKey<Level>> worldKey, Optional<String> targets,
 	                         Optional<BlockPos> pointA, Optional<BlockPos> pointB, int modeIndex)
 	{
 		public static final Codec<RemoteInfo> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.STRING.optionalFieldOf("stage_id").forGetter(RemoteInfo::stageId),
-			RegistryKey.createCodec(RegistryKeys.WORLD).optionalFieldOf("world_key").forGetter(RemoteInfo::worldKey),
+			ResourceKey.codec(Registries.DIMENSION).optionalFieldOf("world_key").forGetter(RemoteInfo::worldKey),
 			Codec.STRING.optionalFieldOf("targets").forGetter(RemoteInfo::targets),
 			BlockPos.CODEC.optionalFieldOf("point_a").forGetter(RemoteInfo::pointA),
 			BlockPos.CODEC.optionalFieldOf("point_b").forGetter(RemoteInfo::pointB),
@@ -118,7 +118,7 @@ public class SplatcraftComponents
 		{
 			return new RemoteInfo(Optional.ofNullable(stageId), worldKey, targets, pointA, pointB, modeIndex);
 		}
-		public RemoteInfo setWorldKey(RegistryKey<World> worldKey)
+		public RemoteInfo setWorldKey(ResourceKey<Level> worldKey)
 		{
 			return new RemoteInfo(stageId, Optional.ofNullable(worldKey), targets, pointA, pointB, modeIndex);
 		}
@@ -236,8 +236,8 @@ public class SplatcraftComponents
 		}
 	}
 	public record SpecialProviderData(
-		Optional<Identifier> specialId,
-		Optional<Identifier> weaponIdFilter,
+		Optional<ResourceLocation> specialId,
+		Optional<ResourceLocation> weaponIdFilter,
 		Optional<Integer> pointsPerSpecialOverride,
 		boolean allowSubs,
 		int storedPoints
@@ -267,7 +267,7 @@ public class SplatcraftComponents
 			if (allowSubs && weaponItem instanceof SubWeaponItem<?>)
 				return true;
 			
-			Identifier weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
+			ResourceLocation weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
 			if (weaponId == null)
 				return false;
 			
@@ -275,21 +275,21 @@ public class SplatcraftComponents
 		}
 		public String getSpecialTranslationKey()
 		{
-			return specialId.map(identifier -> "special_weapon." + identifier.toTranslationKey()).orElse("special_weapon.none");
+			return specialId.map(identifier -> "special_weapon." + identifier.toLanguageKey()).orElse("special_weapon.none");
 		}
-		public Text getSpecialText()
+		public Component getSpecialText()
 		{
-			return Text.translatable(getSpecialTranslationKey());
+			return Component.translatable(getSpecialTranslationKey());
 		}
-		public Text getWeaponText()
+		public Component getWeaponText()
 		{
-			return Text.translatable(weaponIdFilter.get().toTranslationKey("item"));
+			return Component.translatable(weaponIdFilter.get().toLanguageKey("item"));
 		}
-		public SpecialProviderData withSpecialId(Identifier id)
+		public SpecialProviderData withSpecialId(ResourceLocation id)
 		{
 			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, allowSubs, storedPoints);
 		}
-		public SpecialProviderData withWeaponIdFilter(Identifier id)
+		public SpecialProviderData withWeaponIdFilter(ResourceLocation id)
 		{
 			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedPoints);
 		}

@@ -4,18 +4,18 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.DyeColor;
 import net.splatcraft.data.InkColorRegistry;
 
 import java.util.TreeMap;
@@ -25,9 +25,9 @@ public class InkColor implements Comparable<InkColor>
 {
 	public static final InkColor INVALID;
 	private static final TreeMap<Integer, InkColor> hexToColorMap = new TreeMap<>();
-	public static final PacketCodec<RegistryByteBuf, InkColor> PACKET_CODEC =
-		PacketCodec.tuple(
-			PacketCodecs.INTEGER, InkColor::getColor,
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkColor> PACKET_CODEC =
+		StreamCodec.composite(
+			ByteBufCodecs.INT, InkColor::getColor,
 			InkColor::constructOrReuse
 		);
 	public static final Codec<InkColor> RAW_INT_CODEC = new Codec<>()
@@ -96,10 +96,10 @@ public class InkColor implements Comparable<InkColor>
 		{
 			InkColor inkColor = null;
 			
-			DataResult<Identifier> idResult = Identifier.CODEC.parse(ops, input);
+			DataResult<ResourceLocation> idResult = ResourceLocation.CODEC.parse(ops, input);
 			if (idResult.isSuccess())
 			{
-				Identifier name = idResult.getOrThrow();
+				ResourceLocation name = idResult.getOrThrow();
 				inkColor = InkColorRegistry.getInkColorByAlias(name);
 			}
 			if (inkColor == null)
@@ -113,7 +113,7 @@ public class InkColor implements Comparable<InkColor>
 			{
 				return DataResult.error(() -> "Input InkColor is not valid");
 			}
-			Identifier colorAliasId = InkColorRegistry.getColorAlias(input);
+			ResourceLocation colorAliasId = InkColorRegistry.getColorAlias(input);
 			if (colorAliasId == null)
 			{
 				return DataResult.error(() -> "Input InkColor has no alias");
@@ -150,7 +150,7 @@ public class InkColor implements Comparable<InkColor>
 			throw new RuntimeException("what did you do");
 		}
 	}
-	public static InkColor getFromNbt(NbtElement nbt)
+	public static InkColor getFromNbt(Tag nbt)
 	{
 		return NUMBER_CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow();
 	}
@@ -166,17 +166,17 @@ public class InkColor implements Comparable<InkColor>
 	{
 		return (hexCode & 0xFFFFFF) == hexCode;
 	}
-	public MutableText getLocalizedName()
+	public MutableComponent getLocalizedName()
 	{
-		return Text.translatable(getTranslationKey());
+		return Component.translatable(getTranslationKey());
 	}
 	public String getTranslationKey()
 	{
-		Identifier alias = InkColorRegistry.getFirstAliasForColor(hexCode);
+		ResourceLocation alias = InkColorRegistry.getFirstAliasForColor(hexCode);
 		
 		if (alias != null)
 		{
-			return "ink_color." + alias.toShortTranslationKey();
+			return "ink_color." + alias.toShortLanguageKey();
 		}
 		return "ink_color." + String.format("%06X", hexCode).toLowerCase();
 	}
@@ -199,7 +199,7 @@ public class InkColor implements Comparable<InkColor>
 	@Override
 	public String toString()
 	{
-		Identifier alias = InkColorRegistry.getColorAlias(this);
+		ResourceLocation alias = InkColorRegistry.getColorAlias(this);
 		if (alias != null)
 			return alias.getPath() + ": #" + getHexCode().toUpperCase();
 		return "unregistered: #" + getHexCode().toUpperCase();
@@ -211,7 +211,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public DyeColor getDyeColor()
 	{
-		return getDyeColor(DyeColor::getEntityColor);
+		return getDyeColor(DyeColor::getTextureDiffuseColor);
 	}
 	public DyeColor getDyeColor(Function<DyeColor, Integer> propertySelector)
 	{
@@ -229,7 +229,7 @@ public class InkColor implements Comparable<InkColor>
 			int g = (colorValue & 0x00FF00) >> 8;
 			int b = (colorValue & 0x0000FF);
 			
-			int difference = MathHelper.square(r - currentColorR) + MathHelper.square(g - currentColorG) + MathHelper.square(b - currentColorB);
+			int difference = Mth.square(r - currentColorR) + Mth.square(g - currentColorG) + Mth.square(b - currentColorB);
 			if (colorDifference > difference)
 			{
 				colorDifference = difference;
@@ -246,9 +246,9 @@ public class InkColor implements Comparable<InkColor>
 	{
 		return !isValid();
 	}
-	public NbtElement getNbt()
+	public Tag getNbt()
 	{
-		return NbtInt.of(hexCode);
+		return IntTag.valueOf(hexCode);
 	}
 	public InkColor getInverted()
 	{

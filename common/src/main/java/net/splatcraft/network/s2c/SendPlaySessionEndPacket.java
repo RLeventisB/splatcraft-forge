@@ -4,13 +4,13 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Uuids;
-import net.minecraft.world.World;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
@@ -23,8 +23,8 @@ import java.util.UUID;
 
 public class SendPlaySessionEndPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendPlaySessionEndPacket.class);
-	private static final PacketCodec<ByteBuf, List<UUID>> PLAYERS_CODEC = Uuids.PACKET_CODEC.collect(PacketCodecs.toList());
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SendPlaySessionEndPacket.class);
+	private static final StreamCodec<ByteBuf, List<UUID>> PLAYERS_CODEC = UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list());
 	private final String stageId;
 	private final List<UUID> playerUuids;
 	public SendPlaySessionEndPacket(String stageId, List<UUID> playerUuids)
@@ -32,19 +32,19 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 		this.stageId = stageId;
 		this.playerUuids = playerUuids;
 	}
-	public static SendPlaySessionEndPacket decode(RegistryByteBuf buffer)
+	public static SendPlaySessionEndPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new SendPlaySessionEndPacket(PacketCodecs.STRING.decode(buffer), PLAYERS_CODEC.decode(buffer));
+		return new SendPlaySessionEndPacket(ByteBufCodecs.STRING_UTF8.decode(buffer), PLAYERS_CODEC.decode(buffer));
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		PacketCodecs.STRING.encode(buffer, stageId);
+		ByteBufCodecs.STRING_UTF8.encode(buffer, stageId);
 		PLAYERS_CODEC.encode(buffer, playerUuids);
 	}
 	@Environment(EnvType.CLIENT)
@@ -57,11 +57,11 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 		
 		playerUuids.forEach(uuid ->
 		{
-			World world = ClientUtils.getClient().world;
+			Level world = ClientUtils.getClient().level;
 			if (world == null)
 				return;
 			
-			PlayerEntity plr = world.getPlayerByUuid(uuid);
+			Player plr = world.getPlayerByUUID(uuid);
 			if (plr == null)
 				return;
 			

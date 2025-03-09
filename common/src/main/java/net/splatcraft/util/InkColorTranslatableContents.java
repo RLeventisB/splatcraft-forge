@@ -1,23 +1,23 @@
 package net.splatcraft.util;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.TranslatableTextContent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.data.InkColorRegistry;
 
 import java.util.Optional;
 
-public class InkColorTranslatableContents extends TranslatableTextContent
+public class InkColorTranslatableContents extends TranslatableContents
 {
-	private final TranslatableTextContent inverted;
+	private final TranslatableContents inverted;
 	private final InkColor color;
 	public InkColorTranslatableContents(InkColor color, Object... pArgs)
 	{
 		super(getKeyForColor(color), "#" + String.format("%06X", color.getColor()).toUpperCase(), pArgs);
-		inverted = new TranslatableTextContent("ink_color.invert", null, new MutableText[] {
-			MutableText.of(new TranslatableTextContent(
+		inverted = new TranslatableContents("ink_color.invert", null, new MutableComponent[] {
+			MutableComponent.create(new TranslatableContents(
 				getKeyForColor(color.getInverted()),
 				getFallback(),
 				pArgs)
@@ -30,14 +30,14 @@ public class InkColorTranslatableContents extends TranslatableTextContent
 		return color.getTranslationKey();
 	}
 	@Override
-	public <T> Optional<T> visit(StringVisitable.Visitor<T> visitor)
+	public <T> Optional<T> visit(FormattedText.ContentConsumer<T> visitor)
 	{
 		Language language = Language.getInstance();
 		
-		if (!language.hasTranslation(getKey()))
+		if (!language.has(getKey()))
 		{
-			Identifier alias = InkColorRegistry.getColorAlias(color.getInverted());
-			if (alias != null && language.hasTranslation(alias.toTranslationKey()))
+			ResourceLocation alias = InkColorRegistry.getColorAlias(color.getInverted());
+			if (alias != null && language.has(alias.toLanguageKey()))
 			{
 				return inverted.visit(visitor);
 			}

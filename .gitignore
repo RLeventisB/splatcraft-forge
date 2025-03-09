@@ -11,17 +11,14 @@ out
 *.ipr
 *.iws
 *.iml
-.idea
+.idea/*
+!.idea/scopes
 
 # gradle
-**/build
+build
 .gradle
 
 # other
 eclipse
 run
-server
-src/generated
-
-# Files from Forge MDK
-forge*changelog.txt
+runs

@@ -1,12 +1,12 @@
 package net.splatcraft.client.renderer.subs;
 
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.subs.SuctionBombModel;
 import net.splatcraft.entities.subs.SuctionBombEntity;
@@ -14,28 +14,28 @@ import org.jetbrains.annotations.NotNull;
 
 public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, SuctionBombModel>
 {
-	private static final Identifier TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/suction_bomb.png");
-	private static final Identifier OVERLAY_TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/suction_bomb_ink.png");
+	private static final ResourceLocation TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/suction_bomb.png");
+	private static final ResourceLocation OVERLAY_TEXTURE = Splatcraft.identifierOf("textures/item/weapons/sub/suction_bomb_ink.png");
 	private final SuctionBombModel MODEL;
-	public SuctionBombRenderer(EntityRendererFactory.Context context)
+	public SuctionBombRenderer(EntityRendererProvider.Context context)
 	{
 		super(context);
-		MODEL = new SuctionBombModel(context.getPart(SuctionBombModel.LAYER_LOCATION));
+		MODEL = new SuctionBombModel(context.bakeLayer(SuctionBombModel.LAYER_LOCATION));
 	}
 	@Override
-	public void render(SuctionBombEntity suctionBomb, float entityYaw, float partialTicks, @NotNull MatrixStack matrixStack, @NotNull VertexConsumerProvider bufferIn, int packedLightIn)
+	public void render(SuctionBombEntity suctionBomb, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
-		matrixStack.push();
+		matrixStack.pushPose();
 		if (!suctionBomb.isItem)
 		{
-			matrixStack.translate(0, suctionBomb.getHeight() / 2, 0);
-			matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(suctionBomb.getYaw(partialTicks) - 180.0F));
-			matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(suctionBomb.getPitch(partialTicks) + 90));
+			matrixStack.translate(0, suctionBomb.getBbHeight() / 2, 0);
+			matrixStack.mulPose(Axis.YP.rotationDegrees(suctionBomb.getViewYRot(partialTicks) - 180.0F));
+			matrixStack.mulPose(Axis.XP.rotationDegrees(suctionBomb.getViewXRot(partialTicks) + 90));
 			matrixStack.scale(1, -1, 1);
 			
 			float f = suctionBomb.getFlashIntensity(partialTicks);
-			float f1 = 1.0F + MathHelper.sin(f * 100.0F) * f * 0.01F;
-			f = MathHelper.clamp(f, 0.0F, 1.0F);
+			float f1 = 1.0F + Mth.sin(f * 100.0F) * f * 0.01F;
+			f = Mth.clamp(f, 0.0F, 1.0F);
 			f = f * f;
 			f = f * f;
 			float f2 = (1.0F + f * 0.4F) * f1;
@@ -44,20 +44,20 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 		}
 		
 		super.render(suctionBomb, entityYaw, partialTicks, matrixStack, bufferIn, packedLightIn);
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 	@Override
-	protected int getBlockLight(SuctionBombEntity entity, BlockPos pos)
+	protected int getBlockLightLevel(SuctionBombEntity entity, BlockPos pos)
 	{
-		return super.getBlockLight(entity, pos);
+		return super.getBlockLightLevel(entity, pos);
 	}
 	protected float getOverlayProgress(SuctionBombEntity livingEntityIn, float partialTicks)
 	{
 		float f = livingEntityIn.getFlashIntensity(partialTicks);
-		return (int) (f * 10.0F) % 2 == 0 ? 0.0F : MathHelper.clamp(f, 0.5F, 1.0F);
+		return (int) (f * 10.0F) % 2 == 0 ? 0.0F : Mth.clamp(f, 0.5F, 1.0F);
 	}
 	@Override
-	public @NotNull Identifier getTexture(@NotNull SuctionBombEntity entity)
+	public @NotNull ResourceLocation getTextureLocation(@NotNull SuctionBombEntity entity)
 	{
 		return TEXTURE;
 	}
@@ -67,7 +67,7 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 		return MODEL;
 	}
 	@Override
-	public Identifier getInkTextureLocation(SuctionBombEntity entity)
+	public ResourceLocation getInkTextureLocation(SuctionBombEntity entity)
 	{
 		return OVERLAY_TEXTURE;
 	}

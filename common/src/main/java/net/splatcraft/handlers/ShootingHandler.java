@@ -6,12 +6,12 @@ import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.event.events.common.TickEvent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Hand;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -28,7 +28,7 @@ public class ShootingHandler
 	public static Map<LivingEntity, EntityData> shootingData = new HashMap<>();
 	public static boolean notifyStartShooting(LivingEntity entity)
 	{
-		if (entity.getWorld().isClient)
+		if (entity.level().isClientSide)
 			return false;
 		
 		EntityData entityData;
@@ -48,7 +48,7 @@ public class ShootingHandler
 	}
 	public static boolean notifyRecalculateShootingData(LivingEntity entity)
 	{
-		if (entity.getWorld().isClient)
+		if (entity.level().isClientSide)
 			return false;
 		
 		EntityData entityData;
@@ -61,7 +61,7 @@ public class ShootingHandler
 	}
 	public static boolean notifyForceEndShooting(LivingEntity entity)
 	{
-		if (entity.getWorld().isClient)
+		if (entity.level().isClientSide)
 			return false;
 		
 		EntityData entityData;
@@ -87,7 +87,7 @@ public class ShootingHandler
 	{
 		for (Map.Entry<LivingEntity, EntityData> entry : shootingData.entrySet())
 		{
-			if (entry.getValue().entity.isDead())
+			if (entry.getValue().entity.isDeadOrDying())
 			{
 				shootingData.remove(entry.getKey());
 				return;
@@ -116,7 +116,7 @@ public class ShootingHandler
 	public static class EntityData
 	{
 		public final boolean isPlayer;
-		public final PlayerEntity player;
+		public final Player player;
 		public final LivingEntity entity;
 		public final WeaponShootingData mainHandData;
 		public final WeaponShootingData offHandData;
@@ -124,11 +124,11 @@ public class ShootingHandler
 		public int selected;
 		public EntityData(LivingEntity entity)
 		{
-			isPlayer = entity instanceof PlayerEntity;
-			player = isPlayer ? (PlayerEntity) entity : null;
+			isPlayer = entity instanceof Player;
+			player = isPlayer ? (Player) entity : null;
 			this.entity = entity;
-			mainHandData = new WeaponShootingData(this, Hand.MAIN_HAND);
-			offHandData = new WeaponShootingData(this, Hand.OFF_HAND);
+			mainHandData = new WeaponShootingData(this, InteractionHand.MAIN_HAND);
+			offHandData = new WeaponShootingData(this, InteractionHand.OFF_HAND);
 		}
 		public boolean isDualFire()
 		{
@@ -140,7 +140,7 @@ public class ShootingHandler
 			{
 				if (isPlayer)
 				{
-					player.getInventory().selectedSlot = selected;
+					player.getInventory().selected = selected;
 				}
 				if (mainHandData.active)
 				{
@@ -165,15 +165,15 @@ public class ShootingHandler
 				return;
 			
 			if (isPlayer)
-				selected = player.getInventory().selectedSlot;
-			ItemStack mainHand = entity.getStackInHand(Hand.MAIN_HAND);
+				selected = player.getInventory().selected;
+			ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
 			FiringStatData weaponFireData = null;
 			if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
 			{
 				weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
 				mainHandData.start(mainHand, weaponFireData);
 			}
-			ItemStack offHand = entity.getStackInHand(Hand.OFF_HAND);
+			ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
 			if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
 			{
 				FiringStatData offHandFireData = offHandWeapon.getWeaponFireData(offHand, entity);
@@ -196,33 +196,33 @@ public class ShootingHandler
 		}
 		public void recalculateFiringData()
 		{
-			ItemStack mainHand = entity.getStackInHand(Hand.MAIN_HAND);
+			ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
 			if (mainHand.getItem() instanceof WeaponBaseItem<?> mainHandWeapon)
 			{
 				FiringStatData weaponFireData = mainHandWeapon.getWeaponFireData(mainHand, entity);
 				mainHandData.modifyFiringData(weaponFireData);
 			}
-			ItemStack offHand = entity.getStackInHand(Hand.OFF_HAND);
+			ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
 			if (offHand.getItem() instanceof WeaponBaseItem<?> offHandWeapon)
 			{
 				FiringStatData weaponFireData = offHandWeapon.getWeaponFireData(mainHand, entity);
 				offHandData.modifyFiringData(weaponFireData);
 			}
 		}
-		public void notifyEnd(Hand hand)
+		public void notifyEnd(InteractionHand hand)
 		{
 		}
 	}
 	public static class WeaponShootingData
 	{
-		public final Hand hand;
+		public final InteractionHand hand;
 		public final EntityData entityData;
 		public boolean doingEndlag, active;
 		public float timer, offHandTimeout;
 		public ItemStack useItem;
 		public FiringStatData firingData;
 		//        public static long milli;
-		public WeaponShootingData(EntityData data, Hand hand)
+		public WeaponShootingData(EntityData data, InteractionHand hand)
 		{
 			entityData = data;
 			this.hand = hand;
@@ -302,7 +302,7 @@ public class ShootingHandler
 					if (firingData.onShoot != null)
 						firingData.onShoot.accept(this, -timer, entity);
 					timer += firingData.endlagFrames;
-					if (entity.getWorld().isClient && entity.equals(ClientUtils.getClientPlayer()))
+					if (entity.level().isClientSide && entity.equals(ClientUtils.getClientPlayer()))
 					{
 						SplatcraftKeyHandler.autoSquidDelay = firingData.miscEndlagFrames;
 					}
@@ -320,7 +320,7 @@ public class ShootingHandler
 		}
 		public boolean isUsingWeaponEqualToStoredWeapon(@NotNull LivingEntity entity)
 		{
-			return entity.getStackInHand(hand).isOf(useItem.getItem());
+			return entity.getItemInHand(hand).is(useItem.getItem());
 		}
 		@Override
 		public boolean equals(Object o)

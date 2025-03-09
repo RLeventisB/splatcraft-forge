@@ -1,10 +1,10 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.tileentities.InkVatTileEntity;
 import net.splatcraft.util.ColorUtils;
@@ -12,7 +12,7 @@ import net.splatcraft.util.InkColor;
 
 public class UpdateBlockColorPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("update_block_color_packet"));
+	public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("update_block_color_packet"));
 	BlockPos pos;
 	InkColor color;
 	int inkVatPointer = -1;
@@ -26,14 +26,14 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		this(pos, color);
 		inkVatPointer = pointer;
 	}
-	public static UpdateBlockColorPacket decode(RegistryByteBuf buffer)
+	public static UpdateBlockColorPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return new UpdateBlockColorPacket(new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()), InkColor.PACKET_CODEC.decode(buffer), buffer.readInt());
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
-		BlockEntity te = player.getWorld().getBlockEntity(pos);
+		BlockEntity te = player.level().getBlockEntity(pos);
 		
 		if (te instanceof InkVatTileEntity te1)
 		{
@@ -43,7 +43,7 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		ColorUtils.withInkColor(te, color);
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeInt(pos.getX());
 		buffer.writeInt(pos.getY());
@@ -52,7 +52,7 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		buffer.writeInt(inkVatPointer);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

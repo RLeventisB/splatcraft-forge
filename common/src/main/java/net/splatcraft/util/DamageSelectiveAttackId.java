@@ -4,17 +4,16 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Uuids;
-
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.entity.Entity;
 
 public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttackId
 {
 	public static final MapCodec<DamageSelectiveAttackId> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
 		Codec.SHORT.fieldOf("id").forGetter(DamageSelectiveAttackId::getId),
 		Codec.BYTE.fieldOf("projectile_count").forGetter(DamageSelectiveAttackId::getRemainingHits),
-		CodecUtils.hashMapCodec(Uuids.CODEC, Codec.FLOAT).fieldOf("hit_enemies").forGetter(v -> v.enemyToDamageDoneData)
+		CodecUtils.hashMapCodec(UUIDUtil.AUTHLIB_CODEC, Codec.FLOAT).fieldOf("hit_enemies").forGetter(v -> v.enemyToDamageDoneData)
 	).apply(inst, DamageSelectiveAttackId::new));
 	public final Object2ObjectOpenHashMap<UUID, Float> enemyToDamageDoneData;
 	public DamageSelectiveAttackId(Short id)
@@ -38,8 +37,8 @@ public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttack
 	@Override
 	public float getDamage(Entity entity, float damage)
 	{
-		Float lastDamage = enemyToDamageDoneData.get(entity.getUuid());
-		enemyToDamageDoneData.put(entity.getUuid(), damage);
+		Float lastDamage = enemyToDamageDoneData.get(entity.getUUID());
+		enemyToDamageDoneData.put(entity.getUUID(), damage);
 		if (lastDamage != null)
 		{
 			return Math.max(0, damage - lastDamage);

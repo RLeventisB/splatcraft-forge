@@ -2,9 +2,9 @@ package net.splatcraft.util.action.specials;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -47,8 +47,8 @@ public class StingRayAction extends BaseSpecialAction
 	{
 		if (entity.isUsingItem() && !EntityInfoCapability.isSquid(entity))
 		{
-			World world = entity.getWorld();
-			if (usageTick == 1 && world instanceof ServerWorld serverWorld)
+			Level world = entity.level();
+			if (usageTick == 1 && world instanceof ServerLevel serverWorld)
 			{
 				StingRayBeamEntity beam = new StingRayBeamEntity(world,
 					entity,
@@ -62,7 +62,7 @@ public class StingRayAction extends BaseSpecialAction
 					specialData.damageCenter(),
 					specialData.damageShockwave()
 				);
-				serverWorld.spawnEntity(beam);
+				serverWorld.addFreshEntity(beam);
 			}
 			usageTick++;
 		}
@@ -74,8 +74,8 @@ public class StingRayAction extends BaseSpecialAction
 	@Override
 	public boolean canEnd(LivingEntity entity)
 	{
-		World world = entity.getWorld();
-		if (world.isClient && entity.equals(ClientUtils.getClientPlayer()))
+		Level world = entity.level();
+		if (world.isClientSide && entity.equals(ClientUtils.getClientPlayer()))
 		{
 			SplatcraftKeyHandler.autoSquidDelay = 5;
 		}

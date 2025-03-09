@@ -3,12 +3,12 @@ package net.splatcraft.client.particles;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public class InkTerrainParticleData implements ParticleEffect
+public class InkTerrainParticleData implements ParticleOptions
 {
 	public static final MapCodec<InkTerrainParticleData> CODEC = RecordCodecBuilder.mapCodec((instance) ->
 		instance.group(
@@ -24,10 +24,10 @@ public class InkTerrainParticleData implements ParticleEffect
 			Codec.FLOAT.fieldOf("g").forGetter(InkTerrainParticleData::getGreen),
 			Codec.FLOAT.fieldOf("b").forGetter(InkTerrainParticleData::getBlue)
 		).apply(instance, InkTerrainParticleData::new));
-	public static final PacketCodec<RegistryByteBuf, InkTerrainParticleData> PACKET_CODEC = PacketCodec.tuple(
-		PacketCodecs.FLOAT, InkTerrainParticleData::getRed,
-		PacketCodecs.FLOAT, InkTerrainParticleData::getGreen,
-		PacketCodecs.FLOAT, InkTerrainParticleData::getBlue,
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkTerrainParticleData> PACKET_CODEC = StreamCodec.composite(
+		ByteBufCodecs.FLOAT, InkTerrainParticleData::getRed,
+		ByteBufCodecs.FLOAT, InkTerrainParticleData::getGreen,
+		ByteBufCodecs.FLOAT, InkTerrainParticleData::getBlue,
 		InkTerrainParticleData::new);
 	protected final float red;
 	protected final float green;
@@ -54,7 +54,7 @@ public class InkTerrainParticleData implements ParticleEffect
 	@Override
 	public @NotNull String toString()
 	{
-		return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", Registries.PARTICLE_TYPE.getKey(getType()), red, green, blue);
+		return String.format(Locale.ROOT, "%s %.2f %.2f %.2f", BuiltInRegistries.PARTICLE_TYPE.getResourceKey(getType()), red, green, blue);
 	}
 	public float getRed()
 	{

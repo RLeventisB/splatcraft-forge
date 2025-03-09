@@ -2,20 +2,20 @@ package net.splatcraft.entities;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.*;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.audio.StingRayTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -30,19 +30,19 @@ import org.joml.Vector2f;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class StingRayBeamEntity extends ProjectileEntity implements IColoredEntity
+public class StingRayBeamEntity extends Projectile implements IColoredEntity
 {
-	private static final TrackedData<InkColor> COLOR = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
-	private static final TrackedData<Integer> TIME_VALUES = DataTracker.registerData(StingRayBeamEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Vector2f> WIDTH_VALUES = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
-	private static final TrackedData<Vector2f> TURNING_VALUES = DataTracker.registerData(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
+	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<Integer> TIME_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Vector2f> WIDTH_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
+	private static final EntityDataAccessor<Vector2f> TURNING_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
 	public float rayDamage, shockwaveDamage;
-	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, World world)
+	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, Level world)
 	{
 		this(type, world, 0, 0, 0, 0, 0, 0);
 	}
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type,
-	                          World world,
+	                          Level world,
 	                          float turningValue,
 	                          float turningValueWithShockwave,
 	                          float rayWidth,
@@ -52,8 +52,8 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	)
 	{
 		super(type, world);
-		calculateDimensions();
-		refreshPosition();
+		refreshDimensions();
+		reapplyPosition();
 		setTurningValue(turningValue);
 		setTurningValueWithShockwave(turningValueWithShockwave);
 		setRayWidth(rayWidth);
@@ -61,7 +61,7 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		this.rayDamage = rayDamage;
 		this.shockwaveDamage = shockwaveDamage;
 	}
-	public StingRayBeamEntity(World world,
+	public StingRayBeamEntity(Level world,
 	                          LivingEntity owner,
 	                          InkColor color,
 	                          byte startup,
@@ -77,22 +77,22 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		this(SplatcraftEntities.STING_RAY_PROJECTILE.get(), world, turningValue, turningValueWithShockwave, rayWidth, shockwaveWidth, rayDamage, shockwaveDamage);
 		setColor(color);
 		setOwner(owner);
-		calculateDimensions();
-		refreshPosition();
+		refreshDimensions();
+		reapplyPosition();
 		setStartup(startup);
-		setPitch(owner.getPitch());
-		setYaw(owner.getHeadYaw());
+		setXRot(owner.getXRot());
+		setYRot(owner.getYHeadRot());
 		setShockwaveDelay(shockwaveDelay);
 		updatePosForward(owner);
 		updateRotation();
-		prevPitch = getPitch();
-		prevYaw = getYaw();
+		xRotO = getXRot();
+		yRotO = getYRot();
 	}
 	// this comes from https://stackoverflow.com/questions/34952680/distance-between-a-ray-and-a-bound-box
 	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who had access
 	// to better search engines than now i suppose because i cant find this code anywhere else) comes to save
 	// me from eternal torment
-	public static double getDistance(Vec3d rayDirection, Box relativeBox)
+	public static double getDistance(Vec3 rayDirection, AABB relativeBox)
 	{
 		double tx1 = relativeBox.minX / rayDirection.x;
 		double tx2 = relativeBox.maxX / rayDirection.x;
@@ -104,33 +104,33 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		double p1 = Math.max(0.0, Math.max(tx1, Math.min(ty1, tz1)));
 		double p2 = Math.max(0.0, Math.min(tx2, Math.max(ty2, tz2)));
 		
-		double x = MathHelper.clamp((rayDirection.x * p1 + rayDirection.x * p2) / 2, relativeBox.minX, relativeBox.maxX);
-		double y = MathHelper.clamp((rayDirection.y * p1 + rayDirection.y * p2) / 2, relativeBox.minY, relativeBox.maxY);
-		double z = MathHelper.clamp((rayDirection.z * p1 + rayDirection.z * p2) / 2, relativeBox.minZ, relativeBox.maxZ);
+		double x = Mth.clamp((rayDirection.x * p1 + rayDirection.x * p2) / 2, relativeBox.minX, relativeBox.maxX);
+		double y = Mth.clamp((rayDirection.y * p1 + rayDirection.y * p2) / 2, relativeBox.minY, relativeBox.maxY);
+		double z = Mth.clamp((rayDirection.z * p1 + rayDirection.z * p2) / 2, relativeBox.minZ, relativeBox.maxZ);
 		
-		double t = Math.max(0.0, rayDirection.dotProduct(new Vec3d(x, y, z)) / rayDirection.lengthSquared());
+		double t = Math.max(0.0, rayDirection.dot(new Vec3(x, y, z)) / rayDirection.lengthSqr());
 		x = rayDirection.x * t - x;
 		y = rayDirection.y * t - y;
 		z = rayDirection.z * t - z;
 		return Math.sqrt(x * x + y * y + z * z);
 	}
-	public static Vec3d getClosestPoint(Vec3d rayDirection, Vec3d relativePoint)
+	public static Vec3 getClosestPoint(Vec3 rayDirection, Vec3 relativePoint)
 	{
 		double x = relativePoint.x;
 		double y = relativePoint.y;
 		double z = relativePoint.z;
 		
-		double t = Math.max(0.0, rayDirection.dotProduct(relativePoint) / rayDirection.lengthSquared());
+		double t = Math.max(0.0, rayDirection.dot(relativePoint) / rayDirection.lengthSqr());
 		
 		x = rayDirection.x * t - x;
 		y = rayDirection.y * t - y;
 		z = rayDirection.z * t - z;
-		return new Vec3d(x, y, z);
+		return new Vec3(x, y, z);
 	}
 	@Environment(EnvType.CLIENT)
 	public static void playSound(StingRayBeamEntity beam)
 	{
-		MinecraftClient.getInstance().getSoundManager().playNextTick(new StingRayTickableSound(beam));
+		Minecraft.getInstance().getSoundManager().queueTickingSound(new StingRayTickableSound(beam));
 	}
 	@Override
 	public void tick()
@@ -171,13 +171,13 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public void tickRay(LivingEntity owner, int lifespan)
 	{
-		Vec3d forward = updatePosForward(owner);
+		Vec3 forward = updatePosForward(owner);
 		
 		if (isBeamActive())
 		{
-			if (getWorld().isClient)
+			if (level().isClientSide)
 			{
-				getWorld().addParticle(new InkSplashParticleData(getColor(), 0.4f),
+				level().addParticle(new InkSplashParticleData(getColor(), 0.4f),
 					getX(),
 					getY(),
 					getZ(),
@@ -192,36 +192,36 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		
 		setLifespan(lifespan + 1);
 	}
-	private Vec3d updatePosForward(LivingEntity owner)
+	private Vec3 updatePosForward(LivingEntity owner)
 	{
-		Vec3d forward = getRotationVector();
-		setPosition(owner.getEyePos().add(forward));
+		Vec3 forward = getLookAngle();
+		setPos(owner.getEyePosition().add(forward));
 		return forward;
 	}
-	public void doCollisions(Vec3d forward)
+	public void doCollisions(Vec3 forward)
 	{
 		AtomicBoolean canDoSound = new AtomicBoolean(getLifespan() % 4 == 0);
-		for (Entity entity : getWorld().getEntityLookup().iterate())
+		for (Entity entity : level().getEntities().getAll())
 		{
-			if (!canHit(entity))
+			if (!canHitEntity(entity))
 				continue;
 			
-			Box relativeBox = entity.getBoundingBox().offset(getPos().negate());
-			Vec3d[] boxPoints = new Vec3d[] {
-				new Vec3d(relativeBox.minX, relativeBox.minY, relativeBox.minZ),
-				new Vec3d(relativeBox.minX, relativeBox.minY, relativeBox.maxZ),
-				new Vec3d(relativeBox.minX, relativeBox.maxY, relativeBox.minZ),
-				new Vec3d(relativeBox.minX, relativeBox.maxY, relativeBox.maxZ),
-				new Vec3d(relativeBox.maxX, relativeBox.minY, relativeBox.minZ),
-				new Vec3d(relativeBox.maxX, relativeBox.minY, relativeBox.maxZ),
-				new Vec3d(relativeBox.maxX, relativeBox.maxY, relativeBox.minZ),
-				new Vec3d(relativeBox.maxX, relativeBox.maxY, relativeBox.maxZ),
+			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
+			Vec3[] boxPoints = new Vec3[] {
+				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.minZ),
+				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.maxZ),
+				new Vec3(relativeBox.minX, relativeBox.maxY, relativeBox.minZ),
+				new Vec3(relativeBox.minX, relativeBox.maxY, relativeBox.maxZ),
+				new Vec3(relativeBox.maxX, relativeBox.minY, relativeBox.minZ),
+				new Vec3(relativeBox.maxX, relativeBox.minY, relativeBox.maxZ),
+				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.minZ),
+				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.maxZ),
 			};
 			
 			boolean isOnForwardPlane = false;
-			for (Vec3d point : boxPoints)
+			for (Vec3 point : boxPoints)
 			{
-				if (forward.dotProduct(point) >= 0)
+				if (forward.dot(point) >= 0)
 				{
 					isOnForwardPlane = true;
 					break;
@@ -255,18 +255,18 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
 			
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
-			if (!getWorld().isClient && didDamage && playSound.get())
+			if (!level().isClientSide && didDamage && playSound.get())
 			{
 				playSound.set(false);
-				getWorld().playSound(null, getOwner().getX(), getOwner().getY(), getOwner().getZ(), SplatcraftSounds.shotHit, SoundCategory.PLAYERS, 0.7f, 1f);
+				level().playSound(null, getOwner().getX(), getOwner().getY(), getOwner().getZ(), SplatcraftSounds.shotHit, SoundSource.PLAYERS, 0.7f, 1f);
 			}
 		}
 	}
 	@Override
-	public boolean canHit(Entity entity)
+	public boolean canHitEntity(Entity entity)
 	{
 		boolean isntOwnerOrSelf = entity != this && entity != getOwner();
-		return isntOwnerOrSelf && entity.canBeHitByProjectile() && InkDamageUtils.canDamage(entity, dataTracker.get(COLOR));
+		return isntOwnerOrSelf && entity.canBeHitByProjectile() && InkDamageUtils.canDamage(entity, entityData.get(COLOR));
 	}
 	@Override
 	public boolean canBeHitByProjectile()
@@ -274,12 +274,12 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		return false;
 	}
 	@Override
-	public Vec3d getMovement()
+	public Vec3 getKnownMovement()
 	{
-		return Vec3d.ZERO;
+		return Vec3.ZERO;
 	}
 	@Override
-	public void setVelocity(double x, double y, double z)
+	public void setDeltaMovement(double x, double y, double z)
 	{
 	}
 	@Override
@@ -296,12 +296,12 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			return;
 		}
 		
-		prevPitch = getPitch();
-		prevYaw = getYaw();
+		xRotO = getXRot();
+		yRotO = getYRot();
 		
 		float finalTurningValue = hasStartedToShowTheHellspawn() ? getTurningValueWithShockwave() : getTurningValue();
-		setPitch(MathHelper.lerpAngleDegrees(finalTurningValue, getPitch(), owner.getPitch()));
-		setYaw(MathHelper.lerpAngleDegrees(finalTurningValue, getYaw(), owner.getYaw()));
+		setXRot(Mth.rotLerp(finalTurningValue, getXRot(), owner.getXRot()));
+		setYRot(Mth.rotLerp(finalTurningValue, getYRot(), owner.getYRot()));
 	}
 	@Override
 	public void kill()
@@ -312,25 +312,25 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		super.kill();
 	}
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder)
+	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
-		builder.add(COLOR, ColorUtils.getDefaultColor());
-		builder.add(TIME_VALUES, 0);
-		builder.add(WIDTH_VALUES, new Vector2f());
-		builder.add(TURNING_VALUES, new Vector2f());
+		builder.define(COLOR, ColorUtils.getDefaultColor());
+		builder.define(TIME_VALUES, 0);
+		builder.define(WIDTH_VALUES, new Vector2f());
+		builder.define(TURNING_VALUES, new Vector2f());
 	}
 	@Override
-	public void onSpawnPacket(EntitySpawnS2CPacket packet)
+	public void recreateFromPacket(ClientboundAddEntityPacket packet)
 	{
-		super.onSpawnPacket(packet);
+		super.recreateFromPacket(packet);
 		updateRotation();
 		updatePosForward((LivingEntity) getOwner());
 		updateRotation();
-		prevPitch = getPitch();
-		prevYaw = getYaw();
+		xRotO = getXRot();
+		yRotO = getYRot();
 	}
 	@Override
-	protected void readCustomDataFromNbt(NbtCompound nbt)
+	protected void readAdditionalSaveData(CompoundTag nbt)
 	{
 		if (nbt.contains("Color"))
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
@@ -338,7 +338,7 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			setTimeValues(nbt.getInt("TimeValues"));
 		if (nbt.contains("RayValues"))
 		{
-			NbtCompound valuesNbt = (NbtCompound) nbt.get("RayValues");
+			CompoundTag valuesNbt = (CompoundTag) nbt.get("RayValues");
 			setTurningValue(valuesNbt.getFloat("TurningValue"));
 			setTurningValueWithShockwave(valuesNbt.getFloat("TurningValueShockwave"));
 			setRayWidth(valuesNbt.getFloat("RayWidth"));
@@ -346,14 +346,14 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 			rayDamage = valuesNbt.getFloat("RayDmg");
 			shockwaveDamage = valuesNbt.getFloat("ShockwaveDmg");
 		}
-		super.readCustomDataFromNbt(nbt);
+		super.readAdditionalSaveData(nbt);
 	}
 	@Override
-	protected void writeCustomDataToNbt(NbtCompound nbt)
+	protected void addAdditionalSaveData(CompoundTag nbt)
 	{
 		nbt.put("Color", getColor().getNbt());
 		nbt.putInt("TimeValues", getTimeValues());
-		NbtCompound valuesNbt = new NbtCompound();
+		CompoundTag valuesNbt = new CompoundTag();
 		valuesNbt.putFloat("TurningValue", getTurningValue());
 		valuesNbt.putFloat("TurningValueShockwave", getTurningValueWithShockwave());
 		valuesNbt.putFloat("RayWidth", getRayWidth());
@@ -361,7 +361,7 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 		valuesNbt.putFloat("RayDmg", rayDamage);
 		valuesNbt.putFloat("ShockwaveDmg", shockwaveDamage);
 		nbt.put("RayValues", valuesNbt);
-		super.writeCustomDataToNbt(nbt);
+		super.addAdditionalSaveData(nbt);
 	}
 	public boolean hasStartedToShowTheHellspawn()
 	{
@@ -374,20 +374,20 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	@Override
 	public InkColor getColor()
 	{
-		return dataTracker.get(COLOR);
+		return entityData.get(COLOR);
 	}
 	@Override
 	public void setColor(InkColor color)
 	{
-		dataTracker.set(COLOR, color);
+		entityData.set(COLOR, color);
 	}
 	public int getTimeValues()
 	{
-		return dataTracker.get(TIME_VALUES);
+		return entityData.get(TIME_VALUES);
 	}
 	public void setTimeValues(int values)
 	{
-		dataTracker.set(TIME_VALUES, values);
+		entityData.set(TIME_VALUES, values);
 	}
 	public int getStartup()
 	{
@@ -415,14 +415,14 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public boolean hasOwnerStopShooting()
 	{
-		return getFlag(7);
+		return getSharedFlag(7);
 	}
 	public void markOwnerStopShooting()
 	{
-		setFlag(7, true);
+		setSharedFlag(7, true);
 	}
 	@Override
-	public @NotNull EntityDimensions getDimensions(@NotNull EntityPose pose)
+	public @NotNull EntityDimensions getDimensions(@NotNull Pose pose)
 	{
 		return EntityDimensions.fixed(0, 0);
 	}
@@ -432,34 +432,34 @@ public class StingRayBeamEntity extends ProjectileEntity implements IColoredEnti
 	}
 	public float getRayWidth()
 	{
-		return dataTracker.get(WIDTH_VALUES).x;
+		return entityData.get(WIDTH_VALUES).x;
 	}
 	public void setRayWidth(float rayWidth)
 	{
-		dataTracker.set(WIDTH_VALUES, new Vector2f(rayWidth, getShockwaveWidth()));
+		entityData.set(WIDTH_VALUES, new Vector2f(rayWidth, getShockwaveWidth()));
 	}
 	public float getShockwaveWidth()
 	{
-		return dataTracker.get(WIDTH_VALUES).y;
+		return entityData.get(WIDTH_VALUES).y;
 	}
 	public void setShockwaveWidth(float shockwaveWidth)
 	{
-		dataTracker.set(WIDTH_VALUES, new Vector2f(getRayWidth(), shockwaveWidth));
+		entityData.set(WIDTH_VALUES, new Vector2f(getRayWidth(), shockwaveWidth));
 	}
 	public float getTurningValue()
 	{
-		return dataTracker.get(TURNING_VALUES).x;
+		return entityData.get(TURNING_VALUES).x;
 	}
 	public void setTurningValue(float turningValue)
 	{
-		dataTracker.set(TURNING_VALUES, new Vector2f(turningValue, getTurningValueWithShockwave()));
+		entityData.set(TURNING_VALUES, new Vector2f(turningValue, getTurningValueWithShockwave()));
 	}
 	public float getTurningValueWithShockwave()
 	{
-		return dataTracker.get(TURNING_VALUES).y;
+		return entityData.get(TURNING_VALUES).y;
 	}
 	public void setTurningValueWithShockwave(float turningValueWithShockwave)
 	{
-		dataTracker.set(TURNING_VALUES, new Vector2f(getTurningValue(), turningValueWithShockwave));
+		entityData.set(TURNING_VALUES, new Vector2f(getTurningValue(), turningValueWithShockwave));
 	}
 }

@@ -1,8 +1,8 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.world.GameRules;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.GameRules;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
 
@@ -12,7 +12,7 @@ import java.util.TreeMap;
 
 public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
 {
-    public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateBooleanGamerulesPacket.class);
+    public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateBooleanGamerulesPacket.class);
     public TreeMap<Integer, Boolean> booleanRules;
 
     public UpdateBooleanGamerulesPacket(TreeMap<Integer, Boolean> booleanRules)
@@ -20,13 +20,13 @@ public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
         this.booleanRules = booleanRules;
     }
 
-    public UpdateBooleanGamerulesPacket(GameRules.Key<GameRules.BooleanRule> rule, boolean value)
+    public UpdateBooleanGamerulesPacket(GameRules.Key<GameRules.BooleanValue> rule, boolean value)
     {
         booleanRules = new TreeMap<>();
         booleanRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
     }
 
-    public static UpdateBooleanGamerulesPacket decode(RegistryByteBuf buffer)
+    public static UpdateBooleanGamerulesPacket decode(RegistryFriendlyByteBuf buffer)
     {
         TreeMap<Integer, Boolean> booleanRules = new TreeMap<>();
         int entrySize = buffer.readInt();
@@ -40,13 +40,13 @@ public class UpdateBooleanGamerulesPacket extends PlayS2CPacket
     }
 
     @Override
-    public Id<? extends CustomPayload> getId()
+    public Type<? extends CustomPacketPayload> type()
     {
         return ID;
     }
 
     @Override
-    public void encode(RegistryByteBuf buffer)
+    public void encode(RegistryFriendlyByteBuf buffer)
     {
         Set<Map.Entry<Integer, Boolean>> entrySet = booleanRules.entrySet();
 

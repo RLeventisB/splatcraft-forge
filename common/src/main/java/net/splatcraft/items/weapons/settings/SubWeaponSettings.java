@@ -3,10 +3,10 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -31,7 +31,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		super(name);
 	}
 	@Override
-	public Map.Entry<Identifier, MapCodec<? extends T>>[] getDynamicCodecs()
+	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
 			Map.entry(Splatcraft.identifierOf("throwable_exploding"), SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
@@ -84,7 +84,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		return ShotDeviationDataRecord.PERFECT_DEFAULT;
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return 0;
 	}

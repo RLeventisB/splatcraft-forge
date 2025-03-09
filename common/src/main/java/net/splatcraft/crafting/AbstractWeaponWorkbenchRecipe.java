@@ -1,13 +1,13 @@
 package net.splatcraft.crafting;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,9 +18,9 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<RecipeInpu
 {
     protected final ItemStack recipeOutput;
     protected final List<StackedIngredient> recipeItems;
-    protected final Text name;
+    protected final Component name;
 
-    public AbstractWeaponWorkbenchRecipe(Text name, ItemStack recipeOutput, List<StackedIngredient> recipeItems)
+    public AbstractWeaponWorkbenchRecipe(Component name, ItemStack recipeOutput, List<StackedIngredient> recipeItems)
     {
         this.recipeOutput = recipeOutput;
         this.recipeItems = recipeItems;
@@ -28,14 +28,14 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<RecipeInpu
     }
 
     @Override
-    public boolean matches(RecipeInput inv, @NotNull World world)
+    public boolean matches(RecipeInput inv, @NotNull Level world)
     {
         List<ItemStack> inputs = new ArrayList<>();
         int i = 0;
 
-        for (int j = 0; j < inv.getSize(); ++j)
+        for (int j = 0; j < inv.size(); ++j)
         {
-            ItemStack itemstack = inv.getStackInSlot(j);
+            ItemStack itemstack = inv.getItem(j);
             if (!itemstack.isEmpty())
             {
                 ++i;
@@ -46,25 +46,25 @@ public abstract class AbstractWeaponWorkbenchRecipe implements Recipe<RecipeInpu
         return i == recipeItems.size() && CommonUtils.findMatches(inputs, recipeItems) != null;
     }
 
-    public Text getName()
+    public Component getName()
     {
         return name;
     }
 
     @Override
-    public @NotNull ItemStack craft(@NotNull RecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
+    public @NotNull ItemStack assemble(@NotNull RecipeInput inv, @NotNull HolderLookup.Provider access)
     {
         return recipeOutput;
     }
 
     @Override
-    public boolean fits(int width, int height)
+    public boolean canCraftInDimensions(int width, int height)
     {
         return false;
     }
 
     @Override
-    public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
+    public @NotNull ItemStack getResultItem(@NotNull HolderLookup.Provider access)
     {
         return recipeOutput;
     }

@@ -2,13 +2,13 @@ package net.splatcraft.network.c2s;
 
 import dev.architectury.networking.NetworkManager;
 import dev.architectury.utils.Env;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.network.SplatcraftPacket;
 
 public abstract class PlayC2SPacket extends SplatcraftPacket
 {
 	@Override
-	public void consume(NetworkManager.PacketContext ctx)
+	public <T extends SplatcraftPacket> void consume(NetworkManager.PacketContext ctx)
 	{
 		if (ctx.getEnvironment() == Env.SERVER)
 		{
@@ -16,5 +16,5 @@ public abstract class PlayC2SPacket extends SplatcraftPacket
 		}
 //        ctx.get().setPacketHandled(true);
 	}
-	public abstract void execute(PlayerEntity player);
+	public abstract void execute(Player player);
 }

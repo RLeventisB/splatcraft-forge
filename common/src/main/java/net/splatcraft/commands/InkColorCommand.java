@@ -3,13 +3,13 @@ package net.splatcraft.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
@@ -21,29 +21,29 @@ import java.util.Map;
 
 public class InkColorCommand
 {
-	public static void register(CommandDispatcher<ServerCommandSource> dispatcher)
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher)
 	{
-		dispatcher.register(CommandManager.literal("inkcolor").requires(commandSource -> commandSource.hasPermissionLevel(2))
-			.then(CommandManager.argument("color", InkColorArgument.inkColor()).executes(
+		dispatcher.register(Commands.literal("inkcolor").requires(commandSource -> commandSource.hasPermission(2))
+			.then(Commands.argument("color", InkColorArgument.inkColor()).executes(
 				context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"))
-			).then(CommandManager.argument("targets", EntityArgumentType.players()).executes(
-				context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"), EntityArgumentType.getPlayers(context, "targets"))
+			).then(Commands.argument("targets", EntityArgument.players()).executes(
+				context -> setColor(context.getSource(), InkColorArgument.getInkColor(context, "color"), EntityArgument.getPlayers(context, "targets"))
 			)))
 			.then(StageCommand.stageId("stage").then(StageCommand.stageTeam("team", "stage")
 				.executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team")))
-				.then(CommandManager.argument("targets", EntityArgumentType.players())
-					.executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team"), EntityArgumentType.getPlayers(context, "targets")))
+				.then(Commands.argument("targets", EntityArgument.players())
+					.executes(context -> setColorByTeam(context.getSource(), StringArgumentType.getString(context, "stage"), StringArgumentType.getString(context, "team"), EntityArgument.getPlayers(context, "targets")))
 				))));
 	}
-	private static int setColor(ServerCommandSource source, InkColor color) throws CommandSyntaxException
+	private static int setColor(CommandSourceStack source, InkColor color) throws CommandSyntaxException
 	{
-		ColorUtils.setPlayerColor(source.getPlayerOrThrow(), color);
+		ColorUtils.setPlayerColor(source.getPlayerOrException(), color);
 		
-		source.sendFeedback(() ->
+		source.sendSuccess(() ->
 		{
 			try
 			{
-				return Text.translatable("commands.inkcolor.success.single", source.getPlayerOrThrow().getDisplayName(), getColorName(color));
+				return Component.translatable("commands.inkcolor.success.single", source.getPlayerOrException().getDisplayName(), getColorName(color));
 			}
 			catch (CommandSyntaxException e)
 			{
@@ -53,26 +53,26 @@ public class InkColorCommand
 		return 1;
 	}
 	//TODO server friendly feedback message
-	public static MutableText getColorName(InkColor color)
+	public static MutableComponent getColorName(InkColor color)
 	{
-		return Text.literal("#" + String.format("%06X", color.getColor()).toUpperCase()).setStyle(Style.EMPTY.withColor(color.getTextColor()));
+		return Component.literal("#" + String.format("%06X", color.getColor()).toUpperCase()).setStyle(Style.EMPTY.withColor(color.getTextColor()));
 	}
-	private static int setColor(ServerCommandSource source, InkColor color, Collection<ServerPlayerEntity> targets)
+	private static int setColor(CommandSourceStack source, InkColor color, Collection<ServerPlayer> targets)
 	{
 		targets.forEach(player -> ColorUtils.setPlayerColor(player, color));
 		
 		if (targets.size() == 1)
 		{
-			source.sendFeedback(() -> Text.translatable("commands.inkcolor.success.single", targets.iterator().next().getDisplayName(), getColorName(color)), true);
+			source.sendSuccess(() -> Component.translatable("commands.inkcolor.success.single", targets.iterator().next().getDisplayName(), getColorName(color)), true);
 		}
 		else
 		{
-			source.sendFeedback(() -> Text.translatable("commands.inkcolor.success.multiple", targets.size(), getColorName(color)), true);
+			source.sendSuccess(() -> Component.translatable("commands.inkcolor.success.multiple", targets.size(), getColorName(color)), true);
 		}
 		
 		return targets.size();
 	}
-	private static int setColorByTeam(ServerCommandSource source, String stageId, String teamId, Collection<ServerPlayerEntity> targets) throws CommandSyntaxException
+	private static int setColorByTeam(CommandSourceStack source, String stageId, String teamId, Collection<ServerPlayer> targets) throws CommandSyntaxException
 	{
 		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
@@ -85,7 +85,7 @@ public class InkColorCommand
 		
 		return setColor(source, stage.getTeamColor(teamId), targets);
 	}
-	private static int setColorByTeam(ServerCommandSource source, String stageId, String teamId) throws CommandSyntaxException
+	private static int setColorByTeam(CommandSourceStack source, String stageId, String teamId) throws CommandSyntaxException
 	{
 		Map<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))

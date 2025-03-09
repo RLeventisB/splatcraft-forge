@@ -2,28 +2,32 @@ package net.splatcraft.items.remotes;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.Texts;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
+import net.minecraft.network.chat.Style;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -36,17 +40,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class RemoteItem extends Item implements CommandOutput
+public abstract class RemoteItem extends Item implements CommandSource
 {
 	public static final List<RemoteItem> remotes = new ArrayList<>();
-	public static final Collection<ServerPlayerEntity> ALL_TARGETS = new ArrayList<>();
-	protected static final Style TARGETS_STYLE = Style.EMPTY.withColor(Formatting.DARK_BLUE).withItalic(true);
+	public static final Collection<ServerPlayer> ALL_TARGETS = new ArrayList<>();
+	protected static final Style TARGETS_STYLE = Style.EMPTY.withColor(ChatFormatting.DARK_BLUE).withItalic(true);
 	protected final int totalModes;
-	public RemoteItem(Settings settings)
+	public RemoteItem(Properties settings)
 	{
 		this(settings, 1);
 	}
-	public RemoteItem(Settings settings, int totalModes)
+	public RemoteItem(Properties settings, int totalModes)
 	{
 		super(settings.component(SplatcraftComponents.REMOTE_INFO, SplatcraftComponents.RemoteInfo.DEFAULT));
 		remotes.add(this);
@@ -84,7 +88,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		return info.stageId().isPresent() || (info.pointA().isPresent() && info.pointB().isPresent());
 	}
-	public static Pair<BlockPos, BlockPos> getCoordSet(ItemStack stack)
+	public static Tuple<BlockPos, BlockPos> getCoordSet(ItemStack stack)
 	{
 		if (!hasCoordSet(stack))
 			return null;
@@ -96,12 +100,12 @@ public abstract class RemoteItem extends Item implements CommandOutput
 			if (stage == null)
 				return null;
 			
-			return new Pair<>(stage.cornerA, stage.cornerB);
+			return new Tuple<>(stage.cornerA, stage.cornerB);
 		}
 		
-		return new Pair<>(info.pointA().get(), info.pointB().get());
+		return new Tuple<>(info.pointA().get(), info.pointB().get());
 	}
-	public static boolean addCoords(World world, ItemStack stack, BlockPos pos)
+	public static boolean addCoords(Level world, ItemStack stack, BlockPos pos)
 	{
 		if (hasCoordSet(stack))
 			return false;
@@ -109,7 +113,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
 		if (info.worldKey().isEmpty())
-			info = info.setWorldKey(world.getRegistryKey());
+			info = info.setWorldKey(world.dimension());
 		else if (!world.equals(getLevel(world, stack)))
 			return false;
 		
@@ -117,33 +121,33 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		
 		return true;
 	}
-	public static World getLevel(World world, ItemStack stack)
+	public static Level getLevel(Level world, ItemStack stack)
 	{
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
-		World result = world.getServer().getWorld(
+		Level result = world.getServer().getLevel(
 			info.stageId().isPresent() ?
 				SaveInfoCapability.get().stages().get(info.stageId().get()).worldKey :
 				info.worldKey().get());
 		
 		return result == null ? world : result;
 	}
-	public static RemoteResult createResult(boolean success, Text output)
+	public static RemoteResult createResult(boolean success, Component output)
 	{
 		return new RemoteResult(success, output);
 	}
-	public ClampedModelPredicateProvider getActiveProperty()
+	public ClampedItemPropertyFunction getActiveProperty()
 	{
 		return (stack, level, entity, seed) -> hasCoordSet(stack) ? 1 : 0;
 	}
-	public ClampedModelPredicateProvider getModeProperty()
+	public ClampedItemPropertyFunction getModeProperty()
 	{
 		return (stack, level, entity, seed) -> getRemoteMode(stack);
 	}
 	@Override
-	public void appendTooltip(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Text> tooltip, @NotNull TooltipType type)
+	public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 		
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		
@@ -151,125 +155,125 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		{
 			if (hasCoordSet(stack))
 			{
-				Pair<BlockPos, BlockPos> set = getCoordSet(stack);
-				tooltip.add(Text.translatable("item.remote.coords.b", set.getLeft().getX(), set.getLeft().getY(), set.getLeft().getZ(),
-					set.getRight().getX(), set.getRight().getY(), set.getRight().getZ()));
+				Tuple<BlockPos, BlockPos> set = getCoordSet(stack);
+				tooltip.add(Component.translatable("item.remote.coords.b", set.getA().getX(), set.getA().getY(), set.getA().getZ(),
+					set.getB().getX(), set.getB().getY(), set.getB().getZ()));
 			}
 			else if (info.pointA().isPresent())
 			{
 				BlockPos pos = info.pointA().get();
-				tooltip.add(Text.translatable("item.remote.coords.a", pos.getX(), pos.getY(), pos.getZ()));
+				tooltip.add(Component.translatable("item.remote.coords.a", pos.getX(), pos.getY(), pos.getZ()));
 			}
 		}
 		else
-			tooltip.add(Text.translatable("item.remote.coords.invalid").setStyle(Style.EMPTY.withColor(Formatting.RED).withItalic(true)));
+			tooltip.add(Component.translatable("item.remote.coords.invalid").setStyle(Style.EMPTY.withColor(ChatFormatting.RED).withItalic(true)));
 		
 		if (info.targets().isPresent() && !info.targets().get().isEmpty())
-			tooltip.add(Texts.setStyleIfAbsent(Text.literal(info.targets().get()), TARGETS_STYLE));
+			tooltip.add(ComponentUtils.mergeStyles(Component.literal(info.targets().get()), TARGETS_STYLE));
 	}
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context)
+	public InteractionResult useOn(UseOnContext context)
 	{
-		if (context.getWorld().isClient)
+		if (context.getLevel().isClientSide)
 		{
-			return hasCoordSet(context.getStack()) ? ActionResult.PASS : ActionResult.SUCCESS;
+			return hasCoordSet(context.getItemInHand()) ? InteractionResult.PASS : InteractionResult.SUCCESS;
 		}
 		
-		if (addCoords(context.getWorld(), context.getStack(), context.getBlockPos()))
+		if (addCoords(context.getLevel(), context.getItemInHand(), context.getClickedPos()))
 		{
-			SplatcraftComponents.RemoteInfo info = getInfo(context.getStack());
+			SplatcraftComponents.RemoteInfo info = getInfo(context.getItemInHand());
 			String key = info.pointB().isPresent() ? "b" : "a";
-			BlockPos pos = context.getBlockPos();
+			BlockPos pos = context.getClickedPos();
 			
-			context.getPlayer().sendMessage(Text.translatable("status.coord_set." + key, pos.getX(), pos.getY(), pos.getZ()), true);
-			return ActionResult.SUCCESS;
+			context.getPlayer().displayClientMessage(Component.translatable("status.coord_set." + key, pos.getX(), pos.getY(), pos.getZ()), true);
+			return InteractionResult.SUCCESS;
 		}
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 	@Override
-	public TypedActionResult<ItemStack> use(@NotNull World levelIn, PlayerEntity playerIn, @NotNull Hand handIn)
+	public InteractionResultHolder<ItemStack> use(@NotNull Level levelIn, Player playerIn, @NotNull InteractionHand handIn)
 	{
-		ItemStack stack = playerIn.getStackInHand(handIn);
+		ItemStack stack = playerIn.getItemInHand(handIn);
 		int mode = getRemoteMode(stack);
 		
-		if (playerIn.isSneaking() && totalModes > 1)
+		if (playerIn.isShiftKeyDown() && totalModes > 1)
 		{
 			mode = cycleRemoteMode(stack);
-			String statusMsg = getTranslationKey() + ".mode." + mode;
+			String statusMsg = getDescriptionId() + ".mode." + mode;
 			
-			if (levelIn.isClient && I18n.hasTranslation(statusMsg))
+			if (levelIn.isClientSide && I18n.exists(statusMsg))
 			{
-				playerIn.sendMessage(Text.translatable("status.remote_mode", Text.translatable(statusMsg)), true);
+				playerIn.displayClientMessage(Component.translatable("status.remote_mode", Component.translatable(statusMsg)), true);
 			}
 		}
-		else if (hasCoordSet(stack) && !levelIn.isClient)
+		else if (hasCoordSet(stack) && !levelIn.isClientSide)
 		{
-			RemoteResult remoteResult = onRemoteUse(levelIn, stack, ColorUtils.getEntityColor(playerIn), playerIn.getPos(), playerIn);
+			RemoteResult remoteResult = onRemoteUse(levelIn, stack, ColorUtils.getEntityColor(playerIn), playerIn.position(), playerIn);
 			
 			if (remoteResult.getOutput() != null)
 			{
-				playerIn.sendMessage(remoteResult.getOutput(), true);
+				playerIn.displayClientMessage(remoteResult.getOutput(), true);
 			}
-			levelIn.playSound(null, playerIn.getX(), playerIn.getY(), playerIn.getZ(), SplatcraftSounds.remoteUse, SoundCategory.BLOCKS, 0.8f, 1);
-			return new TypedActionResult<>(remoteResult.wasSuccessful() ? ActionResult.SUCCESS : ActionResult.FAIL, stack);
+			levelIn.playSound(null, playerIn.getX(), playerIn.getY(), playerIn.getZ(), SplatcraftSounds.remoteUse, SoundSource.BLOCKS, 0.8f, 1);
+			return new InteractionResultHolder<>(remoteResult.wasSuccessful() ? InteractionResult.SUCCESS : InteractionResult.FAIL, stack);
 		}
 		
 		return super.use(levelIn, playerIn, handIn);
 	}
-	public abstract RemoteResult onRemoteUse(World usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayerEntity> targets);
-	public RemoteResult onRemoteUse(World usedOnWorld, ItemStack stack, InkColor colorIn, Vec3d pos, Entity user)
+	public abstract RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayer> targets);
+	public RemoteResult onRemoteUse(Level usedOnWorld, ItemStack stack, InkColor colorIn, Vec3 pos, Entity user)
 	{
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		Pair<BlockPos, BlockPos> coordSet = getCoordSet(stack);
+		Tuple<BlockPos, BlockPos> coordSet = getCoordSet(stack);
 		
 		if (coordSet == null)
-			return new RemoteResult(false, Text.translatable("status.remote.undefined_area"));
+			return new RemoteResult(false, Component.translatable("status.remote.undefined_area"));
 		
-		Collection<ServerPlayerEntity> targets = ALL_TARGETS;
+		Collection<ServerPlayer> targets = ALL_TARGETS;
 		
 		if (info.targets().isPresent() && !info.targets().get().isEmpty())
 			try
 			{
-				targets = EntityArgumentType.players().parse(new StringReader(info.targets().get())).getPlayers(createCommandSourceStack(stack, (ServerWorld) usedOnWorld, pos, user));
+				targets = EntityArgument.players().parse(new StringReader(info.targets().get())).findPlayers(createCommandSourceStack(stack, (ServerLevel) usedOnWorld, pos, user));
 			}
 			catch (CommandSyntaxException e)
 			{
-				return new RemoteResult(false, Text.literal(e.getMessage()));
+				return new RemoteResult(false, Component.literal(e.getMessage()));
 			}
 		
-		return onRemoteUse(usedOnWorld, coordSet.getLeft(), coordSet.getRight(), stack, colorIn, getRemoteMode(stack), targets);
+		return onRemoteUse(usedOnWorld, coordSet.getA(), coordSet.getB(), stack, colorIn, getRemoteMode(stack), targets);
 	}
-	public ServerCommandSource createCommandSourceStack(ItemStack stack, ServerWorld level, Vec3d pos, Entity user)
+	public CommandSourceStack createCommandSourceStack(ItemStack stack, ServerLevel level, Vec3 pos, Entity user)
 	{
-		return new ServerCommandSource(this, pos, Vec2f.ZERO, level, 2, getName(stack).toString(), getName(stack), level.getServer(), user);
+		return new CommandSourceStack(this, pos, Vec2.ZERO, level, 2, getName(stack).toString(), getName(stack), level.getServer(), user);
 	}
 	@Override
-	public void sendMessage(@NotNull Text p_145747_1_)
+	public void sendSystemMessage(@NotNull Component p_145747_1_)
 	{
 	
 	}
 	@Override
-	public boolean shouldReceiveFeedback()
+	public boolean acceptsSuccess()
 	{
 		return false;
 	}
 	@Override
-	public boolean shouldTrackOutput()
+	public boolean acceptsFailure()
 	{
 		return false;
 	}
 	@Override
-	public boolean shouldBroadcastConsoleToOps()
+	public boolean shouldInformAdmins()
 	{
 		return false;
 	}
 	public static class RemoteResult
 	{
 		boolean success;
-		Text output;
+		Component output;
 		int commandResult = 0;
 		int comparatorResult = 0;
-		public RemoteResult(boolean success, Text output)
+		public RemoteResult(boolean success, Component output)
 		{
 			this.success = success;
 			this.output = output;
@@ -292,7 +296,7 @@ public abstract class RemoteItem extends Item implements CommandOutput
 		{
 			return success;
 		}
-		public Text getOutput()
+		public Component getOutput()
 		{
 			return output;
 		}

@@ -1,11 +1,11 @@
 package net.splatcraft.items.remotes;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
@@ -17,16 +17,16 @@ public class InkDisruptorItem extends RemoteItem
 {
 	public InkDisruptorItem()
 	{
-		super(new Settings().maxCount(1));
+		super(new Properties().stacksTo(1));
 	}
-	public static RemoteResult clearInk(World world, BlockPos from, BlockPos to, boolean removePermanent)
+	public static RemoteResult clearInk(Level world, BlockPos from, BlockPos to, boolean removePermanent)
 	{
-		if (!world.isInBuildLimit(from) || !world.isInBuildLimit(to))
-			return createResult(false, Text.translatable("status.clear_ink.out_of_world"));
+		if (!world.isInWorldBounds(from) || !world.isInWorldBounds(to))
+			return createResult(false, Component.translatable("status.clear_ink.out_of_world"));
 		
-		Box bounds = Box.enclosing(from, to);
+		AABB bounds = AABB.encapsulatingFullBlocks(from, to);
 		AtomicInteger count = new AtomicInteger();
-		int blockTotal = (int) (bounds.getLengthX() * bounds.getLengthY() * bounds.getLengthZ());
+		int blockTotal = (int) (bounds.getXsize() * bounds.getYsize() * bounds.getZsize());
 		
 		InkBlockUtils.forEachInkedBlockInBounds(world, bounds, ((pos, ink) ->
 		{
@@ -39,10 +39,10 @@ public class InkDisruptorItem extends RemoteItem
 				count.incrementAndGet();
 		}));
 		
-		return createResult(true, Text.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
+		return createResult(true, Component.translatable("status.clear_ink." + (count.get() > 0 ? "success" : "no_ink"), count)).setIntResults(count.get(), blockTotal == 0 ? 0 : count.get() * 15 / blockTotal);
 	}
 	@Override
-	public RemoteResult onRemoteUse(World world, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayerEntity> targets)
+	public RemoteResult onRemoteUse(Level world, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayer> targets)
 	{
 		return clearInk(getLevel(world, stack), posA, posB, false);
 	}

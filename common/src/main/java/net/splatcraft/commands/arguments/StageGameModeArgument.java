@@ -1,17 +1,17 @@
 package net.splatcraft.commands.arguments;
 
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.command.argument.EnumArgumentType;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.StringRepresentableArgument;
 import net.splatcraft.data.StageGameMode;
 
-public class StageGameModeArgument extends EnumArgumentType<StageGameMode>
+public class StageGameModeArgument extends StringRepresentableArgument<StageGameMode>
 {
 	protected StageGameModeArgument()
 	{
 		super(StageGameMode.CODEC, StageGameMode::values);
 	}
-	public static StageGameMode getStageGameMode(CommandContext<ServerCommandSource> context, String id)
+	public static StageGameMode getStageGameMode(CommandContext<CommandSourceStack> context, String id)
 	{
 		return context.getArgument(id, StageGameMode.class);
 	}

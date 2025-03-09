@@ -1,12 +1,12 @@
 package net.splatcraft.neoforge;
 
-import dev.architectury.platform.Platform;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
@@ -25,22 +25,20 @@ import net.splatcraft.client.particles.SquidSoulParticle;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
+import net.splatcraft.platform.NeoForgeDeferredRegister;
 import net.splatcraft.registries.SplatcraftParticleTypes;
-import net.splatcraft.registries.SplatcraftRegistries;
-import net.splatcraft.registries.neoforge.SplatcraftEntitiesImpl;
 
 @Mod(Splatcraft.MODID)
 public final class SplatcraftNeoForge
 {
+	public static IEventBus modBus;
 	public SplatcraftNeoForge(IEventBus modBus)
 	{
 		// Run our common setup.
 		
+		SplatcraftNeoForge.modBus = modBus;
 		Splatcraft.init();
-		SplatcraftEntitiesImpl.REGISTRY.register(modBus);
 		modBus.addListener(SplatcraftNeoForge::onRegistryUnlocked);
-		if (Platform.getEnv().equals(Dist.CLIENT))
-			modBus.addListener(SplatcraftNeoForge::beforeRegisterScreens);
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
@@ -52,12 +50,6 @@ public final class SplatcraftNeoForge
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
 		
 		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
-	}
-	@OnlyIn(Dist.CLIENT)
-	private static void beforeRegisterScreens(RegisterMenuScreensEvent event)
-	{
-		// there is absolutely no more events that run after NewRegistryEvent but before RegisterMenuScreensEvent >:(
-		ClientSetupHandler.bindScreenContainers((menuType, screenConstructor) -> event.register(menuType, screenConstructor::create));
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{
@@ -76,7 +68,7 @@ public final class SplatcraftNeoForge
 	}
 	private static void onChunkWatch(ChunkWatchEvent.Sent event)
 	{
-		ChunkInkHandler.sendChunkData(event.getPlayer().networkHandler, event.getLevel(), event.getLevel().getChunk(event.getPos().x, event.getPos().z));
+		ChunkInkHandler.sendChunkData(event.getPlayer().connection, event.getLevel(), event.getLevel().getChunk(event.getPos().x, event.getPos().z));
 	}
 	private static void onMobDrops(LivingDropsEvent event)
 	{
@@ -84,7 +76,7 @@ public final class SplatcraftNeoForge
 	}
 	private static void onInputUpdate(MovementInputUpdateEvent event)
 	{
-		PlayerMovementHandler.onInputUpdate((ClientPlayerEntity) event.getEntity(), event.getInput());
+		PlayerMovementHandler.onInputUpdate((LocalPlayer) event.getEntity(), event.getInput());
 	}
 	private static void onGamemodeChange(PlayerEvent.PlayerChangeGameModeEvent event)
 	{
@@ -92,7 +84,7 @@ public final class SplatcraftNeoForge
 	}
 	public static void onRegistryUnlocked(NewRegistryEvent event)
 	{
-		SplatcraftRegistries.register();
+		NeoForgeDeferredRegister.registerAllRegistries();
 	}
 	public static void registerGuiOverlays(RegisterGuiLayersEvent event)
 	{

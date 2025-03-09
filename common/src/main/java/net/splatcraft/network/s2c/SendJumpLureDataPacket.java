@@ -2,9 +2,9 @@ package net.splatcraft.network.s2c;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.util.InkColor;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class SendJumpLureDataPacket extends PlayS2CPacket
 {
-    public static final Id<? extends CustomPayload> ID = new Id<>(Splatcraft.identifierOf("send_jump_lure_data_packet"));
+    public static final Type<? extends CustomPacketPayload> ID = new Type<>(Splatcraft.identifierOf("send_jump_lure_data_packet"));
     final InkColor color;
     final boolean canJumpToSpawn;
     final BlockPos spawnPosition;
@@ -27,7 +27,7 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
         this.spawnPosition = spawnPosition;
     }
 
-    public static SendJumpLureDataPacket decode(RegistryByteBuf buffer)
+    public static SendJumpLureDataPacket decode(RegistryFriendlyByteBuf buffer)
     {
         InkColor color = InkColor.constructOrReuse(buffer.readInt());
         boolean canJump = buffer.readBoolean();
@@ -35,26 +35,26 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
         int uuidCount = buffer.readInt();
         ArrayList<UUID> uuids = new ArrayList<>();
         for (int i = 0; i < uuidCount; i++)
-            uuids.add(buffer.readUuid());
+            uuids.add(buffer.readUUID());
 
         return new SendJumpLureDataPacket(color, canJump, uuids, spawnPosition);
     }
 
     @Override
-    public Id<? extends CustomPayload> getId()
+    public Type<? extends CustomPacketPayload> type()
     {
         return ID;
     }
 
     @Override
-    public void encode(RegistryByteBuf buffer)
+    public void encode(RegistryFriendlyByteBuf buffer)
     {
         buffer.writeInt(color.getColor());
         buffer.writeBoolean(canJumpToSpawn);
         buffer.writeBlockPos(spawnPosition);
         buffer.writeInt(uuids.size());
         for (UUID uuid : uuids)
-            buffer.writeUuid(uuid);
+            buffer.writeUUID(uuid);
     }
 
     @Environment(EnvType.CLIENT)

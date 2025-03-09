@@ -1,21 +1,21 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.ThrowableExplodingSubDataRecord;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity
 {
 	public static final int FLASH_DURATION = 20;
-	private static final TrackedData<Boolean> ACTIVATED = DataTracker.registerData(SuctionBombEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+	private static final EntityDataAccessor<Boolean> ACTIVATED = SynchedEntityData.defineId(SuctionBombEntity.class, EntityDataSerializers.BOOLEAN);
 	public int shakeTime;
 	protected int fuseTime = 0;
 	protected int prevFuseTime = 0;
@@ -39,15 +39,15 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 	private BlockState inBlockState;
 	@Nullable
 	private Direction stickFacing;
-	public SuctionBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, World world)
+	public SuctionBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, Level world)
 	{
 		super(type, world);
 	}
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder)
+	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
-		super.initDataTracker(builder);
-		builder.add(ACTIVATED, false);
+		super.defineSynchedData(builder);
+		builder.define(ACTIVATED, false);
 	}
 	@Override
 	protected Item getDefaultItem()
@@ -75,19 +75,19 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			}
 			else if (fuseTime >= settings.subDataRecord.fuseTime() - FLASH_DURATION && !playedActivationSound)
 			{
-				getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundCategory.PLAYERS, 0.8F, 1f);
+				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 				playedActivationSound = true;
 			}
 		}
 		
 		if (isSticked())
 		{
-			if (getWorld().isSpaceEmpty(getBoundingBox().stretch(Vec3d.ZERO.offset(stickFacing, -0.05f))))
+			if (level().noCollision(getBoundingBox().expandTowards(Vec3.ZERO.relative(stickFacing, -0.05f))))
 			{
 				stickFacing = null;
 				setActivated(false);
-				Vec3d vector3d = getVelocity();
-				setVelocity(vector3d.multiply(random.nextFloat() * 0.2F, random.nextFloat() * 0.2F, random.nextFloat() * 0.2F));
+				Vec3 vector3d = getDeltaMovement();
+				setDeltaMovement(vector3d.multiply(random.nextFloat() * 0.2F, random.nextFloat() * 0.2F, random.nextFloat() * 0.2F));
 			}
 			else
 			{
@@ -96,45 +96,45 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			}
 		}
 		
-		checkBlockCollision();
+		checkInsideBlocks();
 	}
 	@Override
-	public Vec3d getClientCameraPosVec(float tickDelta)
+	public Vec3 getLightProbePosition(float tickDelta)
 	{
 		if (stickFacing != null)
 		{
-			return getBoundingBox().getCenter().offset(stickFacing, 0.3f);
+			return getBoundingBox().getCenter().relative(stickFacing, 0.3f);
 		}
-		return super.getClientCameraPosVec(tickDelta);
+		return super.getLightProbePosition(tickDelta);
 	}
 	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings)
 	{
-		Vec3d impactPos = stickFacing != null ? getBoundingBox().getCenter().offset(stickFacing, 0.3f) : getLerpedPos(0);
+		Vec3 impactPos = stickFacing != null ? getBoundingBox().getCenter().relative(stickFacing, 0.3f) : getPosition(0);
 		InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
-		getWorld().sendEntityStatus(this, (byte) 1);
-		getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
-		if (!getWorld().isClient())
+		level().broadcastEntityEvent(this, (byte) 1);
+		level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
+		if (!level().isClientSide())
 			discard();
 	}
 	@Override
-	public void handleStatus(byte id)
+	public void handleEntityEvent(byte id)
 	{
-		super.handleStatus(id);
+		super.handleEntityEvent(id);
 		if (id == 1)
-			getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
 	}
 	public void setStickFacing()
 	{
-		if (stickFacing.getHorizontal() >= 0)
+		if (stickFacing.get2DDataValue() >= 0)
 		{
-			setYaw(180 - stickFacing.asRotation());
-			prevYaw = getYaw();
+			setYRot(180 - stickFacing.toYRot());
+			yRotO = getYRot();
 		}
 		else
 		{
-			setPitch(stickFacing.equals(Direction.UP) ? -90 : 90);
-			setYaw(prevYaw);
-			prevPitch = getPitch();
+			setXRot(stickFacing.equals(Direction.UP) ? -90 : 90);
+			setYRot(yRotO);
+			xRotO = getXRot();
 		}
 	}
 	public float getFlashIntensity(float partialTicks)
@@ -142,54 +142,54 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
 		if (settings.subDataRecord == null)
 			return 0;
-		return Math.max(0, MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+		return Math.max(0, Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
 	}
 	@Override
-	protected void onBlockHit(BlockHitResult result)
+	protected void onHitBlock(BlockHitResult result)
 	{
 		if (!isSticked())
 		{
 			shakeTime = 7;
-			inBlockState = getWorld().getBlockState(result.getBlockPos());
+			inBlockState = level().getBlockState(result.getBlockPos());
 			
 			setActivated(true);
 			
-			setPosition(result.getPos());
-			setVelocity(Vec3d.ZERO);
+			setPos(result.getLocation());
+			setDeltaMovement(Vec3.ZERO);
 			
-			stickFacing = result.getSide();
+			stickFacing = result.getDirection();
 			if (stickFacing.getAxis() == Direction.Axis.Y)
 			{
-				setPosition(result.getPos().add(0, -getHeight() / 2, 0));
+				setPos(result.getLocation().add(0, -getBbHeight() / 2, 0));
 			}
 			else
 			{
-				setPosition(result.getPos());
+				setPos(result.getLocation());
 			}
 			setStickFacing();
 		}
 	}
 	public boolean isActivated()
 	{
-		return dataTracker.get(ACTIVATED);
+		return entityData.get(ACTIVATED);
 	}
 	public void setActivated(boolean v)
 	{
-		dataTracker.set(ACTIVATED, v);
+		entityData.set(ACTIVATED, v);
 	}
 	public boolean isSticked()
 	{
 		return stickFacing != null;
 	}
 	@Override
-	public void readCustomDataFromNbt(NbtCompound nbt)
+	public void readAdditionalSaveData(CompoundTag nbt)
 	{
-		super.readCustomDataFromNbt(nbt);
+		super.readAdditionalSaveData(nbt);
 		setActivated(nbt.getBoolean("Activated"));
 		if (nbt.contains("StickFacing"))
 			stickFacing = Direction.byName(nbt.getString("StickFacing"));
 		shakeTime = nbt.getInt("ShakeTime");
-		if (nbt.contains("InBlockState", NbtElement.COMPOUND_TYPE))
+		if (nbt.contains("InBlockState", Tag.TAG_COMPOUND))
 		{
 			BlockState.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound("inBlockState")).ifSuccess(v -> inBlockState = v);
 		}
@@ -198,9 +198,9 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		prevFuseTime = fuseTime;
 	}
 	@Override
-	public void writeCustomDataToNbt(NbtCompound nbt)
+	public void addAdditionalSaveData(CompoundTag nbt)
 	{
-		super.writeCustomDataToNbt(nbt);
+		super.addAdditionalSaveData(nbt);
 		nbt.putBoolean("Activated", isActivated());
 		if (stickFacing != null)
 			nbt.putString("StickFacing", stickFacing.name());

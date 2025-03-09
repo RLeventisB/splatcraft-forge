@@ -1,14 +1,12 @@
 package net.splatcraft.items.weapons;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
@@ -43,12 +41,12 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 		return ShooterWeaponSettings.class;
 	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		ShootingHandler.notifyStartShooting(entity);
 	}
@@ -60,8 +58,8 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 			null,
 			(data, accumulatedTime, entity1) ->
 			{
-				World world = entity1.getWorld();
-				if (!world.isClient)
+				Level world = entity1.level();
+				if (!world.isClientSide)
 				{
 					if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 					{
@@ -69,18 +67,18 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 						for (int i = 0; i < settings.shotData.projectileCount(); i++)
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-							proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), settings.shotData.pitchCompensation(), settings.shotData.speed(), inaccuracy);
+							proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.shotData.pitchCompensation(), settings.shotData.speed(), inaccuracy);
 							proj.setShooterStats(settings);
-							world.spawnEntity(proj);
+							world.addFreshEntity(proj);
 							proj.tick(accumulatedTime);
 						}
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.shooterShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 					}
 				}
 			}, null);
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
 	}

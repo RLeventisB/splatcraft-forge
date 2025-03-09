@@ -1,21 +1,21 @@
 package net.splatcraft.client.gui.stagepad;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.sound.SoundManager;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.GameRules;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.locale.Language;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.GameRules;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -29,17 +29,17 @@ import java.util.HashMap;
 
 public class StageRulesScreen extends AbstractStagePadScreen
 {
-	private static final Identifier TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_rules.png");
-	private final HashMap<GameRules.Key<GameRules.BooleanRule>, RuleEntry> rules = new HashMap<>();
+	private static final ResourceLocation TEXTURES = Splatcraft.identifierOf("textures/gui/stage_pad/stage_rules.png");
+	private final HashMap<GameRules.Key<GameRules.BooleanValue>, RuleEntry> rules = new HashMap<>();
 	private Stage stage;
 	private boolean scrollBarHeld = false;
 	private double scroll = 0;
-	public StageRulesScreen(Text label, String stageId, Screen mainMenu)
+	public StageRulesScreen(Component label, String stageId, Screen mainMenu)
 	{
 		super(label);
 		stage = Stage.getStage(stageId);
 		
-		for (GameRules.Key<GameRules.BooleanRule> rule : Stage.VALID_SETTINGS.values())
+		for (GameRules.Key<GameRules.BooleanValue> rule : Stage.VALID_SETTINGS.values())
 		{
 			rules.put(rule, new RuleEntry(
 				addButton(new RuleNameLabel(rule)),
@@ -55,7 +55,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 		rules.forEach((gameRule, value) -> value.value = stage.getSetting(gameRule));
 	}
 	@Override
-	public void handleWidgets(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+	public void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
 	{
 		int index = 0;
 		for (RuleEntry rule : rules.values())
@@ -81,7 +81,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 		}
 	}
 	@Override
-	public void renderBackground(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float delta)
+	public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float delta)
 	{
 		super.renderBackground(guiGraphics, mouseX, mouseY, delta);
 		
@@ -91,10 +91,10 @@ public class StageRulesScreen extends AbstractStagePadScreen
 		int x = (width - backgroundWidth) / 2;
 		int y = (height - backgroundHeight) / 2;
 		
-		guiGraphics.drawTexture(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
+		guiGraphics.blit(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
 		
 		RenderSystem.setShaderTexture(0, WIDGETS);
-		guiGraphics.drawTexture(WIDGETS, x + 188, y + 24 + (int) (scroll * 81), 196 + (rules.size() > 8 ? (scrollBarHeld ? 2 : 1) * 12 : 0), 0, 12, 15);
+		guiGraphics.blit(WIDGETS, x + 188, y + 24 + (int) (scroll * 81), 196 + (rules.size() > 8 ? (scrollBarHeld ? 2 : 1) * 12 : 0), 0, 12, 15);
 	}
 	@Override
 	public boolean canClickButtons()
@@ -124,7 +124,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 		int y = (height - backgroundHeight) / 2;
 		
 		if (scrollBarHeld)
-			scroll = MathHelper.clamp((mouseY - (y + 24)) / 96f, 0, 1);
+			scroll = Mth.clamp((mouseY - (y + 24)) / 96f, 0, 1);
 		
 		return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
 	}
@@ -132,7 +132,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
 	{
 		if (rules.size() >= 8)
-			scroll = MathHelper.clamp(scroll - Math.signum(verticalAmount) / (rules.size() - 8), 0.0f, 1.0f);
+			scroll = Mth.clamp(scroll - Math.signum(verticalAmount) / (rules.size() - 8), 0.0f, 1.0f);
 		
 		return true;
 	}
@@ -150,44 +150,44 @@ public class StageRulesScreen extends AbstractStagePadScreen
 	}
 	class RuleNameLabel extends MenuButton
 	{
-		public RuleNameLabel(GameRules.Key<GameRules.BooleanRule> rule)
+		public RuleNameLabel(GameRules.Key<GameRules.BooleanValue> rule)
 		{
 			super(10, 24, 144, 12, (b) ->
 			{
 			}, ((button, guiGraphics, mouseX, mouseY, partialTicks) ->
 			{
-				ArrayList<OrderedText> lines = new ArrayList<>(textRenderer.wrapLines(Text.translatable(rule.getTranslationKey()), 150));
-				String descriptionKey = rule.getTranslationKey() + ".description";
+				ArrayList<FormattedCharSequence> lines = new ArrayList<>(font.split(Component.translatable(rule.getDescriptionId()), 150));
+				String descriptionKey = rule.getDescriptionId() + ".description";
 				
-				lines.add(Text.literal(rule.getName().replace(Splatcraft.MODID + ".", "")).formatted(Formatting.YELLOW).asOrderedText());
+				lines.add(Component.literal(rule.getId().replace(Splatcraft.MODID + ".", "")).withStyle(ChatFormatting.YELLOW).getVisualOrderText());
 				
-				if (I18n.hasTranslation(descriptionKey))
-					lines.addAll(textRenderer.wrapLines(Text.translatable(descriptionKey).formatted(Formatting.GRAY), 150));
+				if (I18n.exists(descriptionKey))
+					lines.addAll(font.split(Component.translatable(descriptionKey).withStyle(ChatFormatting.GRAY), 150));
 				
-				guiGraphics.drawOrderedTooltip(MinecraftClient.getInstance().textRenderer, lines, mouseX, mouseY);
+				guiGraphics.renderTooltip(Minecraft.getInstance().font, lines, mouseX, mouseY);
 			}), (ps, b) ->
 			{
 			}, ButtonColor.GREEN);
-			setMessage(Text.translatable(rule.getTranslationKey()));
+			setMessage(Component.translatable(rule.getDescriptionId()));
 		}
 		@Override
-		public void renderWidget(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+		public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
 		{
-			RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
 			RenderSystem.setShaderTexture(0, TEXTURES);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
-			guiGraphics.drawTexture(TEXTURES, getX(), getY(), 0, 244, width, height);
+			guiGraphics.blit(TEXTURES, getX(), getY(), 0, 244, width, height);
 			
-			Text label = getMessage();
-			OrderedText sequence = label.asOrderedText();
+			Component label = getMessage();
+			FormattedCharSequence sequence = label.getVisualOrderText();
 			
-			if (textRenderer.getWidth(label) > width)
-				sequence = Language.getInstance().reorder(StringVisitable.concat(Arrays.asList(textRenderer.trimToWidth(label, width - 12), StringVisitable.styled("...", Style.EMPTY))));
+			if (font.width(label) > width)
+				sequence = Language.getInstance().getVisualOrder(FormattedText.composite(Arrays.asList(font.substrByWidth(label, width - 12), FormattedText.of("...", Style.EMPTY))));
 			
-			guiGraphics.drawTextWithShadow(textRenderer, sequence, getX() + (3), getY() + (getHeight() - 8) / 2, getFGColor() | MathHelper.ceil(getAlpha() * 255.0F) << 24);
+			guiGraphics.drawString(font, sequence, getX() + (3), getY() + (getHeight() - 8) / 2, getFGColor() | Mth.ceil(getAlpha() * 255.0F) << 24);
 		}
 		@Override
 		public void playDownSound(@NotNull SoundManager soundManager)
@@ -197,8 +197,8 @@ public class StageRulesScreen extends AbstractStagePadScreen
 	class RuleValueButton extends MenuButton
 	{
 		static RuleValueButton heldButton = null;
-		final GameRules.Key<GameRules.BooleanRule> rule;
-		public RuleValueButton(GameRules.Key<GameRules.BooleanRule> rule)
+		final GameRules.Key<GameRules.BooleanValue> rule;
+		public RuleValueButton(GameRules.Key<GameRules.BooleanValue> rule)
 		{
 			super(154, 24, 34, 12, (b) ->
 			{
@@ -207,9 +207,9 @@ public class StageRulesScreen extends AbstractStagePadScreen
 				if (heldButton == null || heldButton.rule.equals(rule) /*can't ref to self before super, so this'll have to do*/)
 				{
 					Boolean value = rules.get(rule).value;
-					showText(value == null ? Text.translatable("gui.stage_pad.button.rule_value.default",
-						Text.translatable("gui.stage_pad.button.rule_value." + (SplatcraftGameRules.getClientsideBooleanValue(rule) ? "on" : "off"))) :
-						Text.translatable("gui.stage_pad.button.rule_value." + (value ? "on" : "off"))).onTooltip(button, poseStack, mouseX, mouseY, partialTicks);
+					showText(value == null ? Component.translatable("gui.stage_pad.button.rule_value.default",
+						Component.translatable("gui.stage_pad.button.rule_value." + (SplatcraftGameRules.getClientsideBooleanValue(rule) ? "on" : "off"))) :
+						Component.translatable("gui.stage_pad.button.rule_value." + (value ? "on" : "off"))).onTooltip(button, poseStack, mouseX, mouseY, partialTicks);
 				}
 			}, (guiGraphics, button) ->
 			{
@@ -223,7 +223,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 			
 			if (equals(heldButton))
 			{
-				SplatcraftPacketHandler.sendToServer(new RequestSetStageRulePacket(stage.id, rule.getName(), rules.get(rule).value));
+				SplatcraftPacketHandler.sendToServer(new RequestSetStageRulePacket(stage.id, rule.getId(), rules.get(rule).value));
 				heldButton = null;
 			}
 		}
@@ -248,33 +248,33 @@ public class StageRulesScreen extends AbstractStagePadScreen
 				setValue(ruleEntry, mouseX);
 				
 				if (!(prevValue == null && ruleEntry.value == null) && (ruleEntry.value == null || !ruleEntry.value.equals(prevValue)))
-					playDownSound(MinecraftClient.getInstance().getSoundManager());
+					playDownSound(Minecraft.getInstance().getSoundManager());
 			}
 			return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
 		}
 		void setValue(RuleEntry entry, double mouseX)
 		{
-			entry.value = new Boolean[] {false, null, true}[MathHelper.clamp((int) ((mouseX - getX()) / width * 3), 0, 2)];
+			entry.value = new Boolean[] {false, null, true}[Mth.clamp((int) ((mouseX - getX()) / width * 3), 0, 2)];
 		}
 		@Override
-		public void renderWidget(@NotNull DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks)
+		public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
 		{
-			RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+			RenderSystem.setShader(GameRenderer::getPositionTexShader);
 			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
-			int i = getYImage(isSelected());
+			int i = getYImage(isHoveredOrFocused());
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			RenderSystem.enableDepthTest();
 			RenderSystem.setShaderTexture(0, TEXTURES);
-			guiGraphics.drawTexture(TEXTURES, getX(), getY(), 144, 244, width, height);
+			guiGraphics.blit(TEXTURES, getX(), getY(), 144, 244, width, height);
 			
 			Boolean bool = rules.get(rule).value;
 			int j = bool == null ? 1 : bool ? 2 : 0;
 			
 			int notchWidth = 12;
 			RenderSystem.setShaderTexture(0, WIDGETS);
-			guiGraphics.drawTexture(WIDGETS, getX() + (j * (notchWidth - 1)), getY(), 0, getColor().ordinal() * 36 + i * 12, notchWidth / 2, height);
-			guiGraphics.drawTexture(WIDGETS, getX() + (j * (notchWidth - 1)) + notchWidth / 2, getY(), 180 - notchWidth / 2, getColor().ordinal() * 36 + i * 12, notchWidth / 2, height);
+			guiGraphics.blit(WIDGETS, getX() + (j * (notchWidth - 1)), getY(), 0, getColor().ordinal() * 36 + i * 12, notchWidth / 2, height);
+			guiGraphics.blit(WIDGETS, getX() + (j * (notchWidth - 1)) + notchWidth / 2, getY(), 180 - notchWidth / 2, getColor().ordinal() * 36 + i * 12, notchWidth / 2, height);
 			
 			drawIcon(guiGraphics, WIDGETS, (j * width / 3), 0, 220 + j * 12, 36, 12, 12).apply(guiGraphics, this);
 		}

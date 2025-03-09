@@ -1,18 +1,16 @@
 package net.splatcraft.items.weapons;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.client.audio.ChargerChargingTickableSound;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
@@ -37,7 +35,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	public ChargerChargingTickableSound chargingSound;
 	protected ChargerItem(String settingsId)
 	{
-		super(settingsId, new Item.Settings().maxCount(1)
+		super(settingsId, new Item.Properties().stacksTo(1)
 			.component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT)
 			.component(SplatcraftComponents.CHARGE, 0f)
 		);
@@ -51,10 +49,10 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		return register.register(name, () -> new ChargerItem(parent.get().settingsId.toString()));
 	}
 	@Environment(EnvType.CLIENT)
-	protected static void playChargeReadySound(PlayerEntity player)
+	protected static void playChargeReadySound(Player player)
 	{
-		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUuid().equals(player.getUuid()))
-			MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SplatcraftSounds.chargerReady, MinecraftClient.getInstance().options.getSoundVolume(SoundCategory.PLAYERS)));
+		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()))
+			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.chargerReady, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
 	}
 	@Override
 	public Class<ChargerWeaponSettings> getSettingsClass()
@@ -62,52 +60,52 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		return ChargerWeaponSettings.class;
 	}
 	@Override
-	public void onReleaseCharge(World world, PlayerEntity player, ItemStack stack, float charge)
+	public void onReleaseCharge(Level world, Player player, ItemStack stack, float charge)
 	{
 		ChargerWeaponSettings settings = getSettings(stack);
 		
 		InkProjectileEntity proj = new InkProjectileEntity(world, player, stack, InkBlockUtils.getInkType(player), settings.projectileData.size(), settings);
-		proj.setVelocity(player, player.getPitch(), player.getYaw(), 0.0f, settings.projectileData.speed().getValue(charge), 0f, 0f);
+		proj.setDeltaMovement(player, player.getXRot(), player.getYRot(), 0.0f, settings.projectileData.speed().getValue(charge), 0f, 0f);
 		proj.setChargerStats(charge, settings.projectileData);
 		proj.addExtraData(new ExtraSaveData.ChargeExtraData(charge));
-		world.spawnEntity(proj);
-		world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.chargerShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+		world.addFreshEntity(proj);
+		world.playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.chargerShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 		
 		reduceInk(player, this, settings.shotData.inkConsumption().getValue(charge), settings.shotData.inkRecoveryCooldown(), false, true);
-		EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, player.getActiveHand(), true, false, false, player.isOnGround()));
-		player.getItemCooldownManager().set(this, 7);
+		EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selected, player.getUsedItemHand(), true, false, false, player.onGround()));
+		player.getCooldowns().addCooldown(this, 7);
 	}
 	@Environment(EnvType.CLIENT)
-	protected void playChargingSound(PlayerEntity player)
+	protected void playChargingSound(Player player)
 	{
-		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUuid().equals(player.getUuid()) || (chargingSound != null && !chargingSound.isDone()))
+		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()) || (chargingSound != null && !chargingSound.isStopped()))
 		{
 			return;
 		}
 		
 		chargingSound = new ChargerChargingTickableSound(ClientUtils.getClientPlayer(), SplatcraftSounds.chargerCharge);
-		MinecraftClient.getInstance().getSoundManager().play(chargingSound);
+		Minecraft.getInstance().getSoundManager().play(chargingSound);
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		if (!world.isClient)
+		if (!world.isClientSide)
 		{
 			if (remainingUseTicks % 4 == 0 && !enoughInk(entity, this, 0.1f, 0, false))
 				playNoInkSound(entity, SplatcraftSounds.noInkMain);
 		}
-		else if (entity instanceof PlayerEntity player && !player.getItemCooldownManager().isCoolingDown(this))
+		else if (entity instanceof Player player && !player.getCooldowns().isOnCooldown(this))
 		{
 			ChargerWeaponSettings settings = getSettings(stack);
 			float prevCharge = PlayerCharge.getChargeValue(player, stack);
 			float chargeThisFrame = settings.chargeData.getChargePercentPerTick();
 			
-			if (!entity.isOnGround())
+			if (!entity.onGround())
 				chargeThisFrame *= settings.chargeData.airborneChargeRate();
 			
 			if (!enoughInk(entity, this, settings.shotData.inkConsumption().getValue(prevCharge + chargeThisFrame), 0, remainingUseTicks % 4 == 0))
 			{
-				float rechargeMult = InkTankItem.rechargeMult(player.getEquippedStack(EquipmentSlot.CHEST), true);
+				float rechargeMult = InkTankItem.rechargeMult(player.getItemBySlot(EquipmentSlot.CHEST), true);
 				
 				if (!hasInkInTank(player, this) || rechargeMult == 0)
 					return;
@@ -128,17 +126,17 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		}
 	}
 	@Override
-	public void onStoppedUsing(@NotNull ItemStack stack, @NotNull World world, LivingEntity entity, int timeLeft)
+	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, LivingEntity entity, int timeLeft)
 	{
-		super.onStoppedUsing(stack, world, entity, timeLeft);
+		super.releaseUsing(stack, world, entity, timeLeft);
 		
-		if (world.isClient && !EntityInfoCapability.isSquid(entity) && entity instanceof PlayerEntity player)
+		if (world.isClientSide && !EntityInfoCapability.isSquid(entity) && entity instanceof Player player)
 		{
 			PlayerCharge charge = PlayerCharge.getCharge(player);
 			if (charge != null && charge.charge > 0.05f)
 			{
 				ChargerWeaponSettings settings = getSettings(stack);
-				EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selectedSlot, entity.getActiveHand(), true, false, false, entity.isOnGround()));
+				EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selected, entity.getUsedItemHand(), true, false, false, entity.onGround()));
 				SplatcraftPacketHandler.sendToServer(new ReleaseChargePacket(charge.charge, stack));
 				charge.reset();
 			}
@@ -150,7 +148,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		return settings.shotData.inkConsumption().getValue(charge);
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return PlayerPosingHandler.WeaponPose.BOW_CHARGE;
 	}

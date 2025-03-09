@@ -3,15 +3,15 @@ package net.splatcraft.handlers;
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.EntityEvent;
 import dev.architectury.event.events.common.TickEvent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.util.TypeFilter;
-import net.minecraft.util.function.LazyIterationConsumer;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.AbortableIterationConsumer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -44,47 +44,47 @@ public class WeaponHandler
 			if (cooldown.isPresent())
 			{
 				if (cooldown.get().getSlotIndex() >= 0)
-					player.getInventory().selectedSlot = cooldown.get().getSlotIndex();
+					player.getInventory().selected = cooldown.get().getSlotIndex();
 				
 				usagePreventedByCooldown = tickEntityActions(player, cooldown.get());
 			}
-			if (usagePreventedByCooldown || !player.isUsingItem() || player.getItemUseTimeLeft() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
+			if (usagePreventedByCooldown || !player.isUsingItem() || player.getUseItemRemainingTicks() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
 			{
 				PlayerCharge.dischargeWeapon(player);
 			}
 		});
 		
-		TickEvent.SERVER_LEVEL_PRE.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
+		TickEvent.SERVER_LEVEL_PRE.register((level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			tickPreviousPosMap(entity);
-			return LazyIterationConsumer.NextIteration.CONTINUE;
+			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
-		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntityLookup().forEach(TypeFilter.instanceOf(LivingEntity.class), entity ->
+		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			if (EntityInfoCapability.hasCapability(entity))
 			{
 				EntityInfo playerInfo = EntityInfoCapability.get(entity);
 				playerInfo.reduceSquidAnimationTick();
 			}
-			return LazyIterationConsumer.NextIteration.CONTINUE;
+			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
 	}
 	public static void doScoreboardLogicOnDeath(DamageSource dmgSource, LivingEntity target, InkColor color)
 	{
-		Scoreboard scoreboard = target.getWorld().getScoreboard();
+		Scoreboard scoreboard = target.level().getScoreboard();
 		if (ScoreboardHandler.hasColorCriterion(color))
 		{
-			scoreboard.forEachScore(ScoreboardHandler.getDeathsAsColor(color), target, score -> score.incrementScore(1));
+			scoreboard.forAllObjectives(ScoreboardHandler.getDeathsAsColor(color), target, score -> score.add(1));
 		}
-		if (dmgSource.getSource() instanceof LivingEntity source)
+		if (dmgSource.getDirectEntity() instanceof LivingEntity source)
 		{
 			if (ScoreboardHandler.hasColorCriterion(color))
-				scoreboard.forEachScore(ScoreboardHandler.getColorKills(color), target, score -> score.incrementScore(1));
+				scoreboard.forAllObjectives(ScoreboardHandler.getColorKills(color), target, score -> score.add(1));
 			if (ScoreboardHandler.hasColorCriterion(ColorUtils.getEntityColor(source)))
-				scoreboard.forEachScore(ScoreboardHandler.getKillsAsColor(ColorUtils.getEntityColor(source)), target, score -> score.incrementScore(1));
+				scoreboard.forAllObjectives(ScoreboardHandler.getKillsAsColor(ColorUtils.getEntityColor(source)), target, score -> score.add(1));
 		}
 	}
-	private static boolean tickEntityActions(PlayerEntity player, EntityAction action)
+	private static boolean tickEntityActions(Player player, EntityAction action)
 	{
 		boolean preventedByCooldown = false;
 		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
@@ -110,16 +110,16 @@ public class WeaponHandler
 			}
 			else if (action.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			{
-				weapon.onPlayerCooldownTick(player.getWorld(), player, stack, action);
+				weapon.onPlayerCooldownTick(player.level(), player, stack, action);
 			}
 			action.setTime(action.getTime() - 1);
 		}
 		return preventedByCooldown;
 	}
-	private static boolean doEndActions(PlayerEntity player, EntityAction action, ItemStack stack)
+	private static boolean doEndActions(Player player, EntityAction action, ItemStack stack)
 	{
 		if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-			weapon.onPlayerCooldownEnd(player.getWorld(), player, stack, action);
+			weapon.onPlayerCooldownEnd(player.level(), player, stack, action);
 		if (action.canEnd(player))
 		{
 			EntityAction.setEntityAction(player, null);
@@ -129,39 +129,39 @@ public class WeaponHandler
 	}
 	public static void tickPreviousPosMap(LivingEntity entity)
 	{
-		Vec3d oldOldPos = entity.getLerpedPos(0);
-		Vec2f oldOldRot = new Vec2f(entity.prevPitch, entity.prevYaw);
+		Vec3 oldOldPos = entity.getPosition(0);
+		Vec2 oldOldRot = new Vec2(entity.xRotO, entity.yRotO);
 		OldEntityTransformData oldData = prevPosMap.get(entity);
 		if (oldData != null)
 		{
 			oldOldPos = oldData.oldPosition;
 			oldOldRot = oldData.oldRot;
 		}
-		OldEntityTransformData posData = new OldEntityTransformData(entity.getLerpedPos(0), oldOldPos, new Vec2f(entity.prevPitch, entity.prevYaw), oldOldRot);
+		OldEntityTransformData posData = new OldEntityTransformData(entity.getPosition(0), oldOldPos, new Vec2(entity.xRotO, entity.yRotO), oldOldRot);
 		prevPosMap.put(entity, posData);
 	}
 	public static OldEntityTransformData getEntityPrevPos(LivingEntity entity)
 	{
 		return prevPosMap.containsKey(entity) ? prevPosMap.get(entity) : new OldEntityTransformData(
-			entity.getPos(), entity.getLerpedPos(0),
-			new Vec2f(entity.getPitch(), entity.getYaw()), new Vec2f(entity.prevPitch, entity.prevYaw));
+			entity.position(), entity.getPosition(0),
+			new Vec2(entity.getXRot(), entity.getYRot()), new Vec2(entity.xRotO, entity.yRotO));
 	}
 	public static class OldEntityTransformData
 	{
-		public Vec3d oldPosition, oldOldPosition;
-		public Vec2f oldRot, oldOldRot;
-		public OldEntityTransformData(Vec3d oldPosition, Vec3d oldOldPosition, Vec2f oldRot, Vec2f oldOldRot)
+		public Vec3 oldPosition, oldOldPosition;
+		public Vec2 oldRot, oldOldRot;
+		public OldEntityTransformData(Vec3 oldPosition, Vec3 oldOldPosition, Vec2 oldRot, Vec2 oldOldRot)
 		{
 			this.oldPosition = oldPosition;
 			this.oldOldPosition = oldOldPosition;
 			this.oldRot = oldRot;
 			this.oldOldRot = oldOldRot;
 		}
-		public static Vec2f getRot(LivingEntity entity)
+		public static Vec2 getRot(LivingEntity entity)
 		{
-			return new Vec2f(entity.getPitch(), entity.getYaw());
+			return new Vec2(entity.getXRot(), entity.getYRot());
 		}
-		public Vec3d getOldLerpedPosition(double partialTick)
+		public Vec3 getOldLerpedPosition(double partialTick)
 		{
 			return oldOldPosition.lerp(oldPosition, partialTick);
 		}

@@ -1,19 +1,19 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.LootableInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootTable;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.RandomizableContainer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootTable;
 import net.splatcraft.blocks.CrateBlock;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.CommonUtils;
@@ -22,12 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CrateTileEntity extends InkColorTileEntity implements LootableInventory
+public class CrateTileEntity extends InkColorTileEntity implements RandomizableContainer
 {
-	private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(1, ItemStack.EMPTY);
+	private final NonNullList<ItemStack> inventory = NonNullList.withSize(1, ItemStack.EMPTY);
 	private float health;
 	private float maxHealth;
-	private RegistryKey<LootTable> lootTable = null;
+	private ResourceKey<LootTable> lootTable = null;
 	private long lootTableSeed;
 	public CrateTileEntity(BlockPos pos, BlockState state)
 	{
@@ -35,7 +35,7 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 	}
 	public void ink(InkColor color, float damage)
 	{
-		if (world != null && world.isClient())
+		if (level != null && level.isClientSide())
 		{
 			return;
 		}
@@ -44,31 +44,31 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 		health -= damage;
 		if (health <= 0)
 		{
-			world.removeBlock(getPos(), false);
+			level.removeBlock(getBlockPos(), false);
 			
 			dropInventory();
 		}
 		else
 		{
-			world.setBlockState(getPos(), getCachedState().with(CrateBlock.STATE, getState()), 2);
+			level.setBlock(getBlockPos(), getBlockState().setValue(CrateBlock.STATE, getState()), 2);
 		}
 	}
 	public void dropInventory()
 	{
-		if (world != null && world.getGameRules().getBoolean(GameRules.DO_TILE_DROPS))
+		if (level != null && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS))
 		{
-			getDrops().forEach(stack -> CommonUtils.blockDrop(world, getPos(), stack));
+			getDrops().forEach(stack -> CommonUtils.blockDrop(level, getBlockPos(), stack));
 		}
 	}
 	public List<ItemStack> getDrops()
 	{
-		return hasLoot() ? CrateBlock.generateLoot(world, this, getCachedState(), 0f) : getInventory();
+		return hasLoot() ? CrateBlock.generateLoot(level, this, getBlockState(), 0f) : getInventory();
 	}
-	public RegistryKey<LootTable> getLootTable()
+	public ResourceKey<LootTable> getLootTable()
 	{
 		return lootTable;
 	}
-	public void setLootTable(RegistryKey<LootTable> lootTable)
+	public void setLootTable(ResourceKey<LootTable> lootTable)
 	{
 		this.lootTable = lootTable;
 	}
@@ -83,40 +83,40 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 		this.lootTableSeed = lootTableSeed;
 	}
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
 	{
-		super.readNbt(nbt, lookup);
+		super.loadAdditional(nbt, lookup);
 		
 		health = nbt.getFloat("Health");
 		maxHealth = nbt.getFloat("MaxHealth");
-		if (!readLootTable(nbt))
-			Inventories.readNbt(nbt, inventory, lookup);
+		if (!tryLoadLootTable(nbt))
+			ContainerHelper.loadAllItems(nbt, inventory, lookup);
 		
 		if (nbt.contains("LootTable"))
 		{
-			RegistryKey.createCodec(RegistryKeys.LOOT_TABLE).parse(NbtOps.INSTANCE, nbt.get("LootTable"))
+			ResourceKey.codec(Registries.LOOT_TABLE).parse(NbtOps.INSTANCE, nbt.get("LootTable"))
 				.ifSuccess(encoded -> lootTable = encoded);
 		}
 	}
 	@Override
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
 	{
 		nbt.putFloat("Health", health);
 		nbt.putFloat("MaxHealth", maxHealth);
-		Inventories.writeNbt(nbt, inventory, lookup);
+		ContainerHelper.saveAllItems(nbt, inventory, lookup);
 		
 		if (hasLoot())
 		{
-			RegistryKey.createCodec(RegistryKeys.LOOT_TABLE).encodeStart(NbtOps.INSTANCE, lootTable)
+			ResourceKey.codec(Registries.LOOT_TABLE).encodeStart(NbtOps.INSTANCE, lootTable)
 				.ifSuccess(encoded -> nbt.put("LootTable", encoded));
 		}
 		
-		super.writeNbt(nbt, lookup);
+		super.saveAdditional(nbt, lookup);
 	}
 	@Override
-	public int size()
+	public int getContainerSize()
 	{
-		return getCachedState().getBlock() instanceof CrateBlock && hasLoot() ? 0 : 1;
+		return getBlockState().getBlock() instanceof CrateBlock && hasLoot() ? 0 : 1;
 	}
 	private boolean hasLoot()
 	{
@@ -128,49 +128,49 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 		return inventory.getFirst().isEmpty();
 	}
 	@Override
-	public @NotNull ItemStack getStack(int index)
+	public @NotNull ItemStack getItem(int index)
 	{
 		return inventory.get(index);
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int index, int count)
+	public @NotNull ItemStack removeItem(int index, int count)
 	{
-		if (getCachedState().getBlock() instanceof CrateBlock && hasLoot())
+		if (getBlockState().getBlock() instanceof CrateBlock && hasLoot())
 		{
 			return ItemStack.EMPTY;
 		}
 		
-		ItemStack itemstack = Inventories.splitStack(inventory, index, count);
+		ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
 		if (!itemstack.isEmpty())
 		{
-			markDirty();
+			setChanged();
 		}
 		
 		return itemstack;
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int index)
+	public @NotNull ItemStack removeItemNoUpdate(int index)
 	{
-		return Inventories.removeStack(inventory, index);
+		return ContainerHelper.takeItem(inventory, index);
 	}
 	@Override
-	public void setStack(int index, @NotNull ItemStack stack)
+	public void setItem(int index, @NotNull ItemStack stack)
 	{
 		inventory.set(index, stack);
-		if (stack.getCount() > getMaxCountPerStack())
+		if (stack.getCount() > getMaxStackSize())
 		{
-			stack.setCount(getMaxCountPerStack());
+			stack.setCount(getMaxStackSize());
 		}
 		
-		markDirty();
+		setChanged();
 	}
 	@Override
-	public boolean canPlayerUse(@NotNull PlayerEntity player)
+	public boolean stillValid(@NotNull Player player)
 	{
 		return false;
 	}
 	@Override
-	public void clear()
+	public void clearContent()
 	{
 		inventory.clear();
 	}
@@ -195,7 +195,7 @@ public class CrateTileEntity extends InkColorTileEntity implements LootableInven
 	{
 		maxHealth = value;
 	}
-	public DefaultedList<ItemStack> getInventory()
+	public NonNullList<ItemStack> getInventory()
 	{
 		return inventory;
 	}

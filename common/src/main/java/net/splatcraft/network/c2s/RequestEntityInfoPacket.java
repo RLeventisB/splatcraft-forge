@@ -1,9 +1,9 @@
 package net.splatcraft.network.c2s;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
 import net.splatcraft.util.CommonUtils;
@@ -12,37 +12,37 @@ import java.util.UUID;
 
 public class RequestEntityInfoPacket extends PlayC2SPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(RequestEntityInfoPacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(RequestEntityInfoPacket.class);
 	UUID target;
-	public RequestEntityInfoPacket(PlayerEntity target)
+	public RequestEntityInfoPacket(Player target)
 	{
-		this.target = target.getUuid();
+		this.target = target.getUUID();
 	}
 	private RequestEntityInfoPacket(UUID target)
 	{
 		this.target = target;
 	}
-	public static RequestEntityInfoPacket decode(RegistryByteBuf buffer)
+	public static RequestEntityInfoPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new RequestEntityInfoPacket(buffer.readUuid());
+		return new RequestEntityInfoPacket(buffer.readUUID());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeUuid(target);
+		buffer.writeUUID(target);
 	}
 	@Override
-	public void execute(PlayerEntity player)
+	public void execute(Player player)
 	{
-		ServerPlayerEntity target = (ServerPlayerEntity) player.getWorld().getPlayerByUuid(this.target);
+		ServerPlayer target = (ServerPlayer) player.level().getPlayerByUUID(this.target);
 		if (target != null)
 		{
-			SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(target), (ServerPlayerEntity) player);
+			SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(target), (ServerPlayer) player);
 		}
 	}
 }

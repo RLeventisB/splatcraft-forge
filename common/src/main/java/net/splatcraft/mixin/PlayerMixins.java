@@ -3,18 +3,17 @@ package net.splatcraft.mixin;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.input.Input;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.GameMode;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.Input;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.client.layer.InkTankFeature;
@@ -29,50 +28,50 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 public class PlayerMixins
 {
-	@Mixin(PlayerEntity.class)
+	@Mixin(Player.class)
 	public static class PlayerMixin
 	{
-		@ModifyReturnValue(method = "createPlayerAttributes", at = @At("RETURN"))
-		private static DefaultAttributeContainer.Builder createAttributes(DefaultAttributeContainer.Builder original)
+		@ModifyReturnValue(method = "createAttributes", at = @At("RETURN"))
+		private static AttributeSupplier.Builder createAttributes(AttributeSupplier.Builder original)
 		{
 			return SplatcraftEntities.injectPlayerAttributes(original);
 		}
 	}
-	@Mixin(ServerPlayerEntity.class)
+	@Mixin(ServerPlayer.class)
 	public static class ServerPlayerMixinFabric
 	{
-		@Inject(method = "changeGameMode", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V"))
-		public void splatcraft$onChangeGamemode(GameMode gameMode, CallbackInfoReturnable<Boolean> cir)
+		@Inject(method = "setGameMode", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"))
+		public void splatcraft$onChangeGamemode(GameType gameMode, CallbackInfoReturnable<Boolean> cir)
 		{
-			SquidFormHandler.onGameModeSwitch((ServerPlayerEntity) (Object) this, gameMode);
+			SquidFormHandler.onGameModeSwitch((ServerPlayer) (Object) this, gameMode);
 		}
 	}
-	@Mixin(ClientPlayerEntity.class)
+	@Mixin(LocalPlayer.class)
 	public static class LocalPlayerMixinFabric
 	{
 		@Shadow
 		public Input input;
-		@Inject(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/tutorial/TutorialManager;onMovement(Lnet/minecraft/client/input/Input;)V"))
+		@Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/tutorial/Tutorial;onInput(Lnet/minecraft/client/player/Input;)V"))
 		public void splatcraft$callInputUpdate(CallbackInfo ci)
 		{
-			PlayerMovementHandler.onInputUpdate((ClientPlayerEntity) (Object) this, input);
+			PlayerMovementHandler.onInputUpdate((LocalPlayer) (Object) this, input);
 		}
 	}
-	@Mixin(PlayerEntityRenderer.class)
+	@Mixin(PlayerRenderer.class)
 	public static class PlayerRendererMixin
 	{
 		@Inject(method = "<init>", at = @At("RETURN"))
-		public void splatcraft$captureContext(EntityRendererFactory.Context ctx, boolean slim, CallbackInfo ci)
+		public void splatcraft$captureContext(EntityRendererProvider.Context ctx, boolean slim, CallbackInfo ci)
 		{
-			PlayerEntityRenderer renderer = (PlayerEntityRenderer) (Object) this;
-			renderer.addFeature(new InkTankFeature<>(renderer, ctx.getModelLoader()));
+			PlayerRenderer renderer = (PlayerRenderer) (Object) this;
+			renderer.addLayer(new InkTankFeature<>(renderer, ctx.getModelSet()));
 		}
-		@WrapOperation(method = "render(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
-		public void splatcraft$overridePlayerRender(PlayerEntityRenderer instance, LivingEntity player, float f, float g, MatrixStack matrixStack, VertexConsumerProvider consumerProvider, int i, Operation<Void> original)
+		@WrapOperation(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/player/PlayerRenderer;render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
+		public void splatcraft$overridePlayerRender(PlayerRenderer instance, AbstractClientPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, Operation<Void> original)
 		{
-			if (!RendererHandler.playerRender(instance, (AbstractClientPlayerEntity) player, f, g, matrixStack, consumerProvider, i))
+			if (!RendererHandler.playerRender(instance, entity, entityYaw, partialTicks, poseStack, buffer, packedLight))
 			{
-				original.call(instance, player, f, g, matrixStack, consumerProvider, i);
+				original.call(instance, entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
 			}
 		}
 	}

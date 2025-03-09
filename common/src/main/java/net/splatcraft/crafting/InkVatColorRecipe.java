@@ -5,17 +5,17 @@ import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.ColorUtils;
@@ -30,10 +30,10 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 {
 	protected static final ArrayList<InkColor> omniColors = Lists.newArrayList();
 	protected final Ingredient ingredient;
-	protected final Identifier colorId;
+	protected final ResourceLocation colorId;
 	protected final Supplier<InkColor> colorSupplier;
 	protected final boolean disableOmni;
-	public InkVatColorRecipe(Ingredient input, Identifier colorId, boolean disableOmni)
+	public InkVatColorRecipe(Ingredient input, ResourceLocation colorId, boolean disableOmni)
 	{
 		this.disableOmni = disableOmni;
 		ingredient = input;
@@ -53,22 +53,22 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		return omniColors;
 	}
 	@Override
-	public boolean matches(InkVatRecipeInput inv, @NotNull World levelIn)
+	public boolean matches(InkVatRecipeInput inv, @NotNull Level levelIn)
 	{
-		return ingredient.test(inv.getStackInSlot(3));
+		return ingredient.test(inv.getItem(3));
 	}
 	@Override
-	public ItemStack craft(InkVatRecipeInput input, RegistryWrapper.WrapperLookup lookup)
+	public ItemStack craft(InkVatRecipeInput input, HolderLookup.Provider lookup)
 	{
-		return input.getStackInSlot(0);
+		return input.getItem(0);
 	}
 	@Override
-	public boolean fits(int width, int height)
+	public boolean canCraftInDimensions(int width, int height)
 	{
 		return true;
 	}
 	@Override
-	public ItemStack getResult(RegistryWrapper.WrapperLookup registriesLookup)
+	public ItemStack getResultItem(HolderLookup.Provider registriesLookup)
 	{
 		return ColorUtils.withInkColor(new ItemStack(SplatcraftBlocks.inkwell.get()), colorSupplier.get());
 	}
@@ -76,7 +76,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 	{
 		return colorSupplier.get();
 	}
-	private Identifier getOutputColorId()
+	private ResourceLocation getOutputColorId()
 	{
 		return colorId;
 	}
@@ -99,7 +99,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		return SplatcraftRecipeTypes.INK_VAT_COLOR_CRAFTING_TYPE;
 	}
 	@Override
-	public @NotNull ItemStack createIcon()
+	public @NotNull ItemStack getToastSymbol()
 	{
 		return new ItemStack(SplatcraftBlocks.inkVat.get());
 	}
@@ -107,14 +107,14 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 	{
 		public static final MapCodec<InkVatColorRecipe> CODEC = RecordCodecBuilder.mapCodec((instance) ->
 			instance.group(
-				Ingredient.ALLOW_EMPTY_CODEC.optionalFieldOf("filter", Ingredient.EMPTY).forGetter(v -> v.ingredient),
-				Identifier.CODEC.fieldOf("color").forGetter(v -> v.colorId),
+				Ingredient.CODEC.optionalFieldOf("filter", Ingredient.EMPTY).forGetter(v -> v.ingredient),
+				ResourceLocation.CODEC.fieldOf("color").forGetter(v -> v.colorId),
 				Codec.BOOL.optionalFieldOf("not_on_omni_filter", false).forGetter(v -> v.disableOmni)
 			).apply(instance, InkVatColorRecipe::new));
-		public static final PacketCodec<RegistryByteBuf, InkVatColorRecipe> PACKET_CODEC = PacketCodec.tuple(
-			Ingredient.PACKET_CODEC, InkVatColorRecipe::getIngredient,
-			Identifier.PACKET_CODEC, InkVatColorRecipe::getOutputColorId,
-			PacketCodecs.BOOL, InkVatColorRecipe::isDisableOmni,
+		public static final StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> PACKET_CODEC = StreamCodec.composite(
+			Ingredient.CONTENTS_STREAM_CODEC, InkVatColorRecipe::getIngredient,
+			ResourceLocation.STREAM_CODEC, InkVatColorRecipe::getOutputColorId,
+			ByteBufCodecs.BOOL, InkVatColorRecipe::isDisableOmni,
 			InkVatColorRecipe::new);
 		@Override
 		public MapCodec<InkVatColorRecipe> codec()
@@ -122,7 +122,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 			return CODEC;
 		}
 		@Override
-		public PacketCodec<RegistryByteBuf, InkVatColorRecipe> packetCodec()
+		public StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> streamCodec()
 		{
 			return PACKET_CODEC;
 		}

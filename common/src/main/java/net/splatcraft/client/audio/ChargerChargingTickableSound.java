@@ -1,32 +1,32 @@
 package net.splatcraft.client.audio;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.util.PlayerCharge;
 
-public class ChargerChargingTickableSound extends MovingSoundInstance
+public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
 {
-    private final PlayerEntity player;
+    private final Player player;
 
-    public ChargerChargingTickableSound(PlayerEntity player, SoundEvent sound)
+    public ChargerChargingTickableSound(Player player, SoundEvent sound)
     {
-        super(sound, SoundCategory.PLAYERS, player.getRandom());
-        attenuationType = AttenuationType.NONE;
-        repeat = true;
-        repeatDelay = 0;
+        super(sound, SoundSource.PLAYERS, player.getRandom());
+        attenuation = Attenuation.NONE;
+        looping = true;
+        delay = 0;
 
         this.player = player;
     }
 
     @Override
-    public boolean shouldAlwaysPlay()
+    public boolean canStartSilent()
     {
         return true;
     }
@@ -38,24 +38,24 @@ public class ChargerChargingTickableSound extends MovingSoundInstance
         y = player.getY();
         z = player.getZ();
 
-        if (player.isAlive() && player.getActiveItem().getItem() instanceof IChargeableWeapon && EntityInfoCapability.hasCapability(player))
+        if (player.isAlive() && player.getUseItem().getItem() instanceof IChargeableWeapon && EntityInfoCapability.hasCapability(player))
         {
             EntityInfo info = EntityInfoCapability.get(player);
-            if (!info.isSquid() && PlayerCharge.chargeMatches(player, player.getActiveItem()))
+            if (!info.isSquid() && PlayerCharge.chargeMatches(player, player.getUseItem()))
             {
-                float charge = PlayerCharge.getChargeValue(player, player.getActiveItem());
+                float charge = PlayerCharge.getChargeValue(player, player.getUseItem());
                 float prevCharge = info.getPlayerCharge().prevCharge;
 
-                if (charge >= info.getPlayerCharge().totalCharges && !isDone())
+                if (charge >= info.getPlayerCharge().totalCharges && !isStopped())
                 {
-                    setDone();
+                    stop();
                     return;
                 }
 
-                pitch = (MathHelper.lerp(MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
+                pitch = (Mth.lerp(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true), prevCharge, charge) / info.getPlayerCharge().totalCharges) * 0.5f + 0.5f;
                 return;
             }
         }
-        setDone();
+        stop();
     }
 }

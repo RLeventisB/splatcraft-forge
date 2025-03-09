@@ -6,13 +6,13 @@ import com.mojang.serialization.Lifecycle;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.condition.LootCondition;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.splatcraft.Splatcraft;
 
 import java.util.List;
@@ -22,21 +22,21 @@ import java.util.function.Predicate;
 // i love STEALING code (so i can compile this mod literally i couldn't for the past week why does architectury have like 30% of forge events)
 public abstract class SplatcraftLootModifier
 {
-    public static final RegistryKey<Registry<MapCodec<? extends SplatcraftLootModifier>>> GLOBAL_LOOT_MODIFIER_SERIALIZERS_KEY = RegistryKey.ofRegistry(Identifier.of(Splatcraft.MODID, "global_loot_modifier_serializers_dummy"));
+    public static final ResourceKey<Registry<MapCodec<? extends SplatcraftLootModifier>>> GLOBAL_LOOT_MODIFIER_SERIALIZERS_KEY = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(Splatcraft.MODID, "global_loot_modifier_serializers_dummy"));
     public static final Registry<MapCodec<? extends SplatcraftLootModifier>> GLOBAL_LOOT_MODIFIER_SERIALIZERS;
     /*static Codec<SplatcraftLootModifier> DIRECT_CODEC = GLOBAL_LOOT_MODIFIER_SERIALIZERS.getEntryCodec()
         .dispatch(SplatcraftLootModifier::codec, Function.identity());*/
-    static Codec<LootCondition[]> LOOT_CONDITIONS_CODEC = LootCondition.CODEC.listOf().xmap(list -> list.toArray(LootCondition[]::new), List::of);
+    static Codec<LootItemCondition[]> LOOT_CONDITIONS_CODEC = LootItemCondition.DIRECT_CODEC.listOf().xmap(list -> list.toArray(LootItemCondition[]::new), List::of);
 
     static
     {
-        GLOBAL_LOOT_MODIFIER_SERIALIZERS = new SimpleRegistry<>(GLOBAL_LOOT_MODIFIER_SERIALIZERS_KEY, Lifecycle.stable(), false);
+        GLOBAL_LOOT_MODIFIER_SERIALIZERS = new MappedRegistry<>(GLOBAL_LOOT_MODIFIER_SERIALIZERS_KEY, Lifecycle.stable(), false);
     }
 
-    protected final LootCondition[] conditions;
+    protected final LootItemCondition[] conditions;
     protected final Predicate<LootContext> combinedConditions;
 
-    protected SplatcraftLootModifier(LootCondition[] conditions, Predicate<LootContext> combinedConditions)
+    protected SplatcraftLootModifier(LootItemCondition[] conditions, Predicate<LootContext> combinedConditions)
     {
         this.conditions = conditions;
         this.combinedConditions = combinedConditions;
@@ -51,7 +51,7 @@ public abstract class SplatcraftLootModifier
      * </p>
      * Otherwise can follow this with #and() to add more fields.
      */
-    protected static <T extends SplatcraftLootModifier> Products.P1<RecordCodecBuilder.Mu<T>, LootCondition[]> codecStart(RecordCodecBuilder.Instance<T> instance)
+    protected static <T extends SplatcraftLootModifier> Products.P1<RecordCodecBuilder.Mu<T>, LootItemCondition[]> codecStart(RecordCodecBuilder.Instance<T> instance)
     {
         return instance.group(LOOT_CONDITIONS_CODEC.fieldOf("conditions").forGetter(lm -> lm.conditions));
     }

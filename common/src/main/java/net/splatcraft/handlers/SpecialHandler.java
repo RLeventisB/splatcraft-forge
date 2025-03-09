@@ -3,9 +3,9 @@ package net.splatcraft.handlers;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
@@ -21,8 +21,8 @@ import java.util.Map;
 
 public class SpecialHandler
 {
-	public static final Map<Identifier, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot>> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
-	private static Supplier<Map<Identifier, SpecialWeaponSettings<?>>> specialMapSupplier;
+	public static final Map<ResourceLocation, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot>> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
+	private static Supplier<Map<ResourceLocation, SpecialWeaponSettings<?>>> specialMapSupplier;
 	public static void registerSpecials()
 	{
 		// recalculate the map thingy since we call this when reloading!!!
@@ -38,15 +38,15 @@ public class SpecialHandler
 			EntityAction.setEntityAction(entity, new StingRayAction(settings, CommonUtils.getSlot(entity), slot));
 		});
 	}
-	public static void registerSpecialExecutor(Identifier specialId, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot> delegate)
+	public static void registerSpecialExecutor(ResourceLocation specialId, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot> delegate)
 	{
-		specialExecutor.put(specialId.withPrefixedPath("specials/"), delegate);
+		specialExecutor.put(specialId.withPrefix("specials/"), delegate);
 	}
-	public static Map<Identifier, SpecialWeaponSettings<?>> getSpecialMap()
+	public static Map<ResourceLocation, SpecialWeaponSettings<?>> getSpecialMap()
 	{
 		return specialMapSupplier.get();
 	}
-	public static boolean passesSpecialCost(ItemStack weaponStack, ItemStack providerStack, Identifier specialId)
+	public static boolean passesSpecialCost(ItemStack weaponStack, ItemStack providerStack, ResourceLocation specialId)
 	{
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
 		
@@ -81,7 +81,7 @@ public class SpecialHandler
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
 		return data == null ? 0 : data.storedPoints();
 	}
-	public static <T extends DynamicDataRecord<T>> SpecialWeaponSettings<T> getSpecialSettings(Identifier identifier, Class<T> specialDataClass)
+	public static <T extends DynamicDataRecord<T>> SpecialWeaponSettings<T> getSpecialSettings(ResourceLocation identifier, Class<T> specialDataClass)
 	{
 		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(identifier);
 		if (settings instanceof SpecialWeaponSettings specialSettings && specialDataClass.isInstance(specialSettings.specialDataRecord))
@@ -90,7 +90,7 @@ public class SpecialHandler
 		}
 		return null;
 	}
-	public static SpecialWeaponSettings<?> getSpecialSettings(Identifier specialId)
+	public static SpecialWeaponSettings<?> getSpecialSettings(ResourceLocation specialId)
 	{
 		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
 		if (settings instanceof SpecialWeaponSettings specialSettings)
@@ -99,11 +99,11 @@ public class SpecialHandler
 		}
 		return null;
 	}
-	public static EntitySlot startUsingSpecial(LivingEntity entity, Identifier specialId)
+	public static EntitySlot startUsingSpecial(LivingEntity entity, ResourceLocation specialId)
 	{
 		return startUsingSpecial(entity, specialId, ItemStack.EMPTY);
 	}
-	public static EntitySlot startUsingSpecial(LivingEntity entity, Identifier specialId, ItemStack providerStack)
+	public static EntitySlot startUsingSpecial(LivingEntity entity, ResourceLocation specialId, ItemStack providerStack)
 	{
 		if (!providerStack.isEmpty())
 			SplatcraftComponents.applyToComponentIfContains(providerStack, SplatcraftComponents.SPECIAL_PROVIDER_DATA, v -> v.withStoredPoints(0));
@@ -112,7 +112,7 @@ public class SpecialHandler
 		startUsingSpecial(entity, specialId, slot);
 		return slot;
 	}
-	public static void startUsingSpecial(LivingEntity entity, Identifier specialId, EntitySlot slot)
+	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId, EntitySlot slot)
 	{
 		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
 		if (settings instanceof SpecialWeaponSettings specialSettings)

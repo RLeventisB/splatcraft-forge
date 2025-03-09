@@ -2,12 +2,12 @@ package net.splatcraft.util;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.ChunkPos;
 
 /**
  * A block position whose X and Z are relative to a chunk position. Y is kept absolute.
@@ -31,9 +31,9 @@ public class RelativeBlockPos extends Vec3i
 	public static RelativeBlockPos fromAbsolute(BlockPos pos)
 	{
 		return new RelativeBlockPos(
-			(byte) ChunkSectionPos.getLocalCoord(pos.getX()),
+			(byte) SectionPos.sectionRelative(pos.getX()),
 			pos.getY(),
-			(byte) ChunkSectionPos.getLocalCoord(pos.getZ())
+			(byte) SectionPos.sectionRelative(pos.getZ())
 		);
 	}
 	/**
@@ -42,7 +42,7 @@ public class RelativeBlockPos extends Vec3i
 	 * @param tag The compound tag to read from
 	 * @apiNote The tag must contain ints "X", "Y" and "Z" for construction to be successful.
 	 */
-	public static RelativeBlockPos readNBT(NbtCompound tag)
+	public static RelativeBlockPos readNBT(CompoundTag tag)
 	{
 		return new RelativeBlockPos(
 			tag.getByte("X"),
@@ -56,7 +56,7 @@ public class RelativeBlockPos extends Vec3i
 	 * @param buf The packet buffer to read from.
 	 * @apiNote The buffer must have three integers in a row for construction to be successful.
 	 */
-	public static RelativeBlockPos fromBuf(PacketByteBuf buf)
+	public static RelativeBlockPos fromBuf(FriendlyByteBuf buf)
 	{
 		return new RelativeBlockPos(
 			buf.readByte(),
@@ -77,7 +77,7 @@ public class RelativeBlockPos extends Vec3i
 	 */
 	public BlockPos toAbsolute(ChunkPos pos)
 	{
-		return new BlockPos(add(pos.x * 16, 0, pos.z * 16));
+		return new BlockPos(offset(pos.x * 16, 0, pos.z * 16));
 	}
 	/**
 	 * Writes this position to a compound tag.
@@ -85,7 +85,7 @@ public class RelativeBlockPos extends Vec3i
 	 * @param tag The tag to write to
 	 * @return The modified tag
 	 */
-	public NbtCompound writeNBT(NbtCompound tag)
+	public CompoundTag writeNBT(CompoundTag tag)
 	{
 		tag.putByte("X", (byte) getX());
 		tag.putInt("Y", getY());
@@ -99,7 +99,7 @@ public class RelativeBlockPos extends Vec3i
 	 * @param buf The packet buffer to write to
 	 * @return The modified buffer
 	 */
-	public PacketByteBuf writeBuf(PacketByteBuf buf)
+	public FriendlyByteBuf writeBuf(FriendlyByteBuf buf)
 	{
 		buf.writeByte(getX());
 		buf.writeInt(getY());

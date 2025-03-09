@@ -2,12 +2,11 @@ package net.splatcraft.util;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.random.Random;
-
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 
 // oh wait mojang has a class for these
 // but it uses 3 times more ram and thats not acceptable >:(
@@ -33,7 +32,7 @@ public interface NumberRange<NUMTYPE extends Number>
 	NUMTYPE min();
 	NUMTYPE max();
 	NUMTYPE getValue(float progress);
-	default NUMTYPE getRandom(Random random)
+	default NUMTYPE getRandom(RandomSource random)
 	{
 		return getValue(random.nextFloat());
 	}
@@ -59,7 +58,7 @@ public interface NumberRange<NUMTYPE extends Number>
 		@Override
 		public Float getValue(float progress)
 		{
-			return MathHelper.lerp(progress, min, max);
+			return Mth.lerp(progress, min, max);
 		}
 		@Override
 		public FloatRange mapBoth(Function<Float, Float> mapper)

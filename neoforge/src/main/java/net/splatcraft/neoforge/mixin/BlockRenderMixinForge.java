@@ -3,19 +3,19 @@ package net.splatcraft.neoforge.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.client.render.block.BlockRenderManager;
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.client.render.chunk.SectionBuilder;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-import net.minecraft.world.World;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.client.renderer.chunk.SectionCompiler;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.splatcraft.data.SplatcraftTags;
@@ -32,36 +32,36 @@ import org.spongepowered.asm.mixin.injection.At;
 public class BlockRenderMixinForge
 {
 	// note: these things are THREADED!!!! so a thread can modify some of the fields while the other one is rendering and do some bad things.,,.
-	@Mixin(SectionBuilder.class)
+	@Mixin(SectionCompiler.class)
 	public static class ChunkRenderDispatcherMixinForge
 	{
-		@WrapOperation(method = "compile", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/render/model/BakedModel;getRenderTypes(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/random/Random;Lnet/neoforged/neoforge/client/model/data/ModelData;)Lnet/neoforged/neoforge/client/ChunkRenderTypeSet;"))
-		public ChunkRenderTypeSet splatcraft$fixRenderLayer(BakedModel instance, BlockState state, Random random, ModelData modelData, Operation<ChunkRenderTypeSet> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) ChunkRendererRegion arg2)
+		@WrapOperation(method = "compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/neoforged/neoforge/client/model/data/ModelData;)Lnet/neoforged/neoforge/client/ChunkRenderTypeSet;"))
+		public ChunkRenderTypeSet splatcraft$fixRenderLayer(BakedModel instance, BlockState state, RandomSource random, ModelData modelData, Operation<ChunkRenderTypeSet> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
 		{
-			World world = ((ChunkRegionAccessor) arg2).getWorld();
+			Level world = ((ChunkRegionAccessor) arg2).getLevel();
 			ChunkRenderTypeSet renderType = original.call(instance, state, random, modelData);
 			if (!ChunkInkCapability.has(world, blockpos))
 				return renderType;
 			ChunkInk chunkInk = ChunkInkCapability.get(world, blockpos);
 			if (chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(blockpos)))
-				return ChunkRenderTypeSet.union(renderType, ChunkRenderTypeSet.of(RenderLayer.getTranslucent()));
+				return ChunkRenderTypeSet.union(renderType, ChunkRenderTypeSet.of(RenderType.translucent()));
 			return renderType;
 		}
-		@WrapOperation(method = "compile", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/chunk/ChunkRendererRegion;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
-		public BlockState getBlockState(ChunkRendererRegion instance, BlockPos pos, Operation<BlockState> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) ChunkRendererRegion arg2)
+		@WrapOperation(method = "compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+		public BlockState getBlockState(RenderChunkRegion instance, BlockPos pos, Operation<BlockState> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
 		{
 			BlockState originalState = original.call(instance, pos);
-			return originalState.isIn(SplatcraftTags.Blocks.RENDER_AS_CUBE) && InkBlockUtils.isInkedAny(((ChunkRegionAccessor) arg2).getWorld(), blockpos) ? SplatcraftBlocks.inkedBlock.get().getDefaultState() : originalState;
+			return originalState.is(SplatcraftTags.Blocks.RENDER_AS_CUBE) && InkBlockUtils.isInkedAny(((ChunkRegionAccessor) arg2).getLevel(), blockpos) ? SplatcraftBlocks.inkedBlock.get().defaultBlockState() : originalState;
 		}
 	}
-	@Mixin(BlockRenderManager.class)
+	@Mixin(BlockRenderDispatcher.class)
 	public static class BlockRenderManagerMixin
 	{
-		@WrapOperation(method = "renderBatched", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/block/BlockModelRenderer;tesselateBlock(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;ZLnet/minecraft/util/math/random/Random;JILnet/neoforged/neoforge/client/model/data/ModelData;Lnet/minecraft/client/render/RenderLayer;)V"))
-		public void splatcraft$addBakedModel(BlockModelRenderer instance, BlockRenderView blockRenderView, BakedModel model, BlockState state, BlockPos pos, MatrixStack matrixStack, VertexConsumer vertexConsumer, boolean b, Random random, long l, int i, ModelData modelData, RenderLayer renderLayer, Operation<Void> original)
+		@WrapOperation(method = "renderBatched(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;Lnet/neoforged/neoforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JILnet/neoforged/neoforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V"))
+		public void splatcraft$addBakedModel(ModelBlockRenderer instance, BlockAndTintGetter blockRenderView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrixStack, VertexConsumer vertexConsumer, boolean b, RandomSource random, long l, int i, ModelData modelData, RenderType renderLayer, Operation<Void> original)
 		{
-			original.call(instance, blockRenderView, new InkedBakedModel(model, ((ChunkRegionAccessor) blockRenderView).getWorld(), pos), state, pos, matrixStack, vertexConsumer, b, random, l, i, modelData, renderLayer);
+			original.call(instance, blockRenderView, new InkedBakedModel(model, ((ChunkRegionAccessor) blockRenderView).getLevel(), pos), state, pos, matrixStack, vertexConsumer, b, random, l, i, modelData, renderLayer);
 		}
 	}
 }

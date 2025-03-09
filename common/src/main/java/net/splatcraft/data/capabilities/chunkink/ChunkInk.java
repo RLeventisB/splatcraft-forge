@@ -2,11 +2,11 @@ package net.splatcraft.data.capabilities.chunkink;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
 import net.splatcraft.util.RelativeBlockPos;
@@ -51,7 +51,7 @@ public class ChunkInk
 	}
 	public boolean isInked(RelativeBlockPos pos, Direction direction)
 	{
-		return isInked(pos, direction.getId());
+		return isInked(pos, direction.get3DDataValue());
 	}
 	public boolean isInked(RelativeBlockPos pos, int index)
 	{
@@ -60,7 +60,7 @@ public class ChunkInk
 	}
 	public void ink(RelativeBlockPos pos, Direction direction, InkColor color, InkBlockUtils.InkType type)
 	{
-		ink(pos, direction.getId(), color, type);
+		ink(pos, direction.get3DDataValue(), color, type);
 	}
 	public void ink(RelativeBlockPos pos, int index, InkColor color, InkBlockUtils.InkType type)
 	{
@@ -77,7 +77,7 @@ public class ChunkInk
 	}
 	public boolean clearInk(RelativeBlockPos pos, Direction direction, boolean removeInmutable)
 	{
-		return clearInk(pos, direction.getId(), removeInmutable);
+		return clearInk(pos, direction.get3DDataValue(), removeInmutable);
 	}
 	public boolean clearInk(RelativeBlockPos pos, int index, boolean removeInmutable)
 	{
@@ -118,7 +118,7 @@ public class ChunkInk
 	{
 		return INK_MAP.get(pos);
 	}
-	public void readLegacyNBT(NbtCompound nbt)
+	public void readLegacyNBT(CompoundTag nbt)
 	{
 		INK_MAP.clear();
 		boolean oldFormat = nbt.contains("PermanentInk"); // old format is referred to before this fork btw
@@ -126,12 +126,12 @@ public class ChunkInk
 		if (oldFormat)
 		{
 			INK_MAP.clear();
-			for (NbtElement tag : nbt.getList("Ink", NbtElement.COMPOUND_TYPE))
+			for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
 			{
-				NbtCompound element = (NbtCompound) tag;
+				CompoundTag element = (CompoundTag) tag;
 				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type")));
+				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type")));
 				
 				for (byte i = 0; i < 6; i++)
 				{
@@ -144,12 +144,12 @@ public class ChunkInk
 				}
 			}
 			
-			for (NbtElement tag : nbt.getList("PermanentInk", NbtCompound.COMPOUND_TYPE))
+			for (Tag tag : nbt.getList("PermanentInk", CompoundTag.TAG_COMPOUND))
 			{
-				NbtCompound element = (NbtCompound) tag;
+				CompoundTag element = (CompoundTag) tag;
 				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type")));
+				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type")));
 				
 				BlockEntry entry = getInk(pos);
 				
@@ -168,9 +168,9 @@ public class ChunkInk
 		}
 		else
 		{
-			for (NbtElement tag : nbt.getList("Ink", NbtCompound.COMPOUND_TYPE))
+			for (Tag tag : nbt.getList("Ink", CompoundTag.TAG_COMPOUND))
 			{
-				NbtCompound element = (NbtCompound) tag;
+				CompoundTag element = (CompoundTag) tag;
 				boolean isPermanent = element.getBoolean("IsPermanent");
 				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 				if (element.contains("Faces"))
@@ -178,12 +178,12 @@ public class ChunkInk
 					Byte[] activeIndices = BlockEntry.getIndicesFromActiveFlag(element.getByte("Faces"));
 					for (Byte activeIndex : activeIndices)
 					{
-						Direction direction = Direction.byId(activeIndex);
+						Direction direction = Direction.from3DDataValue(activeIndex);
 						
 						ink(pos,
 							activeIndex,
 							InkColor.constructOrReuse(element.getInt("Color" + direction.name())),
-							InkBlockUtils.InkType.IDENTIFIER_MAP.get(Identifier.of(element.getString("Type" + direction.name())))
+							InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type" + direction.name())))
 						);
 						if (isPermanent)
 							markInmutable(pos);
@@ -265,7 +265,7 @@ public class ChunkInk
 		{
 			return new Boolean[] {(flag & 1) == 1, (flag & 2) == 2, (flag & 4) == 4, (flag & 8) == 8, (flag & 16) == 16, (flag & 32) == 32};
 		}
-		public static BlockEntry readFromBuffer(PacketByteBuf buffer)
+		public static BlockEntry readFromBuffer(FriendlyByteBuf buffer)
 		{
 			BlockEntry entry = new BlockEntry();
 			byte state = buffer.readByte();
@@ -350,7 +350,7 @@ public class ChunkInk
 			}
 			return list.toArray(Byte[]::new);
 		}
-		public void writeToBuffer(PacketByteBuf buffer)
+		public void writeToBuffer(FriendlyByteBuf buffer)
 		{
 			// format:
 			// first bit = whether there's any ink in the block

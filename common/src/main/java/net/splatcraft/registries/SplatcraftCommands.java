@@ -1,19 +1,17 @@
 package net.splatcraft.registries;
 
-import dev.architectury.event.events.common.CommandRegistrationEvent;
-import dev.architectury.injectables.annotations.ExpectPlatform;
-import dev.architectury.registry.registries.DeferredRegister;
-import net.minecraft.command.argument.serialize.ArgumentSerializer;
-import net.minecraft.registry.Registries;
-import net.splatcraft.Splatcraft;
+import net.minecraft.commands.synchronization.SingletonArgumentInfo;
 import net.splatcraft.commands.*;
+import net.splatcraft.commands.arguments.ColorCriterionArgument;
+import net.splatcraft.commands.arguments.InkColorArgument;
+import net.splatcraft.commands.arguments.StageGameModeArgument;
+import net.splatcraft.platform.Services;
 
 public class SplatcraftCommands
 {
-	public static DeferredRegister<ArgumentSerializer<?, ?>> ARGUMENT_REGISTRY = Splatcraft.deferredRegistryOf(Registries.COMMAND_ARGUMENT_TYPE);
 	public static void registerCommands()
 	{
-		CommandRegistrationEvent.EVENT.register((dispatcher, registryAccess, environment) ->
+		Services.PLATFORM.registerCommands((dispatcher, registryAccess, environment) ->
 		{
 			InkColorCommand.register(dispatcher);
 			ScanTurfCommand.register(dispatcher);
@@ -24,9 +22,10 @@ public class SplatcraftCommands
 			SuperJumpCommand.register(dispatcher);
 		});
 	}
-	@ExpectPlatform
 	public static void registerArguments()
 	{
-		throw new AssertionError();
+		Services.PLATFORM.registerCommandArgument("stage_gamemode", StageGameModeArgument.class, SingletonArgumentInfo.contextFree(StageGameModeArgument::stageGamemode));
+		Services.PLATFORM.registerCommandArgument("ink_color", InkColorArgument.class, SingletonArgumentInfo.contextFree(InkColorArgument::inkColor));
+		Services.PLATFORM.registerCommandArgument("color_criterion", ColorCriterionArgument.class, SingletonArgumentInfo.contextFree(ColorCriterionArgument::colorCriterion));
 	}
 }

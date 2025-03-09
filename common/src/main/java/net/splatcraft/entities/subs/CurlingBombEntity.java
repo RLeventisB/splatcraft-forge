@@ -1,23 +1,28 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
+import net.splatcraft.items.weapons.settings.SubWeaponRecords.CurlingBombDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -25,32 +30,30 @@ import net.splatcraft.util.*;
 
 import java.util.List;
 
-import static net.splatcraft.items.weapons.settings.SubWeaponRecords.CurlingBombDataRecord;
-
 public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRecord> implements ObjectCollideListenerEntity
 {
-	private static final TrackedData<Integer> INIT_FUSE_TIME = DataTracker.registerData(CurlingBombEntity.class, TrackedDataHandlerRegistry.INTEGER);
-	private static final TrackedData<Float> COOK_SCALE = DataTracker.registerData(CurlingBombEntity.class, TrackedDataHandlerRegistry.FLOAT);
+	private static final EntityDataAccessor<Integer> INIT_FUSE_TIME = SynchedEntityData.defineId(CurlingBombEntity.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Float> COOK_SCALE = SynchedEntityData.defineId(CurlingBombEntity.class, EntityDataSerializers.FLOAT);
 	public int fuseTime = 0;
 	public int prevFuseTime = 0;
 	public float bladeRot = 0;
 	public float prevBladeRot = 0;
 	private boolean playedActivationSound = false;
-	public CurlingBombEntity(EntityType<? extends AbstractSubWeaponEntity<CurlingBombDataRecord>> type, World world)
+	public CurlingBombEntity(EntityType<? extends AbstractSubWeaponEntity<CurlingBombDataRecord>> type, Level world)
 	{
 		super(type, world);
 	}
 	@Override
-	public float getStepHeight()
+	public float maxUpStep()
 	{
 		return .7f;
 	}
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder)
+	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
-		super.initDataTracker(builder);
-		builder.add(INIT_FUSE_TIME, 0);
-		builder.add(COOK_SCALE, 0f);
+		super.defineSynchedData(builder);
+		builder.define(INIT_FUSE_TIME, 0);
+		builder.define(COOK_SCALE, 0f);
 	}
 	@Override
 	protected Item getDefaultItem()
@@ -64,7 +67,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
 		
-		double spd = getVelocity().horizontalLength();
+		double spd = getDeltaMovement().horizontalDistance();
 		prevBladeRot = bladeRot;
 		bladeRot += (float) spd;
 		
@@ -75,46 +78,46 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		boolean slowingDown = fuseTime <= curlingData.warningFrame();
 		if (slowingDown && !playedActivationSound)
 		{
-			getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundCategory.PLAYERS, 0.8F, 1f);
+			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
 		
-		if (!getWorld().isClient())
+		if (!level().isClientSide())
 		{
 			doTrail(spd > 1.0E-3, settings);
 		}
 		float horizontalFriction = 1f;
-		if (isOnGround())
-			horizontalFriction = getWorld().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getSlipperiness() / 0.6f;
+		if (onGround())
+			horizontalFriction = level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getFriction() / 0.6f;
 		if (slowingDown)
 		{
 			horizontalFriction *= 0.8f;
 		}
-		horizontalFriction = MathHelper.clamp(horizontalFriction, 0, 1);
-		setVelocity(getVelocity().multiply(horizontalFriction, 1f, horizontalFriction));
+		horizontalFriction = Mth.clamp(horizontalFriction, 0, 1);
+		setDeltaMovement(getDeltaMovement().multiply(horizontalFriction, 1f, horizontalFriction));
 		
 		if (fuseTime <= 0)
 		{
-			Vec3d center = getBoundingBox().getCenter();
+			Vec3 center = getBoundingBox().getCenter();
 			explode(curlingData, center);
 		}
 		else if (spd > 0.01 && fuseTime % (int) Math.max(1, (1 - spd) * 10) == 0)
 		{
-			getWorld().sendEntityStatus(this, (byte) 2);
+			level().broadcastEntityEvent(this, (byte) 2);
 		}
 		
-		move(MovementType.SELF, getVelocity());
+		move(MoverType.SELF, getDeltaMovement());
 	}
-	public void explode(CurlingBombDataRecord settings, Vec3d impactPos)
+	public void explode(CurlingBombDataRecord settings, Vec3 impactPos)
 	{
-		if (!getWorld().isClient())
+		if (!level().isClientSide())
 		{
 			InkExplosion.createInkExplosion(getOwner(), impactPos, settings.inkExplosionRange().getValue(getCookProgress()), settings.damageRanges().withShift(-getCookProgress() * settings.maxCookRadiusBonus()), inkType, sourceWeapon, AttackId.NONE);
 			InkExplosion.doSplashes(getOwner(), impactPos, settings.inkSplashes(), getColor(), inkType);
-			getWorld().sendEntityStatus(this, (byte) 1);
+			level().broadcastEntityEvent(this, (byte) 1);
 			discard();
 		}
-		getWorld().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundCategory.PLAYERS, 0.8F, CommonUtils.nextTriangular(getWorld().getRandom(), 0.95F, 0.095F));
+		level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 	}
 	@Override
 	public void handleMovement()
@@ -133,15 +136,15 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		{
 			for (float j = -trailWidth; j <= trailWidth; j += trailStep)
 			{
-				Vec3d normalized = getVelocity().multiply(1, 0, 1).normalize();
+				Vec3 normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
 				double sideX = -normalized.z;
 				double sideZ = normalized.x;
 				for (int i = 0; i <= 2; i++)
 				{
 					BlockPos side = CommonUtils.createBlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
-					if (InkBlockUtils.canInkFromFace(getWorld(), side, Direction.UP))
+					if (InkBlockUtils.canInkFromFace(level(), side, Direction.UP))
 					{
-						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), getWorld(), side, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
+						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), level(), side, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
 						if (result == BlockInkedResult.SUCCESS)
 							InkBlockUtils.awardTurfPoints((LivingEntity) getOwner(), sourceWeapon, 1);
 						break;
@@ -152,54 +155,54 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		else
 		{
 			for (int i = 0; i <= 2; i++)
-				if (InkBlockUtils.canInkFromFace(getWorld(), getBlockPos().down(i), Direction.UP))
+				if (InkBlockUtils.canInkFromFace(level(), blockPosition().below(i), Direction.UP))
 				{
-					InkBlockUtils.inkBlock(getOwner(), getWorld(), getBlockPos().down(i), getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
+					InkBlockUtils.inkBlock(getOwner(), level(), blockPosition().below(i), getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
 					break;
 				}
 		}
 	}
 	@Override
-	public void handleStatus(byte id)
+	public void handleEntityEvent(byte id)
 	{
-		super.handleStatus(id);
+		super.handleEntityEvent(id);
 		float maxDistance = getSettings().subDataRecord.damageRanges().getMaxDistance();
 		if (id == 1)
 		{
-			getWorld().addImportantParticle(new InkExplosionParticleData(getColor(), (maxDistance + getCookProgress()) * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), (maxDistance + getCookProgress()) * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 		if (id == 2)
 		{
-			getWorld().addParticle(new InkSplashParticleData(getColor(), 1.175f), getX(), getY() + 0.4, getZ(), 0, 0, 0);
+			level().addParticle(new InkSplashParticleData(getColor(), 1.175f), getX(), getY() + 0.4, getZ(), 0, 0, 0);
 		}
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
 	@Override
-	protected void onEntityHit(EntityHitResult result)
+	protected void onHitEntity(EntityHitResult result)
 	{
 		if (result.getEntity() instanceof LivingEntity livingEntity)
 		{
 			InkDamageUtils.doRollDamage(livingEntity, getSettings().subDataRecord.contactDamage(), getOwner(), this, sourceWeapon);
 		}
 		
-		double velocityX = getVelocity().x;
-		double velocityY = getVelocity().y;
-		double velocityZ = getVelocity().z;
+		double velocityX = getDeltaMovement().x;
+		double velocityY = getDeltaMovement().y;
+		double velocityZ = getDeltaMovement().z;
 		double absVelocityX = Math.abs(velocityX);
 		double absVelocityY = Math.abs(velocityY);
 		double absVelocityZ = Math.abs(velocityZ);
 		
 		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
-			setVelocity(-velocityX, velocityY, velocityZ);
+			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (absVelocityY >= .05 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
-			setVelocity(velocityX, -velocityY * .5, velocityZ);
+			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
 		if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
-			setVelocity(velocityX, velocityY, -velocityZ);
+			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 	@Override
-	protected void onBlockHit(BlockHitResult result)
+	protected void onHitBlock(BlockHitResult result)
 	{
-		Vec3d velocity = getVelocity().add(0, getGravity(), 0);
+		Vec3 velocity = getDeltaMovement().add(0, getDefaultGravity(), 0);
 		if (canStepUp(velocity))
 			return;
 		
@@ -207,17 +210,17 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		double velocityY = velocity.y;
 		double velocityZ = velocity.z;
 		
-		Direction blockFace = result.getSide();
+		Direction blockFace = result.getDirection();
 		
-		if (getWorld().getBlockState(result.getBlockPos()).getCollisionShape(getWorld(), result.getBlockPos()).getBoundingBox().maxY - (getBlockPos().getY() - getPos().getY()) < .7f)
+		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (blockPosition().getY() - position().y()) < .7f)
 			return;
 		
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
-			setVelocity(-velocityX, velocityY, velocityZ);
+			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (Math.abs(velocityY) >= 0.05 && (blockFace == Direction.DOWN))
-			setVelocity(velocityX, -velocityY * .5, velocityZ);
+			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
 		if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
-			setVelocity(velocityX, velocityY, -velocityZ);
+			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 	public float getFlashIntensity(float partialTicks)
 	{
@@ -226,73 +229,73 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			return 0;
 		if (fuseTime <= settings.subDataRecord.warningFrame())
 		{
-			return settings.subDataRecord.warningFrame() - MathHelper.lerp(partialTicks, prevFuseTime, fuseTime) * 0.85f;
+			return settings.subDataRecord.warningFrame() - Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) * 0.85f;
 		}
 		return 0;
 	}
-	private boolean canStepUp(Vec3d p_20273_)
+	private boolean canStepUp(Vec3 p_20273_)
 	{
-		Box box = getBoundingBox();
-		List<VoxelShape> list = getWorld().getEntityCollisions(this, box.stretch(p_20273_));
-		Vec3d vec3 = p_20273_.lengthSquared() == 0.0D ? p_20273_ : adjustMovementForCollisions(this, p_20273_, box, getWorld(), list);
+		AABB box = getBoundingBox();
+		List<VoxelShape> list = level().getEntityCollisions(this, box.expandTowards(p_20273_));
+		Vec3 vec3 = p_20273_.lengthSqr() == 0.0D ? p_20273_ : collideBoundingBox(this, p_20273_, box, level(), list);
 		boolean flag = p_20273_.x != vec3.x;
 		boolean flag1 = p_20273_.y != vec3.y;
 		boolean flag2 = p_20273_.z != vec3.z;
-		boolean flag3 = isOnGround() || flag1 && p_20273_.y < 0.0D;
-		float stepHeight = getStepHeight();
+		boolean flag3 = onGround() || flag1 && p_20273_.y < 0.0D;
+		float stepHeight = maxUpStep();
 		if (stepHeight > 0.0F && flag3 && (flag || flag2))
 		{
-			Vec3d vec31 = adjustMovementForCollisions(this, new Vec3d(p_20273_.x, stepHeight, p_20273_.z), box, getWorld(), list);
-			Vec3d vec32 = adjustMovementForCollisions(this, new Vec3d(0.0D, stepHeight, 0.0D), box.stretch(p_20273_.x, 0.0D, p_20273_.z), getWorld(), list);
+			Vec3 vec31 = collideBoundingBox(this, new Vec3(p_20273_.x, stepHeight, p_20273_.z), box, level(), list);
+			Vec3 vec32 = collideBoundingBox(this, new Vec3(0.0D, stepHeight, 0.0D), box.expandTowards(p_20273_.x, 0.0D, p_20273_.z), level(), list);
 			if (vec32.y < (double) stepHeight)
 			{
-				Vec3d vec33 = adjustMovementForCollisions(this, new Vec3d(p_20273_.x, 0.0D, p_20273_.z), box.offset(vec32), getWorld(), list).add(vec32);
-				if (vec33.horizontalLengthSquared() > vec31.horizontalLengthSquared())
+				Vec3 vec33 = collideBoundingBox(this, new Vec3(p_20273_.x, 0.0D, p_20273_.z), box.move(vec32), level(), list).add(vec32);
+				if (vec33.horizontalDistanceSqr() > vec31.horizontalDistanceSqr())
 				{
 					vec31 = vec33;
 				}
 			}
 			
-			return vec31.horizontalLengthSquared() > vec3.horizontalLengthSquared();
+			return vec31.horizontalDistanceSqr() > vec3.horizontalDistanceSqr();
 		}
 		
 		return false;
 	}
 	@Override
-	public void readCustomDataFromNbt(NbtCompound nbt)
+	public void readAdditionalSaveData(CompoundTag nbt)
 	{
-		super.readCustomDataFromNbt(nbt);
+		super.readAdditionalSaveData(nbt);
 		setInitialFuseTime(nbt.getInt("FuseTime"));
 	}
 	@Override
-	public void writeCustomDataToNbt(NbtCompound nbt)
+	public void addAdditionalSaveData(CompoundTag nbt)
 	{
-		super.writeCustomDataToNbt(nbt);
+		super.addAdditionalSaveData(nbt);
 		nbt.putInt("FuseTime", fuseTime);
 	}
 	public int getInitialFuseTime()
 	{
-		return dataTracker.get(INIT_FUSE_TIME);
+		return entityData.get(INIT_FUSE_TIME);
 	}
 	public void setInitialFuseTime(int v)
 	{
-		dataTracker.set(INIT_FUSE_TIME, v);
+		entityData.set(INIT_FUSE_TIME, v);
 	}
 	public float getCookProgress()
 	{
-		return dataTracker.get(COOK_SCALE);
+		return entityData.get(COOK_SCALE);
 	}
 	public void setCookScale(float v)
 	{
-		dataTracker.set(COOK_SCALE, v);
+		entityData.set(COOK_SCALE, v);
 	}
 	@Override
-	public void onTrackedDataSet(TrackedData<?> data)
+	public void onSyncedDataUpdated(EntityDataAccessor<?> data)
 	{
 		if (INIT_FUSE_TIME.equals(data))
 			fuseTime = getInitialFuseTime();
 		
-		super.onTrackedDataSet(data);
+		super.onSyncedDataUpdated(data);
 	}
 	@Override
 	public void onCollidedWithObjectEntity(Entity entity)

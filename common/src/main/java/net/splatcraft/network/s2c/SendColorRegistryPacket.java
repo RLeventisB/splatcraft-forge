@@ -4,35 +4,35 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
 
 public class SendColorRegistryPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(SendColorRegistryPacket.class);
-	private static final PacketCodec<RegistryByteBuf, BiMap<Identifier, InkColor>> PACKET_CODEC = PacketCodecs.map(HashBiMap::create, Identifier.PACKET_CODEC, InkColor.PACKET_CODEC);
-	private final BiMap<Identifier, InkColor> colors;
-	public SendColorRegistryPacket(BiMap<Identifier, InkColor> colors)
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SendColorRegistryPacket.class);
+	private static final StreamCodec<RegistryFriendlyByteBuf, BiMap<ResourceLocation, InkColor>> PACKET_CODEC = ByteBufCodecs.map(HashBiMap::create, ResourceLocation.STREAM_CODEC, InkColor.PACKET_CODEC);
+	private final BiMap<ResourceLocation, InkColor> colors;
+	public SendColorRegistryPacket(BiMap<ResourceLocation, InkColor> colors)
 	{
 		this.colors = colors;
 	}
-	public static SendColorRegistryPacket decode(RegistryByteBuf buffer)
+	public static SendColorRegistryPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return new SendColorRegistryPacket(PACKET_CODEC.decode(buffer));
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		PACKET_CODEC.encode(buffer, colors);
 	}

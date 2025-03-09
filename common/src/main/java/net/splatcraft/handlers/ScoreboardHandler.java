@@ -1,40 +1,40 @@
 package net.splatcraft.handlers;
 
 import com.google.common.collect.Maps;
-import dev.architectury.registry.registries.DeferredRegister;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.scoreboard.ScoreHolder;
-import net.minecraft.scoreboard.ScoreboardCriterion;
-import net.minecraft.stat.StatFormatter;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.StatFormatter;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.scores.ScoreHolder;
+import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorRegistry;
+import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.util.InkColor;
 
 import java.util.*;
 
 public class ScoreboardHandler
 {
-	public static final DeferredRegister<Identifier> REGISTRY = Splatcraft.deferredRegistryOf(Registries.CUSTOM_STAT);
-	public static final Identifier COLOR = register("ink_color", StatFormatter.DEFAULT);
-	public static final Identifier TURF_WAR_SCORE = register("turf_war_score", StatFormatter.DEFAULT);
+	public static final DeferredRegister<ResourceLocation> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.CUSTOM_STAT);
+	public static final ResourceLocation COLOR = register("ink_color", StatFormatter.DEFAULT);
+	public static final ResourceLocation TURF_WAR_SCORE = register("turf_war_score", StatFormatter.DEFAULT);
 	protected static final Map<InkColor, CriteriaInkColor[]> COLOR_CRITERIA = Maps.newHashMap();
-	private static Identifier register(String id, StatFormatter formatter)
+	private static ResourceLocation register(String id, StatFormatter formatter)
 	{
-		Identifier identifier = Splatcraft.identifierOf(id);
+		ResourceLocation identifier = Splatcraft.identifierOf(id);
 		REGISTRY.register(id, () -> identifier);
 //		Stats.CUSTOM.getOrCreateStat(identifier, formatter);
 		return identifier;
 	}
 	//this method is WEIRD why is the third parameter called "color" which sets the score as the color value, which is fine, until you get to TurfScannerItem putting something that isnt a color here????
-	public static void updatePlayerScore(ScoreboardCriterion criteria, PlayerEntity player, InkColor color)
+	public static void updatePlayerScore(ObjectiveCriteria criteria, Player player, InkColor color)
 	{
-		player.getScoreboard().forEachScore(criteria, ScoreHolder.fromProfile(player.getGameProfile()), scoreAccess -> scoreAccess.setScore(color.getColor()));
+		player.getScoreboard().forAllObjectives(criteria, ScoreHolder.fromGameProfile(player.getGameProfile()), scoreAccess -> scoreAccess.set(color.getColor()));
 	}
-	public static void updatePlayerScore(ScoreboardCriterion criteria, PlayerEntity player, int score)
+	public static void updatePlayerScore(ObjectiveCriteria criteria, Player player, int score)
 	{
-		player.getScoreboard().forEachScore(criteria, ScoreHolder.fromProfile(player.getGameProfile()), scoreAccess -> scoreAccess.setScore(score));
+		player.getScoreboard().forAllObjectives(criteria, ScoreHolder.fromGameProfile(player.getGameProfile()), scoreAccess -> scoreAccess.set(score));
 	}
 	public static void createColorCriterion(InkColor color)
 	{
@@ -119,7 +119,7 @@ public class ScoreboardHandler
 	{
 		return Objects.requireNonNull(InkColorRegistry.getColorAlias(color)).getPath();
 	}
-	public static class CriteriaInkColor extends ScoreboardCriterion
+	public static class CriteriaInkColor extends ObjectiveCriteria
 	{
 		private final String name;
 		public CriteriaInkColor(String name, InkColor color)
@@ -131,7 +131,7 @@ public class ScoreboardHandler
 		}
 		public void remove()
 		{
-			CRITERIA.remove(name);
+			CRITERIA_CACHE.remove(name);
 		}
 	}
 }

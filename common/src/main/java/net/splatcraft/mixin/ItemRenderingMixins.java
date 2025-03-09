@@ -2,16 +2,16 @@ package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.HeldItemRenderer;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Hand;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.registries.SplatcraftItems;
@@ -25,12 +25,12 @@ public class ItemRenderingMixins
 	@Mixin(ItemRenderer.class)
 	public static class ItemRendererMixin
 	{
-		@Inject(method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V", at = @At("HEAD"), cancellable = true)
-		public void splatcraft$tweakItemRender(ItemStack stack, ModelTransformationMode renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, BakedModel model, CallbackInfo ci)
+		@Inject(method = "render", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$tweakItemRender(ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, BakedModel model, CallbackInfo ci)
 		{
 			if (stack.getItem() instanceof SubWeaponItem subWeaponItem)
 			{
-				RendererHandler.renderSubWeapon(stack, subWeaponItem, matrices, vertexConsumers, light, MinecraftClient.getInstance().getRenderTickCounter().getTickDelta(true), leftHanded);
+				RendererHandler.renderSubWeapon(stack, subWeaponItem, matrices, vertexConsumers, light, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true), leftHanded);
 				ci.cancel();
 			}
 			if (stack.getItem().equals(SplatcraftItems.powerEgg.get()))
@@ -43,11 +43,11 @@ public class ItemRenderingMixins
 			}
 		}
 	}
-	@Mixin(HeldItemRenderer.class)
+	@Mixin(ItemInHandRenderer.class)
 	public static class HeldItemRendererMixin
 	{
-		@WrapOperation(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;renderFirstPersonItem(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/util/Hand;FLnet/minecraft/item/ItemStack;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
-		public void splatcraft$overrideHeldItemRendering(HeldItemRenderer instance, AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, Operation<Void> original)
+		@WrapOperation(method = "renderHandsWithItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
+		public void splatcraft$overrideHeldItemRendering(ItemInHandRenderer instance, AbstractClientPlayer player, float tickDelta, float pitch, InteractionHand hand, float swingProgress, ItemStack item, float equipProgress, PoseStack matrices, MultiBufferSource vertexConsumers, int light, Operation<Void> original)
 		{
 			if (RendererHandler.renderHand(tickDelta, hand, matrices))
 			{

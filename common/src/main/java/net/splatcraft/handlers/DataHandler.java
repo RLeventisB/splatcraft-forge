@@ -8,12 +8,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.architectury.registry.ReloadListenerRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
@@ -33,11 +33,11 @@ public class DataHandler
 	public static final InkColorRegistry.Listener INK_COLOR_ALIASES_LISTENER = new InkColorRegistry.Listener();
 	public static void addReloadListeners()
 	{
-		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, WEAPON_STATS_LISTENER);
-		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INK_COLOR_TAGS_LISTENER);
-		ReloadListenerRegistry.register(ResourceType.SERVER_DATA, INK_COLOR_ALIASES_LISTENER);
+		ReloadListenerRegistry.register(PackType.SERVER_DATA, WEAPON_STATS_LISTENER);
+		ReloadListenerRegistry.register(PackType.SERVER_DATA, INK_COLOR_TAGS_LISTENER);
+		ReloadListenerRegistry.register(PackType.SERVER_DATA, INK_COLOR_ALIASES_LISTENER);
 	}
-	public static class WeaponStatsListener extends JsonDataLoader
+	public static class WeaponStatsListener extends SimpleJsonResourceReloadListener
 	{
 		public static final HashMap<String, Class<? extends AbstractWeaponSettings<?, ?>>> SETTING_TYPES = new HashMap<>()
 		{{
@@ -57,8 +57,8 @@ public class DataHandler
 			{
 			}
 		}}; //TODO make better registry probably
-		public static final BiMap<Identifier, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
-		public static final ReseteableMemoizedPredicate<Class<? extends AbstractWeaponSettings<?, ?>>, List<Identifier>> CLASS_SETTINGS_MAP
+		public static final BiMap<ResourceLocation, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
+		public static final ReseteableMemoizedPredicate<Class<? extends AbstractWeaponSettings<?, ?>>, List<ResourceLocation>> CLASS_SETTINGS_MAP
 			= new ReseteableMemoizedPredicate<>((Class<? extends AbstractWeaponSettings<?, ?>> clazz) -> SETTINGS.entrySet().stream().filter(v -> clazz.isInstance(v.getValue())).map(Map.Entry::getKey).toList());
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "weapon_settings";
@@ -66,12 +66,12 @@ public class DataHandler
 		{
 			super(GSON_INSTANCE, folder);
 		}
-		public static List<Identifier> getSettingsForClass(Class<? extends AbstractWeaponSettings<?, ?>> clazz)
+		public static List<ResourceLocation> getSettingsForClass(Class<? extends AbstractWeaponSettings<?, ?>> clazz)
 		{
 			return CLASS_SETTINGS_MAP.apply(clazz);
 		}
 		@Override
-		protected void apply(Map<Identifier, JsonElement> resourceList, @NotNull ResourceManager manager, @NotNull Profiler profilerIn)
+		protected void apply(Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager manager, @NotNull ProfilerFiller profilerIn)
 		{
 			CLASS_SETTINGS_MAP.reset();
 			SETTINGS.clear();
@@ -81,7 +81,7 @@ public class DataHandler
 				JsonObject json = element.getAsJsonObject();
 				try
 				{
-					String type = JsonHelper.getString(json, "type");
+					String type = GsonHelper.getAsString(json, "type");
 					
 					if (!SETTING_TYPES.containsKey(type))
 						return;

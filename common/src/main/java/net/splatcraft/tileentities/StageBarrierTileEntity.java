@@ -2,19 +2,19 @@ package net.splatcraft.tileentities;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.data.SplatcraftTags;
@@ -44,21 +44,21 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			activeTime--;
 		}
 		
-		for (Entity entity : world.getEntitiesByClass(Entity.class, new Box(getPos()).expand(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
+		for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
 		{
 			onEntityCollide(entity);
 		}
 		
-		if (world.isClient)
+		if (level.isClientSide)
 			tickClient();
 	}
 	public void onEntityCollide(Entity entity)
 	{
 		resetActiveTime();
-		if (getCachedState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
-			entity instanceof PlayerEntity)
+		if (getBlockState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
+			entity instanceof Player)
 		{
-			entity.damage(SplatcraftDamageTypes.of(world, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
+			entity.hurt(SplatcraftDamageTypes.of(level, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
 		}
 	}
 	@Environment(EnvType.CLIENT)
@@ -67,15 +67,15 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		if (ClientUtils.getClientPlayer().isCreative())
 		{
 			boolean canRender = true;
-			PlayerEntity player = ClientUtils.getClientPlayer();
+			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
 			
-			if (player.squaredDistanceTo(getPos().getX(), getPos().getY(), getPos().getZ()) > renderDistance * renderDistance)
+			if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
 			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
 			{
-				canRender = player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS) ||
-					player.getMainHandStack().isIn(SplatcraftTags.Items.REVEALS_BARRIERS);
+				canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
+					player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
 			}
 			if (canRender)
 				addActiveTime();
@@ -90,9 +90,9 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		activeTime = Math.min(maxActiveTime, activeTime + 3);
 	}
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider wrapperLookup)
 	{
-		super.readNbt(nbt, wrapperLookup);
+		super.loadAdditional(nbt, wrapperLookup);
 		
 		if (nbt.contains("ActiveTime"))
 		{
@@ -100,33 +100,33 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		}
 	}
 	@Override
-	public void writeNbt(NbtCompound compound, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void saveAdditional(CompoundTag compound, HolderLookup.Provider wrapperLookup)
 	{
 		compound.putInt("ActiveTime", activeTime);
-		super.writeNbt(compound, wrapperLookup);
+		super.saveAdditional(compound, wrapperLookup);
 	}
 	@Override
-	public @NotNull NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup wrapperLookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider wrapperLookup)
 	{
-		return new NbtCompound()
+		return new CompoundTag()
 		{{
-			writeNbt(this, wrapperLookup);
+			saveAdditional(this, wrapperLookup);
 		}};
 	}
 	@Override
-	public Packet<ClientPlayPacketListener> toUpdatePacket()
+	public Packet<ClientGamePacketListener> getUpdatePacket()
 	{
 		// Will get tag from #toInitialChunkDataNbt
-		return BlockEntityUpdateS2CPacket.create(this);
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	@Override
-	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup lookup)
+	public void phOnDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookup)
 	{
-		if (world != null)
+		if (level != null)
 		{
-			BlockState state = world.getBlockState(getPos());
-			world.updateListeners(getPos(), state, state, 2);
-			phHandleUpdateTag(pkt.getNbt(), lookup);
+			BlockState state = level.getBlockState(getBlockPos());
+			level.sendBlockUpdated(getBlockPos(), state, state, 2);
+			phHandleUpdateTag(pkt.getTag(), lookup);
 		}
 	}
 	public float getMaxActiveTime()

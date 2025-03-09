@@ -1,26 +1,26 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.blocks.InkVatBlock;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
@@ -35,7 +35,7 @@ import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InkVatTileEntity extends LockableContainerBlockEntity implements SidedInventory, RecipeInput, ISplatcraftForgeBlockDummy, ISplatcraftForgeBlockEntityDummy
+public class InkVatTileEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeInput, ISplatcraftForgeBlockDummy, ISplatcraftForgeBlockEntityDummy
 {
 	private static final int[] INPUT_SLOTS = new int[] {0, 1, 2, 3};
 	private static final int[] OUTPUT_SLOTS = new int[] {4};
@@ -43,91 +43,86 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 	// todo: do item handler thingy
     /*Optional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
         net.minecraftforge.items.wrapper.SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);*/
-	private DefaultedList<ItemStack> inventory = DefaultedList.ofSize(5, ItemStack.EMPTY);
+	private NonNullList<ItemStack> inventory = NonNullList.withSize(5, ItemStack.EMPTY);
 	private InkColor color = InkColor.INVALID;
 	private int recipeEntries = 0;
 	public InkVatTileEntity(BlockPos pos, BlockState state)
 	{
 		super(SplatcraftTileEntities.inkVatTileEntity.get(), pos, state);
 	}
-	public static void tick(World world, BlockPos pos, BlockState state, InkVatTileEntity te)
+	public static void tick(Level world, BlockPos pos, BlockState state, InkVatTileEntity te)
 	{
 		te.updateRecipeOutput();
-		if (!world.isClient())
-			world.setBlockState(pos, state.with(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
+		if (!world.isClientSide())
+			world.setBlock(pos, state.setValue(InkVatBlock.ACTIVE, te.hasRecipe()), 3);
 	}
 	@Override
-	public int @NotNull [] getAvailableSlots(@NotNull Direction side)
+	public int @NotNull [] getSlotsForFace(@NotNull Direction side)
 	{
 		return side == Direction.UP ? INPUT_SLOTS : OUTPUT_SLOTS;
 	}
 	@Override
-	public boolean canExtract(int index, @NotNull ItemStack itemStackIn, @Nullable Direction direction)
+	public boolean canTakeItemThroughFace(int index, @NotNull ItemStack itemStackIn, @Nullable Direction direction)
 	{
-		return isValid(index, itemStackIn);
+		return canPlaceItem(index, itemStackIn);
 	}
 	@Override
-	public boolean canInsert(int index, @NotNull ItemStack stack, @Nullable Direction direction)
+	public boolean canPlaceItemThroughFace(int index, @NotNull ItemStack stack, @Nullable Direction direction)
 	{
 		return index == 4;
 	}
 	@Override
-	public int size()
+	public int getContainerSize()
 	{
 		return inventory.size();
 	}
 	@Override
-	public ItemStack getStackInSlot(int slot)
+	public @NotNull ItemStack getItem(int slot)
 	{
-		return getStack(slot);
+		return inventory.get(slot);
 	}
 	@Override
-	public int getSize()
+	public int size()
 	{
-		return size();
+		return getContainerSize();
 	}
 	@Override
 	public boolean isEmpty()
 	{
 		return inventory.stream().allMatch(ItemStack::isEmpty);
 	}
-	@Override
-	public @NotNull ItemStack getStack(int index)
-	{
-		return inventory.get(index);
-	}
 	public boolean consumeIngredients(int count)
 	{
 		if (inventory.get(0).getCount() >= count && inventory.get(1).getCount() >= count && inventory.get(2).getCount() >= count)
 		{
-			removeStack(0, count);
-			removeStack(1, count);
-			removeStack(2, count);
+			removeItem(0, count);
+			removeItem(1, count);
+			removeItem(2, count);
 			return true;
 		}
 		return false;
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int index, int count)
+	public @NotNull ItemStack removeItem(int index, int count)
 	{
 		if (index == 4 && !consumeIngredients(count))
 		{
 			return ItemStack.EMPTY;
 		}
 		
-		ItemStack itemstack = Inventories.splitStack(inventory, index, count);
+		ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
 		if (!itemstack.isEmpty())
-			markDirty();
+			setChanged();
 		
 		return itemstack;
 	}
 	public void updateRecipeOutput()
 	{
 		if (hasRecipe())
-			setStack(4, ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(SplatcraftItems.inkwell.get(), Math.min(SplatcraftItems.inkwell.get().getMaxCount(),
+			setItem(4, ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(SplatcraftItems.inkwell.get(), Math.min(SplatcraftItems.inkwell.get().getDefaultMaxStackSize(),
 				Math.min(Math.min(inventory.get(0).getCount(), inventory.get(1).getCount()), inventory.get(2).getCount()))), getColor()), true));
 		else
-			setStack(4, ItemStack.EMPTY);
+			setItem(4, ItemStack.EMPTY);
 	}
 	public boolean hasOmniFilter()
 	{
@@ -137,30 +132,30 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 		return false;
 	}
 	@Override
-	public @NotNull ItemStack removeStack(int index)
+	public @NotNull ItemStack removeItemNoUpdate(int index)
 	{
-		return Inventories.removeStack(inventory, index);
+		return ContainerHelper.takeItem(inventory, index);
 	}
 	@Override
-	public void setStack(int index, @NotNull ItemStack stack)
+	public void setItem(int index, @NotNull ItemStack stack)
 	{
 		inventory.set(index, stack);
-		if (stack.getCount() > getMaxCountPerStack())
+		if (stack.getCount() > getMaxStackSize())
 		{
-			stack.setCount(getMaxCountPerStack());
+			stack.setCount(getMaxStackSize());
 		}
 		
-		markDirty();
+		setChanged();
 	}
 	@Override
-	public boolean canPlayerUse(@NotNull PlayerEntity player)
+	public boolean stillValid(@NotNull Player player)
 	{
-		if (world != null && world.getBlockEntity(getPos()) != this)
+		if (level != null && level.getBlockEntity(getBlockPos()) != this)
 			return false;
-		return !(player.squaredDistanceTo(getPos().toCenterPos()) > 64.0D);
+		return !(player.distanceToSqr(getBlockPos().getCenter()) > 64.0D);
 	}
 	@Override
-	public void clear()
+	public void clearContent()
 	{
 		inventory.clear();
 	}
@@ -168,84 +163,84 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 	{
 		return !inventory.get(0).isEmpty() && !inventory.get(1).isEmpty() && !inventory.get(2).isEmpty() && getColor().isValid();
 	}
-	public DefaultedList<ItemStack> getInventory()
+	public NonNullList<ItemStack> getInventory()
 	{
 		return inventory;
 	}
 	@Override
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
 	{
 		nbt.put("Color", color.getNbt());
 		nbt.putInt("Pointer", pointer);
 		nbt.putInt("RecipeEntries", recipeEntries);
-		Inventories.writeNbt(nbt, inventory, lookup);
-		super.writeNbt(nbt, lookup);
+		ContainerHelper.saveAllItems(nbt, inventory, lookup);
+		super.saveAdditional(nbt, lookup);
 	}
 	@Override
-	public @NotNull Text getContainerName()
+	public @NotNull Component getDefaultName()
 	{
-		return Text.translatable("container.ink_vat");
+		return Component.translatable("container.ink_vat");
 	}
 	@Override
-	protected DefaultedList<ItemStack> getHeldStacks()
+	protected NonNullList<ItemStack> getItems()
 	{
 		return inventory;
 	}
 	@Override
-	protected void setHeldStacks(DefaultedList<ItemStack> inventory)
+	protected void setItems(NonNullList<ItemStack> inventory)
 	{
 		this.inventory = inventory;
 	}
 	@Override
-	protected @NotNull ScreenHandler createScreenHandler(int id, @NotNull PlayerInventory player)
+	protected @NotNull AbstractContainerMenu createMenu(int id, @NotNull Inventory player)
 	{
-		return new InkVatContainer(id, player, new InkVatScreenHandlerContext(world, getPos()), false);
+		return new InkVatContainer(id, player, new InkVatScreenHandlerContext(level, getBlockPos()), false);
 	}
 	//Nbt Read
 	@Override
-	public void readNbt(@NotNull NbtCompound nbt, RegistryWrapper.WrapperLookup lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
 	{
-		super.readNbt(nbt, lookup);
+		super.loadAdditional(nbt, lookup);
 		color = InkColor.getFromNbt(nbt.get("Color"));
 		pointer = nbt.getInt("Pointer");
 		recipeEntries = nbt.getInt("RecipeEntries");
 		
-		clear();
-		Inventories.readNbt(nbt, inventory, lookup);
+		clearContent();
+		ContainerHelper.loadAllItems(nbt, inventory, lookup);
 	}
 	@Override
-	public @NotNull NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup lookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider lookup)
 	{
-		return new NbtCompound()
+		return new CompoundTag()
 		{{
-			writeNbt(this, lookup);
+			saveAdditional(this, lookup);
 		}};
 	}
 	@Override
-	public Packet<ClientPlayPacketListener> toUpdatePacket()
+	public Packet<ClientGamePacketListener> getUpdatePacket()
 	{
 		// Will get tag from #toInitialChunkDataNbt
-		return BlockEntityUpdateS2CPacket.create(this);
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	@Override
-	public void phOnDataPacket(ClientConnection net, BlockEntityUpdateS2CPacket pkt, RegistryWrapper.WrapperLookup wrapperLookup)
+	public void phOnDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider wrapperLookup)
 	{
-		if (world != null)
+		if (level != null)
 		{
-			BlockState state = world.getBlockState(getPos());
-			world.updateListeners(getPos(), state, state, 2);
-			phHandleUpdateTag(pkt.getNbt(), wrapperLookup);
+			BlockState state = level.getBlockState(getBlockPos());
+			level.sendBlockUpdated(getBlockPos(), state, state, 2);
+			phHandleUpdateTag(pkt.getTag(), wrapperLookup);
 		}
 	}
 	@Override
-	public boolean isValid(int slot, ItemStack stack)
+	public boolean canPlaceItem(int slot, ItemStack stack)
 	{
 		return switch (slot)
 		{
-			case 0 -> stack.isOf(Items.INK_SAC);
-			case 1 -> stack.isOf(SplatcraftItems.powerEgg.get());
-			case 2 -> stack.isOf(SplatcraftItems.emptyInkwell.get());
-			case 3 -> stack.isIn(SplatcraftTags.Items.FILTERS);
+			case 0 -> stack.is(Items.INK_SAC);
+			case 1 -> stack.is(SplatcraftItems.powerEgg.get());
+			case 2 -> stack.is(SplatcraftItems.emptyInkwell.get());
+			case 3 -> stack.is(SplatcraftTags.Items.FILTERS);
 			default -> false;
 		};
 	}
@@ -253,8 +248,8 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 	{
 		if (hasRecipe())
 		{
-			if (world != null)
-				world.updateListeners(getPos(), getCachedState(), getCachedState(), 2);
+			if (level != null)
+				level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
 			if (pointer != -1 && recipeEntries > 0)
 			{
 				pointer = (pointer + 1) % recipeEntries;
@@ -299,9 +294,9 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 	 * invalidates a tile entity
 	 */
 	@Override
-	public void markRemoved()
+	public void setRemoved()
 	{
-		super.markRemoved();
+		super.setRemoved();
         /*for (LazyOptional<? extends IItemHandler> handler : handlers)
         {
             handler.invalidate();
@@ -311,15 +306,15 @@ public class InkVatTileEntity extends LockableContainerBlockEntity implements Si
 	{
 		boolean changeState = Math.min(color.getColor(), 0) != Math.min(getColor().getColor(), 0);
 		setColor(color);
-		if (world != null)
+		if (level != null)
 		{
 			if (changeState)
 			{
-				world.setBlockState(getPos(), getCachedState().with(InkVatBlock.ACTIVE, hasRecipe()), 2);
+				level.setBlock(getBlockPos(), getBlockState().setValue(InkVatBlock.ACTIVE, hasRecipe()), 2);
 			}
 			else
 			{
-				world.updateListeners(getPos(), getCachedState(), getCachedState(), 2);
+				level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
 			}
 		}
 	}

@@ -2,10 +2,10 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -42,7 +42,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 			return projectileData.damageRanges.getDamage(0) * timeDamagePercent;
 		}
-		float distance = data.spawnPos.distance(projectile.getPos().toVector3f());
+		float distance = data.spawnPos.distance(projectile.position().toVector3f());
 		
 		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot || isBrush).projectileData();
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
@@ -92,7 +92,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		return new DataRecord(isBrush, rollData, swingData, Optional.ofNullable(flingData), bypassesMobDamage, isSecret);
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return 0;
 	}
@@ -268,7 +268,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f, new IntRange(2, 3));
 		public int calculateBrushProjectileCount()
 		{
-			return Math.round((attackAngle() * MathHelper.PI / 180f) * (attackData.speedRange.average()) * projectileData.straightShotTicks / (projectileData.size()));
+			return Math.round((attackAngle() * Mth.PI / 180f) * (attackData.speedRange.average()) * projectileData.straightShotTicks / (projectileData.size()));
 		}
 	}
 	public record FlingDataRecord(

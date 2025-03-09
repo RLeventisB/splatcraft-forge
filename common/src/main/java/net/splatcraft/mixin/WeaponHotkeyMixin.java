@@ -1,9 +1,9 @@
 package net.splatcraft.mixin;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Hand;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.action.EntityAction;
@@ -14,29 +14,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 public class WeaponHotkeyMixin
 {
-	@Mixin(ClientPlayerInteractionManager.class)
+	@Mixin(MultiPlayerGameMode.class)
 	public static abstract class PlayerControllerMix
 	{
-		@Inject(method = "stopUsingItem", at = @At("HEAD"), cancellable = true)
-		private void splatcraft$releaseUsingItem(PlayerEntity player, CallbackInfo callbackInfo)
+		@Inject(method = "releaseUsingItem", at = @At("HEAD"), cancellable = true)
+		private void splatcraft$releaseUsingItem(Player player, CallbackInfo callbackInfo)
 		{
 			if (
-				SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getActiveHand() == Hand.OFF_HAND ||
+				SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getUsedItemHand() == InteractionHand.OFF_HAND ||
 					EntityAction.hasActionAnd(player, EntityAction::preventStopUsing) ||
-					((player.getActiveItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventStopUsingWeapon(player.getWorld(), player)))
+					((player.getUseItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventStopUsingWeapon(player.level(), player)))
 			)
 				callbackInfo.cancel();
 		}
 	}
-	@Mixin(MinecraftClient.class)
+	@Mixin(Minecraft.class)
 	public static abstract class MinecraftInstance
 	{
-		@Inject(method = "doItemUse", at = @At("HEAD"), cancellable = true)
+		@Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
 		private void splatcraft$startUseItem(CallbackInfo ci)
 		{
 			if (SplatcraftKeyHandler.isSubWeaponHotkeyDown())
 			{
-				SplatcraftKeyHandler.startUsingItemInHand(Hand.OFF_HAND);
+				SplatcraftKeyHandler.startUsingItemInHand(InteractionHand.OFF_HAND);
 				ci.cancel();
 			}
 		}

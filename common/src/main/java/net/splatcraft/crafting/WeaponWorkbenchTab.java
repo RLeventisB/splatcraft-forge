@@ -5,20 +5,20 @@ import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,11 +30,11 @@ import java.util.function.Supplier;
 public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, Comparable<WeaponWorkbenchTab>
 {
 	public final boolean hidden;
-	protected final Identifier iconLoc;
+	protected final ResourceLocation iconLoc;
 	protected final int pos;
-	protected final Optional<Text> name;
-	protected final Supplier<Text> nameSupplier;
-	public WeaponWorkbenchTab(Identifier iconLoc, int pos, Optional<Text> name, boolean hidden)
+	protected final Optional<Component> name;
+	protected final Supplier<Component> nameSupplier;
+	public WeaponWorkbenchTab(ResourceLocation iconLoc, int pos, Optional<Component> name, boolean hidden)
 	{
 		this.iconLoc = iconLoc;
 		this.pos = pos;
@@ -42,25 +42,25 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 		this.name = name;
 		// todo: find a better way to get the file name for recipe files!!! since this field (and alot more) depends on it
 		// for now name is stored since this recipe is synched via a packetcodec below, and you cant serialize suppliers as far as i know
-		nameSupplier = Suppliers.memoize(() -> name.orElse(Text.translatable("weaponTab." + CommonUtils.getRecipeId(this).toString())));
+		nameSupplier = Suppliers.memoize(() -> name.orElse(Component.translatable("weaponTab." + CommonUtils.getRecipeId(this).toString())));
 	}
 	@Override
-	public boolean matches(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull World levelIn)
+	public boolean matches(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull Level levelIn)
 	{
 		return true;
 	}
 	@Override
-	public @NotNull ItemStack craft(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull RegistryWrapper.WrapperLookup access)
+	public @NotNull ItemStack craft(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull HolderLookup.Provider access)
 	{
 		return ItemStack.EMPTY;
 	}
 	@Override
-	public boolean fits(int width, int height)
+	public boolean canCraftInDimensions(int width, int height)
 	{
 		return false;
 	}
 	@Override
-	public @NotNull ItemStack getResult(@NotNull RegistryWrapper.WrapperLookup access)
+	public @NotNull ItemStack getResultItem(@NotNull HolderLookup.Provider access)
 	{
 		return ItemStack.EMPTY;
 	}
@@ -74,9 +74,9 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 	{
 		return SplatcraftRecipeTypes.WEAPON_STATION_TAB_TYPE;
 	}
-	public List<WeaponWorkbenchRecipe> getTabRecipes(World world, PlayerEntity player)
+	public List<WeaponWorkbenchRecipe> getTabRecipes(Level world, Player player)
 	{
-		List<RecipeEntry<?>> stream = world.getRecipeManager().values().stream().filter(recipe ->
+		List<RecipeHolder<?>> stream = world.getRecipeManager().getRecipes().stream().filter(recipe ->
 			recipe.value() instanceof WeaponWorkbenchRecipe wwRecipe &&
 				equals(wwRecipe.getTab(world).value()) &&
 				!wwRecipe.getAvailableRecipes(player).isEmpty()).toList();
@@ -91,7 +91,7 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 	{
 		return pos - o.pos;
 	}
-	public Identifier getTabIcon()
+	public ResourceLocation getTabIcon()
 	{
 		return iconLoc;
 	}
@@ -100,35 +100,35 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 	{
 		return getName().toString();
 	}
-	public Text getName()
+	public Component getName()
 	{
 		return nameSupplier.get();
 	}
 	public static class WeaponWorkbenchTabSerializer implements RecipeSerializer<WeaponWorkbenchTab>
 	{
 		public static final MapCodec<WeaponWorkbenchTab> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-			Identifier.CODEC.fieldOf("icon").forGetter(v -> v.iconLoc),
+			ResourceLocation.CODEC.fieldOf("icon").forGetter(v -> v.iconLoc),
 			Codec.INT.optionalFieldOf("pos", Integer.MAX_VALUE).forGetter(v -> v.pos),
-			TextCodecs.CODEC.optionalFieldOf("name").forGetter(v -> v.name),
+			ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(v -> v.name),
 			Codec.BOOL.optionalFieldOf("hidden", false).forGetter(v -> v.hidden)
 		).apply(inst, WeaponWorkbenchTab::new));
-		public static final PacketCodec<RegistryByteBuf, WeaponWorkbenchTab> PACKET_CODEC = new PacketCodec<>()
+		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchTab> PACKET_CODEC = new StreamCodec<>()
 		{
 			@Override
-			public WeaponWorkbenchTab decode(RegistryByteBuf buffer)
+			public WeaponWorkbenchTab decode(RegistryFriendlyByteBuf buffer)
 			{
 				return new WeaponWorkbenchTab(
-					buffer.readIdentifier(),
+					buffer.readResourceLocation(),
 					buffer.readInt(),
-					PacketCodecs.optional(TextCodecs.PACKET_CODEC).decode(buffer),
+					ByteBufCodecs.optional(ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC).decode(buffer),
 					buffer.readBoolean());
 			}
 			@Override
-			public void encode(RegistryByteBuf buffer, WeaponWorkbenchTab recipe)
+			public void encode(RegistryFriendlyByteBuf buffer, WeaponWorkbenchTab recipe)
 			{
-				buffer.writeIdentifier(recipe.iconLoc);
+				buffer.writeResourceLocation(recipe.iconLoc);
 				buffer.writeInt(recipe.pos);
-				PacketCodecs.optional(TextCodecs.PACKET_CODEC).encode(buffer, recipe.name);
+				ByteBufCodecs.optional(ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC).encode(buffer, recipe.name);
 				buffer.writeBoolean(recipe.hidden);
 			}
 		};
@@ -138,7 +138,7 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 			return CODEC;
 		}
 		@Override
-		public PacketCodec<RegistryByteBuf, WeaponWorkbenchTab> packetCodec()
+		public StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchTab> streamCodec()
 		{
 			return PACKET_CODEC;
 		}

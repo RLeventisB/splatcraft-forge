@@ -1,15 +1,13 @@
 package net.splatcraft.items.weapons;
 
-import dev.architectury.registry.registries.DeferredRegister;
-import dev.architectury.registry.registries.RegistrySupplier;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.ItemCooldownManager;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemCooldowns;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -41,11 +39,11 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 		if (!isStillUsing || !data.entityData.isPlayer)
 			return isStillUsing;
 		
-		ItemCooldownManager cooldownTracker = data.entityData.player.getItemCooldownManager();
+		ItemCooldowns cooldownTracker = data.entityData.player.getCooldowns();
 		
-		if (!data.entityData.player.getWorld().isClient)
+		if (!data.entityData.player.level().isClientSide)
 		{
-			cooldownTracker.set(data.entityData.player.getInventory().getStack(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
+			cooldownTracker.addCooldown(data.entityData.player.getInventory().getItem(data.entityData.selected).getItem(), (int) (data.firingData.getFiringSpeed() - accumulatedTime));
 		}
 		return true;
 	}
@@ -55,7 +53,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 		return BlasterWeaponSettings.class;
 	}
 	@Override
-	public void weaponUseTick(World world, LivingEntity entity, ItemStack stack, int no)
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int no)
 	{
 		ShootingHandler.notifyStartShooting(entity);
 	}
@@ -67,31 +65,31 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 			BlasterItem::getEndlagConsumer,
 			(data, accumulatedTime, entity1) ->
 			{
-				World world = entity1.getWorld();
-				if (!world.isClient())
+				Level world = entity1.level();
+				if (!world.isClientSide())
 				{
 					BlasterItem item = (BlasterItem) data.useItem.getItem();
 					if (reduceInk(entity, item, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 					{
 						InkProjectileEntity proj = new InkProjectileEntity(world, entity, data.useItem, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
-						proj.setVelocity(entity, entity.getPitch(), entity.getYaw(), 0, settings.shotData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, world.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
+						proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0, settings.shotData.speed(), ShotDeviationHelper.updateShotDeviation(data.useItem, world.getRandom(), settings.getShotDeviationData(data.useItem, entity)));
 						proj.setBlasterStats(settings);
 						proj.setAttackId(AttackId.registerAttack().countProjectile());
 						proj.addExtraData(new ExtraSaveData.ExplosionExtraData(settings.blasterData));
-						world.spawnEntity(proj);
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.blasterShot, SoundCategory.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						world.addFreshEntity(proj);
+						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.blasterShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						proj.tick(accumulatedTime);
 					}
 				}
 			}, null);
 	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull World world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 	}
 	@Override
-	public PlayerPosingHandler.WeaponPose getPose(PlayerEntity player, ItemStack stack)
+	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return ShootingHandler.isDoingShootingAction(player) && ShootingHandler.shootingData.get(player).isDualFire() ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
 	}

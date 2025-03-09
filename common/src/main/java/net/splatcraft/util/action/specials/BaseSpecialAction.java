@@ -2,10 +2,10 @@ package net.splatcraft.util.action.specials;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.world.World;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -49,11 +49,11 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	@Override
 	public void onStart(LivingEntity entity)
 	{
-		World world = entity.getWorld();
-		if (world.isClient)
+		Level world = entity.level();
+		if (world.isClientSide)
 		{
 			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
-			world.playSoundFromEntity(entity, SplatcraftSounds.specialUsage, SoundCategory.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
+			world.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
 			
 			return;
 		}
@@ -61,7 +61,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
 		optional.ifPresent(info ->
 		{
-			if (entity.getWorld().isClient)
+			if (entity.level().isClientSide)
 				ClientUtils.setSquid(info, false);
 			else
 				info.setIsSquid(false);

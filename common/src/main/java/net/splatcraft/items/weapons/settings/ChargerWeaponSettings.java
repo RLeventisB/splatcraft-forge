@@ -3,10 +3,10 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -77,7 +77,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 			bypassesMobDamage, isSecret);
 	}
 	@Override
-	public float getSpeedForRender(PlayerEntity player, ItemStack mainHandItem)
+	public float getSpeedForRender(Player player, ItemStack mainHandItem)
 	{
 		return 0;
 	}
@@ -232,7 +232,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		}
 		public float getValue(float charge)
 		{
-			return charge >= 1 ? fullValue : MathHelper.lerp(charge, minValue, maxValue);
+			return charge >= 1 ? fullValue : Mth.lerp(charge, minValue, maxValue);
 		}
 		public ChargeValueRecord map(Function<Float, Float> function)
 		{

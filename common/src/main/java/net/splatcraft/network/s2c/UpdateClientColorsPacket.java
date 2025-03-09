@@ -1,10 +1,10 @@
 package net.splatcraft.network.s2c;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Uuids;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
@@ -14,8 +14,8 @@ import java.util.UUID;
 
 public class UpdateClientColorsPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateClientColorsPacket.class);
-	public static PacketCodec<RegistryByteBuf, TreeMap<UUID, InkColor>> COLORS_CODEC = PacketCodecs.map(v -> new TreeMap<>(), Uuids.PACKET_CODEC, InkColor.PACKET_CODEC);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateClientColorsPacket.class);
+	public static StreamCodec<RegistryFriendlyByteBuf, TreeMap<UUID, InkColor>> COLORS_CODEC = ByteBufCodecs.map(v -> new TreeMap<>(), UUIDUtil.STREAM_CODEC, InkColor.PACKET_CODEC);
 	final TreeMap<UUID, InkColor> colors;
 	final boolean reset;
 	protected UpdateClientColorsPacket(TreeMap<UUID, InkColor> playerColors, boolean reset)
@@ -33,7 +33,7 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
 		colors.put(player, color);
 		reset = false;
 	}
-	public static UpdateClientColorsPacket decode(RegistryByteBuf buffer)
+	public static UpdateClientColorsPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		boolean reset = buffer.readBoolean();
 		TreeMap<UUID, InkColor> colors = COLORS_CODEC.decode(buffer);
@@ -41,7 +41,7 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
 		return new UpdateClientColorsPacket(colors, reset);
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -55,7 +55,7 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
 		ClientUtils.putClientColors(colors);
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeBoolean(reset);
 		COLORS_CODEC.encode(buffer, colors);

@@ -1,13 +1,13 @@
 package net.splatcraft.network.s2c;
 
 import com.mojang.serialization.DataResult;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
@@ -16,37 +16,37 @@ import java.util.UUID;
 
 public class UpdateEntityActionOnlyPacket extends PlayS2CPacket
 {
-	public static final Id<? extends CustomPayload> ID = CommonUtils.createIdFromClass(UpdateEntityActionOnlyPacket.class);
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateEntityActionOnlyPacket.class);
 	UUID target;
-	NbtElement nbt;
-	protected UpdateEntityActionOnlyPacket(UUID player, NbtElement nbt)
+	Tag nbt;
+	protected UpdateEntityActionOnlyPacket(UUID player, Tag nbt)
 	{
 		target = player;
 		this.nbt = nbt;
 	}
 	public UpdateEntityActionOnlyPacket(LivingEntity target)
 	{
-		this(target.getUuid(), EntityAction.SERIALIZER_CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target).getEntityAction()).getOrThrow());
+		this(target.getUUID(), EntityAction.SERIALIZER_CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target).getEntityAction()).getOrThrow());
 	}
-	public static UpdateEntityActionOnlyPacket decode(RegistryByteBuf buffer)
+	public static UpdateEntityActionOnlyPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new UpdateEntityActionOnlyPacket(buffer.readUuid(), buffer.readNbt());
+		return new UpdateEntityActionOnlyPacket(buffer.readUUID(), buffer.readNbt());
 	}
 	@Override
-	public Id<? extends CustomPayload> getId()
+	public Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
 	@Override
-	public void encode(RegistryByteBuf buffer)
+	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeUuid(target);
+		buffer.writeUUID(target);
 		buffer.writeNbt(nbt);
 	}
 	@Override
 	public void execute()
 	{
-		PlayerEntity target = MinecraftClient.getInstance().world.getPlayerByUuid(this.target);
+		Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
 		
 		if (target != null)
 		{

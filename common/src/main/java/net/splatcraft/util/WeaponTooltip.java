@@ -1,8 +1,8 @@
 package net.splatcraft.util;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 
@@ -52,21 +52,21 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
         return 6;
     }
 
-    public MutableText getTextComponent(S settings, boolean advanced)
+    public MutableComponent getTextComponent(S settings, boolean advanced)
     {
         if (advanced)
-            return Text.translatable("weaponStat.format", Text.translatable("weaponStat." + name),
-                    Text.translatable("weaponStat.metric." + metric.localizedName, new DecimalFormat("0.#").format(getStatValue(settings))))
-                .formatted(Formatting.DARK_GREEN);
+            return Component.translatable("weaponStat.format", Component.translatable("weaponStat." + name),
+                    Component.translatable("weaponStat.metric." + metric.localizedName, new DecimalFormat("0.#").format(getStatValue(settings))))
+                .withStyle(ChatFormatting.DARK_GREEN);
         else
         {
             int ranking = getStatRanking(settings);
 
             Object[] args = new Object[5];
             for (int i = 0; i < 5; i++)
-                args[i] = Text.translatable("weaponStat.gauge." + (ranking >= (i + 1) ? "full" : "empty"));
+                args[i] = Component.translatable("weaponStat.gauge." + (ranking >= (i + 1) ? "full" : "empty"));
 
-            return Text.translatable("weaponStat.format", Text.translatable("weaponStat." + name), Text.translatable("weaponStat.metric.gauge", args)).formatted(ranking > 5 ? Formatting.GOLD : Formatting.DARK_GREEN);
+            return Component.translatable("weaponStat.format", Component.translatable("weaponStat." + name), Component.translatable("weaponStat.metric.gauge", args)).withStyle(ranking > 5 ? ChatFormatting.GOLD : ChatFormatting.DARK_GREEN);
         }
     }
 
