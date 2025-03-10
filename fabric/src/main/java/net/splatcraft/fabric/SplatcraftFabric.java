@@ -10,7 +10,6 @@ import net.splatcraft.client.particles.InkSplashParticle;
 import net.splatcraft.client.particles.InkTerrainParticle;
 import net.splatcraft.client.particles.SquidSoulParticle;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.platform.FabricPlatformHelper;
 import net.splatcraft.registries.SplatcraftParticleTypes;
 
 public final class SplatcraftFabric implements ModInitializer
@@ -23,7 +22,6 @@ public final class SplatcraftFabric implements ModInitializer
 		// Proceed with mild caution.
 		
 		// Run our common setup.
-		FabricPlatformHelper.init();
 		Splatcraft.init();
 		
 		ClientSetupHandler.bindScreenContainers((type, provider) -> MenuScreens.register(type, provider::create));

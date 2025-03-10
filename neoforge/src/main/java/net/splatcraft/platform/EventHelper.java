@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 
 public class EventHelper
 {
-	public static <T extends Event> void registerEvent(Consumer<T> action, Class<T> clazz)
+	public static <T extends Event> void registerEvent(Class<T> clazz, Consumer<T> action)
 	{
 		SplatcraftNeoForge.modBus.addListener(clazz, action);
 	}

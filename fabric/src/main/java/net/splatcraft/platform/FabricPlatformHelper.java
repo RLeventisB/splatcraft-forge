@@ -2,6 +2,8 @@ package net.splatcraft.platform;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -19,15 +21,47 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.platform.event.CommandRegistrationEvent;
+import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.platform.services.IPlatformHelper;
 
 public class FabricPlatformHelper implements IPlatformHelper
 {
 	private static MinecraftServer server = null;
-	public static void init()
+	public void init()
 	{
-		ServerLifecycleEvents.SERVER_STARTING.register(server -> FabricPlatformHelper.server = server);
-		ServerLifecycleEvents.SERVER_STOPPED.register(server -> FabricPlatformHelper.server = null);
+		CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) ->
+			invokeConsumerEvent(CommandRegistrationEvent.class, dispatcher, context, selection));
+		if (isClientSide())
+		{
+			registerClientSideEvents();
+		}
+		else
+		{
+			registerServerSideEvents();
+		}
+	}
+	@Environment(EnvType.SERVER)
+	private void registerServerSideEvents()
+	{
+		ServerLifecycleEvents.SERVER_STARTING.register(server ->
+		{
+			invokeConsumerEvent(LifecycleEvents.ServerStarted.class, server);
+			FabricPlatformHelper.server = server;
+		});
+		ServerLifecycleEvents.SERVER_STOPPED.register(server ->
+		{
+			invokeConsumerEvent(LifecycleEvents.ServerStopped.class, server);
+			FabricPlatformHelper.server = null;
+		});
+	}
+	@Environment(EnvType.CLIENT)
+	private void registerClientSideEvents()
+	{
+		ClientLifecycleEvents.CLIENT_STARTED.register((client) ->
+			invokeConsumerEvent(LifecycleEvents.ClientStarted.class, client));
+		ClientLifecycleEvents.CLIENT_STOPPING.register((client) ->
+			invokeConsumerEvent(LifecycleEvents.ClientStopped.class, client));
 	}
 	@Override
 	public String getPlatformName()
@@ -68,11 +102,6 @@ public class FabricPlatformHelper implements IPlatformHelper
 	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
 	{
 	
-	}
-	@Override
-	public void registerCommands(CommandRegistrationEvent evt)
-	{
-		CommandRegistrationCallback.EVENT.register(evt::register);
 	}
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)

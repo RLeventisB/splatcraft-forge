@@ -15,6 +15,7 @@ import net.splatcraft.handlers.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.registries.*;
 import net.splatcraft.util.action.EntityAction;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +35,7 @@ public final class Splatcraft
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		
-		ClientLifecycleEvent.CLIENT_SETUP.register(Splatcraft::initClientAfter);
+		Services.PLATFORM.registerListener(LifecycleEvents.ClientStarted.class, Splatcraft::initClientAfter);
 	}
 	public static void init()
 	{
@@ -64,7 +65,7 @@ public final class Splatcraft
 //		SplatcraftOreGen.registerOres();
 		SplatcraftItemGroups.addSplatcraftItemsToVanillaGroups();
 		
-		LifecycleEvent.SERVER_STARTED.register(Splatcraft::onServerStart);
+		Services.PLATFORM.registerListener(LifecycleEvents.ServerStarted.class, Splatcraft::onServerStart);
 	}
 	public static void onServerStart(MinecraftServer server)
 	{

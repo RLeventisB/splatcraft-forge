@@ -17,17 +17,34 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.neoforge.SplatcraftNeoForgeDataAttachments;
+import net.splatcraft.platform.event.CommandRegistrationEvent;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.platform.services.IPlatformHelper;
 
 public class NeoForgePlatformHelper implements IPlatformHelper
 {
 	private static final NeoForgeDeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZER_REGISTRY = new NeoForgeDeferredRegister<>(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, Splatcraft.MODID);
+	public static NeoForgePlatformHelper INSTANCE;
 	public static NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>> ARGUMENT_REGISTRY = new NeoForgeDeferredRegister<>(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, Splatcraft.MODID);
+	public void init()
+	{
+		INSTANCE = this;
+		EventHelper.registerEvent(RegisterCommandsEvent.class, (evt) ->
+			invokeConsumerEvent(CommandRegistrationEvent.class, evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection())
+		);
+		EventHelper.registerEvent(PlayerTickEvent.Pre.class, (evt) ->
+			invokeConsumerEvent(TickEvents.PlayerBefore.class, evt.getEntity())
+		);
+		EventHelper.registerEvent(PlayerTickEvent.Post.class, (evt) ->
+			invokeConsumerEvent(TickEvents.PlayerAfter.class, evt.getEntity())
+		);
+	}
 	@Override
 	public String getPlatformName()
 	{
@@ -67,12 +84,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
 	{
 		chunk.setData(SplatcraftNeoForgeDataAttachments.CHUNK_INK, newData);
-	}
-	@Override
-	public void registerCommands(CommandRegistrationEvent params)
-	{
-		EventHelper.registerEvent((evt) ->
-			params.register(evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection()), RegisterCommandsEvent.class);
 	}
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
