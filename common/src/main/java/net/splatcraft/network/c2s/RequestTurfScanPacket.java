@@ -1,6 +1,5 @@
 package net.splatcraft.network.c2s;
 
-import dev.architectury.utils.GameInstance;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
@@ -9,6 +8,7 @@ import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.TurfScannerItem;
+import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 		Stage stage = Stage.getStage(stageId);
 		ServerPlayer serverPlayer = (ServerPlayer) player;
 		
-		ServerLevel stageworld = stage.getStageWorld(GameInstance.getServer());
+		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());
 		ArrayList<ServerPlayer> playerList = new ArrayList<>(stageworld.getEntitiesOfClass(ServerPlayer.class, stage.getBounds(), EntitySelector.NO_SPECTATORS));
 		if (!playerList.contains(serverPlayer))
 			playerList.addFirst(serverPlayer);

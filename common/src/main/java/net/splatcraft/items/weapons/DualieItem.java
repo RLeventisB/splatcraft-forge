@@ -29,6 +29,8 @@ import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.DodgeRollPacket;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CodecUtils;
@@ -61,7 +63,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, RegistrySupplier<DualieItem> parent, String name)
 	{
-		return registry.register(name, () -> new DualieItem(parent.get().settingsId.toString()));
+		return registry.register(name, () -> new DualieItem(parent.value().settingsId.toString()));
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, String settings, String name)
 	{

@@ -22,6 +22,8 @@ import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
@@ -44,7 +46,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	}
 	public static RegistrySupplier<SlosherItem> create(DeferredRegister<Item> register, RegistrySupplier<SlosherItem> parent, String name)
 	{
-		return register.register(name, () -> new SlosherItem(parent.get().settingsId.toString()).setSlosherType(parent.get().slosherType));
+		return register.register(name, () -> new SlosherItem(parent.value().settingsId.toString()).setSlosherType(parent.get().slosherType));
 	}
 	@Override
 	public Class<SlosherWeaponSettings> getSettingsClass()

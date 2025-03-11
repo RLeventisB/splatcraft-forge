@@ -421,7 +421,7 @@ public class InkBlockUtils
 	public static Direction getSquidClimbingDirection(LivingEntity entity, float strafeImpulse, float movementForward, Direction face)
 	{
 		Direction blockFaceToCheck = face.getOpposite();
-		AABB baseBoundingBox = SplatcraftEntities.INK_SQUID.get().getDimensions().makeBoundingBox(entity.position());
+		AABB baseBoundingBox = SplatcraftEntities.INK_SQUID.value().getDimensions().makeBoundingBox(entity.position());
 		Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(-Math.signum(strafeImpulse), Math.signum(movementForward), 0), 0.1f, face.toYRot());
 		BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, baseBoundingBox.inflate(inputVector.x, inputVector.y, inputVector.z), false, (bro, what) ->
 			bro);
@@ -460,9 +460,9 @@ public class InkBlockUtils
 	}
 	public enum InkType implements Comparable<InkType>, StringRepresentable
 	{
-		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.get()),
-		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.get(), SplatcraftBlocks.glowingInkedBlock.get()),
-		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand.get(), SplatcraftBlocks.clearInkedBlock.get());
+		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.value()),
+		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.value(), SplatcraftBlocks.glowingInkedBlock.value()),
+		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand.value(), SplatcraftBlocks.clearInkedBlock.value());
 		public static final Map<ResourceLocation, InkType> IDENTIFIER_MAP = Map.of(
 			Splatcraft.identifierOf("normal"), NORMAL,
 			Splatcraft.identifierOf("glowing"), GLOWING,

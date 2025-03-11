@@ -2,10 +2,6 @@ package net.splatcraft.handlers;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -15,6 +11,11 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EntityEvents;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.PlayerEvents;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -79,9 +80,9 @@ public class ShootingHandler
 	}
 	public static void registerEvents()
 	{
-		TickEvent.SERVER_POST.register(ShootingHandler::update);
-		PlayerEvent.PLAYER_QUIT.register(player -> shootingData.remove(player));
-		EntityEvent.LIVING_DEATH.register(ShootingHandler::onEntityDie);
+		Services.PLATFORM.registerListener(TickEvents.ServerAfter.class, ShootingHandler::update);
+		Services.PLATFORM.registerListener(PlayerEvents.Quit.class, player -> shootingData.remove(player));
+		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, ShootingHandler::onEntityDie);
 	}
 	public static void update(MinecraftServer server)
 	{

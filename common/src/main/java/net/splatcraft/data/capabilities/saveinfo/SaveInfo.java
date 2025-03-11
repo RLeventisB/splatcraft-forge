@@ -2,14 +2,10 @@ package net.splatcraft.data.capabilities.saveinfo;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.platform.Platform;
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.fabricmc.api.EnvType;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -21,6 +17,8 @@ import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.InkColor;
 
@@ -44,9 +42,9 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, PlaySession> playSession
 	}
 	public static void registerEvents()
 	{
-		TickEvent.SERVER_POST.register(SaveInfo::tickPlaySessions);
-		if (Platform.getEnv().equals(EnvType.CLIENT))
-			ClientTickEvent.CLIENT_LEVEL_POST.register(SaveInfo::tickPlaySessionsClient);
+		Services.PLATFORM.registerListener(TickEvents.ServerAfter.class, SaveInfo::tickPlaySessions);
+		if (Services.PLATFORM.isClientSide())
+			Services.PLATFORM.registerListener(TickEvents.ClientLevelAfter.class, SaveInfo::tickPlaySessionsClient);
 	}
 	private static void tickPlaySessionsClient(ClientLevel world)
 	{

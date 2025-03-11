@@ -3,7 +3,6 @@ package net.splatcraft.neoforge;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.base.Joiner;
-import dev.architectury.utils.Env;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.config.ModConfig;
@@ -13,6 +12,7 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.platform.ModSide;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -43,12 +43,12 @@ public class SplatcraftConfigImpl
 			return;
 		ModContainer container = ModLoadingContext.get().getActiveContainer();
 		
-		CommentedFileConfig file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(Env.CLIENT))).sync().autosave().writingMode(WritingMode.REPLACE).build();
+		CommentedFileConfig file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(ModSide.CLIENT))).sync().autosave().writingMode(WritingMode.REPLACE).build();
 		file.load();
 		clientConfig.correct(file);
 		container.registerConfig(ModConfig.Type.CLIENT, clientConfig);
 		
-		file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(Env.SERVER))).sync().autosave().writingMode(WritingMode.REPLACE).build();
+		file = CommentedFileConfig.builder(new File(SplatcraftConfig.getModConfigPathString(ModSide.SERVER))).sync().autosave().writingMode(WritingMode.REPLACE).build();
 		file.load();
 		serverConfig.correct(file);
 		container.registerConfig(ModConfig.Type.SERVER, serverConfig);

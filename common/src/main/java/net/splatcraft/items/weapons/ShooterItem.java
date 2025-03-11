@@ -12,6 +12,8 @@ import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.weapons.settings.ShooterWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
@@ -33,7 +35,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 	}
 	public static RegistrySupplier<ShooterItem> create(DeferredRegister<Item> registry, RegistrySupplier<ShooterItem> parent, String name, boolean secret)
 	{
-		return registry.register(name, () -> new ShooterItem(parent.get().settingsId.toString()).setSecret(secret));
+		return registry.register(name, () -> new ShooterItem(parent.value().settingsId.toString()).setSecret(secret));
 	}
 	@Override
 	public Class<ShooterWeaponSettings> getSettingsClass()

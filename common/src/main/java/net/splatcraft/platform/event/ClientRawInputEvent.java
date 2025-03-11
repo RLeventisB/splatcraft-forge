@@ -1,22 +1,24 @@
 package net.splatcraft.platform.event;
 
 import net.minecraft.client.Minecraft;
+import net.splatcraft.platform.event.types.ConsumerEvent;
+import net.splatcraft.platform.event.types.SimpleEvent;
 
 public interface ClientRawInputEvent
 {
 	@FunctionalInterface
-	interface MouseScrolled
+	interface MouseScrolled extends SimpleEvent.Tri<Minecraft, Double, Double>
 	{
-		EventResult mouseScrolled(Minecraft client, double amountX, double amountY);
+		EventResult invoke(Minecraft client, Double amountX, Double amountY);
 	}
 	@FunctionalInterface
-	interface MouseClicked
+	interface MouseClicked extends ConsumerEvent.Tetra<Minecraft, Integer, Integer, Integer>
 	{
-		EventResult mouseClicked(Minecraft client, int button, int action, int mods);
+		void invoke(Minecraft client, Integer button, Integer action, Integer mods);
 	}
 	@FunctionalInterface
-	interface KeyPressed
+	interface KeyPressed extends ConsumerEvent.Penta<Minecraft, Integer, Integer, Integer, Integer>
 	{
-		EventResult keyPressed(Minecraft client, int keyCode, int scanCode, int action, int modifiers);
+		void invoke(Minecraft client, Integer keyCode, Integer scanCode, Integer action, Integer modifiers);
 	}
 }

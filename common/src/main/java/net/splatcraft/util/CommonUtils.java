@@ -457,7 +457,7 @@ public class CommonUtils
 	}
 	public static <T> T getDistSpecificValue(Supplier<T> clientSupplier, Supplier<T> serverSupplier)
 	{
-		return (Services.PLATFORM.getEnv().equals(ModSide.CLIENT) ? clientSupplier : serverSupplier).get();
+		return (Services.PLATFORM.getModSide().equals(ModSide.CLIENT) ? clientSupplier : serverSupplier).get();
 	}
 	public static <I extends RecipeInput, T extends Recipe<I>> ResourceLocation getRecipeId(T recipe)
 	{

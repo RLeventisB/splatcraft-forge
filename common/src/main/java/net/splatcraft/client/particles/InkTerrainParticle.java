@@ -21,7 +21,7 @@ public class InkTerrainParticle extends TextureSheetParticle
 	public InkTerrainParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, BlockPos blockPos, float r, float g, float b)
 	{
 		super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-		setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getParticleIcon(SplatcraftBlocks.inkedBlock.get().defaultBlockState()));
+		setSprite(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getParticleIcon(SplatcraftBlocks.inkedBlock.value().defaultBlockState()));
 		gravity = 1.0F;
 		rCol = 0.6F * r;
 		gCol = 0.6F * g;

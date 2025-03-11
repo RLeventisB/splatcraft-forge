@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
@@ -15,9 +16,12 @@ import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
@@ -36,23 +40,21 @@ public class FabricPlatformHelper implements IPlatformHelper
 		{
 			registerClientSideEvents();
 		}
-		else
+		
+		ServerLifecycleEvents.SERVER_STARTING.register(server1 ->
 		{
-			registerServerSideEvents();
-		}
-	}
-	@Environment(EnvType.SERVER)
-	private void registerServerSideEvents()
-	{
-		ServerLifecycleEvents.SERVER_STARTING.register(server ->
-		{
-			invokeConsumerEvent(LifecycleEvents.ServerStarted.class, server);
-			FabricPlatformHelper.server = server;
+			invokeConsumerEvent(LifecycleEvents.ServerStarting.class, server1);
+			server = server1;
 		});
-		ServerLifecycleEvents.SERVER_STOPPED.register(server ->
+		ServerLifecycleEvents.SERVER_STARTED.register(server1 ->
 		{
-			invokeConsumerEvent(LifecycleEvents.ServerStopped.class, server);
-			FabricPlatformHelper.server = null;
+			invokeConsumerEvent(LifecycleEvents.ServerStarted.class, server1);
+			server = server1;
+		});
+		ServerLifecycleEvents.SERVER_STOPPED.register(server1 ->
+		{
+			invokeConsumerEvent(LifecycleEvents.ServerStopped.class, server1);
+			server = null;
 		});
 	}
 	@Environment(EnvType.CLIENT)
@@ -135,5 +137,11 @@ public class FabricPlatformHelper implements IPlatformHelper
 	public <T> DeferredRegister<T> createRegistry(Registry<T> registry)
 	{
 		return new FabricDeferredRegister<>(registry, Splatcraft.MODID);
+	}
+	@Override
+	public void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item)
+	{
+		ItemGroupEvents.modifyEntriesEvent(creativeTab).register((tab) ->
+			tab.accept(new ItemStack(item)));
 	}
 }

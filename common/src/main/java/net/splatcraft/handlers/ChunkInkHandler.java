@@ -1,11 +1,5 @@
 package net.splatcraft.handlers;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.event.events.common.BlockEvent;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.TickEvent;
-import dev.architectury.utils.value.IntValue;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -42,6 +36,9 @@ import net.splatcraft.network.s2c.UpdateInkPacket;
 import net.splatcraft.network.s2c.WatchInkPacket;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.InteractionEvents;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
@@ -62,18 +59,18 @@ public class ChunkInkHandler
 	private static final int MAX_DECAYABLE_CHUNKS = 10;
 	public static void registerEvents()
 	{
-		InteractionEvent.RIGHT_CLICK_BLOCK.register(ChunkInkHandler::onBlockPlace);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, ChunkInkHandler::onBlockPlace);
 		BlockEvent.BREAK.register(ChunkInkHandler::onBlockBreak);
-		TickEvent.SERVER_LEVEL_PRE.register(ChunkInkHandler::onWorldTickStart);
-		TickEvent.SERVER_LEVEL_POST.register(ChunkInkHandler::onWorldTickEnd);
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, ChunkInkHandler::onWorldTickStart);
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, ChunkInkHandler::onWorldTickEnd);
 		
-		if (Services.PLATFORM.getEnv().equals(ModSide.CLIENT))
+		if (Services.PLATFORM.getModSide().equals(ModSide.CLIENT))
 			registerClientEvent();
 	}
 	@Environment(EnvType.CLIENT)
 	private static void registerClientEvent()
 	{
-		ClientTickEvent.CLIENT_LEVEL_POST.register(ChunkInkHandler::onClientWorldTickStart);
+		Services.PLATFORM.registerListener(TickEvents.ClientLevelAfter.class, ChunkInkHandler::onClientWorldTickStart);
 	}
 	public static void addInkToRemove(Level world, BlockPos pos)
 	{

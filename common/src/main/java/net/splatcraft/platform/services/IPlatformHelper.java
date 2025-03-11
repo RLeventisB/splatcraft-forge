@@ -5,13 +5,16 @@ import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.ModSide;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.event.IEventMap;
 
 public interface IPlatformHelper extends IEventMap
@@ -51,7 +54,7 @@ public interface IPlatformHelper extends IEventMap
 		return this;
 	}
 	void init();
-	default ModSide getEnv()
+	default ModSide getModSide()
 	{
 		return isClientSide() ? ModSide.CLIENT : ModSide.SERVER;
 	}
@@ -66,4 +69,5 @@ public interface IPlatformHelper extends IEventMap
 	void registerDataTracker(String name, EntityDataSerializer<?> handler);
 	MinecraftServer getServerInstance();
 	<T> DeferredRegister<T> createRegistry(Registry<T> registry);
+	void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item);
 }

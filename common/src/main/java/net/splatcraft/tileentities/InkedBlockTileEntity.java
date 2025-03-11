@@ -30,7 +30,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 	private InkBlockUtils.InkType permanentInkType = InkBlockUtils.InkType.NORMAL;
 	public InkedBlockTileEntity(BlockPos pos, BlockState state)
 	{
-		super(SplatcraftTileEntities.inkedTileEntity.get(), pos, state);
+		super(SplatcraftTileEntities.inkedTileEntity.value(), pos, state);
 	}
 	//Used to port Inked Blocks to World Ink system
 	// ok fine
@@ -61,9 +61,9 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 	@Deprecated //Only used for parity purposes
 	public static InkBlockUtils.InkType getInkType(BlockState state)
 	{
-		if (state.is(SplatcraftBlocks.clearInkedBlock.get()))
+		if (state.is(SplatcraftBlocks.clearInkedBlock.value()))
 			return InkBlockUtils.InkType.CLEAR;
-		if (state.is(SplatcraftBlocks.glowingInkedBlock.get()))
+		if (state.is(SplatcraftBlocks.glowingInkedBlock.value()))
 			return InkBlockUtils.InkType.GLOWING;
 		return InkBlockUtils.InkType.NORMAL;
 	}

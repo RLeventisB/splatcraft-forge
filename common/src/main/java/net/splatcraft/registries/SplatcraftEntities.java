@@ -50,6 +50,8 @@ import net.splatcraft.entities.subs.BurstBombEntity;
 import net.splatcraft.entities.subs.CurlingBombEntity;
 import net.splatcraft.entities.subs.SplatBombEntity;
 import net.splatcraft.entities.subs.SuctionBombEntity;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
 

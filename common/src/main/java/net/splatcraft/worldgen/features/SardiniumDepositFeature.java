@@ -23,7 +23,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 	}
 	private static boolean isIcebergState(BlockState state)
 	{
-		return state.is(SplatcraftBlocks.coralite.get()) || state.is(SplatcraftBlocks.sardiniumOre.get()) || state.is(SplatcraftBlocks.rawSardiniumBlock.get());
+		return state.is(SplatcraftBlocks.coralite.value()) || state.is(SplatcraftBlocks.sardiniumOre.value()) || state.is(SplatcraftBlocks.rawSardiniumBlock.value());
 	}
 	@Override
 	public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context)
@@ -61,7 +61,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 					int k2 = flag1 ? heightDependentRadiusEllipse(j2, l, j1) : heightDependentRadiusRound(random, j2, l, j1);
 					if (flag1 || l1 < k2)
 					{
-						generateIcebergBlock(worldAccess, random, centerPos, l, l1, j2, i2, k2, k1, flag1, j, d0, random.nextFloat() < 0.2f ? SplatcraftBlocks.sardiniumOre.get().defaultBlockState() : SplatcraftBlocks.coralite.get().defaultBlockState());
+						generateIcebergBlock(worldAccess, random, centerPos, l, l1, j2, i2, k2, k1, flag1, j, d0, random.nextFloat() < 0.2f ? SplatcraftBlocks.sardiniumOre.value().defaultBlockState() : SplatcraftBlocks.coralite.value().defaultBlockState());
 					}
 				}
 			}
@@ -78,7 +78,7 @@ public class SardiniumDepositFeature extends Feature<NoneFeatureConfiguration>
 					if (i3 < l2)
 					{
 						generateIcebergBlock(context.level(), random, centerPos, i1, i3, k3, j3, l2, l3, flag1, j, d0,
-							random.nextFloat() < 0.05f ? SplatcraftBlocks.rawSardiniumBlock.get().defaultBlockState() : random.nextFloat() < 0.3f ? SplatcraftBlocks.sardiniumOre.get().defaultBlockState() : SplatcraftBlocks.coralite.get().defaultBlockState());
+							random.nextFloat() < 0.05f ? SplatcraftBlocks.rawSardiniumBlock.value().defaultBlockState() : random.nextFloat() < 0.3f ? SplatcraftBlocks.sardiniumOre.value().defaultBlockState() : SplatcraftBlocks.coralite.value().defaultBlockState());
 					}
 				}
 			}

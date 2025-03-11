@@ -26,6 +26,8 @@ import net.splatcraft.items.weapons.settings.SplatlingWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.ReleaseChargePacket;
 import net.splatcraft.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -57,7 +59,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	}
 	public static RegistrySupplier<SplatlingItem> create(DeferredRegister<Item> register, RegistrySupplier<SplatlingItem> parent, String name)
 	{
-		return register.register(name, () -> new SplatlingItem(parent.get().settingsId.toString()));
+		return register.register(name, () -> new SplatlingItem(parent.value().settingsId.toString()));
 	}
 	@Environment(EnvType.CLIENT)
 	protected static void playChargeReadySound(Player player, float pitch)

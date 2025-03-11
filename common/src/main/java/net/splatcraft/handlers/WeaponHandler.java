@@ -1,8 +1,5 @@
 package net.splatcraft.handlers;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +12,10 @@ import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EntityEvents;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
@@ -30,13 +31,13 @@ public class WeaponHandler
 	private static final Map<LivingEntity, OldEntityTransformData> prevPosMap = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
-		EntityEvent.LIVING_DEATH.register((entity, dmgSource) ->
+		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, (entity, dmgSource) ->
 		{
 			prevPosMap.remove(entity);
 			return EventResult.pass();
 		});
 		
-		TickEvent.PLAYER_POST.register((player) ->
+		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
 			Optional<EntityAction> cooldown = EntityAction.getEntityActionOptional(player);
 			boolean usagePreventedByCooldown = false;
@@ -54,12 +55,12 @@ public class WeaponHandler
 			}
 		});
 		
-		TickEvent.SERVER_LEVEL_PRE.register((level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			tickPreviousPosMap(entity);
 			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
-		TickEvent.SERVER_LEVEL_POST.register((level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			if (EntityInfoCapability.hasCapability(entity))
 			{

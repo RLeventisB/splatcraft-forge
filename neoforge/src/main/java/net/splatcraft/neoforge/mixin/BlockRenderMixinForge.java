@@ -52,7 +52,7 @@ public class BlockRenderMixinForge
 		public BlockState getBlockState(RenderChunkRegion instance, BlockPos pos, Operation<BlockState> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
 		{
 			BlockState originalState = original.call(instance, pos);
-			return originalState.is(SplatcraftTags.Blocks.RENDER_AS_CUBE) && InkBlockUtils.isInkedAny(((ChunkRegionAccessor) arg2).getLevel(), blockpos) ? SplatcraftBlocks.inkedBlock.get().defaultBlockState() : originalState;
+			return originalState.is(SplatcraftTags.Blocks.RENDER_AS_CUBE) && InkBlockUtils.isInkedAny(((ChunkRegionAccessor) arg2).getLevel(), blockpos) ? SplatcraftBlocks.inkedBlock.value().defaultBlockState() : originalState;
 		}
 	}
 	@Mixin(BlockRenderDispatcher.class)

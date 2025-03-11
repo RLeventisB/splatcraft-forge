@@ -49,7 +49,7 @@ public class BlockRenderMixinFabric
 		@WrapOperation(method = "compile", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
 		public BlockState getBlockState(RenderChunkRegion instance, BlockPos pos, Operation<BlockState> original)
 		{
-			return splatcraft$overrideRender ? SplatcraftBlocks.inkedBlock.get().defaultBlockState() : original.call(instance, pos);
+			return splatcraft$overrideRender ? SplatcraftBlocks.inkedBlock.value().defaultBlockState() : original.call(instance, pos);
 		}
 		@Inject(method = "compile", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))

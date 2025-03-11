@@ -7,7 +7,6 @@ import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.commands.arguments.StageGameModeArgument;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.CommandRegistrationEvent;
-import net.splatcraft.platform.event.EventResult;
 
 public class SplatcraftCommands
 {
@@ -22,7 +21,6 @@ public class SplatcraftCommands
 			ColorScoresCommand.register(dispatcher);
 			StageCommand.register(dispatcher);
 			SuperJumpCommand.register(dispatcher);
-			return EventResult.PASS;
 		});
 	}
 	public static void registerArguments()

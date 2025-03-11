@@ -12,6 +12,8 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.blocks.*;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 
 import java.util.ArrayList;
 
@@ -30,7 +32,7 @@ public class SplatcraftBlocks
 	public static final RegistrySupplier<CrateBlock> sunkenCrate = REGISTRY.register("sunken_crate", () -> new CrateBlock("sunken_crate", true));
 	public static final RegistrySupplier<Block> ammoKnightsDebris = REGISTRY.register("ammo_knights_debris", () -> new DebrisBlock(MapColor.EMERALD));
 	public static final RegistrySupplier<Block> coralite = REGISTRY.register("coralite", () -> new InkStainedBlock.WithUninkedVariant(BlockBehaviour.Properties.of().instrument(NoteBlockInstrument.BASEDRUM).mapColor(MapColor.CLAY).strength(3, 3).requiresCorrectToolForDrops()));
-	public static final RegistrySupplier<Block> coraliteStairs = REGISTRY.register("coralite_stairs", () -> new InkStainedStairBlock.WithUninkedVariant(coralite.get().defaultBlockState(), BlockBehaviour.Properties.of().instrument(NoteBlockInstrument.BASEDRUM).mapColor(MapColor.CLAY).strength(3, 3).requiresCorrectToolForDrops()));
+	public static final RegistrySupplier<Block> coraliteStairs = REGISTRY.register("coralite_stairs", () -> new InkStainedStairBlock.WithUninkedVariant(coralite.value().defaultBlockState(), BlockBehaviour.Properties.of().instrument(NoteBlockInstrument.BASEDRUM).mapColor(MapColor.CLAY).strength(3, 3).requiresCorrectToolForDrops()));
 	public static final RegistrySupplier<Block> coraliteSlab = REGISTRY.register("coralite_slab", () -> new InkStainedSlabBlock.WithUninkedVariant(BlockBehaviour.Properties.of().instrument(NoteBlockInstrument.BASEDRUM).mapColor(MapColor.CLAY).strength(3, 3).requiresCorrectToolForDrops()));
 	public static final RegistrySupplier<Block> inkVat = REGISTRY.register("ink_vat", () -> new InkVatBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.0f).requiresCorrectToolForDrops()));
 	public static final RegistrySupplier<Block> weaponWorkbench = REGISTRY.register("ammo_knights_workbench", () -> new WeaponWorkbenchBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).instrument(NoteBlockInstrument.BASEDRUM).strength(2.0f).requiresCorrectToolForDrops()));
@@ -44,7 +46,7 @@ public class SplatcraftBlocks
 	public static final RegistrySupplier<Block> canvas = REGISTRY.register("canvas", () -> new CanvasBlock("canvas"));
 	public static final RegistrySupplier<Block> splatSwitch = REGISTRY.register("splat_switch", SplatSwitchBlock::new);
 	public static final RegistrySupplier<SpawnPadBlock> spawnPad = REGISTRY.register("spawn_pad", SpawnPadBlock::new);
-	public static final RegistrySupplier<Block> spawnPadEdge = REGISTRY.register("spawn_pad_edge", () -> new SpawnPadBlock.Aux(spawnPad.get()));
+	public static final RegistrySupplier<Block> spawnPadEdge = REGISTRY.register("spawn_pad_edge", () -> new SpawnPadBlock.Aux(spawnPad.value()));
 	public static final RegistrySupplier<Block> grate = REGISTRY.register("grate", GrateBlock::new);
 	public static final RegistrySupplier<Block> grateRamp = REGISTRY.register("grate_ramp", GrateRampBlock::new);
 	public static final RegistrySupplier<Block> barrierBar = REGISTRY.register("barrier_bar", BarrierBarBlock::new);

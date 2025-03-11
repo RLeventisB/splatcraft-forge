@@ -1,11 +1,11 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
-import dev.architectury.platform.Platform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.platform.Services;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.Contract;
 
@@ -15,7 +15,7 @@ public class SaveInfoCapability
 	public static SaveInfo clientSaveInfo;
 	static
 	{
-		if (Platform.getEnv().equals(EnvType.CLIENT))
+		if (Services.PLATFORM.isClientSide())
 			clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObjectArrayList<>());
 	}
 	// todo: create an "register" method so get doesn't automatically instantiates a saveinfo

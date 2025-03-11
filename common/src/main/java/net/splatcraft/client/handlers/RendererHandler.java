@@ -4,9 +4,6 @@ import com.google.common.base.Strings;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import dev.architectury.event.CompoundEventResult;
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.client.ClientChatEvent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -59,6 +56,10 @@ import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.CompoundEventResult;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
@@ -85,7 +86,7 @@ public class RendererHandler
 	private static float inkFlash = 0;
 	public static void registerEvents()
 	{
-		ClientChatEvent.RECEIVED.register(RendererHandler::onChatMessage);
+		Services.PLATFORM.registerListener(InteractionEvents.ClientChatReceive.class, RendererHandler::onChatMessage);
 	}
 	public static boolean playerRender(PlayerRenderer instance, AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int color)
 	{
@@ -200,7 +201,7 @@ public class RendererHandler
 //		SubWeaponRenderer<?, ?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().renderers.get(subWeaponItem.entityType.get());
 		// ok i tried to render the sub models via getting their internal model instead of instantiating a whole entity but the entityrenderer thing does a lot of work about colors and those things since these models have 2 layers
 		// maybe i will take that approach soon or something
-		AbstractSubWeaponEntity<T> sub = subWeaponItem.entityType.get().create(ClientUtils.getClientPlayer().clientLevel);
+		AbstractSubWeaponEntity<T> sub = subWeaponItem.entityType.value().create(ClientUtils.getClientPlayer().clientLevel);
 		sub.setColor(ColorUtils.getInkColor(stack));
 		sub.setItem(stack);
 		
@@ -212,7 +213,7 @@ public class RendererHandler
 		Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(sub).render(sub, 0, partialTicks, poseStack, source, light);
 		return true;
 	}
-	public static CompoundEventResult<Component> onChatMessage(ChatType.Bound parameretes, Component message)
+	public static net.splatcraft.platform.event.CompoundEventResult<Component> onChatMessage(ChatType.Bound parameters, Component message, UUID sender)
 	{
 		ClientLevel level = Minecraft.getInstance().level;
 		if (level != null && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.coloredPlayerNames")))

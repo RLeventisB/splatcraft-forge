@@ -9,6 +9,8 @@ import net.splatcraft.criteriaTriggers.ChangeInkColorTrigger;
 import net.splatcraft.criteriaTriggers.CraftWeaponTrigger;
 import net.splatcraft.criteriaTriggers.FallIntoInkTrigger;
 import net.splatcraft.criteriaTriggers.ScanTurfTrigger;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 
 public class SplatcraftStats
 {
@@ -26,7 +28,7 @@ public class SplatcraftStats
 	private static ResourceLocation register(String key, StatFormatter formatter)
 	{
 		ResourceLocation resourcelocation = Splatcraft.identifierOf(key);
-		STAT_REGISTRY.register(resourcelocation, () -> resourcelocation);
+		STAT_REGISTRY.register(key, () -> resourcelocation);
 		return resourcelocation;
 	}
 }

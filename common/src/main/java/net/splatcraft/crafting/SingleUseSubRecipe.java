@@ -38,7 +38,7 @@ public class SingleUseSubRecipe extends CustomRecipe
 			{
 				if (Block.byItem(itemstack.getItem()) instanceof InkwellBlock)
 					++inkwell;
-				else if (itemstack.getItem().equals(SplatcraftItems.sardinium.get()))
+				else if (itemstack.getItem().equals(SplatcraftItems.sardinium.value()))
 					++sardinium;
 				else
 				{
@@ -87,7 +87,7 @@ public class SingleUseSubRecipe extends CustomRecipe
 		{
 			ItemStack stack = inv.getItem(i);
 			if (Block.byItem(stack.getItem()) instanceof InkwellBlock)
-				restult.set(i, new ItemStack(SplatcraftItems.emptyInkwell.get()));
+				restult.set(i, new ItemStack(SplatcraftItems.emptyInkwell.value()));
 			else if (stack.is(SplatcraftTags.Items.SUB_WEAPONS))
 				restult.set(i, stack.copy());
 		}

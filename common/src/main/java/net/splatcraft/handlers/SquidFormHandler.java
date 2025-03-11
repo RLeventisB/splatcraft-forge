@@ -1,11 +1,6 @@
 package net.splatcraft.handlers;
 
 import com.mojang.serialization.Codec;
-import dev.architectury.event.CompoundEventResult;
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +15,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -34,6 +28,11 @@ import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.InteractionEvents;
+import net.splatcraft.platform.event.PlayerEvents;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -48,14 +47,14 @@ public class SquidFormHandler
 {
 	public static void registerEvents()
 	{
-		PlayerEvent.ATTACK_ENTITY.register(SquidFormHandler::onPlayerAttackEntity);
-		InteractionEvent.CLIENT_LEFT_CLICK_AIR.register(SquidFormHandler::onPlayerInteract);
-		InteractionEvent.CLIENT_RIGHT_CLICK_AIR.register(SquidFormHandler::onPlayerInteract);
-		InteractionEvent.LEFT_CLICK_BLOCK.register(SquidFormHandler::onPlayerInteract);
-		InteractionEvent.RIGHT_CLICK_BLOCK.register(SquidFormHandler::onPlayerInteract);
-		InteractionEvent.RIGHT_CLICK_ITEM.register(SquidFormHandler::onPlayerInteractItem);
-		InteractionEvent.INTERACT_ENTITY.register(SquidFormHandler::onPlayerInteract);
-		TickEvent.PLAYER_POST.register(SquidFormHandler::playerTick);
+		Services.PLATFORM.registerListener(PlayerEvents.AttackEntity.class, SquidFormHandler::onPlayerAttackEntity);
+		Services.PLATFORM.registerListener(InteractionEvents.ClientLeftClickAir.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(InteractionEvents.ClientRightClickAir.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickItem.class, SquidFormHandler::onPlayerInteractItem);
+		Services.PLATFORM.registerListener(InteractionEvents.InteractEntity.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, SquidFormHandler::playerTick);
 	}
 	public static void onLivingHurt(LivingEntity entity, DamageSource source, CallbackInfoReturnable<Boolean> cir)
 	{
@@ -195,7 +194,7 @@ public class SquidFormHandler
 		{
 			if (InkBlockUtils.canSquidHide(player))
 			{
-				SplatcraftStats.FALL_INTO_INK_TRIGGER.get().trigger(player, fallDistance);
+				SplatcraftStats.FALL_INTO_INK_TRIGGER.value().trigger(player, fallDistance);
 				cir.setReturnValue(false);
 			}
 		}
@@ -227,11 +226,11 @@ public class SquidFormHandler
 			return EventResult.interruptFalse();
 		return EventResult.pass();
 	}
-	public static CompoundEventResult<ItemStack> onPlayerInteractItem(Player player, Object... params)
+	public static EventResult onPlayerInteractItem(Player player, Object... params)
 	{
 		if (EntityInfoCapability.isSquid(player))
-			return CompoundEventResult.interruptFalse(ItemStack.EMPTY);
-		return CompoundEventResult.pass();
+			return EventResult.interruptFalse();
+		return EventResult.pass();
 	}
 	public static void doSquidRotation(Entity entity)
 	{

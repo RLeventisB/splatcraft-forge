@@ -1,6 +1,5 @@
 package net.splatcraft.items.weapons.subs;
 
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
@@ -11,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
 import org.jetbrains.annotations.NotNull;
 

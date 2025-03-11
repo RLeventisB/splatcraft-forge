@@ -1,7 +1,6 @@
 package net.splatcraft.items.weapons.subs;
 
 import com.mojang.serialization.DataResult;
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
 import net.minecraft.core.component.DataComponentMap;
@@ -26,6 +25,7 @@ import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;

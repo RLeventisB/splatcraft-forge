@@ -1,7 +1,7 @@
 package net.splatcraft;
 
-import dev.architectury.utils.Env;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.platform.ModSide;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -16,9 +16,9 @@ public class SplatcraftConfig
 	// todo: rework this entire class plz
 	public static boolean loaded = false;
 	static Map<String, Setting<?>> settingsMap = new HashMap<>();
-	public static String getModConfigPathString(Env env)
+	public static String getModConfigPathString(ModSide env)
 	{
-		return getModConfigPath().resolve(Splatcraft.MODID + (env == Env.CLIENT ? "-client" : "-server") + ".toml").toString();
+		return getModConfigPath().resolve(Splatcraft.MODID + (env == ModSide.CLIENT ? "-client" : "-server") + ".toml").toString();
 	}
 	public static void initializeSettingsMap()
 	{

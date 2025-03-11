@@ -29,6 +29,8 @@ import net.splatcraft.items.weapons.subs.BurstBombSubWeaponItem;
 import net.splatcraft.items.weapons.subs.CurlingSubWeaponItem;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.items.weapons.subs.ThrowableBombSubWeaponItem;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.ColorUtils;
 
@@ -134,19 +136,19 @@ public class SplatcraftItems
 	public static final RegistrySupplier<SubWeaponItem> curlingBomb = REGISTRY.register("curling_bomb", () -> new CurlingSubWeaponItem(SplatcraftEntities.CURLING_BOMB, "curling_bomb"));
 	//Materials
 	public static final RegistrySupplier<Item> sardinium = REGISTRY.register("sardinium", () -> new Item(new Item.Properties()));
-	public static final RegistrySupplier<Item> sardiniumBlock = REGISTRY.register("sardinium_block", () -> new BlockItem(SplatcraftBlocks.sardiniumBlock.get()));
+	public static final RegistrySupplier<Item> sardiniumBlock = REGISTRY.register("sardinium_block", () -> new BlockItem(SplatcraftBlocks.sardiniumBlock.value()));
 	public static final RegistrySupplier<Item> rawSardinium = REGISTRY.register("raw_sardinium", () -> new Item(new Item.Properties()));
-	public static final RegistrySupplier<Item> sardiniumOre = REGISTRY.register("sardinium_ore", () -> new BlockItem(SplatcraftBlocks.sardiniumOre.get()));
-	public static final RegistrySupplier<Item> rawSardiniumBlock = REGISTRY.register("raw_sardinium_block", () -> new BlockItem(SplatcraftBlocks.rawSardiniumBlock.get()));
-	public static final RegistrySupplier<Item> coralite = REGISTRY.register("coralite", () -> new ColoredBlockItem(SplatcraftBlocks.coralite.get()).setMatchColor(false).clearsToSelf());
-	public static final RegistrySupplier<Item> coraliteSlab = REGISTRY.register("coralite_slab", () -> new ColoredBlockItem(SplatcraftBlocks.coraliteSlab.get()).setMatchColor(false).clearsToSelf());
-	public static final RegistrySupplier<Item> coraliteStairs = REGISTRY.register("coralite_stairs", () -> new ColoredBlockItem(SplatcraftBlocks.coraliteStairs.get()).setMatchColor(false).clearsToSelf());
+	public static final RegistrySupplier<Item> sardiniumOre = REGISTRY.register("sardinium_ore", () -> new BlockItem(SplatcraftBlocks.sardiniumOre.value()));
+	public static final RegistrySupplier<Item> rawSardiniumBlock = REGISTRY.register("raw_sardinium_block", () -> new BlockItem(SplatcraftBlocks.rawSardiniumBlock.value()));
+	public static final RegistrySupplier<Item> coralite = REGISTRY.register("coralite", () -> new ColoredBlockItem(SplatcraftBlocks.coralite.value()).setMatchColor(false).clearsToSelf());
+	public static final RegistrySupplier<Item> coraliteSlab = REGISTRY.register("coralite_slab", () -> new ColoredBlockItem(SplatcraftBlocks.coraliteSlab.value()).setMatchColor(false).clearsToSelf());
+	public static final RegistrySupplier<Item> coraliteStairs = REGISTRY.register("coralite_stairs", () -> new ColoredBlockItem(SplatcraftBlocks.coraliteStairs.value()).setMatchColor(false).clearsToSelf());
 	public static final RegistrySupplier<Item> powerEgg = REGISTRY.register("power_egg", () -> new Item(new Item.Properties()));
 	public static final RegistrySupplier<Item> powerEggCan = REGISTRY.register("power_egg_can", PowerEggCanItem::new);
-	public static final RegistrySupplier<Item> powerEggBlock = REGISTRY.register("power_egg_block", () -> new BlockItem(SplatcraftBlocks.powerEggBlock.get()));
-	public static final RegistrySupplier<Item> emptyInkwell = REGISTRY.register("empty_inkwell", () -> new BlockItem(SplatcraftBlocks.emptyInkwell.get()));
+	public static final RegistrySupplier<Item> powerEggBlock = REGISTRY.register("power_egg_block", () -> new BlockItem(SplatcraftBlocks.powerEggBlock.value()));
+	public static final RegistrySupplier<Item> emptyInkwell = REGISTRY.register("empty_inkwell", () -> new BlockItem(SplatcraftBlocks.emptyInkwell.value()));
 	//Map Items
-	public static final RegistrySupplier<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.get(), 16, emptyInkwell.get()));
+	public static final RegistrySupplier<Item> inkwell = REGISTRY.register("inkwell", () -> new ColoredBlockItem(SplatcraftBlocks.inkwell.value(), 16, emptyInkwell.value()));
 	public static final RegistrySupplier<Item> ammoKnightsScrap = REGISTRY.register("ammo_knights_scrap", () -> new Item(new Item.Properties()));
 	public static final RegistrySupplier<Item> blueprint = REGISTRY.register("blueprint", BlueprintItem::new);
 	public static final RegistrySupplier<Item> kensaPin = REGISTRY.register("toni_kensa_pin", () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
@@ -164,33 +166,33 @@ public class SplatcraftItems
 	public static final RegistrySupplier<FilterItem> midnightFilter = REGISTRY.register("midnight_filter", FilterItem::new);
 	public static final RegistrySupplier<FilterItem> creativeFilter = REGISTRY.register("creative_filter", () -> new FilterItem(Rarity.RARE, false, true));
 	//Crafting Stations
-	public static final RegistrySupplier<Item> inkVat = REGISTRY.register("ink_vat", () -> new BlockItem(SplatcraftBlocks.inkVat.get()));
-	public static final RegistrySupplier<Item> weaponWorkbench = REGISTRY.register("ammo_knights_workbench", () -> new BlockItem(SplatcraftBlocks.weaponWorkbench.get()));
-	public static final RegistrySupplier<Item> spawnPad = REGISTRY.register("spawn_pad", () -> new ColoredBlockItem(SplatcraftBlocks.spawnPad.get(), 1));
-	public static final RegistrySupplier<Item> grate = REGISTRY.register("grate", () -> new BlockItem(SplatcraftBlocks.grate.get()));
-	public static final RegistrySupplier<Item> grateRamp = REGISTRY.register("grate_ramp", () -> new BlockItem(SplatcraftBlocks.grateRamp.get()));
-	public static final RegistrySupplier<Item> barrierBar = REGISTRY.register("barrier_bar", () -> new BlockItem(SplatcraftBlocks.barrierBar.get()));
-	public static final RegistrySupplier<Item> platedBarrierBar = REGISTRY.register("plated_barrier_bar", () -> new BlockItem(SplatcraftBlocks.platedBarrierBar.get()));
-	public static final RegistrySupplier<Item> cautionBarrierBar = REGISTRY.register("caution_barrier_bar", () -> new BlockItem(SplatcraftBlocks.cautionBarrierBar.get()));
-	public static final RegistrySupplier<Item> tarp = REGISTRY.register("tarp", () -> new BlockItem(SplatcraftBlocks.tarp.get()));
-	public static final RegistrySupplier<Item> glassCover = REGISTRY.register("glass_cover", () -> new BlockItem(SplatcraftBlocks.glassCover.get()));
-	public static final RegistrySupplier<Item> canvas = REGISTRY.register("canvas", () -> new ColoredBlockItem(SplatcraftBlocks.canvas.get()).setMatchColor(false));
+	public static final RegistrySupplier<Item> inkVat = REGISTRY.register("ink_vat", () -> new BlockItem(SplatcraftBlocks.inkVat.value()));
+	public static final RegistrySupplier<Item> weaponWorkbench = REGISTRY.register("ammo_knights_workbench", () -> new BlockItem(SplatcraftBlocks.weaponWorkbench.value()));
+	public static final RegistrySupplier<Item> spawnPad = REGISTRY.register("spawn_pad", () -> new ColoredBlockItem(SplatcraftBlocks.spawnPad.value(), 1));
+	public static final RegistrySupplier<Item> grate = REGISTRY.register("grate", () -> new BlockItem(SplatcraftBlocks.grate.value()));
+	public static final RegistrySupplier<Item> grateRamp = REGISTRY.register("grate_ramp", () -> new BlockItem(SplatcraftBlocks.grateRamp.value()));
+	public static final RegistrySupplier<Item> barrierBar = REGISTRY.register("barrier_bar", () -> new BlockItem(SplatcraftBlocks.barrierBar.value()));
+	public static final RegistrySupplier<Item> platedBarrierBar = REGISTRY.register("plated_barrier_bar", () -> new BlockItem(SplatcraftBlocks.platedBarrierBar.value()));
+	public static final RegistrySupplier<Item> cautionBarrierBar = REGISTRY.register("caution_barrier_bar", () -> new BlockItem(SplatcraftBlocks.cautionBarrierBar.value()));
+	public static final RegistrySupplier<Item> tarp = REGISTRY.register("tarp", () -> new BlockItem(SplatcraftBlocks.tarp.value()));
+	public static final RegistrySupplier<Item> glassCover = REGISTRY.register("glass_cover", () -> new BlockItem(SplatcraftBlocks.glassCover.value()));
+	public static final RegistrySupplier<Item> canvas = REGISTRY.register("canvas", () -> new ColoredBlockItem(SplatcraftBlocks.canvas.value()).setMatchColor(false));
 	public static final RegistrySupplier<Item> squidBumper = REGISTRY.register("squid_bumper", SquidBumperItem::new);
-	public static final RegistrySupplier<Item> sunkenCrate = REGISTRY.register("sunken_crate", () -> new BlockItem(SplatcraftBlocks.sunkenCrate.get()));
-	public static final RegistrySupplier<Item> crate = REGISTRY.register("crate", () -> new BlockItem(SplatcraftBlocks.crate.get()));
+	public static final RegistrySupplier<Item> sunkenCrate = REGISTRY.register("sunken_crate", () -> new BlockItem(SplatcraftBlocks.sunkenCrate.value()));
+	public static final RegistrySupplier<Item> crate = REGISTRY.register("crate", () -> new BlockItem(SplatcraftBlocks.crate.value()));
 	//Redstone Components
-	public static final RegistrySupplier<Item> remotePedestal = REGISTRY.register("remote_pedestal", () -> new ColoredBlockItem(SplatcraftBlocks.remotePedestal.get()));
-	public static final RegistrySupplier<Item> splatSwitch = REGISTRY.register("splat_switch", () -> new BlockItem(SplatcraftBlocks.splatSwitch.get()));
+	public static final RegistrySupplier<Item> remotePedestal = REGISTRY.register("remote_pedestal", () -> new ColoredBlockItem(SplatcraftBlocks.remotePedestal.value()));
+	public static final RegistrySupplier<Item> splatSwitch = REGISTRY.register("splat_switch", () -> new BlockItem(SplatcraftBlocks.splatSwitch.value()));
 	//Ink Stained Blocks
-	public static final RegistrySupplier<Item> inkedWool = REGISTRY.register("ink_stained_wool", () -> new ColoredBlockItem(SplatcraftBlocks.inkedWool.get(), new Item.Properties(), Items.WHITE_WOOL));
-	public static final RegistrySupplier<Item> inkedCarpet = REGISTRY.register("ink_stained_carpet", () -> new ColoredBlockItem(SplatcraftBlocks.inkedCarpet.get(), new Item.Properties(), Items.WHITE_CARPET));
-	public static final RegistrySupplier<Item> inkedGlass = REGISTRY.register("ink_stained_glass", () -> new ColoredBlockItem(SplatcraftBlocks.inkedGlass.get(), new Item.Properties(), Items.GLASS));
-	public static final RegistrySupplier<Item> inkedGlassPane = REGISTRY.register("ink_stained_glass_pane", () -> new ColoredBlockItem(SplatcraftBlocks.inkedGlassPane.get(), new Item.Properties(), Items.GLASS_PANE));
+	public static final RegistrySupplier<Item> inkedWool = REGISTRY.register("ink_stained_wool", () -> new ColoredBlockItem(SplatcraftBlocks.inkedWool.value(), new Item.Properties(), Items.WHITE_WOOL));
+	public static final RegistrySupplier<Item> inkedCarpet = REGISTRY.register("ink_stained_carpet", () -> new ColoredBlockItem(SplatcraftBlocks.inkedCarpet.value(), new Item.Properties(), Items.WHITE_CARPET));
+	public static final RegistrySupplier<Item> inkedGlass = REGISTRY.register("ink_stained_glass", () -> new ColoredBlockItem(SplatcraftBlocks.inkedGlass.value(), new Item.Properties(), Items.GLASS));
+	public static final RegistrySupplier<Item> inkedGlassPane = REGISTRY.register("ink_stained_glass_pane", () -> new ColoredBlockItem(SplatcraftBlocks.inkedGlassPane.value(), new Item.Properties(), Items.GLASS_PANE));
 	//Barriers
-	public static final RegistrySupplier<Item> allowedColorBarrier = REGISTRY.register("allowed_color_barrier", () -> new ColoredBlockItem(SplatcraftBlocks.allowedColorBarrier.get()));
-	public static final RegistrySupplier<Item> deniedColorBarrier = REGISTRY.register("denied_color_barrier", () -> new ColoredBlockItem(SplatcraftBlocks.deniedColorBarrier.get()));
-	public static final RegistrySupplier<Item> stageBarrier = REGISTRY.register("stage_barrier", () -> new BlockItem(SplatcraftBlocks.stageBarrier.get()));
-	public static final RegistrySupplier<Item> stageVoid = REGISTRY.register("stage_void", () -> new BlockItem(SplatcraftBlocks.stageVoid.get()));
+	public static final RegistrySupplier<Item> allowedColorBarrier = REGISTRY.register("allowed_color_barrier", () -> new ColoredBlockItem(SplatcraftBlocks.allowedColorBarrier.value()));
+	public static final RegistrySupplier<Item> deniedColorBarrier = REGISTRY.register("denied_color_barrier", () -> new ColoredBlockItem(SplatcraftBlocks.deniedColorBarrier.value()));
+	public static final RegistrySupplier<Item> stageBarrier = REGISTRY.register("stage_barrier", () -> new BlockItem(SplatcraftBlocks.stageBarrier.value()));
+	public static final RegistrySupplier<Item> stageVoid = REGISTRY.register("stage_void", () -> new BlockItem(SplatcraftBlocks.stageVoid.value()));
 	//Gear
 	public static final RegistrySupplier<Item> splatfestBand = REGISTRY.register("splatfest_band", () -> new Item(new Item.Properties().stacksTo(1)));
 	public static final RegistrySupplier<Item> clearBand = REGISTRY.register("clear_ink_band", () -> new Item(new Item.Properties().stacksTo(1)));
@@ -202,29 +204,28 @@ public class SplatcraftItems
 	{
 		SplatcraftItemGroups.colorTabItems.addAll(new ArrayList<>()
 		{{
-			add(inkwell.get());
-			add(spawnPad.get());
-			add(squidBumper.get());
-			add(canvas.get());
-			add(coralite.get());
-			add(coraliteSlab.get());
-			add(coraliteStairs.get());
-			add(inkedWool.get());
-			add(inkedCarpet.get());
-			add(inkedGlass.get());
-			add(inkedGlassPane.get());
-			add(inkedGlassPane.get());
-			add(allowedColorBarrier.get());
-			add(deniedColorBarrier.get());
+			add(inkwell.value());
+			add(spawnPad.value());
+			add(squidBumper.value());
+			add(canvas.value());
+			add(coralite.value());
+			add(coraliteSlab.value());
+			add(coraliteStairs.value());
+			add(inkedWool.value());
+			add(inkedCarpet.value());
+			add(inkedGlass.value());
+			add(inkedGlassPane.value());
+			add(inkedGlassPane.value());
+			add(allowedColorBarrier.value());
+			add(deniedColorBarrier.value());
 		}});
 		
-		DispenserBlock.registerBehavior(emptyInkwell.get(), new PlaceBlockDispenseBehavior());
-		DispenserBlock.registerBehavior(inkwell.get(), new PlaceBlockDispenseBehavior());
+		DispenserBlock.registerBehavior(emptyInkwell.value(), new PlaceBlockDispenseBehavior());
+		DispenserBlock.registerBehavior(inkwell.value(), new PlaceBlockDispenseBehavior());
 	}
 	public static RegistrySupplier<ArmorMaterial> createArmorMaterial(String name, Holder<SoundEvent> equipSound, int armor, float toughness, float knockbackResistance, Ingredient repairIngredient)
 	{
-		ResourceLocation id = Splatcraft.identifierOf(name);
-		return ARMOR_MATERIAL_REGISTRY.register(id, () -> new ArmorMaterial(
+		return ARMOR_MATERIAL_REGISTRY.register(name, () -> new ArmorMaterial(
 			Map.of(
 				ArmorItem.Type.HELMET, armor,
 				ArmorItem.Type.CHESTPLATE, armor,
@@ -263,14 +264,14 @@ public class SplatcraftItems
 		}
 		
 		ClampedItemPropertyFunction coloredProperty = (stack, level, entity, seed) -> !ColorUtils.getInkColor(stack).isValid() ? 0 : 1;
-		Services.PLATFORM.registerItemProperty(canvas.get(), Splatcraft.identifierOf("inked"), coloredProperty);
-		Services.PLATFORM.registerItemProperty(coralite.get(), Splatcraft.identifierOf("colored"), coloredProperty);
-		Services.PLATFORM.registerItemProperty(coraliteSlab.get(), Splatcraft.identifierOf("colored"), coloredProperty);
-		Services.PLATFORM.registerItemProperty(coraliteStairs.get(), Splatcraft.identifierOf("colored"), coloredProperty);
+		Services.PLATFORM.registerItemProperty(canvas.value(), Splatcraft.identifierOf("inked"), coloredProperty);
+		Services.PLATFORM.registerItemProperty(coralite.value(), Splatcraft.identifierOf("colored"), coloredProperty);
+		Services.PLATFORM.registerItemProperty(coraliteSlab.value(), Splatcraft.identifierOf("colored"), coloredProperty);
+		Services.PLATFORM.registerItemProperty(coraliteStairs.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		
-		InkTankFeature.register(inkTank.get(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
-		InkTankFeature.register(classicInkTank.get(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
-		InkTankFeature.register(inkTankJr.get(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);
-		InkTankFeature.register(armoredInkTank.get(), ArmoredInkTankModel.LAYER_LOCATION, ArmoredInkTankModel::new);
+		InkTankFeature.register(inkTank.value(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
+		InkTankFeature.register(classicInkTank.value(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
+		InkTankFeature.register(inkTankJr.value(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);
+		InkTankFeature.register(armoredInkTank.value(), ArmoredInkTankModel.LAYER_LOCATION, ArmoredInkTankModel::new);
 	}
 }

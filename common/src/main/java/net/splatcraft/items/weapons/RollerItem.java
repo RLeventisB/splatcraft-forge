@@ -35,6 +35,8 @@ import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
@@ -64,7 +66,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	}
 	public static RegistrySupplier<RollerItem> create(DeferredRegister<Item> registry, RegistrySupplier<RollerItem> parent, String name)
 	{
-		return registry.register(name, () -> new RollerItem(parent.get().settingsId.toString()));
+		return registry.register(name, () -> new RollerItem(parent.value().settingsId.toString()));
 	}
 	public static void applyRecoilKnockback(LivingEntity entity, double pow)
 	{

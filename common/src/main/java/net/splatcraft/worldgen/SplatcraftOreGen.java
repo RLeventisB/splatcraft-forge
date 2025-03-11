@@ -7,6 +7,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.CountConfigurat
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.placement.*;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.worldgen.features.CrateFeature;
 import net.splatcraft.worldgen.features.SardiniumDepositFeature;
 

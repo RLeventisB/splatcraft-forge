@@ -1,6 +1,5 @@
 package net.splatcraft.client.handlers;
 
-import dev.architectury.event.events.common.TickEvent;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.player.Input;
@@ -25,6 +24,8 @@ import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.SquidInputPacket;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.CommonUtils;
@@ -42,7 +43,8 @@ public class PlayerMovementHandler
 	private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	public static void registerEvents()
 	{
-		TickEvent.PLAYER_POST.register((player) ->
+		Services.PLATFORM.registerListener(TickEvents.PlayerBefore.class, PlayerMovementHandler::playerMovement);
+		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
 			Vec3 deltaMovement = player.getDeltaMovement();
 			if (Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.limitFallSpeed")) && deltaMovement.y < -0.5)
@@ -50,7 +52,6 @@ public class PlayerMovementHandler
 				player.setDeltaMovement(deltaMovement.x, -0.5, deltaMovement.z);
 			}
 		});
-		TickEvent.PLAYER_PRE.register(PlayerMovementHandler::playerMovement);
 	}
 	public static void playerMovement(Player player)
 	{

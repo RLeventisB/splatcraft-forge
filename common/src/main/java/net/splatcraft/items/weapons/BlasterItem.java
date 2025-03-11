@@ -14,6 +14,8 @@ import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
@@ -32,7 +34,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	}
 	public static RegistrySupplier<BlasterItem> createBlaster(DeferredRegister<Item> registry, RegistrySupplier<BlasterItem> parent, String name)
 	{
-		return registry.register(name, () -> new BlasterItem(parent.get().settingsId.toString()));
+		return registry.register(name, () -> new BlasterItem(parent.value().settingsId.toString()));
 	}
 	private static boolean getEndlagConsumer(ShootingHandler.WeaponShootingData data, Float accumulatedTime, LivingEntity entity, Boolean isStillUsing)
 	{

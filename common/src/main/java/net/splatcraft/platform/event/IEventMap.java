@@ -79,6 +79,18 @@ public interface IEventMap
 	{
 		return events.get(eventClass).invokeCompound(v -> v.invoke(parameter1, parameter2, parameter3, parameter4, parameter5));
 	}
+	default <EVT extends SimpleEvent.Hexa<P1, P2, P3, P4, P5, P6>, P1, P2, P3, P4, P5, P6> EventResult invokeEvent(Class<EVT> eventClass, P1 parameter1, P2 parameter2, P3 parameter3, P4 parameter4, P5 parameter5, P6 parameter6)
+	{
+		return events.get(eventClass).invokeSimple(v -> v.invoke(parameter1, parameter2, parameter3, parameter4, parameter5, parameter6));
+	}
+	default <EVT extends ConsumerEvent.Hexa<P1, P2, P3, P4, P5, P6>, P1, P2, P3, P4, P5, P6> void invokeConsumerEvent(Class<EVT> eventClass, P1 parameter1, P2 parameter2, P3 parameter3, P4 parameter4, P5 parameter5, P6 parameter6)
+	{
+		events.get(eventClass).invokeConsumer(v -> v.invoke(parameter1, parameter2, parameter3, parameter4, parameter5, parameter6));
+	}
+	default <EVT extends CompoundEvent.Hexa<P1, P2, P3, P4, P5, P6, R>, P1, P2, P3, P4, P5, P6, R> CompoundEventResult<R> invokeCompoundEvent(Class<EVT> eventClass, P1 parameter1, P2 parameter2, P3 parameter3, P4 parameter4, P5 parameter5, P6 parameter6)
+	{
+		return events.get(eventClass).invokeCompound(v -> v.invoke(parameter1, parameter2, parameter3, parameter4, parameter5, parameter6));
+	}
 	class EventRegistry
 	{
 		public Map<Class<?>, EventList<?>> events;
@@ -106,7 +118,7 @@ public interface IEventMap
 			for (var evt : registeredEvents)
 			{
 				CompoundEventResult<R> result = consumer.apply(evt);
-				if (result.equals(CompoundEventResult.pass()))
+				if (!result.result().interrupts)
 					continue;
 				
 				return result;
@@ -118,7 +130,7 @@ public interface IEventMap
 			for (var evt : registeredEvents)
 			{
 				EventResult result = consumer.apply(evt);
-				if (result.equals(EventResult.PASS))
+				if (!result.interrupts)
 					continue;
 				
 				return result;

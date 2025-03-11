@@ -1,5 +1,7 @@
 package net.splatcraft.platform.event;
 
+import net.minecraft.world.InteractionResultHolder;
+
 // yeah this is pretty much architectury's event result from here!!!
 // https://github.com/architectury/architectury-api/blob/1.21.4/common/src/main/java/dev/architectury/event/CompoundEventResult.java
 // so todo: maybe use architectury again (if they fix their hotswap compatibility) or use some other method that doesnt copy other code
@@ -25,5 +27,9 @@ public record CompoundEventResult<T>(EventResult result, T value)
 	public static <T> CompoundEventResult<T> interrupt(T value, boolean interruptType)
 	{
 		return new CompoundEventResult<>(EventResult.interrupt(interruptType), value);
+	}
+	public InteractionResultHolder<T> convertToInteractionResult()
+	{
+		return new InteractionResultHolder<>(result.convertToInteractionResult(), value);
 	}
 }

@@ -1,6 +1,5 @@
 package net.splatcraft.network.c2s;
 
-import dev.architectury.utils.GameInstance;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -16,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.NotifyStageCreatePacket;
+import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
 
 public class CreateOrEditStagePacket extends PlayC2SPacket
@@ -56,7 +56,7 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
 	@Override
 	public void execute(Player player)
 	{
-		SaveInfoCapability.get().createOrEditStage(GameInstance.getServer(), worldKey, stageId, corner1, corner2, stageName);
+		SaveInfoCapability.get().createOrEditStage(Services.PLATFORM.getServerInstance(), worldKey, stageId, corner1, corner2, stageName);
 		SplatcraftPacketHandler.sendToPlayer(new NotifyStageCreatePacket(stageId), (ServerPlayer) player);
 	}
 }

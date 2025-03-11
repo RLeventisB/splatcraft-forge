@@ -1,6 +1,5 @@
 package net.splatcraft.util;
 
-import dev.architectury.platform.Platform;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
@@ -36,6 +35,8 @@ import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerColorPacket;
+import net.splatcraft.platform.ModSide;
+import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftStats;
@@ -89,7 +90,7 @@ public class ColorUtils
 		if (EntityInfoCapability.hasCapability(player) && EntityInfoCapability.get(player).getColor() != color)
 		{
 			if (player instanceof ServerPlayer serverPlayer)
-				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.get().trigger(serverPlayer);
+				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.value().trigger(serverPlayer);
 			
 			EntityInfoCapability.get(player).setColor(color);
 			ScoreboardHandler.updatePlayerScore(Stats.CUSTOM.get(ScoreboardHandler.COLOR), player, color);
@@ -223,7 +224,7 @@ public class ColorUtils
 	}
 	public static @NotNull InkColor getColorLockedIfConfig(InkColor color)
 	{
-		return Platform.getEnv().equals(EnvType.CLIENT) && isColorLocked() ? getLockedColor(color) : color;
+		return Services.PLATFORM.getModSide().equals(ModSide.CLIENT) && isColorLocked() ? getLockedColor(color) : color;
 	}
 	@Environment(EnvType.CLIENT)
 	public static @NotNull InkColor getLockedColor(InkColor color)

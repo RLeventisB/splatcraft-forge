@@ -1,6 +1,5 @@
 package net.splatcraft.items.weapons.subs;
 
-import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
@@ -11,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 		SubWeaponSettings.DataRecord data = settings.dataRecord;
 		if (!world.isClientSide())
 		{
-			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(entityType.get(), world, entity, stack.copy());
+			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(entityType.value(), world, entity, stack.copy());
 			
 			proj.setItem(stack.copy());
 			proj.setDeltaMovement(entity, entity.getXRot(), entity.getYRot(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);

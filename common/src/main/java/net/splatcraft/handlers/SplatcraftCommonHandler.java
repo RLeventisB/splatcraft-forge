@@ -1,10 +1,5 @@
 package net.splatcraft.handlers;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.event.events.common.InteractionEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -35,6 +30,9 @@ import net.splatcraft.items.InkWaxerItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestEntityInfoPacket;
 import net.splatcraft.network.s2c.*;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
@@ -50,8 +48,8 @@ public class SplatcraftCommonHandler
 		PlayerEvent.PLAYER_CLONE.register(SplatcraftCommonHandler::onPlayerClone);
 		EntityEvent.LIVING_DEATH.register(SplatcraftCommonHandler::onLivingDeath);
 		PlayerEvent.PLAYER_JOIN.register(SplatcraftCommonHandler::onPlayerLoggedIn);
-		TickEvent.PLAYER_PRE.register(SplatcraftCommonHandler::capabilityUpdateEvent);
-		TickEvent.SERVER_LEVEL_PRE.register(SplatcraftCommonHandler::onWorldTick);
+		Services.PLATFORM.registerListener(TickEvents.PlayerBefore.class, SplatcraftCommonHandler::capabilityUpdateEvent);
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, SplatcraftCommonHandler::onWorldTick);
 		
 		InteractionEvent.LEFT_CLICK_BLOCK.register(SplatcraftCommonHandler::onBlockLeftClick);
 	}

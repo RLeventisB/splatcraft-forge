@@ -1,6 +1,5 @@
 package net.splatcraft.network.c2s;
 
-import dev.architectury.utils.GameInstance;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
@@ -9,6 +8,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 	public void execute(Player player)
 	{
 		EntityInfo target = EntityInfoCapability.get(player);
-		if (squid == target.isSquid() && !GameInstance.getServer().isSingleplayer())
+		if (squid == target.isSquid() && !Services.PLATFORM.getServerInstance().isSingleplayer())
 		{
 			throw new IllegalStateException(String.format("Squid state did not change for %s (%s)", player.getGameProfile(), squid));
 		}

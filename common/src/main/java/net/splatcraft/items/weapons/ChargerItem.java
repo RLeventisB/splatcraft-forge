@@ -20,6 +20,8 @@ import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.ReleaseChargePacket;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
@@ -46,7 +48,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	}
 	public static RegistrySupplier<ChargerItem> create(DeferredRegister<Item> register, RegistrySupplier<ChargerItem> parent, String name)
 	{
-		return register.register(name, () -> new ChargerItem(parent.get().settingsId.toString()));
+		return register.register(name, () -> new ChargerItem(parent.value().settingsId.toString()));
 	}
 	@Environment(EnvType.CLIENT)
 	protected static void playChargeReadySound(Player player)

@@ -15,6 +15,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
 import net.splatcraft.client.renderer.tileentity.StageBarrierTileEntityRenderer;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.tileentities.*;
 import net.splatcraft.tileentities.container.InkVatContainer;
 import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
@@ -33,7 +35,7 @@ public class SplatcraftTileEntities
 		{
 			Block[] blocks = new Block[allowedBlocks.length];
 			for (int i = 0; i < blocks.length; i++)
-				blocks[i] = allowedBlocks[i].get();
+				blocks[i] = allowedBlocks[i].value();
 			
 			return BlockEntityType.Builder.of(factoryIn, blocks).build(null);
 		}));
@@ -46,9 +48,9 @@ public class SplatcraftTileEntities
 	public static void bindTESR()
 	{
 		//BlockEntityRenderers.register(inkedTileEntity.get(), InkedBlockTileEntityRenderer::new);
-		BlockEntityRendererRegistry.register(stageBarrierTileEntity.get(), StageBarrierTileEntityRenderer::new);
-		BlockEntityRendererRegistry.register(colorBarrierTileEntity.get(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
-		BlockEntityRendererRegistry.register(remotePedestalTileEntity.get(), context -> new RemotePedestalTileEntityRenderer());
+		BlockEntityRendererRegistry.register(stageBarrierTileEntity.value(), StageBarrierTileEntityRenderer::new);
+		BlockEntityRendererRegistry.register(colorBarrierTileEntity.value(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
+		BlockEntityRendererRegistry.register(remotePedestalTileEntity.value(), context -> new RemotePedestalTileEntityRenderer());
 	}
 	public static final RegistrySupplier<MenuType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
 	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);

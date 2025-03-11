@@ -7,6 +7,8 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.loot.BlueprintLootFunction;
+import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.RegistrySupplier;
 
 public class SplatcraftLoot
 {

@@ -22,6 +22,14 @@ public interface LifecycleEvents
 			register(parameter1);
 		}
 	}
+	public interface ServerStarting extends ConsumerEvent.Mono<MinecraftServer>
+	{
+		void register(MinecraftServer client);
+		default void invoke(MinecraftServer parameter1)
+		{
+			register(parameter1);
+		}
+	}
 	public interface ServerStarted extends ConsumerEvent.Mono<MinecraftServer>
 	{
 		void register(MinecraftServer client);

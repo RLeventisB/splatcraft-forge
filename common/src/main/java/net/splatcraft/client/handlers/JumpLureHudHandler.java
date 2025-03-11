@@ -16,6 +16,7 @@ import net.splatcraft.network.c2s.UseJumpLurePacket;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.ClientRawInputEvent;
 import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.InkColor;
@@ -35,9 +36,8 @@ public class JumpLureHudHandler
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(ClientRawInputEvent.MouseScrolled.class, JumpLureHudHandler::onMouseScroll);
-		ClientRawInputEvent.MOUSE_SCROLLED.register(JumpLureHudHandler::onMouseScroll);
-		ClientRawInputEvent.MOUSE_CLICKED_PRE.register(JumpLureHudHandler::onMouseClick);
-		ClientTickEvent.CLIENT_PRE.register(JumpLureHudHandler::onKeypadInput);
+		Services.PLATFORM.registerListener(ClientRawInputEvent.MouseClicked.class, JumpLureHudHandler::onMouseClick);
+		Services.PLATFORM.registerListener(TickEvents.ClientBefore.class, JumpLureHudHandler::onKeypadInput);
 	}
 	public static void renderGui(GuiGraphics context, DeltaTracker tickCounter)
 	{
