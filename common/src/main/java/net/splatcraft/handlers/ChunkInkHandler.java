@@ -1,7 +1,5 @@
 package net.splatcraft.handlers;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -12,11 +10,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ChunkPos;
@@ -25,6 +23,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
@@ -44,7 +44,6 @@ import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkColor;
 import net.splatcraft.util.RelativeBlockPos;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -60,14 +59,14 @@ public class ChunkInkHandler
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, ChunkInkHandler::onBlockPlace);
-		BlockEvent.BREAK.register(ChunkInkHandler::onBlockBreak);
+		Services.PLATFORM.registerListener(InteractionEvents.BlockBreak.class, ChunkInkHandler::onBlockBreak);
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, ChunkInkHandler::onWorldTickStart);
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, ChunkInkHandler::onWorldTickEnd);
 		
 		if (Services.PLATFORM.getModSide().equals(ModSide.CLIENT))
 			registerClientEvent();
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private static void registerClientEvent()
 	{
 		Services.PLATFORM.registerListener(TickEvents.ClientLevelAfter.class, ChunkInkHandler::onClientWorldTickStart);
@@ -107,7 +106,7 @@ public class ChunkInkHandler
 		checkForInkRemoval(world, pos, Direction.values());
 		directions.forEach(direction -> checkForInkRemoval(world, pos.relative(direction), new Direction[] {direction.getOpposite()}));
 	}
-	public static EventResult onBlockBreak(Level level, BlockPos pos, BlockState state, ServerPlayer player, @Nullable IntValue xp)
+	public static EventResult onBlockBreak(Player player, Level level, BlockPos pos, BlockState state)
 	{
 		InkBlockUtils.clearBlock(level, pos, true);
 		return EventResult.pass();
@@ -143,7 +142,7 @@ public class ChunkInkHandler
 		}
 	}
 	//prevent foliage placement on ink if inkDestroysFoliage is on
-	public static EventResult onBlockPlace(Player player, InteractionHand hand, BlockPos pos, Direction face)
+	public static EventResult onBlockPlace(Player player, InteractionHand hand, Direction face, ItemStack stack, Level level, BlockPos pos)
 	{
 		Direction direction = face == null ? Direction.UP : face;
 		if (SplatcraftGameRules.getLocalizedRule(player.level(), pos, SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
@@ -235,7 +234,7 @@ public class ChunkInkHandler
 			}
 		}
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void onClientWorldTickStart(ClientLevel world)
 	{
 		new ArrayList<>(INK_CACHE.keySet()).forEach(chunkPos ->
@@ -277,9 +276,9 @@ public class ChunkInkHandler
 		if (!ChunkInkCapability.hasAndNotEmpty(chunk))
 			return;
 		ChunkInk worldInk = ChunkInkCapability.get(chunk);
-		handler.send(SplatcraftPacketHandler.CHANNEL.toPacket(Side.S2C, new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), world.registryAccess()), null);
+		SplatcraftPacketHandler.sendToPlayer(new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), handler.player);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void updateClientInkForChunk(Level world, LevelChunk chunk)
 	{
 		ChunkPos chunkPos = chunk.getPos();
@@ -308,7 +307,7 @@ public class ChunkInkHandler
 		blocks.addAll(positions);
 		INK_IGNORE_REMOVE.put(world, blocks);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Render
 	{
 		public static final ResourceLocation INKED_BLOCK_LOCATION = Splatcraft.identifierOf("block/inked_block");

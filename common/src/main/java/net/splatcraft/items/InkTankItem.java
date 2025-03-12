@@ -1,7 +1,5 @@
 package net.splatcraft.items;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -14,6 +12,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -151,7 +151,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getBarColor(stack) : ColorUtils.getInkColor(stack).getColorWithAlpha(255);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public boolean isBarVisible(@NotNull ItemStack stack)
 	{

@@ -1,8 +1,6 @@
 package net.splatcraft.util;
 
 import com.mojang.datafixers.util.Pair;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -19,6 +17,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -35,9 +35,9 @@ import java.util.*;
 
 public class ClientUtils
 {
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected static final TreeMap<UUID, InkColor> clientColors = new TreeMap<>();
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, Pair<Vec3, Vec2>[]> matchStartCameraPosProvider =
 		new DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<>((stage) ->
 		{
@@ -88,7 +88,7 @@ public class ClientUtils
 			return posAndRotations.toArray(Pair[]::new);
 		}
 		);
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static Pair<UUID, Vector3f> killCamData;
 	private static void addPadToList(SpawnPadTileEntity randomPad, Vec3 stageFloorCenter, ArrayList<Pair<Vec3, Vec2>> posAndRotations)
 	{
@@ -100,27 +100,27 @@ public class ClientUtils
 		
 		posAndRotations.add(Pair.of(lookPosition, new Vec2(-pitch, -yaw)));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void resetClientColors()
 	{
 		clientColors.clear();
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static InkColor getClientPlayerColor(UUID player)
 	{
 		return clientColors.getOrDefault(player, InkColor.INVALID);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void setClientPlayerColor(UUID player, InkColor color)
 	{
 		clientColors.put(player, color);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void putClientColors(TreeMap<UUID, InkColor> map)
 	{
 		clientColors.putAll(map);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static LocalPlayer getClientPlayer()
 	{
 		return Minecraft.getInstance().player;
@@ -178,12 +178,12 @@ public class ClientUtils
 			cap.flagSquidCancel();
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static Minecraft getClient()
 	{
 		return Minecraft.getInstance();
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static Pair<Vec3, Vec2>[] getMatchIntroData(Stage stage)
 	{
 		return matchStartCameraPosProvider.apply(stage);

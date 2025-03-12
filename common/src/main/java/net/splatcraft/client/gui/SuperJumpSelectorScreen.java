@@ -54,13 +54,13 @@ public class SuperJumpSelectorScreen
 	}
 	public double render(GuiGraphics graphics, DeltaTracker tickCounter, JumpLureHudHandler.SuperJumpTargets targets, double scrollDelta, boolean clicked)
 	{
-		ArrayList<UUID> playerUuids = new ArrayList<>(targets.playerTargetUuids);
-		int entryCount = playerUuids.size() + (targets.canTargetSpawn ? 2 : 1);
+		ArrayList<UUID> playerUuids = new ArrayList<>(targets.playerTargetUuids());
+		int entryCount = playerUuids.size() + (targets.canTargetSpawn() ? 2 : 1);
 		int index = Math.floorMod((int) scrollDelta, entryCount);
 		
 		ArrayList<MenuItem> options = new ArrayList<>(playerUuids.stream().map(uuid -> new PlayerMenuItem(mc.getConnection().getPlayerInfo(uuid).getProfile())).toList());
 		
-		if (targets.canTargetSpawn)
+		if (targets.canTargetSpawn())
 			options.add(0, new ItemStackMenuItem(new ItemStack(SplatcraftItems.spawnPad.get()), Component.literal("Go to Spawn")));
 		options.add(0, new ItemStackMenuItem(new ItemStack(Items.BARRIER), Component.literal("Cancel")));
 		
@@ -73,7 +73,7 @@ public class SuperJumpSelectorScreen
 			float x = screenWidth / 2f - 10 + i * 20;
 			options.get(finalIndex).renderIcon(graphics, x, 10, 0, 1, tickCounter.getGameTimeDeltaPartialTick(true));
 			
-			graphics.drawCenteredString(mc.font, Integer.toString(finalIndex), (int) x + 8, 30, finalIndex == index ? targets.color.getColorWithAlpha(255) : 0xFFFFFF);
+			graphics.drawCenteredString(mc.font, Integer.toString(finalIndex), (int) x + 8, 30, finalIndex == index ? targets.color().getColorWithAlpha(255) : 0xFFFFFF);
 		}
 		
 		double fov = ((GameRendererFovAccessor) mc.gameRenderer).invokeGetFov(
@@ -89,9 +89,9 @@ public class SuperJumpSelectorScreen
 			var option = options.get(i);
 			
 			float x = -1, y = -1, scale = 1;
-			if (i == 1 && targets.canTargetSpawn && option instanceof ItemStackMenuItem)
+			if (i == 1 && targets.canTargetSpawn() && option instanceof ItemStackMenuItem)
 			{
-				Vec3 spawnPos = Vec3.atCenterOf(targets.spawnPosition);
+				Vec3 spawnPos = Vec3.atCenterOf(targets.spawnPosition());
 				Vector4f screenPos = GraphicsUtils.worldToScreenSpace(spawnPos, projectionMatrix);
 				if (screenPos.z > 0)
 					continue;
@@ -149,7 +149,7 @@ public class SuperJumpSelectorScreen
 			
 			graphics.pose().pushPose();
 			graphics.pose().translate(0, 0, 3000f);
-			graphics.drawCenteredString(mc.font, option.getName(), (int) ((screenWidth / 2f + x)), (int) ((screenHeight / 2f + y - 8)), i == index ? targets.color.getColorWithAlpha(255) : 0xFFFFFF);
+			graphics.drawCenteredString(mc.font, option.getName(), (int) ((screenWidth / 2f + x)), (int) ((screenHeight / 2f + y - 8)), i == index ? targets.color().getColorWithAlpha(255) : 0xFFFFFF);
 			graphics.pose().popPose();
 		}
 		if (!selected && clicked)

@@ -1,7 +1,5 @@
 package net.splatcraft.entities;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -16,6 +14,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.StingRayTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -127,7 +127,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		z = rayDirection.z * t - z;
 		return new Vec3(x, y, z);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void playSound(StingRayBeamEntity beam)
 	{
 		Minecraft.getInstance().getSoundManager().queueTickingSound(new StingRayTickableSound(beam));

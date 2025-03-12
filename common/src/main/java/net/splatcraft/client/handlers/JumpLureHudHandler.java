@@ -1,7 +1,5 @@
 package net.splatcraft.client.handlers;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -9,6 +7,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.gui.SuperJumpSelectorScreen;
 import net.splatcraft.items.JumpLureItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -25,14 +25,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class JumpLureHudHandler
 {
 	private static final SuperJumpSelectorScreen selectorGui = new SuperJumpSelectorScreen();
 	public static boolean clickedThisFrame = false;
 	private static SuperJumpTargets targets;
 	private static double scrollDelta = 0;
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(ClientRawInputEvent.MouseScrolled.class, JumpLureHudHandler::onMouseScroll);

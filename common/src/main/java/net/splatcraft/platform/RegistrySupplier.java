@@ -10,9 +10,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class RegistrySupplier<R> implements Holder<R>
+public class RegistrySupplier<R> implements Holder<R>, Supplier<R>
 {
 	Holder<R> holder;
 	public RegistrySupplier(Holder<R> holder)
@@ -78,5 +79,10 @@ public class RegistrySupplier<R> implements Holder<R>
 	public boolean canSerializeIn(@NotNull HolderOwner<R> holderOwner)
 	{
 		return holder.canSerializeIn(holderOwner);
+	}
+	@Override
+	public R get()
+	{
+		return holder.value();
 	}
 }

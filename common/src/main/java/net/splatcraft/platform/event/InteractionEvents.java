@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.platform.event.types.CompoundEvent;
 import net.splatcraft.platform.event.types.ConsumerEvent;
 import net.splatcraft.platform.event.types.SimpleEvent;
@@ -65,16 +66,17 @@ public interface InteractionEvents
 	@FunctionalInterface
 	public interface InteractEntity extends SimpleEvent.Hexa<Player, InteractionHand, Direction, Entity, Level, BlockPos>
 	{
-		EventResult register(Player player, InteractionHand usedHand, Direction blockFace, Entity target, Level level, BlockPos blockClicked);
-		default EventResult invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, Entity parameter4, Level parameter5, BlockPos parameter6)
-		{
-			return register(parameter1, parameter2, parameter3, parameter4, parameter5, parameter6);
-		}
+		EventResult invoke(Player player, InteractionHand usedHand, Direction blockFace, Entity target, Level level, BlockPos blockClicked);
 	}
 	@FunctionalInterface
 	public interface ClientChatReceive extends CompoundEvent.Tri<ChatType.Bound, Component, UUID, Component>
 	{
 		CompoundEventResult<Component> invoke(ChatType.Bound chatType, Component message, UUID sender);
+	}
+	@FunctionalInterface
+	public interface BlockBreak extends SimpleEvent.Tetra<Player, Level, BlockPos, BlockState>
+	{
+		EventResult invoke(Player player, Level level, BlockPos blockPosition, BlockState state);
 	}
 }
 

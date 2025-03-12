@@ -1,10 +1,5 @@
 package net.splatcraft.registries;
 
-import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
-import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
-import dev.architectury.registry.level.entity.EntityAttributeRegistry;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
@@ -22,6 +17,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkAccessoryLayer;
 import net.splatcraft.client.layer.InkOverlayLayer;
@@ -81,43 +78,43 @@ public class SplatcraftEntities
 	{
 		return create(name, supplier, classification, 1, 1);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void bindRenderers()
 	{
-		EntityRendererRegistry.register(INK_DROP, InkDropRenderer::new);
-		EntityRendererRegistry.register(INK_PROJECTILE, InkProjectileRenderer::new);
-		EntityRendererRegistry.register(INK_SQUID, InkSquidRenderer::new);
-		EntityRendererRegistry.register(SQUID_BUMPER, SquidBumperRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(INK_DROP, InkDropRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(INK_PROJECTILE, InkProjectileRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(INK_SQUID, InkSquidRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(SQUID_BUMPER, SquidBumperRenderer::new);
 		
-		EntityRendererRegistry.register(SPLAT_BOMB, SplatBombRenderer::new);
-		EntityRendererRegistry.register(BURST_BOMB, BurstBombRenderer::new);
-		EntityRendererRegistry.register(SUCTION_BOMB, SuctionBombRenderer::new);
-		EntityRendererRegistry.register(CURLING_BOMB, CurlingBombRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(SPLAT_BOMB, SplatBombRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(BURST_BOMB, BurstBombRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(SUCTION_BOMB, SuctionBombRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(CURLING_BOMB, CurlingBombRenderer::new);
 		
-		EntityRendererRegistry.register(SPAWN_SHIELD, SpawnShieldRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(SPAWN_SHIELD, SpawnShieldRenderer::new);
 		
-		EntityRendererRegistry.register(STING_RAY_PROJECTILE, StingRayBeamRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(STING_RAY_PROJECTILE, StingRayBeamRenderer::new);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void defineModelLayers()
 	{
-		EntityModelLayerRegistry.register(InkSquidModel.LAYER_LOCATION, InkSquidModel::createBodyLayer);
-		EntityModelLayerRegistry.register(SquidBumperModel.LAYER_LOCATION, SquidBumperModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(InkSquidModel.LAYER_LOCATION, InkSquidModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(SquidBumperModel.LAYER_LOCATION, SquidBumperModel::createBodyLayer);
 		
-		EntityModelLayerRegistry.register(SplatBombModel.LAYER_LOCATION, SplatBombModel::createBodyLayer);
-		EntityModelLayerRegistry.register(BurstBombModel.LAYER_LOCATION, BurstBombModel::createBodyLayer);
-		EntityModelLayerRegistry.register(SuctionBombModel.LAYER_LOCATION, SuctionBombModel::createBodyLayer);
-		EntityModelLayerRegistry.register(CurlingBombModel.LAYER_LOCATION, CurlingBombModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(SplatBombModel.LAYER_LOCATION, SplatBombModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(BurstBombModel.LAYER_LOCATION, BurstBombModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(SuctionBombModel.LAYER_LOCATION, SuctionBombModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(CurlingBombModel.LAYER_LOCATION, CurlingBombModel::createBodyLayer);
 		
-		EntityModelLayerRegistry.register(InkProjectileModel.LAYER_LOCATION, InkProjectileModel::createBodyLayer);
-		EntityModelLayerRegistry.register(ShooterInkProjectileModel.LAYER_LOCATION, ShooterInkProjectileModel::createBodyLayer);
-		EntityModelLayerRegistry.register(BlasterInkProjectileModel.LAYER_LOCATION, BlasterInkProjectileModel::createBodyLayer);
-		EntityModelLayerRegistry.register(RollerInkProjectileModel.LAYER_LOCATION, RollerInkProjectileModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(InkProjectileModel.LAYER_LOCATION, InkProjectileModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(ShooterInkProjectileModel.LAYER_LOCATION, ShooterInkProjectileModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(BlasterInkProjectileModel.LAYER_LOCATION, BlasterInkProjectileModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(RollerInkProjectileModel.LAYER_LOCATION, RollerInkProjectileModel::createBodyLayer);
 		
-		EntityModelLayerRegistry.register(InkTankModel.LAYER_LOCATION, InkTankModel::createBodyLayer);
-		EntityModelLayerRegistry.register(ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::createBodyLayer);
-		EntityModelLayerRegistry.register(InkTankJrModel.LAYER_LOCATION, InkTankJrModel::createBodyLayer);
-		EntityModelLayerRegistry.register(ArmoredInkTankModel.LAYER_LOCATION, ArmoredInkTankModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(InkTankModel.LAYER_LOCATION, InkTankModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(InkTankJrModel.LAYER_LOCATION, InkTankJrModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(ArmoredInkTankModel.LAYER_LOCATION, ArmoredInkTankModel::createBodyLayer);
 	}
 	public static void registerDataTrackers()
 	{
@@ -139,12 +136,12 @@ public class SplatcraftEntities
 		builder.add(SplatcraftAttributes.superJumpHeight, SplatcraftAttributes.superJumpHeight.get().getDefaultValue());
 		return builder;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private static <T extends LivingEntity, M extends EntityModel<T>> void attachInkOverlay(LivingEntityRenderer<T, M> renderer)
 	{
 		renderer.addLayer(new InkOverlayLayer<>(renderer));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void addRenderLayers(Map<EntityType<?>, EntityRenderer<?>> renderers, Map<PlayerSkin.Model, EntityRenderer<? extends Player>> skinMap, EntityRendererProvider.Context context)
 	{
 		skinMap.keySet().forEach(renderer ->
@@ -163,7 +160,7 @@ public class SplatcraftEntities
 	}
 	public static void registerAttributes()
 	{
-		EntityAttributeRegistry.register(SQUID_BUMPER, SquidBumperEntity::setCustomAttributes);
-		EntityAttributeRegistry.register(INK_SQUID, InkSquidEntity::setCustomAttributes);
+		Services.PLATFORM.registerAttribute(SQUID_BUMPER, SquidBumperEntity::setCustomAttributes);
+		Services.PLATFORM.registerAttribute(INK_SQUID, InkSquidEntity::setCustomAttributes);
 	}
 }

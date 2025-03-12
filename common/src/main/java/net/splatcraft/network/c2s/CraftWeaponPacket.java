@@ -47,7 +47,7 @@ public class CraftWeaponPacket extends PlayC2SPacket
 	{
 		Optional<? extends RecipeHolder<?>> recipeOptional = player.level().getRecipeManager().byKey(recipeID);
 		
-		if (recipeOptional.isPresent() && recipeOptional.get().get() instanceof WeaponWorkbenchRecipe workbenchRecipe)
+		if (recipeOptional.isPresent() && recipeOptional.get().value() instanceof WeaponWorkbenchRecipe workbenchRecipe)
 		{
 			WeaponWorkbenchSubtypeRecipe recipe = workbenchRecipe.getRecipeFromIndex(player, subtype);
 			for (StackedIngredient ing : recipe.getInput())

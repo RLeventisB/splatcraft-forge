@@ -17,9 +17,9 @@ public class ShotDeviationHelper
 		
 		stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, data
 			.withChanceDecreaseDelay(actualChanceResult.delay())
-			.withChance(actualChanceResult.get())
+			.withChance(actualChanceResult.value())
 			.withAirborneDecreaseDelay(airInfluenceResult.delay())
-			.withAirborneInfluence(airInfluenceResult.get())
+			.withAirborneInfluence(airInfluenceResult.value())
 		);
 	}
 	public static SplatcraftComponents.WeaponPrecisionData getDeviationData(ItemStack stack)

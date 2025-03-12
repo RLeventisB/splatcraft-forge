@@ -69,10 +69,10 @@ public class SplatcraftParticleTypes
 	};
 	public static void registerParticles()
 	{
-		REGISTRY.register(Splatcraft.identifierOf("ink_splash"), () -> INK_SPLASH);
-		REGISTRY.register(Splatcraft.identifierOf("ink_explosion"), () -> INK_EXPLOSION);
-		REGISTRY.register(Splatcraft.identifierOf("squid_soul"), () -> SQUID_SOUL);
-		REGISTRY.register(Splatcraft.identifierOf("ink_terrain"), () -> INK_TERRAIN);
+		REGISTRY.register("ink_splash", () -> INK_SPLASH);
+		REGISTRY.register("ink_explosion", () -> INK_EXPLOSION);
+		REGISTRY.register("squid_soul", () -> SQUID_SOUL);
+		REGISTRY.register("ink_terrain", () -> INK_TERRAIN);
 		
 		// uhhh architectury commented the code of these, why?????????????
 /*

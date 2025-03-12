@@ -2,11 +2,7 @@ package net.splatcraft.client.handlers;
 
 import com.google.common.collect.Iterables;
 import com.mojang.datafixers.util.Pair;
-import dev.architectury.event.events.client.ClientTickEvent;
-import dev.architectury.registry.client.keymappings.KeyMappingRegistry;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -20,6 +16,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -32,6 +30,8 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestSpecialUsageDataPacket;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
 import net.splatcraft.network.c2s.UpdateChargeStatePacket;
+import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -51,13 +51,13 @@ public class SplatcraftKeyHandler
 	public static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static int slot = -1;
 	private static boolean usingSubWeaponHotkey;
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void registerBindingsAndEvents()
 	{
-		KeyMappingRegistry.register(SUB_WEAPON_KEYBIND.key);
-		KeyMappingRegistry.register(SPECIAL_WEAPON_KEYBIND.key);
-		KeyMappingRegistry.register(SQUID_KEYBIND.key);
-		ClientTickEvent.CLIENT_PRE.register(SplatcraftKeyHandler::onClientTick);
+		Services.PLATFORM.registerKeyMapping(SUB_WEAPON_KEYBIND.key);
+		Services.PLATFORM.registerKeyMapping(SPECIAL_WEAPON_KEYBIND.key);
+		Services.PLATFORM.registerKeyMapping(SQUID_KEYBIND.key);
+		Services.PLATFORM.registerListener(TickEvents.ClientBefore.class, SplatcraftKeyHandler::onClientTick);
 	}
 	public static boolean isSubWeaponHotkeyDown()
 	{
@@ -67,7 +67,7 @@ public class SplatcraftKeyHandler
 	{
 		return !pressState.isEmpty() && Iterables.getLast(pressState).equals(SQUID_KEYBIND);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void onClientTick(Minecraft mc)
 	{
 		Player player = mc.player;

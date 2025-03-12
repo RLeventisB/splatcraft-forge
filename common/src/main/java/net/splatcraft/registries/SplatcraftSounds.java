@@ -1,7 +1,6 @@
 package net.splatcraft.registries;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.block.SoundType;
 import net.splatcraft.Splatcraft;
@@ -143,9 +142,8 @@ public class SplatcraftSounds
 	*/
 	private static SoundEvent createSoundEvent(String id)
 	{
-		ResourceLocation loc = Splatcraft.identifierOf(id);
-		SoundEvent sound = SoundEvent.createVariableRangeEvent(loc);
-		REGISTRY.register(loc, () -> sound);
+		SoundEvent sound = SoundEvent.createVariableRangeEvent(Splatcraft.identifierOf(id));
+		REGISTRY.register(id, () -> sound);
 		return sound;
 	}
 }

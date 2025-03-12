@@ -1,6 +1,11 @@
 package net.splatcraft.platform.services;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.core.Registry;
@@ -8,14 +13,25 @@ import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.event.IEventMap;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 public interface IPlatformHelper extends IEventMap
 {
@@ -70,4 +86,10 @@ public interface IPlatformHelper extends IEventMap
 	MinecraftServer getServerInstance();
 	<T> DeferredRegister<T> createRegistry(Registry<T> registry);
 	void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item);
+	void registerReloadListener(PackType packType, PreparableReloadListener reloadListener);
+	void registerKeyMapping(KeyMapping key);
+	<T extends BlockEntity> void registerBlockEntityRenderer(@NotNull BlockEntityType<T> type, BlockEntityRendererProvider<T> provider);
+	<T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider);
+	void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier);
+	void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute);
 }

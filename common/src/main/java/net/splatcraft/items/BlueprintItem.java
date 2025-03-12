@@ -1,7 +1,5 @@
 package net.splatcraft.items;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.component.DataComponents;
@@ -16,6 +14,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.items.weapons.*;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
@@ -133,7 +133,7 @@ public class BlueprintItem extends Item
 			}
 		}
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> components, @NotNull TooltipFlag type)
 	{
@@ -182,8 +182,8 @@ public class BlueprintItem extends Item
 				for (String key : serverPlayer.getAdvancements().getOrStartProgress(advancement).getRemainingCriteria())
 					serverPlayer.getAdvancements().award(advancement, key);
 				
-				if (advancement.get().display().isPresent() && !advancement.get().display().get().shouldShowToast())
-					player.displayClientMessage(Component.translatable("status.blueprint.unlock", advancement.get().display().get().getTitle()), true);
+				if (advancement.value().display().isPresent() && !advancement.value().display().get().shouldShowToast())
+					player.displayClientMessage(Component.translatable("status.blueprint.unlock", advancement.value().display().get().getTitle()), true);
 				
 				stack.shrink(1);
 				return InteractionResultHolder.consume(stack);

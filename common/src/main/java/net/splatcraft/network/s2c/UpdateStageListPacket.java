@@ -1,13 +1,13 @@
 package net.splatcraft.network.s2c;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.gui.stagepad.AbstractStagePadScreen;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
@@ -37,7 +37,7 @@ public class UpdateStageListPacket extends PlayS2CPacket
 	{
 		STAGE_INFO_PACKET_CODEC.encode(buffer, stages);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

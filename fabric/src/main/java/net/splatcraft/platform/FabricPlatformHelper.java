@@ -1,8 +1,6 @@
 package net.splatcraft.platform;
 
 import com.mojang.brigadier.arguments.ArgumentType;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -57,7 +55,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 			server = null;
 		});
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private void registerClientSideEvents()
 	{
 		ClientLifecycleEvents.CLIENT_STARTED.register((client) ->

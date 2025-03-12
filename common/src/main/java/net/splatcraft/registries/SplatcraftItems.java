@@ -1,7 +1,5 @@
 package net.splatcraft.registries;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -11,6 +9,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.DispenserBlock;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkTankFeature;
 import net.splatcraft.client.models.inktanks.ArmoredInkTankModel;
@@ -233,7 +233,7 @@ public class SplatcraftItems
 				ArmorItem.Type.BOOTS, armor
 			), 0, equipSound, () -> repairIngredient, List.of(), toughness, knockbackResistance));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void registerModelProperties()
 	{
 		ResourceLocation activeProperty = Splatcraft.identifierOf("active");

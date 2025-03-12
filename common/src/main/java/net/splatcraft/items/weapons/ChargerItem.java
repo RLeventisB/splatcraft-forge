@@ -1,7 +1,5 @@
 package net.splatcraft.items.weapons;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundSource;
@@ -11,6 +9,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.ChargerChargingTickableSound;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
@@ -50,7 +50,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	{
 		return register.register(name, () -> new ChargerItem(parent.value().settingsId.toString()));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected static void playChargeReadySound(Player player)
 	{
 		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()))
@@ -77,7 +77,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		EntityAction.setEntityAction(player, new EntityCooldown(stack, settings.shotData.endlagTicks(), player.getInventory().selected, player.getUsedItemHand(), true, false, false, player.onGround()));
 		player.getCooldowns().addCooldown(this, 7);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected void playChargingSound(Player player)
 	{
 		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()) || (chargingSound != null && !chargingSound.isStopped()))

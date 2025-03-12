@@ -1,7 +1,5 @@
 package net.splatcraft.items.weapons;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -15,6 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.SplatlingChargingTickableSound;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -61,7 +61,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		return register.register(name, () -> new SplatlingItem(parent.value().settingsId.toString()));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected static void playChargeReadySound(Player player, float pitch)
 	{
 		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(player.getUUID()))
@@ -97,7 +97,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		return SplatlingWeaponSettings.class;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected void playChargingSound(Player player, ItemStack stack)
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();

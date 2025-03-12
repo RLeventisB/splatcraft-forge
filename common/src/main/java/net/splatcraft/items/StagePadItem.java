@@ -1,7 +1,5 @@
 package net.splatcraft.items;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.stats.Stats;
@@ -15,6 +13,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
@@ -60,7 +60,7 @@ public class StagePadItem extends Item implements IColoredItem, ISplatcraftForge
 		
 		return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void openMenu(ItemStack itemStack)
 	{
 		Minecraft.getInstance().setScreen(new StageSelectionScreen(itemStack.getHoverName()));

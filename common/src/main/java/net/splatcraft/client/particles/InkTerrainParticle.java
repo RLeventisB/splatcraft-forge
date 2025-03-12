@@ -1,17 +1,17 @@
 package net.splatcraft.client.particles;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.BlockPos;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class InkTerrainParticle extends TextureSheetParticle
 {
 	public InkTerrainParticle(ClientLevel p_108282_, double p_108283_, double p_108284_, double p_108285_, double p_108286_, double p_108287_, double p_108288_, float r, float g, float b)
@@ -33,7 +33,7 @@ public class InkTerrainParticle extends TextureSheetParticle
 	{
 		return ParticleRenderType.TERRAIN_SHEET;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Factory implements ParticleProvider<InkTerrainParticleData>
 	{
 		public Factory(SpriteSet sprite)

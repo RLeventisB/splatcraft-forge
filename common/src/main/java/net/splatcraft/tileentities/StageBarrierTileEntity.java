@@ -1,7 +1,5 @@
 package net.splatcraft.tileentities;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +13,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.data.SplatcraftTags;
@@ -61,7 +61,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			entity.hurt(SplatcraftDamageTypes.of(level, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
 		}
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void tickClient()
 	{
 		if (ClientUtils.getClientPlayer().isCreative())

@@ -1,7 +1,5 @@
 package net.splatcraft.client.handlers;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
@@ -13,6 +11,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -114,7 +114,7 @@ public class PlayerMovementHandler
 				speedAttribute.addTransientModifier(mod);
 		}
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void onInputUpdate(LocalPlayer player, Input input)
 	{
 		EntityInfoCapability.getOptional(player).ifPresent(info ->

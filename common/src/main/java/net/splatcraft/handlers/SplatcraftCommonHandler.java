@@ -16,6 +16,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.InkColorRegistry;
@@ -31,8 +32,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestEntityInfoPacket;
 import net.splatcraft.network.s2c.*;
 import net.splatcraft.platform.Services;
-import net.splatcraft.platform.event.EventResult;
-import net.splatcraft.platform.event.TickEvents;
+import net.splatcraft.platform.event.*;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
@@ -45,13 +45,13 @@ public class SplatcraftCommonHandler
 {
 	public static void registerEvents()
 	{
-		PlayerEvent.PLAYER_CLONE.register(SplatcraftCommonHandler::onPlayerClone);
-		EntityEvent.LIVING_DEATH.register(SplatcraftCommonHandler::onLivingDeath);
-		PlayerEvent.PLAYER_JOIN.register(SplatcraftCommonHandler::onPlayerLoggedIn);
+		Services.PLATFORM.registerListener(PlayerEvents.PlayerClone.class, SplatcraftCommonHandler::onPlayerClone);
+		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, SplatcraftCommonHandler::onLivingDeath);
+		Services.PLATFORM.registerListener(PlayerEvents.LogIn.class, SplatcraftCommonHandler::onPlayerLoggedIn);
 		Services.PLATFORM.registerListener(TickEvents.PlayerBefore.class, SplatcraftCommonHandler::capabilityUpdateEvent);
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, SplatcraftCommonHandler::onWorldTick);
 		
-		InteractionEvent.LEFT_CLICK_BLOCK.register(SplatcraftCommonHandler::onBlockLeftClick);
+		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SplatcraftCommonHandler::onBlockLeftClick);
 	}
 	public static void onPlayerJump(LivingEntity entity)
 	{
@@ -253,7 +253,7 @@ public class SplatcraftCommonHandler
 			{
 				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
 				
-				if (!ItemStack.isSameItem(info.getInkBand(), inkBand))
+				if (!net.minecraft.world.item.ItemStack.isSameItem(info.getInkBand(), inkBand))
 				{
 					info.setInkBand(inkBand);
 					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(player), player);
@@ -347,8 +347,10 @@ public class SplatcraftCommonHandler
 	}
 	public static EventResult onBlockLeftClick(Player player,
 	                                           InteractionHand hand,
-	                                           BlockPos pos,
-	                                           Direction face)
+	                                           Direction face,
+	                                           ItemStack stack,
+	                                           Level level,
+	                                           BlockPos pos)
 	{
 		if (player.getItemInHand(hand).getItem() instanceof InkWaxerItem waxItem)
 		{

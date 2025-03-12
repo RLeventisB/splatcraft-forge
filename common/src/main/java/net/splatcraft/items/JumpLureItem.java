@@ -1,7 +1,5 @@
 package net.splatcraft.items;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -20,6 +18,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
@@ -133,7 +133,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 	{
 		return 72000;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private void releaseLure(LivingEntity entity)
 	{
 		if (entity.equals(ClientUtils.getClientPlayer()))

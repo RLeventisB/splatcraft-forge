@@ -1,7 +1,5 @@
 package net.splatcraft.blocks;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +20,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.StageBarrierTileEntity;
@@ -78,7 +78,7 @@ public class StageBarrierBlock extends Block implements EntityBlock, ISplatcraft
 	{
 		return true;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public float getShadeBrightness(@NotNull BlockState p_220080_1_, @NotNull BlockGetter p_220080_2_, @NotNull BlockPos p_220080_3_)
 	{
 		return 1.0F;

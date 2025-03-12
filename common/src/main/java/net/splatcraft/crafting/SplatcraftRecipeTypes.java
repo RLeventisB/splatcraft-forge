@@ -50,15 +50,15 @@ public class SplatcraftRecipeTypes
 		INK_VAT_COLOR_CRAFTING_TYPE = createRecipeType("ink_vat_color");
 		WEAPON_STATION_TAB_TYPE = createRecipeType("weapon_workbench_tab");
 		WEAPON_STATION_TYPE = createRecipeType("weapon_workbench");
-		RECIPE_TYPE_REGISTRY.register(Splatcraft.identifierOf("ink_vat_color"), () -> INK_VAT_COLOR_CRAFTING_TYPE);
-		RECIPE_TYPE_REGISTRY.register(Splatcraft.identifierOf("weapon_workbench_tab"), () -> WEAPON_STATION_TAB_TYPE);
-		RECIPE_TYPE_REGISTRY.register(Splatcraft.identifierOf("weapon_workbench"), () -> WEAPON_STATION_TYPE);
+		RECIPE_TYPE_REGISTRY.register("ink_vat_color", () -> INK_VAT_COLOR_CRAFTING_TYPE);
+		RECIPE_TYPE_REGISTRY.register("weapon_workbench_tab", () -> WEAPON_STATION_TAB_TYPE);
+		RECIPE_TYPE_REGISTRY.register("weapon_workbench", () -> WEAPON_STATION_TYPE);
 		
-		RECIPE_SERIALIZER_REGISTRY.register(Splatcraft.identifierOf("ink_vat_color"), () -> INK_VAT_COLOR_CRAFTING);
-		RECIPE_SERIALIZER_REGISTRY.register(Splatcraft.identifierOf("weapon_workbench_tab"), () -> WEAPON_STATION_TAB);
-		RECIPE_SERIALIZER_REGISTRY.register(Splatcraft.identifierOf("weapon_workbench"), () -> WEAPON_STATION);
-		RECIPE_SERIALIZER_REGISTRY.register(Splatcraft.identifierOf("colored_crafting_shaped"), () -> COLORED_SHAPED_CRAFTING);
-		RECIPE_SERIALIZER_REGISTRY.register(Splatcraft.identifierOf("single_use_sub"), () -> SINGLE_USE_SUB);
+		RECIPE_SERIALIZER_REGISTRY.register("ink_vat_color", () -> INK_VAT_COLOR_CRAFTING);
+		RECIPE_SERIALIZER_REGISTRY.register("weapon_workbench_tab", () -> WEAPON_STATION_TAB);
+		RECIPE_SERIALIZER_REGISTRY.register("weapon_workbench", () -> WEAPON_STATION);
+		RECIPE_SERIALIZER_REGISTRY.register("colored_crafting_shaped", () -> COLORED_SHAPED_CRAFTING);
+		RECIPE_SERIALIZER_REGISTRY.register("single_use_sub", () -> SINGLE_USE_SUB);
 	}
 	// literally recipetype.register but without ofVanilla
 	public static <T extends Recipe<?>> RecipeType<T> createRecipeType(String id)

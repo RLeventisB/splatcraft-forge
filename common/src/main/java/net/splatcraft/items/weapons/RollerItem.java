@@ -4,8 +4,6 @@ import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.core.BlockPos;
@@ -24,6 +22,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.client.audio.RollerRollTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
@@ -73,7 +73,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		entity.setDeltaMovement(new Vec3(Math.cos(Math.toRadians(entity.getYRot() + 90)) * -pow, entity.getDeltaMovement().y, Math.sin(Math.toRadians(entity.getYRot() + 90)) * -pow));
 		entity.hurtMarked = true;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected static void playRollSound(boolean isBrush)
 	{
 		Minecraft.getInstance().getSoundManager().queueTickingSound(new RollerRollTickableSound(ClientUtils.getClientPlayer(), isBrush));

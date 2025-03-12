@@ -1,7 +1,5 @@
 package net.splatcraft.util;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,6 +21,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.IColoredBlock;
@@ -80,7 +80,7 @@ public class ColorUtils
 			return coloredEntity.getColor();
 		return InkColor.INVALID;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private static InkColor getClientColor(LivingEntity living)
 	{
 		return living == ClientUtils.getClientPlayer() ? ClientUtils.getClientPlayerColor(living.getUUID()) : null;
@@ -217,7 +217,7 @@ public class ColorUtils
 		
 		return items;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static boolean isColorLocked()
 	{
 		return SplatcraftConfig.get("splatcraft.colorLock");
@@ -226,7 +226,7 @@ public class ColorUtils
 	{
 		return Services.PLATFORM.getModSide().equals(ModSide.CLIENT) && isColorLocked() ? getLockedColor(color) : color;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static @NotNull InkColor getLockedColor(InkColor color)
 	{
 		return ClientUtils.getClientPlayer() != null

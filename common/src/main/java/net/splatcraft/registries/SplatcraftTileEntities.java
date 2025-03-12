@@ -1,9 +1,6 @@
 package net.splatcraft.registries;
 
 import com.google.common.base.Suppliers;
-import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -12,11 +9,14 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
 import net.splatcraft.client.renderer.tileentity.StageBarrierTileEntityRenderer;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
+import net.splatcraft.platform.Services;
 import net.splatcraft.tileentities.*;
 import net.splatcraft.tileentities.container.InkVatContainer;
 import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
@@ -44,13 +44,13 @@ public class SplatcraftTileEntities
 	{
 		return CONTAINER_REGISTRY.register(name, () -> new MenuType<>(factoryIn, FeatureFlagSet.of()));
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void bindTESR()
 	{
 		//BlockEntityRenderers.register(inkedTileEntity.get(), InkedBlockTileEntityRenderer::new);
-		BlockEntityRendererRegistry.register(stageBarrierTileEntity.value(), StageBarrierTileEntityRenderer::new);
-		BlockEntityRendererRegistry.register(colorBarrierTileEntity.value(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
-		BlockEntityRendererRegistry.register(remotePedestalTileEntity.value(), context -> new RemotePedestalTileEntityRenderer());
+		Services.PLATFORM.registerBlockEntityRenderer(stageBarrierTileEntity.value(), StageBarrierTileEntityRenderer::new);
+		Services.PLATFORM.registerBlockEntityRenderer(colorBarrierTileEntity.value(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
+		Services.PLATFORM.registerBlockEntityRenderer(remotePedestalTileEntity.value(), context -> new RemotePedestalTileEntityRenderer());
 	}
 	public static final RegistrySupplier<MenuType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
 	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);

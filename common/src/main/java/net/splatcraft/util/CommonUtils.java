@@ -5,8 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -48,6 +46,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.PlaySession;
@@ -166,7 +166,7 @@ public class CommonUtils
 		{
 			entity = new TimedTextDisplayEntity(EntityType.TEXT_DISPLAY, world, durationTicks);
 			entity.setPos(pos);
-			entity.setText(text);
+//			entity.setText(text);
 			world.addFreshEntity(entity);
 		}
 		
@@ -182,7 +182,7 @@ public class CommonUtils
 	{
 		spawnTestParticle(getCurrentWorld(), new BlockParticleOption(ParticleTypes.BLOCK_MARKER, state), pos);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static Level getCurrentWorld()
 	{
 		return Minecraft.getInstance().level;
@@ -464,7 +464,7 @@ public class CommonUtils
 		RecipeManager recipeManager = getDistSpecificValue(() -> ClientUtils.getClient().level.getRecipeManager(), () -> Services.PLATFORM.getServerInstance().getRecipeManager());
 		for (RecipeHolder<?> recipeEntry : recipeManager.getAllRecipesFor((RecipeType<T>) recipe.getType()))
 		{
-			if (recipeEntry.get() == recipe)
+			if (recipeEntry.value() == recipe)
 				return recipeEntry.id();
 		}
 		return null;

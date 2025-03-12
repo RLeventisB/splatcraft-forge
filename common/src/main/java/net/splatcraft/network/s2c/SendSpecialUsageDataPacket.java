@@ -1,11 +1,11 @@
 package net.splatcraft.network.s2c;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.util.ClientUtils;
@@ -41,7 +41,7 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 		buffer.writeUUID(target);
 		EntitySlot.SERIALIZER_PACKET_CODEC.encode(buffer, providerSlot);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

@@ -40,6 +40,7 @@ import net.splatcraft.registries.SplatcraftStats;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -265,7 +266,7 @@ public class SquidFormHandler
 			this.state = (byte) state;
 		}
 		@Override
-		public String getSerializedName()
+		public @NotNull String getSerializedName()
 		{
 			return name();
 		}

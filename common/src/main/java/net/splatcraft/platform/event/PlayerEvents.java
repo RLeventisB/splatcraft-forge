@@ -39,9 +39,13 @@ public interface PlayerEvents
 		}
 	}
 	@FunctionalInterface
-	public interface Quit extends ConsumerEvent.Mono<Player>
+	public interface Quit extends ConsumerEvent.Mono<ServerPlayer>
 	{
-		void invoke(Player player);
+		void invoke(ServerPlayer player);
+	}
+	public interface LogIn extends ConsumerEvent.Mono<ServerPlayer>
+	{
+		void invoke(ServerPlayer player);
 	}
 }
 

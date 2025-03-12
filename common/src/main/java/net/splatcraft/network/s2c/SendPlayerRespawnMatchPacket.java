@@ -1,10 +1,10 @@
 package net.splatcraft.network.s2c;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -28,7 +28,7 @@ public class SendPlayerRespawnMatchPacket extends PlayS2CPacket
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

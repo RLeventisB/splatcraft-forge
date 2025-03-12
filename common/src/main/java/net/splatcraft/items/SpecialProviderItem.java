@@ -1,8 +1,6 @@
 package net.splatcraft.items;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +16,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
@@ -82,7 +82,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	{
 		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getBarColor(stack) : getBarWidth(stack) == 1 ? 0xfab311 : 0xecf4c6;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public int getBarWidth(ItemStack stack)
 	{

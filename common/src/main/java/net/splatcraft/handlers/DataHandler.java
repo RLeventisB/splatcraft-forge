@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.architectury.registry.ReloadListenerRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -18,6 +17,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -33,9 +33,9 @@ public class DataHandler
 	public static final InkColorRegistry.Listener INK_COLOR_ALIASES_LISTENER = new InkColorRegistry.Listener();
 	public static void addReloadListeners()
 	{
-		ReloadListenerRegistry.register(PackType.SERVER_DATA, WEAPON_STATS_LISTENER);
-		ReloadListenerRegistry.register(PackType.SERVER_DATA, INK_COLOR_TAGS_LISTENER);
-		ReloadListenerRegistry.register(PackType.SERVER_DATA, INK_COLOR_ALIASES_LISTENER);
+		Services.PLATFORM.registerReloadListener(PackType.SERVER_DATA, WEAPON_STATS_LISTENER);
+		Services.PLATFORM.registerReloadListener(PackType.SERVER_DATA, INK_COLOR_TAGS_LISTENER);
+		Services.PLATFORM.registerReloadListener(PackType.SERVER_DATA, INK_COLOR_ALIASES_LISTENER);
 	}
 	public static class WeaponStatsListener extends SimpleJsonResourceReloadListener
 	{

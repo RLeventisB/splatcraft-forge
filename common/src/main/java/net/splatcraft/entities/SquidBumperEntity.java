@@ -1,7 +1,5 @@
 package net.splatcraft.entities;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -21,6 +19,8 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
@@ -247,7 +247,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 		}
 	}
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void handleEntityEvent(byte id)
 	{
 		switch (id)

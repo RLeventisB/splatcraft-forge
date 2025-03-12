@@ -1,11 +1,11 @@
 package net.splatcraft.network.s2c;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
@@ -53,7 +53,7 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 			buffer.writeFloat(scores[i]);
 		}
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

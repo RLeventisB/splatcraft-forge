@@ -1,12 +1,8 @@
 {
     "required": true,
     "package": "net.splatcraft.neoforge.mixin",
-    "compatibilityLevel": "JAVA_21",
-    "refmap": "splatcraft-refmap.json",
     "minVersion": "0.8",
-    "injectors": {
-        "defaultRequire": 1
-    },
+    "refmap": "splatcraft-refmap.json",
     "client": [
         "BlockModelRendererMixin",
         "BlockRenderMixinForge$BlockRenderManagerMixin",

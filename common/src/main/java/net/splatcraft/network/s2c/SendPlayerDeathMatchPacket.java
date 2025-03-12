@@ -1,8 +1,6 @@
 package net.splatcraft.network.s2c;
 
 import com.mojang.datafixers.util.Pair;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -10,6 +8,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -49,7 +49,7 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 		UUIDUtil.STREAM_CODEC.encode(buffer, killerPlayer);
 		ByteBufCodecs.VECTOR3F.encode(buffer, killCamDirection);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

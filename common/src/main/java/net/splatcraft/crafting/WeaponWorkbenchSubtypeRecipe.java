@@ -2,8 +2,6 @@ package net.splatcraft.crafting;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.NonNullList;
@@ -16,6 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -78,7 +79,7 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 		
 		return true;
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private boolean isAvailableOnClient(Player player)
 	{
 		if (!(player instanceof LocalPlayer clientPlayer) || advancement.isEmpty())

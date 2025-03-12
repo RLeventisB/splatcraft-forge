@@ -12,9 +12,6 @@
         "SaveDataMixins$LevelStorageMixin", "ServerGamePacketMixin", "SquidPassthroughMixin", "accessors.EntityAccessor"
     ],
     "minVersion": "0.8",
-    "injectors": {
-        "defaultRequire": 1
-    },
     "client": [
         "CooldownSlotMixin", "EntityLayerMixin", "EntityMixins$EntityRendererMixin", "GameRendererMixin",
         "ItemRenderingMixins$ItemRendererMixin", "MatchMixins$AbstractClientPlayerMixin",

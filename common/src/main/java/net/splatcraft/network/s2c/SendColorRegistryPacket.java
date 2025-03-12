@@ -2,13 +2,13 @@ package net.splatcraft.network.s2c;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
@@ -36,7 +36,7 @@ public class SendColorRegistryPacket extends PlayS2CPacket
 	{
 		PACKET_CODEC.encode(buffer, colors);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

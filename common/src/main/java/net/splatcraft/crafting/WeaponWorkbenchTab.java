@@ -50,7 +50,7 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 		return true;
 	}
 	@Override
-	public @NotNull ItemStack craft(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull HolderLookup.Provider access)
+	public @NotNull ItemStack assemble(@NotNull WeaponWorkbenchRecipeInput inv, @NotNull HolderLookup.Provider access)
 	{
 		return ItemStack.EMPTY;
 	}

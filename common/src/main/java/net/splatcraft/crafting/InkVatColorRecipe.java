@@ -58,7 +58,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		return ingredient.test(inv.getItem(3));
 	}
 	@Override
-	public ItemStack craft(InkVatRecipeInput input, HolderLookup.Provider lookup)
+	public @NotNull ItemStack assemble(InkVatRecipeInput input, HolderLookup.@NotNull Provider lookup)
 	{
 		return input.getItem(0);
 	}
@@ -68,7 +68,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		return true;
 	}
 	@Override
-	public ItemStack getResultItem(HolderLookup.Provider registriesLookup)
+	public @NotNull ItemStack getResultItem(HolderLookup.@NotNull Provider registriesLookup)
 	{
 		return ColorUtils.withInkColor(new ItemStack(SplatcraftBlocks.inkwell.get()), colorSupplier.get());
 	}

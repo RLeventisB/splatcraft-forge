@@ -1,12 +1,12 @@
 package net.splatcraft.network.s2c;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -37,7 +37,7 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 	{
 		PlaySession.PACKET_CODEC.encode(buffer, session);
 	}
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

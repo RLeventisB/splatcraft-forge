@@ -91,7 +91,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			}
 			else
 			{
-				setVelocity(0, 0, 0);
+				setDeltaMovement(0, 0, 0);
 				setStickFacing();
 			}
 		}

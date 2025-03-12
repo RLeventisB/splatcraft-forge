@@ -1,9 +1,9 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.InkColor;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Contract;
 
 public class SaveInfoCapability
 {
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static SaveInfo clientSaveInfo;
 	static
 	{
