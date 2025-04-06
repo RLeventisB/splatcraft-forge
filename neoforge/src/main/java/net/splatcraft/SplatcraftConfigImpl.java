@@ -1,4 +1,4 @@
-package net.splatcraft.neoforge;
+package net.splatcraft;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
@@ -10,7 +10,6 @@ import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.platform.ModSide;
 

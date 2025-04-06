@@ -2,6 +2,7 @@ package net.splatcraft;
 
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.platform.ModSide;
+import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -40,15 +41,15 @@ public class SplatcraftConfig
 	}
 	public static Path getModConfigPath()
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.getModConfigPath();
 	}
 	public static void loadConfig()
 	{
-		throw new AssertionError();
+		Services.PLATFORM.loadConfig();
 	}
 	public static void initializeConfigs()
 	{
-		throw new AssertionError();
+		Services.PLATFORM.initializeConfigs();
 	}
 	public static <T> void registerConfigAccessor(String name, Supplier<T> getter, Consumer<T> setter)
 	{

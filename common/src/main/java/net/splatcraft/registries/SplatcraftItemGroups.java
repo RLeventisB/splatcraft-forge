@@ -26,7 +26,7 @@ import static net.splatcraft.registries.SplatcraftItems.*;
 public class SplatcraftItemGroups
 {
 	public static final ArrayList<Item> colorTabItems = new ArrayList<>();
-	protected static final DeferredRegister<CreativeModeTab> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.CREATIVE_MODE_TAB);
+	public static final DeferredRegister<CreativeModeTab> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.CREATIVE_MODE_TAB);
 	public static final RegistrySupplier<CreativeModeTab> GROUP_GENERAL = REGISTRY.register("splatcraft_general", () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 1)
 		.icon(() -> sardiniumBlock.value().getDefaultInstance())
 		.title(Component.translatable("itemGroup.splatcraft_general"))

@@ -1,6 +1,5 @@
 package net.splatcraft.items.weapons.subs;
 
-import com.mojang.serialization.DataResult;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
 import net.minecraft.core.component.DataComponentMap;
@@ -22,14 +21,12 @@ import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +42,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	{
 		super(settings);
 		this.entityType = entityType;
-		
+
 		subs.add(this);
 		DispenserBlock.registerBehavior(this, new SubWeaponItem.DispenseBehavior());
 	}
@@ -119,22 +116,16 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	{
 		DataComponentMap components = stack.getComponents();
 		ResourceLocation id = components.has(SplatcraftComponents.WEAPON_SETTING_ID) ? components.get(SplatcraftComponents.WEAPON_SETTING_ID) : settingsId;
-		
-		DataResult<AbstractWeaponSettings<?, ?>> result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
-		if (result.isSuccess() && result.getOrThrow() instanceof SubWeaponSettings<?> data)
+
+		if (DataHandler.WeaponStatsListener.SETTINGS.get(id) instanceof SubWeaponSettings<?> data)
 		{
 			return (SubWeaponSettings<Data>) data;
 		}
-		else
+		if (DataHandler.WeaponStatsListener.SETTINGS.get(settingsId) instanceof SubWeaponSettings<?> data)
 		{
-			id = settingsId;
-			result = CommonUtils.getFromMap(DataHandler.WeaponStatsListener.SETTINGS, id);
-			if (result.isSuccess() && result.getOrThrow() instanceof SubWeaponSettings<?> data)
-			{
-				return (SubWeaponSettings<Data>) data;
-			}
-			return new SubWeaponSettings<>("default");
+			return (SubWeaponSettings<Data>) data;
 		}
+		return new SubWeaponSettings<>("default");
 	}
 	public static class DispenseBehavior extends DefaultDispenseItemBehavior
 	{
@@ -145,7 +136,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 			{
 				ItemStack thrownStack = stack.copy();
 				thrownStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
-				
+
 				Level world = source.level();
 				Position iposition = DispenserBlock.getDispensePosition(source);
 				Direction direction = source.state().getValue(DispenserBlock.FACING);
@@ -153,12 +144,12 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 				projectileentity.shoot(direction.getStepX(), direction.getStepY() + 0.1F, direction.getStepZ(), getPower(), getUncertainty());
 				world.addFreshEntity(projectileentity);
 				stack.shrink(1);
-				
+
 				source.level().playSound(null, source.pos(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
-				
+
 				return stack;
 			}
-			
+
 			Direction direction = source.state().getValue(DispenserBlock.FACING);
 			Position iposition = DispenserBlock.getDispensePosition(source);
 			ItemStack itemstack = stack.split(1);
@@ -173,7 +164,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 		{
 			if (!(stackIn.getItem() instanceof SubWeaponItem<?> subWeaponItem))
 				return null;
-			
+
 			return AbstractSubWeaponEntity.create(subWeaponItem.entityType.get(), levelIn, position.x(), position.y(), position.z(), ColorUtils.getInkColor(stackIn), InkBlockUtils.InkType.NORMAL, stackIn);
 		}
 		protected float getUncertainty()

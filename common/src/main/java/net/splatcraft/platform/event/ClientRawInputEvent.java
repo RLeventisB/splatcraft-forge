@@ -12,7 +12,7 @@ public interface ClientRawInputEvent
 		EventResult invoke(Minecraft client, Double amountX, Double amountY);
 	}
 	@FunctionalInterface
-	interface MouseClicked extends ConsumerEvent.Tetra<Minecraft, Integer, Integer, Integer>
+	interface PreMouseClicked extends ConsumerEvent.Tetra<Minecraft, Integer, Integer, Integer>
 	{
 		void invoke(Minecraft client, Integer button, Integer action, Integer mods);
 	}

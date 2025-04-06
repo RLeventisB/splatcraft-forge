@@ -6,13 +6,10 @@ plugins {
 neoForge {
     version = neoforge_version
     // Automatically enable neoforge AccessTransformers if the file exists
-    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
-
-    interfaceInjectionData.from "src/main/resources/interfaces.json"
-
     parchment {
         minecraftVersion = parchment_minecraft
         mappingsVersion = parchment_version
@@ -38,7 +35,9 @@ neoForge {
         }
     }
 }
+
 dependencies {
     implementation 'mysticdrew:common-networking-neoforge:1.0.16-1.21'
 }
+
 sourceSets.main.resources { srcDir 'src/generated/resources' }

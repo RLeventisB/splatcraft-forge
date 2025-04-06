@@ -10,9 +10,7 @@ dependencies {
     }
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modImplementation 'mysticdrew:common-networking-fabric:1.0.16-1.21'
 }
-
 
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")

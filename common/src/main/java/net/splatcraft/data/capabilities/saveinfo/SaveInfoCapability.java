@@ -22,15 +22,11 @@ public class SaveInfoCapability
 	@Contract
 	public static SaveInfo get()
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.getSaveInfo();
 	}
 	public static void set(SaveInfo newData)
 	{
-		throw new AssertionError();
-	}
-	public static void markUpdated()
-	{
-		throw new AssertionError();
+		Services.PLATFORM.setSaveInfo(newData);
 	}
 	public static boolean loadLegacy(CompoundTag nbt)
 	{
@@ -41,7 +37,6 @@ public class SaveInfoCapability
 				ScoreboardHandler.createColorCriterion(color);
 			}
 			set(v.getFirst());
-			markUpdated();
 		}).isSuccess();
 	}
 }

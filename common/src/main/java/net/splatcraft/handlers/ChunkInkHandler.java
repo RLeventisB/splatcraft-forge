@@ -19,6 +19,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -106,9 +107,9 @@ public class ChunkInkHandler
 		checkForInkRemoval(world, pos, Direction.values());
 		directions.forEach(direction -> checkForInkRemoval(world, pos.relative(direction), new Direction[] {direction.getOpposite()}));
 	}
-	public static EventResult onBlockBreak(Player player, Level level, BlockPos pos, BlockState state)
+	public static EventResult onBlockBreak(Player player, LevelAccessor level, BlockPos pos, BlockState state)
 	{
-		InkBlockUtils.clearBlock(level, pos, true);
+		InkBlockUtils.clearBlock((Level)level, pos, true);
 		return EventResult.pass();
 	}
 	private static void checkForInkRemoval(Level world, BlockPos pos, Direction[] directionsToCheck)

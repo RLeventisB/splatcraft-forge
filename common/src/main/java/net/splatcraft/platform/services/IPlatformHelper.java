@@ -25,12 +25,16 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.event.IEventMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 public interface IPlatformHelper extends IEventMap
@@ -74,10 +78,6 @@ public interface IPlatformHelper extends IEventMap
 	{
 		return isClientSide() ? ModSide.CLIENT : ModSide.SERVER;
 	}
-	boolean hasChunkInk(ChunkAccess chunk);
-	boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk);
-	ChunkInk getChunkInk(ChunkAccess chunk);
-	void setChunkInk(ChunkAccess chunk, ChunkInk newData);
 	// yes this could've used architectury api because these are literally the same functions from https://github.com/architectury/architectury-api
 	// however, that is one more jar and i am FRIGHTENED that the mod doesnt let me hotswap
 	void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function);
@@ -88,8 +88,28 @@ public interface IPlatformHelper extends IEventMap
 	void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item);
 	void registerReloadListener(PackType packType, PreparableReloadListener reloadListener);
 	void registerKeyMapping(KeyMapping key);
-	<T extends BlockEntity> void registerBlockEntityRenderer(@NotNull BlockEntityType<T> type, BlockEntityRendererProvider<T> provider);
+	<T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider);
 	<T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider);
 	void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier);
 	void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute);
+    void loadConfig();
+	void initializeConfigs();
+	Path getModConfigPath();
+
+	// todo: do a neoforge-like abstract capability id thingy that is resolved when serializing and deserializing by the modloader or something
+	boolean hasChunkInk(ChunkAccess chunk);
+	boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk);
+	ChunkInk getChunkInk(ChunkAccess chunk);
+	void setChunkInk(ChunkAccess chunk, ChunkInk newData);
+
+	SaveInfo getSaveInfo();
+	void setSaveInfo(SaveInfo newData);
+
+	InkOverlayInfo getInkOverlayInfo(LivingEntity entity);
+	boolean hasInkOverlayInfo(LivingEntity entity);
+	void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData);
+
+	EntityInfo getEntityInfo(LivingEntity entity);
+	boolean hasEntityInfo(LivingEntity entity);
+	void setEntityInfo(LivingEntity entity, EntityInfo newData);
 }

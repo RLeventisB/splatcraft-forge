@@ -39,7 +39,6 @@ public final class Splatcraft
 	}
 	public static void init()
 	{
-		// Write common init code here.
 		SplatcraftConfig.initialize();
 		
 		DataHandler.addReloadListeners();

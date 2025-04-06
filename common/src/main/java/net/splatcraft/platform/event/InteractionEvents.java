@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.platform.event.types.CompoundEvent;
 import net.splatcraft.platform.event.types.ConsumerEvent;
@@ -19,7 +20,7 @@ import java.util.UUID;
 public interface InteractionEvents
 {
 	@FunctionalInterface
-	public interface ClientLeftClickAir extends ConsumerEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
+	interface ClientLeftClickAir extends ConsumerEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
 	{
 		void register(Player player, InteractionHand usedHand, Direction blockFace, ItemStack itemStack, Level level, BlockPos blockClicked);
 		default void invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, ItemStack parameter4, Level parameter5, BlockPos parameter6)
@@ -28,7 +29,7 @@ public interface InteractionEvents
 		}
 	}
 	@FunctionalInterface
-	public interface ClientRightClickAir extends ConsumerEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
+	interface ClientRightClickAir extends ConsumerEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
 	{
 		void register(Player player, InteractionHand usedHand, Direction blockFace, ItemStack itemStack, Level level, BlockPos blockClicked);
 		default void invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, ItemStack parameter4, Level parameter5, BlockPos parameter6)
@@ -37,7 +38,7 @@ public interface InteractionEvents
 		}
 	}
 	@FunctionalInterface
-	public interface LeftClickBlock extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
+	interface LeftClickBlock extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
 	{
 		EventResult register(Player player, InteractionHand usedHand, Direction blockFace, ItemStack itemStack, Level level, BlockPos blockClicked);
 		default EventResult invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, ItemStack parameter4, Level parameter5, BlockPos parameter6)
@@ -46,7 +47,7 @@ public interface InteractionEvents
 		}
 	}
 	@FunctionalInterface
-	public interface RightClickBlock extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
+	interface RightClickBlock extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
 	{
 		EventResult register(Player player, InteractionHand usedHand, Direction blockFace, ItemStack itemStack, Level level, BlockPos blockClicked);
 		default EventResult invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, ItemStack parameter4, Level parameter5, BlockPos parameter6)
@@ -55,7 +56,7 @@ public interface InteractionEvents
 		}
 	}
 	@FunctionalInterface
-	public interface RightClickItem extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
+	interface RightClickItem extends SimpleEvent.Hexa<Player, InteractionHand, Direction, ItemStack, Level, BlockPos>
 	{
 		EventResult register(Player player, InteractionHand usedHand, Direction blockFace, ItemStack itemStack, Level level, BlockPos blockClicked);
 		default EventResult invoke(Player parameter1, InteractionHand parameter2, Direction parameter3, ItemStack parameter4, Level parameter5, BlockPos parameter6)
@@ -64,19 +65,19 @@ public interface InteractionEvents
 		}
 	}
 	@FunctionalInterface
-	public interface InteractEntity extends SimpleEvent.Hexa<Player, InteractionHand, Direction, Entity, Level, BlockPos>
+	interface InteractEntity extends SimpleEvent.Hexa<Player, InteractionHand, Direction, Entity, Level, BlockPos>
 	{
 		EventResult invoke(Player player, InteractionHand usedHand, Direction blockFace, Entity target, Level level, BlockPos blockClicked);
 	}
 	@FunctionalInterface
-	public interface ClientChatReceive extends CompoundEvent.Tri<ChatType.Bound, Component, UUID, Component>
+	interface ClientChatReceive extends CompoundEvent.Tri<ChatType.Bound, Component, UUID, Component>
 	{
 		CompoundEventResult<Component> invoke(ChatType.Bound chatType, Component message, UUID sender);
 	}
 	@FunctionalInterface
-	public interface BlockBreak extends SimpleEvent.Tetra<Player, Level, BlockPos, BlockState>
+	interface BlockBreak extends SimpleEvent.Tetra<Player, LevelAccessor, BlockPos, BlockState>
 	{
-		EventResult invoke(Player player, Level level, BlockPos blockPosition, BlockState state);
+		EventResult invoke(Player player, LevelAccessor level, BlockPos blockPosition, BlockState state);
 	}
 }
 

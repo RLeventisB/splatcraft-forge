@@ -7,7 +7,7 @@ import net.splatcraft.platform.event.types.SimpleEvent;
 public interface EntityEvents
 {
 	@FunctionalInterface
-	public interface LivingDeath extends SimpleEvent.Bi<LivingEntity, DamageSource>
+	interface LivingDeath extends SimpleEvent.Bi<LivingEntity, DamageSource>
 	{
 		EventResult invoke(LivingEntity entity, DamageSource deathSource);
 	}

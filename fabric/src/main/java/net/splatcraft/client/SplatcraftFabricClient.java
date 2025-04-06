@@ -1,4 +1,4 @@
-package net.splatcraft.fabric.client;
+package net.splatcraft.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.Minecraft;

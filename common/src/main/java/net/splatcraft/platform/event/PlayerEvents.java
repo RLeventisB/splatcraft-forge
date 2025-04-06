@@ -12,7 +12,7 @@ import net.splatcraft.platform.event.types.SimpleEvent;
 public interface PlayerEvents
 {
 	@FunctionalInterface
-	public interface PlayerClone extends ConsumerEvent.Tri<ServerPlayer, ServerPlayer, Boolean>
+	interface PlayerClone extends ConsumerEvent.Tri<ServerPlayer, ServerPlayer, Boolean>
 	{
 		void register(ServerPlayer oldPlayer, ServerPlayer newPlayer, Boolean beatenEnderDragon);
 		default void invoke(ServerPlayer parameter1, ServerPlayer parameter2, Boolean parameter3)
@@ -21,7 +21,7 @@ public interface PlayerEvents
 		}
 	}
 	@FunctionalInterface
-	public interface PlayerDeath extends ConsumerEvent.Mono<Player>
+	interface PlayerDeath extends ConsumerEvent.Mono<Player>
 	{
 		void register(Player player);
 		default void invoke(Player parameter1)
@@ -30,7 +30,7 @@ public interface PlayerEvents
 		}
 	}
 	@FunctionalInterface
-	public interface AttackEntity extends SimpleEvent.Penta<Player, Level, Entity, InteractionHand, EntityHitResult>
+	interface AttackEntity extends SimpleEvent.Penta<Player, Level, Entity, InteractionHand, EntityHitResult>
 	{
 		EventResult register(Player player, Level level, Entity target, InteractionHand hand, EntityHitResult hitResult);
 		default EventResult invoke(Player parameter1, Level parameter2, Entity parameter3, InteractionHand parameter4, EntityHitResult parameter5)
@@ -39,11 +39,11 @@ public interface PlayerEvents
 		}
 	}
 	@FunctionalInterface
-	public interface Quit extends ConsumerEvent.Mono<ServerPlayer>
+	interface Quit extends ConsumerEvent.Mono<ServerPlayer>
 	{
 		void invoke(ServerPlayer player);
 	}
-	public interface LogIn extends ConsumerEvent.Mono<ServerPlayer>
+	interface LogIn extends ConsumerEvent.Mono<ServerPlayer>
 	{
 		void invoke(ServerPlayer player);
 	}

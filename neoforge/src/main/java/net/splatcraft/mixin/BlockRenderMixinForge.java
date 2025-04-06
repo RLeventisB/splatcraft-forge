@@ -1,4 +1,4 @@
-package net.splatcraft.neoforge.mixin;
+package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -18,11 +18,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
+import net.splatcraft.InkedBakedModel;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.mixin.accessors.ChunkRegionAccessor;
-import net.splatcraft.neoforge.InkedBakedModel;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.RelativeBlockPos;
@@ -36,7 +36,7 @@ public class BlockRenderMixinForge
 	public static class ChunkRenderDispatcherMixinForge
 	{
 		@WrapOperation(method = "compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/neoforged/neoforge/client/model/data/ModelData;)Lnet/neoforged/neoforge/client/ChunkRenderTypeSet;"))
+				target = "Lnet/minecraft/client/resources/model/BakedModel;getRenderTypes(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;Lnet/neoforged/neoforge/client/model/data/ModelData;)Lnet/neoforged/neoforge/client/ChunkRenderTypeSet;"))
 		public ChunkRenderTypeSet splatcraft$fixRenderLayer(BakedModel instance, BlockState state, RandomSource random, ModelData modelData, Operation<ChunkRenderTypeSet> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
 		{
 			Level world = ((ChunkRegionAccessor) arg2).getLevel();

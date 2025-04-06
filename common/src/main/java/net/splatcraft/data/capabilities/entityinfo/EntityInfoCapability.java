@@ -2,6 +2,7 @@ package net.splatcraft.data.capabilities.entityinfo;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.entities.InkSquidEntity;
+import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.Contract;
 
 import java.util.Optional;
@@ -11,7 +12,7 @@ public class EntityInfoCapability
 	@Contract
 	public static EntityInfo get(LivingEntity entity)
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.getEntityInfo(entity);
 	}
 	@Contract
 	public static Optional<EntityInfo> getOptional(LivingEntity entity)
@@ -23,12 +24,12 @@ public class EntityInfoCapability
 	@Contract
 	public static void set(LivingEntity entity, EntityInfo newData)
 	{
-		throw new AssertionError();
+		Services.PLATFORM.setEntityInfo(entity, newData);
 	}
 	@Contract
 	public static boolean hasCapability(LivingEntity entity)
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.hasEntityInfo(entity);
 	}
 	public static boolean isSquid(LivingEntity entity)
 	{

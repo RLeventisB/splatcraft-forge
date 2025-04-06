@@ -1,50 +1,65 @@
 package net.splatcraft.platform;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.neoforged.bus.api.Event;
-import net.splatcraft.neoforge.SplatcraftNeoForge;
+import net.neoforged.fml.event.IModBusEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.splatcraft.SplatcraftNeoForge;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class EventHelper
 {
-	private static final Map<Class<? extends Event>, EventCollection<?>> EVENT_MAPS = new Object2ObjectOpenHashMap<>();
-	private static final Map<Class<? extends Event>, EventCollection<?>> EVENT_LISTS = new Object2ObjectOpenHashMap<>();
+	private static final Map<EventRecord<?, ?>, List<?>> EVENT_CONSUMERS = new Object2ObjectOpenHashMap<>();
 	public static <T extends Event> void registerEvent(Class<T> clazz, Consumer<T> action)
 	{
+		if(IModBusEvent.class.isAssignableFrom(clazz))
 		SplatcraftNeoForge.modBus.addListener(clazz, action);
+		else
+			NeoForge.EVENT_BUS.addListener(clazz, action);
 	}
 	// todo: maybe finish this code that simplifies NeoForgePlatformHelper.serverDataPacks, or creativeTabAppends, into a single method that
 	// tracks these entries to add them to a bi consumer or something so it isnt necessary to do a list for every forge event that is
 	// "ok!!! you can update this list now while this event is being posted!!!!!"
-	public static <E extends Event> void addToEventSpecificList(Class<E> clazz, Consumer<E> action)
+	public static <E extends Event, V> void addToEventSpecificList(Class<E> eventClass, V value, BiConsumer<E, V> action)
 	{
-		boolean first = !EVENT_LISTS.containsKey(clazz);
-		EventCollection<E> list = (EventCollection<E>) EVENT_LISTS.computeIfAbsent(clazz, v -> new EventCollection<E>(clazz, new ObjectArrayList<>()));
-		list.eventFiringConsumer.add(action);
+		EventRecord<E, V> record = new EventRecord<>(eventClass, action);
+		boolean first = !EVENT_CONSUMERS.containsKey(record);
+		List<V> list = (List<V>) EVENT_CONSUMERS.computeIfAbsent(record, v -> new ObjectArrayList<>());
+		list.add(value);
 		
 		if (first)
-			registerEvent(clazz, list::process);
+			registerEvent(eventClass, v -> record.process(v, list));
 	}
-	public static <E extends Event> void addToEventSpecificMap(Class<E> clazz, Consumer<E> action)
+	public static <E extends Event, K, V> void addToEventSpecificMap(Class<E> eventClass, K key, V value, TriConsumer<E, K, V> action)
 	{
-		boolean first = !EVENT_LISTS.containsKey(clazz);
-		EventCollection<E> list = (EventCollection<E>) EVENT_LISTS.computeIfAbsent(clazz, v -> new EventCollection<E>(clazz, new ObjectArrayList<>()));
-		list.eventFiringConsumer.add(action);
-		
-		if (first)
-			registerEvent(clazz, list::process);
+		addToEventSpecificList(eventClass, Pair.of(key, value), (e, pair) -> action.accept(e, pair.key(), pair.value()));
 	}
-	static record EventCollection<E extends Event>(Class<E> eventClass, List<Consumer<E>> eventFiringConsumer)
+	record EventRecord<E extends Event, V>(Class<E> evtClass, BiConsumer<E, V> eventFiringConsumer)
+	{
+		public void process(E event, List<V> values)
+		{
+			for (var value : values)
+			{
+				eventFiringConsumer.accept(event, value);
+			}
+		}
+	}
+	record EventConsumer<E extends Event, V>(BiConsumer<E, V> eventFiringConsumer, List<V> values)
 	{
 		public void process(E event)
 		{
-			for (var consumer : eventFiringConsumer)
+			for (var value : values)
 			{
-				consumer.accept(event);
+				eventFiringConsumer.accept(event, value);
 			}
 		}
 	}

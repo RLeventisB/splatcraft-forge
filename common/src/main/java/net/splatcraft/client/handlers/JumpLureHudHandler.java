@@ -36,7 +36,7 @@ public class JumpLureHudHandler
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(ClientRawInputEvent.MouseScrolled.class, JumpLureHudHandler::onMouseScroll);
-		Services.PLATFORM.registerListener(ClientRawInputEvent.MouseClicked.class, JumpLureHudHandler::onMouseClick);
+		Services.PLATFORM.registerListener(ClientRawInputEvent.PreMouseClicked.class, JumpLureHudHandler::onMouseClick);
 		Services.PLATFORM.registerListener(TickEvents.ClientBefore.class, JumpLureHudHandler::onKeypadInput);
 	}
 	public static void renderGui(GuiGraphics context, DeltaTracker tickCounter)

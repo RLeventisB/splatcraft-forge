@@ -1,4 +1,4 @@
-package net.splatcraft.util.neoforge;
+package net.splatcraft.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.KeyMapping;
@@ -23,7 +23,7 @@ import net.neoforged.neoforge.common.util.RecipeMatcher;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.util.CommonUtils;
+import net.splatcraft.platform.DeferredRegister;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

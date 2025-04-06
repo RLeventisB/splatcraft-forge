@@ -1,4 +1,4 @@
-package net.splatcraft.fabric;
+package net.splatcraft;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;

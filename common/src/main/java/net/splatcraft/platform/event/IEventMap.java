@@ -6,6 +6,7 @@ import net.splatcraft.platform.event.types.CompoundEvent;
 import net.splatcraft.platform.event.types.ConsumerEvent;
 import net.splatcraft.platform.event.types.SimpleEvent;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -93,7 +94,7 @@ public interface IEventMap
 	}
 	class EventRegistry
 	{
-		public Map<Class<?>, EventList<?>> events;
+		public Map<Class<?>, EventList<?>> events = new HashMap<>();
 		public <EVT> EventList<EVT> get(Class<EVT> eventClass)
 		{
 			return (EventList<EVT>) events.computeIfAbsent(eventClass, v -> new EventList<EVT>());

@@ -1,6 +1,0 @@
-{
-    "net/neoforged/neoforge/common/extensions/IItemExtension": "net/splatcraft/ForgeDummyInjections$ItemMixin",
-    "net/neoforged/neoforge/client/extensions/IClientBlockExtensions": "net/splatcraft/ForgeDummyInjections$ClientBlockMixin",
-    "net/neoforged/neoforge/common/extensions/IBlockExtension": "net/splatcraft/ForgeDummyInjections$BlockMixin",
-    "net/neoforged/neoforge/common/extensions/IBlockEntityExtension": "net/splatcraft/ForgeDummyInjections$BlockEntityMixin"
-}

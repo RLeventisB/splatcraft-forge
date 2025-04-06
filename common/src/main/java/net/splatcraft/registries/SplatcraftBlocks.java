@@ -20,7 +20,7 @@ import java.util.ArrayList;
 public class SplatcraftBlocks
 {
 	public static final ArrayList<Block> inkColoredBlocks = new ArrayList<>();
-	protected static final DeferredRegister<Block> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.BLOCK);
+	public static final DeferredRegister<Block> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.BLOCK);
 	public static final RegistrySupplier<InkedBlock> inkedBlock = REGISTRY.register("inked_block", InkedBlock::new);
 	public static final RegistrySupplier<InkedBlock> glowingInkedBlock = REGISTRY.register("glowing_inked_block", InkedBlock::glowing);
 	public static final RegistrySupplier<InkedBlock> clearInkedBlock = REGISTRY.register("clear_inked_block", InkedBlock::new);

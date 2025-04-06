@@ -6,7 +6,7 @@ import net.splatcraft.platform.event.types.ConsumerEvent;
 
 public interface LifecycleEvents
 {
-	public interface ClientStarted extends ConsumerEvent.Mono<Minecraft>
+	interface ClientStarted extends ConsumerEvent.Mono<Minecraft>
 	{
 		void register(Minecraft client);
 		default void invoke(Minecraft parameter1)
@@ -14,7 +14,7 @@ public interface LifecycleEvents
 			register(parameter1);
 		}
 	}
-	public interface ClientStopped extends ConsumerEvent.Mono<Minecraft>
+	interface ClientStopped extends ConsumerEvent.Mono<Minecraft>
 	{
 		void register(Minecraft client);
 		default void invoke(Minecraft parameter1)
@@ -22,7 +22,7 @@ public interface LifecycleEvents
 			register(parameter1);
 		}
 	}
-	public interface ServerStarting extends ConsumerEvent.Mono<MinecraftServer>
+	interface ServerStarting extends ConsumerEvent.Mono<MinecraftServer>
 	{
 		void register(MinecraftServer client);
 		default void invoke(MinecraftServer parameter1)
@@ -30,7 +30,7 @@ public interface LifecycleEvents
 			register(parameter1);
 		}
 	}
-	public interface ServerStarted extends ConsumerEvent.Mono<MinecraftServer>
+	interface ServerStarted extends ConsumerEvent.Mono<MinecraftServer>
 	{
 		void register(MinecraftServer client);
 		default void invoke(MinecraftServer parameter1)
@@ -38,7 +38,7 @@ public interface LifecycleEvents
 			register(parameter1);
 		}
 	}
-	public interface ServerStopped extends ConsumerEvent.Mono<MinecraftServer>
+	interface ServerStopped extends ConsumerEvent.Mono<MinecraftServer>
 	{
 		void register(MinecraftServer client);
 		default void invoke(MinecraftServer parameter1)

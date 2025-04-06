@@ -20,7 +20,7 @@ public class SplatcraftStats
 	public static final ResourceLocation WEAPONS_CRAFTED = register("weapons_crafted", StatFormatter.DEFAULT);
 	public static final ResourceLocation INKWELLS_CRAFTED = register("inkwells_crafted", StatFormatter.DEFAULT);
 	public static final ResourceLocation SQUID_TIME = register("squid_time", StatFormatter.TIME);
-	public static DeferredRegister<CriterionTrigger<?>> CRITERION_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.TRIGGER_TYPES);
+	public static final DeferredRegister<CriterionTrigger<?>> CRITERION_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.TRIGGER_TYPES);
 	public static final RegistrySupplier<CraftWeaponTrigger> CRAFT_WEAPON_TRIGGER = CRITERION_REGISTRY.register("craft_weapon", CraftWeaponTrigger::new);
 	public static final RegistrySupplier<ChangeInkColorTrigger> CHANGE_INK_COLOR_TRIGGER = CRITERION_REGISTRY.register("change_ink_color", ChangeInkColorTrigger::new);
 	public static final RegistrySupplier<ScanTurfTrigger> SCAN_TURF_TRIGGER = CRITERION_REGISTRY.register("scan_turf", ScanTurfTrigger::new);

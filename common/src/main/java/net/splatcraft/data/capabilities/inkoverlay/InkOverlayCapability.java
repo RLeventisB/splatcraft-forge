@@ -1,6 +1,7 @@
 package net.splatcraft.data.capabilities.inkoverlay;
 
 import net.minecraft.world.entity.LivingEntity;
+import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.Contract;
 
 public class InkOverlayCapability
@@ -8,15 +9,15 @@ public class InkOverlayCapability
 	@Contract
 	public static InkOverlayInfo get(LivingEntity entity)
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.getInkOverlayInfo(entity);
 	}
 	public static void set(LivingEntity entity, InkOverlayInfo newData)
 	{
-		throw new AssertionError();
+		Services.PLATFORM.setInkOverlayInfo(entity, newData);
 	}
 	@Contract
 	public static boolean hasCapability(LivingEntity entity)
 	{
-		throw new AssertionError();
+		return Services.PLATFORM.hasInkOverlayInfo(entity);
 	}
 }

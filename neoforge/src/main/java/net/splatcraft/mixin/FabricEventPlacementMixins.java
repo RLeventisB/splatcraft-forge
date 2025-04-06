@@ -1,4 +1,4 @@
-package net.splatcraft.neoforge.mixin;
+package net.splatcraft.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;

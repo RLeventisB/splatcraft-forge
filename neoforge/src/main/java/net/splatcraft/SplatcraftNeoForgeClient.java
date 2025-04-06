@@ -1,10 +1,9 @@
-package net.splatcraft.neoforge;
+package net.splatcraft;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.ClientSetupHandler;
 
 @Mod(value = Splatcraft.MODID, dist = Dist.CLIENT)

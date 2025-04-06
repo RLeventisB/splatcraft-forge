@@ -1,13 +1,20 @@
 package net.splatcraft.platform;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
@@ -17,15 +24,30 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.platform.event.CommandRegistrationEvent;
 import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.platform.services.IPlatformHelper;
+import org.jetbrains.annotations.NotNull;
+
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public class FabricPlatformHelper implements IPlatformHelper
 {
@@ -55,7 +77,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 			server = null;
 		});
 	}
-	@OnlyIn(Dist.CLIENT)
+	@Environment(EnvType.CLIENT)
 	private void registerClientSideEvents()
 	{
 		ClientLifecycleEvents.CLIENT_STARTED.register((client) ->
@@ -103,6 +125,47 @@ public class FabricPlatformHelper implements IPlatformHelper
 	{
 	
 	}
+
+	@Override
+	public SaveInfo getSaveInfo() {
+		return null;
+	}
+
+	@Override
+	public void setSaveInfo(SaveInfo newData) {
+
+	}
+
+	@Override
+	public InkOverlayInfo getInkOverlayInfo(LivingEntity entity) {
+		return null;
+	}
+
+	@Override
+	public boolean hasInkOverlayInfo(LivingEntity entity) {
+		return false;
+	}
+
+	@Override
+	public void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData) {
+
+	}
+
+	@Override
+	public EntityInfo getEntityInfo(LivingEntity entity) {
+		return null;
+	}
+
+	@Override
+	public boolean hasEntityInfo(LivingEntity entity) {
+		return false;
+	}
+
+	@Override
+	public void setEntityInfo(LivingEntity entity, EntityInfo newData) {
+
+	}
+
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
 	{
@@ -141,5 +204,50 @@ public class FabricPlatformHelper implements IPlatformHelper
 	{
 		ItemGroupEvents.modifyEntriesEvent(creativeTab).register((tab) ->
 			tab.accept(new ItemStack(item)));
+	}
+
+	@Override
+	public void registerReloadListener(PackType packType, PreparableReloadListener reloadListener) {
+
+	}
+
+	@Override
+	public void registerKeyMapping(KeyMapping key) {
+
+	}
+
+	@Override
+	public <T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider) {
+
+	}
+
+	@Override
+	public <T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider) {
+
+	}
+
+	@Override
+	public void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier) {
+
+	}
+
+	@Override
+	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute) {
+
+	}
+
+	@Override
+	public void loadConfig() {
+
+	}
+
+	@Override
+	public void initializeConfigs() {
+
+	}
+
+	@Override
+	public Path getModConfigPath() {
+		return null;
 	}
 }

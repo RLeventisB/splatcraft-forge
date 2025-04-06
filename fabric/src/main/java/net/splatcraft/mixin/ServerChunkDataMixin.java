@@ -1,4 +1,4 @@
-package net.splatcraft.fabric.mixin;
+package net.splatcraft.mixin;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.network.PlayerChunkSender;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PlayerChunkSender.class)
 public class ServerChunkDataMixin
 {
-	@Inject(method = "sendChunkData", at = @At("TAIL"))
+	@Inject(method = "sendChunk", at = @At("TAIL"))
 	private static void splatcraft$onChunkDataSent(ServerGamePacketListenerImpl handler, ServerLevel world, LevelChunk chunk, CallbackInfo ci)
 	{
 		ChunkInkHandler.sendChunkData(handler, world, chunk);

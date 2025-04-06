@@ -1,4 +1,4 @@
-package net.splatcraft.neoforge;
+package net.splatcraft;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -29,7 +29,7 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 		return processQuads(quads, face);
 	}
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random)
+	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random)
 	{
 		List<BakedQuad> quads = original.getQuads(state, face, random);
 		return processQuads(quads, face);

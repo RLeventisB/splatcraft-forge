@@ -34,10 +34,9 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
 
     public int getStatRanking(S settings)
     {
-
         //this can be pooled if we need to micro-optimize
         List<Float> settingsList = DataHandler.WeaponStatsListener.SETTINGS.values().stream().filter(settings.getClass()::isInstance).filter(s -> !s.isSecret).map(settings.getClass()::cast)
-            .sorted((setting, other) -> ranker.apply(valueGetter, (S) setting, (S) other)).map((setting) -> valueGetter.get((S) setting)).distinct().toList();
+                .sorted((setting, other) -> ranker.apply(valueGetter, (S) setting, (S) other)).map((setting) -> valueGetter.get((S) setting)).distinct().toList();
 
         float value = valueGetter.get(settings);
         if (!settings.isSecret)
@@ -56,8 +55,8 @@ public class WeaponTooltip<S extends AbstractWeaponSettings<S, ?>>
     {
         if (advanced)
             return Component.translatable("weaponStat.format", Component.translatable("weaponStat." + name),
-                    Component.translatable("weaponStat.metric." + metric.localizedName, new DecimalFormat("0.#").format(getStatValue(settings))))
-                .withStyle(ChatFormatting.DARK_GREEN);
+                            Component.translatable("weaponStat.metric." + metric.localizedName, new DecimalFormat("0.#").format(getStatValue(settings))))
+                    .withStyle(ChatFormatting.DARK_GREEN);
         else
         {
             int ranking = getStatRanking(settings);

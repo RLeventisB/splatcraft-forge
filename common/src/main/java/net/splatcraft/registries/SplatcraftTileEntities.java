@@ -26,8 +26,8 @@ import static net.splatcraft.registries.SplatcraftBlocks.*;
 // why does this file fuck up the formatter?????
 public class SplatcraftTileEntities
 {
-	protected static final DeferredRegister<BlockEntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.BLOCK_ENTITY_TYPE);
-	protected static final DeferredRegister<MenuType<?>> CONTAINER_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.MENU);
+	public static final DeferredRegister<BlockEntityType<?>> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.BLOCK_ENTITY_TYPE);
+	public static final DeferredRegister<MenuType<?>> CONTAINER_REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.MENU);
 	@SafeVarargs
 	private static <T extends BlockEntity> RegistrySupplier<BlockEntityType<T>> registerTileEntity(String name, BlockEntityType.BlockEntitySupplier<T> factoryIn, RegistrySupplier<? extends Block>... allowedBlocks)
 	{
@@ -48,9 +48,9 @@ public class SplatcraftTileEntities
 	public static void bindTESR()
 	{
 		//BlockEntityRenderers.register(inkedTileEntity.get(), InkedBlockTileEntityRenderer::new);
-		Services.PLATFORM.registerBlockEntityRenderer(stageBarrierTileEntity.value(), StageBarrierTileEntityRenderer::new);
-		Services.PLATFORM.registerBlockEntityRenderer(colorBarrierTileEntity.value(), context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
-		Services.PLATFORM.registerBlockEntityRenderer(remotePedestalTileEntity.value(), context -> new RemotePedestalTileEntityRenderer());
+		Services.PLATFORM.registerBlockEntityRenderer(stageBarrierTileEntity, StageBarrierTileEntityRenderer::new);
+		Services.PLATFORM.registerBlockEntityRenderer(colorBarrierTileEntity, context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
+		Services.PLATFORM.registerBlockEntityRenderer(remotePedestalTileEntity, context -> new RemotePedestalTileEntityRenderer());
 	}
 	public static final RegistrySupplier<MenuType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
 	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);

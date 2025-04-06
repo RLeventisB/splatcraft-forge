@@ -1,33 +1,36 @@
 {
     "schemaVersion": 1,
-    "id": "splatcraft",
+    "id": "${mod_id}",
     "version": "${version}",
-    "name": "splatcraft",
-    "description": "Splatcraft is a Minecraft mod based on Nintendo's popular game Splatoon!\nThis mod aims to add items and mechanics based on the game in a cohesive way, such as Turf Wars, Weapons, Squid Transformations and many more!",
+    "name": "${mod_name}",
+    "description": "${description}",
     "authors": [
-        "Cibernet",
-        "Octol1ttle"
+        "${mod_author}"
     ],
     "contact": {
-        "sources": "https://github.com/splatcraft/splatcraft-forge"
+        "homepage": "https://fabricmc.net/",
+        "sources": "https://github.com/FabricMC/fabric-example-mod"
     },
-    "license": "https://github.com/splatcraft/splatcraft-forge/blob/HEAD/LICENSE",
-    "icon": "icon.png",
+    "license": "${license}",
+    "icon": "${mod_id}.png",
     "environment": "*",
     "entrypoints": {
         "main": [
-            "net.splatcraft.fabric.SplatcraftFabric"
+          "net.splatcraft.SplatcraftFabric"
         ]
     },
     "mixins": [
-        "splatcraft.mixins.json",
-        "splatcraft-fabric.mixins.json"
+        "${mod_id}.mixins.json",
+        "${mod_id}.fabric.mixins.json"
     ],
     "depends": {
-        "fabricloader": ">=0.16.9",
-        "minecraft": "~1.21.1",
-        "java": ">=21",
-        "architectury": ">=13.0.2",
-        "fabric-api": "*"
+        "fabricloader": ">=${fabric_loader_version}",
+        "fabric-api": "*",
+        "minecraft": "~${minecraft_version}",
+        "java": ">=${java_version}"
+    },
+    "suggests": {
+        "another-mod": "*"
     }
 }
+  
