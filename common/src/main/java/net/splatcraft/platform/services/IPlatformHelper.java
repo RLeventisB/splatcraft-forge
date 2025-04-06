@@ -33,8 +33,11 @@ import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.event.IEventMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public interface IPlatformHelper extends IEventMap
@@ -92,7 +95,7 @@ public interface IPlatformHelper extends IEventMap
 	<T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider);
 	void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier);
 	void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute);
-    void loadConfig();
+	void loadConfig();
 	void initializeConfigs();
 	Path getModConfigPath();
 
@@ -112,4 +115,5 @@ public interface IPlatformHelper extends IEventMap
 	EntityInfo getEntityInfo(LivingEntity entity);
 	boolean hasEntityInfo(LivingEntity entity);
 	void setEntityInfo(LivingEntity entity, EntityInfo newData);
+	<T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests);
 }
