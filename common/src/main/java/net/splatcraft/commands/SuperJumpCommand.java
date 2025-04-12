@@ -49,14 +49,14 @@ public class SuperJumpCommand
 	{
 		ServerPlayer player = context.getSource().getPlayerOrException();
 		superJump(player, target, true);
-		
+
 		return 0;
 	}
 	private static int executeSpawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		ServerPlayer player = context.getSource().getPlayerOrException();
 		superJumpToSpawn(player, true);
-		
+
 		return 0;
 	}
 	public static boolean superJumpToSpawn(ServerPlayer player, boolean global)
@@ -68,11 +68,11 @@ public class SuperJumpCommand
 			{
 				targetPos = player.level().getLevelData().getSpawnPos();
 			}
-			
+
 			superJump(player, new Vec3(targetPos.getX(), targetPos.getY() + blockHeight(targetPos, player.level()), targetPos.getZ()), global);
 			return true;
 		}
-		
+
 		return false;
 	}
 	@Nullable
@@ -81,7 +81,7 @@ public class SuperJumpCommand
 		BlockPos targetPos = player.getRespawnPosition();
 		if (targetPos == null || player.level().getBlockEntity(targetPos) instanceof SpawnPadTileEntity spawnpad && !ColorUtils.colorEquals(player, spawnpad))
 			return null;
-		
+
 		return targetPos;
 	}
 	public static boolean superJump(ServerPlayer player, Vec3 target)
@@ -100,18 +100,18 @@ public class SuperJumpCommand
 	{
 		if (!global && !canSuperJumpTo(player, target))
 			return false;
-		
+
 		EntityAction.setEntityAction(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics, player.getAbilities().invulnerable));
-		
+
 		EntityInfo info = EntityInfoCapability.get(player);
 		if (!info.isSquid())
 		{
 			info.setIsSquid(true);
 			SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), info.isSquid()), player);
 		}
-		
+
 		SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
-		
+
 		return true;
 	}
 	public static boolean canSuperJumpTo(LivingEntity entity, Vec3 target)
@@ -195,7 +195,7 @@ public class SuperJumpCommand
 			}
 			if (getTime() > getTravelTime()) // windup
 			{
-			
+
 			}
 			else
 			{
@@ -205,7 +205,7 @@ public class SuperJumpCommand
 				}
 				float progress = getSuperJumpProgress(0);
 				float oldProgress = getSuperJumpProgress(1);
-				
+
 				// i put () in every coordinate because java is doing magic bullshit again and somewhere in the code target is being set as source and i question how the fuck does that happen
 				// NEVERMIND SOURCE AND TARGET WERE REVERSED WHAT THE HELL
 				Vec3 nextPos = new Vec3(Mth.lerp(progress, start.x, end.x), getSuperJumpYPos(progress, start.y, end.y, getHeight()), Mth.lerp(progress, start.z, end.z));

@@ -52,9 +52,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	protected DualieItem(String settings)
 	{
 		super(settings);
-		
+
 		this.settings = settings;
-		
+
 		dualies.add(this);
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, String settings)
@@ -77,7 +77,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		if (stack.getItem() instanceof DualieItem dualie)
 			return dualie.getSettings(stack).rollData.turretDuration();
-		
+
 		return 0;
 	}
 	public static int getRollCount(LivingEntity player)
@@ -118,9 +118,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public void performRoll(LivingEntity entity, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
 	{
 		int rollCount = getRollCount(entity);
-		
+
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
-		
+
 		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()))
 		{
 			ShootingHandler.notifyForceEndShooting(entity);
@@ -129,7 +129,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), player.getAbilities().mayfly));
 			else
 				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, -1, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), false));
-			
+
 			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
 	}
@@ -160,11 +160,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-		
+
 		if (entity instanceof LivingEntity livingEntity)
 		{
 			InteractionHand hand = livingEntity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-			
+
 			if (livingEntity.getItemInHand(hand).equals(stack) && livingEntity.getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
 			{
 				stack.set(SplatcraftComponents.IS_PLURAL, true);
@@ -184,7 +184,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			offhandDualie = user.getOffhandItem();
 		}
-		
+
 		int rollCount = getRollCount(user);
 		int maxRolls = getMaxRollCount(user);
 		if (rollCount > 0 && !EntityAction.hasEntityAction(user)) // fix just in case
@@ -205,11 +205,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
 			// why does vec2 use floats but vec3 use doubles
-			
+
 			if (enoughInk(user, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
 			{
 				Vec2 rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
-				
+
 				performRoll(user, stack, user.getUsedItemHand(), maxRolls, rollPotency, true);
 				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUUID(), activeDualie, user.getUsedItemHand(), maxRolls, rollPotency));
 			}
@@ -220,7 +220,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		Player player = (Player) entity;
 		player.setYBodyRot(player.getVisualRotationYInDegrees()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
-		
+
 		ShootingHandler.notifyStartShooting(entity);
 	}
 	@Override
@@ -236,7 +236,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				{
 					ShotDataRecord shotData = settings.getShotData(entity);
 					ProjectileDataRecord projectileData = settings.getProjectileData(entity);
-					
+
 					if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 					{
 						float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), shotData.accuracyData());
@@ -248,14 +248,14 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						for (int i = 0; i < shotData.projectileCount(); i++)
 						{
 							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
-							
+
 							proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
 							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
 							proj.setDualieStats(projectileData);
 							world.addFreshEntity(proj);
 							proj.tick(accumulatedTime);
 						}
-						
+
 						world.playLocalSound(entity, SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, (float) world.getRandom().triangle(0.95f, 0.095f));
 					}
 				}
@@ -346,7 +346,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 								InkExplosion.createInkExplosion(entity, entity.position(), 0.9f, InkBlockUtils.getInkType(entity), storedStack);
 							}
 							entity.setDiscardFriction(true);
-							
+
 							entity.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
 							rollState = RollState.ROLL;
 							break;
@@ -357,7 +357,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						if (getTime() <= rollEndFrame)
 						{
 							entity.setDiscardFriction(false);
-							
+
 							rollState = RollState.AFTER_ROLL;
 							break;
 						}
@@ -394,7 +394,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				}
 				return true;
 			}
-			
+
 			return false;
 		}
 		public boolean canCancelRoll()

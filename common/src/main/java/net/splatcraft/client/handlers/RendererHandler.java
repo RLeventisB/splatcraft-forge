@@ -91,7 +91,7 @@ public class RendererHandler
 	public static boolean playerRender(PlayerRenderer instance, AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int color)
 	{
 		if (player.isSpectator()) return false;
-		
+
 		if (EntityInfoCapability.isSquid(player))
 		{
 			if (squidRenderer == null)
@@ -137,7 +137,7 @@ public class RendererHandler
 		{
 			return false;
 		}
-		
+
 		Optional<EntityAction> actionOptional = EntityAction.getActionIf(player, v -> Objects.equals(v.getHand(), hand));
 		if (actionOptional.isPresent())
 		{
@@ -146,7 +146,7 @@ public class RendererHandler
 			float maxTime = action.getMaxTime();
 			float yOff = -0.5f * (time / maxTime);
 			float weaponRotation = 0;
-			
+
 			if (player.getItemInHand(hand).getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
 			{
 				switch (weaponBaseItem.getPose(player, player.getItemInHand(hand)))
@@ -164,14 +164,14 @@ public class RendererHandler
 							{
 								yOff = Math.max(0f, 1.5f + distFromSwingFrame * 0.7f);
 							}
-							
+
 							if (!swingAction.isGrounded())
 							{
 								weaponRotation = yOff * 0.5f;
 								yOff = 0;
 							}
 						}
-						
+
 						break;
 					case BRUSH:
 						matrices.mulPose(Axis.YN.rotation(yOff * ((player.getMainArm() == HumanoidArm.RIGHT ? hand.equals(InteractionHand.MAIN_HAND) : hand.equals(InteractionHand.OFF_HAND)) ? 1 : -1)));
@@ -179,14 +179,14 @@ public class RendererHandler
 						break;
 					case TURRET_FIRE:
 						yOff = 0;
-						
+
 						break;
 					case DUAL_FIRE:
 						if (actionOptional.get() instanceof DualieItem.DodgeRollAction dodgeRollAction && dodgeRollAction.preventWeaponUse())
 						{
 							yOff = -(time - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
 						}
-						
+
 						break;
 				}
 			}
@@ -204,12 +204,12 @@ public class RendererHandler
 		AbstractSubWeaponEntity<T> sub = subWeaponItem.entityType.value().create(ClientUtils.getClientPlayer().clientLevel);
 		sub.setColor(ColorUtils.getInkColor(stack));
 		sub.setItem(stack);
-		
+
 		sub.isItem = true;
-		
+
 		BakedModel itemModel = Minecraft.getInstance().getModelManager().getModel(new ModelResourceLocation(subWeaponItem.builtInRegistryHolder().unwrapKey().map(ResourceKey::location).orElse(null), "inventory"));
 		itemModel.getTransforms().getTransform(ItemDisplayContext.GUI).apply(leftHanded, poseStack);
-		
+
 		Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(sub).render(sub, 0, partialTicks, poseStack, source, light);
 		return true;
 	}
@@ -227,18 +227,18 @@ public class RendererHandler
 					players.put(getDisplayName(info).getString(), info.getProfile().getId());
 				}
 			}
-			
+
 			if (!(message.getContents() instanceof TranslatableContents translatableContents))
 			{
 				return CompoundEventResult.pass();
 			}
-			
+
 			for (Object arg : translatableContents.getArgs())
 			{
 				if (!(arg instanceof MutableComponent msgChildren))
 					continue;
 				String key = msgChildren.getString();
-				
+
 				if (players.containsKey(key))
 					msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ClientUtils.getClientPlayerColor(players.get(key)).getColor())));
 			}
@@ -281,30 +281,30 @@ public class RendererHandler
 			{
 				return;
 			}
-			
+
 			PoseStack matrixStack = graphics.pose();
 			if (player.getMainHandItem().getItem() instanceof IChargeableWeapon || player.getOffhandItem().getItem() instanceof IChargeableWeapon)
 			{
 				renderChargerGui(graphics, tickDelta, width, height, info, matrixStack);
 			}
-			
+
 			InkColor color = ColorUtils.getColorLockedIfConfig(info.getColor());
 			float[] playerColor = color.getRGB();
 			if (player.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
 			{
 				renderDeviationGui(graphics, tickDelta, width, height, weaponBaseItem, matrixStack, player, playerColor);
 			}
-			
+
 			if (info.isPlaying())
 			{
 				renderMatchGui(graphics, tickDelta, width, height, info, matrixStack);
 			}
-			
+
 			SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 			boolean showCrosshairInkIndicator = inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
 			boolean isHoldingMatchItem = player.getMainHandItem().is(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffhandItem().is(SplatcraftTags.Items.MATCH_ITEMS);
 			boolean showLowInkWarning = showCrosshairInkIndicator && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.lowInkWarning")) && (isHoldingMatchItem || info.isSquid()) && !enoughInk(player, null, 10f, 0, false);
-			
+
 			boolean canUse = true;
 			float inkPctg = 0;
 			boolean isCoolingDown = false;
@@ -319,23 +319,23 @@ public class RendererHandler
 			if (info.isSquid() || showLowInkWarning || !canUse)
 			{
 				squidTime += 0.15f * tickDelta;
-				
+
 				if (showCrosshairInkIndicator)
 				{
 					int heightAnim = Math.min(14, (int) squidTime);
 					int glowAnim = Math.max(0, Math.min(18, (int) squidTime - 16));
-					
+
 					matrixStack.pushPose();
 					RenderSystem.enableBlend();
 					RenderSystem.setShaderTexture(0, WIDGETS);
-					
+
 					if (enoughInk(player, null, 220, 0, false))
 					{ // checks if you have unlimited ink
 						graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 2, 0, 131, 18, 2, 256, 256);
 						graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 0, 131, 18, 4 + heightAnim, 256, 256);
-						
+
 						RenderSystem.setShaderColor(playerColor[0], playerColor[1], playerColor[2], 1);
-						
+
 						graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 18, 131, 18, 4 + heightAnim, 256, 256);
 						graphics.blit(WIDGETS, width / 2 + 9 + 18 - glowAnim, height / 2 - 9, glowAnim, 18, 18 - glowAnim, 149, glowAnim, 18, 256, 256);
 					}
@@ -343,7 +343,7 @@ public class RendererHandler
 					{
 						graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 2, 0, 95, 18, 2, 256, 256);
 						graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 0, 95, 18, 4 + heightAnim, 256, 256);
-						
+
 						if (inkPctg != prevInkPctg && inkPctg == 1)
 						{
 							inkFlash = 0.2f;
@@ -356,15 +356,15 @@ public class RendererHandler
 							inkFlash = CommonUtils.tickValue(0, inkFlash, 0.0004f, 0, 1).value();
 						if (inkFlash < 0)
 							inkFlash = CommonUtils.tickValueToMax(0, inkFlash, 0.004f, 0, 1).value();
-						
+
 						float inkPctgLerp = Mth.lerp(0.05f, prevInkPctg, inkPctg);
 						float inkSize = (1 - inkPctg) * 18;
-						
+
 						RenderSystem.setShaderColor(playerColor[0] + inkFlash, playerColor[1] + inkFlash, playerColor[2] + inkFlash, 1);
 						matrixStack.translate(0, inkSize - Math.floor(inkSize), 0);
 						graphics.blit(WIDGETS, width / 2 + 9, (int) (height / 2 - 9 + (14 - heightAnim) + (1 - inkPctgLerp) * 18), 18, (int) ((4 + heightAnim) * inkPctgLerp), 18, 95 + inkSize, 18, (int) ((4 + heightAnim) * inkPctg), 256, 256);
 						matrixStack.translate(0, -(inkSize - Math.floor(inkSize)), 0);
-						
+
 						if (SplatcraftConfig.get("splatcraft.vanillaInkDurability"))
 						{
 							float[] durRgb = ColorUtils.hexToRGB(Mth.hsvToRgb(Math.max(0.0F, inkPctgLerp) / 3.0F, 1.0F, 1.0F));
@@ -374,9 +374,9 @@ public class RendererHandler
 						{
 							RenderSystem.setShaderColor(playerColor[0], playerColor[1], playerColor[2], 1);
 						}
-						
+
 						graphics.blit(WIDGETS, width / 2 + 9 + 18 - glowAnim, height / 2 - 9, glowAnim, 18, 18 - glowAnim, 113, glowAnim, 18, 256, 256);
-						
+
 						RenderSystem.setShaderColor(1, 1, 1, 1);
 						if (glowAnim == 18)
 						{
@@ -412,7 +412,7 @@ public class RendererHandler
 			Font textRenderer = mc.font;
 			matrixStack.pushPose();
 			renderMatchTopLabels(graphics, width, now, session, textRenderer);
-			
+
 			if (info.isMatchRespawning())
 			{
 				if (info.getMatchRespawnTimeLeft() < 60)
@@ -423,7 +423,7 @@ public class RendererHandler
 					graphics.drawString(textRenderer, label, width / 2 - textRenderer.width(label) / 2, height - 80, -1, true);
 				}
 			}
-			
+
 			matrixStack.popPose();
 		}
 	}
@@ -431,7 +431,7 @@ public class RendererHandler
 	{
 		int seconds = (int) Math.max(0, now.until(session.getMatchEndInstant(), ChronoUnit.SECONDS));
 		int minutes = seconds / 60;
-		
+
 		String[] topLabels = new String[]
 			{
 				session.stageId,
@@ -455,34 +455,34 @@ public class RendererHandler
 		matrixStack.pushPose();
 		RenderSystem.setShaderTexture(0, WIDGETS);
 		RenderSystem.enableBlend();
-		
+
 		AbstractWeaponSettings<?, ?> settings = weaponBaseItem.getSettings(player.getMainHandItem());
 		float speedForRender = settings.getSpeedForRender(player, player.getMainHandItem());
 		if (speedForRender <= 0)
 			return;
-		
+
 		CommonRecords.ShotDeviationDataRecord data = settings.getShotDeviationData(player.getMainHandItem(), player);
 		SplatcraftComponents.WeaponPrecisionData deviationData = ShotDeviationHelper.getDeviationData(player.getMainHandItem());
-		
+
 		CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), frameTime);
 		CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, frameTime);
-		
+
 		Minecraft mc = Minecraft.getInstance();
-		
+
 		double fov = ((GameRendererFovAccessor) mc.gameRenderer).invokeGetFov(
 			mc.gameRenderer.getMainCamera(),
 			frameTime,
 			true);
 		Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
 			fov);
-		
+
 		float currentAirInfluence = airInfluenceResult.value();
 		float currentDeviationChance = actualChanceResult.value();
-		
+
 		float currentDeviation = Math.max(0.017453292f, Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f);
-		
+
 		float aspectRatio = Mth.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
-		
+
 		float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
 		float[] rgb = new float[]
 			{
@@ -491,30 +491,30 @@ public class RendererHandler
 				Mth.lerp(value, 0.6f, playerColor[2])
 			};
 		RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
-		
+
 		Vec3 deltaMovementLerped = player.getKnownMovement();
-		
+
 		deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(frameTime));
 		// TODO: do this correctly please this aproximation works half the time
 		Vec3 relativePos = new Vec3(0, 0, speedForRender).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
 		double horizontalScale = Math.PI / relativePos.z;
 		relativePos = relativePos.multiply(horizontalScale, horizontalScale, 1);
 		float textureSize = 4 * (scale + 1);
-		
+
 		for (int x = -1; x <= 1; x += 2)
 		{
 			for (int y = -1; y <= 1; y += 2)
 			{
 				Vec3 rotatedPos = relativePos.yRot(currentDeviation * x).xRot(currentDeviation * y);
-				
+
 				Vector3f camSpace = rotatedPos.toVector3f();
-				
+
 				Vector4f projectiveCamSpace = new Vector4f(camSpace, 1f);
 				projectionMatrix.transform(projectiveCamSpace);
 				float w = projectiveCamSpace.w();
-				
+
 				Vector4f screenPos = new Vector4f(projectiveCamSpace.x() / w * width, projectiveCamSpace.y() / w * height, w, (float) Math.sqrt(relativePos.dot(relativePos)));
-				
+
 				// TODO: center this properly soon
 				GraphicsUtils.drawTexture(graphics, WIDGETS,
 					width / 2f - textureSize / 2 + screenPos.x,
@@ -522,7 +522,7 @@ public class RendererHandler
 					textureSize, textureSize, 64 - 7 * x, 8 - 7 * y, 4, 4, 256, 256);
 			}
 		}
-		
+
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		matrixStack.popPose();
 	}
@@ -532,27 +532,27 @@ public class RendererHandler
 		RenderSystem.enableBlend();
 		RenderSystem.setShaderTexture(0, WIDGETS);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		
+
 		graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 0, 30, 9, 256, 256);
 		if (info.getPlayerCharge() != null)
 		{
 			PlayerCharge playerCharge = info.getPlayerCharge();
 			float charge = Mth.lerp(frameTime, playerCharge.prevCharge, playerCharge.charge);
-			
+
 			if (charge > 1)
 			{
 				RenderSystem.setShaderColor(1, 1, 1, playerCharge.getDischargeValue(frameTime) * 0.05f);
 				graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 9, 30, 9, 256, 256);
-				
+
 				if (Math.floor(charge) != charge)
 					charge = charge % 1f;
 			}
-			
+
 			RenderSystem.setShaderColor(1, 1, 1, playerCharge.getDischargeValue(frameTime));
 			graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, (int) (30 * charge), 9, 88, 9, (int) (30 * charge), 9, 256, 256);
 		}
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		
+
 		matrixStack.popPose();
 	}
 }

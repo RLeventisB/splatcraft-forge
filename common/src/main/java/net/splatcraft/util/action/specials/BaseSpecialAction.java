@@ -54,10 +54,10 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		{
 			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
 			world.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
-			
+
 			return;
 		}
-		
+
 		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
 		optional.ifPresent(info ->
 		{
