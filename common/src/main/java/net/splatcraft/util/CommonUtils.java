@@ -386,16 +386,15 @@ public class CommonUtils
 		}
 		return new Result(delay, value);
 	}
-	public static <T> T returnValueDependantOnSquidCancel(LivingEntity player, T withCancel, T withoutCancel)
+	public static <T> T returnValueDependantOnSquidCancel(LivingEntity entity, T withCancel, T withoutCancel)
 	{
-		boolean didCancel = false;
-		if (EntityInfoCapability.hasCapability(player))
+		AtomicBoolean didCancel = new AtomicBoolean(false);
+		EntityInfoCapability.getOptional(entity).ifPresent(info ->
 		{
-			EntityInfo info = EntityInfoCapability.get(player);
-			didCancel = info.hasHigherStartup();
+			didCancel.set(info.hasHigherStartup());
 			info.resetHigherStartup();
-		}
-		return didCancel ? withCancel : withoutCancel;
+		});
+		return didCancel.get() ? withCancel : withoutCancel;
 	}
 	public static float startupSquidSwitch(LivingEntity entity, CommonRecords.ShotDataRecord shotData)
 	{

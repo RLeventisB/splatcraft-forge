@@ -1,17 +1,22 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "net.splatcraft.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "mixins": [],
-  "client": [
-    "BlockModelRendererMixin",
-    "BlockRenderMixinForge$BlockRenderManagerMixin",
-    "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
-    "FabricEventPlacementMixins$ClientMixins"
-  ],
-  "server": [],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "net.splatcraft.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "mixins": [
+        "ForgeDummyInjections$BlockEntityMixin",
+        "ForgeDummyInjections$BlockMixin",
+        "ForgeDummyInjections$ItemMixin"
+    ],
+    "client": [
+        "BlockModelRendererMixin",
+        "BlockRenderMixinForge$BlockRenderManagerMixin",
+        "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
+        "FabricEventPlacementMixins$ClientMixins",
+        "ForgeDummyInjections$ClientBlockMixin"
+    ],
+    "server": [],
+    "injectors": {
+        "defaultRequire": 1
+    }
 }

@@ -221,7 +221,7 @@ public class EntityInfo
 	{
 		if (playingData == null)
 			playingData = PlayingData.DEFAULT;
-		
+
 		return playingData.respawnTime & 0b01111111111111111111111111111111;
 	}
 	public void setMatchRespawnTimeLeft(int time)

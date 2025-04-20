@@ -24,18 +24,18 @@ import java.util.stream.Stream;
 
 public interface EntityAction
 {
-	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("player_cooldown_classes")), Lifecycle.stable());
-	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("player_cooldown_codecs")), Lifecycle.stable());
+	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("entity_action_classes")), Lifecycle.stable());
+	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("entity_action_codecs")), Lifecycle.stable());
 	Codec<EntityAction> SERIALIZER_CODEC = new MapCodec<EntityAction>()
 	{
 		@Override
 		public <T> RecordBuilder<T> encode(EntityAction input, DynamicOps<T> ops, RecordBuilder<T> builder)
 		{
 			ResourceLocation id = CLASS_REGISTRY.getKey(input.getClass());
-			
+
 			builder.add("id", ResourceLocation.CODEC.encodeStart(ops, id));
 			builder.add("data", ops.withEncoder(CODEC_REGISTRY.get(id).get()).apply(input));
-			
+
 			return builder;
 		}
 		@Override
@@ -58,10 +58,10 @@ public interface EntityAction
 	 */
 	static EntityAction getEntityAction(LivingEntity entity)
 	{
-		EntityInfo playerInfo = EntityInfoCapability.get(entity);
-		if (playerInfo == null)
+		EntityInfo entityInfo = EntityInfoCapability.get(entity);
+		if (entityInfo == null)
 			return null;
-		return playerInfo.getEntityAction();
+		return entityInfo.getEntityAction();
 	}
 	/**
 	 * Retrieves an {@link EntityAction} from the specified {@link LivingEntity}, if the {@link EntityAction} implements or extends a specified {@link Class}.
@@ -72,10 +72,10 @@ public interface EntityAction
 	 */
 	static <T extends EntityAction> T getSpecificEntityAction(LivingEntity entity, Class<T> clazz)
 	{
-		EntityInfo playerInfo = EntityInfoCapability.get(entity);
-		if (playerInfo == null || !clazz.isInstance(playerInfo.getEntityAction()))
+		EntityInfo entityInfo = EntityInfoCapability.get(entity);
+		if (entityInfo == null || !clazz.isInstance(entityInfo.getEntityAction()))
 			return null;
-		return (T) playerInfo.getEntityAction();
+		return (T) entityInfo.getEntityAction();
 	}
 	/**
 	 * Tries to retrieve an {@link EntityAction} from the specified {@link LivingEntity}, the result is represented by an {@link Optional}.
@@ -106,7 +106,7 @@ public interface EntityAction
 		{
 			action.setTime(time);
 		}
-		
+
 		return action;
 	}
 	static boolean hasActionAnd(LivingEntity entity, Predicate<EntityAction> actionPredicate)

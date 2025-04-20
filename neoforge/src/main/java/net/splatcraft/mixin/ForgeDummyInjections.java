@@ -1,4 +1,4 @@
-package net.splatcraft;
+package net.splatcraft.mixin;
 
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
@@ -38,6 +38,7 @@ public class ForgeDummyInjections
 {
 	// ps: do NOT. put the dummy method's name the same as the extension, or else an stackoverflow exception will occur!!! idk why!!!
 	// oh yeah ph stands for placeholder
+	@Mixin(ISplatcraftForgeItemDummy.class)
 	public interface ItemMixin extends IItemExtension
 	{
 		@Override
@@ -61,6 +62,7 @@ public class ForgeDummyInjections
 			return ((ISplatcraftForgeItemDummy) this).phShouldCauseReequipAnimation(oldStack, newStack, slotChanged);
 		}
 	}
+	@Mixin(ISplatcraftForgeBlockDummy.class)
 	public interface ClientBlockMixin extends IClientBlockExtensions
 	{
 		@Override
@@ -69,6 +71,7 @@ public class ForgeDummyInjections
 			return ((ISplatcraftForgeBlockDummy) this).phAddHitEffects(state, level, target, manager);
 		}
 	}
+	@Mixin(ISplatcraftForgeBlockDummy.class)
 	public interface BlockMixin extends IBlockExtension
 	{
 		@Override

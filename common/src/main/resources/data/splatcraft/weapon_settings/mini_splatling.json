@@ -2,9 +2,8 @@
     "type": "splatcraft:splatling",
     "projectile": {
         "size": 1,
-        "speed": 1,
-        "decayed_speed": 0.8,
-        "count": 1,
+        "delay_speed_mult": 1,
+        "count": 10.5,
         "ink_coverage_on_impact": 0.85,
         "ink_drop_coverage": 0.75,
         "distance_between_drops": 3,
@@ -16,6 +15,8 @@
         "damage_decay_per_tick": 0.4
     },
     "shot": {
+        "speed": 1,
+        "delay_speed_mult": 0.73,
         "firing_speed": 3,
         "ground_inaccuracy": 6,
         "airborne_inaccuracy": 12,
@@ -23,10 +24,10 @@
         "ink_consumption": 0
     },
     "second_charge_projectile": {
-        "speed": 1.5,
         "straight_shot_ticks": 4
     },
     "second_charge_shot": {
+        "speed": 15
     },
     "charge": {
         "first_charge_time_ticks": 7,
