@@ -44,6 +44,7 @@ import net.neoforged.neoforge.common.util.RecipeMatcher;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -89,136 +90,136 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			registerClientSideEvents();
 
 		EventHelper.registerEvent(RegisterCommandsEvent.class, (evt) ->
-				invokeConsumerEvent(CommandRegistrationEvent.class, evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection())
+			invokeConsumerEvent(CommandRegistrationEvent.class, evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection())
 		);
 		EventHelper.registerEvent(ServerStartingEvent.class, (evt) ->
-				invokeConsumerEvent(LifecycleEvents.ServerStarting.class, evt.getServer())
+			invokeConsumerEvent(LifecycleEvents.ServerStarting.class, evt.getServer())
 		);
 		EventHelper.registerEvent(ServerStartedEvent.class, (evt) ->
-				invokeConsumerEvent(LifecycleEvents.ServerStarted.class, evt.getServer())
+			invokeConsumerEvent(LifecycleEvents.ServerStarted.class, evt.getServer())
 		);
 		EventHelper.registerEvent(ServerStoppedEvent.class, (evt) ->
-				invokeConsumerEvent(LifecycleEvents.ServerStopped.class, evt.getServer())
+			invokeConsumerEvent(LifecycleEvents.ServerStopped.class, evt.getServer())
 		);
 		EventHelper.registerEvent(PlayerTickEvent.Pre.class, (evt) ->
-				invokeConsumerEvent(TickEvents.PlayerBefore.class, evt.getEntity())
+			invokeConsumerEvent(TickEvents.PlayerBefore.class, evt.getEntity())
 		);
 		EventHelper.registerEvent(PlayerTickEvent.Post.class, (evt) ->
-				invokeConsumerEvent(TickEvents.PlayerAfter.class, evt.getEntity())
+			invokeConsumerEvent(TickEvents.PlayerAfter.class, evt.getEntity())
 		);
 		EventHelper.registerEvent(LevelTickEvent.Pre.class, (evt) ->
-				{
-					if (evt.getLevel() instanceof ServerLevel serverLevel)
-						invokeConsumerEvent(TickEvents.ServerLevelBefore.class, serverLevel);
-				}
+			{
+				if (evt.getLevel() instanceof ServerLevel serverLevel)
+					invokeConsumerEvent(TickEvents.ServerLevelBefore.class, serverLevel);
+			}
 		);
 		EventHelper.registerEvent(LevelTickEvent.Post.class, (evt) ->
-				{
-					if (evt.getLevel() instanceof ServerLevel serverLevel)
-						invokeConsumerEvent(TickEvents.ServerLevelAfter.class, serverLevel);
-				}
+			{
+				if (evt.getLevel() instanceof ServerLevel serverLevel)
+					invokeConsumerEvent(TickEvents.ServerLevelAfter.class, serverLevel);
+			}
 		);
 		EventHelper.registerEvent(ServerTickEvent.Pre.class, (evt) ->
-				invokeConsumerEvent(TickEvents.ServerBefore.class, evt.getServer())
+			invokeConsumerEvent(TickEvents.ServerBefore.class, evt.getServer())
 		);
 		EventHelper.registerEvent(ServerTickEvent.Post.class, (evt) ->
-				invokeConsumerEvent(TickEvents.ServerAfter.class, evt.getServer())
+			invokeConsumerEvent(TickEvents.ServerAfter.class, evt.getServer())
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.LeftClickEmpty.class, (evt) ->
-				{
-					if (evt.getSide() == LogicalSide.CLIENT)
-						invokeConsumerEvent(InteractionEvents.ClientLeftClickAir.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-				}
+			{
+				if (evt.getSide() == LogicalSide.CLIENT)
+					invokeConsumerEvent(InteractionEvents.ClientLeftClickAir.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
+			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.RightClickEmpty.class, (evt) ->
-				{
-					if (evt.getSide() == LogicalSide.CLIENT)
-						invokeConsumerEvent(InteractionEvents.ClientRightClickAir.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-				}
+			{
+				if (evt.getSide() == LogicalSide.CLIENT)
+					invokeConsumerEvent(InteractionEvents.ClientRightClickAir.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
+			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.LeftClickBlock.class, (evt) ->
-				{
-					EventResult result = invokeEvent(InteractionEvents.LeftClickBlock.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-					result.value.ifPresent(evt::setCanceled);
-				}
+			{
+				EventResult result = invokeEvent(InteractionEvents.LeftClickBlock.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
+				result.value.ifPresent(evt::setCanceled);
+			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.RightClickBlock.class, (evt) ->
-				{
-					EventResult result = invokeEvent(InteractionEvents.RightClickBlock.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-					evt.setCancellationResult(result.convertToInteractionResult());
-					if (result.interrupts)
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(InteractionEvents.RightClickBlock.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
+				evt.setCancellationResult(result.convertToInteractionResult());
+				if (result.interrupts)
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.RightClickItem.class, (evt) ->
-				{
-					EventResult result = invokeEvent(InteractionEvents.RightClickItem.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-					evt.setCancellationResult(result.convertToInteractionResult());
-					if (result.interrupts)
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(InteractionEvents.RightClickItem.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
+				evt.setCancellationResult(result.convertToInteractionResult());
+				if (result.interrupts)
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.EntityInteract.class, (evt) ->
-				{
-					EventResult result = invokeEvent(InteractionEvents.InteractEntity.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getEntity(), evt.getLevel(), evt.getPos());
-					evt.setCancellationResult(result.convertToInteractionResult());
-					if (result.interrupts)
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(InteractionEvents.InteractEntity.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getEntity(), evt.getLevel(), evt.getPos());
+				evt.setCancellationResult(result.convertToInteractionResult());
+				if (result.interrupts)
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(PlayerEvent.Clone.class, (evt) ->
-				invokeConsumerEvent(PlayerEvents.PlayerClone.class, (ServerPlayer) evt.getOriginal(), (ServerPlayer) evt.getEntity(), !evt.isWasDeath())
+			invokeConsumerEvent(PlayerEvents.PlayerClone.class, (ServerPlayer) evt.getOriginal(), (ServerPlayer) evt.getEntity(), !evt.isWasDeath())
 		);
 		EventHelper.registerEvent(AttackEntityEvent.class, (evt) ->
-				{
-					EventResult result = invokeEvent(PlayerEvents.AttackEntity.class, evt.getEntity(), evt.getEntity().level(), evt.getTarget(), evt.getEntity().getUsedItemHand(), null);
-					if (result.interrupts)
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(PlayerEvents.AttackEntity.class, evt.getEntity(), evt.getEntity().level(), evt.getTarget(), evt.getEntity().getUsedItemHand(), null);
+				if (result.interrupts)
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(InputEvent.MouseScrollingEvent.class, (evt) ->
-				{
-					EventResult result = invokeEvent(ClientRawInputEvent.MouseScrolled.class, Minecraft.getInstance(), evt.getMouseX(), evt.getMouseY());
-					if (result.interruptsOrFalse())
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(ClientRawInputEvent.MouseScrolled.class, Minecraft.getInstance(), evt.getMouseX(), evt.getMouseY());
+				if (result.interruptsOrFalse())
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(InputEvent.MouseButton.Pre.class, (evt) ->
-				invokeConsumerEvent(ClientRawInputEvent.PreMouseClicked.class, Minecraft.getInstance(), evt.getButton(), evt.getAction(), evt.getModifiers())
+			invokeConsumerEvent(ClientRawInputEvent.PreMouseClicked.class, Minecraft.getInstance(), evt.getButton(), evt.getAction(), evt.getModifiers())
 		);
 		EventHelper.registerEvent(InputEvent.Key.class, (evt) ->
-				invokeConsumerEvent(ClientRawInputEvent.KeyPressed.class, Minecraft.getInstance(), evt.getKey(), evt.getScanCode(), evt.getAction(), evt.getModifiers())
+			invokeConsumerEvent(ClientRawInputEvent.KeyPressed.class, Minecraft.getInstance(), evt.getKey(), evt.getScanCode(), evt.getAction(), evt.getModifiers())
 		);
 		EventHelper.registerEvent(LivingDeathEvent.class, (evt) ->
-				{
-					EventResult result = invokeEvent(EntityEvents.LivingDeath.class, evt.getEntity(), evt.getSource());
-					if (result.interruptsOrFalse())
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(EntityEvents.LivingDeath.class, evt.getEntity(), evt.getSource());
+				if (result.interruptsOrFalse())
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(ClientChatReceivedEvent.class, (evt) ->
+			{
+				CompoundEventResult<Component> result = invokeCompoundEvent(InteractionEvents.ClientChatReceive.class, evt.getBoundChatType(), evt.getMessage(), evt.getSender());
+				if (result.value() != null)
 				{
-					CompoundEventResult<Component> result = invokeCompoundEvent(InteractionEvents.ClientChatReceive.class, evt.getBoundChatType(), evt.getMessage(), evt.getSender());
-					if (result.value() != null)
-					{
-						evt.setMessage(result.value());
-					}
-					if (result.result().interruptsOrFalse())
-						evt.setCanceled(true);
+					evt.setMessage(result.value());
 				}
+				if (result.result().interruptsOrFalse())
+					evt.setCanceled(true);
+			}
 		);
 		EventHelper.registerEvent(PlayerEvent.PlayerLoggedInEvent.class, (evt) ->
-				invokeConsumerEvent(PlayerEvents.LogIn.class, (ServerPlayer) evt.getEntity())
+			invokeConsumerEvent(PlayerEvents.LogIn.class, (ServerPlayer) evt.getEntity())
 		);
 		EventHelper.registerEvent(PlayerEvent.PlayerLoggedOutEvent.class, (evt) ->
-				invokeConsumerEvent(PlayerEvents.Quit.class, (ServerPlayer) evt.getEntity())
+			invokeConsumerEvent(PlayerEvents.Quit.class, (ServerPlayer) evt.getEntity())
 		);
 		EventHelper.registerEvent(BlockEvent.BreakEvent.class, (evt) ->
-				{
-					EventResult result = invokeEvent(InteractionEvents.BlockBreak.class, evt.getPlayer(), evt.getLevel(), evt.getPos(), evt.getState());
-					if (result.interruptsOrFalse())
-						evt.setCanceled(true);
-				}
+			{
+				EventResult result = invokeEvent(InteractionEvents.BlockBreak.class, evt.getPlayer(), evt.getLevel(), evt.getPos(), evt.getState());
+				if (result.interruptsOrFalse())
+					evt.setCanceled(true);
+			}
 		);
 	}
 
@@ -226,22 +227,22 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	private void registerClientSideEvents()
 	{
 		EventHelper.registerEvent(ClientTickEvent.Pre.class, (evt) ->
-				invokeConsumerEvent(TickEvents.ClientBefore.class, Minecraft.getInstance())
+			invokeConsumerEvent(TickEvents.ClientBefore.class, Minecraft.getInstance())
 		);
 		EventHelper.registerEvent(ClientTickEvent.Post.class, (evt) ->
-				invokeConsumerEvent(TickEvents.ClientAfter.class, Minecraft.getInstance())
+			invokeConsumerEvent(TickEvents.ClientAfter.class, Minecraft.getInstance())
 		);
 		EventHelper.registerEvent(LevelTickEvent.Pre.class, (evt) ->
-				{
-					if (evt.getLevel() instanceof ClientLevel clientLevel)
-						invokeConsumerEvent(TickEvents.ClientLevelBefore.class, clientLevel);
-				}
+			{
+				if (evt.getLevel() instanceof ClientLevel clientLevel)
+					invokeConsumerEvent(TickEvents.ClientLevelBefore.class, clientLevel);
+			}
 		);
 		EventHelper.registerEvent(LevelTickEvent.Post.class, (evt) ->
-				{
-					if (evt.getLevel() instanceof ClientLevel clientLevel)
-						invokeConsumerEvent(TickEvents.ClientLevelAfter.class, clientLevel);
-				}
+			{
+				if (evt.getLevel() instanceof ClientLevel clientLevel)
+					invokeConsumerEvent(TickEvents.ClientLevelAfter.class, clientLevel);
+			}
 		);
 	}
 
@@ -383,13 +384,13 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item)
 	{
 		EventHelper.addToEventSpecificMap(BuildCreativeModeTabContentsEvent.class, creativeTab, item,
-				(buildTab, tabKey, itemToAdd) ->
+			(buildTab, tabKey, itemToAdd) ->
+			{
+				if (buildTab.getTabKey().equals(tabKey))
 				{
-					if (buildTab.getTabKey().equals(tabKey))
-					{
-						buildTab.accept(new ItemStack(itemToAdd));
-					}
+					buildTab.accept(new ItemStack(itemToAdd));
 				}
+			}
 		);
 	}
 
@@ -398,21 +399,21 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	{
 		if (packType == PackType.SERVER_DATA)
 			EventHelper.addToEventSpecificList(AddReloadListenerEvent.class, reloadListener,
-					AddReloadListenerEvent::addListener
+				AddReloadListenerEvent::addListener
 			);
 	}
 	@Override
 	public void registerKeyMapping(KeyMapping key)
 	{
 		EventHelper.addToEventSpecificList(RegisterKeyMappingsEvent.class, key,
-				RegisterKeyMappingsEvent::register
+			RegisterKeyMappingsEvent::register
 		);
 	}
 	@Override
 	public <T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider)
 	{
 		EventHelper.addToEventSpecificMap(EntityRenderersEvent.RegisterRenderers.class, type, provider,
-				(registerRenderers, blockEntityType, blockEntityRendererProvider) -> registerRenderers.registerBlockEntityRenderer(blockEntityType.get(), blockEntityRendererProvider)
+			(registerRenderers, blockEntityType, blockEntityRendererProvider) -> registerRenderers.registerBlockEntityRenderer(blockEntityType.get(), blockEntityRendererProvider)
 		);
 	}
 
@@ -420,7 +421,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public <T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider)
 	{
 		EventHelper.addToEventSpecificMap(EntityRenderersEvent.RegisterRenderers.class, type, provider,
-				(registerRenderers, entityType, entityRendererProvider) -> registerRenderers.registerEntityRenderer(entityType.get(), entityRendererProvider)
+			(registerRenderers, entityType, entityRendererProvider) -> registerRenderers.registerEntityRenderer(entityType.get(), entityRendererProvider)
 		);
 	}
 
@@ -428,14 +429,16 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier)
 	{
 		EventHelper.addToEventSpecificMap(EntityRenderersEvent.RegisterLayerDefinitions.class, location, layerDefinitionSupplier,
-				EntityRenderersEvent.RegisterLayerDefinitions::registerLayerDefinition
+			EntityRenderersEvent.RegisterLayerDefinitions::registerLayerDefinition
 		);
 	}
 
 	@Override
-	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute)
+	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attributeBuilder)
 	{
-
+		EventHelper.addToEventSpecificMap(EntityAttributeCreationEvent.class, type, attributeBuilder,
+			(registerAttributes, entityType, attributeSupplier) -> registerAttributes.put(entityType.get(), attributeSupplier.get().build())
+		);
 	}
 
 	@Override
