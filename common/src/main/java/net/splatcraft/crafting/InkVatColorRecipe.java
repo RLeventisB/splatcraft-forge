@@ -117,12 +117,12 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 			ByteBufCodecs.BOOL, InkVatColorRecipe::isDisableOmni,
 			InkVatColorRecipe::new);
 		@Override
-		public MapCodec<InkVatColorRecipe> codec()
+		public @NotNull MapCodec<InkVatColorRecipe> codec()
 		{
 			return CODEC;
 		}
 		@Override
-		public StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> streamCodec()
+		public @NotNull StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> streamCodec()
 		{
 			return PACKET_CODEC;
 		}

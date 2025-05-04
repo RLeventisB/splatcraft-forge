@@ -3,6 +3,7 @@ package net.splatcraft.items.weapons;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -16,12 +17,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
-import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
@@ -51,7 +53,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public String settings;
 	protected DualieItem(String settings)
 	{
-		super(settings);
+		super(settings, properties -> properties.component(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT));
 
 		this.settings = settings;
 
@@ -63,7 +65,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, RegistrySupplier<DualieItem> parent, String name)
 	{
-		return registry.register(name, () -> new DualieItem(parent.value().settingsId.toString()));
+		return registry.register(name, () -> new DualieItem(parent.value().components().get(SplatcraftComponents.WEAPON_SETTING_ID).toString()));
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, String settings, String name)
 	{
@@ -115,7 +117,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		return DualieWeaponSettings.class;
 	}
-	public void performRoll(LivingEntity entity, ItemStack activeDualie, InteractionHand hand, int maxRolls, Vec2 rollPotency, boolean local)
+	public void performRoll(LivingEntity entity, ItemStack activeDualie, EntitySlot dualieSlot, Vec2 rollPotency)
 	{
 		int rollCount = getRollCount(entity);
 
@@ -123,12 +125,19 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
 		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()))
 		{
-			ShootingHandler.notifyForceEndShooting(entity);
+			entity.getMainHandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
+			entity.getOffhandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
+			entity.stopUsingItem();
+
 			int turretDuration = getRollTurretDuration(activeDualie);
-			if (entity instanceof Player player)
-				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, player.getInventory().selected, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), player.getAbilities().mayfly));
-			else
-				EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, -1, hand, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), false));
+
+			boolean allowFlying = entity instanceof Player player && player.getAbilities().mayfly;
+			Optional<DodgeRollAction> previousDodgeRoll = EntityAction.getSpecificEntityActionOptional(entity, DodgeRollAction.class);
+			if (previousDodgeRoll.isPresent())
+			{
+				allowFlying = previousDodgeRoll.get().didAllowFlying;
+			}
+			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), allowFlying));
 
 			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
 		}
@@ -161,18 +170,35 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-		if (entity instanceof LivingEntity livingEntity)
+		if (entity instanceof LivingEntity living)
 		{
-			InteractionHand hand = livingEntity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+			InteractionHand hand = living.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 
-			if (livingEntity.getItemInHand(hand).equals(stack) && livingEntity.getItemInHand(InteractionHand.values()[(hand.ordinal() + 1) % InteractionHand.values().length]).getItem().equals(stack.getItem()))
+			if (living.getItemInHand(hand).equals(stack) && living.getItemInHand(CommonUtils.otherHand(hand)).is(stack.getItem()))
 			{
 				stack.set(SplatcraftComponents.IS_PLURAL, true);
 			}
+
+			DualieWeaponSettings settings = getSettings(stack);
+
+			stack.update(
+				SplatcraftComponents.SHOOTER_FIRING_DATA,
+				SplatcraftComponents.ShooterFiringData.DEFAULT,
+				data ->
+				{
+					return data.tick(
+						(accumulatedTime) ->
+						{
+							fire(settings, world, stack, living, accumulatedTime, hand);
+							return v -> living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse) ? v : v.withRepeatingFlag(false);
+						},
+						(accumulatedTime) -> v -> v);
+				}
+			);
 		}
 	}
 	@Override
-	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(@NotNull Level world, @NotNull LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		doDodgeRollTick(user, stack);
 		super.onUseTick(world, user, stack, remainingUseTicks);
@@ -180,7 +206,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	private void doDodgeRollTick(LivingEntity user, ItemStack stack)
 	{
 		ItemStack offhandDualie = ItemStack.EMPTY;
-		if (user.getUsedItemHand().equals(InteractionHand.OFF_HAND) && user.getOffhandItem().equals(stack) && user.getOffhandItem().getItem() instanceof DualieItem)
+		if (user.getOffhandItem().equals(stack) && user.getMainHandItem().getItem() instanceof DualieItem)
+		{
+			offhandDualie = user.getMainHandItem();
+		}
+		else if (user.getMainHandItem().equals(stack) && user.getOffhandItem().getItem() instanceof DualieItem)
 		{
 			offhandDualie = user.getOffhandItem();
 		}
@@ -209,9 +239,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			if (enoughInk(user, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
 			{
 				Vec2 rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
+				EntitySlot usedDualie = EntitySlot.searchAndCreateWithStack(user, activeDualie, EntitySlot.StackComparator.ONLY_REFERENCE);
 
-				performRoll(user, stack, user.getUsedItemHand(), maxRolls, rollPotency, true);
-				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUUID(), activeDualie, user.getUsedItemHand(), maxRolls, rollPotency));
+				performRoll(user, activeDualie, usedDualie, rollPotency);
+				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUUID(), activeDualie, usedDualie, rollPotency));
 			}
 		}
 	}
@@ -221,45 +252,72 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		Player player = (Player) entity;
 		player.setYBodyRot(player.getVisualRotationYInDegrees()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 
-		ShootingHandler.notifyStartShooting(entity);
+		stack.update(
+			SplatcraftComponents.SHOOTER_FIRING_DATA,
+			SplatcraftComponents.ShooterFiringData.DEFAULT,
+			data -> data.notifyUsing(entity, getSettings(stack).getShotData(entity))
+		);
+
+		InteractionHand hand = entity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+		ItemStack itemInOtherHand = entity.getItemInHand(CommonUtils.otherHand(hand));
+
+		// returns if the other stack is empty, or isnt a dualie, or is already shooting
+		if (
+			itemInOtherHand.isEmpty() ||
+				!(itemInOtherHand.getItem() instanceof DualieItem otherDualie) ||
+				SplatcraftComponents.getOptional(itemInOtherHand, SplatcraftComponents.SHOOTER_FIRING_DATA)
+					.map(SplatcraftComponents.ShooterFiringData::preventsChanging).orElse(true)) return;
+
+		DualieWeaponSettings otherDualieSettings = otherDualie.getSettings(itemInOtherHand);
+		float initialStartup = otherDualieSettings.getShotData(entity).repeatTicks() / 2f;
+		float timeSinceStartup = entity.getTicksUsingItem() - initialStartup;
+		if (timeSinceStartup < 0) return;
+
+		itemInOtherHand.update(
+			SplatcraftComponents.SHOOTER_FIRING_DATA,
+			SplatcraftComponents.ShooterFiringData.DEFAULT,
+			data ->
+				data
+					.notifyUsing(entity, otherDualieSettings.getShotData(entity))
+					.tick((accumulatedTime) ->
+						{
+							fire(otherDualieSettings, world, itemInOtherHand, entity, accumulatedTime, hand);
+							return v -> v;
+						},
+						(accumulatedTime) -> v -> v, timeSinceStartup)
+		);
 	}
-	@Override
-	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack stack, LivingEntity entity)
+	public void fire(DualieWeaponSettings settings, Level level, ItemStack stack, LivingEntity entity, float accumulatedTime, InteractionHand hand)
 	{
-		DualieWeaponSettings settings = getSettings(stack);
-		Level world = entity.level();
-		return ShootingHandler.FiringStatData.createFromShotData(settings.getShotData(entity),
-			null,
-			(data, accumulatedTime, entity1) ->
+		ShotDataRecord shotData = settings.getShotData(entity);
+		ProjectileDataRecord projectileData = settings.getProjectileData(entity);
+
+		if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
+		{
+			if (entity == Minecraft.getInstance().player)
+				SplatcraftKeyHandler.squidAndSubDelay = (int) shotData.miscEndlagTicks();
+			else if (!level.isClientSide)
 			{
-				if (!world.isClientSide())
+				float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), shotData.accuracyData());
+				ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(hand));
+				if (!otherHand.isEmpty() && otherHand.getItem() instanceof DualieItem)
 				{
-					ShotDataRecord shotData = settings.getShotData(entity);
-					ProjectileDataRecord projectileData = settings.getProjectileData(entity);
-
-					if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
-					{
-						float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, world.getRandom(), shotData.accuracyData());
-						ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(data.hand));
-						if (!otherHand.isEmpty() && otherHand.getItem() instanceof DualieItem)
-						{
-							stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, ShotDeviationHelper.getDeviationData(otherHand));
-						}
-						for (int i = 0; i < shotData.projectileCount(); i++)
-						{
-							InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
-
-							proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
-							proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
-							proj.setDualieStats(projectileData);
-							world.addFreshEntity(proj);
-							proj.tick(accumulatedTime);
-						}
-
-						world.playLocalSound(entity, SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, (float) world.getRandom().triangle(0.95f, 0.095f));
-					}
+					stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, ShotDeviationHelper.getDeviationData(otherHand));
 				}
-			}, null);
+				for (int i = 0; i < shotData.projectileCount(); i++)
+				{
+					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
+
+					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
+					proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
+					proj.setDualieStats(projectileData);
+					level.addFreshEntity(proj);
+					proj.tick(accumulatedTime);
+				}
+
+				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(level.getRandom(), 0.95F, 0.095F));
+			}
+		}
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
@@ -275,8 +333,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			ItemStack.CODEC.fieldOf("stored_stack").forGetter(DodgeRollAction::getStoredStack),
 			Codec.FLOAT.fieldOf("time").forGetter(DodgeRollAction::getTime),
 			Codec.FLOAT.fieldOf("max_time").forGetter(DodgeRollAction::getMaxTime),
-			Codec.INT.fieldOf("slot_index").forGetter(DodgeRollAction::getSlotIndex),
-			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(EntityAction::getHand),
+			EntitySlot.SERIALIZER_CODEC.fieldOf("dualie_slot").forGetter(DodgeRollAction::getItemSlot),
 			Codec.BYTE.fieldOf("roll_frame").forGetter(v -> v.rollFrame),
 			Codec.BYTE.fieldOf("roll_end_frame").forGetter(v -> v.rollEndFrame),
 			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
@@ -287,17 +344,15 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		).apply(inst, DodgeRollAction::new));
 		public final byte rollFrame, rollEndFrame, turretModeFrame;
 		final ItemStack storedStack;
-		final int slotIndex;
-		final InteractionHand hand;
+		final EntitySlot itemSlot;
 		final Vec2 rollDirection;
 		final boolean canSlide, didAllowFlying;
 		RollState rollState = RollState.BEFORE_ROLL;
-		public DodgeRollAction(ItemStack stack, int slotIndex, InteractionHand hand, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, EntitySlot itemSlot, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
 		{
 			super(startupFrames + rollDuration + endlagFrames + turretModeFrames);
 			storedStack = stack;
-			this.slotIndex = slotIndex;
-			this.hand = hand;
+			this.itemSlot = itemSlot;
 			this.rollDirection = rollDirection;
 			rollFrame = (byte) (rollDuration + turretModeFrames + endlagFrames);
 			rollEndFrame = (byte) (turretModeFrames + endlagFrames);
@@ -305,12 +360,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			this.canSlide = canSlide;
 			this.didAllowFlying = didAllowFlying;
 		}
-		public DodgeRollAction(ItemStack stack, float time, float maxTime, int slotIndex, InteractionHand hand, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2 rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, float time, float maxTime, EntitySlot itemSlot, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2 rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
 		{
 			super(time, maxTime);
 			storedStack = stack;
-			this.slotIndex = slotIndex;
-			this.hand = hand;
+			this.itemSlot = itemSlot;
 			this.rollDirection = rollDirection;
 			this.rollFrame = rollFrame;
 			this.rollEndFrame = rollEndFrame;
@@ -387,7 +441,6 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			if (endedTurretMode)
 			{
 				EntityInfoCapability.get(entity).setDodgeCount(0);
-				ShootingHandler.notifyRecalculateShootingData(entity);
 				if (entity instanceof Player player)
 				{
 					player.getAbilities().mayfly = didAllowFlying;
@@ -422,14 +475,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			return storedStack;
 		}
 		@Override
-		public int getSlotIndex()
+		public EntitySlot getItemSlot()
 		{
-			return slotIndex;
-		}
-		@Override
-		public InteractionHand getHand()
-		{
-			return hand;
+			return itemSlot;
 		}
 		public enum RollState implements StringRepresentable
 		{
@@ -444,7 +492,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				this.value = (byte) value;
 			}
 			@Override
-			public String getSerializedName()
+			public @NotNull String getSerializedName()
 			{
 				return name();
 			}

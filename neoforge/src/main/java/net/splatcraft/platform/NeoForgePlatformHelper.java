@@ -35,6 +35,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.Event;
 import net.neoforged.fml.LogicalSide;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -72,7 +73,10 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -348,6 +352,33 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public <T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests)
 	{
 		return RecipeMatcher.findMatches(inputs, tests);
+	}
+	@Override
+	public void postConsumerEvent(String eventClassName, Object... params)
+	{
+		try
+		{
+			Constructor<? extends Event> constructor = (Constructor<? extends Event>) Class.forName(eventClassName).getConstructor(Arrays.stream(params).map(Object::getClass).toArray(Class[]::new));
+			EventHelper.postEvent(constructor.newInstance(params));
+		}
+		catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException | InstantiationException |
+		       IllegalAccessException | ClassCastException e)
+		{
+		}
+	}
+	@Override
+	public Object postEvent(String eventClassName, Object... params)
+	{
+		try
+		{
+			Constructor<?> constructor = Class.forName(eventClassName).getConstructor(Arrays.stream(params).map(Object::getClass).toArray(Class[]::new));
+			return EventHelper.postEvent((Event) constructor.newInstance(params));
+		}
+		catch (NoSuchMethodException | ClassNotFoundException | InvocationTargetException | InstantiationException |
+		       IllegalAccessException | ClassCastException e)
+		{
+		}
+		return null;
 	}
 
 	@Override

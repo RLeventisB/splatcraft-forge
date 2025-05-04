@@ -37,8 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class InkVatTileEntity extends BaseContainerBlockEntity implements WorldlyContainer, RecipeInput, ISplatcraftForgeBlockDummy, ISplatcraftForgeBlockEntityDummy
 {
-	private static final int[] INPUT_SLOTS = new int[] {0, 1, 2, 3};
-	private static final int[] OUTPUT_SLOTS = new int[] {4};
+	private static final int[] INPUT_SLOTS = new int[]{0, 1, 2, 3};
+	private static final int[] OUTPUT_SLOTS = new int[]{4};
 	public int pointer = -1;
 	// todo: do item handler thingy
     /*Optional<? extends net.minecraftforge.items.IItemHandler>[] handlers =
@@ -109,11 +109,11 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 		{
 			return ItemStack.EMPTY;
 		}
-		
+
 		ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
 		if (!itemstack.isEmpty())
 			setChanged();
-		
+
 		return itemstack;
 	}
 	public void updateRecipeOutput()
@@ -128,7 +128,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 	{
 		if (inventory.get(3).getItem() instanceof FilterItem filter)
 			return filter.isOmni();
-		
+
 		return false;
 	}
 	@Override
@@ -144,7 +144,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 		{
 			stack.setCount(getMaxStackSize());
 		}
-		
+
 		setChanged();
 	}
 	@Override
@@ -168,7 +168,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 		return inventory;
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
+	public void saveAdditional(CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		nbt.put("Color", color.getNbt());
 		nbt.putInt("Pointer", pointer);
@@ -182,12 +182,12 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 		return Component.translatable("container.ink_vat");
 	}
 	@Override
-	protected NonNullList<ItemStack> getItems()
+	protected @NotNull NonNullList<ItemStack> getItems()
 	{
 		return inventory;
 	}
 	@Override
-	protected void setItems(NonNullList<ItemStack> inventory)
+	protected void setItems(@NotNull NonNullList<ItemStack> inventory)
 	{
 		this.inventory = inventory;
 	}
@@ -198,18 +198,18 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 	}
 	//Nbt Read
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		super.loadAdditional(nbt, lookup);
 		color = InkColor.getFromNbt(nbt.get("Color"));
 		pointer = nbt.getInt("Pointer");
 		recipeEntries = nbt.getInt("RecipeEntries");
-		
+
 		clearContent();
 		ContainerHelper.loadAllItems(nbt, inventory, lookup);
 	}
 	@Override
-	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider lookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider lookup)
 	{
 		return new CompoundTag()
 		{{
@@ -233,7 +233,7 @@ public class InkVatTileEntity extends BaseContainerBlockEntity implements Worldl
 		}
 	}
 	@Override
-	public boolean canPlaceItem(int slot, ItemStack stack)
+	public boolean canPlaceItem(int slot, @NotNull ItemStack stack)
 	{
 		return switch (slot)
 		{

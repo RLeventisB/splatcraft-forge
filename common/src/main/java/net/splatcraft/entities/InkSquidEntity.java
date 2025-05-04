@@ -39,7 +39,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 			.add(Attributes.FOLLOW_RANGE, 16);
 	}
 	@Override
-	protected void defineSynchedData(SynchedEntityData.Builder builder)
+	protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder)
 	{
 		super.defineSynchedData(builder);
 		builder.define(COLOR, ColorUtils.getDefaultColor());
@@ -52,7 +52,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 		goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 10.0F));
 	}
 	@Override
-	public void die(DamageSource damageSource)
+	public void die(@NotNull DamageSource damageSource)
 	{
 		level().broadcastEntityEvent(this, (byte) 60);
 		super.die(damageSource);
@@ -83,9 +83,9 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 	public void tick()
 	{
 		super.tick();
-		
+
 		BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
-		
+
 		if (level().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level().getBlockEntity(pos) instanceof InkColorTileEntity te)
 		{
 			if (te.getInkColor() != getColor())

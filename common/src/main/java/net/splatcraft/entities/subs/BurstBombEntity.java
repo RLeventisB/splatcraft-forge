@@ -20,6 +20,7 @@ import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkDamageUtils;
 import net.splatcraft.util.InkExplosion;
+import org.jetbrains.annotations.NotNull;
 
 public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord> implements ObjectCollideListenerEntity
 {
@@ -27,12 +28,12 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 	{
 		super(type, world);
 	}
-	protected void onHitEntity(EntityHitResult result)
+	protected void onHitEntity(@NotNull EntityHitResult result)
 	{
 		super.onHitEntity(result);
-		
+
 		SubWeaponSettings<BurstBombDataRecord> settings = getSettings();
-		
+
 		if (result.getEntity() instanceof LivingEntity target)
 			InkDamageUtils.doDamage(target, settings.subDataRecord.directDamage(), getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
 		explode(settings, result.getLocation());
@@ -70,11 +71,6 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 		Vec3 vec3 = getDeltaMovement();
 		setXRot(angle);
 		setYRot(lerpRotation(yRotO, (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG)));
-	}
-	@Override
-	public void tick()
-	{
-		super.tick();
 	}
 	@Override
 	protected Item getDefaultItem()

@@ -8,6 +8,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SendPlayerRespawnMatchPacket extends PlayS2CPacket
 {
@@ -20,7 +21,7 @@ public class SendPlayerRespawnMatchPacket extends PlayS2CPacket
 		return new SendPlayerRespawnMatchPacket();
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

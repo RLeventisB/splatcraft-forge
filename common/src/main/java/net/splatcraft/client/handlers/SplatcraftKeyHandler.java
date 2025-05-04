@@ -48,7 +48,7 @@ public class SplatcraftKeyHandler
 	public static final ToggleableKey SUB_WEAPON_KEYBIND = new ToggleableKey(new KeyMapping("key.subWeaponHotkey", GLFW.GLFW_KEY_V, "key.categories.splatcraft"));
 	public static final ToggleableKey SPECIAL_WEAPON_KEYBIND = new ToggleableKey(new KeyMapping("key.specialWeaponHotkey", GLFW.GLFW_KEY_B, "key.categories.splatcraft"));
 	private static final ObjectArrayList<ToggleableKey> pressState = new ObjectArrayList<>();
-	public static int autoSquidDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
+	public static int squidAndSubDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static int slot = -1;
 	private static boolean usingSubWeaponHotkey;
 	@OnlyIn(Dist.CLIENT)
@@ -71,42 +71,42 @@ public class SplatcraftKeyHandler
 	public static void onClientTick(Minecraft mc)
 	{
 		Player player = mc.player;
-		
+
 		if (player == null || player.isSpectator() || !EntityInfoCapability.hasCapability(player))
 		{
 			return;
 		}
-		
+
 		tickKeys(mc);
-		
+
 		if (!SHOOT_KEYBIND.active && PlayerCharge.hasCharge(player) && EntityInfoCapability.isSquid(player)) //Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
 		{
 			PlayerCharge.getCharge(player).reset();
 			SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
 		}
-		
+
+		tickAutoSquidDelay(player);
+
 		if ((EntityAction.hasActionAnd(player, v -> !(SQUID_KEYBIND.active && v.isCancellable())))
 			|| CommonUtils.anyWeaponOnCooldown(player) || ShootingHandler.isDoingShootingAction(player))
 		{
 			return;
 		}
-		
+
 		ToggleableKey last = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
-		
-		tickAutoSquidDelay(player);
-		
+
 		EntityInfo info = EntityInfoCapability.get(player);
 		if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
 		{
 			// Unsquid so we can actually fire
 			ClientUtils.setSquid(info, false);
 		}
-		
+
 		Inventory inventory = player.getInventory();
 		if (SUB_WEAPON_KEYBIND.equals(last))
 		{
 			ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
-			
+
 			if (sub.isEmpty() || (info.isSquid() && !player.level().noBlockCollision(player,
 				new AABB(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3))))
 			{
@@ -115,21 +115,21 @@ public class SplatcraftKeyHandler
 			else
 			{
 				ClientUtils.setSquid(info, false);
-				
+
 				if (SUB_WEAPON_KEYBIND.pressed)
 				{
 					if (!player.getItemInHand(InteractionHand.OFF_HAND).equals(sub))
 					{
 						slot = inventory.findSlotMatchingItem(sub);
 						SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
-						
+
 						ItemStack stack = player.getOffhandItem();
 						player.setItemInHand(InteractionHand.OFF_HAND, inventory.getItem(slot));
 						inventory.setItem(slot, stack);
 						player.releaseUsingItem();
 					}
 					else if (!usingSubWeaponHotkey) slot = -1;
-					
+
 					usingSubWeaponHotkey = true;
 					startUsingItemInHand(InteractionHand.OFF_HAND);
 				}
@@ -141,20 +141,20 @@ public class SplatcraftKeyHandler
 			{
 				mc.gameMode.releaseUsingItem(player);
 			}
-			
+
 			if (slot != -1)
 			{
 				ItemStack stack = player.getOffhandItem();
 				player.setItemInHand(InteractionHand.OFF_HAND, inventory.getItem(slot));
 				inventory.setItem(slot, stack);
 				player.releaseUsingItem();
-				
+
 				SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 				usingSubWeaponHotkey = false;
 				slot = -1;
 			}
 		}
-		
+
 		if (SPECIAL_WEAPON_KEYBIND.equals(last))
 		{
 			Pair<ItemStack, Integer> providerPair = CommonUtils.getStackAndIndexInInventory(player, stack -> stack.getItem() instanceof SpecialProviderItem);
@@ -177,7 +177,7 @@ public class SplatcraftKeyHandler
 				}
 				if (weaponPair == null)
 				{
-				
+
 				}
 				else
 				{
@@ -186,7 +186,7 @@ public class SplatcraftKeyHandler
 				}
 			}
 		}
-		
+
 		if (player.getVehicle() == null &&
 			player.level().noBlockCollision(player,
 				new AABB(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3)))
@@ -205,31 +205,31 @@ public class SplatcraftKeyHandler
 			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || optional.isPresent())
 			{
 				//autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
-				autoSquidDelay = optional.map(
+				squidAndSubDelay = optional.map(
 					entityAction -> (int) (entityAction.getTime() + 10)
 				).orElseGet(
 					() -> (player.getUseItem().getItem() instanceof IChargeableWeapon ? 20 : 5)
 				);
 			}
-			else if (autoSquidDelay > 0)
+			else if (squidAndSubDelay > 0)
 			{
-				autoSquidDelay--;
+				squidAndSubDelay--;
 			}
 		}
 	}
 	private static void tickKeys(Minecraft mc)
 	{
 		boolean canHold = canHoldKeys(mc);
-		
+
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SHOOT_KEYBIND, autoSquidDelay);
-		
+		updatePressState(SHOOT_KEYBIND, squidAndSubDelay);
+
 		SQUID_KEYBIND.tick(SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
 		updatePressState(SQUID_KEYBIND, 0);
-		
+
 		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SUB_WEAPON_KEYBIND, autoSquidDelay);
-		
+		updatePressState(SUB_WEAPON_KEYBIND, squidAndSubDelay);
+
 		SPECIAL_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SPECIAL_WEAPON_KEYBIND, 0);
 	}
@@ -282,7 +282,7 @@ public class SplatcraftKeyHandler
 							{
 								actionresulttype = mc.gameMode.interact(mc.player, entity, hand);
 							}
-							
+
 							if (actionresulttype.consumesAction())
 							{
 								if (actionresulttype.shouldSwing())
@@ -292,7 +292,7 @@ public class SplatcraftKeyHandler
 										mc.player.swing(hand);
 									}
 								}
-								
+
 								return;
 							}
 							break;
@@ -313,22 +313,22 @@ public class SplatcraftKeyHandler
 										mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 									}
 								}
-								
+
 								return;
 							}
-							
+
 							if (actionresulttype1 == InteractionResult.FAIL)
 							{
 								return;
 							}
 					}
 				}
-				
+
 				if (itemstack.isEmpty() && (mc.hitResult == null || mc.hitResult.getType() == HitResult.Type.MISS))
 				{
 					CommonUtils.doForgeEmptyClickEvent(mc.player, hand);
 				}
-				
+
 				if (!itemstack.isEmpty())
 				{
 					InteractionResult actionresulttype2 = mc.gameMode.useItem(mc.player, hand);
@@ -338,7 +338,7 @@ public class SplatcraftKeyHandler
 						{
 							mc.player.swing(hand);
 						}
-						
+
 						mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 					}
 				}

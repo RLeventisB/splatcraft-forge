@@ -61,7 +61,7 @@ public class InkColorRegistry
 			if (value.getColor() == color)
 				result.add(key);
 		});
-		
+
 		return result;
 	}
 	public static ResourceLocation getColorAlias(InkColor color)
@@ -103,7 +103,7 @@ public class InkColorRegistry
 			return resourceList;
 		}
 		@Override
-		protected void apply(Map<ResourceLocation, JsonElement> resourceList, ResourceManager manager, ProfilerFiller profiler)
+		protected void apply(Map<ResourceLocation, JsonElement> resourceList, @NotNull ResourceManager manager, @NotNull ProfilerFiller profiler)
 		{
 			for (Map.Entry<ResourceLocation, JsonElement> entry : resourceList.entrySet())
 			{

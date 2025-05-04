@@ -1,6 +1,6 @@
 package net.splatcraft.util.action.specials;
 
-import com.mojang.serialization.Codec;
+import com.mojang.datafixers.Products;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,35 +12,44 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
 public abstract class BaseSpecialAction extends EntityActionWithTime
 {
-	protected final EntitySlot providerEntitySlot;
-	protected final int slotIndex;
-	public BaseSpecialAction(float time, float duration, int slotIndex, EntitySlot providerEntitySlot)
+	protected final EntitySlot weaponSlot, providerSlot;
+	public BaseSpecialAction(float time, float duration, EntitySlot weaponSlot, EntitySlot providerEntitySlot)
 	{
 		super(time, duration);
-		this.slotIndex = slotIndex;
-		this.providerEntitySlot = providerEntitySlot;
+		this.weaponSlot = weaponSlot;
+		this.providerSlot = providerEntitySlot;
 	}
-	public BaseSpecialAction(float duration, int slotIndex, EntitySlot providerEntitySlot)
+	public BaseSpecialAction(float duration, EntitySlot weaponSlot, EntitySlot providerSlot)
 	{
-		this(duration, duration, slotIndex, providerEntitySlot);
+		this(duration, duration, weaponSlot, providerSlot);
 	}
-	public static <T extends BaseSpecialAction> RecordCodecBuilder<T, Integer> getSlotIndexCodec()
+	public static <T extends BaseSpecialAction> Products.P4<RecordCodecBuilder.Mu<T>, Float, Float, EntitySlot, EntitySlot> specialCodecStart(RecordCodecBuilder.Instance<T> instance)
 	{
-		return Codec.INT.fieldOf("slot_index").forGetter(v -> v.slotIndex);
+		return EntityActionWithTime.codecStart(instance)
+			.and(instance.group(
+				getWeaponSlotCodec(),
+				getProviderSlotCodec()
+			));
 	}
-	public static <T extends BaseSpecialAction> RecordCodecBuilder<T, EntitySlot> getProviderEntitySlotCodec()
+	private static <T extends BaseSpecialAction> @NotNull RecordCodecBuilder<T, EntitySlot> getWeaponSlotCodec()
 	{
-		return EntitySlot.SERIALIZER_CODEC.fieldOf("provider_slot_index").forGetter(v -> v.providerEntitySlot);
+		return EntitySlot.SERIALIZER_CODEC.fieldOf("weapon_slot").forGetter(EntityAction::getItemSlot);
+	}
+	private static <T extends BaseSpecialAction> @NotNull RecordCodecBuilder<T, EntitySlot> getProviderSlotCodec()
+	{
+		return EntitySlot.SERIALIZER_CODEC.fieldOf("provider_slot").forGetter(v -> v.providerSlot);
 	}
 	public boolean isProviderStack(LivingEntity entity, ItemStack stack)
 	{
-		return providerEntitySlot.isSlotFor(entity, stack);
+		return providerSlot.isItemForSlot(entity, stack);
 	}
 	public float getProgress()
 	{
@@ -73,8 +82,8 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		return true;
 	}
 	@Override
-	public int getSlotIndex()
+	public EntitySlot getItemSlot()
 	{
-		return slotIndex;
+		return weaponSlot;
 	}
 }

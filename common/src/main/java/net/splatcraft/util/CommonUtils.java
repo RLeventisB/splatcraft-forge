@@ -52,7 +52,6 @@ import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
-import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -400,10 +399,6 @@ public class CommonUtils
 	{
 		return returnValueDependantOnSquidCancel(entity, shotData.squidStartupTicks(), shotData.startupTicks());
 	}
-	public static float startupSquidSwitch(LivingEntity entity, ShootingHandler.FiringStatData firingData)
-	{
-		return returnValueDependantOnSquidCancel(entity, firingData.squidStartupFrames(), firingData.startupFrames());
-	}
 	public static float nextTriangular(RandomSource random, float mode, float deviation)
 	{
 		return mode + deviation * (random.nextFloat() - random.nextFloat());
@@ -425,9 +420,9 @@ public class CommonUtils
 	{
 		return world.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolder(enchantment).get();
 	}
-	public static void doPlayerSquidForgeEvent(AbstractClientPlayer player, InkSquidRenderer squidRenderer, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int i)
+	public static void doRenderLivingAfterEvent(AbstractClientPlayer player, InkSquidRenderer squidRenderer, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int i)
 	{
-		throw new AssertionError();
+		Services.PLATFORM.postConsumerEvent("net.neoforged.neoforge.client.event.RenderLivingEvent.Post", player, squidRenderer, g, matrixStack, consumerProvider, i);
 	}
 	public static InteractionEventResultDummy doPlayerUseItemForgeEvent(int i, KeyMapping useKey, InteractionHand hand)
 	{

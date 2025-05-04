@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.TreeMap;
 import java.util.UUID;
@@ -37,11 +38,11 @@ public class UpdateClientColorsPacket extends PlayS2CPacket
 	{
 		boolean reset = buffer.readBoolean();
 		TreeMap<UUID, InkColor> colors = COLORS_CODEC.decode(buffer);
-		
+
 		return new UpdateClientColorsPacket(colors, reset);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

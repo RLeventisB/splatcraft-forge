@@ -5,6 +5,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.level.GameRules;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,56 +13,56 @@ import java.util.TreeMap;
 
 public class UpdateIntGamerulesPacket extends PlayS2CPacket
 {
-    public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
-    public TreeMap<Integer, Integer> intRules;
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateIntGamerulesPacket.class);
+	public TreeMap<Integer, Integer> intRules;
 
-    public UpdateIntGamerulesPacket(TreeMap<Integer, Integer> intRules)
-    {
-        this.intRules = intRules;
-    }
+	public UpdateIntGamerulesPacket(TreeMap<Integer, Integer> intRules)
+	{
+		this.intRules = intRules;
+	}
 
-    public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntegerValue> rule, int value)
-    {
-        intRules = new TreeMap<>();
-        intRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
-    }
+	public UpdateIntGamerulesPacket(GameRules.Key<GameRules.IntegerValue> rule, int value)
+	{
+		intRules = new TreeMap<>();
+		intRules.put(SplatcraftGameRules.getRuleIndex(rule), value);
+	}
 
-    public static UpdateIntGamerulesPacket decode(RegistryFriendlyByteBuf buffer)
-    {
-        TreeMap<Integer, Integer> intRules = new TreeMap<>();
-        int entrySize = buffer.readInt();
+	public static UpdateIntGamerulesPacket decode(RegistryFriendlyByteBuf buffer)
+	{
+		TreeMap<Integer, Integer> intRules = new TreeMap<>();
+		int entrySize = buffer.readInt();
 
-        for (int i = 0; i < entrySize; i++)
-        {
-            intRules.put(buffer.readInt(), buffer.readInt());
-        }
+		for (int i = 0; i < entrySize; i++)
+		{
+			intRules.put(buffer.readInt(), buffer.readInt());
+		}
 
-        return new UpdateIntGamerulesPacket(intRules);
-    }
+		return new UpdateIntGamerulesPacket(intRules);
+	}
 
-    @Override
-    public Type<? extends CustomPacketPayload> type()
-    {
-        return ID;
-    }
+	@Override
+	public @NotNull Type<? extends CustomPacketPayload> type()
+	{
+		return ID;
+	}
 
-    @Override
-    public void encode(RegistryFriendlyByteBuf buffer)
-    {
-        Set<Map.Entry<Integer, Integer>> entrySet = intRules.entrySet();
+	@Override
+	public void encode(RegistryFriendlyByteBuf buffer)
+	{
+		Set<Map.Entry<Integer, Integer>> entrySet = intRules.entrySet();
 
-        buffer.writeInt(entrySet.size());
+		buffer.writeInt(entrySet.size());
 
-        for (Map.Entry<Integer, Integer> rule : entrySet)
-        {
-            buffer.writeInt(rule.getKey());
-            buffer.writeInt(rule.getValue());
-        }
-    }
+		for (Map.Entry<Integer, Integer> rule : entrySet)
+		{
+			buffer.writeInt(rule.getKey());
+			buffer.writeInt(rule.getValue());
+		}
+	}
 
-    @Override
-    public void execute()
-    {
-        SplatcraftGameRules.intRules.putAll(intRules);
-    }
+	@Override
+	public void execute()
+	{
+		SplatcraftGameRules.intRules.putAll(intRules);
+	}
 }

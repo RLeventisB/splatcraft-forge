@@ -1,5 +1,6 @@
 package net.splatcraft.util.action;
 
+import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -14,6 +15,13 @@ public abstract class EntityActionWithTime implements EntityAction
 	{
 		this.time = time;
 		this.maxTime = maxTime;
+	}
+	public static <T extends EntityActionWithTime> Products.P2<RecordCodecBuilder.Mu<T>, Float, Float> codecStart(RecordCodecBuilder.Instance<T> instance)
+	{
+		return instance.group(
+			getTimeCodec(),
+			getMaxTimeCodec()
+		);
 	}
 	public static <T extends EntityActionWithTime> RecordCodecBuilder<T, Float> getTimeCodec()
 	{

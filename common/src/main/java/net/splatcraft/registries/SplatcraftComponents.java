@@ -1,5 +1,6 @@
 package net.splatcraft.registries;
 
+import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -8,10 +9,15 @@ import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
@@ -20,34 +26,46 @@ import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class SplatcraftComponents
 {
 	public static final DataComponentType<TankData> TANK_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("tank_data"),
-		DataComponentType.<TankData>builder().persistent(TankData.CODEC).build()
+		DataComponentType.<TankData>builder().persistent(TankData.CODEC).networkSynchronized(TankData.STREAM_CODEC).build()
 	);
 	public static final DataComponentType<ItemColorData> ITEM_COLOR_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("item_color_data"),
-		DataComponentType.<ItemColorData>builder().persistent(ItemColorData.CODEC).build()
+		DataComponentType.<ItemColorData>builder().persistent(ItemColorData.CODEC).networkSynchronized(ItemColorData.STREAM_CODEC).build()
 	);
 	public static final DataComponentType<WeaponPrecisionData> WEAPON_PRECISION_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("current_weapon_precision_data"),
 		DataComponentType.<WeaponPrecisionData>builder().persistent(WeaponPrecisionData.CODEC).build()
 	);
+	public static final DataComponentType<ShooterFiringData> SHOOTER_FIRING_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
+		Splatcraft.identifierOf("shooter_firing_data"),
+		DataComponentType.<ShooterFiringData>builder().persistent(ShooterFiringData.CODEC).cacheEncoding().build()
+	);
 	public static final DataComponentType<ResourceLocation> WEAPON_SETTING_ID = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
-		Splatcraft.identifierOf("weapon_settings"),
+		Splatcraft.identifierOf("settings_id"),
 		DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).build()
+	);
+	public static final DataComponentType<ResourceKey<EntityType<?>>> SUB_WEAPON_ENTITY_ID = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
+		Splatcraft.identifierOf("sub_entity_id"),
+		DataComponentType.<ResourceKey<EntityType<?>>>builder().persistent(ResourceKey.codec(Registries.ENTITY_TYPE)).build()
 	);
 	public static final DataComponentType<Boolean> SINGLE_USE = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -102,6 +120,129 @@ public class SplatcraftComponents
 	{
 		getOptional(stack, type).ifPresent(component -> stack.set(type, applier.apply(component)));
 	}
+	public interface FiringData<SELF extends FiringData<SELF>>
+	{
+		static <T extends FiringData> Products.P5<RecordCodecBuilder.Mu<T>, Float, Float, Float, Float, Boolean> codecStart(RecordCodecBuilder.Instance<T> instance)
+		{
+			return instance.group(
+				Codec.FLOAT.fieldOf("counter").forGetter(FiringData::counter),
+				Codec.FLOAT.fieldOf("startup_time").forGetter(FiringData::startupTime),
+				Codec.FLOAT.fieldOf("repeat_time").forGetter(FiringData::repeatTime),
+				Codec.FLOAT.fieldOf("endlag_time").forGetter(FiringData::endlagTime),
+				Codec.BOOL.fieldOf("repeat_queued").forGetter(FiringData::isRepeating)
+			);
+		}
+
+		default SELF tick(TimeAwareAction<SELF> onAction)
+		{
+			return tick(onAction, v -> (y -> y), 1f);
+		}
+		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone)
+		{
+			return tick(onAction, onActionDone, 1f);
+		}
+		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, float timeDelta)
+		{
+			SELF self = (SELF) this;
+			if (Float.isNaN(counter()))
+				return self;
+
+			// behavior: if time > 0, its the first iteration, after that its kept in the interval [0, -repeatTime[ if the is repeating flag is on
+			// if the is repeating flag is off, when the counter reaches -repeatTime - endlagTime the action is done!!
+
+			float nextTime = counter() - timeDelta;
+			if (self.counter() > 0 && nextTime <= 0) // first iteration
+			{
+				self = onAction.run(-nextTime).apply(self);
+			}
+			while (self.isRepeating() && nextTime <= -self.repeatTime()) // repeating iteration
+			{
+				nextTime += self.repeatTime();
+				self = onAction.run(-nextTime).apply(self);
+			}
+			if (nextTime <= -self.repeatTime() - self.endlagTime()) // last iteration
+			{
+				self = onActionDone.run(-(nextTime + self.repeatTime() + self.endlagTime())).apply(self);
+				return self.withCounter(Float.NaN);
+			}
+
+			return self.withCounter(nextTime);
+		}
+		boolean isRepeating();
+		float startupTime();
+		float repeatTime();
+		float endlagTime();
+		float counter();
+		SELF withRepeatingFlag(boolean repeating);
+		SELF withStartupTime(float startupTime);
+		SELF withRepeatTime(float repeatTime);
+		SELF withEndlagTime(float endlagTime);
+		SELF withCounter(float counter);
+		boolean preventsChanging();
+		default SELF initialize(float counter, float startupTime, float repeatTime, float endlagTime)
+		{
+			return initialize(counter, startupTime, repeatTime, endlagTime, true);
+		}
+		SELF initialize(float counter, float startupTime, float repeatTime, float endlagTime, boolean withRepeatingFlag);
+		@FunctionalInterface
+		interface TimeAwareAction<SELF>
+		{
+			UnaryOperator<SELF> run(float extraTime);
+		}
+	}
+	public record ShooterFiringData(float counter, float startupTime, float repeatTime, float endlagTime,
+	                                boolean isRepeating) implements FiringData<ShooterFiringData>
+	{
+
+		public static final Codec<ShooterFiringData> CODEC = RecordCodecBuilder.create(inst ->
+			FiringData.codecStart(inst).
+				apply(inst, ShooterFiringData::new)
+		);
+		public static final ShooterFiringData DEFAULT = new ShooterFiringData(0, 1, 1, 1, false);
+		@Override
+		public ShooterFiringData withRepeatingFlag(boolean repeating)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeating);
+		}
+		@Override
+		public ShooterFiringData withStartupTime(float startupTime)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+		}
+		@Override
+		public ShooterFiringData withRepeatTime(float repeatTime)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+		}
+		@Override
+		public ShooterFiringData withEndlagTime(float endlagTime)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+		}
+		@Override
+		public ShooterFiringData withCounter(float counter)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+		}
+		@Override
+		public boolean preventsChanging()
+		{
+			return !Float.isNaN(counter);
+		}
+		@Override
+		public ShooterFiringData initialize(float counter, float startupTime, float repeatTime, float endlagTime, boolean withRepeatingFlag)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, withRepeatingFlag);
+		}
+		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings)
+		{
+			if (!Float.isNaN(counter))
+				return this;
+
+			float startup = CommonUtils.startupSquidSwitch(entity, settings);
+			return initialize(startup, startup, settings.repeatTicks(), settings.endlagTicks());
+		}
+	}
 	public record RemoteInfo(Optional<String> stageId, Optional<ResourceKey<Level>> worldKey, Optional<String> targets,
 	                         Optional<BlockPos> pointA, Optional<BlockPos> pointB, int modeIndex)
 	{
@@ -154,6 +295,13 @@ public class SplatcraftComponents
 			Codec.FLOAT.optionalFieldOf("ink_recovery_cooldown", 0f).forGetter(TankData::inkRecoveryCooldown)
 		).apply(builder, TankData::new));
 		public static final TankData DEFAULT = new TankData(false, false, 0, 0);
+		public static final StreamCodec<? super RegistryFriendlyByteBuf, TankData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.BOOL, TankData::infiniteInk,
+			ByteBufCodecs.BOOL, TankData::hideTooltip,
+			ByteBufCodecs.FLOAT, TankData::inkLevel,
+			ByteBufCodecs.FLOAT, TankData::inkRecoveryCooldown,
+			TankData::new
+		);
 		public TankData withInkRecoveryCooldown(float inkRecoveryCooldown)
 		{
 			return new TankData(infiniteInk, hideTooltip, inkLevel, inkRecoveryCooldown);
@@ -210,6 +358,12 @@ public class SplatcraftComponents
 			InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(ItemColorData::color)
 		).apply(builder, ItemColorData::new));
 		public static final ItemColorData DEFAULT = new ItemColorData(false, false, InkColor.INVALID);
+		public static final StreamCodec<RegistryFriendlyByteBuf, ItemColorData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.BOOL, ItemColorData::colorLocked,
+			ByteBufCodecs.BOOL, ItemColorData::hasInvertedColor,
+			InkColor.PACKET_CODEC, ItemColorData::color,
+			ItemColorData::new
+		);
 		public ItemColorData withColorLocked(boolean colorLocked)
 		{
 			return new ItemColorData(colorLocked, hasInvertedColor, color);
@@ -257,20 +411,20 @@ public class SplatcraftComponents
 		{
 			if (stack.isEmpty())
 				return false;
-			
+
 			if (weaponIdFilter.isEmpty())
 				return true;
-			
+
 			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 				return false;
-			
+
 			if (allowSubs && weaponItem instanceof SubWeaponItem<?>)
 				return true;
-			
+
 			ResourceLocation weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
 			if (weaponId == null)
 				return false;
-			
+
 			return Objects.equals(weaponIdFilter.get(), weaponId);
 		}
 		public String getSpecialTranslationKey()

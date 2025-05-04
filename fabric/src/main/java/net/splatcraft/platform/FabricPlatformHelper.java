@@ -174,6 +174,16 @@ public class FabricPlatformHelper implements IPlatformHelper
 		return NeoForgeRecipeManager.findMatches(inputs, tests);
 	}
 	@Override
+	public void postConsumerEvent(String eventClassName, Object... params)
+	{
+
+	}
+	@Override
+	public Object postEvent(String eventClassName, Object... params)
+	{
+		return null;
+	}
+	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
 	{
 		ItemProperties.register(item.asItem(), id, function);

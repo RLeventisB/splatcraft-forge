@@ -43,7 +43,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 		super(material, Type.CHESTPLATE, settings.component(SplatcraftComponents.TANK_DATA, new SplatcraftComponents.TankData(false, false, 0, 0)));
 		this.capacity = capacity;
 		this.settings = settings;
-		
+
 		inkTanks.add(this);
 		SplatcraftTags.Items.putInkTankTags(this, tagId);
 	}
@@ -59,7 +59,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		if (!(stack.getItem() instanceof InkTankItem inkTankItem))
 			return 0;
-		
+
 		float capacity = inkTankItem.capacity;
 		SplatcraftComponents.TankData data = getTankData(stack);
 		if (data.infiniteInk()) return capacity;
@@ -81,7 +81,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	public static float rechargeMult(ItemStack stack, boolean updateCooldown)
 	{
 		SplatcraftComponents.TankData data = getTankData(stack);
-		
+
 		float cooldown = data.inkRecoveryCooldown();
 		if (cooldown < 1)
 		{
@@ -102,13 +102,13 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-		
+
 		if (entity instanceof Player player && !world.isClientSide() && SplatcraftGameRules.getLocalizedRule(world, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
 		{
 			float ink = getInkAmount(stack);
 			Item using = player.getUseItem().getItem();
 			float rechargeMult = rechargeMult(stack, true);
-			
+
 			if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
 				&& (!EntityAction.hasEntityAction(player))
 				&& !PlayerCharge.hasCharge(player)
@@ -121,20 +121,20 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 		}
 	}
 	@Override
-	public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
+	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		if (ColorUtils.isColorLocked(stack))
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
-		
+
 		super.appendHoverText(stack, context, tooltip, type);
-		
+
 		if (!stack.has(DataComponents.HIDE_TOOLTIP))
 		{
 			if (!canRecharge(stack, false))
 			{
 				tooltip.add(Component.translatable("item.splatcraft.ink_tank.cant_recharge"));
 			}
-			
+
 			if (type.isAdvanced())
 			{
 				tooltip.add(Component.translatable("item.splatcraft.ink_tank.ink", String.format("%.1f", getInkAmount(stack)), capacity));
@@ -168,7 +168,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		boolean inWhitelist = item.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_WHITELIST.get(this));
 		boolean inBlacklist = item.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_BLACKLIST.get(this));
-		
+
 		return !inBlacklist && inWhitelist;
 	}
 	public void refill(ItemStack stack)

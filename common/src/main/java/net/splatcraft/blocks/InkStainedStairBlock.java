@@ -39,7 +39,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 		return ColorUtils.withColorLocked(ColorUtils.withInkColor(super.getCloneItemStack(level, pos, state), color), true);
 	}
 	@Override
-	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, ItemStack stack)
+	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, @Nullable LivingEntity entity, @NotNull ItemStack stack)
 	{
 		if (ColorUtils.doesStackHaveColorData(stack) && world.getBlockEntity(pos) instanceof InkColorTileEntity)
 		{
@@ -49,7 +49,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 	}
 	@Nullable
 	@Override
-	public BlockEntity newBlockEntity(BlockPos pos, BlockState state)
+	public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state)
 	{
 		return SplatcraftTileEntities.colorTileEntity.get().create(pos, state);
 	}
@@ -70,7 +70,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 	}
 	@Nullable
 	@Override
-	public BlockState getStateForPlacement(BlockPlaceContext ctx)
+	public BlockState getStateForPlacement(@NotNull BlockPlaceContext ctx)
 	{
 		return super.getStateForPlacement(ctx);
 	}
@@ -92,7 +92,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 	public boolean remoteColorChange(Level world, BlockPos pos, InkColor newColor)
 	{
 		BlockState state = world.getBlockState(pos);
-		
+
 		if (world.getBlockEntity(pos) instanceof InkColorTileEntity blockEntity && blockEntity.getInkColor() != newColor)
 		{
 			blockEntity.setColor(newColor);
@@ -111,7 +111,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 		public WithUninkedVariant(BlockState parent, BlockBehaviour.Properties settings)
 		{
 			super(parent, settings);
-			
+
 			registerDefaultState(defaultBlockState().setValue(COLORED, false));
 		}
 		@Override
@@ -132,7 +132,7 @@ public class InkStainedStairBlock extends StairBlock implements IColoredBlock, E
 		{
 			if (!world.getBlockState(pos).getValue(COLORED))
 				return false;
-			
+
 			return super.remoteColorChange(world, pos, newColor);
 		}
 		@Override

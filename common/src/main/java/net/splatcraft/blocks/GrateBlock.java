@@ -42,7 +42,7 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
 		registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.DOWN).setValue(WATERLOGGED, false));
 	}
 	@Override
-	public VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return AABBS.get(state.getValue(FACING));
 	}
@@ -52,14 +52,14 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
 		BlockState blockstate = defaultBlockState();
 		FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
 		Direction direction = context.getClickedFace();
-		
+
 		if (context.getPlayer() != null && context.getPlayer().isShiftKeyDown())
 			blockstate = blockstate.setValue(FACING, direction.getOpposite());
 		else if (!context.replacingClickedOnBlock() && direction.getAxis().isHorizontal())
 			blockstate = blockstate.setValue(FACING, context.getClickLocation().y - (double) context.getClickedPos().getY() > 0.5D ? Direction.UP : Direction.DOWN);
 		else
 			blockstate = blockstate.setValue(FACING, direction == Direction.UP ? Direction.DOWN : Direction.UP);
-		
+
 		return blockstate.setValue(WATERLOGGED, fluidstate.holder() == Fluids.WATER);
 	}
 	@Override
@@ -85,7 +85,7 @@ public class GrateBlock extends Block implements SimpleWaterloggedBlock
 		{
 			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
 		}
-		
+
 		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 }

@@ -8,6 +8,7 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendStageWarpDataToPadPacket;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class RequestUpdateStageSpawnPadsPacket extends PlayC2SPacket
 {
@@ -26,7 +27,7 @@ public class RequestUpdateStageSpawnPadsPacket extends PlayC2SPacket
 		return new RequestUpdateStageSpawnPadsPacket(buffer.readUtf());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

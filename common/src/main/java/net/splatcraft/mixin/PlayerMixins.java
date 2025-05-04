@@ -1,8 +1,6 @@
 package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.Input;
@@ -61,17 +59,18 @@ public class PlayerMixins
 	public static class PlayerRendererMixin
 	{
 		@Inject(method = "<init>", at = @At("RETURN"))
-		public void splatcraft$captureContext(EntityRendererProvider.Context ctx, boolean slim, CallbackInfo ci)
+		public void splatcraft$addLayers(EntityRendererProvider.Context ctx, boolean slim, CallbackInfo ci)
 		{
 			PlayerRenderer renderer = (PlayerRenderer) (Object) this;
 			renderer.addLayer(new InkTankFeature<>(renderer, ctx.getModelSet()));
 		}
-		@WrapOperation(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/player/PlayerRenderer;render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
-		public void splatcraft$overridePlayerRender(PlayerRenderer instance, AbstractClientPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, Operation<Void> original)
+		// it isnt possible to add a wrapoperation to the base render call because it has a generic parameter :(
+		@Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"), cancellable = true)
+		public void splatcraft$overridePlayerRender(AbstractClientPlayer entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci)
 		{
-			if (!RendererHandler.playerRender(instance, entity, entityYaw, partialTicks, poseStack, buffer, packedLight))
+			if (RendererHandler.playerRender(entity, entityYaw, partialTicks, poseStack, buffer, packedLight))
 			{
-				original.call(instance, entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+				ci.cancel();
 			}
 		}
 	}

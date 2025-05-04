@@ -10,6 +10,7 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -28,7 +29,7 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 		return new RequestTurfScanPacket(buffer.readUtf(), buffer.readBoolean());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -43,7 +44,7 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 	{
 		Stage stage = Stage.getStage(stageId);
 		ServerPlayer serverPlayer = (ServerPlayer) player;
-		
+
 		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());
 		ArrayList<ServerPlayer> playerList = new ArrayList<>(stageworld.getEntitiesOfClass(ServerPlayer.class, stage.getBounds(), EntitySelector.NO_SPECTATORS));
 		if (!playerList.contains(serverPlayer))

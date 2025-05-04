@@ -13,6 +13,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.util.RelativeBlockPos;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 		return new DeleteInkPacket(chunkPos, toDelete);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

@@ -59,7 +59,7 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
 		super.setPlacedBy(world, pos, state, entity, stack);
 	}
 	@Override
-	public BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
+	public @NotNull BlockState getStateForPlacement(@NotNull BlockPlaceContext context)
 	{
 		return super.getStateForPlacement(context).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).holder() == Fluids.WATER);
 	}
@@ -67,10 +67,10 @@ public class InkedGlassPaneBlock extends IronBarsBlock implements IColoredBlock,
 	public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
 		ItemStack stack = super.getCloneItemStack(reader, pos, state);
-		
+
 		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity)
 			ColorUtils.withColorLocked(ColorUtils.withInkColor(stack, ColorUtils.getInkColor(reader.getBlockEntity(pos))), true);
-		
+
 		return stack;
 	}
 	@Override

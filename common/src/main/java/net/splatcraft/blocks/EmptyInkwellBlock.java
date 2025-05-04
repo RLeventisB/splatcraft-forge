@@ -35,7 +35,7 @@ public class EmptyInkwellBlock extends TransparentBlock implements ISplatcraftFo
 		registerDefaultState(getStateDefinition().any().setValue(WATERLOGGED, false));
 	}
 	@Override
-	public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPE;
 	}
@@ -72,7 +72,7 @@ public class EmptyInkwellBlock extends TransparentBlock implements ISplatcraftFo
 		{
 			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
 		}
-		
+
 		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 }

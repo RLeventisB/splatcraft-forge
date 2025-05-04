@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class RequestSpecialUsageDataPacket extends PlayC2SPacket
 {
@@ -22,7 +23,7 @@ public class RequestSpecialUsageDataPacket extends PlayC2SPacket
 		return new RequestSpecialUsageDataPacket(buffer.readInt(), buffer.readInt());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

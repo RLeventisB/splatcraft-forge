@@ -12,13 +12,15 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.util.CodecUtils;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
 public interface EntitySlot
 {
-	StackComparator DEFAULT_COMPARATOR = StackComparator.INCLUDE_REFERENCE;
+	StackComparator DEFAULT_COMPARATOR = StackComparator.INCLUDE_REFERENCE_AND_COMPONENTS;
 	Codec<EntitySlot> SERIALIZER_CODEC = new MapCodec<EntitySlot>()
 	{
 		@Override
@@ -52,33 +54,67 @@ public interface EntitySlot
 	StreamCodec<ByteBuf, EntitySlot> SERIALIZER_PACKET_CODEC = new StreamCodec<>()
 	{
 		@Override
-		public EntitySlot decode(ByteBuf buf)
+		public @NotNull EntitySlot decode(@NotNull ByteBuf buf)
 		{
 			SlotId id = SlotId.PACKET_CODEC.decode(buf);
 			return id.packetCodec.decode(buf);
 		}
 		@Override
-		public void encode(ByteBuf buf, EntitySlot value)
+		public void encode(@NotNull ByteBuf buf, EntitySlot value)
 		{
 			SlotId id = value.getId();
 			SlotId.PACKET_CODEC.encode(buf, id);
 			id.packetCodec.encode(buf, value);
 		}
 	};
-	static EntitySlot createFor(LivingEntity entity, ItemStack stack)
+	EntitySlot EMPTY = new EntitySlot()
 	{
-		return createFor(entity, stack, DEFAULT_COMPARATOR);
+		@Override
+		public boolean isItemForSlot(LivingEntity entity, ItemStack stack)
+		{
+			return false;
+		}
+		@Override
+		public boolean isItemForSlot(LivingEntity entity, InteractionHand hand)
+		{
+			return false;
+		}
+		@Override
+		public Optional<ItemStack> tryGetItemFrom(LivingEntity entity)
+		{
+			return Optional.empty();
+		}
+		@Override
+		public SlotId getId()
+		{
+			return SlotId.EMPTY;
+		}
+		@Override
+		public boolean isValidForEntity(LivingEntity entity)
+		{
+			return false;
+		}
+	};
+	// todo: more descriptive names for these methods pls
+	static EntitySlot createForUsed(LivingEntity entity)
+	{
+		if (entity instanceof Player player)
+			return createWithSlot(player.getInventory().selected, player.getUsedItemHand());
+		return createWithHand(entity.getUsedItemHand(), DEFAULT_COMPARATOR);
 	}
-	static EntitySlot createFor(LivingEntity entity, ItemStack stack, StackComparator comparator)
+	static EntitySlot createForUsed(LivingEntity entity, InteractionHand hand)
 	{
-		if (comparator.areEquals(entity.getMainHandItem(), stack))
-		{
-			return createFor(InteractionHand.MAIN_HAND, comparator);
-		}
-		if (comparator.areEquals(entity.getOffhandItem(), stack))
-		{
-			return createFor(InteractionHand.OFF_HAND, comparator);
-		}
+		if (entity instanceof Player player)
+			return createWithSlot(player.getInventory().selected, hand);
+		return createWithHand(hand, DEFAULT_COMPARATOR);
+	}
+	static EntitySlot searchAndCreateWithStack(LivingEntity entity, ItemStack stack)
+	{
+		return searchAndCreateWithStack(entity, stack, DEFAULT_COMPARATOR);
+	}
+	static EntitySlot searchAndCreateWithStack(LivingEntity entity, ItemStack stack, StackComparator comparator)
+	{
+		// prioritize player because if this gets sent to a packet and the player changes slots it could create a desync :(
 		if (entity instanceof Player player)
 		{
 			Inventory inventory = player.getInventory();
@@ -86,37 +122,69 @@ public interface EntitySlot
 			{
 				if (comparator.areEquals(inventory.getItem(i), stack))
 				{
-					return createFor(i, comparator);
+					// fix since sometimes we need a selected index that is within the hotbar
+					if (i == Inventory.SLOT_OFFHAND)
+						return new PlayerInventorySlot(inventory.selected, InteractionHand.OFF_HAND, comparator);
+					return createWithSlot(i, InteractionHand.MAIN_HAND, comparator);
 				}
 			}
 		}
-		
+		if (comparator.areEquals(entity.getMainHandItem(), stack))
+		{
+			return createWithHand(InteractionHand.MAIN_HAND, comparator);
+		}
+		if (comparator.areEquals(entity.getOffhandItem(), stack))
+		{
+			return createWithHand(InteractionHand.OFF_HAND, comparator);
+		}
+
 		throw new AssertionError("The given stack isn't contained by the given entity");
 	}
-	static EntitySlot createFor(int slot)
+	static EntitySlot createWithSlot(int slot)
 	{
-		return createFor(slot, DEFAULT_COMPARATOR);
+		return createWithSlot(slot, InteractionHand.MAIN_HAND, DEFAULT_COMPARATOR);
 	}
-	static EntitySlot createFor(int slot, StackComparator comparator)
+	static EntitySlot createWithSlot(int slot, InteractionHand hand)
 	{
-		return new PlayerInventorySlot(slot, comparator);
+		return createWithSlot(slot, hand, DEFAULT_COMPARATOR);
 	}
-	static EntitySlot createFor(InteractionHand hand)
+	static EntitySlot createWithSlot(int slot, InteractionHand hand, StackComparator comparator)
 	{
-		return createFor(hand, DEFAULT_COMPARATOR);
+		return new PlayerInventorySlot(slot, hand, comparator);
 	}
-	static EntitySlot createFor(InteractionHand hand, StackComparator comparator)
+	static EntitySlot createWithHand(InteractionHand hand)
+	{
+		return createWithHand(hand, DEFAULT_COMPARATOR);
+	}
+	static EntitySlot createWithHand(InteractionHand hand, StackComparator comparator)
 	{
 		return new EntityHandSlot(hand, comparator);
 	}
-	boolean isSlotFor(LivingEntity entity, ItemStack stack);
+	static EntitySlot createWithHandToSlot(LivingEntity user, InteractionHand hand)
+	{
+		return createWithHandToSlot(user, hand, DEFAULT_COMPARATOR);
+	}
+	static EntitySlot createWithHandToSlot(LivingEntity user, InteractionHand hand, StackComparator comparator)
+	{
+		if (user instanceof Player player)
+		{
+			return new PlayerInventorySlot(player.getInventory().selected, hand, comparator);
+		}
+		if (hand != null)
+			return new EntityHandSlot(hand, comparator);
+		return EMPTY;
+	}
+	boolean isItemForSlot(LivingEntity entity, ItemStack stack);
+	boolean isItemForSlot(LivingEntity entity, InteractionHand hand);
+	Optional<ItemStack> tryGetItemFrom(LivingEntity entity);
 	SlotId getId();
 	boolean isValidForEntity(LivingEntity entity);
 	enum StackComparator implements StringRepresentable
 	{
 		ONLY_ITEM(ItemStack::isSameItem),
 		INCLUDE_COMPONENTS(ItemStack::isSameItemSameComponents),
-		INCLUDE_REFERENCE(ItemStack::matches);
+		INCLUDE_REFERENCE_AND_COMPONENTS(ItemStack::matches),
+		ONLY_REFERENCE((x, y) -> x == y);
 		public static final StreamCodec<ByteBuf, StackComparator> PACKET_CODEC = CodecUtils.createEnumPacketCodec(StackComparator::values);
 		public static final Codec<StackComparator> CODEC = StringRepresentable.fromEnum(StackComparator::values);
 		private final BiPredicate<ItemStack, ItemStack> comparer;
@@ -129,7 +197,7 @@ public interface EntitySlot
 			return comparer.test(stack, otherStack);
 		}
 		@Override
-		public String getSerializedName()
+		public @NotNull String getSerializedName()
 		{
 			return name();
 		}
@@ -137,18 +205,19 @@ public interface EntitySlot
 	enum SlotId implements StringRepresentable
 	{
 		ENTITY_HAND(EntityHandSlot.CODEC, EntityHandSlot.PACKET_CODEC),
-		PLAYER_SLOT(PlayerInventorySlot.CODEC, PlayerInventorySlot.PACKET_CODEC);
+		PLAYER_SLOT(PlayerInventorySlot.CODEC, PlayerInventorySlot.PACKET_CODEC),
+		EMPTY(MapCodec.unit(EntitySlot.EMPTY), StreamCodec.unit(EntitySlot.EMPTY));
 		public static final StreamCodec<ByteBuf, SlotId> PACKET_CODEC = CodecUtils.createEnumPacketCodec(SlotId::values);
 		public static final Codec<SlotId> CODEC = StringRepresentable.fromEnum(SlotId::values);
 		public final MapCodec<EntitySlot> codec;
 		public final StreamCodec<ByteBuf, EntitySlot> packetCodec;
-		SlotId(MapCodec<?> codec, StreamCodec<ByteBuf, ?> packetCodec)
+		SlotId(MapCodec<? extends EntitySlot> codec, StreamCodec<ByteBuf, ? extends EntitySlot> packetCodec)
 		{
 			this.codec = (MapCodec<EntitySlot>) codec;
 			this.packetCodec = (StreamCodec<ByteBuf, EntitySlot>) packetCodec;
 		}
 		@Override
-		public String getSerializedName()
+		public @NotNull String getSerializedName()
 		{
 			return name();
 		}
@@ -176,9 +245,19 @@ public interface EntitySlot
 			this.comparator = comparator;
 		}
 		@Override
-		public boolean isSlotFor(LivingEntity entity, ItemStack stack)
+		public boolean isItemForSlot(LivingEntity entity, ItemStack stack)
 		{
 			return comparator.areEquals(entity.getItemInHand(hand), stack);
+		}
+		@Override
+		public boolean isItemForSlot(LivingEntity entity, InteractionHand hand)
+		{
+			return hand == this.hand;
+		}
+		@Override
+		public Optional<ItemStack> tryGetItemFrom(LivingEntity entity)
+		{
+			return Optional.of(entity.getItemInHand(hand));
 		}
 		@Override
 		public SlotId getId()
@@ -194,25 +273,55 @@ public interface EntitySlot
 	class PlayerInventorySlot implements EntitySlot
 	{
 		public static final MapCodec<PlayerInventorySlot> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-			Codec.INT.fieldOf("slot").forGetter(v -> v.slot),
+			Codec.INT.fieldOf("slot").forGetter(v -> v.selectedSlot),
+			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(v -> v.hand),
 			StackComparator.CODEC.fieldOf("comparator").forGetter(v -> v.comparator)
 		).apply(inst, PlayerInventorySlot::new));
 		public static final StreamCodec<ByteBuf, PlayerInventorySlot> PACKET_CODEC = StreamCodec.composite(
-			ByteBufCodecs.INT, v -> v.slot,
+			ByteBufCodecs.INT, v -> v.selectedSlot,
+			CodecUtils.Codecs.PACKET_HAND, v -> v.hand,
 			StackComparator.PACKET_CODEC, v -> v.comparator,
 			PlayerInventorySlot::new
 		);
-		private final int slot;
+		private final int selectedSlot;
+		private final InteractionHand hand;
 		private final StackComparator comparator;
-		public PlayerInventorySlot(int slot, StackComparator comparator)
+		public PlayerInventorySlot(int slot, InteractionHand hand, StackComparator comparator)
 		{
-			this.slot = slot;
+			this.selectedSlot = slot;
+			this.hand = hand;
 			this.comparator = comparator;
 		}
-		@Override
-		public boolean isSlotFor(LivingEntity entity, ItemStack stack)
+		public int getSlotIndex()
 		{
-			return comparator.areEquals(((Player) entity).getInventory().getItem(slot), stack);
+			return selectedSlot;
+		}
+		@Override
+		public boolean isItemForSlot(LivingEntity entity, ItemStack stack)
+		{
+			if (hand == InteractionHand.OFF_HAND)
+				return comparator.areEquals(entity.getOffhandItem(), stack);
+
+			if (!(entity instanceof Player player))
+				return false;
+
+			return comparator.areEquals(player.getInventory().getItem(selectedSlot), stack);
+		}
+		@Override
+		public boolean isItemForSlot(LivingEntity entity, InteractionHand hand)
+		{
+			if (!(entity instanceof Player player))
+				return false;
+
+			return player.getInventory().selected == selectedSlot && this.hand == hand;
+		}
+		@Override
+		public Optional<ItemStack> tryGetItemFrom(LivingEntity entity)
+		{
+			if (entity instanceof Player player)
+				return Optional.of(player.getInventory().getItem(selectedSlot));
+
+			return Optional.empty();
 		}
 		@Override
 		public SlotId getId()

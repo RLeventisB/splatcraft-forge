@@ -25,6 +25,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkExplosion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity
@@ -61,16 +62,16 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
 		if (shakeTime > 0)
 			--shakeTime;
-		
+
 		prevFuseTime = fuseTime;
-		
+
 		if (isActivated())
 		{
 			fuseTime++;
 			if (fuseTime >= settings.subDataRecord.fuseTime() && stickFacing != null)
 			{
 				explode(settings);
-				
+
 				return;
 			}
 			else if (fuseTime >= settings.subDataRecord.fuseTime() - FLASH_DURATION && !playedActivationSound)
@@ -79,7 +80,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 				playedActivationSound = true;
 			}
 		}
-		
+
 		if (isSticked())
 		{
 			if (level().noCollision(getBoundingBox().expandTowards(Vec3.ZERO.relative(stickFacing, -0.05f))))
@@ -95,11 +96,11 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 				setStickFacing();
 			}
 		}
-		
+
 		checkInsideBlocks();
 	}
 	@Override
-	public Vec3 getLightProbePosition(float tickDelta)
+	public @NotNull Vec3 getLightProbePosition(float tickDelta)
 	{
 		if (stickFacing != null)
 		{
@@ -145,18 +146,18 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		return Math.max(0, Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
 	}
 	@Override
-	protected void onHitBlock(BlockHitResult result)
+	protected void onHitBlock(@NotNull BlockHitResult result)
 	{
 		if (!isSticked())
 		{
 			shakeTime = 7;
 			inBlockState = level().getBlockState(result.getBlockPos());
-			
+
 			setActivated(true);
-			
+
 			setPos(result.getLocation());
 			setDeltaMovement(Vec3.ZERO);
-			
+
 			stickFacing = result.getDirection();
 			if (stickFacing.getAxis() == Direction.Axis.Y)
 			{
@@ -193,7 +194,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		{
 			BlockState.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound("inBlockState")).ifSuccess(v -> inBlockState = v);
 		}
-		
+
 		fuseTime = nbt.getInt("FuseTime");
 		prevFuseTime = fuseTime;
 	}
@@ -207,7 +208,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		nbt.putInt("ShakeTime", shakeTime);
 		if (inBlockState != null)
 			nbt.put("InBlockState", BlockState.CODEC.encode(inBlockState, NbtOps.INSTANCE, nbt).getOrThrow());
-		
+
 		nbt.putInt("FuseTime", fuseTime);
 	}
 	@Override

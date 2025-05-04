@@ -54,7 +54,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
 	protected static VoxelShape modifyShapeForDirection(Direction facing, VoxelShape shape)
 	{
 		AABB bb = shape.bounds();
-		
+
 		switch (facing)
 		{
 			case EAST:
@@ -69,7 +69,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
 	public static VoxelShape[] createVoxelShapes(VoxelShape... shapes)
 	{
 		VoxelShape[] result = new VoxelShape[4];
-		
+
 		for (int i = 0; i < 4; i++)
 		{
 			result[i] = Shapes.empty();
@@ -78,7 +78,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
 				result[i] = Shapes.or(result[i], modifyShapeForDirection(Direction.from2DDataValue(i), shape));
 			}
 		}
-		
+
 		return result;
 	}
 	@Override
@@ -87,7 +87,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
 		return SHAPES[state.getValue(FACING).get2DDataValue()];
 	}
 	@Override
-	public ItemInteractionResult useItemOn(ItemStack stack, @NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
+	public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
 	{
 		if (levelIn.isClientSide)
 		{
@@ -122,7 +122,7 @@ public class WeaponWorkbenchBlock extends HorizontalDirectionalBlock implements 
 		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
 	}
 	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec()
+	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec()
 	{
 		return CODEC;
 	}

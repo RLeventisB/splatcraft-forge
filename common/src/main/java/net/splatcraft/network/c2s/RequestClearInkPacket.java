@@ -8,6 +8,7 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class RequestClearInkPacket extends PlayC2SPacket
 {
@@ -22,7 +23,7 @@ public class RequestClearInkPacket extends PlayC2SPacket
 		return new RequestClearInkPacket(buffer.readUtf());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

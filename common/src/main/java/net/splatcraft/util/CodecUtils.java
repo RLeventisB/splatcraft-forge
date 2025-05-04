@@ -1,6 +1,10 @@
 package net.splatcraft.util;
 
 import com.google.common.base.Suppliers;
+import com.mojang.datafixers.Products.P10;
+import com.mojang.datafixers.Products.P2;
+import com.mojang.datafixers.Products.P8;
+import com.mojang.datafixers.kinds.K1;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
@@ -15,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec2;
 import net.splatcraft.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -91,7 +96,7 @@ public class CodecUtils
 					return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, path));
 				}
 			}
-			
+
 			return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, id));
 		}
 		catch (ResourceLocationException var2)
@@ -110,12 +115,12 @@ public class CodecUtils
 		public static final StreamCodec<ByteBuf, InteractionHand> PACKET_HAND = new StreamCodec<>()
 		{
 			@Override
-			public InteractionHand decode(ByteBuf buf)
+			public @NotNull InteractionHand decode(ByteBuf buf)
 			{
 				return buf.readBoolean() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 			}
 			@Override
-			public void encode(ByteBuf buf, InteractionHand value)
+			public void encode(ByteBuf buf, @NotNull InteractionHand value)
 			{
 				buf.writeBoolean(Objects.equals(value, InteractionHand.MAIN_HAND));
 			}
@@ -175,14 +180,14 @@ public class CodecUtils
 		{
 			final M read = mapCreator.get();
 			final Stream.Builder<Pair<T, T>> failed = Stream.builder();
-			
+
 			final DataResult<Unit> result = input.entries().reduce(
 				DataResult.success(Unit.INSTANCE, Lifecycle.stable()),
 				(r, pair) ->
 				{
 					final DataResult<K> key = keyCodec().parse(ops, pair.getFirst());
 					final DataResult<V> value = elementCodec().parse(ops, pair.getSecond());
-					
+
 					final DataResult<Pair<K, V>> entryResult = key.apply2stable(Pair::of, value);
 					final Optional<Pair<K, V>> entry = entryResult.resultOrPartial();
 					if (entry.isPresent())
@@ -198,14 +203,14 @@ public class CodecUtils
 					{
 						failed.add(pair);
 					}
-					
+
 					return r.apply2stable((u, p) -> u, entryResult);
 				},
 				(r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
 			);
-			
+
 			final T errors = ops.createMap(failed.build());
-			
+
 			return result.map(unit -> read).setPartial(read).mapError(e -> e + " missed input: " + errors);
 		}
 		<T> RecordBuilder<T> encode(final M input, final DynamicOps<T> ops, final RecordBuilder<T> prefix)
@@ -326,6 +331,22 @@ public class CodecUtils
 				final Pair<C, T> pair = Pair.of(elements, errors);
 				return result.map(ignored -> pair).setPartial(pair);
 			}
+		}
+	}
+	public static class MissingProducts
+	{
+		public static <F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(P2<F, T1, T2> p2, P8<F, T3, T4, T5, T6, T7, T8, T9, T10> p8)
+		{
+			return new com.mojang.datafixers.Products.P10<>(p2.t1(),
+				p2.t2(),
+				p8.t1(),
+				p8.t2(),
+				p8.t3(),
+				p8.t4(),
+				p8.t5(),
+				p8.t6(),
+				p8.t7(),
+				p8.t8());
 		}
 	}
 }

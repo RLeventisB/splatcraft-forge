@@ -38,7 +38,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		return List.of(
 			new WeaponTooltip<>("range", WeaponTooltip.Metrics.BLOCKS, settings -> calculateAproximateRange(settings.projectileData, settings.shotData), WeaponTooltip.RANKER_ASCENDING),
 			new WeaponTooltip<>("direct_damage", WeaponTooltip.Metrics.HEALTH, settings -> settings.projectileData.baseDamage(), WeaponTooltip.RANKER_ASCENDING),
-			new WeaponTooltip<>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.getFireRate(), WeaponTooltip.RANKER_DESCENDING)
+			new WeaponTooltip<>("fire_rate", WeaponTooltip.Metrics.BPS, settings -> settings.shotData.repeatTicks(), WeaponTooltip.RANKER_DESCENDING)
 		);
 	}
 	@Override
@@ -57,7 +57,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
 		blasterData = SplatcraftConvertors.convert(data.blast);
-		
+
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

@@ -46,7 +46,7 @@ public class MenuButton extends Button
 	{
 		if (!visible)
 			return;
-		
+
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.setShaderTexture(0, WIDGETS);
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
@@ -57,7 +57,7 @@ public class MenuButton extends Button
 		guiGraphics.blit(WIDGETS, getX(), getY(), 0, getColor().ordinal() * 36 + i * 12, width / 2, height);
 		guiGraphics.blit(WIDGETS, getX() + width / 2, getY(), 180 - width / 2, getColor().ordinal() * 36 + i * 12, width / 2, height);
 		draw.apply(guiGraphics, this);
-		
+
 		if (isHoveredOrFocused())
 			drawTooltip(guiGraphics, mouseX, mouseY, partialTicks);
 	}
@@ -66,7 +66,7 @@ public class MenuButton extends Button
 		onTooltip.onTooltip(this, guiGraphics, mouseX, mouseY, partialTicks);
 	}
 	@Override
-	protected void defaultButtonNarrationText(NarrationElementOutput builder)
+	protected void defaultButtonNarrationText(@NotNull NarrationElementOutput builder)
 	{
 		super.defaultButtonNarrationText(builder);
 		onTooltip.narrateTooltip(v -> builder.add(NarratedElementType.HINT, v));

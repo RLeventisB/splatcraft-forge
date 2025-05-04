@@ -52,11 +52,11 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
 	{
 		super(Properties.of().mapColor(MapColor.METAL).requiresCorrectToolForDrops().strength(5.0F).sound(SoundType.METAL).noOcclusion());
 		registerDefaultState(defaultBlockState().setValue(FACING, Direction.UP).setValue(POWERED, false));
-		
+
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 	}
 	@Override
-	public VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPES[state.getValue(FACING).ordinal()];
 	}
@@ -152,10 +152,10 @@ public class SplatSwitchBlock extends Block implements IColoredBlock, SimpleWate
 	{
 		if (!(world.getBlockState(pos).getBlock().equals(this)) || !(world.getBlockEntity(pos) instanceof InkColorTileEntity te))
 			return BlockInkedResult.FAIL;
-		
+
 		BlockState state = world.getBlockState(pos);
 		InkColor switchColor = te.getInkColor();
-		
+
 		te.setColor(color);
 		world.setBlock(pos, state.setValue(POWERED, true), 3);
 		playSound(world, pos, state);

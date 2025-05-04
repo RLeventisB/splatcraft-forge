@@ -14,6 +14,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SendPlaySessionCreationPacket extends PlayS2CPacket
 {
@@ -28,7 +29,7 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 		return new SendPlaySessionCreationPacket(PlaySession.PACKET_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -50,17 +51,17 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 			SplatcraftKeyHandler.SQUID_KEYBIND.active = true;
 			ClientUtils.killCamData = null;
 		}
-		
+
 		session.playerUuids.forEach(uuid ->
 		{
 			Level world = ClientUtils.getClient().level;
 			if (world == null)
 				return;
-			
+
 			Player plr = world.getPlayerByUUID(uuid);
 			if (plr == null)
 				return;
-			
+
 			EntityInfoCapability.getOptional(plr).ifPresent(info ->
 			{
 				info.setIsSquid(true);

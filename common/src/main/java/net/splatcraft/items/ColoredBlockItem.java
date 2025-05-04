@@ -44,25 +44,25 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		SplatcraftItems.inkColoredItems.add(this);
 		InkwellBlock.inkCoatingRecipes.put(clearItem, this);
 		this.clearItem = clearItem;
-		
+
 		if (clearItem == null)
 			return;
-		
+
 		CauldronInteraction.WATER.map().put(this, ((state, level, pos, player, hand, stack) ->
 		{
 			if (equals(clearItem) && !ColorUtils.getInkColor(stack).isValid())
 				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-			
+
 			ItemStack itemstack1 = new ItemStack(clearItem, 1);
-			
+
 			player.awardStat(Stats.USE_CAULDRON);
-			
+
 			if (!player.isCreative())
 			{
 				stack.shrink(1);
 				LayeredCauldronBlock.lowerFillLevel(state, level, pos);
 			}
-			
+
 			if (stack.isEmpty())
 			{
 				player.setItemInHand(hand, itemstack1);
@@ -71,7 +71,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 			{
 				player.drop(itemstack1, false);
 			}
-			
+
 			return ItemInteractionResult.SUCCESS;
 		}));
 	}
@@ -97,13 +97,13 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		return matchColor;
 	}
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type)
+	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-		
+
 		if (I18n.exists(getDescriptionId() + ".tooltip"))
 			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
-		
+
 		boolean inverted = ColorUtils.isInverted(stack);
 		if (ColorUtils.isColorLocked(stack))
 		{
@@ -125,19 +125,19 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		MinecraftServer server = levelIn.getServer();
 		if (server == null)
 			return false;
-		
+
 		InkColor color = ColorUtils.getEffectiveColor(stack, player);
-		
+
 		if (color.isValid())
 			ColorUtils.withInkColor(levelIn.getBlockEntity(pos), color);
-		
+
 		return super.updateCustomBlockEntityTag(pos, levelIn, player, stack, state);
 	}
 	@Override
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entityIn, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entityIn, itemSlot, isSelected);
-		
+
 		if (matchColor && (!ColorUtils.getInkColor(stack).isValid() || !ColorUtils.isColorLocked(stack)))
 		{
 			ColorUtils.withInkColor(stack, entityIn instanceof LivingEntity living && EntityInfoCapability.hasCapability(living) ?
@@ -148,7 +148,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.blockPosition();
-		
+
 		if (entity.level().getBlockState(pos.below()).getBlock() instanceof InkwellBlock)
 		{
 			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos.below()))
@@ -162,7 +162,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 		{
 			entity.setItem(new ItemStack(clearItem, stack.getCount()));
 		}
-		
+
 		return false;
 	}
 }

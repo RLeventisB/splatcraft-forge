@@ -15,12 +15,11 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -43,7 +42,6 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
-import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.IChargeableWeapon;
@@ -70,7 +68,6 @@ import org.joml.Vector4f;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -88,7 +85,7 @@ public class RendererHandler
 	{
 		Services.PLATFORM.registerListener(InteractionEvents.ClientChatReceive.class, RendererHandler::onChatMessage);
 	}
-	public static boolean playerRender(PlayerRenderer instance, AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int color)
+	public static boolean playerRender(AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int color)
 	{
 		if (player.isSpectator()) return false;
 
@@ -99,36 +96,11 @@ public class RendererHandler
 			if (!InkBlockUtils.canSquidHide(player))
 			{
 				squidRenderer.render(player, f, g, matrixStack, consumerProvider, color);
-				CommonUtils.doPlayerSquidForgeEvent(player, squidRenderer, g, matrixStack, consumerProvider, color);
+				CommonUtils.doRenderLivingAfterEvent(player, squidRenderer, g, matrixStack, consumerProvider, color);
 			}
 			return true;
 		}
 		return false;
-	}
-	public static int slotToAssign(Player player)
-	{
-		if (player != null && !player.isSpectator())
-		{
-			Optional<EntityAction> action = EntityAction.getActionIf(player, v -> v.getSlotIndex() >= 0);
-			if (action.isPresent())
-			{
-				return action.get().getSlotIndex();
-			}
-			else if (ShootingHandler.isDoingShootingAction(player))
-			{
-				return ShootingHandler.shootingData.get(player).selected;
-			}
-		}
-		return -1;
-	}
-	public static void onRenderTick(Minecraft client)
-	{
-		Player player = client.player;
-		int slot = slotToAssign(player);
-		if (slot != -1)
-		{
-			player.getInventory().selected = slot;
-		}
 	}
 	public static boolean renderHand(float tickDelta, InteractionHand hand, PoseStack matrices)
 	{
@@ -138,7 +110,7 @@ public class RendererHandler
 			return false;
 		}
 
-		Optional<EntityAction> actionOptional = EntityAction.getActionIf(player, v -> Objects.equals(v.getHand(), hand));
+		Optional<EntityAction> actionOptional = EntityAction.getActionIf(player, v -> v.getItemSlot().isItemForSlot(player, hand));
 		if (actionOptional.isPresent())
 		{
 			EntityAction action = actionOptional.get();
@@ -201,13 +173,13 @@ public class RendererHandler
 //		SubWeaponRenderer<?, ?> renderer = MinecraftClient.getInstance().getEntityRenderDispatcher().renderers.get(subWeaponItem.entityType.get());
 		// ok i tried to render the sub models via getting their internal model instead of instantiating a whole entity but the entityrenderer thing does a lot of work about colors and those things since these models have 2 layers
 		// maybe i will take that approach soon or something
-		AbstractSubWeaponEntity<T> sub = subWeaponItem.entityType.value().create(ClientUtils.getClientPlayer().clientLevel);
+		AbstractSubWeaponEntity<T> sub = subWeaponItem.getEntityType(stack).create(ClientUtils.getClientPlayer().clientLevel);
 		sub.setColor(ColorUtils.getInkColor(stack));
 		sub.setItem(stack);
 
 		sub.isItem = true;
 
-		BakedModel itemModel = Minecraft.getInstance().getModelManager().getModel(new ModelResourceLocation(subWeaponItem.builtInRegistryHolder().unwrapKey().map(ResourceKey::location).orElse(null), "inventory"));
+		BakedModel itemModel = Minecraft.getInstance().getModelManager().getModel(new ModelResourceLocation(BuiltInRegistries.ITEM.getKey(subWeaponItem), "inventory"));
 		itemModel.getTransforms().getTransform(ItemDisplayContext.GUI).apply(leftHanded, poseStack);
 
 		Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(sub).render(sub, 0, partialTicks, poseStack, source, light);

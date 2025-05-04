@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -27,7 +28,7 @@ public class RequestEntityInfoPacket extends PlayC2SPacket
 		return new RequestEntityInfoPacket(buffer.readUUID());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

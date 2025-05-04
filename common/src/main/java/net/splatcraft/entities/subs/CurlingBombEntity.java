@@ -27,6 +27,7 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -64,16 +65,16 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public void tick()
 	{
 		super.tick();
-		
+
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
-		
+
 		double spd = getDeltaMovement().horizontalDistance();
 		prevBladeRot = bladeRot;
 		bladeRot += (float) spd;
-		
+
 		prevFuseTime = fuseTime;
 		fuseTime--;
-		
+
 		CurlingBombDataRecord curlingData = settings.subDataRecord;
 		boolean slowingDown = fuseTime <= curlingData.warningFrame();
 		if (slowingDown && !playedActivationSound)
@@ -81,7 +82,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
-		
+
 		if (!level().isClientSide())
 		{
 			doTrail(spd > 1.0E-3, settings);
@@ -95,7 +96,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		}
 		horizontalFriction = Mth.clamp(horizontalFriction, 0, 1);
 		setDeltaMovement(getDeltaMovement().multiply(horizontalFriction, 1f, horizontalFriction));
-		
+
 		if (fuseTime <= 0)
 		{
 			Vec3 center = getBoundingBox().getCenter();
@@ -105,7 +106,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		{
 			level().broadcastEntityEvent(this, (byte) 2);
 		}
-		
+
 		move(MoverType.SELF, getDeltaMovement());
 	}
 	public void explode(CurlingBombDataRecord settings, Vec3 impactPos)
@@ -184,14 +185,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		{
 			InkDamageUtils.doRollDamage(livingEntity, getSettings().subDataRecord.contactDamage(), getOwner(), this, sourceWeapon);
 		}
-		
+
 		double velocityX = getDeltaMovement().x;
 		double velocityY = getDeltaMovement().y;
 		double velocityZ = getDeltaMovement().z;
 		double absVelocityX = Math.abs(velocityX);
 		double absVelocityY = Math.abs(velocityY);
 		double absVelocityZ = Math.abs(velocityZ);
-		
+
 		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
 			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (absVelocityY >= .05 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
@@ -200,21 +201,21 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
 	@Override
-	protected void onHitBlock(BlockHitResult result)
+	protected void onHitBlock(@NotNull BlockHitResult result)
 	{
 		Vec3 velocity = getDeltaMovement().add(0, getDefaultGravity(), 0);
 		if (canStepUp(velocity))
 			return;
-		
+
 		double velocityX = velocity.x;
 		double velocityY = velocity.y;
 		double velocityZ = velocity.z;
-		
+
 		Direction blockFace = result.getDirection();
-		
+
 		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (blockPosition().getY() - position().y()) < .7f)
 			return;
-		
+
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
 			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (Math.abs(velocityY) >= 0.05 && (blockFace == Direction.DOWN))
@@ -255,10 +256,10 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 					vec31 = vec33;
 				}
 			}
-			
+
 			return vec31.horizontalDistanceSqr() > vec3.horizontalDistanceSqr();
 		}
-		
+
 		return false;
 	}
 	@Override
@@ -290,11 +291,11 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		entityData.set(COOK_SCALE, v);
 	}
 	@Override
-	public void onSyncedDataUpdated(EntityDataAccessor<?> data)
+	public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> data)
 	{
 		if (INIT_FUSE_TIME.equals(data))
 			fuseTime = getInitialFuseTime();
-		
+
 		super.onSyncedDataUpdated(data);
 	}
 	@Override

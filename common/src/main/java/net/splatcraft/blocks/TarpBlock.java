@@ -64,28 +64,28 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
 	private static VoxelShape getShapeForState(BlockState state)
 	{
 		VoxelShape voxelshape = Shapes.empty();
-		
+
 		if (state.getValue(UP))
 			voxelshape = UP_AABB;
-		
+
 		if (state.getValue(DOWN))
 			voxelshape = Shapes.or(voxelshape, DOWN_AABB);
-		
+
 		if (state.getValue(NORTH))
 			voxelshape = Shapes.or(voxelshape, SOUTH_AABB);
-		
+
 		if (state.getValue(SOUTH))
 			voxelshape = Shapes.or(voxelshape, NORTH_AABB);
-		
+
 		if (state.getValue(EAST))
 			voxelshape = Shapes.or(voxelshape, WEST_AABB);
-		
+
 		if (state.getValue(WEST))
 			voxelshape = Shapes.or(voxelshape, EAST_AABB);
-		
+
 		return voxelshape;
 	}
-	public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return stateToShapeMap.get(state);
 	}
@@ -100,13 +100,13 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
 	{
 		BlockState state = context.getLevel().getBlockState(context.getClickedPos()).is(this) ? context.getLevel().getBlockState(context.getClickedPos()) :
 			super.getStateForPlacement(context).setValue(DOWN, false).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).holder() == Fluids.WATER);
-		
+
 		state = state.setValue(FACING_TO_PROPERTY_MAP.get(context.getClickedFace().getOpposite()), true);
-		
+
 		for (Direction direction : Direction.values())
 			if (state.getValue(FACING_TO_PROPERTY_MAP.get(direction)))
 				return state;
-		
+
 		return state.setValue(DOWN, true);
 	}
 	@Override
@@ -122,7 +122,7 @@ public class TarpBlock extends Block implements SimpleWaterloggedBlock
 	{
 		player.awardStat(Stats.BLOCK_MINED.get(this));
 		player.causeFoodExhaustion(0.005F);
-		
+
 		for (Direction dir : Direction.values())
 			if (state.getValue(FACING_TO_PROPERTY_MAP.get(dir)))
 				dropResources(state, world, pos, te, player, stack);

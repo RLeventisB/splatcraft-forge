@@ -8,45 +8,46 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.items.JumpLureItem;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
 public class UseJumpLurePacket extends PlayC2SPacket
 {
-    public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UseJumpLurePacket.class);
-    @Nullable
-    final UUID targetUUID;
-    final InkColor color;
-    public UseJumpLurePacket(InkColor color, @Nullable UUID targetUUID)
-    {
-        this.targetUUID = targetUUID;
-        this.color = color;
-    }
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UseJumpLurePacket.class);
+	@Nullable
+	final UUID targetUUID;
+	final InkColor color;
+	public UseJumpLurePacket(InkColor color, @Nullable UUID targetUUID)
+	{
+		this.targetUUID = targetUUID;
+		this.color = color;
+	}
 
-    public static UseJumpLurePacket decode(FriendlyByteBuf buf)
-    {
-        return new UseJumpLurePacket(InkColor.constructOrReuse(buf.readInt()), buf.readBoolean() ? null : buf.readUUID());
-    }
+	public static UseJumpLurePacket decode(FriendlyByteBuf buf)
+	{
+		return new UseJumpLurePacket(InkColor.constructOrReuse(buf.readInt()), buf.readBoolean() ? null : buf.readUUID());
+	}
 
-    @Override
-    public Type<? extends CustomPacketPayload> type()
-    {
-        return ID;
-    }
+	@Override
+	public @NotNull Type<? extends CustomPacketPayload> type()
+	{
+		return ID;
+	}
 
-    @Override
-    public void encode(RegistryFriendlyByteBuf buffer)
-    {
-        buffer.writeInt(color.getColor());
-        buffer.writeBoolean(targetUUID == null);
-        if (targetUUID != null)
-            buffer.writeUUID(targetUUID);
-    }
+	@Override
+	public void encode(RegistryFriendlyByteBuf buffer)
+	{
+		buffer.writeInt(color.getColor());
+		buffer.writeBoolean(targetUUID == null);
+		if (targetUUID != null)
+			buffer.writeUUID(targetUUID);
+	}
 
-    @Override
-    public void execute(Player player)
-    {
-        JumpLureItem.activate((ServerPlayer) player, targetUUID, color);
-    }
+	@Override
+	public void execute(Player player)
+	{
+		JumpLureItem.activate((ServerPlayer) player, targetUUID, color);
+	}
 }

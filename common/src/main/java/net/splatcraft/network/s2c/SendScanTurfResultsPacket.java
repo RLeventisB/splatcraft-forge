@@ -10,6 +10,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -35,11 +36,11 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 			colorList.add(InkColor.constructOrReuse(buffer.readInt()));
 			scoreList.add(buffer.readFloat());
 		}
-		
+
 		return new SendScanTurfResultsPacket(colorList.toArray(new InkColor[0]), scoreList.toArray(new Float[0]));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -60,7 +61,7 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 		Player player = ClientUtils.getClientPlayer();
 		InkColor winner = InkColor.INVALID;
 		float winnerScore = -1;
-		
+
 		for (int i = 0; i < colors.length; i++)
 		{
 			player.displayClientMessage(Component.translatable("status.scan_turf.score", ColorUtils.getFormatedColorName(colors[i], false), String.format("%.1f", scores[i])), false);
@@ -70,7 +71,7 @@ public class SendScanTurfResultsPacket extends PlayS2CPacket
 				winner = colors[i];
 			}
 		}
-		
+
 		if (winner.isValid())
 		{
 			player.displayClientMessage(Component.translatable("status.scan_turf.winner", ColorUtils.getFormatedColorName(winner, false)), false);

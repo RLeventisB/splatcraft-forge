@@ -43,7 +43,7 @@ public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 	{
 		super(setting);
 		SplatcraftBlocks.inkColoredBlocks.add(this);
-		
+
 		registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(ACTIVE, false).setValue(POWERED, false));
 	}
 	@Override
@@ -58,19 +58,19 @@ public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 		return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
 	}
 	@Override
-	public ItemInteractionResult useItemOn(ItemStack stack, @NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
+	public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack, @NotNull BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand handIn, @NotNull BlockHitResult hit)
 	{
 		if (levelIn.isClientSide)
 		{
 			return ItemInteractionResult.SUCCESS;
 		}
-		
+
 		if (levelIn.getBlockEntity(pos) instanceof InkVatTileEntity inkVatTile && player instanceof ServerPlayer serverPlayer)
 		{
 			serverPlayer.openMenu(inkVatTile);
 			return ItemInteractionResult.SUCCESS;
 		}
-		
+
 		return ItemInteractionResult.FAIL;
 	}
 	@Override
@@ -119,7 +119,7 @@ public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 		return true;
 	}
 	@Override
-	protected MapCodec<? extends BaseEntityBlock> codec()
+	protected @NotNull MapCodec<? extends BaseEntityBlock> codec()
 	{
 		return null;
 	}
@@ -161,7 +161,7 @@ public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 				Containers.dropContentsOnDestroy(state, newState, world, pos);
 				world.updateNeighbourForOutputSignal(pos, this);
 			}
-			
+
 			super.onRemove(state, world, pos, newState, isMoving);
 		}
 	}
@@ -185,7 +185,7 @@ public class InkVatBlock extends BaseEntityBlock implements IColoredBlock
 			{
 				tileEntity.onRedstonePulse();
 			}
-			
+
 			world.setBlock(pos, state.setValue(POWERED, isPowered), 3);
 		}
 	}

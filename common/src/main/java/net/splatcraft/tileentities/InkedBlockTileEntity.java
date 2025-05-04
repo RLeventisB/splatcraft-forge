@@ -43,12 +43,12 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 				world.setBlock(pos, inkedBlock.savedState, 2);
 				if (inkedBlock.hasPermanentColor())
 					ChunkInkCapability.get(world, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos));
-				
+
 				for (int i = 0; i < 6; i++)
 				{
 					InkBlockUtils.inkBlock(world, pos, inkedBlock.getInkColor(), i, getInkType(state), 0);
 				}
-				
+
 				if (inkedBlock.hasSavedColor() && inkedBlock.getSavedState().getBlock() instanceof IColoredBlock coloredBlock)
 				{
 					if (inkedBlock.getSavedState().getBlock() instanceof EntityBlock blockEntityProvider)
@@ -74,7 +74,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 	}
 	//Read NBT
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider wrapperLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		super.loadAdditional(nbt, wrapperLookup);
 		savedState = NbtUtils.readBlockState(level.holderLookup(Registries.BLOCK), nbt.getCompound("SavedState"));
@@ -86,7 +86,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 		}
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider wrapperLookup)
+	public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		nbt.put("SavedState", NbtUtils.writeBlockState(savedState));
 		if (hasSavedColor())

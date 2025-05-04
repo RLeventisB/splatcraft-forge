@@ -54,7 +54,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 	{
 		super(settings.component(SplatcraftComponents.REMOTE_INFO, SplatcraftComponents.RemoteInfo.DEFAULT));
 		remotes.add(this);
-		
+
 		this.totalModes = totalModes;
 	}
 	public static SplatcraftComponents.RemoteInfo getInfo(ItemStack stack)
@@ -93,43 +93,43 @@ public abstract class RemoteItem extends Item implements CommandSource
 		if (!hasCoordSet(stack))
 			return null;
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		
+
 		if (info.stageId().isPresent())
 		{
 			Stage stage = SaveInfoCapability.get().stages().get(info.stageId().get());
 			if (stage == null)
 				return null;
-			
+
 			return new Tuple<>(stage.cornerA, stage.cornerB);
 		}
-		
+
 		return new Tuple<>(info.pointA().get(), info.pointB().get());
 	}
 	public static boolean addCoords(Level world, ItemStack stack, BlockPos pos)
 	{
 		if (hasCoordSet(stack))
 			return false;
-		
+
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		
+
 		if (info.worldKey().isEmpty())
 			info = info.setWorldKey(world.dimension());
 		else if (!world.equals(getLevel(world, stack)))
 			return false;
-		
+
 		setInfo(stack, info.setPoint(pos));
-		
+
 		return true;
 	}
 	public static Level getLevel(Level world, ItemStack stack)
 	{
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		
+
 		Level result = world.getServer().getLevel(
 			info.stageId().isPresent() ?
 				SaveInfoCapability.get().stages().get(info.stageId().get()).worldKey :
 				info.worldKey().get());
-		
+
 		return result == null ? world : result;
 	}
 	public static RemoteResult createResult(boolean success, Component output)
@@ -145,12 +145,12 @@ public abstract class RemoteItem extends Item implements CommandSource
 		return (stack, level, entity, seed) -> getRemoteMode(stack);
 	}
 	@Override
-	public void appendHoverText(@NotNull ItemStack stack, TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
+	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-		
+
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
-		
+
 		if (info.stageId().isEmpty() || SaveInfoCapability.get().stages().containsKey(info.stageId().get()))
 		{
 			if (hasCoordSet(stack))
@@ -167,40 +167,40 @@ public abstract class RemoteItem extends Item implements CommandSource
 		}
 		else
 			tooltip.add(Component.translatable("item.remote.coords.invalid").setStyle(Style.EMPTY.withColor(ChatFormatting.RED).withItalic(true)));
-		
+
 		if (info.targets().isPresent() && !info.targets().get().isEmpty())
 			tooltip.add(ComponentUtils.mergeStyles(Component.literal(info.targets().get()), TARGETS_STYLE));
 	}
 	@Override
-	public InteractionResult useOn(UseOnContext context)
+	public @NotNull InteractionResult useOn(UseOnContext context)
 	{
 		if (context.getLevel().isClientSide)
 		{
 			return hasCoordSet(context.getItemInHand()) ? InteractionResult.PASS : InteractionResult.SUCCESS;
 		}
-		
+
 		if (addCoords(context.getLevel(), context.getItemInHand(), context.getClickedPos()))
 		{
 			SplatcraftComponents.RemoteInfo info = getInfo(context.getItemInHand());
 			String key = info.pointB().isPresent() ? "b" : "a";
 			BlockPos pos = context.getClickedPos();
-			
+
 			context.getPlayer().displayClientMessage(Component.translatable("status.coord_set." + key, pos.getX(), pos.getY(), pos.getZ()), true);
 			return InteractionResult.SUCCESS;
 		}
 		return InteractionResult.PASS;
 	}
 	@Override
-	public InteractionResultHolder<ItemStack> use(@NotNull Level levelIn, Player playerIn, @NotNull InteractionHand handIn)
+	public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level levelIn, Player playerIn, @NotNull InteractionHand handIn)
 	{
 		ItemStack stack = playerIn.getItemInHand(handIn);
 		int mode = getRemoteMode(stack);
-		
+
 		if (playerIn.isShiftKeyDown() && totalModes > 1)
 		{
 			mode = cycleRemoteMode(stack);
 			String statusMsg = getDescriptionId() + ".mode." + mode;
-			
+
 			if (levelIn.isClientSide && I18n.exists(statusMsg))
 			{
 				playerIn.displayClientMessage(Component.translatable("status.remote_mode", Component.translatable(statusMsg)), true);
@@ -209,7 +209,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 		else if (hasCoordSet(stack) && !levelIn.isClientSide)
 		{
 			RemoteResult remoteResult = onRemoteUse(levelIn, stack, ColorUtils.getEntityColor(playerIn), playerIn.position(), playerIn);
-			
+
 			if (remoteResult.getOutput() != null)
 			{
 				playerIn.displayClientMessage(remoteResult.getOutput(), true);
@@ -217,7 +217,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 			levelIn.playSound(null, playerIn.getX(), playerIn.getY(), playerIn.getZ(), SplatcraftSounds.remoteUse, SoundSource.BLOCKS, 0.8f, 1);
 			return new InteractionResultHolder<>(remoteResult.wasSuccessful() ? InteractionResult.SUCCESS : InteractionResult.FAIL, stack);
 		}
-		
+
 		return super.use(levelIn, playerIn, handIn);
 	}
 	public abstract RemoteResult onRemoteUse(Level usedOnWorld, BlockPos posA, BlockPos posB, ItemStack stack, InkColor colorIn, int mode, Collection<ServerPlayer> targets);
@@ -225,12 +225,12 @@ public abstract class RemoteItem extends Item implements CommandSource
 	{
 		SplatcraftComponents.RemoteInfo info = getInfo(stack);
 		Tuple<BlockPos, BlockPos> coordSet = getCoordSet(stack);
-		
+
 		if (coordSet == null)
 			return new RemoteResult(false, Component.translatable("status.remote.undefined_area"));
-		
+
 		Collection<ServerPlayer> targets = ALL_TARGETS;
-		
+
 		if (info.targets().isPresent() && !info.targets().get().isEmpty())
 			try
 			{
@@ -240,7 +240,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 			{
 				return new RemoteResult(false, Component.literal(e.getMessage()));
 			}
-		
+
 		return onRemoteUse(usedOnWorld, coordSet.getA(), coordSet.getB(), stack, colorIn, getRemoteMode(stack), targets);
 	}
 	public CommandSourceStack createCommandSourceStack(ItemStack stack, ServerLevel level, Vec3 pos, Entity user)
@@ -250,7 +250,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 	@Override
 	public void sendSystemMessage(@NotNull Component p_145747_1_)
 	{
-	
+
 	}
 	@Override
 	public boolean acceptsSuccess()

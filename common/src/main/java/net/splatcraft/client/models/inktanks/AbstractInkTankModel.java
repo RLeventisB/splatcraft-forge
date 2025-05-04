@@ -2,11 +2,13 @@ package net.splatcraft.client.models.inktanks;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractInkTankModel extends EntityModel<LivingEntity>
 {
@@ -45,7 +47,7 @@ public abstract class AbstractInkTankModel extends EntityModel<LivingEntity>
 		}
 	}
 	@Override
-	public void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, int color)
+	public void renderToBuffer(@NotNull PoseStack matrices, @NotNull VertexConsumer vertices, int light, int overlay, int color)
 	{
 		Iterable<ModelPart> parts = (color == -1 ? getTankParts() : getInkLevelParts());
 		parts.forEach((modelPart) ->

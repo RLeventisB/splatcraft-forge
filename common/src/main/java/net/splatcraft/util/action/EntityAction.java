@@ -5,11 +5,11 @@ import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
@@ -198,13 +198,9 @@ public interface EntityAction
 	{
 		return false;
 	}
-	default int getSlotIndex()
+	default EntitySlot getItemSlot()
 	{
-		return -1;
-	}
-	default InteractionHand getHand()
-	{
-		return InteractionHand.MAIN_HAND;
+		return EntitySlot.EMPTY;
 	}
 	default void tick(LivingEntity entity)
 	{

@@ -79,10 +79,10 @@ public class InkColorGroups
 			{
 				if (loaded)
 					return;
-				
+
 				// this literally exists so java loads the class for this lol
 				STARTER_COLORS.clear();
-				
+
 				loaded = true;
 				for (var entry : REGISTRY.entrySet())
 				{
@@ -107,12 +107,12 @@ public class InkColorGroups
 		{
 			InkColorGroups tag = getOrCreateTag(key);
 			JsonObject json = j.getAsJsonObject();
-			
+
 			if (GsonHelper.getAsBoolean(json, "replace", false))
 				tag.clear();
-			
+
 			ArrayList<InkColor> newColors = new ArrayList<>();
-			
+
 			for (JsonElement jsonElement : GsonHelper.getAsJsonArray(json, "values"))
 			{
 				String str = jsonElement.getAsString();
@@ -129,7 +129,7 @@ public class InkColorGroups
 						continue;
 					}
 				}
-				
+
 				try
 				{
 					InkColor.NAME_CODEC.parse(JsonOps.INSTANCE, jsonElement).ifSuccess(newColors::add);
@@ -139,10 +139,10 @@ public class InkColorGroups
 					// WHAT HAVE YOU DONE :(
 				}
 			}
-			
+
 			if (newColors.isEmpty())
 				return;
-			
+
 			newColors.removeIf(i -> !i.isValid());
 			tag.addAll(newColors);
 		}
@@ -159,7 +159,7 @@ public class InkColorGroups
 			return false;
 		}
 		@Override
-		protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profiler)
+		protected @NotNull Map<ResourceLocation, JsonElement> prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler)
 		{
 			loaded = false;
 			entries.clear();

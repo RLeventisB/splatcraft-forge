@@ -44,7 +44,7 @@ public class DebrisBlock extends Block implements ISplatcraftForgeBlockDummy
 		registerDefaultState(getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
 	}
 	@Override
-	public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPES.get(state.getValue(DIRECTION));
 	}
@@ -82,7 +82,7 @@ public class DebrisBlock extends Block implements ISplatcraftForgeBlockDummy
 		{
 			world.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
 		}
-		
+
 		return super.updateShape(stateIn, facing, facingState, world, currentPos, facingPos);
 	}
 }

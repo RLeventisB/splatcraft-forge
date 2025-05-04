@@ -57,13 +57,13 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
 	{
 		super(BlockBehaviour.Properties.of().isRedstoneConductor((state, getter, pos) -> false).instrument(NoteBlockInstrument.HAT).strength(0.35f).sound(SOUND_TYPE));
 		registerDefaultState(getStateDefinition().any().setValue(WATERLOGGED, false));
-		
+
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 	}
 	private static void tick(Level world, BlockPos pos, BlockState state, InkColorTileEntity t)
 	{
 		AABB bb = new AABB(t.getBlockPos().above());
-		
+
 		for (ItemEntity entity : world.getEntitiesOfClass(ItemEntity.class, bb, entity -> inkCoatingRecipes.containsKey(entity.getItem().getItem())))
 		{
 			ItemStack stack = entity.getItem();
@@ -92,15 +92,15 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
 		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
 	}
 	@Override
-	protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos)
+	protected @NotNull BlockState updateShape(BlockState state, @NotNull Direction direction, @NotNull BlockState neighborState, @NotNull LevelAccessor world, @NotNull BlockPos pos, @NotNull BlockPos neighborPos)
 	{
 		if (state.getValue(WATERLOGGED))
 			world.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
-		
+
 		return super.updateShape(state, direction, neighborState, world, pos, neighborPos);
 	}
 	@Override
-	protected VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context)
+	protected @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter world, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPE;
 	}
@@ -110,13 +110,13 @@ public class InkwellBlock extends Block implements IColoredBlock, SimpleWaterlog
 		return PushReaction.DESTROY;
 	}
 	@Override
-	public @NotNull ItemStack getCloneItemStack(LevelReader reader, BlockPos pos, BlockState state)
+	public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
 		ItemStack stack = super.getCloneItemStack(reader, pos, state);
-		
+
 		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity colorTileEntity)
 			ColorUtils.withColorLocked(ColorUtils.withInkColor(stack, ColorUtils.getInkColor(colorTileEntity)), true);
-		
+
 		return stack;
 	}
 	@Override

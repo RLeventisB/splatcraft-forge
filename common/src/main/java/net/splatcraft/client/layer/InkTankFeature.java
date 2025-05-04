@@ -1,5 +1,7 @@
 package net.splatcraft.client.layer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -18,8 +20,8 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.InkTankItem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -40,27 +42,27 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 		MAP.put(item, new Tuple<>(layer, constructor));
 	}
 	@Override
-	public void render(PoseStack matrixStack, MultiBufferSource provider, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch)
+	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource provider, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch)
 	{
 		ItemStack itemStack = entity.getItemBySlot(EquipmentSlot.CHEST);
 		if (itemStack.getItem() instanceof InkTankItem item)
 		{
 			AbstractInkTankModel model = MODEL_CACHE.getOrDefault(item, createModel(item));
 			matrixStack.pushPose();
-			
+
 			getParentModel().copyPropertiesTo((EntityModel<T>) model);
 			model.setInkLevels(InkTankItem.getInkAmount(itemStack) / item.capacity);
 			model.setupAnim(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
 			model.notifyState(getParentModel());
-			
+
 			VertexConsumer vertexConsumer = ItemRenderer.getArmorFoilBuffer(provider, RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1_overlay.png")
 			), itemStack.hasFoil());
 			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, -1);
-			
+
 			matrixStack.popPose();
 			matrixStack.pushPose();
-			
+
 			vertexConsumer = provider.getBuffer(RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1.png")
 			));

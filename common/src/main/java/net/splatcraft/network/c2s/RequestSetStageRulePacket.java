@@ -10,6 +10,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class RequestSetStageRulePacket extends PlayC2SPacket
 {
@@ -29,7 +30,7 @@ public class RequestSetStageRulePacket extends PlayC2SPacket
 		return new RequestSetStageRulePacket(buffer.readUtf(), buffer.readUtf(), valueIndex == 0 ? null : valueIndex == 1);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -44,10 +45,10 @@ public class RequestSetStageRulePacket extends PlayC2SPacket
 	public void execute(Player player)
 	{
 		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
-		
+
 		Stage stage = stages.get(stageId);
 		stage.applySetting(ruleId.replace(Splatcraft.MODID + ".", ""), value);
-		
+
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 	}
 }

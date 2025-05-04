@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public class UpdateEntityActionOnlyPacket extends PlayS2CPacket
 		return new UpdateEntityActionOnlyPacket(buffer.readUUID(), buffer.readNbt());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -47,7 +48,7 @@ public class UpdateEntityActionOnlyPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
-		
+
 		if (target != null)
 		{
 			DataResult<EntityAction> result = EntityAction.SERIALIZER_CODEC.parse(NbtOps.INSTANCE, nbt);

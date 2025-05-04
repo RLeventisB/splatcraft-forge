@@ -36,13 +36,13 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
 			signal = 0;
 			return;
 		}
-		
+
 		RemoteItem.RemoteResult result = remote.onRemoteUse(level, this.remote, getInkColor(), worldPosition.getCenter(), null);
 		signal = result.getComparatorResult();
 		remoteResult = result.getCommandResult();
 	}
 	@Override
-	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider lookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider lookup)
 	{
 		return new CompoundTag()
 		{{
@@ -68,7 +68,7 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
 	@Override
 	public int @NotNull [] getSlotsForFace(@NotNull Direction direction)
 	{
-		return new int[] {0};
+		return new int[]{0};
 	}
 	@Override
 	public boolean canPlaceItemThroughFace(int i, ItemStack itemStack, @Nullable Direction direction)
@@ -125,28 +125,28 @@ public class RemotePedestalTileEntity extends InkColorTileEntity implements Worl
 		remote = ItemStack.EMPTY;
 	}
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		super.loadAdditional(nbt, lookup);
-		
+
 		signal = nbt.getInt("Signal");
-		
+
 		if (nbt.contains("Remote"))
 			remote = ItemStack.parseOptional(lookup, nbt.getCompound("Remote"));
-		
+
 		if (nbt.contains("RemoteResult"))
 			remoteResult = nbt.getInt("RemoteResult");
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
+	public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		nbt.putInt("Signal", signal);
-		
+
 		if (!remote.isEmpty())
 			nbt.put("Remote", remote.save(lookup, new CompoundTag()));
 		if (remoteResult != 0)
 			nbt.putInt("RemoteResult", remoteResult);
-		
+
 		super.saveAdditional(nbt, lookup);
 	}
 	public int getSignal()

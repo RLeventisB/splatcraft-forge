@@ -43,10 +43,10 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 		SplatcraftItems.inkColoredItems.add(this);
 	}
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type)
+	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-		
+
 		if (ColorUtils.isColorLocked(stack))
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getEffectiveColor(stack), true));
 		else
@@ -65,7 +65,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-		
+
 		if (entity instanceof LivingEntity livingEntity && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(livingEntity)
 			&& EntityInfoCapability.hasCapability(livingEntity))
 		{
@@ -76,7 +76,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.blockPosition().below();
-		
+
 		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
 			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
@@ -90,7 +90,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 			ColorUtils.withInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
 			ColorUtils.withColorLocked(stack, false);
 		}
-		
+
 		return false;
 	}
 	@Override
@@ -98,11 +98,11 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	{
 		if (context.getClickedFace() == Direction.DOWN)
 			return InteractionResult.FAIL;
-		
+
 		Level world = context.getLevel();
 		BlockPos pos = new BlockPlaceContext(context).getClickedPos();
 		ItemStack stack = context.getItemInHand();
-		
+
 		Vec3 vector3d = Vec3.atBottomCenterOf(pos);
 		AABB axisalignedbb = SplatcraftEntities.SQUID_BUMPER.get().getDimensions().makeBoundingBox(vector3d);
 		if (world.noCollision(null, axisalignedbb) && world.getEntities(null, axisalignedbb).isEmpty())
@@ -124,7 +124,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 			stack.shrink(1);
 			return InteractionResult.sidedSuccess(world.isClientSide());
 		}
-		
+
 		return InteractionResult.FAIL;
 	}
 }

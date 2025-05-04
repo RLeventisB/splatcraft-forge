@@ -10,6 +10,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.client.gui.stagepad.StageCreationScreen;
 import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
 import net.splatcraft.client.gui.stagepad.StageSettingsScreen;
+import org.jetbrains.annotations.NotNull;
 
 public class NotifyStageCreatePacket extends PlayS2CPacket
 {
@@ -24,7 +25,7 @@ public class NotifyStageCreatePacket extends PlayS2CPacket
 		return new NotifyStageCreatePacket(buf.readUtf());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

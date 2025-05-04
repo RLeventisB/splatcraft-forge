@@ -86,6 +86,7 @@ public class SplatcraftConvertors
 		return new ShotDataRecord(
 			dataRecord.startupTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.squidStartupTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.repeatTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.speed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,

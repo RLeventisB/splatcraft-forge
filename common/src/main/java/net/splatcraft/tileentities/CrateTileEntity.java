@@ -39,13 +39,13 @@ public class CrateTileEntity extends InkColorTileEntity implements RandomizableC
 		{
 			return;
 		}
-		
+
 		setColor(color);
 		health -= damage;
 		if (health <= 0)
 		{
 			level.removeBlock(getBlockPos(), false);
-			
+
 			dropInventory();
 		}
 		else
@@ -83,15 +83,15 @@ public class CrateTileEntity extends InkColorTileEntity implements RandomizableC
 		this.lootTableSeed = lootTableSeed;
 	}
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		super.loadAdditional(nbt, lookup);
-		
+
 		health = nbt.getFloat("Health");
 		maxHealth = nbt.getFloat("MaxHealth");
 		if (!tryLoadLootTable(nbt))
 			ContainerHelper.loadAllItems(nbt, inventory, lookup);
-		
+
 		if (nbt.contains("LootTable"))
 		{
 			ResourceKey.codec(Registries.LOOT_TABLE).parse(NbtOps.INSTANCE, nbt.get("LootTable"))
@@ -99,18 +99,18 @@ public class CrateTileEntity extends InkColorTileEntity implements RandomizableC
 		}
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider lookup)
+	public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		nbt.putFloat("Health", health);
 		nbt.putFloat("MaxHealth", maxHealth);
 		ContainerHelper.saveAllItems(nbt, inventory, lookup);
-		
+
 		if (hasLoot())
 		{
 			ResourceKey.codec(Registries.LOOT_TABLE).encodeStart(NbtOps.INSTANCE, lootTable)
 				.ifSuccess(encoded -> nbt.put("LootTable", encoded));
 		}
-		
+
 		super.saveAdditional(nbt, lookup);
 	}
 	@Override
@@ -139,13 +139,13 @@ public class CrateTileEntity extends InkColorTileEntity implements RandomizableC
 		{
 			return ItemStack.EMPTY;
 		}
-		
+
 		ItemStack itemstack = ContainerHelper.removeItem(inventory, index, count);
 		if (!itemstack.isEmpty())
 		{
 			setChanged();
 		}
-		
+
 		return itemstack;
 	}
 	@Override
@@ -161,7 +161,7 @@ public class CrateTileEntity extends InkColorTileEntity implements RandomizableC
 		{
 			stack.setCount(getMaxStackSize());
 		}
-		
+
 		setChanged();
 	}
 	@Override

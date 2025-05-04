@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -14,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.DataHandler;
@@ -24,10 +24,15 @@ import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.AttackId;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +51,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	}
 	public static RegistrySupplier<SlosherItem> create(DeferredRegister<Item> register, RegistrySupplier<SlosherItem> parent, String name)
 	{
-		return register.register(name, () -> new SlosherItem(parent.value().settingsId.toString()).setSlosherType(parent.get().slosherType));
+		return register.register(name, () -> new SlosherItem(parent.value().components().get(SplatcraftComponents.WEAPON_SETTING_ID).toString()).setSlosherType(parent.get().slosherType));
 	}
 	@Override
 	public Class<SlosherWeaponSettings> getSettingsClass()
@@ -59,21 +64,21 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		return this;
 	}
 	@Override
-	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(@NotNull Level world, @NotNull LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		if (remainingUseTicks != stack.getUseDuration(user)) // sloshers cannot be held to attack normally
 			return;
-		
+
 		user.swimAmount = 0f;
 		Optional<EntityAction> action = EntityAction.getActionIf(user, EntityAction::preventWeaponUse);
 		boolean notPreventedByAction = action.isEmpty();
-		
+
 		// if there is already an action, and the sloshing already shot a bullet, make it so you can slosh automatically after
 		if (!notPreventedByAction && action.get() instanceof SloshAction slosh && slosh.didSound)
 		{
 			slosh.doAction = true;
 		}
-		
+
 		if (notPreventedByAction && ((!(user instanceof Player player) || !CommonUtils.anyWeaponOnCooldown(player))))
 		{
 			weaponUseTick(world, user, stack, remainingUseTicks);
@@ -91,7 +96,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			{
 				return;
 			}
-			EntityAction.setEntityAction(player, new SloshAction(player, stack, player.getInventory().selected, entity.getUsedItemHand(), settings, settings.shotData.endlagTicks(), settings.shotData.miscEndlagTicks()));
+			EntityAction.setEntityAction(player, new SloshAction(player, stack, EntitySlot.searchAndCreateWithStack(entity, stack), settings, settings.shotData.endlagTicks(), settings.shotData.miscEndlagTicks()));
 		}
 	}
 	@Override
@@ -112,8 +117,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			ItemStack.CODEC.fieldOf("stored_stack").forGetter(SloshAction::getStoredStack),
 			Codec.FLOAT.fieldOf("time").forGetter(SloshAction::getTime),
 			Codec.FLOAT.fieldOf("max_time").forGetter(SloshAction::getMaxTime),
-			Codec.INT.fieldOf("slot_index").forGetter(SloshAction::getSlotIndex),
-			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(SloshAction::getHand),
+			EntitySlot.SERIALIZER_CODEC.fieldOf("item_slot").forGetter(SloshAction::getItemSlot),
 			ResourceLocation.CODEC.fieldOf("slosh_setting_id").forGetter(v -> DataHandler.WeaponStatsListener.SETTINGS.inverse().get(v.sloshData)),
 			Codec.BOOL.fieldOf("did_sound").forGetter(v -> v.didSound),
 			Codec.BOOL.fieldOf("do_action").forGetter(v -> v.doAction),
@@ -126,36 +130,33 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			Codec.FLOAT.fieldOf("y_rot_old").forGetter(v -> v.yRotOld)
 		).apply(inst, SloshAction::new));
 		final ItemStack storedStack;
-		final int slotIndex;
-		final InteractionHand hand;
+		final EntitySlot itemSlot;
 		private final int endlag;
 		public SlosherWeaponSettings sloshData;
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
 		public boolean didSound, doAction = false;
 		public AttackId attackId;
 		public float pitch, xDelta, yaw, yDelta, xRotOld, yRotOld;
-		public SloshAction(Player player, ItemStack stack, int slotIndex, InteractionHand hand, SlosherWeaponSettings sloshData, float duration, int endlag)
+		public SloshAction(Player player, ItemStack stack, EntitySlot itemSlot, SlosherWeaponSettings sloshData, float duration, int endlag)
 		{
 			super(duration);
 			storedStack = stack;
-			this.slotIndex = slotIndex;
-			this.hand = hand;
+			this.itemSlot = itemSlot;
 			pitch = xRotOld = player.getXRot();
 			yaw = yRotOld = player.getYRot();
 			this.sloshData = sloshData;
 			this.endlag = endlag;
-			
+
 			calculateSloshes();
 		}
-		public SloshAction(ItemStack storedStack, float time, float maxTime, int slotIndex, InteractionHand hand, ResourceLocation sloshDataId, boolean didSound, boolean doAction, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
+		public SloshAction(ItemStack storedStack, float time, float maxTime, EntitySlot itemSlot, ResourceLocation sloshDataId, boolean didSound, boolean doAction, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
 		{
 			super(time, maxTime);
 			sloshData = (SlosherWeaponSettings) DataHandler.WeaponStatsListener.SETTINGS.get(sloshDataId);
 			calculateSloshes();
-			
+
 			this.storedStack = storedStack;
-			this.slotIndex = slotIndex;
-			this.hand = hand;
+			this.itemSlot = itemSlot;
 			this.didSound = didSound;
 			this.doAction = doAction;
 			this.endlag = endlag;
@@ -185,21 +186,21 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		public void tick(LivingEntity entity)
 		{
 			Level world = entity.level();
-			
+
 			if (sloshData == null)
 				return;
-			
+
 			float frame = getMaxTime() - getTime();
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
 			SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
-			
+
 			if (shotSetting.allowFlicking())
 			{
 				xDelta = xDelta * 0.7f + (Mth.degreesDifference(pitch, entity.getXRot())) * 0.12f;
 				yDelta = yDelta * 0.7f + (Mth.degreesDifference(yaw, entity.getYRot())) * 0.12f;
 				xRotOld = pitch;
 				yRotOld = yaw;
-				
+
 				pitch += xDelta * (didSound ? 1 : 0.4f);
 				yaw += yDelta * (didSound ? 1 : 0.4f);
 			}
@@ -210,7 +211,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				pitch = entity.getXRot();
 				yaw = entity.getYRot();
 			}
-			
+
 			for (int i = 0; i < sloshes.size(); i++)
 			{
 				CalculatedSloshData calculatedSloshData = sloshes.get(i);
@@ -218,7 +219,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				{
 					float extraTime = frame - calculatedSloshData.time;
 					float partialTick = 1 - extraTime;
-					
+
 					if ((didSound || reduceInk(entity, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true)))
 					{
 						SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(calculatedSloshData.sloshDataIndex);
@@ -226,12 +227,12 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						{
 							shootSlosh(entity, calculatedSloshData, world, partialTick, projectileSetting, shotSetting, slosherItem, extraTime);
 						}
-						
+
 						if (!didSound)
 						{
 							if (entity.level().isClientSide() && entity.equals(ClientUtils.getClientPlayer()))
 							{
-								SplatcraftKeyHandler.autoSquidDelay = endlag;
+								SplatcraftKeyHandler.squidAndSubDelay = endlag;
 							}
 							world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 							didSound = true;
@@ -242,7 +243,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 						setTime(0);
 						break;
 					}
-					
+
 					sloshes.remove(i);
 					i--;
 				}
@@ -252,10 +253,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		{
 			CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
 			float speed = calculatedSloshData.sloshSpeed();
-			
+
 			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), sloshData);
 			proj.setSlosherStats(projectileData);
-			
+
 			float xRotation = Mth.rotLerp(partialTick, yRotOld, yaw);
 			proj.shootFromRotation(
 				entity,
@@ -266,7 +267,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				0);
 			proj.setAttackId(attackId);
 			proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
-			
+
 			switch (slosherItem.slosherType)
 			{
 				case EXPLODING:
@@ -282,7 +283,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			}
 			proj.addExtraData(new ExtraSaveData.SloshExtraData(calculatedSloshData.sloshDataIndex, proj.getY()));
 			world.addFreshEntity(proj);
-			
+
 			proj.tick(extraTime);
 		}
 		@Override
@@ -292,12 +293,12 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			{
 				setTime(getTime() + getMaxTime());
 				calculateSloshes();
-				
+
 				xRotOld = pitch;
 				yRotOld = yaw;
 				pitch = entity.getXRot();
 				yaw = entity.getYRot();
-				
+
 				doAction = false;
 				didSound = false;
 				return false;
@@ -315,14 +316,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			return storedStack;
 		}
 		@Override
-		public int getSlotIndex()
+		public EntitySlot getItemSlot()
 		{
-			return slotIndex;
-		}
-		@Override
-		public InteractionHand getHand()
-		{
-			return hand;
+			return itemSlot;
 		}
 		public record CalculatedSloshData(float time, byte subIndex, int sloshDataIndex, float sloshSpeed)
 		{

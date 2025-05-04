@@ -48,7 +48,7 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 	{
 		return id;
 	}
-	public WeighedSoundEvents resolve(SoundManager soundManager)
+	public WeighedSoundEvents resolve(@NotNull SoundManager soundManager)
 	{
 		if (id.equals(SoundManager.INTENTIONALLY_EMPTY_SOUND_LOCATION))
 		{
@@ -66,7 +66,7 @@ public abstract class MovingSoundInstanceButTheIdCanBeChanged implements Tickabl
 			{
 				sound = weightedSoundSet.getSound(random);
 			}
-			
+
 			return weightedSoundSet;
 		}
 	}

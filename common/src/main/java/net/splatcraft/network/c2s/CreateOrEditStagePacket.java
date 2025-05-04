@@ -17,6 +17,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.NotifyStageCreatePacket;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateOrEditStagePacket extends PlayC2SPacket
 {
@@ -40,7 +41,7 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
 		return new CreateOrEditStagePacket(buf.readUtf(), ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buf), buf.readBlockPos(), buf.readBlockPos(), WORLD_KEY_CODEC.decode(buf));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

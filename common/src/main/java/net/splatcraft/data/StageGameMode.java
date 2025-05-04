@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -59,7 +60,7 @@ public enum StageGameMode implements StringRepresentable
 		return playChecker.test(stage, (ServerLevel) world);
 	}
 	@Override
-	public String getSerializedName()
+	public @NotNull String getSerializedName()
 	{
 		return name();
 	}
@@ -85,7 +86,7 @@ public enum StageGameMode implements StringRepresentable
 		public static boolean canStart(Stage stage, ServerLevel world)
 		{
 			InkDisruptorItem.clearInk(world, stage.cornerA, stage.cornerB, false);
-			
+
 			return true;
 		}
 	}

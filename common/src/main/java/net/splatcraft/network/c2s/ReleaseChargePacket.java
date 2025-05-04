@@ -7,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
+import org.jetbrains.annotations.NotNull;
 
 public class ReleaseChargePacket extends PlayC2SPacket
 {
@@ -29,7 +30,7 @@ public class ReleaseChargePacket extends PlayC2SPacket
 		return new ReleaseChargePacket(buffer.readFloat(), ItemStack.STREAM_CODEC.decode(buffer), buffer.readBoolean());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -42,12 +43,12 @@ public class ReleaseChargePacket extends PlayC2SPacket
 				String.format("%s attempted to release a charge (%.2f; %s), but the server does not recall them having a charge",
 					player.getGameProfile(), charge, stack.getItem()));
 		}
-		
+
 		if (stack.getItem() instanceof IChargeableWeapon weapon)
 		{
 			weapon.onReleaseCharge(player.level(), player, stack, charge);
 		}
-		
+
 		if (resetCharge)
 			PlayerCharge.updateServerMap(player, false);
 	}

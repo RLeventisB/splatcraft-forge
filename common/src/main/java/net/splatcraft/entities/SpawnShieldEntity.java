@@ -41,40 +41,40 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		reapplyPosition();
 	}
 	@Override
-	public void onSyncedDataUpdated(EntityDataAccessor<?> data)
+	public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> data)
 	{
 		if (SIZE.equals(data))
 			refreshDimensions();
-		
+
 		super.onSyncedDataUpdated(data);
 	}
 	@Override
 	public void tick()
 	{
 		super.tick();
-		
+
 		if (level().isClientSide())
 			return;
-		
+
 		if (!(getSpawnPadPos() != null && level().getBlockEntity(getSpawnPadPos()) instanceof SpawnPadTileEntity spawnPad &&
 			spawnPad.isSpawnShield(this)))
 		{
 			discard();
 			return;
 		}
-		
+
 		if (spawnPad.getInkColor() != getColor())
 			setColor(spawnPad.getInkColor());
-		
+
 		if (getActiveTime() > 0)
 			setActiveTime(getActiveTime() - 1);
-		
+
 		for (Entity entity : level().getEntities(this, getBoundingBox(), EntitySelector.NO_SPECTATORS))
 		{
 			if (!(entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor())))
 			{
 				setActiveTime(MAX_ACTIVE_TIME);
-				
+
 				// todo: maybe move this to the sub weapon class instead of here??
 				if (entity instanceof ObjectCollideListenerEntity listener)
 				{
@@ -89,7 +89,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 				{
 					if (entity instanceof Player player && player.isPassenger())
 						player.stopRiding();
-					
+
 					entity.setDeltaMovement(entity.position().subtract(position().x, position().y, position().z).normalize().scale(.5));
 					entity.hurtMarked = true;
 				}

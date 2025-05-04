@@ -26,7 +26,7 @@ public abstract class ExtraSaveData
 		private static final StreamCodec<? super RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> PACKET_CODEC = new StreamCodec<>()
 		{
 			@Override
-			public InkProjectileEntity.ExtraDataList decode(RegistryFriendlyByteBuf buf)
+			public InkProjectileEntity.@NotNull ExtraDataList decode(RegistryFriendlyByteBuf buf)
 			{
 				int count = buf.readInt();
 				InkProjectileEntity.ExtraDataList saveDatas = new InkProjectileEntity.ExtraDataList(count);
@@ -57,12 +57,12 @@ public abstract class ExtraSaveData
 			}
 		};
 		@Override
-		public StreamCodec<? super RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> codec()
+		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> codec()
 		{
 			return PACKET_CODEC;
 		}
 		@Override
-		public EntityDataAccessor<InkProjectileEntity.ExtraDataList> createAccessor(int id)
+		public @NotNull EntityDataAccessor<InkProjectileEntity.ExtraDataList> createAccessor(int id)
 		{
 			return EntityDataSerializer.super.createAccessor(id);
 		}
@@ -72,6 +72,7 @@ public abstract class ExtraSaveData
 			return new InkProjectileEntity.ExtraDataList(saveData.stream().map(ExtraSaveData::copy).toList());
 		}
 	};
+
 	static
 	{
 		Registry.register(REGISTRY, Splatcraft.identifierOf("charge_data"), ChargeExtraData.class);
@@ -79,6 +80,7 @@ public abstract class ExtraSaveData
 		Registry.register(REGISTRY, Splatcraft.identifierOf("slosher_data"), SloshExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("dualie_data"), DualieExtraData.class);
 	}
+
 	public abstract void save(@NotNull RegistryFriendlyByteBuf buffer);
 	public abstract ExtraSaveData load(@NotNull RegistryFriendlyByteBuf buffer);
 	public abstract ExtraSaveData copy();
@@ -86,12 +88,12 @@ public abstract class ExtraSaveData
 	{
 		public EmptyExtraData()
 		{
-		
+
 		}
 		@Override
 		public void save(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-		
+
 		}
 		@Override
 		public EmptyExtraData load(@NotNull RegistryFriendlyByteBuf buffer)

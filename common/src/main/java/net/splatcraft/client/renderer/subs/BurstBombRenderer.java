@@ -24,7 +24,6 @@ public class BurstBombRenderer extends SubWeaponRenderer<BurstBombEntity, BurstB
 	@Override
 	public void render(BurstBombEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrices, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
-		
 		matrices.pushPose();
 		if (!entityIn.isItem)
 		{

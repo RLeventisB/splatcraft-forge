@@ -10,6 +10,7 @@ import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(buffer.readUtf()).getConstructor(String.class).newInstance(key.toString());
 				JsonObject json = GsonHelper.parse(buffer.readUtf());
 				setting.deserialize(key, json);
-				
+
 				setting.registerStatTooltips();
 				settings.add(Map.entry(key, setting));
 			}
@@ -56,12 +57,12 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 				Splatcraft.LOGGER.error("Error upon reading data for {}", key);
 			}
 		}
-		
+
 		SplatcraftConvertors.SkipConverting = false;
 		return new UpdateWeaponSettingsPacket(settings);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -69,7 +70,7 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeInt(settings.size());
-		
+
 		for (Map.Entry<ResourceLocation, AbstractWeaponSettings<?, ?>> entry : settings)
 		{
 			buffer.writeResourceLocation(entry.getKey());

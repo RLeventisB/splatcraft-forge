@@ -116,4 +116,6 @@ public interface IPlatformHelper extends IEventMap
 	boolean hasEntityInfo(LivingEntity entity);
 	void setEntityInfo(LivingEntity entity, EntityInfo newData);
 	<T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests);
+	void postConsumerEvent(String eventClassName, Object... params);
+	Object postEvent(String eventClassName, Object... params);
 }

@@ -6,6 +6,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.data.InkColorRegistry;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
@@ -16,7 +17,7 @@ public class InkColorTranslatableContents extends TranslatableContents
 	public InkColorTranslatableContents(InkColor color, Object... pArgs)
 	{
 		super(getKeyForColor(color), "#" + String.format("%06X", color.getColor()).toUpperCase(), pArgs);
-		inverted = new TranslatableContents("ink_color.invert", null, new MutableComponent[] {
+		inverted = new TranslatableContents("ink_color.invert", null, new MutableComponent[]{
 			MutableComponent.create(new TranslatableContents(
 				getKeyForColor(color.getInverted()),
 				getFallback(),
@@ -30,10 +31,10 @@ public class InkColorTranslatableContents extends TranslatableContents
 		return color.getTranslationKey();
 	}
 	@Override
-	public <T> Optional<T> visit(FormattedText.ContentConsumer<T> visitor)
+	public <T> @NotNull Optional<T> visit(FormattedText.@NotNull ContentConsumer<T> visitor)
 	{
 		Language language = Language.getInstance();
-		
+
 		if (!language.has(getKey()))
 		{
 			ResourceLocation alias = InkColorRegistry.getColorAlias(color.getInverted());
@@ -42,7 +43,7 @@ public class InkColorTranslatableContents extends TranslatableContents
 				return inverted.visit(visitor);
 			}
 		}
-		
+
 		return super.visit(visitor);
 	}
 }

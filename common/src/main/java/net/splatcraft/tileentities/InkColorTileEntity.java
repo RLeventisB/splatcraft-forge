@@ -34,7 +34,7 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 		super(type, pos, state);
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup)
+	public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider registryLookup)
 	{
 		if (!team.isEmpty())
 			nbt.putString("Team", team);
@@ -44,7 +44,7 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 	}
 	//Nbt Read
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider registryLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider registryLookup)
 	{
 		super.loadAdditional(nbt, registryLookup);
 		SplatcraftComponents.ItemColorData colorData = SplatcraftComponents.ItemColorData.CODEC.decode(NbtOps.INSTANCE, nbt.get("ColorData")).getOrThrow().getFirst();
@@ -58,7 +58,7 @@ public class InkColorTileEntity extends BlockEntity implements IHasTeam, ISplatc
 		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	@Override
-	public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registryLookup)
 	{
 		CompoundTag nbt = new CompoundTag();
 		saveAdditional(nbt, registryLookup);

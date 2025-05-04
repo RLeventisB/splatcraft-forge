@@ -53,7 +53,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 		registerDefaultState(defaultBlockState().setValue(POWERED, false));
 	}
 	@Override
-	public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPE;
 	}
@@ -86,27 +86,27 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 				return InteractionResult.sidedSuccess(world.isClientSide);
 			}
 		}
-		
+
 		return super.useWithoutItem(state, world, pos, player, rayTrace);
 	}
 	@Override
 	public void neighborChanged(BlockState state, Level levelIn, @NotNull BlockPos pos, @NotNull Block blockIn, @NotNull BlockPos fromPos, boolean isMoving)
 	{
 		boolean isPowered = levelIn.hasNeighborSignal(pos);
-		
+
 		if (isPowered != state.getValue(POWERED))
 		{
 			if (isPowered && levelIn.getBlockEntity(pos) instanceof RemotePedestalTileEntity tileEntity)
 			{
 				tileEntity.onPowered();
 			}
-			
+
 			levelIn.setBlock(pos, state.setValue(POWERED, isPowered), 3);
 			updateColor(levelIn, pos, pos.below());
 		}
 	}
 	@Override
-	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, LivingEntity entity, ItemStack stack)
+	public void setPlacedBy(@NotNull Level world, @NotNull BlockPos pos, @NotNull BlockState state, LivingEntity entity, @NotNull ItemStack stack)
 	{
 		super.setPlacedBy(world, pos, state, entity, stack);
 		updateColor(world, pos, pos.below());
@@ -133,7 +133,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 	{
 		if (state.getValue(POWERED) && world.getBlockEntity(pos) instanceof RemotePedestalTileEntity te)
 			return te.getSignal();
-		
+
 		return 0;
 	}
 	@Override
@@ -181,7 +181,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 				}
 			}
 		}
-		
+
 		return false;
 	}
 	@Override
@@ -208,7 +208,7 @@ public class RemotePedestalBlock extends Block implements IColoredBlock, EntityB
 				Containers.dropContentsOnDestroy(state, newState, world, pos);
 				world.blockUpdated(pos, this);
 			}
-			
+
 			super.onRemove(state, world, pos, newState, isMoving);
 		}
 	}

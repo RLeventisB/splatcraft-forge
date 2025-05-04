@@ -9,6 +9,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.tileentities.InkVatTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 public class UpdateBlockColorPacket extends PlayC2SPacket
 {
@@ -34,12 +35,12 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 	public void execute(Player player)
 	{
 		BlockEntity te = player.level().getBlockEntity(pos);
-		
+
 		if (te instanceof InkVatTileEntity te1)
 		{
 			te1.pointer = inkVatPointer;
 		}
-		
+
 		ColorUtils.withInkColor(te, color);
 	}
 	@Override
@@ -52,7 +53,7 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		buffer.writeInt(inkVatPointer);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

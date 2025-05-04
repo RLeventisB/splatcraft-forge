@@ -14,19 +14,19 @@ public class InkExplosionParticle extends TextureSheetParticle
 	public InkExplosionParticle(ClientLevel level, double x, double y, double z, double motionX, double motionY, double motionZ, InkExplosionParticleData data, SpriteSet provider)
 	{
 		super(level, x, y, z, motionX, motionY, motionZ);
-		
+
 		xd = motionX;
 		yd = motionY;
 		zd = motionZ;
-		
+
 		setColor(Math.max(0.018f, data.getRed() - 0.018f),
 			Math.max(0.018f, data.getGreen() - 0.018f),
 			Math.max(0.018f, data.getBlue() - 0.018f));
-		
+
 		quadSize = 0.33F * (random.nextFloat() * 0.5F + 0.5F) * 2.0F * data.getScale();
 		gravity = 0;
 		lifetime = 6 + random.nextInt(4);
-		
+
 		spriteProvider = provider;
 		setSpriteFromAge(provider);
 	}
@@ -46,7 +46,7 @@ public class InkExplosionParticle extends TextureSheetParticle
 		}
 	}
 	@Override
-	public ParticleRenderType getRenderType()
+	public @NotNull ParticleRenderType getRenderType()
 	{
 		return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
 	}

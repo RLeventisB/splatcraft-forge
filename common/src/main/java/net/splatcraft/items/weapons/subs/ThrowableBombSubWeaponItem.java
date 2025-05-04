@@ -24,14 +24,14 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 	public void useSub(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
 		entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
-		
+
 		SubWeaponSettings<SubWeaponRecords.ThrowableExplodingSubDataRecord> settings = getSettings(stack);
 		SubWeaponRecords.ThrowableExplodingSubDataRecord subData = settings.subDataRecord;
 		SubWeaponSettings.DataRecord data = settings.dataRecord;
 		if (!world.isClientSide())
 		{
-			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(entityType.value(), world, entity, stack.copy());
-			
+			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(getEntityType(stack), world, entity, stack.copy());
+
 			proj.setItem(stack.copy());
 			proj.setDeltaMovement(entity, entity.getXRot(), entity.getYRot(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
 			world.addFreshEntity(proj);

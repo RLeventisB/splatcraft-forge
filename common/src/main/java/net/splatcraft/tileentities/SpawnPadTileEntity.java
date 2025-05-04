@@ -31,7 +31,7 @@ public class SpawnPadTileEntity extends InkColorTileEntity
 	{
 		if (level.isClientSide() || spawnShieldUuid == null)
 			return null;
-		
+
 		Entity res = ((ServerLevel) level).getEntity(spawnShieldUuid);
 		return (res instanceof SpawnShieldEntity) ? (SpawnShieldEntity) res : null;
 	}
@@ -53,17 +53,17 @@ public class SpawnPadTileEntity extends InkColorTileEntity
 		return new Vec3(pos.getX() + 0.5, pos.getY() + SuperJumpCommand.blockHeight(pos, level), pos.getZ() + 0.5);
 	}
 	@Override
-	public void saveAdditional(CompoundTag nbt, HolderLookup.Provider wrapperLookup)
+	public void saveAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		if (spawnShieldUuid != null)
 			nbt.putUUID("SpawnShield", spawnShieldUuid);
 		super.saveAdditional(nbt, wrapperLookup);
 	}
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider lookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider lookup)
 	{
 		super.loadAdditional(nbt, lookup);
-		
+
 		if (nbt.hasUUID("SpawnShield"))
 			spawnShieldUuid = nbt.getUUID("SpawnShield");
 		updateStages = true;

@@ -16,53 +16,53 @@ import java.util.Optional;
 
 public class CraftWeaponTrigger extends SimpleCriterionTrigger<CraftWeaponTrigger.TriggerInstance>
 {
-    static final ResourceLocation ID = Splatcraft.identifierOf("craft_weapon");
+	static final ResourceLocation ID = Splatcraft.identifierOf("craft_weapon");
 
-    public @NotNull ResourceLocation getId()
-    {
-        return ID;
-    }
+	public @NotNull ResourceLocation getId()
+	{
+		return ID;
+	}
 
-    public void trigger(ServerPlayer player, ItemStack stack)
-    {
-        trigger(player, (instance) -> instance.matches(stack));
-    }
+	public void trigger(ServerPlayer player, ItemStack stack)
+	{
+		trigger(player, (instance) -> instance.matches(stack));
+	}
 
-    @Override
-    public Codec<TriggerInstance> codec()
-    {
-        return TriggerInstance.CODEC;
-    }
+	@Override
+	public @NotNull Codec<TriggerInstance> codec()
+	{
+		return TriggerInstance.CODEC;
+	}
 
-    public record TriggerInstance(Optional<ContextAwarePredicate> player,
-                                  Optional<ItemPredicate> item) implements SimpleCriterionTrigger.SimpleInstance
-    {
-        public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(
-            instance ->
-                instance.group(
-                        EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
-                        ItemPredicate.CODEC.optionalFieldOf("item").forGetter(TriggerInstance::item))
-                    .apply(instance, TriggerInstance::new));
+	public record TriggerInstance(Optional<ContextAwarePredicate> player,
+	                              Optional<ItemPredicate> item) implements SimpleCriterionTrigger.SimpleInstance
+	{
+		public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(
+			instance ->
+				instance.group(
+						EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
+						ItemPredicate.CODEC.optionalFieldOf("item").forGetter(TriggerInstance::item))
+					.apply(instance, TriggerInstance::new));
 
-        public TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item)
-        {
-            this.player = player;
-            this.item = item;
-        }
+		public TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item)
+		{
+			this.player = player;
+			this.item = item;
+		}
 
-        public boolean matches(ItemStack stack)
-        {
-            return item.isEmpty() || item.get().test(stack);
-        }
+		public boolean matches(ItemStack stack)
+		{
+			return item.isEmpty() || item.get().test(stack);
+		}
 
-        public Optional<ContextAwarePredicate> player()
-        {
-            return player;
-        }
+		public @NotNull Optional<ContextAwarePredicate> player()
+		{
+			return player;
+		}
 
-        public Optional<ItemPredicate> item()
-        {
-            return item;
-        }
-    }
+		public Optional<ItemPredicate> item()
+		{
+			return item;
+		}
+	}
 }

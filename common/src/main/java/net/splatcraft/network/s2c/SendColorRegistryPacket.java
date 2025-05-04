@@ -12,6 +12,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 public class SendColorRegistryPacket extends PlayS2CPacket
 {
@@ -27,7 +28,7 @@ public class SendColorRegistryPacket extends PlayS2CPacket
 		return new SendColorRegistryPacket(PACKET_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

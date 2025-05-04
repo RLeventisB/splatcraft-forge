@@ -9,6 +9,7 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Scoreboard;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -36,17 +37,17 @@ public class WeaponHandler
 			prevPosMap.remove(entity);
 			return EventResult.pass();
 		});
-		
+
 		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
 			Optional<EntityAction> cooldown = EntityAction.getEntityActionOptional(player);
 			boolean usagePreventedByCooldown = false;
-			
+
 			if (cooldown.isPresent())
 			{
-				if (cooldown.get().getSlotIndex() >= 0)
-					player.getInventory().selected = cooldown.get().getSlotIndex();
-				
+				if (cooldown.get().getItemSlot() instanceof EntitySlot.PlayerInventorySlot playerSlot)
+					player.getInventory().selected = playerSlot.getSlotIndex();
+
 				usagePreventedByCooldown = tickEntityActions(player, cooldown.get());
 			}
 			if (usagePreventedByCooldown || !player.isUsingItem() || player.getUseItemRemainingTicks() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
@@ -54,7 +55,7 @@ public class WeaponHandler
 				PlayerCharge.dischargeWeapon(player);
 			}
 		});
-		
+
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			tickPreviousPosMap(entity);
@@ -91,7 +92,7 @@ public class WeaponHandler
 		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
 		{
 			ItemStack stack = action.getStoredStack();
-			
+
 			doEndActions(player, action, stack);
 		}
 		else
@@ -100,10 +101,10 @@ public class WeaponHandler
 				action.onStart(player);
 			action.tick(player);
 			player.setSprinting(false);
-			
+
 			preventedByCooldown = action.preventWeaponUse();
 			ItemStack stack = action.getStoredStack();
-			
+
 			if (action.getTime() <= 1)
 			{
 				if (doEndActions(player, action, stack))

@@ -8,6 +8,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -50,7 +51,7 @@ public class PlayerColorPacket extends PlayS2CPacket
 		ClientUtils.setClientPlayerColor(target, color);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

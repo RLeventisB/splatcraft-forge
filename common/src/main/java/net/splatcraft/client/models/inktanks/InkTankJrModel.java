@@ -8,6 +8,7 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class InkTankJrModel extends AbstractInkTankModel
 {
@@ -21,11 +22,11 @@ public class InkTankJrModel extends AbstractInkTankModel
 	{
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-		
+
 		PartDefinition body = partdefinition.addOrReplaceChild("body", CubeListBuilder.create(), PartPose.offset(0.0F, 0.0F, 0.0F));
 		PartDefinition torso = body.addOrReplaceChild("torso", CubeListBuilder.create().texOffs(0, 0).addBox(-4.8056F, -0.25F, -2.5F, 9.0F, 12.0F, 5.0F, new CubeDeformation(0.0F))
 			.texOffs(31, 0).addBox(-1.0F, 3.0F, 2.5F, 2.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -0.25F, 0.0F));
-		
+
 		PartDefinition Ink_Tank = torso.addOrReplaceChild("ink_tank", CubeListBuilder.create().texOffs(20, 18).addBox(-2.0F, 1.5F, 3.75F, 4.0F, 2.0F, 4.0F, new CubeDeformation(0.0F))
 			.texOffs(8, 33).addBox(-3.5F, 3.15F, 4.25F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(12, 39).addBox(0.9875F, 5.25F, 7.25F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
@@ -38,9 +39,9 @@ public class InkTankJrModel extends AbstractInkTankModel
 			.texOffs(18, 25).addBox(-3.0F, 11.25F, 3.25F, 6.0F, 1.0F, 5.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 18).addBox(-2.5F, 3.25F, 3.25F, 5.0F, 1.0F, 5.0F, new CubeDeformation(0.0F))
 			.texOffs(31, 2).addBox(-0.5F, 1.75F, 2.0F, 1.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.75F, 0.75F));
-		
+
 		partdefinition.addOrReplaceChild("tag", CubeListBuilder.create(), PartPose.offsetAndRotation(-3.1168F, 2.8445F, 8.9821F, -0.1309F, -0.3927F, -0.3054F));
-		
+
 		for (int i = 0; i < 7; i++)
 		{
 			Ink_Tank.addOrReplaceChild("ink_piece_" + i, CubeListBuilder.create().texOffs(110, 0)
@@ -49,8 +50,8 @@ public class InkTankJrModel extends AbstractInkTankModel
 		return LayerDefinition.create(meshdefinition, 128, 128);
 	}
 	@Override
-	public void setupAnim(LivingEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch)
+	public void setupAnim(@NotNull LivingEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch)
 	{
-	
+
 	}
 }

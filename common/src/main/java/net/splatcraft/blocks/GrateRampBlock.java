@@ -38,21 +38,21 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
 	private static VoxelShape[] makeVoxelShape()
 	{
 		VoxelShape[] shapes = new VoxelShape[8];
-		
+
 		for (int i = 0; i < 6; i++)
 		{
 			shapes[i] = SEGMENT.move(.125 * i, .125 * i, 0);
 		}
-		
+
 		shapes[6] = START;
 		shapes[7] = END;
-		
+
 		return createVoxelShapes(shapes);
 	}
 	protected static VoxelShape modifyShapeForDirection(Direction facing, VoxelShape shape)
 	{
 		AABB bb = shape.bounds();
-		
+
 		return switch (facing)
 		{
 			case SOUTH -> Shapes.create(new AABB(1 - bb.maxZ, bb.minY, bb.minX, 1 - bb.minZ, bb.maxY, bb.maxX));
@@ -64,7 +64,7 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
 	protected static VoxelShape[] createVoxelShapes(VoxelShape... shapes)
 	{
 		VoxelShape[] result = new VoxelShape[4];
-		
+
 		for (int i = 0; i < 4; i++)
 		{
 			result[i] = Shapes.empty();
@@ -73,11 +73,11 @@ public class GrateRampBlock extends Block implements SimpleWaterloggedBlock
 				result[i] = Shapes.or(result[i], modifyShapeForDirection(Direction.from2DDataValue(i), shape));
 			}
 		}
-		
+
 		return result;
 	}
 	@Override
-	public VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPES[state.getValue(FACING).ordinal() - 2];
 	}

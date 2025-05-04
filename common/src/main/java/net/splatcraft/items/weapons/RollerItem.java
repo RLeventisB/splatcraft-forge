@@ -11,7 +11,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -27,6 +26,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.client.audio.RollerRollTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -37,12 +37,14 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.NumberRange.FloatRange;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import org.joml.sampling.PoissonSampling;
 
@@ -66,7 +68,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	}
 	public static RegistrySupplier<RollerItem> create(DeferredRegister<Item> registry, RegistrySupplier<RollerItem> parent, String name)
 	{
-		return registry.register(name, () -> new RollerItem(parent.value().settingsId.toString()));
+		return registry.register(name, () -> new RollerItem(parent.value().components().get(SplatcraftComponents.WEAPON_SETTING_ID).toString()));
 	}
 	public static void applyRecoilKnockback(LivingEntity entity, double pow)
 	{
@@ -92,11 +94,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				InitialSwingAction action = EntityAction.getSpecificEntityAction(player, InitialSwingAction.class);
 				if (action != null)
 				{
-					if (action.getSlotIndex() > -1)
+					Optional<ItemStack> weaponStackOptional = action.getItemSlot().tryGetItemFrom(entity);
+					if (weaponStackOptional.isPresent())
 					{
-						ItemStack weaponStack = action.getHand() == InteractionHand.MAIN_HAND ? player.getInventory().items.get(action.getSlotIndex())
-							: entity.getOffhandItem();
-						return stack.equals(weaponStack) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() < action.attackFrame - 2) ? 1 : 0;
+						return stack.equals(weaponStackOptional.get()) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() < action.attackFrame - 2) ? 1 : 0;
 					}
 				}
 			}
@@ -104,7 +105,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		};
 	}
 	@Override
-	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(@NotNull Level world, @NotNull LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		if (remainingUseTicks == stack.getUseDuration(user))
 		{
@@ -311,8 +312,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			ItemStack.OPTIONAL_CODEC.fieldOf("stored_stack").forGetter(EntityAction::getStoredStack),
 			Codec.FLOAT.fieldOf("total_time").forGetter(InitialSwingAction::getMaxTime),
 			Codec.FLOAT.fieldOf("attack_frame").forGetter(v -> v.attackFrame),
-			Codec.INT.fieldOf("slot_index").forGetter(InitialSwingAction::getSlotIndex),
-			CodecUtils.Codecs.HAND_CODEC.fieldOf("used_hand").forGetter(InitialSwingAction::getHand),
+			EntitySlot.SERIALIZER_CODEC.fieldOf("item_slot").forGetter(InitialSwingAction::getItemSlot),
 			Codec.BOOL.fieldOf("is_grounded").forGetter(InitialSwingAction::isGrounded),
 			Codec.BOOL.fieldOf("is_action_queued").forGetter(v -> v.isAttackQueued),
 			Codec.BOOL.fieldOf("has_attacked").forGetter(v -> v.hasAttacked),
@@ -320,8 +320,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		).apply(inst, InitialSwingAction::new));
 		public final float attackFrame;
 		final ItemStack storedStack;
-		final int slotIndex;
-		final InteractionHand hand;
+		final EntitySlot itemSlot;
 		protected boolean isGrounded, isAttackQueued, hasAttacked;
 		public InitialSwingAction(ItemStack stack, float windupTime, float endlagTime, LivingEntity entity)
 		{
@@ -329,10 +328,9 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			isGrounded = entity.onGround();
 			storedStack = stack;
 			attackFrame = endlagTime;
-			slotIndex = entity instanceof Player player ? player.getInventory().selected : -1;
-			hand = entity.getUsedItemHand();
+			itemSlot = EntitySlot.searchAndCreateWithStack(entity, stack);
 		}
-		public InitialSwingAction(ItemStack stack, float totalTime, float attackFrame, int slotIndex, InteractionHand hand, boolean isGrounded, boolean isAttackQueued, boolean hasAttacked, float time)
+		public InitialSwingAction(ItemStack stack, float totalTime, float attackFrame, EntitySlot itemSlot, boolean isGrounded, boolean isAttackQueued, boolean hasAttacked, float time)
 		{
 			super(time, totalTime);
 			this.attackFrame = attackFrame;
@@ -340,8 +338,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			this.hasAttacked = hasAttacked;
 			this.isGrounded = isGrounded;
 			storedStack = stack;
-			this.slotIndex = slotIndex;
-			this.hand = hand;
+			this.itemSlot = itemSlot;
 		}
 		static List<Vector3f> poissonDiskSampling(RandomSource random, float maxAngle, float radiusApart, float minSpeedSquared, float maxSpeed, int maxTries, float yaw)
 		{
@@ -544,14 +541,9 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			return storedStack;
 		}
 		@Override
-		public int getSlotIndex()
+		public EntitySlot getItemSlot()
 		{
-			return slotIndex;
-		}
-		@Override
-		public InteractionHand getHand()
-		{
-			return hand;
+			return itemSlot;
 		}
 	}
 }

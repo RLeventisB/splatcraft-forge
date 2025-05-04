@@ -13,7 +13,9 @@
     "shot": {
         "startup_ticks": 12,
         "startup_ticks_from_squid": 21,
-        "endlag_ticks": 28,
+        "repeat_ticks": 40,
+        "endlag_ticks": 20,
+        "other_actions_endlag_ticks": 20,
         "speed": 14,
         "accuracy_data": {
             "ground_deviation_degrees": 0,

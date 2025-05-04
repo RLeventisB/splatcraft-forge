@@ -18,27 +18,26 @@ import static net.splatcraft.items.weapons.settings.SpecialWeaponRecords.StingRa
 public class StingRayAction extends BaseSpecialAction
 {
 	public static final Codec<StingRayAction> CODEC = RecordCodecBuilder.create(
-		inst -> inst.group(
-			StingRayDataRecord.CODEC.fieldOf("special_data").forGetter(v -> v.specialData),
-			getTimeCodec(),
-			getMaxTimeCodec(),
-			getSlotIndexCodec(),
-			getProviderEntitySlotCodec(),
-			Codec.FLOAT.fieldOf("mobility").forGetter(v -> v.mobility)
-		).apply(inst, StingRayAction::new)
+		inst ->
+			specialCodecStart(inst).and(
+				inst.group(
+					StingRayDataRecord.CODEC.fieldOf("special_data").forGetter(v -> v.specialData),
+					Codec.FLOAT.fieldOf("mobility").forGetter(v -> v.mobility)
+				)
+			).apply(inst, StingRayAction::new)
 	);
 	private final StingRayDataRecord specialData;
 	private final float mobility;
 	protected int usageTick;
-	public StingRayAction(StingRayDataRecord specialData, float time, float maxTime, int slotIndex, EntitySlot providerEntitySlot, float mobility)
+	public StingRayAction(float time, float maxTime, EntitySlot weaponSlot, EntitySlot providerSlot, StingRayDataRecord specialData, float mobility)
 	{
-		super(time, maxTime, slotIndex, providerEntitySlot);
+		super(time, maxTime, weaponSlot, providerSlot);
 		this.specialData = specialData;
 		this.mobility = mobility;
 	}
-	public StingRayAction(SpecialWeaponSettings<StingRayDataRecord> settings, int slotIndex, EntitySlot providerSlotIndex)
+	public StingRayAction(SpecialWeaponSettings<StingRayDataRecord> settings, EntitySlot weaponSlot, EntitySlot providerSlot)
 	{
-		super(settings.dataRecord.specialDuration(), slotIndex, providerSlotIndex);
+		super(settings.dataRecord.specialDuration(), weaponSlot, providerSlot);
 		specialData = settings.specialDataRecord;
 		mobility = settings.dataRecord.mobility();
 	}
@@ -77,7 +76,7 @@ public class StingRayAction extends BaseSpecialAction
 		Level world = entity.level();
 		if (world.isClientSide && entity.equals(ClientUtils.getClientPlayer()))
 		{
-			SplatcraftKeyHandler.autoSquidDelay = 5;
+			SplatcraftKeyHandler.squidAndSubDelay = 5;
 		}
 		return true;
 	}

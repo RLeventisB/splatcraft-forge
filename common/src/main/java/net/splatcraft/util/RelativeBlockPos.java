@@ -8,6 +8,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.ChunkPos;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A block position whose X and Z are relative to a chunk position. Y is kept absolute.
@@ -90,7 +91,7 @@ public class RelativeBlockPos extends Vec3i
 		tag.putByte("X", (byte) getX());
 		tag.putInt("Y", getY());
 		tag.putByte("Z", (byte) getZ());
-		
+
 		return tag;
 	}
 	/**
@@ -104,11 +105,11 @@ public class RelativeBlockPos extends Vec3i
 		buf.writeByte(getX());
 		buf.writeInt(getY());
 		buf.writeByte(getZ());
-		
+
 		return buf;
 	}
 	@Override
-	public String toString()
+	public @NotNull String toString()
 	{
 		return getX() + "," + getY() + "," + getZ(); // do not add spaces to the strings it will make the codecs unhappy
 	}

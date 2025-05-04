@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SuperJumpToStagePacket extends PlayC2SPacket
 {
@@ -21,7 +22,7 @@ public class SuperJumpToStagePacket extends PlayC2SPacket
 		return new SuperJumpToStagePacket(buf.readUtf());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

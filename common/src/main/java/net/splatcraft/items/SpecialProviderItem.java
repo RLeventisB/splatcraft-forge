@@ -46,7 +46,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		super(new Properties().durability(1).component(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT));
 	}
 	@Override
-	public Component getName(ItemStack stack)
+	public @NotNull Component getName(ItemStack stack)
 	{
 		if (stack.has(SPECIAL_PROVIDER_DATA))
 			return Component.translatable(getDescriptionId());
@@ -56,17 +56,17 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-		
+
 		SpecialProviderData data = getData(stack);
 		if (data == null || (data.specialId().isEmpty() && data.weaponIdFilter().isEmpty()))
 		{
 			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_none").withStyle(ChatFormatting.GRAY));
 			return;
 		}
-		
+
 		if (data.weaponIdFilter().isPresent())
 			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_linked_weapon", data.getWeaponText()));
-		
+
 		tooltip.add(data.specialId().isEmpty() ?
 			Component.translatable(getDescriptionId() + ".tooltip_no_special").withStyle(ChatFormatting.GRAY) :
 			Component.translatable(getDescriptionId() + ".tooltip_linked_special", data.getSpecialText())
@@ -78,13 +78,13 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		return stack.has(SPECIAL_PROVIDER_DATA);
 	}
 	@Override
-	public int getBarColor(ItemStack stack)
+	public int getBarColor(@NotNull ItemStack stack)
 	{
 		return SplatcraftConfig.get("splatcraft.vanillaInkDurability") ? super.getBarColor(stack) : getBarWidth(stack) == 1 ? 0xfab311 : 0xecf4c6;
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override
-	public int getBarWidth(ItemStack stack)
+	public int getBarWidth(@NotNull ItemStack stack)
 	{
 		SpecialProviderData data = getData(stack);
 		float progress = 0;
@@ -101,15 +101,15 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		return (int) (progress * 13f);
 	}
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand)
+	public @NotNull InteractionResultHolder<ItemStack> use(Level world, Player user, @NotNull InteractionHand hand)
 	{
 		ItemStack stack = user.getItemInHand(hand);
-		
+
 		if (world.isClientSide)
 			return InteractionResultHolder.pass(stack);
-		
+
 		ServerPlayer serverPlayer = user instanceof ServerPlayer ? (ServerPlayer) user : null;
-		
+
 		if (user.isShiftKeyDown())
 		{
 			SpecialProviderData data = getData(stack);
@@ -128,7 +128,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			SpecialProviderData data = getData(stack);
 			if (data == null)
 				data = SpecialProviderData.DEFAULT;
-			
+
 			List<ResourceLocation> weaponIds = new ObjectArrayList<>();
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(ShooterWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(RollerWeaponSettings.class));
@@ -142,25 +142,25 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			index %= weaponIds.size();
 			data = data.withWeaponIdFilter(weaponIds.get(index));
 			setData(stack, data);
-			
+
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.literal("Set weapon to " + data.getWeaponText()).withStyle(ChatFormatting.RED), true);
 		}
-		
+
 		return InteractionResultHolder.pass(stack);
 	}
 	@Override
-	public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack otherStack, Slot slot, ClickAction clickType, Player player, SlotAccess cursorStackReference)
+	public boolean overrideOtherStackedOnMe(@NotNull ItemStack stack, @NotNull ItemStack otherStack, @NotNull Slot slot, @NotNull ClickAction clickType, @NotNull Player player, @NotNull SlotAccess cursorStackReference)
 	{
 		return super.overrideOtherStackedOnMe(stack, otherStack, slot, clickType, player, cursorStackReference);
 	}
 	@Override
-	public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction clickType, Player player)
+	public boolean overrideStackedOnOther(@NotNull ItemStack stack, @NotNull Slot slot, @NotNull ClickAction clickType, @NotNull Player player)
 	{
 		SpecialProviderData data = getData(stack);
 		if (data == null || data.specialId().isEmpty() && data.weaponIdFilter().isEmpty())
 			return false;
-		
+
 		setData(stack, data.withSpecialId(null).withWeaponIdFilter(null));
 		return true;
 	}
@@ -168,7 +168,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	{
 		if (world.isClientSide())
 			return;
-		
+
 		InteractionHand hand = entity.getUsedItemHand();
 		SpecialProviderData data = getData(providerStack);
 		ServerPlayer serverPlayer = entity instanceof ServerPlayer ? (ServerPlayer) entity : null;
@@ -178,31 +178,31 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 				serverPlayer.sendSystemMessage(Component.translatable("status.provider_inactive").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		if (data.specialId().isEmpty())
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.translatable("status.provider_unassigned_special").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		if (!data.testWeapon(weaponStack))
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.translatable("status.provider_wrong_weapon").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		if (!SpecialHandler.passesSpecialCost(weaponStack, providerStack, data.specialId().get()))
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.translatable("status.not_enough_points_special").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		EntitySlot entitySlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack);
 		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUUID(), entitySlot), serverPlayer);
-		
+
 		entity.startUsingItem(hand);
 	}
 	@Override

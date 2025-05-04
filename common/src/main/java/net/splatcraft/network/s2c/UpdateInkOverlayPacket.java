@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UpdateInkOverlayPacket extends PlayS2CPacket
 {
@@ -29,7 +30,7 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 		return new UpdateInkOverlayPacket(buffer.readInt(), buffer.readNbt());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -37,7 +38,7 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Entity entity = Minecraft.getInstance().level.getEntity(entityId);
-		
+
 		if (!(entity instanceof LivingEntity living) || !InkOverlayCapability.hasCapability(living))
 		{
 			return;

@@ -9,6 +9,7 @@ import net.splatcraft.client.gui.stagepad.StageSelectionScreen;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,29 +29,29 @@ public class SendStageWarpDataToPadPacket extends PlayS2CPacket
 	public static SendStageWarpDataToPadPacket compile(Player player)
 	{
 		ArrayList<Stage> stages = Stage.getAllStages();
-		
+
 		ArrayList<Stage> needsUpdate = new ArrayList<>();
 		for (Stage stage : stages)
 			if (stage.needSpawnPadUpdate())
 				needsUpdate.add(stage);
-		
+
 		stages.removeIf(stage -> !stage.hasSpawnPads());
-		
+
 		ArrayList<Stage> outOfRange = new ArrayList<>();
 		for (Stage stage : stages)
 		{
 			ArrayList<BlockPos> validPads = new ArrayList<>(stage.getSpawnPadPositions());
-			
+
 			validPads.removeIf(pos ->
 				!(SuperJumpCommand.canSuperJumpTo(player, new Vec3(pos.getX() + 0.5, pos.getY(), pos.getZ()))));
-			
+
 			if (validPads.isEmpty())
 				outOfRange.add(stage);
 		}
-		
+
 		stages.removeIf(outOfRange::contains);
 		stages.removeIf(needsUpdate::contains);
-		
+
 		return new SendStageWarpDataToPadPacket(stages.stream().map(
 			stage -> stage.id).toList(),
 			outOfRange.stream().map(stage -> stage.id).toList(),
@@ -62,21 +63,21 @@ public class SendStageWarpDataToPadPacket extends PlayS2CPacket
 		ArrayList<String> validStages = new ArrayList<>();
 		for (int i = 0; i < validStageCount; i++)
 			validStages.add(buffer.readUtf());
-		
+
 		int outOfReachStageCount = buffer.readInt();
 		ArrayList<String> outOfReachStages = new ArrayList<>();
 		for (int i = 0; i < outOfReachStageCount; i++)
 			outOfReachStages.add(buffer.readUtf());
-		
+
 		int needsUpdateCount = buffer.readInt();
 		ArrayList<String> needsUpdateStages = new ArrayList<>();
 		for (int i = 0; i < needsUpdateCount; i++)
 			needsUpdateStages.add(buffer.readUtf());
-		
+
 		return new SendStageWarpDataToPadPacket(validStages, outOfReachStages, needsUpdateStages);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

@@ -2,10 +2,12 @@ package net.splatcraft.items.weapons.subs;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.Position;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.dispenser.BlockSource;
 import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -31,24 +33,42 @@ import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extends WeaponBaseItem<SubWeaponSettings<Data>>
 {
-	public static final ArrayList<SubWeaponItem<?>> subs = new ArrayList<>();
-	public final RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity<Data>>> entityType;
-	public SubWeaponItem(RegistrySupplier<? extends EntityType<? extends AbstractSubWeaponEntity<Data>>> entityType, String settings)
+	private static final ResourceKey<EntityType<?>> defaultSubEntityTypeId = ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.tryBuild("splatcraft", "splat_bomb"));
+	public SubWeaponItem(RegistrySupplier<? extends EntityType<?>> entityType, String settings)
 	{
-		super(settings);
-		this.entityType = entityType;
+		super(settings, v ->
+			v.component(SplatcraftComponents.SUB_WEAPON_ENTITY_ID, (ResourceKey<EntityType<?>>) entityType.unwrapKey().get()), false);
 
-		subs.add(this);
-		DispenserBlock.registerBehavior(this, new SubWeaponItem.DispenseBehavior());
+		DispenserBlock.registerBehavior(this, new DispenseBehavior());
 	}
 	public static boolean singleUse(ItemStack stack)
 	{
-		return Boolean.TRUE.equals(stack.get(SplatcraftComponents.SINGLE_USE));
+		return stack.getOrDefault(SplatcraftComponents.SINGLE_USE, false);
+	}
+	public static EntityType<?> getSubEntityTypeUnrestricted(ItemStack stack)
+	{
+		return BuiltInRegistries.ENTITY_TYPE.get(stack.getOrDefault(SplatcraftComponents.SUB_WEAPON_ENTITY_ID, defaultSubEntityTypeId));
+	}
+	public static <Data extends DynamicDataRecord<Data>> EntityType<AbstractSubWeaponEntity<Data>> getSubEntityTypeStatic(ItemStack stack)
+	{
+		EntityType<?> type = getSubEntityTypeUnrestricted(stack);
+
+		try
+		{
+			return (EntityType<AbstractSubWeaponEntity<Data>>) type;
+		}
+		catch (Exception ignored)
+		{
+			return null;
+		}
+	}
+	public <Entity extends AbstractSubWeaponEntity<Data>> EntityType<Entity> getEntityType(ItemStack stack)
+	{
+		return (EntityType<Entity>) SubWeaponItem.<Data>getSubEntityTypeStatic(stack);
 	}
 	@Override
 	public Class<SubWeaponSettings<Data>> getSettingsClass()
@@ -66,6 +86,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level world, Player player, @NotNull InteractionHand hand)
 	{
 		// this !(bool && bool) confuses me
+		// nvm morgans law
 		if (!(player.isSwimming() && !player.isUnderWater()) && (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).dataRecord.inkUsage().consumption(), 0, true, true)))
 			player.startUsingItem(hand);
 		return useSuper(world, player, hand);
@@ -82,18 +103,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	}
 	public abstract void useSub(@NotNull ItemStack itemStack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks);
 	@Override
-	public boolean useOnRelease(ItemStack stack)
-	{
-		return super.useOnRelease(stack);
-	}
-	@Override // onStoppedUsing doesn't get called when the timeleft is 0??? but why :(
-	public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity entity)
-	{
-		entity.releaseUsingItem();
-		return stack;
-	}
-	@Override
-	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, LivingEntity entity, int remainingUseTicks)
+	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
 		useSub(stack, world, entity, remainingUseTicks);
 		super.releaseUsing(stack, world, entity, remainingUseTicks);
@@ -104,7 +114,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 		return PlayerPosingHandler.WeaponPose.SUB_HOLD;
 	}
 	@Override
-	public int getUseDuration(@NotNull ItemStack stack, LivingEntity entity)
+	public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity)
 	{
 		SubWeaponSettings<Data> settings = getSettings(stack);
 		if (settings != null && settings.dataRecord != null)
@@ -114,14 +124,9 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	@Override
 	public SubWeaponSettings<Data> getSettings(ItemStack stack)
 	{
-		DataComponentMap components = stack.getComponents();
-		ResourceLocation id = components.has(SplatcraftComponents.WEAPON_SETTING_ID) ? components.get(SplatcraftComponents.WEAPON_SETTING_ID) : settingsId;
+		ResourceLocation id = stack.get(SplatcraftComponents.WEAPON_SETTING_ID);
 
 		if (DataHandler.WeaponStatsListener.SETTINGS.get(id) instanceof SubWeaponSettings<?> data)
-		{
-			return (SubWeaponSettings<Data>) data;
-		}
-		if (DataHandler.WeaponStatsListener.SETTINGS.get(settingsId) instanceof SubWeaponSettings<?> data)
 		{
 			return (SubWeaponSettings<Data>) data;
 		}
@@ -138,9 +143,9 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 				thrownStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
 
 				Level world = source.level();
-				Position iposition = DispenserBlock.getDispensePosition(source);
+				Position position = DispenserBlock.getDispensePosition(source);
 				Direction direction = source.state().getValue(DispenserBlock.FACING);
-				AbstractSubWeaponEntity<?> projectileentity = getProjectile(world, iposition, thrownStack);
+				AbstractSubWeaponEntity<?> projectileentity = getProjectile(world, position, thrownStack);
 				projectileentity.shoot(direction.getStepX(), direction.getStepY() + 0.1F, direction.getStepZ(), getPower(), getUncertainty());
 				world.addFreshEntity(projectileentity);
 				stack.shrink(1);
@@ -160,12 +165,12 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 		{
 			return 0.7f;
 		}
-		protected AbstractSubWeaponEntity<?> getProjectile(Level levelIn, Position position, ItemStack stackIn)
+		protected AbstractSubWeaponEntity<?> getProjectile(Level level, Position position, ItemStack stack)
 		{
-			if (!(stackIn.getItem() instanceof SubWeaponItem<?> subWeaponItem))
+			if (!(stack.getItem() instanceof SubWeaponItem<?> subWeaponItem))
 				return null;
 
-			return AbstractSubWeaponEntity.create(subWeaponItem.entityType.get(), levelIn, position.x(), position.y(), position.z(), ColorUtils.getInkColor(stackIn), InkBlockUtils.InkType.NORMAL, stackIn);
+			return AbstractSubWeaponEntity.create(subWeaponItem.getEntityType(stack), level, position.x(), position.y(), position.z(), ColorUtils.getInkColor(stack), InkBlockUtils.InkType.NORMAL, stack);
 		}
 		protected float getUncertainty()
 		{

@@ -13,6 +13,7 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UpdateStageListPacket extends PlayS2CPacket
 {
@@ -28,7 +29,7 @@ public class UpdateStageListPacket extends PlayS2CPacket
 		return new UpdateStageListPacket(STAGE_INFO_PACKET_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -42,7 +43,7 @@ public class UpdateStageListPacket extends PlayS2CPacket
 	public void execute()
 	{
 		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.playSessions(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(stages), SaveInfoCapability.clientSaveInfo.colorScores());
-		
+
 		if (Minecraft.getInstance().screen instanceof AbstractStagePadScreen stagePadScreen)
 			stagePadScreen.onStagesUpdate();
 	}

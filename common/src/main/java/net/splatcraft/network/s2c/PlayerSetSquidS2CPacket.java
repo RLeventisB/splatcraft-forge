@@ -7,6 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -25,7 +26,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 		return new PlayerSetSquidS2CPacket(buffer.readUUID(), buffer.readBoolean());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

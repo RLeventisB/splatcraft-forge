@@ -1,6 +1,7 @@
 package net.splatcraft.items.weapons;
 
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.JavaOps;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.cauldron.CauldronInteraction;
@@ -25,7 +26,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
-import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
@@ -33,7 +33,6 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
-import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.IColoredItem;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.*;
@@ -44,16 +43,14 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.ClientUtils;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem, ISplatcraftForgeItemDummy
 {
@@ -68,18 +65,38 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		put(DualieWeaponSettings.class, DualieWeaponSettings.DEFAULT);
 		put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
 	}};
-	public ResourceLocation settingsId;
 	public boolean isSecret;
 	public WeaponBaseItem(String settingsId)
 	{
-		this(settingsId, new Item.Properties().stacksTo(1).component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT));
+		this(settingsId, true);
+	}
+	public WeaponBaseItem(String settingsId, boolean withPrecisionComponent)
+	{
+		this(settingsId, v -> v, withPrecisionComponent);
+	}
+	public WeaponBaseItem(String settingsId, UnaryOperator<Properties> propertiesMutator)
+	{
+		this(settingsId, propertiesMutator, true);
+	}
+	public WeaponBaseItem(String settingsId, UnaryOperator<Properties> propertiesMutator, boolean withPrecisionComponent)
+	{
+		this(settingsId,
+			propertiesMutator.apply(withPrecisionComponent ?
+				new Properties().stacksTo(1).component(SplatcraftComponents.WEAPON_PRECISION_DATA, SplatcraftComponents.WeaponPrecisionData.DEFAULT) :
+				new Properties().stacksTo(1)
+			)
+		);
 	}
 	public WeaponBaseItem(String settingsId, Properties settings)
 	{
-		super(settings);
+		super(settings.
+			component(
+				SplatcraftComponents.WEAPON_SETTING_ID,
+				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.parse(JavaOps.INSTANCE, settingsId).getOrThrow()
+			)
+		);
 		SplatcraftItems.inkColoredItems.add(this);
 		SplatcraftItems.weapons.add(this);
-		this.settingsId = settingsId.contains(":") ? ResourceLocation.parse(settingsId) : Splatcraft.identifierOf(settingsId);
 
 		CauldronInteraction.WATER.map().put(this, (state, level, pos, player, hand, stack) ->
 		{
@@ -186,12 +203,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 				return Pair.of(id, getSettingsClass().cast(settings));
 			}
 		}
-		id = settingsId;
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(id);
-		if (settings != null && getSettingsClass().isInstance(settings))
-		{
-			return Pair.of(id, getSettingsClass().cast(settings));
-		}
 		return Pair.of(null, (S) DEFAULTS.get(getSettingsClass()));
 	}
 	public <T extends WeaponBaseItem<?>> T setSecret(boolean secret)
@@ -254,10 +265,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			}
 		}
 	}
-	public ShootingHandler.FiringStatData getWeaponFireData(ItemStack itemStack, LivingEntity entity)
-	{
-		return ShootingHandler.FiringStatData.DEFAULT;
-	}
 	@Override
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
@@ -310,7 +317,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		}
 	}
 	@Override
-	public int getUseDuration(@NotNull ItemStack stack, LivingEntity entity)
+	public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity)
 	{
 		return USE_DURATION;
 	}
@@ -326,7 +333,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		return useSuper(world, player, hand);
 	}
 	@Override
-	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks)
+	public void onUseTick(@NotNull Level world, @NotNull LivingEntity user, ItemStack stack, int remainingUseTicks)
 	{
 		if (remainingUseTicks == stack.getUseDuration(user))
 		{
@@ -342,7 +349,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		}
 	}
 	@Override
-	public void releaseUsing(ItemStack stack, Level world, LivingEntity user, int remainingUseTicks)
+	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity user, int remainingUseTicks)
 	{
 		super.releaseUsing(stack, world, user, remainingUseTicks);
 	}
@@ -378,5 +385,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public boolean phShouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
 	{
 		return !ItemStack.isSameItem(oldStack, newStack);
+	}
+	public boolean preventsChanging(ItemStack stack)
+	{
+		return false;
 	}
 }

@@ -17,6 +17,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +38,7 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 		return new SendPlaySessionEndPacket(ByteBufCodecs.STRING_UTF8.decode(buffer), PLAYERS_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -54,17 +55,17 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 		Object2ObjectOpenHashMap<String, PlaySession> map = new Object2ObjectOpenHashMap<>(SaveInfoCapability.clientSaveInfo.playSessions());
 		map.remove(stageId);
 		SaveInfoCapability.clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.stages(), SaveInfoCapability.clientSaveInfo.colorScores());
-		
+
 		playerUuids.forEach(uuid ->
 		{
 			Level world = ClientUtils.getClient().level;
 			if (world == null)
 				return;
-			
+
 			Player plr = world.getPlayerByUUID(uuid);
 			if (plr == null)
 				return;
-			
+
 			EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
 		});
 	}

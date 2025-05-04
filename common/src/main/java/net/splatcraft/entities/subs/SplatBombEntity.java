@@ -20,6 +20,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkExplosion;
+import org.jetbrains.annotations.NotNull;
 
 public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity
 {
@@ -40,21 +41,21 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	public void tick()
 	{
 		super.tick();
-		
+
 		prevFuseTime = fuseTime;
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
-		
+
 		if (!onGround() || distanceToSqr(getDeltaMovement()) > (double) 1.0E-5F)
 		{
 			float f1 = 0.98F;
 			if (onGround())
 				f1 = level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getFriction();
-			
+
 			f1 = (float) Math.min(0.98, f1 * 1.5f);
-			
+
 			setDeltaMovement(getDeltaMovement().multiply(f1, 0.98D, f1));
 		}
-		
+
 		if (onGround())
 		{
 			fuseTime++;
@@ -69,7 +70,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
-		
+
 		move(MoverType.SELF, getDeltaMovement());
 	}
 	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings, Vec3 impactPos)
@@ -97,17 +98,17 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
 	@Override
-	protected void onHitEntity(EntityHitResult result)
+	protected void onHitEntity(@NotNull EntityHitResult result)
 	{
 		super.onHitEntity(result);
-		
+
 		double velocityX = getDeltaMovement().x * 0.3;
 		double velocityY = getDeltaMovement().y;
 		double velocityZ = getDeltaMovement().z * 0.3;
 		double absVelocityX = Math.abs(velocityX);
 		double absVelocityY = Math.abs(velocityY);
 		double absVelocityZ = Math.abs(velocityZ);
-		
+
 		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
 			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (absVelocityY >= .02 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
@@ -120,13 +121,13 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	{
 		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (getBlockY() - getBlockY()) <= 0)
 			return;
-		
+
 		double velocityX = getDeltaMovement().x;
 		double velocityY = getDeltaMovement().y;
 		double velocityZ = getDeltaMovement().z;
-		
+
 		Direction blockFace = result.getDirection();
-		
+
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
 			setDeltaMovement(-velocityX, velocityY, velocityZ);
 		if (blockFace == Direction.DOWN)

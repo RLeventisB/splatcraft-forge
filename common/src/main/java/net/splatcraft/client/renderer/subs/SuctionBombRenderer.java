@@ -32,7 +32,7 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 			matrixStack.mulPose(Axis.YP.rotationDegrees(suctionBomb.getViewYRot(partialTicks) - 180.0F));
 			matrixStack.mulPose(Axis.XP.rotationDegrees(suctionBomb.getViewXRot(partialTicks) + 90));
 			matrixStack.scale(1, -1, 1);
-			
+
 			float f = suctionBomb.getFlashIntensity(partialTicks);
 			float f1 = 1.0F + Mth.sin(f * 100.0F) * f * 0.01F;
 			f = Mth.clamp(f, 0.0F, 1.0F);
@@ -42,12 +42,12 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 			float f3 = (1.0F + f * 0.1F) / f1;
 			matrixStack.scale(f2, f3, f2);
 		}
-		
+
 		super.render(suctionBomb, entityYaw, partialTicks, matrixStack, bufferIn, packedLightIn);
 		matrixStack.popPose();
 	}
 	@Override
-	protected int getBlockLightLevel(SuctionBombEntity entity, BlockPos pos)
+	protected int getBlockLightLevel(@NotNull SuctionBombEntity entity, @NotNull BlockPos pos)
 	{
 		return super.getBlockLightLevel(entity, pos);
 	}

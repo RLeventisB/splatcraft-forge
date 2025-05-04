@@ -29,7 +29,7 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 		return processQuads(quads, face);
 	}
 	@Override
-	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random)
+	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, @NotNull RandomSource random)
 	{
 		List<BakedQuad> quads = original.getQuads(state, face, random);
 		return processQuads(quads, face);
@@ -48,7 +48,7 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 					{
 						if (quad.getDirection() == null)
 							continue;
-						
+
 						ChunkInk.InkEntry entry = ink.get(quad.getDirection().get3DDataValue());
 						if (entry != null)
 						{
@@ -93,18 +93,18 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 				{
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, false));
 				}
-				
+
 				break;
-			
+
 			case GLOWING:
 				for (BakedQuad quad : quads)
 				{
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, false));
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, true));
 				}
-				
+
 				break;
-			
+
 			case CLEAR:
 				for (BakedQuad quad : quads)
 				{
@@ -118,7 +118,7 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 	{
 		if (world == null || blockPos == null || face == null)
 			return null;
-		
+
 		ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(world, blockPos);
 		if (ink != null)
 		{
@@ -147,22 +147,22 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 		return true;
 	}
 	@Override
-	public TextureAtlasSprite getParticleIcon()
+	public @NotNull TextureAtlasSprite getParticleIcon()
 	{
 		return original.getParticleIcon();
 	}
 	@Override
-	public ItemTransforms getTransforms()
+	public @NotNull ItemTransforms getTransforms()
 	{
 		return original.getTransforms();
 	}
 	@Override
-	public ItemOverrides getOverrides()
+	public @NotNull ItemOverrides getOverrides()
 	{
 		return original.getOverrides();
 	}
 	@Override
-	public String toString()
+	public @NotNull String toString()
 	{
 		return "InkedBakedModel[" +
 			"original=" + original + ", " +

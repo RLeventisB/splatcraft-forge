@@ -22,7 +22,7 @@ public class InkedCarpetBlock extends InkStainedBlock
 		super(BlockBehaviour.Properties.of().isRedstoneConductor((state, getter, pos) -> false).mapColor(MapColor.WOOL).ignitedByLava().strength(0.1F).sound(SoundType.WOOL));
 	}
 	@Override
-	public VoxelShape getShape(@NotNull BlockState st, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState st, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		return SHAPE;
 	}

@@ -1,7 +1,5 @@
 package net.splatcraft.platform;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -21,10 +19,17 @@ public class EventHelper
 	private static final Map<EventRecord<?, ?>, List<?>> EVENT_CONSUMERS = new Object2ObjectOpenHashMap<>();
 	public static <T extends Event> void registerEvent(Class<T> clazz, Consumer<T> action)
 	{
-		if(IModBusEvent.class.isAssignableFrom(clazz))
-		SplatcraftNeoForge.modBus.addListener(clazz, action);
+		if (IModBusEvent.class.isAssignableFrom(clazz))
+			SplatcraftNeoForge.modBus.addListener(clazz, action);
 		else
 			NeoForge.EVENT_BUS.addListener(clazz, action);
+	}
+	public static <T extends Event> T postEvent(T event)
+	{
+		if (event instanceof IModBusEvent)
+			return SplatcraftNeoForge.modBus.post(event);
+		else
+			return NeoForge.EVENT_BUS.post(event);
 	}
 	// todo: maybe finish this code that simplifies NeoForgePlatformHelper.serverDataPacks, or creativeTabAppends, into a single method that
 	// tracks these entries to add them to a bi consumer or something so it isnt necessary to do a list for every forge event that is
@@ -35,7 +40,7 @@ public class EventHelper
 		boolean first = !EVENT_CONSUMERS.containsKey(record);
 		List<V> list = (List<V>) EVENT_CONSUMERS.computeIfAbsent(record, v -> new ObjectArrayList<>());
 		list.add(value);
-		
+
 		if (first)
 			registerEvent(eventClass, v -> record.process(v, list));
 	}

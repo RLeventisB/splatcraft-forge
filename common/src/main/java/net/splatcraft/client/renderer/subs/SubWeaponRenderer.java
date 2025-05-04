@@ -29,20 +29,20 @@ public abstract class SubWeaponRenderer<E extends AbstractSubWeaponEntity, M ext
 	public void render(E entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
 		InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
-		
+
 		int rgba = color.getColor();
-		
+
 		M model = getModel();
 		ResourceLocation texture = getTextureLocation(entityIn);
 		ResourceLocation inkTexture = getInkTextureLocation(entityIn);
 		ResourceLocation overlay = getOverlayTexture(entityIn);
-		
+
 		ItemStack stack = entityIn.getItem();
-		if (stack.getItem() instanceof SubWeaponItem sub && entityIn.getType().equals(sub.entityType.get()))
+		if (stack.getItem() instanceof SubWeaponItem sub && entityIn.getType().equals(sub.getEntityType(stack)))
 		{
 			ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(sub);
 			String customModelData = "";
-			
+
 			if (stack.has(DataComponents.CUSTOM_MODEL_DATA))
 			{
 				CustomModelData modelData = stack.get(DataComponents.CUSTOM_MODEL_DATA);
@@ -52,26 +52,26 @@ public abstract class SubWeaponRenderer<E extends AbstractSubWeaponEntity, M ext
 					customModelData = "_" + modelData.value();
 				}
 			}
-			
+
 			texture = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + ".png");
 			inkTexture = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_ink.png");
-			
+
 			if (overlay != null)
 				overlay = ResourceLocation.fromNamespaceAndPath(registryName.getNamespace(), "textures/item/weapons/sub/" + registryName.getPath() + customModelData + "_overlay.png");
 		}
-		
+
 		model.setupAnim(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getXRot());
 		model.prepareMobModel(entityIn, 0, 0, partialTicks);
 		int i = OverlayTexture.pack(OverlayTexture.u(getOverlayProgress(entityIn, partialTicks)), OverlayTexture.v(false));
 		model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(inkTexture)), packedLightIn, i, rgba);
 		model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(texture)), packedLightIn, i, 0xFFFFFF);
-		
+
 		if (overlay != null)
 		{
 			int overlayRgb = getOverlayColor(entityIn, partialTicks);
 			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(overlay)), packedLightIn, i, overlayRgb);
 		}
-		
+
 		super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
 	}
 	protected float getOverlayProgress(E entity, float partialTicks)

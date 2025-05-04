@@ -43,12 +43,12 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		{
 			activeTime--;
 		}
-		
+
 		for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
 		{
 			onEntityCollide(entity);
 		}
-		
+
 		if (level.isClientSide)
 			tickClient();
 	}
@@ -69,7 +69,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			boolean canRender = true;
 			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
-			
+
 			if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
 			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
@@ -90,23 +90,23 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		activeTime = Math.min(maxActiveTime, activeTime + 3);
 	}
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider wrapperLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		super.loadAdditional(nbt, wrapperLookup);
-		
+
 		if (nbt.contains("ActiveTime"))
 		{
 			activeTime = nbt.getInt("ActiveTime");
 		}
 	}
 	@Override
-	public void saveAdditional(CompoundTag compound, HolderLookup.Provider wrapperLookup)
+	public void saveAdditional(CompoundTag compound, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		compound.putInt("ActiveTime", activeTime);
 		super.saveAdditional(compound, wrapperLookup);
 	}
 	@Override
-	public @NotNull CompoundTag getUpdateTag(HolderLookup.Provider wrapperLookup)
+	public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		return new CompoundTag()
 		{{

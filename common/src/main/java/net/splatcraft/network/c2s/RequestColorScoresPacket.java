@@ -8,6 +8,7 @@ import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateColorScoresPacket;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -16,14 +17,14 @@ public class RequestColorScoresPacket extends PlayC2SPacket
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(RequestColorScoresPacket.class);
 	public RequestColorScoresPacket()
 	{
-	
+
 	}
 	public static RequestColorScoresPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return new RequestColorScoresPacket();
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -35,6 +36,6 @@ public class RequestColorScoresPacket extends PlayC2SPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-	
+
 	}
 }

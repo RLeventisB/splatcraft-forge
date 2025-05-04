@@ -54,13 +54,13 @@ public class StageBarrierBlock extends Block implements EntityBlock, ISplatcraft
 		return true;
 	}
 	@Override
-	public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
+	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter levelIn, @NotNull BlockPos pos, @NotNull CollisionContext context)
 	{
 		if (ClientUtils.getClientPlayer().isCreative() || !(levelIn.getBlockEntity(pos) instanceof StageBarrierTileEntity te))
 		{
 			return Shapes.block();
 		}
-		
+
 		return te.getActiveTime() > 5 ? super.getShape(state, levelIn, pos, context) : Shapes.empty();
 	}
 	@Override

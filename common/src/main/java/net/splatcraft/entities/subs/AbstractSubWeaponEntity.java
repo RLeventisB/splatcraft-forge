@@ -54,7 +54,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		A result = create(type, world, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
 		result.setOwner(thrower);
-		
+
 		return result;
 	}
 	public static <Data extends DynamicDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, Level world, double x, double y, double z, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
@@ -65,30 +65,30 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		result.inkType = inkType;
 		result.sourceWeapon = sourceWeapon;
 		result.setItem(sourceWeapon);
-		
+
 		return result;
 	}
 	@Override
 	public void tick()
 	{
 		super.tick();
-		
+
 		if (isUnderWater())
 		{
 			level().broadcastEntityEvent(this, (byte) -1);
 			discard();
 		}
-		
+
 		HitResult hitResult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
 		if (hitResult.getType() != HitResult.Type.MISS)
 		{
 			hitTargetOrDeflectSelf(hitResult);
 		}
-		
+
 		checkInsideBlocks();
-		
+
 		handleMovement();
-		
+
 		updateRotation();
 		float f = getFriction();
 		if (f != -1)
@@ -107,14 +107,14 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	public void handleEntityEvent(byte id)
 	{
 		super.handleEntityEvent(id);
-		
+
 		if (id == -1)
 		{
 			level().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override
-	public void shootFromRotation(Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
+	public void shootFromRotation(@NotNull Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
 	{
 		ISetVelocityExtension.super.setDeltaMovement(shooter, pitch, yaw, roll, speed, divergence);
 	}
@@ -136,7 +136,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		if (getItem().getItem() instanceof SubWeaponItem<?> sub)
 		{
-			return (SubWeaponSettings<Data>) sub.getSettings(getItemRaw());
+			return (SubWeaponSettings<Data>) sub.getSettings(getItem());
 		}
 		return (SubWeaponSettings<Data>) SubWeaponSettings.DEFAULT;
 	}
@@ -147,7 +147,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
 		nbt.putString("InkType", inkType.getIdString());
 		nbt.put("SourceWeapon", sourceWeapon.save(registryAccess()));
-		
+
 		ItemStack itemstack = getItemRaw();
 		if (!itemstack.isEmpty())
 			nbt.put("Item", itemstack.save(level().registryAccess()));
@@ -161,7 +161,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		bypassMobDamageMultiplier = nbt.getBoolean("DypassMobDamageMultiplier");
 		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 		sourceWeapon = ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("SourceWeapon")).getOrThrow().getFirst();
-		
+
 		ItemStack itemstack = ItemStack.parseOptional(registryAccess(), nbt.getCompound("Item"));
 		setItem(itemstack);
 		super.readAdditionalSaveData(nbt);
@@ -169,7 +169,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
-		builder.define(DATA_ITEM_STACK, ItemStack.EMPTY);
+		builder.define(DATA_ITEM_STACK, new ItemStack(getDefaultItem()));
 		builder.define(COLOR, ColorUtils.getDefaultColor());
 	}
 	@Override

@@ -10,6 +10,7 @@ import net.splatcraft.data.EntitySlot;
 import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 		return new SendSpecialUsageDataPacket(ResourceLocation.STREAM_CODEC.decode(buffer), buffer.readUUID(), EntitySlot.SERIALIZER_PACKET_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

@@ -5,6 +5,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.PlayerCharge;
+import org.jetbrains.annotations.NotNull;
 
 public class UpdateChargeStatePacket extends PlayC2SPacket
 {
@@ -19,7 +20,7 @@ public class UpdateChargeStatePacket extends PlayC2SPacket
 		return new UpdateChargeStatePacket(buffer.readBoolean());
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

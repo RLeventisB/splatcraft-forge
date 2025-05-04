@@ -36,7 +36,7 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 		this.color = color;
 	}
 	@Override
-	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.Provider wrapperLookup)
+	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		super.loadAdditional(nbt, wrapperLookup);
 		setColor(InkColor.getFromNbt(nbt.get("Color")));
@@ -44,7 +44,7 @@ public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements 
 		setInverted(nbt.getBoolean("Inverted"));
 	}
 	@Override
-	public void saveAdditional(CompoundTag compound, HolderLookup.Provider wrapperLookup)
+	public void saveAdditional(CompoundTag compound, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		compound.put("Color", getColor().getNbt());
 		compound.putString("Team", getTeam());

@@ -15,6 +15,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
@@ -58,29 +59,29 @@ public class PlayerMovementHandler
 		EntityInfo playerInfo = EntityInfoCapability.get(player);
 		if (playerInfo == null)
 			playerInfo = new EntityInfo();
-		
+
 		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
-		
+
 		AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
 //            EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
-		
+
 		if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 			speedAttribute.removeModifier(INK_SWIM_SPEED);
 		if (speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
 			speedAttribute.removeModifier(ENEMY_INK_SPEED);
 //            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
 //                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
-		
+
 		if (speedAttribute.getModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER) != null)
 			speedAttribute.removeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER);
-		
+
 		if (InkBlockUtils.onEnemyInk(player))
 		{
 			//player.setVelocity(player.getVelocity().x, Math.min(player.getVelocity().y, 0.05f), player.getVelocity().z);
 			if (!speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
 				speedAttribute.addTransientModifier(ENEMY_INK_SPEED);
 		}
-		
+
 		if (playerInfo.isSquid())
 		{
 			if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.onGround())
@@ -88,15 +89,15 @@ public class PlayerMovementHandler
 //                if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
 //                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
 		}
-		
+
 		action.ifPresent(v ->
 		{
-			if (v.getSlotIndex() >= 0)
-				player.getInventory().selected = v.getSlotIndex();
+			if (v.getItemSlot() instanceof EntitySlot.PlayerInventorySlot playerSlot)
+				player.getInventory().selected = playerSlot.getSlotIndex();
 		});
-		
+
 		tickWeaponMobilityAttribute(player, speedAttribute);
-		
+
 		if (!player.getAbilities().flying)
 			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 				player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
@@ -106,7 +107,7 @@ public class PlayerMovementHandler
 		ItemStack useStack = entity.getUseItem();
 		if (speedAttribute.hasModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID))
 			speedAttribute.removeModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID);
-		
+
 		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(entity, useStack))
 		{
 			var mod = weapon.getSpeedModifier(entity, useStack);
@@ -121,7 +122,7 @@ public class PlayerMovementHandler
 		{
 			Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
 			copyTo(input, clonedInput);
-			
+
 			if (CommonUtils.isEntityMatchImmobile(player, info))
 			{
 				input.leftImpulse = 0;
@@ -130,17 +131,17 @@ public class PlayerMovementHandler
 				input.shiftKeyDown = false;
 				return;
 			}
-			
+
 			float speedMod = !input.shiftKeyDown ? info.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
-			
+
 			input.forwardImpulse *= speedMod;
 			input.leftImpulse *= speedMod;
-			
+
 			if (info.isSquid())
 			{
 				handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, input.jumping, input.shiftKeyDown, input);
 			}
-			
+
 			if (player.isUsingItem())
 			{
 				ItemStack stack = player.getUseItem();
@@ -153,7 +154,7 @@ public class PlayerMovementHandler
 					}
 				}
 			}
-			
+
 			EntityAction.getEntityActionOptional(player).ifPresent(action ->
 			{
 				if (!action.canMove())
@@ -194,7 +195,7 @@ public class PlayerMovementHandler
 		{
 			Direction oldClimbedDirection = playerInfo.getClimbedDirection().get();
 			Direction climbedDirection = InkBlockUtils.getSquidClimbingDirection(player, movementSideways, movementForward, oldClimbedDirection);
-			
+
 			if (climbedDirection != null && !player.onGround()) // if player is still swimming on a wall
 			{
 				playerInfo.setClimbedDirection(climbedDirection);
@@ -206,17 +207,17 @@ public class PlayerMovementHandler
 						EntityAccessor.invokeGetInputVector(new Vec3(0f, movementForward, 0f), 0.12f, yaw).add(
 							EntityAccessor.invokeGetInputVector(new Vec3(movementSideways, 0f, 0f), 0.02f, yaw)
 						);
-					
+
 					deltaMovement = deltaMovement.add(vec3);
 				}
 				if (sneaking) // set minimum y velocity to 0 if shifting
 					deltaMovement = new Vec3(deltaMovement.x, Math.max(0, deltaMovement.y), deltaMovement.z);
-				
+
 				if (climbedDirection.getAxis() != oldClimbedDirection.getAxis()) // if player swam to another wall, rotate velocity
 				{
 					deltaMovement = deltaMovement.yRot(Mth.DEG_TO_RAD * (climbedDirection.toYRot() - oldClimbedDirection.toYRot()));
 				}
-				
+
 				if (climbedDirection.getAxis() == Direction.Axis.X) // set velocity perpendicular to the wall to 0 because YOU CANNOT ESCAPE THE WALL (unless you press back).
 				{
 					double parallelMovement = deltaMovement.x;
@@ -229,16 +230,16 @@ public class PlayerMovementHandler
 					if (Math.abs(parallelMovement) < 0.6)
 						deltaMovement = new Vec3(deltaMovement.x, deltaMovement.y, 0);
 				}
-				
+
 				if (deltaMovement.y <= -0.3D) // limit gravity
 				{
 					deltaMovement = new Vec3(deltaMovement.x, -0.3D, deltaMovement.z);
 				}
-				
+
 				if (jumping) // squid surge
 				{
 					deltaMovement = deltaMovement.scale(1f / (1f + playerInfo.getSquidSurgeCharge() / 2f));
-					
+
 					if (playerInfo.getSquidSurgeCharge() < 30)
 						playerInfo.setSquidSurgeCharge(playerInfo.getSquidSurgeCharge() + 1);
 				}
@@ -250,13 +251,13 @@ public class PlayerMovementHandler
 					}
 					playerInfo.setSquidSurgeCharge(0f);
 				}
-				
+
 				if (input != null) // set input as 0 because movement was handled!! i think i should've used the event thingy though
 				{
 					input.forwardImpulse = 0;
 					input.leftImpulse = 0;
 				}
-				
+
 				player.fallDistance = 0.0F;
 				player.setDeltaMovement(deltaMovement);
 			}
@@ -265,7 +266,7 @@ public class PlayerMovementHandler
 				playerInfo.setClimbedDirection(null);
 			}
 		}
-		
+
 		if (playerInfo.getClimbedDirection().isEmpty())
 		{
 			playerInfo.setSquidSurgeCharge(0f);

@@ -13,6 +13,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 		return new SendPlayerDeathMatchPacket(buffer.readInt(), UUIDUtil.STREAM_CODEC.decode(buffer), ByteBufCodecs.VECTOR3F.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}

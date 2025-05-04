@@ -10,6 +10,7 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
+import org.jetbrains.annotations.NotNull;
 
 public class ArmoredInkTankModel extends AbstractInkTankModel
 {
@@ -26,31 +27,31 @@ public class ArmoredInkTankModel extends AbstractInkTankModel
 	{
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-		
+
 		CubeDeformation deformation = new CubeDeformation(1);
 		PartDefinition body = partdefinition.addOrReplaceChild("body", CubeListBuilder.create().texOffs(16, 0).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, deformation), PartPose.offset(0.0F, 0.0F, 0.0F));
 		partdefinition.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(40, 0).addBox(-3.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), PartPose.offset(-5.0F, 2.0F, 0.0F));
 		partdefinition.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(40, 0).mirror().addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, deformation), PartPose.offset(5.0F, 2.0F, 0.0F));
-		
+
 		PartDefinition torso = body.addOrReplaceChild("torso", CubeListBuilder.create(), PartPose.offset(0.0F, -0.25F, 0.0F));
-		
+
 		PartDefinition Ink_Tank = torso.addOrReplaceChild("ink_tank", CubeListBuilder.create().texOffs(0, 19).addBox(-2.0F, 3.25F, 3.25F, 4.0F, 1.0F, 4.0F, new CubeDeformation(0.0F))
 			.texOffs(16, 19).addBox(-2.0F, 10.25F, 3.25F, 4.0F, 1.0F, 4.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 24).addBox(1.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
 			.texOffs(6, 24).addBox(1.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
 			.texOffs(10, 24).addBox(-2.0F, 4.25F, 6.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F))
 			.texOffs(14, 24).addBox(-2.0F, 4.25F, 3.25F, 1.0F, 6.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -2.25F, -1.225F));
-		
+
 		for (int i = 0; i < 6; i++)
 		{
 			Ink_Tank.addOrReplaceChild("ink_piece_" + i, CubeListBuilder.create().texOffs(116, 0)
 				.addBox(-1.5F, -13.0F, 4.5F, 3, 1, 3, new CubeDeformation(0f)), PartPose.offset(0.0F, 23.25f, -0.75F));
 		}
-		
+
 		return LayerDefinition.create(meshdefinition, 128, 128);
 	}
 	@Override
-	public void setupAnim(LivingEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch)
+	public void setupAnim(@NotNull LivingEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch)
 	{
 	}
 	@Override

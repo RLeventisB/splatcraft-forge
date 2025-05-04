@@ -12,7 +12,6 @@ import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SpecialWeaponRecords;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.registries.SplatcraftComponents;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 import org.apache.commons.lang3.function.TriConsumer;
@@ -35,7 +34,7 @@ public class SpecialHandler
 		specialExecutor.clear();
 		registerSpecialExecutor(SpecialWeaponRecords.StingRayDataRecord.ID, (entity, settings, slot) ->
 		{
-			EntityAction.setEntityAction(entity, new StingRayAction(settings, CommonUtils.getSlot(entity), slot));
+			EntityAction.setEntityAction(entity, new StingRayAction(settings, EntitySlot.createForUsed(entity), slot));
 		});
 	}
 	public static void registerSpecialExecutor(ResourceLocation specialId, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot> delegate)
@@ -49,7 +48,7 @@ public class SpecialHandler
 	public static boolean passesSpecialCost(ItemStack weaponStack, ItemStack providerStack, ResourceLocation specialId)
 	{
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-		
+
 		int specialPoints = data == null ? 0 : data.storedPoints();
 		SpecialWeaponSettings<?> settings = getSpecialSettings(specialId);
 		int requiredSpecialPoints = getRequiredSpecialPoints(weaponStack, data, settings);
@@ -107,8 +106,8 @@ public class SpecialHandler
 	{
 		if (!providerStack.isEmpty())
 			SplatcraftComponents.applyToComponentIfContains(providerStack, SplatcraftComponents.SPECIAL_PROVIDER_DATA, v -> v.withStoredPoints(0));
-		
-		EntitySlot slot = EntitySlot.createFor(entity, providerStack);
+
+		EntitySlot slot = EntitySlot.searchAndCreateWithStack(entity, providerStack);
 		startUsingSpecial(entity, specialId, slot);
 		return slot;
 	}

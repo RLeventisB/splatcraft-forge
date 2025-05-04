@@ -8,6 +8,7 @@ import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 		return new UpdateColorScoresPacket(buffer.readBoolean(), buffer.readBoolean(), COLOR_LIST_CODEC.decode(buffer));
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
@@ -41,7 +42,7 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 			ScoreboardHandler.clearColorCriteria();
 			InkVatColorRecipe.getOmniList().clear();
 		}
-		
+
 		if (add)
 		{
 			for (InkColor color : colors)

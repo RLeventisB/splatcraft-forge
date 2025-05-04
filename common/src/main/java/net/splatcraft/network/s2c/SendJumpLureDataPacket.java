@@ -8,6 +8,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -35,11 +36,11 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
 		ArrayList<UUID> uuids = new ArrayList<>();
 		for (int i = 0; i < uuidCount; i++)
 			uuids.add(buffer.readUUID());
-		
+
 		return new SendJumpLureDataPacket(color, canJump, uuids, spawnPosition);
 	}
 	@Override
-	public Type<? extends CustomPacketPayload> type()
+	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
