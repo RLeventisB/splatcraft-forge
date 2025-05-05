@@ -42,15 +42,15 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 			return;
 		}
 
-		shootCurlingBomb(stack, level, entity, remainingUseTicks, settings);
+		shootCurlingBomb(stack, level, entity, settings);
 	}
-	private void shootCurlingBomb(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity entity, int remainingUseTicks, SubWeaponSettings<CurlingBombDataRecord> settings)
+	private void shootCurlingBomb(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity entity, SubWeaponSettings<CurlingBombDataRecord> settings)
 	{
 		entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
 
 		DataRecord data = settings.dataRecord;
 		CurlingBombDataRecord curlingData = settings.subDataRecord;
-		cookProgress = 1f - (float) remainingUseTicks / stack.getItem().getUseDuration(stack, entity);
+		cookProgress = (float) entity.getTicksUsingItem() / (data.holdTime() - 1);
 		InkUsageDataRecord inkUsage = new InkUsageDataRecord(
 			Mth.lerp(cookProgress, data.inkUsage().consumption(), curlingData.maxCookInkUsage().consumption()),
 			Mth.lerp(cookProgress, data.inkUsage().recoveryCooldown(), curlingData.maxCookInkUsage().recoveryCooldown())
@@ -75,12 +75,12 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 	public void weaponUseTick(@NotNull Level level, @NotNull LivingEntity entity, @NotNull ItemStack stack, int remainingUseTicks)
 	{
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings(stack);
-		int holdTime = settings.dataRecord.holdTime();
+		int holdTime = settings.dataRecord.holdTime() - 1;
 		cookProgress = (float) (entity.getTicksUsingItem()) / holdTime;
 
-		if (entity.getTicksUsingItem() == holdTime - 1)
+		if (entity.getTicksUsingItem() == holdTime)
 		{
-			shootCurlingBomb(stack, level, entity, remainingUseTicks, settings);
+			shootCurlingBomb(stack, level, entity, settings);
 		}
 	}
 	@Override
