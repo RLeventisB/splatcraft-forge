@@ -9,7 +9,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
@@ -196,7 +199,7 @@ public class CommonUtils
 			world.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
 		}
 	}
-	public static void showBoundingBoxCorners(Level world, AABB aabb)
+	public static void showBoundingBoxCorners(Level level, AABB aabb)
 	{
 		for (int x = 0; x < 2; x++)
 		{
@@ -204,7 +207,7 @@ public class CommonUtils
 			{
 				for (int z = 0; z < 2; z++)
 				{
-					spawnTestParticle(world,
+					spawnTestParticle(level,
 						ParticleTypes.BUBBLE, new Vec3(
 							x == 0 ? aabb.min(Direction.Axis.X) : aabb.max(Direction.Axis.X),
 							y == 0 ? aabb.min(Direction.Axis.Y) : aabb.max(Direction.Axis.Y),
@@ -221,34 +224,22 @@ public class CommonUtils
 	{
 		return min + (max - min) * random.nextDouble();
 	}
-	public static Vec3i round(Vec3 vec3)
+	public static void blockDrop(Level level, BlockPos pos, ItemStack stack)
 	{
-		return new Vec3i((int) Math.floor(vec3.x), (int) Math.floor(vec3.y), (int) Math.floor(vec3.z));
+		if (level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) /*&& !world.captureBlockSnapshots*/)
+			spawnItem(level, pos, stack);
 	}
-	public static BlockPos createBlockPos(double x, double y, double z)
+	public static void spawnItem(Level level, BlockPos pos, ItemStack stack)
 	{
-		return new BlockPos((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-	}
-	public static BlockPos createBlockPos(Vec3 vec3)
-	{
-		return new BlockPos(round(vec3));
-	}
-	public static void blockDrop(Level world, BlockPos pos, ItemStack stack)
-	{
-		if (world.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) /*&& !world.captureBlockSnapshots*/)
-			spawnItem(world, pos, stack);
-	}
-	public static void spawnItem(Level world, BlockPos pos, ItemStack stack)
-	{
-		if (!world.isClientSide() && !stack.isEmpty())
-		{
-			double d0 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
-			double d1 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
-			double d2 = (double) (world.random.nextFloat() * 0.5F) + 0.25D;
-			ItemEntity itementity = new ItemEntity(world, (double) pos.getX() + d0, (double) pos.getY() + d1, (double) pos.getZ() + d2, stack);
-			itementity.setDefaultPickUpDelay();
-			world.addFreshEntity(itementity);
-		}
+		if (level.isClientSide() || stack.isEmpty())
+			return;
+
+		double d0 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
+		double d1 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
+		double d2 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
+		ItemEntity itementity = new ItemEntity(level, (double) pos.getX() + d0, (double) pos.getY() + d1, (double) pos.getZ() + d2, stack);
+		itementity.setDefaultPickUpDelay();
+		level.addFreshEntity(itementity);
 	}
 	public static ItemStack getItemInInventory(Player entity, Predicate<ItemStack> predicate)
 	{

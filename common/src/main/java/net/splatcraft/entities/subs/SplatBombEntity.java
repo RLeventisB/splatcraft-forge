@@ -1,5 +1,6 @@
 package net.splatcraft.entities.subs;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -49,7 +50,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		{
 			float f1 = 0.98F;
 			if (onGround())
-				f1 = level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getFriction();
+				f1 = level().getBlockState(BlockPos.containing(getX(), getY() - 1.0D, getZ())).getBlock().getFriction();
 
 			f1 = (float) Math.min(0.98, f1 * 1.5f);
 

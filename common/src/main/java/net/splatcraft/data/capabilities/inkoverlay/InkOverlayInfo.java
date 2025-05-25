@@ -12,28 +12,28 @@ public class InkOverlayInfo
 		InkColor.HEX_CODEC.fieldOf("color").forGetter(InkOverlayInfo::getColor),
 		Codec.FLOAT.fieldOf("amount").forGetter(InkOverlayInfo::getAmount),
 		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayInfo::isInkproof),
-		Codec.DOUBLE.fieldOf("squid_rot").forGetter(InkOverlayInfo::getSquidRot),
-		Codec.DOUBLE.fieldOf("squid_rot_0").forGetter(InkOverlayInfo::getSquidRotO)
+		Codec.FLOAT.fieldOf("squid_pitch").forGetter(InkOverlayInfo::getSquidPitch),
+		Codec.FLOAT.fieldOf("squid_pitch_0").forGetter(InkOverlayInfo::getPreviousSquidPitch)
 	).apply(inst, InkOverlayInfo::new));
 	private InkColor color = ColorUtils.getDefaultColor();
 	private float amount = 0;
 	private boolean inkproof = false;
-	private double squidRot;
-	private double squidRotO;
+	private float squidPitch;
+	private float squidPitchO;
 	public InkOverlayInfo()
 	{
 	}
 	public InkOverlayInfo(InkColor color,
 	                      float amount,
 	                      boolean inkproof,
-	                      double squidRot,
-	                      double squidRotO)
+	                      float squidRot,
+	                      float squidRotO)
 	{
 		this.color = color;
 		this.amount = amount;
 		this.inkproof = inkproof;
-		this.squidRot = squidRot;
-		this.squidRotO = squidRotO;
+		this.squidPitch = squidRot;
+		this.squidPitchO = squidRotO;
 	}
 	public InkColor getColor()
 	{
@@ -55,25 +55,25 @@ public class InkOverlayInfo
 	{
 		setAmount(amount + v);
 	}
-	public double getSquidRot()
+	public float getSquidPitch()
 	{
-		return squidRot;
+		return squidPitch;
 	}
-	public void setSquidRot(double v)
+	public void setSquidPitch(float v)
 	{
-		squidRotO = squidRot;
-		squidRot = v;
+		squidPitchO = squidPitch;
+		squidPitch = v;
 	}
-	public double getSquidRotO()
+	public float getPreviousSquidPitch()
 	{
-		return squidRotO;
+		return squidPitchO;
 	}
 	public CompoundTag writeNBT(CompoundTag nbt)
 	{
 		nbt.put("Color", getColor().getNbt());
 		nbt.putFloat("Amount", getAmount());
 		nbt.putBoolean("Inkproof", isInkproof());
-		
+
 		return nbt;
 	}
 	public void readNBT(CompoundTag nbt)

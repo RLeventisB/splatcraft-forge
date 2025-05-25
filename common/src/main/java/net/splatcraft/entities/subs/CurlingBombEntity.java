@@ -89,7 +89,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		}
 		float horizontalFriction = 1f;
 		if (onGround())
-			horizontalFriction = level().getBlockState(CommonUtils.createBlockPos(getX(), getY() - 1.0D, getZ())).getBlock().getFriction() / 0.6f;
+			horizontalFriction = level().getBlockState(BlockPos.containing(getX(), getY() - 1.0D, getZ())).getBlock().getFriction() / 0.6f;
 		if (slowingDown)
 		{
 			horizontalFriction *= 0.8f;
@@ -142,7 +142,8 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 				double sideZ = normalized.x;
 				for (int i = 0; i <= 2; i++)
 				{
-					BlockPos side = CommonUtils.createBlockPos(Math.floor(getX() + sideX * j), getBlockY() - i, Math.floor(getZ() + sideZ * j));
+					double y = getBlockY() - i;
+					BlockPos side = BlockPos.containing(Math.floor(getX() + sideX * j), y, Math.floor(getZ() + sideZ * j));
 					if (InkBlockUtils.canInkFromFace(level(), side, Direction.UP))
 					{
 						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), level(), side, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());

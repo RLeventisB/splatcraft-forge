@@ -16,7 +16,6 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.CreateOrEditStagePacket;
-import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,11 +60,11 @@ public class StageCreationScreen extends AbstractStagePadScreen
 					}
 				}
 			}
-			
+
 			Minecraft.getInstance().setScreen(new StageCreationScreen(stack.getHoverName(), parent));
 			setCorner1 = null;
 		}));
-		
+
 		addButton(new MenuButton(51, 107, 50, 12, goToScreen(() -> parent),
 			MenuButton.NO_TOOLTIP, drawText(Component.translatable("gui.stage_pad.button.cancel"), true), MenuButton.ButtonColor.RED));
 		addButton(new MenuButton(167, 70, 30, 12, (b) -> clickSetCornerButton(b, true),
@@ -77,7 +76,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 			if (canCreate())
 			{
 				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, Component.literal(stageName.getValue()), corner1, corner2, worldKey));
-				
+
 				buttons.forEach(button -> button.active = false);
 				stageName.setFocused(false);
 				pendingCreation = true;
@@ -96,7 +95,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 			stageName.setFocused(true);
 			return stageName;
 		});
-		
+
 		corner1 = cornerA;
 		corner2 = cornerB;
 	}
@@ -112,7 +111,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 				if (nl.minValue <= Math.abs(v))
 					return Integer.toString((int) (v / nl.minValue)) + nl.letter;
 			}
-		
+
 		return String.valueOf(v);
 	}
 	protected void clickSetCornerButton(Button button, boolean isCorner1)
@@ -121,10 +120,10 @@ public class StageCreationScreen extends AbstractStagePadScreen
 		{
 			String[] coords = minecraft.keyboardHandler.getClipboard().replaceAll(",+\\s+|\\s+|,", " ").replaceAll("[^.\\d\\s-]", "").split(" ");
 			BlockPos pos = null;
-			
+
 			if (coords.length >= 3)
-				pos = CommonUtils.createBlockPos(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
-			
+				pos = BlockPos.containing(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
+
 			if (isCorner1)
 				corner1 = pos;
 			else
@@ -148,20 +147,20 @@ public class StageCreationScreen extends AbstractStagePadScreen
 	{
 		if (pendingCreation)
 			return;
-		
+
 		if (!savedName.equals(stageName.getValue()))
 		{
 			savedName = stageName.getValue();
 			updateId();
 		}
-		
+
 		createButton.active = canCreate();
 	}
 	private void updateId()
 	{
 		String savedId = stageName.getValue().replace(' ', '_');
 		String newId = savedId;
-		
+
 		if (minecraft.level != null && !newId.isEmpty())
 		{
 			Map<String, Stage> stages = SaveInfoCapability.get().stages();
@@ -170,7 +169,7 @@ public class StageCreationScreen extends AbstractStagePadScreen
 		}
 		else
 			newId = "";
-		
+
 		stageId = newId;
 	}
 	private boolean canCreate()
@@ -181,26 +180,26 @@ public class StageCreationScreen extends AbstractStagePadScreen
 	public void renderBackground(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float delta)
 	{
 		super.renderBackground(guiGraphics, mouseX, mouseY, delta);
-		
+
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		RenderSystem.setShaderTexture(0, TEXTURES);
-		
+
 		int x = (width - backgroundWidth) / 2;
 		int y = (height - backgroundHeight) / 2;
-		
+
 		guiGraphics.blit(TEXTURES, x, y, 0, 0, backgroundWidth, backgroundHeight);
-		
+
 		Component label = Component.translatable("gui.stage_pad.label.create_stage");
 		guiGraphics.drawString(font, label, x + 105 - font.width(label) / 2, y + 14, 0xFFFFFF);
 		guiGraphics.drawString(font, Component.translatable("gui.stage_pad.label.set_stage_name"), x + 14, y + 28, 0xFFFFFF);
 		guiGraphics.drawString(font, Component.translatable("gui.stage_pad.label.stage_id", stageId), x + 14, y + 55, 0x808080);
-		
+
 		label = Component.translatable("gui.stage_pad.label.corner_1");
 		guiGraphics.drawString(font, label, x + 60 - font.width(label), y + 72, 0xFFFFFF);
-		
+
 		label = Component.translatable("gui.stage_pad.label.corner_2");
 		guiGraphics.drawString(font, label, x + 60 - font.width(label), y + 90, 0xFFFFFF);
-		
+
 		if (corner1 != null)
 		{
 			guiGraphics.drawString(font, getShortenedInt(corner1.getX()), x + 64, y + 73, 0xFFFFFF);

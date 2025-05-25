@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -18,10 +20,13 @@ import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkSquidColorLayer;
 import net.splatcraft.client.models.InkSquidModel;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkSquidEntity;
-import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
+
+import java.util.Optional;
 
 public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSquidModel> implements RenderLayerParent<LivingEntity, InkSquidModel>
 {
@@ -31,7 +36,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	{
 		super(context, new InkSquidModel(context.bakeLayer(InkSquidModel.LAYER_LOCATION)), 0.5f);
 		addLayer(new InkSquidColorLayer(this, context.getModelSet()));
-		
+
 		if (InkSquidRenderer.context == null)
 			InkSquidRenderer.context = context;
 	}
@@ -61,10 +66,23 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		return super.isBodyVisible(entity) && (entity.shouldShowName() || entity.hasCustomName() && entity == entityRenderDispatcher.crosshairPickEntity);
 	}
 	@Override
+	protected void setupRotations(@NotNull LivingEntity entity, @NotNull PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale)
+	{
+		Optional<Direction> directionOptional = EntityInfoCapability.getOptional(entity).flatMap(EntityInfo::getClimbedDirection);
+		if (directionOptional.isPresent())
+		{
+			yBodyRot = 0;
+			Vec3i normal = directionOptional.get().getNormal(); // the squid floats without this piece of code,,,,, (the height of the model is 0.3 but 0.5 "buries" it and it looks better in my opinion)
+			float offset = -0.5f * scale;
+			poseStack.translate(normal.getX() * offset, 0, normal.getZ() * offset);
+		}
+		super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+	}
+	@Override
 	public void render(@NotNull LivingEntity entity, float p_115309_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int light)
 	{
 		super.render(entity, p_115309_, partialTicks, poseStack, bufferSource, light);
-		
+
 		if (entity instanceof InkSquidEntity squid)
 			renderLeash(squid, partialTicks, poseStack, bufferSource);
 	}
@@ -76,13 +94,13 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	private void renderLeash(InkSquidEntity squid, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource)
 	{
 		Entity holder = squid.getLeashHolder();
-		
+
 		if (holder == null)
 			return;
-		
+
 		matrixStack.pushPose();
 		Vec3 vec3 = holder.getRopeHoldPosition(partialTicks);
-		float d0 = (Mth.lerp(partialTicks, squid.yBodyRot, squid.yBodyRotO) * Mth.DEG_TO_RAD) + Mth.HALF_PI;
+		float d0 = (squid.getPreciseBodyRotation(partialTicks) * Mth.DEG_TO_RAD) + Mth.HALF_PI;
 		Vec3 vec31 = squid.getLeashOffset(partialTicks);
 		double d1 = Math.cos(d0) * vec31.z + Math.sin(d0) * vec31.x;
 		double d2 = Math.sin(d0) * vec31.z - Math.cos(d0) * vec31.x;
@@ -98,27 +116,27 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		float f4 = (float) (Math.sqrt(f * f + f2 * f2) * 0.025F / 2.0F);
 		float f5 = f2 * f4;
 		float f6 = f * f4;
-		BlockPos blockpos = CommonUtils.createBlockPos(squid.getEyePosition(partialTicks));
-		BlockPos blockpos1 = CommonUtils.createBlockPos(holder.getEyePosition(partialTicks));
+		BlockPos blockpos = BlockPos.containing(squid.getEyePosition(partialTicks));
+		BlockPos blockpos1 = BlockPos.containing(holder.getEyePosition(partialTicks));
 		int i = getBlockLightLevel(squid, blockpos);
 		int j = getHolderBlockLightLevel(holder, blockpos1);
 		int k = squid.level().getBrightness(LightLayer.SKY, blockpos);
 		int l = squid.level().getBrightness(LightLayer.SKY, blockpos1);
-		
+
 		for (int i1 = 0; i1 <= 24; ++i1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.025F, f5, f6, i1, false);
 		}
-		
+
 		for (int j1 = 24; j1 >= 0; --j1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.0F, f5, f6, j1, true);
 		}
-		
+
 		matrixStack.popPose();
 	}
-	protected int getHolderBlockLightLevel(Entity p_114496_, BlockPos p_114497_)
+	protected int getHolderBlockLightLevel(Entity entity, BlockPos pos)
 	{
-		return p_114496_.isOnFire() ? 15 : p_114496_.level().getBrightness(LightLayer.BLOCK, p_114497_);
+		return entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, pos);
 	}
 }

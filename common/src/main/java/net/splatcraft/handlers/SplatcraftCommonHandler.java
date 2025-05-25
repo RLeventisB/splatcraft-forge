@@ -50,7 +50,7 @@ public class SplatcraftCommonHandler
 		Services.PLATFORM.registerListener(PlayerEvents.LogIn.class, SplatcraftCommonHandler::onPlayerLoggedIn);
 		Services.PLATFORM.registerListener(TickEvents.PlayerBefore.class, SplatcraftCommonHandler::capabilityUpdateEvent);
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, SplatcraftCommonHandler::onWorldTick);
-		
+
 		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SplatcraftCommonHandler::onBlockLeftClick);
 	}
 	public static void onPlayerJump(LivingEntity entity)
@@ -81,13 +81,13 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-		
+
 		Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = EntityInfoCapability.get(oldPlayer).getMatchInventory();
-		
+
 		if (!matchInv.isEmpty())
 		{
 			tryToInsertItems(newPlayer, matchInv, true);
-			
+
 			EntityInfoCapability.get(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
 		}
 		EntityAction.setEntityAction(newPlayer, null);
@@ -107,7 +107,7 @@ public class SplatcraftCommonHandler
 	private static boolean putStackInSlot(Inventory inventory, ItemStack stack, int slot)
 	{
 		ItemStack invStack = inventory.getItem(slot);
-		
+
 		if (invStack.isEmpty())
 		{
 			inventory.setItem(slot, stack);
@@ -119,7 +119,7 @@ public class SplatcraftCommonHandler
 			int count = Math.min(invStack.getMaxStackSize(), stack.getCount() + invStack.getCount());
 			invStack.setCount(count);
 			stack.shrink(count - invCount);
-			
+
 			return stack.isEmpty();
 		}
 		return false;
@@ -127,12 +127,12 @@ public class SplatcraftCommonHandler
 	public static EventResult onLivingDeath(LivingEntity entity, DamageSource source)
 	{
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
-		
+
 		if (stack.getItem() instanceof InkTankItem item)
 		{
 			item.refill(stack);
 		}
-		
+
 		return keepAliveIfOnMatch(entity, source);
 	}
 	private static EventResult keepAliveIfOnMatch(LivingEntity entity, DamageSource source)
@@ -147,7 +147,7 @@ public class SplatcraftCommonHandler
 				{
 					info.setMatchRespawnTimeLeft(100);
 					info.setIsMatchRespawning(true);
-					
+
 					if (entity instanceof ServerPlayer player)
 					{
 						Entity attacker = source.getEntity();
@@ -157,15 +157,15 @@ public class SplatcraftCommonHandler
 							InkExplosion.createInkExplosion(attacker, player.position(), 2f, DamageRangesRecord.DEFAULT, InkBlockUtils.getInkType(livingAttacker), source.getWeaponItem(), AttackId.NONE);
 							killCamDirection = attacker.position().subtract(entity.position()).toVector3f().sub(0, 3, 0).normalize();
 						}
-						
+
 						SplatcraftPacketHandler.sendToPlayer(new SendPlayerDeathMatchPacket(100, source.getEntity(), killCamDirection), player);
 					}
-					
+
 					((ServerLevel) entity.level()).sendParticles(new SquidSoulParticleData(color), entity.getX(), entity.getY() + 0.5f, entity.getZ(), 1, 0, 1, 0, 1.5f);
 				}
-				
+
 				keepAlive.set(true);
-				
+
 				WeaponHandler.doScoreboardLogicOnDeath(source, entity, color);
 			}
 		});
@@ -179,9 +179,9 @@ public class SplatcraftCommonHandler
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = info.getMatchInventory();
-				
+
 				drops.removeIf(o -> matchInv.containsValue(o.getItem()));
-				
+
 				tryToInsertItems(player, matchInv, false);
 			});
 		}
@@ -192,14 +192,14 @@ public class SplatcraftCommonHandler
 		{
 			return;
 		}
-		
+
 		if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
 		{
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				Inventory inventory = player.getInventory();
 				Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = new Object2ObjectOpenHashMap<>(inventory.getContainerSize());
-				
+
 				for (int i = 0; i < inventory.getContainerSize(); i++)
 				{
 					ItemStack stack = inventory.getItem(i);
@@ -217,9 +217,9 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateBooleanGamerulesPacket(SplatcraftGameRules.booleanRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
-		
+
 		TreeMap<UUID, InkColor> playerColors = new TreeMap<>();
-		
+
 		for (Player p : player.level().players())
 		{
 			if (EntityInfoCapability.hasCapability(p))
@@ -227,7 +227,7 @@ public class SplatcraftCommonHandler
 				playerColors.put(p.getUUID(), EntityInfoCapability.get(p).getColor());
 			}
 		}
-		
+
 		SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(player.getUUID(), EntityInfoCapability.get(player).getColor()));
 		SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
 		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
@@ -242,17 +242,17 @@ public class SplatcraftCommonHandler
 			if (player.deathTime <= 0 && !info.isInitialized())
 			{
 				info.setInitialized(true);
-				
+
 				if (player.level().isClientSide() && player instanceof LocalPlayer)
 				{
 					SplatcraftPacketHandler.sendToServer(new RequestEntityInfoPacket(player));
 				}
 			}
-			
+
 			if (player instanceof ServerPlayer)
 			{
 				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
-				
+
 				if (!net.minecraft.world.item.ItemStack.isSameItem(info.getInkBand(), inkBand))
 				{
 					info.setInkBand(inkBand);
@@ -303,7 +303,7 @@ public class SplatcraftCommonHandler
 				}
 				InkOverlayCapability.set(livingEntity, overlayInfo);
 			}
-			
+
 			EntityInfoCapability.getOptional(livingEntity).ifPresent(info ->
 			{
 				if (info.isPlaying())

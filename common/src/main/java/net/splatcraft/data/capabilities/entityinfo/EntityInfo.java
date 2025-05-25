@@ -13,7 +13,11 @@ import java.util.Optional;
 
 public class EntityInfo
 {
-	public static final int HIGHER_STARTUP_DURATION = 10;
+	public static final int SQUID_LAG_DURATION = 10;
+	public static final float MIN_SQUID_SURGE_CHARGE = 7;
+	public static final float MAX_SQUID_SURGE_CHARGE = 20;
+	public static final float SQUID_SURGE_USAGE_OFFSET = 100;
+	public static final float SQUID_SURGE_ENDLAG = 20;
 	public static final Codec<EntityInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		Codec.INT.optionalFieldOf("dodge_count", 0).forGetter(EntityInfo::getDodgeCount),
 		InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(EntityInfo::getColor),
@@ -24,7 +28,7 @@ public class EntityInfo
 		EntityAction.SERIALIZER_CODEC.lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
 		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
-		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeCharge),
+		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeState),
 		PlayingData.CODEC.optionalFieldOf("playing_data", PlayingData.DEFAULT).forGetter(EntityInfo::playingData),
 		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks),
 		SquidState.CODEC.optionalFieldOf("squid_state", SquidState.SURFACED).forGetter(EntityInfo::getSquidState)
@@ -38,7 +42,7 @@ public class EntityInfo
 	private EntityAction entityAction = null;
 	private PlayerCharge playerCharge = null;
 	private ItemStack inkBand = ItemStack.EMPTY;
-	private float squidSurgeCharge = 0f;
+	private float squidSurgeState = 0;
 	private PlayingData playingData = PlayingData.DEFAULT;
 	private int higherStartupTicks;
 	private SquidState squidState = SquidState.SURFACED;
@@ -73,7 +77,7 @@ public class EntityInfo
 		this.entityAction = entityAction.orElse(null);
 		this.playerCharge = playerCharge.orElse(null);
 		this.inkBand = inkBand;
-		this.squidSurgeCharge = squidSurgeCharge;
+		this.squidSurgeState = squidSurgeCharge;
 		this.playingData = playingData;
 		this.higherStartupTicks = higherStartupTicks;
 		this.squidState = squidState;
@@ -122,7 +126,11 @@ public class EntityInfo
 	}
 	public void setClimbedDirection(Direction direction)
 	{
-		climbedDirection = direction == null ? Optional.empty() : Optional.of(direction);
+		climbedDirection = Optional.ofNullable(direction);
+	}
+	public void setClimbedDirection(Optional<Direction> direction)
+	{
+		climbedDirection = direction;
 	}
 	public ItemStack getInkBand()
 	{
@@ -164,14 +172,48 @@ public class EntityInfo
 	{
 		playerCharge = charge;
 	}
+	public boolean isDoingSquidSurge()
+	{
+		return squidSurgeState >= SQUID_SURGE_USAGE_OFFSET;
+	}
+	public boolean canChargeSquidSurge()
+	{
+		return squidSurgeState >= 0 && squidSurgeState < SQUID_SURGE_USAGE_OFFSET;
+	}
+	public float getSquidSurgeState()
+	{
+		return squidSurgeState;
+	}
+	public void setSquidSurgeState(float squidSurgeState)
+	{
+		this.squidSurgeState = squidSurgeState;
+	}
 	public float getSquidSurgeCharge()
 	{
-		return squidSurgeCharge;
+		return squidSurgeState > SQUID_SURGE_USAGE_OFFSET ? 0 : squidSurgeState;
 	}
-	public void setSquidSurgeCharge(float squidSurgeCharge)
+	public float getSquidSurgePower()
 	{
-		this.squidSurgeCharge = squidSurgeCharge;
+		return squidSurgeState - SQUID_SURGE_USAGE_OFFSET;
 	}
+	public void chargeSquidSurge()
+	{
+		if (squidSurgeState < MAX_SQUID_SURGE_CHARGE)
+			this.squidSurgeState = Math.min(squidSurgeState + 1, MAX_SQUID_SURGE_CHARGE);
+	}
+	public boolean flagSquidSurgeUsage()
+	{
+		if (squidSurgeState < MIN_SQUID_SURGE_CHARGE)
+			return false;
+
+		squidSurgeState = SQUID_SURGE_USAGE_OFFSET + squidSurgeState;
+		return true;
+	}
+	public void flagSquidSurgeEnd()
+	{
+		squidSurgeState = -SQUID_SURGE_ENDLAG;
+	}
+
 	public int getDodgeCount()
 	{
 		return dodgeCount;
@@ -186,7 +228,8 @@ public class EntityInfo
 	}
 	public void flagSquidCancel()
 	{
-		flagSquidCancel(HIGHER_STARTUP_DURATION);
+		flagSquidCancel(SQUID_LAG_DURATION);
+		setSquidSurgeState((byte) Math.clamp(squidSurgeState, -20, 0));
 	}
 	public void flagSquidCancel(int frames)
 	{

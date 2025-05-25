@@ -1,13 +1,15 @@
 package net.splatcraft.util;
 
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,12 +25,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.InkedBlock;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
@@ -39,16 +43,13 @@ import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
-import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.*;
 import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2f;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public class InkBlockUtils
@@ -324,15 +325,18 @@ public class InkBlockUtils
 	}
 	public static boolean canSquidHide(LivingEntity entity)
 	{
-		if (entity instanceof Player player && EntityAction.hasEntityAction(player) && EntityAction.getEntityAction(player) instanceof SuperJumpCommand.SuperJump)
+		if (EntityAction.hasSpecificEntityAction(entity, SuperJumpCommand.SuperJump.class))
 		{
 			return false;
 		}
-		EntityInfo playerInfo = EntityInfoCapability.get(entity);
-		if (playerInfo == null)
+		EntityInfo entityInfo = EntityInfoCapability.get(entity);
+		if (entityInfo == null)
 			return false;
 
-		return !entity.isSpectator() && (canSquidSwim(entity) || playerInfo.getClimbedDirection().isPresent() && playerInfo.getSquidSurgeCharge() < 20);
+		if (entityInfo.getSquidSurgeState() >= EntityInfo.MIN_SQUID_SURGE_CHARGE)
+			return false;
+
+		return !entity.isSpectator() && (canSquidSwim(entity) || entityInfo.getClimbedDirection().isPresent());
 	}
 	public static boolean canSquidSwim(LivingEntity entity)
 	{
@@ -355,18 +359,19 @@ public class InkBlockUtils
 	}
 	public static BlockPos getBlockStandingOnPos(Entity entity, double maxDepth)
 	{
-		BlockPos result;
-		for (double i = 0; i >= -maxDepth + 0.1; i -= 0.1)
+		BlockPos.MutableBlockPos result = BlockPos.containing(entity.getX(), entity.getY(), entity.getZ()).mutable();
+		int minY = Mth.floor(entity.getY() - maxDepth);
+		AABB aabb = entity.getBoundingBox().expandTowards(0, -maxDepth, 0);
+		while (result.getY() >= minY)
 		{
-			result = CommonUtils.createBlockPos(entity.getX(), entity.getY() + i, entity.getZ());
-
 			VoxelShape shape = entity.level().getBlockState(result).getCollisionShape(entity.level(), result, CollisionContext.of(entity));
-			shape.collide(Direction.Axis.Y, entity.getBoundingBox(), 0.0);
 
-			if (!shape.isEmpty() && shape.bounds().minY <= entity.getY() - result.getY())
+			if (shape.max(Direction.Axis.Y) >= aabb.minY)
 				return result;
+
+			result.move(0, -1, 0);
 		}
-		return CommonUtils.createBlockPos(entity.getX(), entity.getY() - maxDepth, entity.getZ());
+		return BlockPos.containing(entity.getX(), entity.getY() - maxDepth, entity.getZ());
 	}
 	public static boolean onEnemyInk(LivingEntity entity)
 	{
@@ -380,63 +385,132 @@ public class InkBlockUtils
 			return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.level(), pos).isValid() && !canSquidSwim(entity);
 		else return false;
 	}
-	public static Direction canSquidClimb(LivingEntity entity, float strafeImpulse, float movementForward, float yaw)
+	public static Optional<Direction> getSquidClimbDirection(final LivingEntity entity, final float movementSideways, final float movementForward, final Optional<Direction> previousDirection)
 	{
 		if (onEnemyInk(entity))
-			return null;
+			return Optional.empty();
 
-		Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(Math.signum(strafeImpulse), 0, Math.signum(movementForward)), 0.1f, yaw);
-		BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, entity.getBoundingBox().inflate(inputVector.x, inputVector.y, inputVector.z), false, (bro, what) ->
-			bro);
+		final Vector2f rotatedImpulse = PlayerMovementHandler.getRotatedImpulse(movementSideways, movementForward, entity.getYRot());
+		final AABB originalBox = entity.getBoundingBox();
+		Vec3 deltaMovement = entity.getDeltaMovement().add(0, entity.isNoGravity() ? 0 : entity.getGravity(), 0);
+		Vec3 entityCenter = originalBox.getCenter();
 
-		return checkSquidCollisions(entity, collisions, inputVector);
-	}
-	@Nullable
-	private static Direction checkSquidCollisions(LivingEntity entity, BlockCollisions<BlockPos> collisions, Vec3 inputVector)
-	{
-		while (collisions.hasNext())
+		AABB extendedBox = originalBox.expandTowards(deltaMovement);
+//		CommonUtils.showBoundingBoxCorners(entity.level(), extendedBox);
+		BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
+
+		Tuple<Optional<Direction>, VoxelShape> originalDirection = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
+
+		// this normally executes if the player is on a wall but is not inputting anything / only going upwards, since going downwards is treated like going out of the wall
+		if (originalDirection.getA().isEmpty() && previousDirection.isPresent())
 		{
-			BlockPos collidedBlock = collisions.next();
-			Vec3 center = collidedBlock.getCenter();
-			Direction direction;
-			if (Math.abs(center.x - entity.getX()) > Math.abs(center.z - entity.getZ()))
+			final Vec3 inputVector = PlayerMovementHandler.processImpulse(previousDirection.get(), rotatedImpulse);
+			if (deltaMovement.y >= -0.1 || inputVector.y >= 0)
 			{
-				direction = center.x > entity.getX() ? Direction.WEST : Direction.EAST;
-			}
-			else
-			{
-				direction = center.z > entity.getZ() ? Direction.NORTH : Direction.SOUTH;
-			}
+				Vec3 normal = Vec3.atLowerCornerOf(previousDirection.get().getNormal()).scale(-0.1);
+				extendedBox = originalBox.expandTowards(normal);
 
-			if (isInked(entity.level(), collidedBlock, direction) &&
-				ColorUtils.colorEquals(entity.level(), collidedBlock,
-					ColorUtils.getEntityColor(entity),
-					getInkBlock(entity.level(), collidedBlock).color(direction.get3DDataValue())))
-			{
-				if (inputVector == null || Vec3.atBottomCenterOf(new Vec3i(direction.getStepX(), direction.getStepY(), direction.getStepZ())).cross(inputVector).y() != 0)
-					return direction;
+				collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
+				originalDirection = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
+				if (!originalDirection.getA().equals(previousDirection))
+					return Optional.empty();
 			}
 		}
-		return null;
+		if (originalDirection.getA().isPresent())
+		{
+/*
+			// check if the entity can "step up" the collision like with stairs, via a poor way obviously
+			float maxUpStep = entity.maxUpStep();
+			extendedBox = extendedBox.expandTowards(0, maxUpStep, 0);
+			collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
+			Tuple<Optional<Direction>, VoxelShape> upStepCollision = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
+			if (upStepCollision.getA().isEmpty() || (
+				upStepCollision.getA().get() == originalDirection.getA().get() &&
+					upStepCollision.getB().max(Direction.Axis.Y) - originalDirection.getB().max(Direction.Axis.Y) <= maxUpStep))
+			{
+				// if there is no collision, we can up step!!! (however this will be handled by the movement code executed after this so
+				// we fake not actually climbing
+				return Optional.empty();
+			}
+*/
+		}
+		return originalDirection.getA();
 	}
-	public static Direction getSquidClimbingDirection(LivingEntity entity, float strafeImpulse, float movementForward, Direction face)
+	/*public static Direction getSquidSustainedClimbingDirection(LivingEntity entity, float movementSideways, float movementForward, Direction face)
 	{
-		Direction blockFaceToCheck = face.getOpposite();
-		AABB baseBoundingBox = SplatcraftEntities.INK_SQUID.value().getDimensions().makeBoundingBox(entity.position());
-		Vec3 inputVector = EntityAccessor.invokeGetInputVector(new Vec3(-Math.signum(strafeImpulse), Math.signum(movementForward), 0), 0.1f, face.toYRot());
-		BlockCollisions<BlockPos> collisions = new BlockCollisions<>(entity.level(), entity, baseBoundingBox.inflate(inputVector.x, inputVector.y, inputVector.z), false, (bro, what) ->
-			bro);
+		Vec3 horizontalImpulse = PlayerMovementHandler.getHorizontalImpulse(movementSideways, movementForward, entity.getYRot()).normalize().scale(entity.getDeltaMovement().length());
+		// if the user has too much "backward impulse", and is already going down, detach from the wall
+		if (horizontalImpulse.z < Mth.SQRT_OF_TWO && Math.abs(horizontalImpulse.x) < 0.5 && entity.getDeltaMovement().y < 1)
+			return null;
 
-		Direction otherWallClosion = checkSquidCollisions(entity, collisions, inputVector);
-		if (otherWallClosion != null)
-			return otherWallClosion;
+		Vec3 inputVector = PlayerMovementHandler.getInputVectorWithClimbedDirection(face, movementSideways, movementForward, entity.getYRot(), entity.getXRot());
+		AABB extendedBox = entity.getBoundingBox().expandTowards(inputVector.x, inputVector.y, inputVector.z);
 
-		inputVector = Vec3.atBottomCenterOf(new Vec3i(blockFaceToCheck.getStepX(), blockFaceToCheck.getStepY(), blockFaceToCheck.getStepZ())).scale(0.01);
-		AABB aabb = baseBoundingBox.inflate(inputVector.x, inputVector.y, inputVector.z);
-		collisions = new BlockCollisions<>(entity.level(), entity, aabb, false, (bro, what) ->
-			bro);
+		BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
 
-		return checkSquidCollisions(entity, collisions, null);
+		Direction wallCollision = checkSquidCollisions(entity, collisions, extendedBox);
+		if (wallCollision == null)
+			return face;
+		return wallCollision;
+	}*/
+	private static Tuple<Optional<Direction>, VoxelShape> checkSquidCollisions(final LivingEntity entity, final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions, final AABB extendedBox)
+	{
+		return checkSquidCollisions(entity, collisions, extendedBox, entity.getBoundingBox().getCenter());
+	}
+	private static Tuple<Optional<Direction>, VoxelShape> checkSquidCollisions(final LivingEntity entity, final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions, final AABB extendedBox, final Vec3 entityCenter)
+	{
+		final Direction.Axis[] horizontalAxis = {Direction.Axis.X, Direction.Axis.Z};
+		final VoxelShape collisionShape = Shapes.create(extendedBox);
+
+		double minDistanceToBlock = Double.POSITIVE_INFINITY;
+
+		Optional<Direction> collidedDirection = Optional.empty();
+		VoxelShape usedJoined = null;
+
+		while (collisions.hasNext())
+		{
+			Pair<BlockPos, VoxelShape> collidedBlock = collisions.next();
+			BlockPos blockPos = collidedBlock.first();
+			VoxelShape voxelShape = collidedBlock.second();
+
+			VoxelShape joined = Shapes.join(voxelShape, collisionShape, BooleanOp.AND)
+				.move(
+					-entityCenter.x(), -entityCenter.y(), -entityCenter.z());
+			if (joined.isEmpty())
+				continue;
+
+			for (Direction.Axis axis : horizontalAxis)
+			{
+				double minDist = joined.min(axis);
+				double maxDist = joined.max(axis);
+
+				// since the joined shape is relative to the entity, having the same sign in an axis means the collision on the given axis was on a face, or something
+				if (Math.signum(minDist) == Math.signum(maxDist))
+				{
+					// yes the distance can be calculated before but i dont wanna waste 3 cpu cycles >:(
+					double distanceToBlock = Vec3.atCenterOf(blockPos).distanceToSqr(entityCenter);
+					if (distanceToBlock < minDistanceToBlock)
+					{
+						minDistanceToBlock = distanceToBlock;
+
+						Direction.AxisDirection axisDirection = Math.signum(minDist) == 1 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE;
+						Direction directionCandidate = Direction.fromAxisAndDirection(axis, axisDirection).getOpposite();
+
+						ChunkInk.BlockEntry inkData = getInkBlock(entity.level(), blockPos);
+						if (inkData == null || inkData.get(directionCandidate.get3DDataValue()) == null ||
+							!ColorUtils.colorEquals(entity.level(), blockPos, ColorUtils.getEntityColor(entity), inkData.color(directionCandidate.get3DDataValue()))
+						)
+						{
+							continue;
+						}
+
+						collidedDirection = Optional.of(directionCandidate);
+						usedJoined = joined;
+					}
+				}
+			}
+		}
+		return new Tuple<>(collidedDirection, usedJoined);
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{

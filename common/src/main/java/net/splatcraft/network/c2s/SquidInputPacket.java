@@ -2,6 +2,8 @@ package net.splatcraft.network.c2s;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -15,6 +17,11 @@ import java.util.Optional;
 public class SquidInputPacket extends PlayC2SPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SquidInputPacket.class);
+	private static final StreamCodec<RegistryFriendlyByteBuf, SquidInputPacket> STREAM_CODEC = StreamCodec.composite(
+		ByteBufCodecs.optional(Direction.STREAM_CODEC), v -> v.climbedDirection,
+		ByteBufCodecs.FLOAT, v -> v.squidSurgeCharge,
+		SquidInputPacket::new
+	);
 	private final Optional<Direction> climbedDirection;
 	private final float squidSurgeCharge;
 
@@ -26,8 +33,7 @@ public class SquidInputPacket extends PlayC2SPacket
 
 	public static SquidInputPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		byte index = buffer.readByte();
-		return new SquidInputPacket(index == Byte.MAX_VALUE ? Optional.empty() : Optional.of(Direction.from3DDataValue(index)), buffer.readFloat());
+		return STREAM_CODEC.decode(buffer);
 	}
 
 	@Override
@@ -41,16 +47,12 @@ public class SquidInputPacket extends PlayC2SPacket
 	{
 		EntityInfo playerInfo = EntityInfoCapability.get(target);
 		playerInfo.setClimbedDirection(climbedDirection.orElse(null));
-		playerInfo.setSquidSurgeCharge(squidSurgeCharge);
+		playerInfo.setSquidSurgeState(squidSurgeCharge);
 	}
 
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		if (climbedDirection.isPresent())
-			buffer.writeByte(climbedDirection.get().get3DDataValue());
-		else
-			buffer.writeByte(Byte.MAX_VALUE);
-		buffer.writeFloat(squidSurgeCharge);
+		STREAM_CODEC.encode(buffer, this);
 	}
 }

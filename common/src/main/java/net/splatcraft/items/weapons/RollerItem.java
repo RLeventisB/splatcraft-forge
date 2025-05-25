@@ -175,7 +175,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			dxOff = Math.cos(Math.toRadians(entity.getYRot() + 90)) * i;
 			dzOff = Math.sin(Math.toRadians(entity.getYRot() + 90)) * i;
 
-			BlockPos pos = CommonUtils.createBlockPos(entity.getX() + dxOff, entity.getY(), entity.getZ() + dzOff);
+			BlockPos pos = BlockPos.containing(entity.getX() + dxOff, entity.getY(), entity.getZ() + dzOff);
 			if (!InkBlockUtils.canInkPassthrough(world, pos))
 				break;
 		}
@@ -203,7 +203,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					dzOff = Math.sin(Math.toRadians(entity.getYRot() + 90));
 				}
 
-				BlockPos pos = CommonUtils.createBlockPos(entity.getX() + xOff + dxOff, entity.getY() + yOff, entity.getZ() + zOff + dzOff);
+				BlockPos pos = BlockPos.containing(entity.getX() + xOff + dxOff, entity.getY() + yOff, entity.getZ() + zOff + dzOff);
 
 				if (world.getBlockState(pos).getBlock() instanceof ColoredBarrierBlock block && block.canAllowThrough(pos, entity))
 					continue;
@@ -249,7 +249,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				continue;
 			}
 
-			BlockPos attackPos = CommonUtils.createBlockPos(entity.getX() + xOff + dxOff, entity.getY() - 1, entity.getZ() + zOff + dzOff);
+			BlockPos attackPos = BlockPos.containing(entity.getX() + xOff + dxOff, entity.getY() - 1, entity.getZ() + zOff + dzOff);
 			for (LivingEntity target : world.getEntitiesOfClass(LivingEntity.class, AABB.encapsulatingFullBlocks(attackPos, attackPos.offset(1, 2, 1)), EntitySelector.NO_SPECTATORS.and(e ->
 			{
 				if (e instanceof LivingEntity target)
