@@ -7,6 +7,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
+import net.splatcraft.mixin.accessors.GameRuleAccessor;
 
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -60,30 +61,30 @@ public class SplatcraftGameRules
 	public static boolean getLocalizedRule(Level level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule)
 	{
 		ArrayList<Stage> stages = Stage.getStagesForPosition(level, new Vec3(pos.getX(), pos.getY(), pos.getZ()));
-		
+
 		Stage localStage = null;
 		AABB localStageBounds = null;
-		
+
 		for (Stage stage : stages)
 		{
 			AABB stageBounds = stage.getBounds();
-			
+
 			if (localStage == null || stageBounds.getSize() < localStageBounds.getSize())
 			{
 				localStage = stage;
 				localStageBounds = stage.getBounds();
 			}
 		}
-		
+
 		if (localStage != null && localStage.hasSetting(rule))
 			return localStage.getSetting(rule);
-		
+
 		return getBooleanRuleValue(level, rule);
 	}
 	public static GameRules.Key<GameRules.BooleanValue> createBooleanRule(String name, GameRules.Category category, boolean defaultValue)
 	{
 		GameRules.Type<GameRules.BooleanValue> booleanValue = GameRules.BooleanValue.create(defaultValue);
-		GameRules.Key<GameRules.BooleanValue> ruleKey = GameRules.register(Splatcraft.MODID + "." + name, category, booleanValue);
+		GameRules.Key<GameRules.BooleanValue> ruleKey = GameRuleAccessor.invokeRegister(Splatcraft.MODID + "." + name, category, booleanValue);
 		ruleList.add(ruleKey);
 		booleanRules.put(getRuleIndex(ruleKey), defaultValue);
 		return ruleKey;
@@ -91,8 +92,8 @@ public class SplatcraftGameRules
 	public static GameRules.Key<GameRules.IntegerValue> createIntRule(String name, GameRules.Category category, int defaultValue)
 	{
 		GameRules.Type<GameRules.IntegerValue> intValue = GameRules.IntegerValue.create(defaultValue);
-		GameRules.Key<GameRules.IntegerValue> ruleKey = GameRules.register(Splatcraft.MODID + "." + name, category, intValue);
-		
+		GameRules.Key<GameRules.IntegerValue> ruleKey = GameRuleAccessor.invokeRegister(Splatcraft.MODID + "." + name, category, intValue);
+
 		ruleList.add(ruleKey);
 		intRules.put(getRuleIndex(ruleKey), defaultValue);
 		return ruleKey;

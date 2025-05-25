@@ -29,61 +29,61 @@ import net.splatcraft.registries.SplatcraftParticleTypes;
 @Mod(Splatcraft.MODID)
 public final class SplatcraftNeoForge
 {
-    public static IEventBus modBus;
-    public SplatcraftNeoForge(IEventBus modBus)
-    {
-        // Run our common setup.
+	public static IEventBus modBus;
+	public SplatcraftNeoForge(IEventBus modBus)
+	{
+		// Run our common setup.
 
-        SplatcraftNeoForge.modBus = modBus;
-        NeoForgeDeferredRegister.registerAllRegistries();
-        Splatcraft.init();
+		SplatcraftNeoForge.modBus = modBus;
+		NeoForgeDeferredRegister.registerAllRegistries();
+		Splatcraft.init();
 
-        modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
-        modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
-        modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
-        modBus.addListener(SplatcraftNeoForge::registerColorHandlersBlock);
+		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
+		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
+		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
+		modBus.addListener(SplatcraftNeoForge::registerColorHandlersBlock);
 
-        NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onMobDrops);
-        NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
-        NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
-        NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onMobDrops);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
 
-        SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
-    }
-    private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
-    {
-        ClientSetupHandler.initItemColors(event.getItemColors());
-    }
-    private static void registerColorHandlersBlock(RegisterColorHandlersEvent.Block event)
-    {
-        ClientSetupHandler.initBlockColors(event.getBlockColors());
-    }
-    private static void registerParticleProviders(RegisterParticleProvidersEvent event)
-    {
-        event.registerSpriteSet(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);
-        event.registerSpriteSet(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
-        event.registerSpriteSet(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
-        event.registerSpriteSet(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
-    }
-    private static void onChunkWatch(ChunkWatchEvent.Sent event)
-    {
-        ChunkInkHandler.sendChunkData(event.getPlayer().connection, event.getLevel(), event.getLevel().getChunk(event.getPos().x, event.getPos().z));
-    }
-    private static void onMobDrops(LivingDropsEvent event)
-    {
-        SplatcraftCommonHandler.onLivingDeathDrops(event.getEntity(), event.getDrops());
-    }
-    private static void onInputUpdate(MovementInputUpdateEvent event)
-    {
-        PlayerMovementHandler.onInputUpdate((LocalPlayer) event.getEntity(), event.getInput());
-    }
-    private static void onGamemodeChange(PlayerEvent.PlayerChangeGameModeEvent event)
-    {
-        SquidFormHandler.onGameModeSwitch(event.getEntity(), event.getNewGameMode());
-    }
-    public static void registerGuiOverlays(RegisterGuiLayersEvent event)
-    {
-        event.registerAbove(VanillaGuiLayers.CROSSHAIR, Splatcraft.identifierOf("overlay"), RendererHandler::renderGui);
-        event.registerAbove(VanillaGuiLayers.HOTBAR, Splatcraft.identifierOf("jump_lure"), JumpLureHudHandler::renderGui);
-    }
+		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
+	}
+	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
+	{
+		ClientSetupHandler.initItemColors(event.getItemColors());
+	}
+	private static void registerColorHandlersBlock(RegisterColorHandlersEvent.Block event)
+	{
+		ClientSetupHandler.initBlockColors(event.getBlockColors());
+	}
+	private static void registerParticleProviders(RegisterParticleProvidersEvent event)
+	{
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
+	}
+	private static void onChunkWatch(ChunkWatchEvent.Sent event)
+	{
+		ChunkInkHandler.sendChunkData(event.getPlayer().connection, event.getLevel(), event.getLevel().getChunk(event.getPos().x, event.getPos().z));
+	}
+	private static void onMobDrops(LivingDropsEvent event)
+	{
+		SplatcraftCommonHandler.onLivingDeathDrops(event.getEntity(), event.getDrops());
+	}
+	private static void onInputUpdate(MovementInputUpdateEvent event)
+	{
+		PlayerMovementHandler.onInputUpdate((LocalPlayer) event.getEntity(), event.getInput());
+	}
+	private static void onGamemodeChange(PlayerEvent.PlayerChangeGameModeEvent event)
+	{
+		SquidFormHandler.onGameModeSwitch(event.getEntity(), event.getNewGameMode());
+	}
+	public static void registerGuiOverlays(RegisterGuiLayersEvent event)
+	{
+		event.registerAbove(VanillaGuiLayers.CROSSHAIR, Splatcraft.identifierOf("overlay"), RendererHandler::renderGui);
+		event.registerAbove(VanillaGuiLayers.HOTBAR, Splatcraft.identifierOf("jump_lure"), JumpLureHudHandler::renderGui);
+	}
 }
