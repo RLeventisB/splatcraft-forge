@@ -283,7 +283,7 @@ public class RendererHandler
 			if (player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof InkTankItem tankItem)
 			{
 				ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
-				inkPctg = InkTankItem.getInkAmount(stack) / tankItem.capacity;
+				inkPctg = InkTankItem.getInkPercentage(stack);
 				isCoolingDown = !InkTankItem.canRecharge(stack, false);
 				if (isHoldingMatchItem)
 					canUse = tankItem.canUse(player.getMainHandItem().getItem()) || tankItem.canUse(player.getOffhandItem().getItem());

@@ -286,37 +286,48 @@ public class SplatcraftComponents
 			return setPointB(pos);
 		}
 	}
-	public record TankData(boolean infiniteInk, boolean hideTooltip, float inkLevel, float inkRecoveryCooldown)
+	public record TankData(boolean infiniteInk, boolean hideTooltip, float inkLevel, float maxCapacity,
+	                       float inkRecoveryCooldown)
 	{
 		public static final Codec<TankData> CODEC = RecordCodecBuilder.create(builder -> builder.group(
 			Codec.BOOL.optionalFieldOf("infinite_ink", false).forGetter(TankData::infiniteInk),
 			Codec.BOOL.optionalFieldOf("hide_tooltip", false).forGetter(TankData::hideTooltip),
 			Codec.FLOAT.optionalFieldOf("ink_level", 0f).forGetter(TankData::inkLevel),
+			Codec.FLOAT.optionalFieldOf("max_capacity", 100f).forGetter(TankData::maxCapacity),
 			Codec.FLOAT.optionalFieldOf("ink_recovery_cooldown", 0f).forGetter(TankData::inkRecoveryCooldown)
 		).apply(builder, TankData::new));
-		public static final TankData DEFAULT = new TankData(false, false, 0, 0);
+		public static final TankData DEFAULT = new TankData(false, false, 0, 100, 0);
 		public static final StreamCodec<? super RegistryFriendlyByteBuf, TankData> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL, TankData::infiniteInk,
 			ByteBufCodecs.BOOL, TankData::hideTooltip,
 			ByteBufCodecs.FLOAT, TankData::inkLevel,
+			ByteBufCodecs.FLOAT, TankData::maxCapacity,
 			ByteBufCodecs.FLOAT, TankData::inkRecoveryCooldown,
 			TankData::new
 		);
 		public TankData withInkRecoveryCooldown(float inkRecoveryCooldown)
 		{
-			return new TankData(infiniteInk, hideTooltip, inkLevel, inkRecoveryCooldown);
+			return new TankData(infiniteInk, hideTooltip, inkLevel, maxCapacity, inkRecoveryCooldown);
 		}
 		public TankData withInkLevel(float inkLevel)
 		{
-			return new TankData(infiniteInk, hideTooltip, inkLevel, inkRecoveryCooldown);
+			return new TankData(infiniteInk, hideTooltip, inkLevel, maxCapacity, inkRecoveryCooldown);
+		}
+		public TankData withInkLevelClamped(float inkLevel)
+		{
+			return new TankData(infiniteInk, hideTooltip, Math.min(inkLevel, maxCapacity), maxCapacity, inkRecoveryCooldown);
+		}
+		public TankData withMaxCapacity(float maxCapacity)
+		{
+			return new TankData(infiniteInk, hideTooltip, inkLevel, maxCapacity, inkRecoveryCooldown);
 		}
 		public TankData withHideTooltip(boolean hideTooltip)
 		{
-			return new TankData(infiniteInk, hideTooltip, inkLevel, inkRecoveryCooldown);
+			return new TankData(infiniteInk, hideTooltip, inkLevel, maxCapacity, inkRecoveryCooldown);
 		}
 		public TankData withInfiniteInk(boolean infiniteInk)
 		{
-			return new TankData(infiniteInk, hideTooltip, inkLevel, inkRecoveryCooldown);
+			return new TankData(infiniteInk, hideTooltip, inkLevel, maxCapacity, inkRecoveryCooldown);
 		}
 	}
 	public record WeaponPrecisionData(float chanceDecreaseDelay, float chance, float airborneDecreaseDelay,

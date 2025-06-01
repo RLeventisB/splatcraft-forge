@@ -18,8 +18,8 @@ import net.splatcraft.client.models.inktanks.ClassicInkTankModel;
 import net.splatcraft.client.models.inktanks.InkTankJrModel;
 import net.splatcraft.client.models.inktanks.InkTankModel;
 import net.splatcraft.dispenser.PlaceBlockDispenseBehavior;
-import net.splatcraft.items.BlockItem;
 import net.splatcraft.items.*;
+import net.splatcraft.items.BlockItem;
 import net.splatcraft.items.remotes.ColorChangerItem;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.RemoteItem;
@@ -48,14 +48,13 @@ public class SplatcraftItems
 	public static final ResourceLocation SPEED_MOD_IDENTIFIER = ResourceLocation.withDefaultNamespace("generic.movement_speed");
 	//Armor Materials
 	public static final RegistrySupplier<ArmorMaterial> INK_CLOTH = createArmorMaterial("ink_cloth", SoundEvents.ARMOR_EQUIP_LEATHER, 0, 0, 0, null);
+	public static final RegistrySupplier<ArmorMaterial> ARMORED_INK_TANK_MATERIAL = createArmorMaterial("armored_ink_tank", SoundEvents.ARMOR_EQUIP_IRON, 3, 0, 0.05f, null);
+	public static final RegistrySupplier<ArmorMaterial> DEFAULT_INK_TANK_MATERIAL = createArmorMaterial("ink_tank", SoundEvents.ARMOR_EQUIP_LEATHER, 0, 0, 0, null);
 	//Vanity
 	public static final RegistrySupplier<Item> inkClothHelmet = REGISTRY.register("ink_cloth_helmet", () -> new ColoredArmorItem(INK_CLOTH, ArmorItem.Type.HELMET));
 	public static final RegistrySupplier<Item> inkClothChestplate = REGISTRY.register("ink_cloth_chestplate", () -> new ColoredArmorItem(INK_CLOTH, ArmorItem.Type.CHESTPLATE));
 	public static final RegistrySupplier<Item> inkClothLeggings = REGISTRY.register("ink_cloth_leggings", () -> new ColoredArmorItem(INK_CLOTH, ArmorItem.Type.LEGGINGS));
 	public static final RegistrySupplier<Item> inkClothBoots = REGISTRY.register("ink_cloth_boots", () -> new ColoredArmorItem(INK_CLOTH, ArmorItem.Type.BOOTS));
-	public static final RegistrySupplier<ArmorMaterial> ARMORED_INK_TANK_MATERIAL = createArmorMaterial("armored_ink_tank", SoundEvents.ARMOR_EQUIP_IRON, 3, 0, 0.05f, null);
-	public static final RegistrySupplier<InkTankItem> armoredInkTank = REGISTRY.register("armored_ink_tank", () -> new InkTankItem("armored_ink_tank", 85, ARMORED_INK_TANK_MATERIAL));
-	public static final RegistrySupplier<ArmorMaterial> DEFAULT_INK_TANK_MATERIAL = createArmorMaterial("ink_tank", SoundEvents.ARMOR_EQUIP_LEATHER, 0, 0, 0, null);
 	//Shooters
 	public static final RegistrySupplier<ShooterItem> splattershot = ShooterItem.create(REGISTRY, "splattershot", "splattershot");
 	public static final RegistrySupplier<ShooterItem> ancientSplattershot = ShooterItem.create(REGISTRY, splattershot, "ancient_splattershot", true);
@@ -128,6 +127,7 @@ public class SplatcraftItems
 	public static final RegistrySupplier<InkTankItem> inkTank = REGISTRY.register("ink_tank", () -> new InkTankItem("ink_tank", 100));
 	public static final RegistrySupplier<InkTankItem> classicInkTank = REGISTRY.register("classic_ink_tank", () -> new InkTankItem("classic_ink_tank", 100));
 	public static final RegistrySupplier<InkTankItem> inkTankJr = REGISTRY.register("ink_tank_jr", () -> new InkTankItem("ink_tank_jr", 110));
+	public static final RegistrySupplier<InkTankItem> armoredInkTank = REGISTRY.register("armored_ink_tank", () -> new InkTankItem("armored_ink_tank", 85, ARMORED_INK_TANK_MATERIAL));
 	//Sub Weapons
 	public static final RegistrySupplier<SubWeaponItem> splatBomb = REGISTRY.register("splat_bomb", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb"));
 	public static final RegistrySupplier<SubWeaponItem> splatBomb2 = REGISTRY.register("splat_bomb_2", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SPLAT_BOMB, "splat_bomb").setSecret(true));
@@ -219,7 +219,7 @@ public class SplatcraftItems
 			add(allowedColorBarrier.value());
 			add(deniedColorBarrier.value());
 		}});
-		
+
 		DispenserBlock.registerBehavior(emptyInkwell.value(), new PlaceBlockDispenseBehavior());
 		DispenserBlock.registerBehavior(inkwell.value(), new PlaceBlockDispenseBehavior());
 	}
@@ -241,34 +241,34 @@ public class SplatcraftItems
 		ResourceLocation inkProperty = Splatcraft.identifierOf("ink");
 		ResourceLocation isLeftProperty = Splatcraft.identifierOf("is_left");
 		ResourceLocation unfoldedProperty = Splatcraft.identifierOf("unfolded");
-		
+
 		for (RemoteItem remote : RemoteItem.remotes)
 		{
 			Services.PLATFORM.registerItemProperty(remote, activeProperty, remote.getActiveProperty());
 			Services.PLATFORM.registerItemProperty(remote, modeProperty, remote.getModeProperty());
 		}
-		
+
 		for (InkTankItem tank : InkTankItem.inkTanks)
 		{
-			Services.PLATFORM.registerItemProperty(tank, inkProperty, (stack, level, entity, seed) -> InkTankItem.getInkAmount(stack) / tank.capacity);
+			Services.PLATFORM.registerItemProperty(tank, inkProperty, (stack, level, entity, seed) -> InkTankItem.getInkPercentage(stack));
 		}
-		
+
 		for (DualieItem dualie : DualieItem.dualies)
 		{
 			Services.PLATFORM.registerItemProperty(dualie, isLeftProperty, dualie.getIsLeft());
 		}
-		
+
 		for (RollerItem roller : RollerItem.rollers)
 		{
 			Services.PLATFORM.registerItemProperty(roller, unfoldedProperty, roller.getUnfolded());
 		}
-		
+
 		ClampedItemPropertyFunction coloredProperty = (stack, level, entity, seed) -> !ColorUtils.getInkColor(stack).isValid() ? 0 : 1;
 		Services.PLATFORM.registerItemProperty(canvas.value(), Splatcraft.identifierOf("inked"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coralite.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteSlab.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteStairs.value(), Splatcraft.identifierOf("colored"), coloredProperty);
-		
+
 		InkTankFeature.register(inkTank.value(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
 		InkTankFeature.register(classicInkTank.value(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
 		InkTankFeature.register(inkTankJr.value(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);

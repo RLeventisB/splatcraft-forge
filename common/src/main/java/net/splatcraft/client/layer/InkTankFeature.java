@@ -51,7 +51,7 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 			matrixStack.pushPose();
 
 			getParentModel().copyPropertiesTo((EntityModel<T>) model);
-			model.setInkLevels(InkTankItem.getInkAmount(itemStack) / item.capacity);
+			model.setInkLevels(InkTankItem.getInkPercentage(itemStack));
 			model.setupAnim(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
 			model.notifyState(getParentModel());
 

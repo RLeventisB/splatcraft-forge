@@ -36,13 +36,9 @@ import java.util.List;
 public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeItemDummy
 {
 	public static final ArrayList<InkTankItem> inkTanks = new ArrayList<>();
-	public final float capacity;
-	public final Item.Properties settings;
 	public InkTankItem(String tagId, float capacity, Holder<ArmorMaterial> material, Item.Properties settings)
 	{
-		super(material, Type.CHESTPLATE, settings.component(SplatcraftComponents.TANK_DATA, new SplatcraftComponents.TankData(false, false, 0, 0)));
-		this.capacity = capacity;
-		this.settings = settings;
+		super(material, Type.CHESTPLATE, settings.component(SplatcraftComponents.TANK_DATA, new SplatcraftComponents.TankData(false, false, 0, capacity, 0)));
 
 		inkTanks.add(this);
 		SplatcraftTags.Items.putInkTankTags(this, tagId);
@@ -57,13 +53,29 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	}
 	public static float getInkAmount(ItemStack stack)
 	{
-		if (!(stack.getItem() instanceof InkTankItem inkTankItem))
+		if (!(stack.getItem() instanceof InkTankItem))
 			return 0;
 
-		float capacity = inkTankItem.capacity;
 		SplatcraftComponents.TankData data = getTankData(stack);
-		if (data.infiniteInk()) return capacity;
-		return Mth.clamp(data.inkLevel(), 0, capacity);
+		if (data.infiniteInk()) return data.maxCapacity();
+		return Mth.clamp(data.inkLevel(), 0, data.maxCapacity());
+	}
+	public static float getInkCapacity(ItemStack stack)
+	{
+		if (!(stack.getItem() instanceof InkTankItem))
+			return 0;
+
+		SplatcraftComponents.TankData data = getTankData(stack);
+		return data.maxCapacity();
+	}
+	public static float getInkPercentage(ItemStack stack)
+	{
+		if (!(stack.getItem() instanceof InkTankItem))
+			return 0;
+
+		SplatcraftComponents.TankData data = getTankData(stack);
+		if (data.infiniteInk()) return 1f;
+		return Mth.clamp(data.inkLevel() / data.maxCapacity(), 0, 1f);
 	}
 	private static SplatcraftComponents.@Nullable TankData getTankData(ItemStack stack)
 	{
@@ -71,8 +83,11 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	}
 	public static void setInkAmount(ItemStack stack, float amount)
 	{
-		float capacity = ((InkTankItem) stack.getItem()).capacity;
-		stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkLevel(Math.min(capacity, amount)));
+		stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkLevelClamped(amount));
+	}
+	public static void setInkAmountUnclamped(ItemStack stack, float amount)
+	{
+		stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkLevel(amount));
 	}
 	public static boolean canRecharge(ItemStack stack, boolean updateCooldown)
 	{
@@ -109,7 +124,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 			Item using = player.getUseItem().getItem();
 			float rechargeMult = rechargeMult(stack, true);
 
-			if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < capacity
+			if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < getInkCapacity(stack)
 				&& (!EntityAction.hasEntityAction(player))
 				&& !PlayerCharge.hasCharge(player)
 				&& (!(using instanceof WeaponBaseItem)
@@ -137,14 +152,14 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 
 			if (type.isAdvanced())
 			{
-				tooltip.add(Component.translatable("item.splatcraft.ink_tank.ink", String.format("%.1f", getInkAmount(stack)), capacity));
+				tooltip.add(Component.translatable("item.splatcraft.ink_tank.ink", String.format("%.1f", getInkAmount(stack)), getInkCapacity(stack)));
 			}
 		}
 	}
 	@Override
 	public int getBarWidth(@NotNull ItemStack stack)
 	{
-		return (int) (getInkAmount(stack) / capacity * 13);
+		return (int) (getInkPercentage(stack) * 13);
 	}
 	@Override
 	public int getBarColor(@NotNull ItemStack stack)
@@ -157,7 +172,7 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 		return (inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.DURABILITY)) &&
-			stack.has(SplatcraftComponents.TANK_DATA) && getInkAmount(stack) < capacity;
+			stack.has(SplatcraftComponents.TANK_DATA) && getInkPercentage(stack) < 1;
 	}
 	@Override
 	public boolean phIsRepairable(@Nullable ItemStack stack)
@@ -173,6 +188,6 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	}
 	public void refill(ItemStack stack)
 	{
-		setInkAmount(stack, capacity);
+		setInkAmount(stack, Float.POSITIVE_INFINITY);
 	}
 }
