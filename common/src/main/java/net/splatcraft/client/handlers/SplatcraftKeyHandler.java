@@ -5,10 +5,12 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +25,6 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.items.SpecialProviderItem;
-import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -205,11 +206,12 @@ public class SplatcraftKeyHandler
 			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || optional.isPresent())
 			{
 				//autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
-				squidAndSubDelay = optional.map(
+				// i think its better that actions manage their own squid endlag tho
+				/*squidAndSubDelay = optional.map(
 					entityAction -> (int) (entityAction.getTime() + 10)
 				).orElseGet(
 					() -> (player.getUseItem().getItem() instanceof IChargeableWeapon ? 20 : 5)
-				);
+				);*/
 			}
 			else if (squidAndSubDelay > 0)
 			{
@@ -344,6 +346,12 @@ public class SplatcraftKeyHandler
 				}
 			}
 		}
+	}
+	public static void setSquidDelay(LivingEntity entity, float delay)
+	{
+		int delayInt = (int) delay;
+		if (delayInt > squidAndSubDelay && entity instanceof LocalPlayer)
+			squidAndSubDelay = delayInt;
 	}
 	public enum KeyMode
 	{

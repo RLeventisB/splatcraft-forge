@@ -12,14 +12,14 @@ public class ShootingHandler
 {
 	public static boolean isDoingShootingAction(LivingEntity entity)
 	{
-		boolean mainhandPrevent = entity.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getMainHandItem());
-		boolean offhandPrevent = entity.getOffhandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getOffhandItem());
+		boolean mainhandPrevent = entity.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getMainHandItem(), entity);
+		boolean offhandPrevent = entity.getOffhandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getOffhandItem(), entity);
 		return mainhandPrevent || offhandPrevent;
 	}
 	public static boolean isDoingShootingActionOnBothHands(LivingEntity entity)
 	{
-		boolean mainhandPrevent = entity.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getMainHandItem());
-		boolean offhandPrevent = entity.getOffhandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getOffhandItem());
+		boolean mainhandPrevent = entity.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getMainHandItem(), entity);
+		boolean offhandPrevent = entity.getOffhandItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventsChanging(entity.getOffhandItem(), entity);
 		return mainhandPrevent && offhandPrevent;
 	}
 	public static <C> void tickShootingComponent(@NotNull ItemStack stack, DataComponentType<C> componentType, C componentDefault, UnaryOperator<C> o)

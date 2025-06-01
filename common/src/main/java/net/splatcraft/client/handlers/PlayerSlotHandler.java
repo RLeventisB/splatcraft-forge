@@ -22,7 +22,7 @@ public class PlayerSlotHandler
 			{
 				return slot.getSlotIndex();
 			}
-			else if (selected.getItem() instanceof WeaponBaseItem<?> weaponBaseItem && weaponBaseItem.preventsChanging(selected))
+			else if (selected.getItem() instanceof WeaponBaseItem<?> weaponBaseItem && weaponBaseItem.preventsChanging(selected, player))
 			{
 				return player.getInventory().selected;
 			}

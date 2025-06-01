@@ -3,7 +3,6 @@ package net.splatcraft.items.weapons;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -294,9 +293,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
 		if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 		{
-			if (entity == Minecraft.getInstance().player)
-				SplatcraftKeyHandler.squidAndSubDelay = (int) shotData.miscEndlagTicks();
-			else if (!level.isClientSide)
+			SplatcraftKeyHandler.setSquidDelay(entity, shotData.miscEndlagTicks());
+
+			if (!level.isClientSide)
 			{
 				float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), shotData.accuracyData());
 				ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(hand));

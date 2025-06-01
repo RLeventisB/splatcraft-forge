@@ -82,6 +82,7 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		{
 			shootCurlingBomb(stack, level, entity, settings);
 		}
+		super.weaponUseTick(level, entity, stack, remainingUseTicks);
 	}
 	@Override
 	public boolean useOnRelease(@NotNull ItemStack stack)

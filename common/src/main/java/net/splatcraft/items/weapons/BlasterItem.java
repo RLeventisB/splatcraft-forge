@@ -1,6 +1,5 @@
 package net.splatcraft.items.weapons;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -77,9 +76,8 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	{
 		if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 		{
-			if (entity == Minecraft.getInstance().player)
-				SplatcraftKeyHandler.squidAndSubDelay = (int) settings.shotData.miscEndlagTicks();
-			else if (!level.isClientSide)
+			SplatcraftKeyHandler.setSquidDelay(entity, settings.shotData.miscEndlagTicks());
+			if (!level.isClientSide)
 			{
 				float divergence = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, entity));
 				for (int i = 0; i < settings.shotData.projectileCount(); i++)
@@ -102,7 +100,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 		return PlayerPosingHandler.WeaponPose.FIRE;
 	}
 	@Override
-	public boolean preventsChanging(ItemStack stack)
+	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
 	{
 		return SplatcraftComponents.getOptional(stack, SplatcraftComponents.SHOOTER_FIRING_DATA).map(SplatcraftComponents.ShooterFiringData::preventsChanging).orElse(false);
 	}

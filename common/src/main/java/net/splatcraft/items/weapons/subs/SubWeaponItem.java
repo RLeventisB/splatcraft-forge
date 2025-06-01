@@ -19,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -37,6 +38,7 @@ import java.util.List;
 
 public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extends WeaponBaseItem<SubWeaponSettings<Data>>
 {
+	private static final int SUB_WEAPON_ENDLAG = 7;
 	private static final ResourceKey<EntityType<?>> defaultSubEntityTypeId = ResourceKey.create(Registries.ENTITY_TYPE, ResourceLocation.tryBuild("splatcraft", "splat_bomb"));
 	public SubWeaponItem(RegistrySupplier<? extends EntityType<?>> entityType, String settings)
 	{
@@ -87,8 +89,15 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	{
 		// this !(bool && bool) confuses me
 		// nvm morgans law
-		if (!(player.isSwimming() && !player.isUnderWater()) && (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).dataRecord.inkUsage().consumption(), 0, true, true)))
-			player.startUsingItem(hand);
+		if (!(player.isSwimming() && !player.isUnderWater()))
+			if (singleUse(player.getItemInHand(hand)) || enoughInk(player, this, getSettings(player.getItemInHand(hand)).dataRecord.inkUsage().consumption(), 0, true, true))
+			{
+				player.startUsingItem(hand);
+			}
+			else
+			{
+				SplatcraftKeyHandler.setSquidDelay(player, SUB_WEAPON_ENDLAG);
+			}
 		return useSuper(world, player, hand);
 	}
 	@Override
@@ -106,7 +115,13 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
 		useSub(stack, world, entity, remainingUseTicks);
+		SplatcraftKeyHandler.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 		super.releaseUsing(stack, world, entity, remainingUseTicks);
+	}
+	@Override
+	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
+	{
+		SplatcraftKeyHandler.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)

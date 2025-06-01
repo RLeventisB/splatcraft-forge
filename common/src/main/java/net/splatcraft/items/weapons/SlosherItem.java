@@ -27,7 +27,6 @@ import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.AttackId;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
@@ -230,10 +229,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 
 						if (!didSound)
 						{
-							if (entity.level().isClientSide() && entity.equals(ClientUtils.getClientPlayer()))
-							{
-								SplatcraftKeyHandler.squidAndSubDelay = endlag;
-							}
+							SplatcraftKeyHandler.setSquidDelay(entity, endlag);
+
 							world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 							didSound = true;
 						}

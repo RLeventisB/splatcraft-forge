@@ -386,7 +386,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	{
 		return !ItemStack.isSameItem(oldStack, newStack);
 	}
-	public boolean preventsChanging(ItemStack stack)
+	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
 	{
 		return false;
 	}
