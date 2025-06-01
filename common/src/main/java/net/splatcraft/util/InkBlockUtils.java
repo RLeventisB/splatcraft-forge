@@ -436,23 +436,6 @@ public class InkBlockUtils
 		}
 		return originalDirection.getA();
 	}
-	/*public static Direction getSquidSustainedClimbingDirection(LivingEntity entity, float movementSideways, float movementForward, Direction face)
-	{
-		Vec3 horizontalImpulse = PlayerMovementHandler.getHorizontalImpulse(movementSideways, movementForward, entity.getYRot()).normalize().scale(entity.getDeltaMovement().length());
-		// if the user has too much "backward impulse", and is already going down, detach from the wall
-		if (horizontalImpulse.z < Mth.SQRT_OF_TWO && Math.abs(horizontalImpulse.x) < 0.5 && entity.getDeltaMovement().y < 1)
-			return null;
-
-		Vec3 inputVector = PlayerMovementHandler.getInputVectorWithClimbedDirection(face, movementSideways, movementForward, entity.getYRot(), entity.getXRot());
-		AABB extendedBox = entity.getBoundingBox().expandTowards(inputVector.x, inputVector.y, inputVector.z);
-
-		BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
-
-		Direction wallCollision = checkSquidCollisions(entity, collisions, extendedBox);
-		if (wallCollision == null)
-			return face;
-		return wallCollision;
-	}*/
 	private static Tuple<Optional<Direction>, VoxelShape> checkSquidCollisions(final LivingEntity entity, final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions, final AABB extendedBox)
 	{
 		return checkSquidCollisions(entity, collisions, extendedBox, entity.getBoundingBox().getCenter());
