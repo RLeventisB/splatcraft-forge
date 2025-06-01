@@ -31,7 +31,6 @@ import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftItems;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +129,7 @@ public class PlayerMovementHandler
 			Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
 			copyTo(input, clonedInput);
 
-			if (CommonUtils.isEntityMatchImmobile(player, info))
+			if (info.getMatchState(player).movementDisabled)
 			{
 				input.leftImpulse = 0;
 				input.forwardImpulse = 0;

@@ -1,5 +1,6 @@
 package net.splatcraft.util;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -15,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -29,76 +30,83 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.joml.Vector3f;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class ClientUtils
 {
 	@OnlyIn(Dist.CLIENT)
 	protected static final TreeMap<UUID, InkColor> clientColors = new TreeMap<>();
 	@OnlyIn(Dist.CLIENT)
-	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, Pair<Vec3, Vec2>[]> matchStartCameraPosProvider =
+	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, MatchCameraPositions> matchStartCameraPosProvider =
 		new DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<>((stage) ->
 		{
 			ClientLevel world = getClient().level;
 			// if the current world isn't the same as the stage's world, do nothing, we are the client, and thus we cant
 			// retrieve other worlds :(
 			if (world.dimension() != stage.worldKey)
-				return new Pair[0];
-			
+				return MatchCameraPositions.INVALID;
+
 			// gets the stage's (horizontal) center and find the highest y
-			float stageCenterX = (stage.cornerA.getX() + stage.cornerB.getX()) / 2f;
-			float stageCenterZ = (stage.cornerA.getZ() + stage.cornerB.getZ()) / 2f;
-			int minY = Math.min(stage.cornerA.getY(), stage.cornerB.getY());
-			int maxY = Math.max(stage.cornerA.getY(), stage.cornerB.getY());
-			ArrayList<Pair<Vec3, Vec2>> posAndRotations = new ArrayList<>();
-			
-			Vec3 stageFloorCenter = new Vec3(
+			AABB bounds = stage.getBounds();
+			int stageCenterX = (int) bounds.getCenter().x;
+			int stageCenterZ = (int) bounds.getCenter().z;
+			int minY = (int) bounds.minY;
+			int maxY = (int) bounds.maxY;
+
+			CameraPosition stageFloorCenter = new CameraPosition(new Vec3(
 				stageCenterX,
-				Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stage.cornerA.getY(), stage.cornerB.getY(), world, minY, maxY)).map(v -> (float) v.getY()).orElse((float) Math.min(stage.cornerA.getY(), stage.cornerB.getY())) + 2,
+				Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stageCenterX, stageCenterZ, world, minY, maxY))
+					.map(v -> (float) v.getY()).orElse((float) minY) + 2,
 				stageCenterZ
+			), 0.0f, 90.0f);
+
+			CameraPosition stageTopCenter = new CameraPosition(
+				stageFloorCenter.position.add(0, 25, 0),
+				0.0f, 90.0f
 			);
-			// rotation is handled outside of this
-			posAndRotations.add(Pair.of(stageFloorCenter, null));
-			
+
+			ImmutableList.Builder<CameraPosition> positions = ImmutableList.builder();
 			// spawn pads
 			Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
-			
+
 			// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
 			InkColor clientPlayerColor = getClientPlayerColor(getClientPlayer().getUUID());
 			List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
-			
+
 			if (clientSpawnPads != null)
 			{
 				spawnPadPositions.remove(clientPlayerColor);
-				
+
 				SpawnPadTileEntity randomClientPad = Util.getRandom(clientSpawnPads, world.random);
-				
-				addPadToList(randomClientPad, stageFloorCenter, posAndRotations);
+
+				addPadToList(randomClientPad, stageFloorCenter, positions);
 			}
-			
+
 			for (Map.Entry<InkColor, List<SpawnPadTileEntity>> spawnPadEntrySet : spawnPadPositions.entrySet())
 			{
 				SpawnPadTileEntity randomPad = Util.getRandom(spawnPadEntrySet.getValue(), world.random);
-				
-				addPadToList(randomPad, stageFloorCenter, posAndRotations);
+
+				addPadToList(randomPad, stageFloorCenter, positions);
 			}
-			
-			return posAndRotations.toArray(Pair[]::new);
+
+			return new MatchCameraPositions(stageFloorCenter, stageTopCenter, positions.build());
 		}
 		);
 	@OnlyIn(Dist.CLIENT)
 	public static Pair<UUID, Vector3f> killCamData;
-	private static void addPadToList(SpawnPadTileEntity randomPad, Vec3 stageFloorCenter, ArrayList<Pair<Vec3, Vec2>> posAndRotations)
+	private static void addPadToList(SpawnPadTileEntity spawnPad, CameraPosition stageFloorCenter, ImmutableList.Builder<CameraPosition> posAndRotations)
 	{
-		Vec3 spawnPadCenter = randomPad.getSuperJumpPos().add(0, 1, 0);
-		Vec3 dirCenterToPad = spawnPadCenter.subtract(stageFloorCenter).normalize();
-		Vec3 lookPosition = spawnPadCenter.subtract(dirCenterToPad.scale(3));
+		Vec3 spawnPadCenter = spawnPad.getSuperJumpPos().add(0, 3, 0);
+		Vec3 dirCenterToPad = spawnPadCenter.subtract(stageFloorCenter.position).normalize();
+		Vec3 lookPosition = spawnPadCenter.subtract(dirCenterToPad.scale(2)).subtract(0, 2, 0);
 		float pitch = (float) (Mth.atan2(dirCenterToPad.y, dirCenterToPad.horizontalDistance()) * Mth.RAD_TO_DEG);
 		float yaw = (float) (Mth.atan2(dirCenterToPad.x, dirCenterToPad.z) * Mth.RAD_TO_DEG);
-		
-		posAndRotations.add(Pair.of(lookPosition, new Vec2(-pitch, -yaw)));
+
+		posAndRotations.add(new CameraPosition(lookPosition, -yaw, -pitch));
 	}
 	@OnlyIn(Dist.CLIENT)
 	public static void resetClientColors()
@@ -133,12 +141,12 @@ public class ClientUtils
 	public static double getDurabilityForDisplay()
 	{
 		Player player = getClientPlayer();
-		
+
 		if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
 		{
 			return 0;
 		}
-		
+
 		ItemStack chestpiece = player.getItemBySlot(EquipmentSlot.CHEST);
 		if (chestpiece.getItem() instanceof InkTankItem item)
 		{
@@ -150,12 +158,12 @@ public class ClientUtils
 	{
 		if (te.getLevel() == null)
 			return false;
-		
+
 		BlockPos tePos = te.getBlockPos();
-		
+
 		Vector3f lookVec = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
 		Vec3 blockVec = Vec3.atBottomCenterOf(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
-		
+
 		Vec3 directionVec3d = blockVec.subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).normalize();
 		Vector3f directionVec = new Vector3f((float) directionVec3d.x, (float) directionVec3d.y, (float) directionVec3d.z);
 		if (lookVec.dot(directionVec) > 0)
@@ -164,7 +172,7 @@ public class ClientUtils
 			BlockState offset = te.getLevel().getBlockState(tePos.relative(direction));
 			return offset.equals(Blocks.BARRIER.defaultBlockState()) || !offset.isSolid() || !offset.isRedstoneConductor(te.getLevel(), tePos.relative(direction));
 		}
-		
+
 		return false;
 	}
 	public static void setSquid(EntityInfo cap, boolean newSquid)
@@ -184,8 +192,53 @@ public class ClientUtils
 		return Minecraft.getInstance();
 	}
 	@OnlyIn(Dist.CLIENT)
-	public static Pair<Vec3, Vec2>[] getMatchIntroData(Stage stage)
+	public static MatchCameraPositions getMatchIntroData(Stage stage)
 	{
 		return matchStartCameraPosProvider.apply(stage);
+	}
+	public record MatchCameraPositions(CameraPosition floorStart, CameraPosition birdsEye,
+	                                   List<CameraPosition> spawnPads)
+	{
+		public static final MatchCameraPositions INVALID = new MatchCameraPositions(CameraPosition.INVALID, CameraPosition.INVALID, List.of());
+	}
+	public record CameraPosition(Vec3 position, float yaw, float pitch)
+	{
+		public static final CameraPosition INVALID = new CameraPosition(null, Float.NaN, Float.NaN);
+		public static CameraPosition lerp(CameraPosition pos1, CameraPosition pos2, float value)
+		{
+			return new CameraPosition(pos1.position.lerp(pos2.position, value), Mth.rotLerp(value, pos1.yaw, pos2.yaw), Mth.rotLerp(value, pos1.pitch, pos2.pitch));
+		}
+		public static CameraPosition lerp(CameraPosition pos1, CameraPosition pos2, float positionValue, float rotationValue)
+		{
+			return new CameraPosition(pos1.position.lerp(pos2.position, positionValue), Mth.rotLerp(rotationValue, pos1.yaw, pos2.yaw), Mth.rotLerp(rotationValue, pos1.pitch, pos2.pitch));
+		}
+		public static CameraPosition from(Player player)
+		{
+			return new CameraPosition(player.getEyePosition(), player.getYRot(), player.getXRot());
+		}
+		public static CameraPosition from(Player player, float partialTicks)
+		{
+			return new CameraPosition(player.getEyePosition(partialTicks), player.getViewYRot(partialTicks), player.getViewXRot(partialTicks));
+		}
+		public CameraPosition withPitch(float pitch)
+		{
+			return new CameraPosition(position, yaw, pitch);
+		}
+		public CameraPosition withYaw(float yaw)
+		{
+			return new CameraPosition(position, yaw, pitch);
+		}
+
+		public void applyTransformations(TriConsumer<Double, Double, Double> positionConsumer, BiConsumer<Float, Float> rotationConsumer)
+		{
+			if (position != null)
+				positionConsumer.accept(position.x, position.y, position.z);
+			if (!Float.isNaN(yaw) && !Float.isNaN(pitch))
+				rotationConsumer.accept(yaw, pitch);
+		}
+		public CameraPosition add(double x, double y, double z)
+		{
+			return new CameraPosition(position.add(x, y, z), yaw, pitch);
+		}
 	}
 }

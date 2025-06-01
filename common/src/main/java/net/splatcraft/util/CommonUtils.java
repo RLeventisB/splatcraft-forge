@@ -52,8 +52,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.data.PlaySession;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -67,7 +65,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -113,22 +110,6 @@ public class CommonUtils
 			return new Vec3(vec.x, vec.y, vec.z);
 		}
 	};
-	public static boolean isEntityMatchImmobile(LivingEntity entity, EntityInfo info)
-	{
-		if (entity == null || info == null)
-			return false;
-
-		AtomicBoolean isImmobile = new AtomicBoolean(false);
-
-		PlaySession.getPlaySession(entity).ifPresent(session ->
-		{
-			Instant now = Instant.now();
-			if (now.isBefore(session.getMatchStartInstant()) || now.isAfter(session.getMatchEndInstant()) || info.isMatchRespawning())
-				isImmobile.set(true);
-		});
-
-		return isImmobile.get();
-	}
 	public static CustomPacketPayload.Type<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPacketPayload.Type<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));

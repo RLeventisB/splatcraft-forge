@@ -4,11 +4,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.splatcraft.data.PlaySession;
+import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public class EntityInfo
@@ -258,22 +262,41 @@ public class EntityInfo
 	}
 	public void setPlayingStageId(String stageId)
 	{
-		playingData = new PlayingData(stageId, playingData != null ? (playingData.respawnTime & 0x7FFFFFFF) : 0);
+		playingData = new PlayingData(stageId, playingData != null ? (playingData.respawnData & 0x7FFFFFFF) : 0);
 	}
 	public int getMatchRespawnTimeLeft()
 	{
 		if (playingData == null)
 			playingData = PlayingData.DEFAULT;
 
-		return playingData.respawnTime & 0b01111111111111111111111111111111;
+		return playingData.respawnData & 0x7fffffff;
 	}
 	public void setMatchRespawnTimeLeft(int time)
 	{
-		playingData = new PlayingData(getPlayingStageId(), (playingData.respawnTime & 0x80000000) | (time & 0x7FFFFFFF));
+		playingData = new PlayingData(getPlayingStageId(), (playingData.respawnData & 0x80000000) | (time & 0x7FFFFFFF));
 	}
 	public boolean isMatchRespawning()
 	{
-		return playingData != null && (playingData.respawnTime & 0x80000000) != 0;
+		return playingData != null && (playingData.respawnData & 0x80000000) != 0;
+	}
+	public MatchState getMatchState(LivingEntity entity)
+	{
+		if (isPlaying())
+		{
+			PlaySession session = SaveInfoCapability.get().playSessions().get(getPlayingStageId());
+			if (session != null && session.playerUuids.contains(entity.getUUID()))
+			{
+				Instant now = Instant.now();
+				if (now.isBefore(session.getMatchStartInstant()))
+					return MatchState.INTRO;
+				else if (now.isAfter(session.getMatchEndInstant()))
+					return MatchState.SEEING_RESULTS;
+				else if (isMatchRespawning())
+					return MatchState.RESPAWNING;
+				return MatchState.PLAYING;
+			}
+		}
+		return MatchState.NOT_PLAYING;
 	}
 	public void setIsMatchRespawning(boolean respawning)
 	{
@@ -281,22 +304,38 @@ public class EntityInfo
 		if (playingData != null)
 		{
 			if (respawning)
-				playingData = new PlayingData(playingData.playingStageId, playingData.respawnTime | lastBitActive);
+				playingData = new PlayingData(playingData.playingStageId, playingData.respawnData | lastBitActive);
 			else
-				playingData = new PlayingData(playingData.playingStageId, playingData.respawnTime & 0x7FFFFFFF);
+				playingData = new PlayingData(playingData.playingStageId, playingData.respawnData & 0x7FFFFFFF);
 		}
 		else
 			playingData = new PlayingData(null, respawning ? lastBitActive : 0);
 	}
+	public enum MatchState
+	{
+		NOT_PLAYING(false, false, false),
+		PLAYING(false, false, true),
+		INTRO(true, true, true),
+		RESPAWNING(true, true, true),
+		SEEING_RESULTS(true, true, true);
+		public final boolean movementDisabled, modifiesCamera, playing;
+
+		MatchState(boolean movementDisabled, boolean modifiesCamera, boolean playing)
+		{
+			this.movementDisabled = movementDisabled;
+			this.modifiesCamera = modifiesCamera;
+			this.playing = playing;
+		}
+	}
 	public record PlayingData(
 		String playingStageId,
-		int respawnTime
+		int respawnData // leftmost bit is used as a flag
 	)
 	{
 		public static final Codec<PlayingData> CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
 				Codec.STRING.optionalFieldOf("playing_stage_id").forGetter(playingData1 -> Optional.ofNullable(playingData1.playingStageId())),
-				Codec.INT.optionalFieldOf("respawn_time", 0).forGetter(PlayingData::respawnTime)
+				Codec.INT.optionalFieldOf("respawn_time", 0).forGetter(PlayingData::respawnData)
 			).apply(inst, (Optional<String> playingStageId, Integer respawnTime) -> new PlayingData(playingStageId.orElse(null), respawnTime))
 		);
 		public static final PlayingData DEFAULT = new PlayingData(null, 0);

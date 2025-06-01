@@ -15,6 +15,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -25,7 +26,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public final class PlaySession
@@ -47,10 +47,10 @@ public final class PlaySession
 	public final List<UUID> playerUuids;
 	public final StageGameMode gameMode;
 	public final String stageId;
-	// todo: implement pausing for singleplayer, but at the same time who will pause a match on singleplayer????
+	// todo: implement pausing for singleplayer, but at the same time who will pause a match on singleplayer????, or have one ig
 	// i put instants because they are pretty much epoch seconds and so if someone receives the
 	// packet for when the server starts a play session but the receiver get a lag spike, they wont be delayed
-	// and the match timer wont desync
+	// and the match timer wont desync, HOWEVER since they are received from the system clock ig they are different by region??
 	public final Instant sessionEndInstant;
 	private final Supplier<Instant> matchStartInstantSupplier, matchEndInstantSupplier;
 	public PlaySession(Collection<ServerPlayer> players, Stage stage, StageGameMode gameMode)
@@ -65,7 +65,7 @@ public final class PlaySession
 				info.setPlayingStageId(stage.id);
 			});
 		});
-		
+
 		this.gameMode = gameMode;
 		stageId = stage.id;
 		sessionEndInstant = Instant.now().plus(INTRO_DURATION).plusSeconds(gameMode.DEFAULT_TIME_SECONDS).plus(END_DURATION);
@@ -83,17 +83,19 @@ public final class PlaySession
 	}
 	public static Optional<PlaySession> getPlaySession(LivingEntity entity)
 	{
-		AtomicReference<PlaySession> result = new AtomicReference<>(null);
-		EntityInfoCapability.getOptional(entity).ifPresent(info ->
+		Optional<EntityInfo> infoOptional = EntityInfoCapability.getOptional(entity);
+		return infoOptional.flatMap(entityInfo -> getPlaySession(entity, entityInfo));
+	}
+	public static Optional<PlaySession> getPlaySession(LivingEntity entity, EntityInfo info)
+	{
+		PlaySession result = null;
+		if (info.isPlaying())
 		{
-			if (info.isPlaying() && info.getPlayingStageId() != null)
-			{
-				PlaySession session = SaveInfoCapability.get().playSessions().get(info.getPlayingStageId());
-				if (session != null && session.playerUuids.contains(entity.getUUID()))
-					result.set(session);
-			}
-		});
-		return Optional.ofNullable(result.get());
+			PlaySession session = SaveInfoCapability.get().playSessions().get(info.getPlayingStageId());
+			if (session != null && session.playerUuids.contains(entity.getUUID()))
+				result = session;
+		}
+		return Optional.ofNullable(result);
 	}
 	/**
 	 * Ticks all the play session related actions.
@@ -132,16 +134,16 @@ public final class PlaySession
 			Stage stage = SaveInfoCapability.get().stages().get(stageId);
 			ServerLevel world = stage.getStageWorld(server);
 			gameMode.onEnd.consume(this, world);
-			
+
 			playerUuids.forEach(uuid ->
 			{
 				if (world == null)
 					return;
-				
+
 				Player plr = world.getPlayerByUUID(uuid);
 				if (plr == null)
 					return;
-				
+
 				EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
 			});
 			SaveInfoCapability.get().playSessions().remove(stageId);
@@ -181,6 +183,7 @@ public final class PlaySession
 	{
 		NO_PLAYERS,
 		NORMAL,
-		STAGE_NOT_FOUND, FORCED
+		STAGE_NOT_FOUND,
+		FORCED
 	}
 }
