@@ -114,34 +114,34 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			return ItemInteractionResult.FAIL;
 		});
 	}
-	public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage)
+	public static boolean reduceInk(LivingEntity entity, Item item, float amount, float recoveryCooldown, boolean sendMessage)
 	{
-		return reduceInk(player, item, amount, recoveryCooldown, sendMessage, false);
+		return reduceInk(entity, item, amount, recoveryCooldown, sendMessage, false);
 	}
-	public static boolean reduceInk(LivingEntity player, Item item, float amount, float recoveryCooldown, boolean sendMessage, boolean force)
+	public static boolean reduceInk(LivingEntity entity, Item item, float amount, float recoveryCooldown, boolean sendMessage, boolean force)
 	{
-		if (!force && !enoughInk(player, item, amount, recoveryCooldown, sendMessage, false)) return false;
-		ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
+		if (!force && !enoughInk(entity, item, amount, recoveryCooldown, sendMessage, false)) return false;
+		ItemStack tank = entity.getItemBySlot(EquipmentSlot.CHEST);
 		if (tank.getItem() instanceof InkTankItem)
 			InkTankItem.setInkAmount(tank, InkTankItem.getInkAmount(tank) - amount);
 		return true;
 	}
-	public static boolean refundInk(LivingEntity player, float amount)
+	public static boolean refundInk(LivingEntity entity, float amount)
 	{
-		ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
+		ItemStack tank = entity.getItemBySlot(EquipmentSlot.CHEST);
 		InkTankItem.setInkAmount(tank, InkTankItem.getInkAmount(tank) + amount);
 		return true;
 	}
-	public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage)
+	public static boolean enoughInk(LivingEntity entity, Item item, float consumption, float recoveryCooldown, boolean sendMessage)
 	{
-		return enoughInk(player, item, consumption, recoveryCooldown, sendMessage, false);
+		return enoughInk(entity, item, consumption, recoveryCooldown, sendMessage, false);
 	}
-	public static boolean enoughInk(LivingEntity player, Item item, float consumption, float recoveryCooldown, boolean sendMessage, boolean sub)
+	public static boolean enoughInk(LivingEntity entity, Item item, float consumption, float recoveryCooldown, boolean sendMessage, boolean sub)
 	{
-		ItemStack tank = player.getItemBySlot(EquipmentSlot.CHEST);
-		if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-			|| player instanceof Player plr && plr.isCreative()
-			&& SplatcraftGameRules.getBooleanRuleValue(player.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+		ItemStack tank = entity.getItemBySlot(EquipmentSlot.CHEST);
+		if (!SplatcraftGameRules.getLocalizedRule(entity.level(), entity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
+			|| entity instanceof Player plr && plr.isCreative()
+			&& SplatcraftGameRules.getBooleanRuleValue(entity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
 		{
 			return true;
 		}
@@ -152,19 +152,19 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			if (!sub || enoughInk)
 				InkTankItem.setRecoveryCooldown(tank, recoveryCooldown);
 			if (!enoughInk && sendMessage)
-				sendNoInkMessage(player, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
+				sendNoInkMessage(entity, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
 			return enoughInk;
 		}
 		if (sendMessage)
-			sendNoInkMessage(player, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
+			sendNoInkMessage(entity, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
 		return false;
 	}
-	public static boolean hasInkInTank(LivingEntity livingEntity, Item item)
+	public static boolean hasInkInTank(LivingEntity entity, Item item)
 	{
-		ItemStack tank = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
-		if (!SplatcraftGameRules.getLocalizedRule(livingEntity.level(), livingEntity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
-			|| livingEntity instanceof Player player && player.isCreative()
-			&& SplatcraftGameRules.getBooleanRuleValue(livingEntity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
+		ItemStack tank = entity.getItemBySlot(EquipmentSlot.CHEST);
+		if (!SplatcraftGameRules.getLocalizedRule(entity.level(), entity.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK)
+			|| entity instanceof Player player && player.isCreative()
+			&& SplatcraftGameRules.getBooleanRuleValue(entity.level(), SplatcraftGameRules.INFINITE_INK_IN_CREATIVE))
 		{
 			return true;
 		}

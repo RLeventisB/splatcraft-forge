@@ -46,7 +46,7 @@ public class CodecUtils
 	}
 	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values)
 	{
-		final IntFunction<T> decoder = (index) -> values.get()[index];
+		final IntFunction<T> decoder = index -> values.get()[index];
 		final ToIntFunction<T> encoder = Enum::ordinal;
 		return ByteBufCodecs.idMapper(decoder, encoder);
 	}
@@ -70,31 +70,39 @@ public class CodecUtils
 	{
 		return Codec.STRING.comapFlatMap(id -> validateId(id, defaultNamespace), ResourceLocation::toString).stable();
 	}
+	public static StreamCodec<ByteBuf, ResourceLocation> identifierCustomNamespaceStreamCodec(String defaultNamespace)
+	{
+		return ByteBufCodecs.STRING_UTF8.map(id -> parse(id, defaultNamespace), ResourceLocation::toString);
+	}
 	private static DataResult<ResourceLocation> validateId(String id, String defaultNamespace)
 	{
 		try
 		{
-			int i = id.indexOf(':');
-			if (i >= 0)
-			{
-				String path = id.substring(i + 1);
-				if (i != 0)
-				{
-					String namespace = id.substring(0, i);
-					return DataResult.success(ResourceLocation.fromNamespaceAndPath(namespace, path));
-				}
-				else
-				{
-					return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, path));
-				}
-			}
-
-			return DataResult.success(ResourceLocation.fromNamespaceAndPath(defaultNamespace, id));
+			return DataResult.success(parse(id, defaultNamespace));
 		}
 		catch (ResourceLocationException var2)
 		{
 			return DataResult.error(() -> "Not a valid resource location: " + id + " " + var2.getMessage());
 		}
+	}
+	private static @NotNull ResourceLocation parse(String id, String defaultNamespace)
+	{
+		int i = id.indexOf(':');
+		if (i >= 0)
+		{
+			String path = id.substring(i + 1);
+			if (i != 0)
+			{
+				String namespace = id.substring(0, i);
+				return ResourceLocation.fromNamespaceAndPath(namespace, path);
+			}
+			else
+			{
+				return ResourceLocation.fromNamespaceAndPath(defaultNamespace, path);
+			}
+		}
+
+		return ResourceLocation.fromNamespaceAndPath(defaultNamespace, id);
 	}
 	public static class Codecs
 	{
@@ -104,6 +112,7 @@ public class CodecUtils
 			Instant::ofEpochSecond
 		);
 		public static final Codec<ResourceLocation> SPLATCRAFT_IDENTIFIER_CODEC = identifierCustomNamespace(Splatcraft.MODID);
+		public static final StreamCodec<ByteBuf, ResourceLocation> SPLATCRAFT_IDENTIFIER_STREAM_CODEC = identifierCustomNamespaceStreamCodec(Splatcraft.MODID);
 		public static final StreamCodec<ByteBuf, InteractionHand> PACKET_HAND = new StreamCodec<>()
 		{
 			@Override

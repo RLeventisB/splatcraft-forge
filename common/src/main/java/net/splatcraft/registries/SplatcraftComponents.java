@@ -3,6 +3,7 @@ package net.splatcraft.registries;
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
@@ -22,16 +23,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -40,77 +44,82 @@ public class SplatcraftComponents
 	public static final DataComponentType<TankData> TANK_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("tank_data"),
-		DataComponentType.<TankData>builder().persistent(TankData.CODEC).networkSynchronized(TankData.STREAM_CODEC).build()
+		DataComponentType.<TankData>builder().networkSynchronized(TankData.STREAM_CODEC).persistent(TankData.CODEC).build()
 	);
 	public static final DataComponentType<ItemColorData> ITEM_COLOR_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("item_color_data"),
-		DataComponentType.<ItemColorData>builder().persistent(ItemColorData.CODEC).networkSynchronized(ItemColorData.STREAM_CODEC).build()
+		DataComponentType.<ItemColorData>builder().networkSynchronized(ItemColorData.STREAM_CODEC).persistent(ItemColorData.CODEC).build()
 	);
 	public static final DataComponentType<WeaponPrecisionData> WEAPON_PRECISION_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("current_weapon_precision_data"),
-		DataComponentType.<WeaponPrecisionData>builder().persistent(WeaponPrecisionData.CODEC).build()
+		DataComponentType.<WeaponPrecisionData>builder().networkSynchronized(WeaponPrecisionData.STREAM_CODEC).persistent(WeaponPrecisionData.CODEC).build()
 	);
 	public static final DataComponentType<ShooterFiringData> SHOOTER_FIRING_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("shooter_firing_data"),
-		DataComponentType.<ShooterFiringData>builder().persistent(ShooterFiringData.CODEC).cacheEncoding().build()
+		DataComponentType.<ShooterFiringData>builder().networkSynchronized(ShooterFiringData.STREAM_CODEC).persistent(ShooterFiringData.CODEC).cacheEncoding().build()
+	);
+	public static final DataComponentType<ChargerFiringData> CHARGER_FIRING_DATA = Registry.register(
+		BuiltInRegistries.DATA_COMPONENT_TYPE,
+		Splatcraft.identifierOf("shooter_firing_data"),
+		DataComponentType.<ChargerFiringData>builder().networkSynchronized(ChargerFiringData.STREAM_CODEC).persistent(ChargerFiringData.CODEC).cacheEncoding().build()
 	);
 	public static final DataComponentType<ResourceLocation> WEAPON_SETTING_ID = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("settings_id"),
-		DataComponentType.<ResourceLocation>builder().persistent(ResourceLocation.CODEC).build()
+		DataComponentType.<ResourceLocation>builder().networkSynchronized(ResourceLocation.STREAM_CODEC).persistent(ResourceLocation.CODEC).build()
 	);
 	public static final DataComponentType<ResourceKey<EntityType<?>>> SUB_WEAPON_ENTITY_ID = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("sub_entity_id"),
-		DataComponentType.<ResourceKey<EntityType<?>>>builder().persistent(ResourceKey.codec(Registries.ENTITY_TYPE)).build()
+		DataComponentType.<ResourceKey<EntityType<?>>>builder().networkSynchronized(ResourceKey.streamCodec(Registries.ENTITY_TYPE)).persistent(ResourceKey.codec(Registries.ENTITY_TYPE)).build()
 	);
 	public static final DataComponentType<Boolean> SINGLE_USE = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("single_use"),
-		DataComponentType.<Boolean>builder().persistent(Codec.BOOL).build()
+		DataComponentType.<Boolean>builder().networkSynchronized(ByteBufCodecs.BOOL).persistent(Codec.BOOL).build()
 	);
 	public static final DataComponentType<String> TEAM_ID = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("team_id"),
-		DataComponentType.<String>builder().persistent(Codec.STRING).build()
+		DataComponentType.<String>builder().networkSynchronized(ByteBufCodecs.STRING_UTF8).persistent(Codec.STRING).build()
 	);
 	public static final DataComponentType<RemoteInfo> REMOTE_INFO = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("remote_info"),
-		DataComponentType.<RemoteInfo>builder().persistent(RemoteInfo.CODEC).build()
+		DataComponentType.<RemoteInfo>builder().networkSynchronized(RemoteInfo.STREAM_CODEC).persistent(RemoteInfo.CODEC).build()
 	);
 	public static final DataComponentType<Float> CHARGE = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("charge"),
-		DataComponentType.<Float>builder().persistent(Codec.FLOAT).build()
+		DataComponentType.<Float>builder().networkSynchronized(ByteBufCodecs.FLOAT).persistent(Codec.FLOAT).build()
 	);
 	public static final DataComponentType<CompoundTag> SUB_WEAPON_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("sub_weapon_data"),
-		DataComponentType.<CompoundTag>builder().persistent(CompoundTag.CODEC).build()
+		DataComponentType.<CompoundTag>builder().networkSynchronized(ByteBufCodecs.COMPOUND_TAG).persistent(CompoundTag.CODEC).build()
 	);
 	public static final DataComponentType<Boolean> IS_PLURAL = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("is_plural"),
-		DataComponentType.<Boolean>builder().persistent(Codec.BOOL).build()
+		DataComponentType.<Boolean>builder().networkSynchronized(ByteBufCodecs.BOOL).persistent(Codec.BOOL).build()
 	);
 	public static final DataComponentType<List<String>> BLUEPRINT_WEAPONS = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("blueprint_weapons"),
-		DataComponentType.<List<String>>builder().persistent(Codec.list(Codec.STRING)).build()
+		DataComponentType.<List<String>>builder().networkSynchronized(ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list())).persistent(Codec.list(Codec.STRING)).build()
 	);
 	public static final DataComponentType<List<ResourceLocation>> BLUEPRINT_ADVANCEMENTS = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("blueprint_advancements"),
-		DataComponentType.<List<ResourceLocation>>builder().persistent(Codec.list(ResourceLocation.CODEC)).build()
+		DataComponentType.<List<ResourceLocation>>builder().networkSynchronized(ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list())).persistent(Codec.list(ResourceLocation.CODEC)).build()
 	);
 	public static final DataComponentType<SpecialProviderData> SPECIAL_PROVIDER_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("special_provider_data"),
-		DataComponentType.<SpecialProviderData>builder().persistent(SpecialProviderData.CODEC).build()
+		DataComponentType.<SpecialProviderData>builder().networkSynchronized(SpecialProviderData.STREAM_CODEC).persistent(SpecialProviderData.CODEC).build()
 	);
 	public static <T> Optional<T> getOptional(ItemStack stack, DataComponentType<T> type)
 	{
@@ -135,7 +144,7 @@ public class SplatcraftComponents
 
 		default SELF tick(TimeAwareAction<SELF> onAction)
 		{
-			return tick(onAction, v -> (y -> y), 1f);
+			return tick(onAction, v -> y -> y, 1f);
 		}
 		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone)
 		{
@@ -190,6 +199,109 @@ public class SplatcraftComponents
 			UnaryOperator<SELF> run(float extraTime);
 		}
 	}
+	public record ChargerFiringData(float counter, boolean charging, boolean queuedShot)
+	{
+		public static final ChargerFiringData DEFAULT = new ChargerFiringData(Float.NaN, false, false);
+		public static final Codec<ChargerFiringData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			Codec.FLOAT.fieldOf("counter").forGetter(ChargerFiringData::counter),
+			Codec.BOOL.fieldOf("charging").forGetter(ChargerFiringData::charging),
+			Codec.BOOL.fieldOf("queued_shot").forGetter(ChargerFiringData::queuedShot)
+		).apply(inst, ChargerFiringData::new));
+		public static final StreamCodec<ByteBuf, ChargerFiringData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.FLOAT, ChargerFiringData::counter,
+			ByteBufCodecs.BOOL, ChargerFiringData::charging,
+			ByteBufCodecs.BOOL, ChargerFiringData::queuedShot,
+			ChargerFiringData::new
+		);
+		public ChargerFiringData tick(LivingEntity entity, ItemStack stack, ChargerWeaponSettings settings, float chargeMult, BiConsumer<Float, Float> onCharge, TimeAwareAction onRelease)
+		{
+			return tick(entity, stack, settings, chargeMult, onCharge, onRelease, 1);
+		}
+		public ChargerFiringData tick(LivingEntity entity, ItemStack stack, ChargerWeaponSettings settings, float chargeMult, BiConsumer<Float, Float> onCharge, TimeAwareAction onRelease, float timeDelta)
+		{
+			if (Float.isNaN(counter()))
+				return this;
+
+			if (counter >= 0)
+			{
+				boolean newCharging = charging && entity.isUsingItem();
+				float minChargeTime = settings.chargeData.minChargeTime();
+				float maxChargeTime = settings.chargeData.chargeTime();
+				float nextCounter = Math.min(counter + timeDelta * chargeMult, maxChargeTime + minChargeTime);
+
+				if (nextCounter < minChargeTime)
+				{
+					onCharge.accept(0f, 0f);
+					return new ChargerFiringData(nextCounter, newCharging, queuedShot);
+				}
+				else if (counter < minChargeTime && nextCounter >= minChargeTime)
+				{
+					if (!newCharging) // tap shot
+					{
+						float extraTime = nextCounter - minChargeTime;
+						return fireShotAndGoToEndlag(settings, onRelease, 0, extraTime);
+					}
+					float newCharge = (nextCounter - minChargeTime) / maxChargeTime;
+					stack.set(SplatcraftComponents.CHARGE, newCharge);
+
+					onCharge.accept(0f, newCharge);
+					return new ChargerFiringData(nextCounter, true, queuedShot);
+				}
+				else
+				{
+					float prevCharge = stack.get(SplatcraftComponents.CHARGE);
+					float newCharge = (nextCounter - minChargeTime) / maxChargeTime;
+					stack.set(SplatcraftComponents.CHARGE, newCharge);
+
+					if (!newCharging)
+					{
+						onRelease.run(newCharge, 0);
+						return fireShotAndGoToEndlag(settings, onRelease, newCharge, 0);
+					}
+					onCharge.accept(prevCharge, newCharge);
+					return new ChargerFiringData(nextCounter, true, queuedShot);
+				}
+			}
+			else
+			{
+				float nextCounter = counter + timeDelta;
+				if (nextCounter >= 0)
+				{
+					if (queuedShot)
+						return new ChargerFiringData(nextCounter * chargeMult, false, false);
+					return new ChargerFiringData(Float.NaN, false, false);
+				}
+				return new ChargerFiringData(nextCounter, true, false);
+			}
+		}
+		public @NotNull ChargerFiringData fireShotAndGoToEndlag(ChargerWeaponSettings settings, TimeAwareAction onRelease, float charge, float extraTime)
+		{
+			onRelease.run(charge, extraTime);
+			return new ChargerFiringData(-settings.shotData.endlagTicks() + extraTime, false, queuedShot);
+		}
+		public ChargerFiringData notifyUsage()
+		{
+			if (Float.isNaN(counter))
+				return new ChargerFiringData(0, true, true);
+
+			if (counter < 0)
+				return new ChargerFiringData(counter, false, true);
+
+			if (!charging)
+				return new ChargerFiringData(counter, false, true);
+			return new ChargerFiringData(counter, true, false);
+		}
+
+		public boolean preventsChanging()
+		{
+			return !Float.isNaN(counter);
+		}
+		@FunctionalInterface
+		public interface TimeAwareAction
+		{
+			void run(float charge, float extraTime);
+		}
+	}
 	public record ShooterFiringData(float counter, float startupTime, float repeatTime, float endlagTime,
 	                                boolean isRepeating) implements FiringData<ShooterFiringData>
 	{
@@ -199,6 +311,14 @@ public class SplatcraftComponents
 				apply(inst, ShooterFiringData::new)
 		);
 		public static final ShooterFiringData DEFAULT = new ShooterFiringData(0, 1, 1, 1, false);
+		public static final StreamCodec<ByteBuf, ShooterFiringData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.FLOAT, FiringData::counter,
+			ByteBufCodecs.FLOAT, FiringData::startupTime,
+			ByteBufCodecs.FLOAT, FiringData::repeatTime,
+			ByteBufCodecs.FLOAT, FiringData::endlagTime,
+			ByteBufCodecs.BOOL, FiringData::isRepeating,
+			ShooterFiringData::new
+		);
 		@Override
 		public ShooterFiringData withRepeatingFlag(boolean repeating)
 		{
@@ -254,6 +374,15 @@ public class SplatcraftComponents
 			BlockPos.CODEC.optionalFieldOf("point_b").forGetter(RemoteInfo::pointB),
 			Codec.INT.optionalFieldOf("mode_state", 0).forGetter(RemoteInfo::modeIndex)
 		).apply(builder, RemoteInfo::new));
+		public static final StreamCodec<ByteBuf, RemoteInfo> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), RemoteInfo::stageId,
+			ByteBufCodecs.optional(ResourceKey.streamCodec(Registries.DIMENSION)), RemoteInfo::worldKey,
+			ByteBufCodecs.optional(ByteBufCodecs.STRING_UTF8), RemoteInfo::targets,
+			ByteBufCodecs.optional(BlockPos.STREAM_CODEC), RemoteInfo::pointA,
+			ByteBufCodecs.optional(BlockPos.STREAM_CODEC), RemoteInfo::pointB,
+			ByteBufCodecs.INT, RemoteInfo::modeIndex,
+			RemoteInfo::new
+		);
 		public static final RemoteInfo DEFAULT = new RemoteInfo(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 0);
 		public RemoteInfo setStageId(String stageId)
 		{
@@ -339,6 +468,12 @@ public class SplatcraftComponents
 			Codec.FLOAT.optionalFieldOf("airborne_decrease_delay", 0f).forGetter(WeaponPrecisionData::airborneDecreaseDelay),
 			Codec.FLOAT.optionalFieldOf("airborne_influence", 0f).forGetter(WeaponPrecisionData::airborneInfluence)
 		).apply(builder, WeaponPrecisionData::new));
+		public static final StreamCodec<ByteBuf, WeaponPrecisionData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.FLOAT, WeaponPrecisionData::chanceDecreaseDelay,
+			ByteBufCodecs.FLOAT, WeaponPrecisionData::chance,
+			ByteBufCodecs.FLOAT, WeaponPrecisionData::airborneDecreaseDelay,
+			ByteBufCodecs.FLOAT, WeaponPrecisionData::airborneInfluence,
+			WeaponPrecisionData::new);
 		public static final WeaponPrecisionData DEFAULT = new WeaponPrecisionData(0, 0, 0, 0);
 		public WeaponPrecisionData withChanceDecreaseDelay(float chanceDecreaseDelay)
 		{
@@ -416,6 +551,14 @@ public class SplatcraftComponents
 				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
 				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)
 			).apply(inst, SpecialProviderData::new)
+		);
+		public static final StreamCodec<ByteBuf, SpecialProviderData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.optional(CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_STREAM_CODEC), SpecialProviderData::specialId,
+			ByteBufCodecs.optional(CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_STREAM_CODEC), SpecialProviderData::weaponIdFilter,
+			ByteBufCodecs.optional(ByteBufCodecs.INT), SpecialProviderData::pointsPerSpecialOverride,
+			ByteBufCodecs.BOOL, SpecialProviderData::allowSubs,
+			ByteBufCodecs.INT, SpecialProviderData::storedPoints,
+			SpecialProviderData::new
 		);
 		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), true, 0);
 		public boolean testWeapon(ItemStack stack)
