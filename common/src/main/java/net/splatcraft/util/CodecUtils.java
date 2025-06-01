@@ -52,19 +52,11 @@ public class CodecUtils
 	}
 	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
-		return hashMapCodec(keyCodec, valueCodec, false);
-	}
-	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec, boolean unsafeConvert)
-	{
-		return mapCodec(keyCodec, valueCodec, Object2ObjectOpenHashMap::new, unsafeConvert);
+		return mapCodec(keyCodec, valueCodec, Object2ObjectOpenHashMap::new);
 	}
 	public static <K, V, M extends Map<K, V>> Codec<M> mapCodec(Codec<K> keyCodec, Codec<V> valueCodec, Supplier<M> mapCreator)
 	{
-		return mapCodec(keyCodec, valueCodec, mapCreator, true);
-	}
-	public static <K, V, M extends Map<K, V>> Codec<M> mapCodec(Codec<K> keyCodec, Codec<V> valueCodec, Supplier<M> mapCreator, boolean unsafeConvert)
-	{
-		return new MapCodecNotToBeConfusedWithAMapCodec<>(keyCodec, valueCodec, mapCreator, unsafeConvert);
+		return new MapCodecNotToBeConfusedWithAMapCodec<>(keyCodec, valueCodec, mapCreator);
 	}
 	public static <E> Codec<ObjectArrayList<E>> arrayList(Codec<E> codec)
 	{
@@ -152,14 +144,12 @@ public class CodecUtils
 		private final Codec<V> elementCodec;
 		private final Supplier<M> mapCreator;
 		private final Supplier<String> classNameSupplier;
-		private final boolean unsafeConvert;
-		public MapCodecNotToBeConfusedWithAMapCodec(Codec<K> keyCodec, Codec<V> elementCodec, Supplier<M> mapCreator, boolean unsafeConvert)
+		public MapCodecNotToBeConfusedWithAMapCodec(Codec<K> keyCodec, Codec<V> elementCodec, Supplier<M> mapCreator)
 		{
 			this.keyCodec = keyCodec;
 			this.elementCodec = elementCodec;
 			this.mapCreator = mapCreator;
 			classNameSupplier = Suppliers.memoize(() -> mapCreator.get().getClass().getSimpleName());
-			this.unsafeConvert = unsafeConvert;
 		}
 		@Override
 		public <T> DataResult<Pair<M, T>> decode(final DynamicOps<T> ops, final T input)
@@ -174,7 +164,7 @@ public class CodecUtils
 		@Override
 		public String toString()
 		{
-			return classNameSupplier.get() + "Codec[" + keyCodec + " -> " + elementCodec + (unsafeConvert ? ", unsafeConvert" : "") + ']';
+			return classNameSupplier.get() + "Codec[" + keyCodec + " -> " + elementCodec + ']';
 		}
 		private <T> DataResult<M> decode(final DynamicOps<T> ops, final MapLike<T> input)
 		{
