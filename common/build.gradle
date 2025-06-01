@@ -14,6 +14,12 @@ neoForge {
         minecraftVersion = parchment_minecraft
         mappingsVersion = parchment_version
     }
+
+    runs {
+        configureEach {
+            jvmArguments = ["-XX:+AllowEnhancedClassRedefinition", "-XX:+IgnoreUnrecognizedVMOptions"]
+        }
+    }
 }
 
 dependencies {

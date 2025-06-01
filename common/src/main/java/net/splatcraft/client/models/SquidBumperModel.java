@@ -31,41 +31,41 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity>
 	{
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-		
+
 		PartDefinition Base = partdefinition.addOrReplaceChild("Base", CubeListBuilder.create().texOffs(0, 46).addBox(-5.0F, -2.0F, -5.0F, 10.0F, 2.0F, 10.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
-		
+
 		PartDefinition Bumper = partdefinition.addOrReplaceChild("Bumper", CubeListBuilder.create().texOffs(0, 0).addBox(-7.0F, -16.0F, -7.0F, 14.0F, 14.0F, 14.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 28).addBox(-6.0F, -22.0F, -6.0F, 12.0F, 6.0F, 12.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 1).addBox(-5.0F, -27.0F, -5.0F, 10.0F, 5.0F, 10.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 17).addBox(-4.0F, -30.0F, -4.0F, 8.0F, 3.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
-		
+
 		PartDefinition Left_Side = Bumper.addOrReplaceChild("Left_Side", CubeListBuilder.create().texOffs(72, 28).addBox(-11.3308F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, 0.7854F));
-		
+
 		PartDefinition Right_Side = Bumper.addOrReplaceChild("Right_Side", CubeListBuilder.create().texOffs(48, 28).mirror().addBox(1.3261F, -12.0465F, -1.5F, 10.0F, 10.0F, 2.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offsetAndRotation(-3.3308F, -12.7034F, 0.5F, 0.0F, 0.0F, -0.7854F));
-		
+
 		return LayerDefinition.create(meshdefinition, 128, 128);
 	}
 	@Override
 	public void setupAnim(@NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
 	{
-	
+
 	}
 	@Override
 	public void prepareMobModel(@NotNull SquidBumperEntity bumper, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(bumper, limbSwing, limbSwingAmount, partialTick);
-		
+
 		scale = bumper.getBumperScale(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
 		Bumper.yRot = Mth.DEG_TO_RAD * Mth.lerp(partialTick, bumper.yHeadRot, bumper.yHeadRotO) + (float) Math.PI;
-		
+
 		Base.xRot = 0.0F;
 		Base.yRot = 0.0F;
 		Base.zRot = 0.0F;
-		
+
 		float scale = bumper.getBumperScale(partialTick);
-		
+
 		Bumper.y = 24;
-		
+
 		if (bumper.getInkHealth() <= 0f)
 		{
 			Bumper.y *= 1 / scale;
@@ -75,7 +75,7 @@ public class SquidBumperModel extends EntityModel<SquidBumperEntity>
 	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
 	{
 		Base.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
-		
+
 		poseStack.pushPose();
 		poseStack.scale(scale, scale, scale);
 		Bumper.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);

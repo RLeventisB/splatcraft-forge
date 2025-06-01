@@ -102,10 +102,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public static Vec2 getDodgeRollVector(LivingEntity entity, float rollSpeed)
 	{
 		Vec2 direction = new Vec2(entity.xxa, entity.zza);
-		float p_20018_ = entity.getYRot(); // Entity::getInputVector
+		float yaw = entity.getYRot() * Mth.DEG_TO_RAD; // Entity::getInputVector
 		Vec2 vec3 = direction.normalized().scale(rollSpeed);
-		float f = Mth.sin(p_20018_ * (0.017453292f));
-		float f1 = Mth.cos(p_20018_ * (0.017453292f));
+		float f = Mth.sin(yaw);
+		float f1 = Mth.cos(yaw);
 		return new Vec2(vec3.x * f1 - vec3.y * f, vec3.y * f1 + vec3.x * f);
 	}
 	public static boolean canPerformRoll(LivingEntity entity)
@@ -318,6 +318,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(level.getRandom(), 0.95F, 0.095F));
 			}
 		}
+	}
+	@Override
+	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
+	{
+		return SplatcraftComponents.getOptional(stack, SplatcraftComponents.SHOOTER_FIRING_DATA).map(SplatcraftComponents.ShooterFiringData::preventsChanging).orElse(false);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
