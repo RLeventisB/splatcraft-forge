@@ -381,6 +381,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 		return null;
 	}
 
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
 	{

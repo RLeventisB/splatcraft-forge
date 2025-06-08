@@ -24,6 +24,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
@@ -83,6 +85,7 @@ public interface IPlatformHelper extends IEventMap
 	}
 	// yes this could've used architectury api because these are literally the same functions from https://github.com/architectury/architectury-api
 	// however, that is one more jar and i am FRIGHTENED that the mod doesnt let me hotswap
+	@OnlyIn(Dist.CLIENT)
 	void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function);
 	<A extends ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>, I extends ArgumentTypeInfo<A, T>> void registerCommandArgument(String argumentName, Class<A> infoClass, I argumentTypeInfo);
 	void registerDataTracker(String name, EntityDataSerializer<?> handler);
