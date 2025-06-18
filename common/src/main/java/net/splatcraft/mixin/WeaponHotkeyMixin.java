@@ -5,7 +5,6 @@ import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
-import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +21,7 @@ public class WeaponHotkeyMixin
 		{
 			if (
 				SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getUsedItemHand() == InteractionHand.OFF_HAND ||
-					EntityAction.hasActionAnd(player, EntityAction::preventStopUsing) ||
-					((player.getUseItem().getItem() instanceof WeaponBaseItem<?> weaponItem && weaponItem.preventStopUsingWeapon(player.level(), player)))
+					EntityAction.hasActionAnd(player, EntityAction::preventStopUsing)
 			)
 				callbackInfo.cancel();
 		}

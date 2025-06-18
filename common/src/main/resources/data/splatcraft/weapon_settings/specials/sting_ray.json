@@ -4,7 +4,7 @@
     "special_duration": 7.17,
     "startup_ticks": 42,
     "shockwave_delay": 90,
-    "painting_radius": 15,
+    "painting_radius": 8,
     "mobility_on_use": 0.6,
     "damage_center": 1.8,
     "damage_shockwave": 1.5,

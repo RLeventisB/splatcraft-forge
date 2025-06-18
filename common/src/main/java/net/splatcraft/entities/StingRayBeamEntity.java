@@ -6,13 +6,17 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -36,10 +40,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	private static final EntityDataAccessor<Integer> TIME_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Vector2f> WIDTH_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
 	private static final EntityDataAccessor<Vector2f> TURNING_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
-	public float rayDamage, shockwaveDamage;
+	public float rayDamage, shockwaveDamage, paintingRadius, paintingClipSize;
+	public InkBlockUtils.InkType inkType;
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, Level world)
 	{
-		this(type, world, 0, 0, 0, 0, 0, 0);
+		this(type, world, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type,
 	                          Level world,
@@ -48,7 +53,9 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	                          float rayWidth,
 	                          float shockwaveWidth,
 	                          float rayDamage,
-	                          float shockwaveDamage
+	                          float shockwaveDamage,
+	                          float paintingRadius,
+	                          float paintingClipSize
 	)
 	{
 		super(type, world);
@@ -60,6 +67,8 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		setShockwaveWidth(shockwaveWidth);
 		this.rayDamage = rayDamage;
 		this.shockwaveDamage = shockwaveDamage;
+		this.paintingRadius = paintingRadius;
+		this.paintingClipSize = paintingClipSize;
 	}
 	public StingRayBeamEntity(Level world,
 	                          LivingEntity owner,
@@ -71,10 +80,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	                          float rayWidth,
 	                          float shockwaveWidth,
 	                          float rayDamage,
-	                          float shockwaveDamage
-	)
+	                          float shockwaveDamage,
+	                          float paintingRadius,
+	                          float paintSearchRadius)
 	{
-		this(SplatcraftEntities.STING_RAY_PROJECTILE.get(), world, turningValue, turningValueWithShockwave, rayWidth, shockwaveWidth, rayDamage, shockwaveDamage);
+		this(SplatcraftEntities.STING_RAY_PROJECTILE.get(), world, turningValue, turningValueWithShockwave, rayWidth, shockwaveWidth, rayDamage, shockwaveDamage, paintingRadius, paintSearchRadius);
 		setColor(color);
 		setOwner(owner);
 		refreshDimensions();
@@ -85,6 +95,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		setShockwaveDelay(shockwaveDelay);
 		updatePosForward(owner);
 		updateRotation();
+		inkType = InkBlockUtils.getInkType(owner);
 		xRotO = getXRot();
 		yRotO = getYRot();
 	}
@@ -187,10 +198,23 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				);
 			}
 			else
+			{
 				doCollisions(forward);
+				paint(forward);
+			}
 		}
 
 		setLifespan(lifespan + 1);
+	}
+	public void paint(Vec3 forward)
+	{
+		ClipContext context = new ClipContext(position(), position().add(forward.scale(paintingClipSize)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this);
+		BlockHitResult result = level().clip(context);
+		if (result.getType() == HitResult.Type.MISS)
+			return;
+
+		Vec3 smallNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal()).scale(0.01);
+		InkExplosion.createInkExplosion(this, result.getLocation().add(smallNormal), paintingRadius, inkType, ItemStack.EMPTY);
 	}
 	private Vec3 updatePosForward(LivingEntity owner)
 	{
@@ -345,6 +369,9 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			setShockwaveWidth(valuesNbt.getFloat("ShockwaveWidth"));
 			rayDamage = valuesNbt.getFloat("RayDmg");
 			shockwaveDamage = valuesNbt.getFloat("ShockwaveDmg");
+			paintingRadius = valuesNbt.getFloat("RayPaintSize");
+			paintingClipSize = valuesNbt.getFloat("RayPaintSearch");
+			inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(valuesNbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 		}
 		super.readAdditionalSaveData(nbt);
 	}
@@ -360,6 +387,9 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		valuesNbt.putFloat("ShockwaveWidth", getShockwaveWidth());
 		valuesNbt.putFloat("RayDmg", rayDamage);
 		valuesNbt.putFloat("ShockwaveDmg", shockwaveDamage);
+		valuesNbt.putFloat("RayPaintSize", paintingRadius);
+		valuesNbt.putFloat("RayPaintSearch", paintingClipSize);
+		valuesNbt.putString("InkType", inkType.getIdString());
 		nbt.put("RayValues", valuesNbt);
 		super.addAdditionalSaveData(nbt);
 	}

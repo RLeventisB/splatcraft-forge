@@ -59,7 +59,9 @@ public class StingRayAction extends BaseSpecialAction
 					specialData.radiusCenter(),
 					specialData.radiusShockwave(),
 					specialData.damageCenter(),
-					specialData.damageShockwave()
+					specialData.damageShockwave(),
+					specialData.paintingRadius(),
+					specialData.paintSearchRadius()
 				);
 				serverWorld.addFreshEntity(beam);
 			}

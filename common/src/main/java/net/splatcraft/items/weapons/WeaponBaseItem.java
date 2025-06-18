@@ -341,7 +341,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		// this returns true if there is no cooldown, or the cooldown has preventWeaponUse set as false
 		boolean notPreventedByAction = !EntityAction.hasActionAnd(user, EntityAction::preventWeaponUse);
 
-		if (notPreventedByAction && ((!(user instanceof Player player) || !CommonUtils.anyWeaponOnCooldown(player))))
+		if (notPreventedByAction && !(user instanceof Player player && CommonUtils.anyWeaponOnCooldown(player)))
 		{
 			weaponUseTick(world, user, stack, remainingUseTicks);
 			user.setSprinting(false);
@@ -355,10 +355,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 
-	}
-	public boolean preventStopUsingWeapon(Level world, LivingEntity entity)
-	{
-		return false;
 	}
 	public void onPlayerCooldownEnd(Level world, Player player, ItemStack stack, EntityAction action)
 	{
