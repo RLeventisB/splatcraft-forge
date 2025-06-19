@@ -304,26 +304,30 @@ public class PlayerMovementHandler
 		{
 			if (entityInfo.canChargeSquidSurge())
 			{
-				entityInfo.getClimbedDirection().ifPresent(climbDirection ->
-				{
-					if (jumping) // charge squid surge
+				entityInfo.getClimbedDirection().ifPresentOrElse(climbDirection ->
 					{
-						deltaMovement.set(deltaMovement.get().scale(1f / (1f + entityInfo.getSquidSurgeState() / 2f)));
+						if (jumping) // charge squid surge
+						{
+							deltaMovement.set(deltaMovement.get().scale(1f / (1f + entityInfo.getSquidSurgeState() / 2f)));
 
-						entityInfo.chargeSquidSurge();
-					}
-					else // release squid surge
+							entityInfo.chargeSquidSurge();
+						}
+						else // release squid surge
+						{
+							if (entityInfo.flagSquidSurgeUsage()) // do squid surge logic
+							{
+								deltaMovement.set(new Vec3(0, 0.3, 0));
+							}
+							else
+							{
+								entityInfo.setSquidSurgeState(0);
+							}
+						}
+					},
+					() ->
 					{
-						if (entityInfo.flagSquidSurgeUsage()) // do squid surge logic
-						{
-							deltaMovement.set(new Vec3(0, 0.3, 0));
-						}
-						else
-						{
-							entityInfo.setSquidSurgeState(0);
-						}
-					}
-				});
+						entityInfo.setSquidSurgeState(0);
+					});
 			}
 			else if (entityInfo.getSquidSurgeState() < 0) // is on cooldown
 			{
@@ -367,28 +371,4 @@ public class PlayerMovementHandler
 	{
 		return new Vec3(0, -movementForward, movementSideways).xRot(-yaw * Mth.DEG_TO_RAD);
 	}
-	/*public static Vec3 getInputVectorWithClimbedDirection(Direction climbedDirection, float movementSideways, float movementForward, float yaw, float pitch)
-	{
-		if (climbedDirection == null)
-			climbedDirection = Direction.UP;
-
-		if (climbedDirection.getStepX() != 0 || climbedDirection.getStepY() != 0)
-		{
-			float c = yaw;
-			yaw = pitch;
-			pitch = c;
-		}
-
-		Vec3 input = getHorizontalImpulse(movementSideways, movementForward, yaw);
-
-		switch (climbedDirection.getAxis())
-		{
-			case X -> input = new Vec3(0, input.z, input.x);
-			case Z -> input = new Vec3(input.x, input.z, 0);
-		}
-		if (climbedDirection.getAxisDirection() == Direction.AxisDirection.POSITIVE)
-			return input.scale(-1);
-
-		return input;
-	}*/
 }
