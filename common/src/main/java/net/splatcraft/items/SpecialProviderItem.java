@@ -169,6 +169,9 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		if (world.isClientSide())
 			return;
 
+		if (EntityAction.hasEntityAction(entity))
+			return;
+
 		InteractionHand hand = entity.getUsedItemHand();
 		SpecialProviderData data = getData(providerStack);
 		ServerPlayer serverPlayer = entity instanceof ServerPlayer ? (ServerPlayer) entity : null;

@@ -20,7 +20,8 @@ public class SpecialWeaponRecords
 		float turningValue,
 		float turningValueWithShockwave,
 		float revealRadius,
-		float paintingRadius
+		float paintingRadius,
+		float paintSearchRadius
 	) implements DynamicDataRecord<StingRayDataRecord>
 	{
 		public static final MapCodec<StingRayDataRecord> CODEC = RecordCodecBuilder.mapCodec(
@@ -35,7 +36,8 @@ public class SpecialWeaponRecords
 				Codec.FLOAT.fieldOf("turning_value").forGetter(StingRayDataRecord::turningValue),
 				Codec.FLOAT.fieldOf("turning_value_with_shockwave").forGetter(StingRayDataRecord::turningValueWithShockwave),
 				Codec.FLOAT.fieldOf("reveal_radius").forGetter(StingRayDataRecord::revealRadius),
-				Codec.FLOAT.fieldOf("painting_radius").forGetter(StingRayDataRecord::paintingRadius)
+				Codec.FLOAT.fieldOf("painting_radius").forGetter(StingRayDataRecord::paintingRadius),
+				Codec.FLOAT.optionalFieldOf("painting_search_radius", 1000f).forGetter(StingRayDataRecord::paintSearchRadius)
 			).apply(inst, StingRayDataRecord::new)
 		);
 		public static final ResourceLocation ID = Splatcraft.identifierOf("sting_ray");
@@ -53,7 +55,8 @@ public class SpecialWeaponRecords
 				turningValue,
 				turningValueWithShockwave,
 				revealRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
-				paintingRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare
+				paintingRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				paintSearchRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare
 			);
 		}
 	}

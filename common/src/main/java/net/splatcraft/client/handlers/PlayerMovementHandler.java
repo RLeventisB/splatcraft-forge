@@ -110,15 +110,25 @@ public class PlayerMovementHandler
 	}
 	private static void tickWeaponMobilityAttribute(LivingEntity entity, AttributeInstance speedAttribute)
 	{
-		ItemStack useStack = entity.getUseItem();
 		if (speedAttribute.hasModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID))
 			speedAttribute.removeModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID);
 
-		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.hasSpeedModifier(entity, useStack))
+		ItemStack useStack = entity.getMainHandItem();
+		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.preventsChanging(useStack, entity) && weapon.hasSpeedModifier(entity, useStack))
 		{
 			var mod = weapon.getSpeedModifier(entity, useStack);
 			if (!speedAttribute.hasModifier(mod.id()))
 				speedAttribute.addTransientModifier(mod);
+		}
+		else
+		{
+			useStack = entity.getOffhandItem();
+			if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.preventsChanging(useStack, entity) && weapon.hasSpeedModifier(entity, useStack))
+			{
+				var mod = weapon.getSpeedModifier(entity, useStack);
+				if (!speedAttribute.hasModifier(mod.id()))
+					speedAttribute.addTransientModifier(mod);
+			}
 		}
 	}
 	@OnlyIn(Dist.CLIENT)

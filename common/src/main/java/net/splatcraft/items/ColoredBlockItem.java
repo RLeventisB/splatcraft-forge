@@ -138,7 +138,7 @@ public class ColoredBlockItem extends BlockItem implements IColoredItem, ISplatc
 	{
 		super.inventoryTick(stack, world, entityIn, itemSlot, isSelected);
 
-		if (matchColor && (!ColorUtils.getInkColor(stack).isValid() || !ColorUtils.isColorLocked(stack)))
+		if (matchColor && (ColorUtils.getInkColor(stack).isInvalid() || !ColorUtils.isColorLocked(stack)))
 		{
 			ColorUtils.withInkColor(stack, entityIn instanceof LivingEntity living && EntityInfoCapability.hasCapability(living) ?
 				ColorUtils.getEntityColor(entityIn) : ColorUtils.getDefaultColor());

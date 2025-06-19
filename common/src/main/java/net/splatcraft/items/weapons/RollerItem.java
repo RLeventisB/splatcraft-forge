@@ -306,6 +306,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	{
 		return getSettings(stack).isBrush ? PlayerPosingHandler.WeaponPose.BRUSH : PlayerPosingHandler.WeaponPose.ROLLER_SWING;
 	}
+	@Override
+	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
+	{
+		return EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || entity.getUseItem().equals(stack);
+	}
 	public static class InitialSwingAction extends EntityActionWithTime
 	{
 		public static final Codec<InitialSwingAction> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -533,7 +538,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		@Override
 		public boolean preventWeaponUse()
 		{
-			return true;
+			return !canQueueSwing();
 		}
 		@Override
 		public ItemStack getStoredStack()

@@ -1,7 +1,6 @@
 package net.splatcraft.handlers;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -21,7 +20,6 @@ import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
@@ -236,30 +234,29 @@ public class SplatcraftCommonHandler
 	}
 	public static void capabilityUpdateEvent(Player player)
 	{
-		if (EntityInfoCapability.hasCapability(player))
+		EntityInfoCapability.getOptional(player).ifPresent(info ->
 		{
-			EntityInfo info = EntityInfoCapability.get(player);
 			if (player.deathTime <= 0 && !info.isInitialized())
 			{
 				info.setInitialized(true);
 
-				if (player.level().isClientSide() && player instanceof LocalPlayer)
+				if (player.isLocalPlayer())
 				{
 					SplatcraftPacketHandler.sendToServer(new RequestEntityInfoPacket(player));
 				}
 			}
 
-			if (player instanceof ServerPlayer)
+			if (!player.isLocalPlayer())
 			{
 				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
 
-				if (!net.minecraft.world.item.ItemStack.isSameItem(info.getInkBand(), inkBand))
+				if (!ItemStack.isSameItem(info.getInkBand(), inkBand))
 				{
 					info.setInkBand(inkBand);
 					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(player), player);
 				}
 			}
-		}
+		});
 	}
 	public static void onWorldTick(ServerLevel world)
 	{

@@ -1,12 +1,14 @@
 package net.splatcraft.util;
 
+import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 
 // oh wait mojang has a class for these
 // but it uses 3 times more ram and thats not acceptable >:(
@@ -20,14 +22,16 @@ public interface NumberRange<NUMTYPE extends Number>
 	{
 		return Codec.list(numberCodec, 2, 2).xmap(v -> constructor.apply(v.getFirst(), v.get(1)), v -> List.of(v.min(), v.max()));
 	}
+	static <NUMTYPE extends Number, RANGE extends NumberRange<NUMTYPE>> Products.P2<RecordCodecBuilder.Mu<RANGE>, NUMTYPE, NUMTYPE> objectCodecStart(RecordCodecBuilder.Instance<RANGE> inst, Codec<NUMTYPE> numberCodec)
+	{
+		return inst.group(
+			numberCodec.fieldOf("min").forGetter(RANGE::min),
+			numberCodec.fieldOf("max").forGetter(RANGE::max)
+		);
+	}
 	static <NUMTYPE extends Number, RANGE extends NumberRange<NUMTYPE>> Codec<RANGE> createObjectCodec(Codec<NUMTYPE> numberCodec, BiFunction<NUMTYPE, NUMTYPE, RANGE> constructor)
 	{
-		return RecordCodecBuilder.create(
-			inst -> inst.group(
-				numberCodec.fieldOf("min").forGetter(RANGE::min),
-				numberCodec.fieldOf("max").forGetter(RANGE::max)
-			).apply(inst, constructor)
-		);
+		return RecordCodecBuilder.create(inst -> objectCodecStart(inst, numberCodec).apply(inst, constructor));
 	}
 	NUMTYPE min();
 	NUMTYPE max();
@@ -64,6 +68,41 @@ public interface NumberRange<NUMTYPE extends Number>
 		public FloatRange mapBoth(Function<Float, Float> mapper)
 		{
 			return new FloatRange(mapper.apply(min), mapper.apply(max));
+		}
+	}
+	record FloatRangeShifted(
+		Float min,
+		Float max,
+		float minProgress,
+		float maxProgress
+	) implements NumberRange<Float>
+	{
+		public static final FloatRangeShifted ZERO = new FloatRangeShifted(0f, 0f, 0, 1f);
+		public static final Codec<FloatRangeShifted> CODEC = RecordCodecBuilder.create(
+			inst -> NumberRange.objectCodecStart(inst, Codec.FLOAT).and(
+				inst.group(
+					Codec.FLOAT.fieldOf("min_progress").forGetter(FloatRangeShifted::minProgress),
+					Codec.FLOAT.fieldOf("max_progress").forGetter(FloatRangeShifted::maxProgress)
+				)
+			).apply(inst, FloatRangeShifted::new)
+		);
+		public static FloatRangeShifted create(float min, float max)
+		{
+			return new FloatRangeShifted(min, max, 0f, 1f);
+		}
+		@Override
+		public Float getValue(float progress)
+		{
+			if (progress < minProgress)
+				return min;
+			if (progress > maxProgress)
+				return max;
+			return Mth.lerp((progress - minProgress) / (maxProgress - minProgress), min, max);
+		}
+		@Override
+		public FloatRangeShifted mapBoth(Function<Float, Float> mapper)
+		{
+			return new FloatRangeShifted(mapper.apply(min), mapper.apply(max), minProgress, maxProgress);
 		}
 	}
 	record IntRange(
