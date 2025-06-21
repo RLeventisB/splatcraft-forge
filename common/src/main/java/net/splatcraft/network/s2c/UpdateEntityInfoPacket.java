@@ -9,7 +9,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,7 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
-		
+
 		if (target != null)
 		{
 			DataResult<EntityInfo> result = EntityInfo.CODEC.parse(NbtOps.INSTANCE, nbt);
@@ -56,7 +55,6 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 			{
 				EntityInfo entityInfo = result.getOrThrow();
 				EntityInfoCapability.set(target, entityInfo);
-				ClientUtils.setClientPlayerColor(this.target, entityInfo.getColor());
 			}
 		}
 	}

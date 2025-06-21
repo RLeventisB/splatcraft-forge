@@ -21,9 +21,9 @@ import java.util.Optional;
 public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWeaponSettings, DataRecord>
 {
 	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
-	public ShotDataRecord firstChargeLevelShot = ShotDataRecord.DEFAULT;
+	public SplatlingShotDataRecord firstChargeLevelShot = SplatlingShotDataRecord.DEFAULT;
 	public ProjectileDataRecord firstChargeLevelProjectile = ProjectileDataRecord.DEFAULT;
-	public ShotDataRecord secondChargeLevelShot = ShotDataRecord.DEFAULT;
+	public SplatlingShotDataRecord secondChargeLevelShot = SplatlingShotDataRecord.DEFAULT;
 	public ProjectileDataRecord secondChargeLevelProjectile = ProjectileDataRecord.DEFAULT;
 	public ChargeDataRecord chargeData = ChargeDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
@@ -66,7 +66,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return stack.getOrDefault(SplatcraftComponents.CHARGE, 1f) > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
+		return stack.getOrDefault(SplatcraftComponents.CHARGE_DATA, SplatcraftComponents.ChargeData.DEFAULT).charge() > 1 ? secondChargeLevelShot.accuracyData : firstChargeLevelShot.accuracyData;
 	}
 	@Override
 	public void processData(DataRecord data)
@@ -110,13 +110,13 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	}
 	public float getDualieOffhandFiringOffset(boolean secondChargeLevel) // ok this would be funny to implement
 	{
-		return firstChargeLevelShot.firingSpeed / 2;
+		return firstChargeLevelShot.repeatTicks / 2;
 	}
 	public record DataRecord(
 		ProjectileDataRecord projectile,
-		ShotDataRecord shot,
+		SplatlingShotDataRecord shot,
 		Optional<ProjectileDataRecord> secondChargeLevelProjectile,
-		Optional<ShotDataRecord> secondChargeLevelShot,
+		Optional<SplatlingShotDataRecord> secondChargeLevelShot,
 		ChargeDataRecord charge,
 		float inkConsumption,
 		int inkRecoveryCooldown,
@@ -128,9 +128,9 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
-				ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
+				SplatlingShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
 				ProjectileDataRecord.CODEC.optionalFieldOf("second_charge_projectile").forGetter(v -> v.secondChargeLevelProjectile),
-				ShotDataRecord.CODEC.optionalFieldOf("second_charge_shot").forGetter(v -> v.secondChargeLevelShot),
+				SplatlingShotDataRecord.CODEC.optionalFieldOf("second_charge_shot").forGetter(v -> v.secondChargeLevelShot),
 				ChargeDataRecord.CODEC.fieldOf("charge").forGetter(DataRecord::charge),
 				Codec.FLOAT.fieldOf("max_ink_consumption").forGetter(DataRecord::inkConsumption),
 				Codec.INT.fieldOf("ink_recovery_cooldown").forGetter(DataRecord::inkRecoveryCooldown),
@@ -139,9 +139,17 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
 			).apply(instance, DataRecord::create)
 		);
-		public static DataRecord create(ProjectileDataRecord projectile, ShotDataRecord shot, Optional<ProjectileDataRecord> secondChargeLevelProjectile, Optional<ShotDataRecord> secondChargeLevelShot, ChargeDataRecord charge, float inkConsumption, int inkRecoveryCooldown, float moveSpeed, boolean bypassesMobDamage, boolean isSecret)
+		public static DataRecord create(ProjectileDataRecord projectile, SplatlingShotDataRecord shot, Optional<ProjectileDataRecord> secondChargeLevelProjectile, Optional<SplatlingShotDataRecord> secondChargeLevelShot, ChargeDataRecord charge, float inkConsumption, int inkRecoveryCooldown, float moveSpeed, boolean bypassesMobDamage, boolean isSecret)
 		{
-			ChargeDataRecord parsedCharge = new ChargeDataRecord(charge.firstChargeTime, charge.secondChargeTime, charge.emptyTankFirstChargeTime, charge.emptyTankSecondChargeTime, charge.firingDuration, Optional.of(charge.moveSpeed.orElse(moveSpeed)), charge.chargeStorageTime, charge.canRechargeWhileFiring);
+			ChargeDataRecord parsedCharge = new ChargeDataRecord(charge.firstChargeTime,
+				charge.secondChargeTime,
+				charge.emptyTankFirstChargeTime,
+				charge.emptyTankSecondChargeTime,
+				charge.firingDuration,
+				charge.fullFiringDuration,
+				Optional.of(charge.moveSpeed.orElse(moveSpeed)),
+				charge.chargeStorageTime,
+				charge.canRechargeWhileFiring);
 			return new DataRecord(projectile, shot, secondChargeLevelProjectile, secondChargeLevelShot, parsedCharge, inkConsumption, inkRecoveryCooldown, moveSpeed, bypassesMobDamage, isSecret);
 		}
 	}
@@ -151,6 +159,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		int emptyTankFirstChargeTime,
 		int emptyTankSecondChargeTime,
 		int firingDuration,
+		int fullFiringDuration,
 		Optional<Float> moveSpeed,
 		int chargeStorageTime,
 		boolean canRechargeWhileFiring
@@ -162,41 +171,56 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				Codec.INT.fieldOf("second_charge_time_ticks").forGetter(ChargeDataRecord::secondChargeTime),
 				Codec.INT.optionalFieldOf("empty_tank_first_charge_time_ticks").forGetter(v -> Optional.of(v.emptyTankFirstChargeTime)),
 				Codec.INT.optionalFieldOf("empty_tank_second_charge_time_ticks").forGetter(v -> Optional.of(v.emptyTankSecondChargeTime)),
-				Codec.INT.fieldOf("total_firing_duration").forGetter(ChargeDataRecord::firingDuration),
+				Codec.INT.fieldOf("first_charge_firing_duration").forGetter(ChargeDataRecord::firingDuration),
+				Codec.INT.optionalFieldOf("fully_charged_firing_duration").forGetter((t) -> Optional.of(t.fullFiringDuration())),
 				Codec.FLOAT.optionalFieldOf("mobility_while_charging").forGetter(ChargeDataRecord::moveSpeed),
 				Codec.INT.optionalFieldOf("charge_storage_ticks", 0).forGetter(ChargeDataRecord::chargeStorageTime),
 				Codec.BOOL.optionalFieldOf("can_recharge_while_firing", false).forGetter(ChargeDataRecord::canRechargeWhileFiring)
 			).apply(instance, ChargeDataRecord::create)
 		);
-		public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(0, 0, 0, 0, 0, Optional.empty(), 0, false);
-		public static ChargeDataRecord create(int firstChargeTime, int secondChargeTime, Optional<Integer> emptyTankFirstChargeTime, Optional<Integer> emptyTankSecondChargeTime, int firingDuration, Optional<Float> moveSpeed, int chargeStorageTime, boolean canRechargeWhileFiring)
+		public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(0, 0, 0, 0, 10, 20, Optional.empty(), 0, false);
+		public static ChargeDataRecord create(int firstChargeTime,
+		                                      int secondChargeTime,
+		                                      Optional<Integer> emptyTankFirstChargeTime,
+		                                      Optional<Integer> emptyTankSecondChargeTime,
+		                                      int firstFiringDuration,
+		                                      Optional<Integer> fullFiringDuration,
+		                                      Optional<Float> moveSpeed,
+		                                      int chargeStorageTime,
+		                                      boolean canRechargeWhileFiring)
 		{
-			return new ChargeDataRecord(firstChargeTime, secondChargeTime, emptyTankFirstChargeTime.orElse(firstChargeTime * 6), emptyTankSecondChargeTime.orElse(secondChargeTime * 6), firingDuration, moveSpeed, chargeStorageTime, canRechargeWhileFiring);
+			return new ChargeDataRecord(firstChargeTime,
+				secondChargeTime,
+				emptyTankFirstChargeTime.orElse(firstChargeTime * 6),
+				emptyTankSecondChargeTime.orElse(secondChargeTime * 6),
+				firstFiringDuration,
+				fullFiringDuration.orElse(firstFiringDuration * 2),
+				moveSpeed,
+				chargeStorageTime,
+				canRechargeWhileFiring);
 		}
 	}
-	public record ShotDataRecord(
+	public record SplatlingShotDataRecord(
 		float startupTicks,
-		float firingSpeed,
+		float repeatTicks,
+		float endlagTicks,
 		int projectileCount,
 		float projectileSpeed,
 		ShotDeviationDataRecord accuracyData,
 		float pitchCompensation
 	)
 	{
-		public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
+		public static final Codec<SplatlingShotDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(ShotDataRecord::startupTicks),
-				Codec.FLOAT.fieldOf("firing_speed").forGetter(ShotDataRecord::firingSpeed),
-				Codec.INT.optionalFieldOf("shot_count", 1).forGetter(ShotDataRecord::projectileCount),
-				Codec.FLOAT.optionalFieldOf("projectile_speed", 0f).forGetter(ShotDataRecord::projectileSpeed),
-				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(ShotDataRecord::accuracyData),
-				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(ShotDataRecord::pitchCompensation)
-			).apply(instance, ShotDataRecord::new)
+				Codec.FLOAT.optionalFieldOf("startup_ticks", 0f).forGetter(SplatlingShotDataRecord::startupTicks),
+				Codec.FLOAT.fieldOf("repeat_ticks").forGetter(SplatlingShotDataRecord::repeatTicks),
+				Codec.FLOAT.fieldOf("endlag_ticks").forGetter(SplatlingShotDataRecord::repeatTicks),
+				Codec.INT.optionalFieldOf("shot_count", 1).forGetter(SplatlingShotDataRecord::projectileCount),
+				Codec.FLOAT.optionalFieldOf("projectile_speed", 0f).forGetter(SplatlingShotDataRecord::projectileSpeed),
+				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data", ShotDeviationDataRecord.PERFECT_DEFAULT).forGetter(SplatlingShotDataRecord::accuracyData),
+				Codec.FLOAT.optionalFieldOf("pitch_compensation", 0f).forGetter(SplatlingShotDataRecord::pitchCompensation)
+			).apply(instance, SplatlingShotDataRecord::new)
 		);
-		public static final ShotDataRecord DEFAULT = new ShotDataRecord(0, 0, 1, 1, ShotDeviationDataRecord.DEFAULT, 0);
-		public static ShotDataRecord create(float startupTicks, float firingSpeed, int projectileCount, float speed, ShotDeviationDataRecord accuracyData, float pitchCompensation)
-		{
-			return new ShotDataRecord(startupTicks, firingSpeed, projectileCount, speed, accuracyData, pitchCompensation);
-		}
+		public static final SplatlingShotDataRecord DEFAULT = new SplatlingShotDataRecord(0, 1, 0, 1, 1, ShotDeviationDataRecord.DEFAULT, 0);
 	}
 }

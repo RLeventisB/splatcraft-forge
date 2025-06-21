@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
@@ -71,9 +72,9 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		optional.ifPresent(info ->
 		{
 			if (entity.level().isClientSide)
-				ClientUtils.setSquid(info, false);
+				ClientUtils.setSquid(entity, info, false);
 			else
-				info.setIsSquid(false);
+				SquidFormHandler.setSquid(entity, info, false);
 		});
 	}
 	@Override

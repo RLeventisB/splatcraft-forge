@@ -343,6 +343,7 @@ public class SplatcraftConvertors
 
 		return new ChargerWeaponSettings.ShotDataRecord(
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.inkConsumption(),
 			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
 			dataRecord.shotsCount()
@@ -354,11 +355,13 @@ public class SplatcraftConvertors
 			return dataRecord;
 
 		return new ChargeDataRecord(
-			dataRecord.minChargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeStartup() / SplatoonFramesPerMinecraftTick,
 			dataRecord.chargeTime() / SplatoonFramesPerMinecraftTick,
 			dataRecord.airborneChargeRate(),
 			dataRecord.emptyTankChargeRate(),
-			dataRecord.chargeStorageTime() / SplatoonFramesPerMinecraftTick
+			dataRecord.chargeStorageTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeStorageSquidLag() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeStorageShootLag() / SplatoonFramesPerMinecraftTick
 		);
 	}
 	public static NumberRange.FloatRange convertLength(NumberRange.FloatRange range)

@@ -31,12 +31,15 @@ import net.splatcraft.network.c2s.RequestEntityInfoPacket;
 import net.splatcraft.network.s2c.*;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.*;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SplatcraftCommonHandler
@@ -126,9 +129,9 @@ public class SplatcraftCommonHandler
 	{
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
 
-		if (stack.getItem() instanceof InkTankItem item)
+		if (stack.has(SplatcraftComponents.TANK_DATA))
 		{
-			item.refill(stack);
+			InkTankItem.refill(stack);
 		}
 
 		return keepAliveIfOnMatch(entity, source);
@@ -215,19 +218,7 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateBooleanGamerulesPacket(SplatcraftGameRules.booleanRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
-
-		TreeMap<UUID, InkColor> playerColors = new TreeMap<>();
-
-		for (Player p : player.level().players())
-		{
-			if (EntityInfoCapability.hasCapability(p))
-			{
-				playerColors.put(p.getUUID(), EntityInfoCapability.get(p).getColor());
-			}
-		}
-
-		SplatcraftPacketHandler.sendToAll(new UpdateClientColorsPacket(player.getUUID(), EntityInfoCapability.get(player).getColor()));
-		SplatcraftPacketHandler.sendToPlayer(new UpdateClientColorsPacket(playerColors), player);
+		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, EntityInfoCapability.get(player).getColor()));
 		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);

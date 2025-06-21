@@ -16,12 +16,14 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
 import net.splatcraft.items.weapons.settings.CommonRecords;
@@ -63,7 +65,7 @@ public class SplatcraftComponents
 	);
 	public static final DataComponentType<ChargerFiringData> CHARGER_FIRING_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
-		Splatcraft.identifierOf("shooter_firing_data"),
+		Splatcraft.identifierOf("charger_firing_data"),
 		DataComponentType.<ChargerFiringData>builder().networkSynchronized(ChargerFiringData.STREAM_CODEC).persistent(ChargerFiringData.CODEC).cacheEncoding().build()
 	);
 	public static final DataComponentType<ResourceLocation> WEAPON_SETTING_ID = Registry.register(
@@ -91,10 +93,10 @@ public class SplatcraftComponents
 		Splatcraft.identifierOf("remote_info"),
 		DataComponentType.<RemoteInfo>builder().networkSynchronized(RemoteInfo.STREAM_CODEC).persistent(RemoteInfo.CODEC).build()
 	);
-	public static final DataComponentType<Float> CHARGE = Registry.register(
+	public static final DataComponentType<ChargeData> CHARGE_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
 		Splatcraft.identifierOf("charge"),
-		DataComponentType.<Float>builder().networkSynchronized(ByteBufCodecs.FLOAT).persistent(Codec.FLOAT).build()
+		DataComponentType.<ChargeData>builder().networkSynchronized(ChargeData.STREAM_CODEC).persistent(ChargeData.CODEC).build()
 	);
 	public static final DataComponentType<CompoundTag> SUB_WEAPON_DATA = Registry.register(
 		BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -222,67 +224,99 @@ public class SplatcraftComponents
 			if (Float.isNaN(counter()))
 				return this;
 
-			if (counter >= 0)
+			// if the counter is higher than 0, it acts as a "delay" to charging, otherwise if the counter is less than 0 its because the weapon is on endlag, otherwise, the weapon is charging
+			if (counter < 0)
 			{
-				boolean newCharging = charging && entity.isUsingItem();
-				float minChargeTime = settings.chargeData.minChargeTime();
-				float maxChargeTime = settings.chargeData.chargeTime();
-				float nextCounter = Math.min(counter + timeDelta * chargeMult, maxChargeTime + minChargeTime);
-
-				if (nextCounter < minChargeTime)
-				{
-					onCharge.accept(0f, 0f);
-					return new ChargerFiringData(nextCounter, newCharging, queuedShot);
-				}
-				else if (counter < minChargeTime && nextCounter >= minChargeTime)
-				{
-					if (!newCharging) // tap shot
-					{
-						float extraTime = nextCounter - minChargeTime;
-						return fireShotAndGoToEndlag(settings, onRelease, 0, extraTime);
-					}
-					float newCharge = (nextCounter - minChargeTime) / maxChargeTime;
-					stack.set(SplatcraftComponents.CHARGE, newCharge);
-
-					onCharge.accept(0f, newCharge);
-					return new ChargerFiringData(nextCounter, true, queuedShot);
-				}
-				else
-				{
-					float prevCharge = stack.get(SplatcraftComponents.CHARGE);
-					float newCharge = (nextCounter - minChargeTime) / maxChargeTime;
-					stack.set(SplatcraftComponents.CHARGE, newCharge);
-
-					if (!newCharging)
-					{
-						onRelease.run(newCharge, 0);
-						return fireShotAndGoToEndlag(settings, onRelease, newCharge, 0);
-					}
-					onCharge.accept(prevCharge, newCharge);
-					return new ChargerFiringData(nextCounter, true, queuedShot);
-				}
-			}
-			else
-			{
+				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
 				float nextCounter = counter + timeDelta;
 				if (nextCounter >= 0)
 				{
 					if (queuedShot)
-						return new ChargerFiringData(nextCounter * chargeMult, false, false);
+						return new ChargerFiringData(settings.chargeData.chargeStartup() - nextCounter, true, false);
 					return new ChargerFiringData(Float.NaN, false, false);
 				}
 				return new ChargerFiringData(nextCounter, true, false);
 			}
+
+			boolean newCharging = charging && WeaponHandler.canContinueShooting(entity);
+
+			if (counter > 0)
+			{
+				float nextCounter = counter - timeDelta;
+				if (nextCounter < 0)
+				{
+					timeDelta += nextCounter;
+				}
+				else if (nextCounter > 0)
+				{
+					return new ChargerFiringData(nextCounter, newCharging, queuedShot);
+				}
+			}
+
+			float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge;
+			if (charge < 1)
+			{
+				if (charge == 0 && !newCharging) // tap shot
+				{
+					onCharge.accept(0f, 0f);
+
+					return fireShotAndGoToEndlag(settings, onRelease, stack, 0, -(counter - timeDelta), 0);
+				}
+				float chargeTime = settings.chargeData.chargeTime();
+				float chargeStep = (chargeMult * timeDelta) / chargeTime;
+				float nextCharge = charge + chargeStep;
+				float cutoffTime;
+				if (nextCharge > 1)
+				{
+					cutoffTime = Mth.inverseLerp(1, charge, nextCharge);
+					nextCharge = 1;
+				}
+				else
+				{
+					cutoffTime = 1f;
+				}
+
+				float finalNextCharge = nextCharge;
+				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(finalNextCharge).registerChargeDeltaTime(cutoffTime));
+
+				onCharge.accept(charge, nextCharge);
+
+				if (!newCharging)
+				{
+					return fireShotAndGoToEndlag(settings, onRelease, stack, nextCharge, timeDelta, cutoffTime);
+				}
+			}
+			else
+			{
+				onCharge.accept(1f, 1f);
+
+				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(1).registerChargeDeltaTime(1));
+
+				if (!newCharging)
+				{
+					return fireShotAndGoToEndlag(settings, onRelease, stack, 1, 0, 1f);
+				}
+			}
+
+			return new ChargerFiringData(0, true, queuedShot);
 		}
-		public @NotNull ChargerFiringData fireShotAndGoToEndlag(ChargerWeaponSettings settings, TimeAwareAction onRelease, float charge, float extraTime)
+		public ChargerFiringData retrieveCharge(ChargerWeaponSettings settings)
+		{
+			return new ChargerFiringData(settings.chargeData.chargeStorageShootLag(), true, false);
+		}
+		public @NotNull ChargerFiringData fireShotAndGoToEndlag(ChargerWeaponSettings settings, TimeAwareAction onRelease, ItemStack stack, float charge, float extraTime, float chargeDeltaTime)
 		{
 			onRelease.run(charge, extraTime);
+			stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(chargeDeltaTime));
 			return new ChargerFiringData(-settings.shotData.endlagTicks() + extraTime, false, queuedShot);
 		}
-		public ChargerFiringData notifyUsage()
+		public ChargerFiringData notifyUsage(LivingEntity entity, ChargerWeaponSettings settings)
 		{
+			if (!WeaponHandler.canContinueShooting(entity))
+				return this;
+
 			if (Float.isNaN(counter))
-				return new ChargerFiringData(0, true, true);
+				return new ChargerFiringData(settings.chargeData.chargeStartup(), true, true);
 
 			if (counter < 0)
 				return new ChargerFiringData(counter, false, true);
@@ -356,8 +390,7 @@ public class SplatcraftComponents
 		}
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings)
 		{
-			if (!Float.isNaN(counter))
-				return this;
+			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
 
 			float startup = CommonUtils.startupSquidSwitch(entity, settings);
 			return initialize(startup, startup, settings.repeatTicks(), settings.endlagTicks());
@@ -616,6 +649,44 @@ public class SplatcraftComponents
 		public SpecialProviderData incrementStoredPoints(int points)
 		{
 			return withStoredPoints(storedPoints + points);
+		}
+	}
+	public record ChargeData(float charge, float previousCharge, float chargeDeltaTime)
+	{
+		public static final ChargeData DEFAULT = new ChargeData(0, 0, 0);
+		public static final StreamCodec<ByteBuf, ChargeData> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.FLOAT, ChargeData::charge,
+			ByteBufCodecs.FLOAT, ChargeData::previousCharge,
+			ByteBufCodecs.FLOAT, ChargeData::chargeDeltaTime,
+			ChargeData::new
+		);
+		public static final Codec<ChargeData> CODEC = RecordCodecBuilder.create(
+			inst -> inst.group(
+				Codec.FLOAT.fieldOf("charge").forGetter(ChargeData::charge),
+				Codec.FLOAT.fieldOf("previous_charge").forGetter(ChargeData::previousCharge),
+				Codec.FLOAT.fieldOf("charge_delta_time").forGetter(ChargeData::chargeDeltaTime)
+			).apply(inst, ChargeData::new)
+		);
+
+		public ChargeData updateCharge(float charge)
+		{
+			return new ChargeData(charge, this.charge, chargeDeltaTime);
+		}
+		public ChargeData withCharge(float charge)
+		{
+			return new ChargeData(charge, previousCharge, chargeDeltaTime);
+		}
+		public ChargeData withCharge(float charge, float previousCharge)
+		{
+			return new ChargeData(charge, previousCharge, chargeDeltaTime);
+		}
+		public ChargeData registerChargeDeltaTime(float chargeCompleteExtraTime)
+		{
+			return new ChargeData(charge, previousCharge, chargeCompleteExtraTime);
+		}
+		public float getCharge(float frameTime)
+		{
+			return Mth.clamp(Mth.lerp(frameTime / (chargeDeltaTime), previousCharge, charge), previousCharge, charge);
 		}
 	}
 }

@@ -37,6 +37,7 @@
         "MatchMixins$PlayerRendererMixin",
         "PlayerMixins$LocalPlayerMixinFabric",
         "PlayerMixins$PlayerRendererMixin",
+        "PlayerMixins$WeaponUsageModelMixin",
         "PlayerModelMixin",
         "PlayerTabOverlayMixin",
         "RecipeCategoryMixin",

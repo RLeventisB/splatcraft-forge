@@ -7,9 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -18,15 +16,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.Splatcraft;
@@ -48,6 +48,7 @@ import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
+import oshi.util.tuples.Triplet;
 
 import java.util.*;
 import java.util.function.Function;
@@ -342,47 +343,47 @@ public class InkBlockUtils
 	{
 		boolean canSwim = false;
 
-		BlockPos down = entity.getOnPos();
-		Block standingBlock = entity.level().getBlockState(down).getBlock();
+		Optional<BlockPos> down = getBlockStandingOnPos(entity);
+		if (down.isEmpty())
+			return false;
+		Block standingBlock = entity.level().getBlockState(down.get()).getBlock();
 
-		if (isInked(entity.level(), down, Direction.UP))
-			return ColorUtils.colorEquals(entity.level(), down, ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down).color(Direction.UP.get3DDataValue()));
+		if (isInked(entity.level(), down.get(), Direction.UP))
+			return ColorUtils.colorEquals(entity.level(), down.get(), ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down.get()).color(Direction.UP.get3DDataValue()));
 
 		if (standingBlock instanceof IColoredBlock coloredBlock)
 			canSwim = coloredBlock.canSwim();
 
-		return canSwim && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(down));
+		return canSwim && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(down.get()));
 	}
-	public static BlockPos getBlockStandingOnPos(Entity entity)
+	public static Optional<BlockPos> getBlockStandingOnPos(Entity entity)
 	{
-		return getBlockStandingOnPos(entity, 0.6);
+		return getBlockStandingOnPos(entity, 0.1);
 	}
-	public static BlockPos getBlockStandingOnPos(Entity entity, double maxDepth)
+	public static Optional<BlockPos> getBlockStandingOnPos(Entity entity, double maxDepth)
 	{
-		BlockPos.MutableBlockPos result = BlockPos.containing(entity.getX(), entity.getY(), entity.getZ()).mutable();
-		int minY = Mth.floor(entity.getY() - maxDepth);
-		AABB aabb = entity.getBoundingBox().expandTowards(0, -maxDepth, 0);
-		while (result.getY() >= minY)
-		{
-			VoxelShape shape = entity.level().getBlockState(result).getCollisionShape(entity.level(), result, CollisionContext.of(entity));
-
-			if (shape.max(Direction.Axis.Y) >= aabb.minY)
-				return result;
-
-			result.move(0, -1, 0);
-		}
-		return BlockPos.containing(entity.getX(), entity.getY() - maxDepth, entity.getZ());
+		double top = entity.getY() + entity.getBbHeight();
+		double bottom = entity.getY() - maxDepth;
+		double x = entity.getX();
+		double z = entity.getZ();
+		BlockHitResult result = entity.level().clip(new ClipContext(new Vec3(x, top, z), new Vec3(x, bottom, z), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+		if (result.getType() == HitResult.Type.MISS)
+			return Optional.empty();
+		return Optional.of(result.getBlockPos());
 	}
 	public static boolean onEnemyInk(LivingEntity entity)
 	{
 		if (!entity.onGround())
 			return false;
-		BlockPos pos = entity.getOnPos();
 
-		if (isInked(entity.level(), pos, Direction.UP))
+		Optional<BlockPos> pos = getBlockStandingOnPos(entity);
+		if (pos.isEmpty())
+			return false;
+
+		if (isInked(entity.level(), pos.get(), Direction.UP))
 			return !canSquidSwim(entity);
-		else if (entity.level().getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
-			return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.level(), pos).isValid() && !canSquidSwim(entity);
+		else if (entity.level().getBlockState(pos.get()).getBlock() instanceof IColoredBlock coloredBlock)
+			return coloredBlock.canDamage() && ColorUtils.getInkColor(entity.level(), pos.get()).isValid() && !canSquidSwim(entity);
 		else return false;
 	}
 	public static Optional<Direction> getSquidClimbDirection(final LivingEntity entity, final float movementSideways, final float movementForward, final Optional<Direction> previousDirection)
@@ -392,31 +393,37 @@ public class InkBlockUtils
 
 		final Vector2f rotatedImpulse = PlayerMovementHandler.getRotatedImpulse(movementSideways, movementForward, entity.getYRot());
 		final AABB originalBox = entity.getBoundingBox();
-		Vec3 deltaMovement = entity.getDeltaMovement().add(0, entity.isNoGravity() ? 0 : entity.getGravity(), 0);
-		Vec3 entityCenter = originalBox.getCenter();
+		final Vec3 deltaMovement = entity.getDeltaMovement().add(0, entity.isNoGravity() ? 0 : entity.getGravity(), 0);
 
 		AABB extendedBox = originalBox.expandTowards(deltaMovement);
 //		CommonUtils.showBoundingBoxCorners(entity.level(), extendedBox);
-		BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
 
-		Tuple<Optional<Direction>, VoxelShape> originalDirection = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
+		Optional<Triplet<Direction, VoxelShape, BlockPos>> collisionData = checkSquidCollisions(entity, extendedBox);
 
 		// this normally executes if the player is on a wall but is not inputting anything / only going upwards, since going downwards is treated like going out of the wall
-		if (originalDirection.getA().isEmpty() && previousDirection.isPresent())
+		if (collisionData.isEmpty())
 		{
-			final Vec3 inputVector = PlayerMovementHandler.processImpulse(previousDirection.get(), rotatedImpulse);
-			if (deltaMovement.y >= -0.1 || inputVector.y >= 0)
+			if (previousDirection.isPresent())
 			{
-				Vec3 normal = Vec3.atLowerCornerOf(previousDirection.get().getNormal()).scale(-0.1);
-				extendedBox = originalBox.expandTowards(normal);
+				final Vec3 inputVector = PlayerMovementHandler.processImpulse(previousDirection.get(), rotatedImpulse);
+				if (deltaMovement.y >= -0.1 || inputVector.y >= 0)
+				{
+					Vec3 normal = Vec3.atLowerCornerOf(previousDirection.get().getNormal()).scale(-0.1);
+					extendedBox = originalBox.expandTowards(normal);
 
-				collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
-				originalDirection = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
-				if (!originalDirection.getA().equals(previousDirection))
-					return Optional.empty();
+					collisionData = checkSquidCollisions(entity, extendedBox);
+					if (!collisionData.map(Triplet::getA).equals(previousDirection))
+						return Optional.empty();
+				}
+			}
+			else
+			{
+				final Vec3 inputVector = new Vec3(rotatedImpulse.x, 0, rotatedImpulse.y).scale(0.01);
+				extendedBox = originalBox.expandTowards(inputVector).move(0, 10e-4, 0);
+				collisionData = checkSquidCollisions(entity, extendedBox);
 			}
 		}
-		if (originalDirection.getA().isPresent())
+		if (collisionData.isPresent())
 		{
 /*
 			// check if the entity can "step up" the collision like with stairs, via a poor way obviously
@@ -434,21 +441,23 @@ public class InkBlockUtils
 			}
 */
 		}
-		return originalDirection.getA();
+		return collisionData.map(Triplet::getA);
 	}
-	private static Tuple<Optional<Direction>, VoxelShape> checkSquidCollisions(final LivingEntity entity, final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions, final AABB extendedBox)
+	private static Optional<Triplet<Direction, VoxelShape, BlockPos>> checkSquidCollisions(final LivingEntity entity, final AABB extendedBox)
 	{
-		return checkSquidCollisions(entity, collisions, extendedBox, entity.getBoundingBox().getCenter());
+		return checkSquidCollisions(entity, extendedBox, entity.getBoundingBox().getCenter());
 	}
-	private static Tuple<Optional<Direction>, VoxelShape> checkSquidCollisions(final LivingEntity entity, final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions, final AABB extendedBox, final Vec3 entityCenter)
+	private static Optional<Triplet<Direction, VoxelShape, BlockPos>> checkSquidCollisions(final LivingEntity entity, final AABB extendedBox, final Vec3 entityCenter)
 	{
 		final Direction.Axis[] horizontalAxis = {Direction.Axis.X, Direction.Axis.Z};
 		final VoxelShape collisionShape = Shapes.create(extendedBox);
 
 		double minDistanceToBlock = Double.POSITIVE_INFINITY;
 
-		Optional<Direction> collidedDirection = Optional.empty();
+		Direction collidedDirection = null;
 		VoxelShape usedJoined = null;
+		BlockPos usedBlockPos = null;
+		final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
 
 		while (collisions.hasNext())
 		{
@@ -456,9 +465,13 @@ public class InkBlockUtils
 			BlockPos blockPos = collidedBlock.first();
 			VoxelShape voxelShape = collidedBlock.second();
 
+			if (voxelShape.isEmpty())
+				continue;
+
 			VoxelShape joined = Shapes.join(voxelShape, collisionShape, BooleanOp.AND)
 				.move(
 					-entityCenter.x(), -entityCenter.y(), -entityCenter.z());
+
 			if (joined.isEmpty())
 				continue;
 
@@ -487,13 +500,16 @@ public class InkBlockUtils
 							continue;
 						}
 
-						collidedDirection = Optional.of(directionCandidate);
+						collidedDirection = directionCandidate;
 						usedJoined = joined;
+						usedBlockPos = blockPos;
 					}
 				}
 			}
 		}
-		return new Tuple<>(collidedDirection, usedJoined);
+		if (collidedDirection == null)
+			return Optional.empty();
+		return Optional.of(new Triplet<>(collidedDirection, usedJoined, usedBlockPos));
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{

@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,6 +19,6 @@ public class PlayerTabOverlayMixin
 	public void decorateName(PlayerInfo playerInfo, MutableComponent component, CallbackInfoReturnable<Component> cir)
 	{
 		if (SplatcraftConfig.get("splatcraft.coloredPlayerNames"))
-			component.setStyle(component.getStyle().withColor(ClientUtils.getClientPlayerColor(playerInfo.getProfile().getId()).getColor()));
+			component.setStyle(component.getStyle().withColor(ColorUtils.getPlayerColor(playerInfo.getProfile().getId(), ClientUtils.getClient().level).getColor()));
 	}
 }

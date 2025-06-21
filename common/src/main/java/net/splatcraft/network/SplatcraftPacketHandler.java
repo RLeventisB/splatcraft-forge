@@ -23,11 +23,8 @@ import java.util.function.Function;
 
 public class SplatcraftPacketHandler
 {
-	// i am about to swear for the 10th time but i will look like vivziepop
-	// basically networkmanager throws a cast exception or something and there is nothing i can do so i will use the deprecated method that will be soon deleted!! yipee!
 	public static void registerMessages()
 	{
-		//INSTANCE.registerMessage(ID++, PlayerColorPacket.class, SplatcraftPacket::encode, PlayerColorPacket::decode, SplatcraftPacket::consume);
 		registerMessage(UpdateEntityInfoPacket.ID, UpdateEntityInfoPacket.class, UpdateEntityInfoPacket::decode);
 		registerMessage(UpdateEntityActionOnlyPacket.ID, UpdateEntityActionOnlyPacket.class, UpdateEntityActionOnlyPacket::decode);
 		registerMessage(PlayerColorPacket.ID, PlayerColorPacket.class, PlayerColorPacket::decode);
@@ -42,11 +39,8 @@ public class SplatcraftPacketHandler
 		registerMessage(DodgeRollPacket.ID, DodgeRollPacket.class, DodgeRollPacket::decode);
 		registerMessage(SquidInputPacket.ID, SquidInputPacket.class, SquidInputPacket::decode);
 		registerMessage(CraftWeaponPacket.ID, CraftWeaponPacket.class, CraftWeaponPacket::decode);
-		registerMessage(UpdateClientColorsPacket.ID, UpdateClientColorsPacket.class, UpdateClientColorsPacket::decode);
 		registerMessage(SendColorRegistryPacket.ID, SendColorRegistryPacket.class, SendColorRegistryPacket::decode);
 		registerMessage(UpdateInkOverlayPacket.ID, UpdateInkOverlayPacket.class, UpdateInkOverlayPacket::decode);
-		registerMessage(ReleaseChargePacket.ID, ReleaseChargePacket.class, ReleaseChargePacket::decode);
-		registerMessage(UpdateChargeStatePacket.ID, UpdateChargeStatePacket.class, UpdateChargeStatePacket::decode);
 		registerMessage(SwapSlotWithOffhandPacket.ID, SwapSlotWithOffhandPacket.class, SwapSlotWithOffhandPacket::decode);
 		registerMessage(UpdateStageListPacket.ID, UpdateStageListPacket.class, UpdateStageListPacket::decode);
 		registerMessage(UpdateWeaponSettingsPacket.ID, UpdateWeaponSettingsPacket.class, UpdateWeaponSettingsPacket::decode);
@@ -61,7 +55,8 @@ public class SplatcraftPacketHandler
 		registerMessage(UseJumpLurePacket.ID, UseJumpLurePacket.class, UseJumpLurePacket::decode);
 		registerMessage(RequestSpecialUsageDataPacket.ID, RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
 		registerMessage(SendSpecialUsageDataPacket.ID, SendSpecialUsageDataPacket.class, SendSpecialUsageDataPacket::decode);
-		
+		registerMessage(SendSquidLagPacket.ID, SendSquidLagPacket.class, SendSquidLagPacket::decode);
+
 		//Stage Pad packets
 		registerMessage(SuperJumpToStagePacket.ID, SuperJumpToStagePacket.class, SuperJumpToStagePacket::decode);
 		registerMessage(SendStageWarpDataToPadPacket.ID, SendStageWarpDataToPadPacket.class, SendStageWarpDataToPadPacket::decode);

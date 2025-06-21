@@ -51,6 +51,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
@@ -295,6 +296,14 @@ public class CommonUtils
 			return predicate.test(entity.getItemInHand(InteractionHand.MAIN_HAND)) ? Pair.of(entity.getItemInHand(InteractionHand.MAIN_HAND), entity instanceof Player player ? player.getInventory().selected : -2) : Pair.of(ItemStack.EMPTY, -1);
 		}
 	}
+	public static boolean anyWeaponOnCooldown(LivingEntity entity)
+	{
+		if (entity instanceof Player player)
+			return anyWeaponOnCooldown(player);
+		boolean isMainOnCooldown = entity.getMainHandItem().getItem() instanceof WeaponBaseItem;
+		boolean isOffOnCooldown = entity.getOffhandItem().getItem() instanceof WeaponBaseItem;
+		return isMainOnCooldown || isOffOnCooldown;
+	}
 	public static boolean anyWeaponOnCooldown(Player player)
 	{
 		boolean isMainOnCooldown = player.getMainHandItem().getItem() instanceof WeaponBaseItem weapon && player.getCooldowns().isOnCooldown(weapon);
@@ -489,13 +498,13 @@ public class CommonUtils
 		}
 		return booleans;
 	}
-	public static int getSlot(LivingEntity entity)
+	public static void setSquidDelay(LivingEntity entity, float delay)
 	{
 		if (entity instanceof Player player)
 		{
-			return player.getInventory().selected;
+			if (player.isLocalPlayer())
+				SplatcraftKeyHandler.setSquidDelayInternal(delay);
 		}
-		return -1;
 	}
 	public record Result(float delay, float value)
 	{
@@ -503,7 +512,7 @@ public class CommonUtils
 	public static class InteractionEventResultDummy
 	{
 		private final boolean canceled;
-		private boolean handSwing = true;
+		private boolean handSwing;
 		public InteractionEventResultDummy(boolean handSwing, boolean canceled)
 		{
 			this.handSwing = handSwing;

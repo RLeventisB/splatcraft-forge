@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -23,23 +24,27 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.DataHandler;
+import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class ClientUtils
 {
-	@OnlyIn(Dist.CLIENT)
-	protected static final TreeMap<UUID, InkColor> clientColors = new TreeMap<>();
 	@OnlyIn(Dist.CLIENT)
 	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, MatchCameraPositions> matchStartCameraPosProvider =
 		new DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<>((stage) ->
@@ -74,7 +79,7 @@ public class ClientUtils
 			Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
 
 			// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
-			InkColor clientPlayerColor = getClientPlayerColor(getClientPlayer().getUUID());
+			InkColor clientPlayerColor = ColorUtils.getEntityColor(getClientPlayer());
 			List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
 
 			if (clientSpawnPads != null)
@@ -109,26 +114,6 @@ public class ClientUtils
 		posAndRotations.add(new CameraPosition(lookPosition, -yaw, -pitch));
 	}
 	@OnlyIn(Dist.CLIENT)
-	public static void resetClientColors()
-	{
-		clientColors.clear();
-	}
-	@OnlyIn(Dist.CLIENT)
-	public static InkColor getClientPlayerColor(UUID player)
-	{
-		return clientColors.getOrDefault(player, InkColor.INVALID);
-	}
-	@OnlyIn(Dist.CLIENT)
-	public static void setClientPlayerColor(UUID player, InkColor color)
-	{
-		clientColors.put(player, color);
-	}
-	@OnlyIn(Dist.CLIENT)
-	public static void putClientColors(TreeMap<UUID, InkColor> map)
-	{
-		clientColors.putAll(map);
-	}
-	@OnlyIn(Dist.CLIENT)
 	public static LocalPlayer getClientPlayer()
 	{
 		return Minecraft.getInstance().player;
@@ -148,7 +133,7 @@ public class ClientUtils
 		}
 
 		ItemStack chestpiece = player.getItemBySlot(EquipmentSlot.CHEST);
-		if (chestpiece.getItem() instanceof InkTankItem)
+		if (chestpiece.has(SplatcraftComponents.TANK_DATA))
 		{
 			return InkTankItem.getInkPercentage(chestpiece);
 		}
@@ -175,16 +160,23 @@ public class ClientUtils
 
 		return false;
 	}
-	public static void setSquid(EntityInfo cap, boolean newSquid)
+	public static void setSquid(LivingEntity entity, boolean newSquid)
 	{
-		if (cap.isSquid() == newSquid)
-		{
-			return;
-		}
-		cap.setIsSquid(newSquid);
-		if (!newSquid)
-			cap.flagSquidCancel();
-		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid));
+		setSquid(entity, EntityInfoCapability.get(entity), newSquid, false);
+	}
+	public static void setSquid(LivingEntity entity, boolean newSquid, boolean checkChargeStorage)
+	{
+		setSquid(entity, EntityInfoCapability.get(entity), newSquid, checkChargeStorage);
+	}
+	public static void setSquid(LivingEntity entity, EntityInfo cap, boolean newSquid)
+	{
+		setSquid(entity, cap, newSquid, false);
+	}
+	public static void setSquid(LivingEntity entity, EntityInfo info, boolean newSquid, boolean checkChargeStorage)
+	{
+		SquidFormHandler.setSquid(entity, info, newSquid);
+
+		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid, checkChargeStorage));
 	}
 	@OnlyIn(Dist.CLIENT)
 	public static Minecraft getClient()

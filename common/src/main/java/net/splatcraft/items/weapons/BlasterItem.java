@@ -7,10 +7,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.platform.DeferredRegister;
@@ -54,8 +55,9 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 					SplatcraftComponents.ShooterFiringData updatedData = data.tick(
 						(accumulatedTime) ->
 						{
-							fire(settings, world, stack, living, accumulatedTime);
-							return v -> living.isUsingItem() ? v : v.withRepeatingFlag(false);
+							if (!EntityInfoCapability.isSquid(living))
+								fire(settings, world, stack, living, accumulatedTime);
+							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
 						},
 						(accumulatedTime) -> v -> v);
 					return updatedData;
@@ -76,7 +78,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	{
 		if (reduceInk(entity, this, settings.shotData.inkConsumption(), settings.shotData.inkRecoveryCooldown(), true))
 		{
-			SplatcraftKeyHandler.setSquidDelay(entity, settings.shotData.miscEndlagTicks());
+			CommonUtils.setSquidDelay(entity, settings.shotData.miscEndlagTicks());
 			if (!level.isClientSide)
 			{
 				float divergence = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, entity));

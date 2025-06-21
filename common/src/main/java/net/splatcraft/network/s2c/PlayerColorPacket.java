@@ -5,7 +5,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,6 @@ public class PlayerColorPacket extends PlayS2CPacket
 		Player player = Minecraft.getInstance().level.getPlayerByUUID(target);
 		if (player != null)
 			ColorUtils.setPlayerColor(player, color, false);
-		ClientUtils.setClientPlayerColor(target, color);
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()

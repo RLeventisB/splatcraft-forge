@@ -16,7 +16,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
-import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -188,8 +187,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					return data.tick(
 						(accumulatedTime) ->
 						{
-							fire(settings, world, stack, living, accumulatedTime, hand);
-							return v -> living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse) ? v : v.withRepeatingFlag(false);
+							if (!EntityInfoCapability.isSquid(living))
+								fire(settings, world, stack, living, accumulatedTime, hand);
+							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
 						},
 						(accumulatedTime) -> v -> v);
 				}
@@ -293,7 +293,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 
 		if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 		{
-			SplatcraftKeyHandler.setSquidDelay(entity, shotData.miscEndlagTicks());
+			CommonUtils.setSquidDelay(entity, shotData.miscEndlagTicks());
 
 			if (!level.isClientSide)
 			{

@@ -19,7 +19,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
-import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -30,6 +29,7 @@ import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +96,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 			}
 			else
 			{
-				SplatcraftKeyHandler.setSquidDelay(player, SUB_WEAPON_ENDLAG);
+				CommonUtils.setSquidDelay(player, SUB_WEAPON_ENDLAG);
 			}
 		return useSuper(world, player, hand);
 	}
@@ -115,13 +115,13 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
 		useSub(stack, world, entity, remainingUseTicks);
-		SplatcraftKeyHandler.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
+		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 		super.releaseUsing(stack, world, entity, remainingUseTicks);
 	}
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		SplatcraftKeyHandler.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
+		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)

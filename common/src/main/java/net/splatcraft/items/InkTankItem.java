@@ -6,7 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -18,20 +18,21 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.RollerItem;
-import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.PlayerCharge;
 import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeItemDummy
 {
@@ -53,29 +54,26 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	}
 	public static float getInkAmount(ItemStack stack)
 	{
-		if (!(stack.getItem() instanceof InkTankItem))
-			return 0;
-
-		SplatcraftComponents.TankData data = getTankData(stack);
-		if (data.infiniteInk()) return data.maxCapacity();
-		return Mth.clamp(data.inkLevel(), 0, data.maxCapacity());
+		Optional<SplatcraftComponents.@Nullable TankData> data = getTankDataOptional(stack);
+		return data.map(v -> v.infiniteInk() ?
+			v.maxCapacity() :
+			Mth.clamp(v.inkLevel(), 0, v.maxCapacity())).orElse(0f);
 	}
 	public static float getInkCapacity(ItemStack stack)
 	{
-		if (!(stack.getItem() instanceof InkTankItem))
-			return 0;
-
-		SplatcraftComponents.TankData data = getTankData(stack);
-		return data.maxCapacity();
+		Optional<SplatcraftComponents.@Nullable TankData> data = getTankDataOptional(stack);
+		return data.map(SplatcraftComponents.TankData::maxCapacity).orElse(0f);
 	}
 	public static float getInkPercentage(ItemStack stack)
 	{
-		if (!(stack.getItem() instanceof InkTankItem))
-			return 0;
-
-		SplatcraftComponents.TankData data = getTankData(stack);
-		if (data.infiniteInk()) return 1f;
-		return Mth.clamp(data.inkLevel() / data.maxCapacity(), 0, 1f);
+		Optional<SplatcraftComponents.@Nullable TankData> data = getTankDataOptional(stack);
+		return data.map(v -> v.infiniteInk() ?
+			1f :
+			Mth.clamp(v.inkLevel() / v.maxCapacity(), 0, 1f)).orElse(0f);
+	}
+	private static Optional<SplatcraftComponents.@Nullable TankData> getTankDataOptional(ItemStack stack)
+	{
+		return Optional.ofNullable(stack.get(SplatcraftComponents.TANK_DATA));
 	}
 	private static SplatcraftComponents.@Nullable TankData getTankData(ItemStack stack)
 	{
@@ -97,6 +95,9 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		SplatcraftComponents.TankData data = getTankData(stack);
 
+		if (data == null)
+			return 0f;
+
 		float cooldown = data.inkRecoveryCooldown();
 		if (cooldown < 1)
 		{
@@ -105,33 +106,51 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 				stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkRecoveryCooldown(0));
 			return remainder;
 		}
+
 		if (updateCooldown)
 			stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkRecoveryCooldown(Math.max(0, cooldown - 1)));
 		return 0f;
 	}
 	public static void setRecoveryCooldown(ItemStack stack, float recoveryCooldown)
 	{
-		stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkRecoveryCooldown(Math.max(stack.get(SplatcraftComponents.TANK_DATA).inkRecoveryCooldown(), recoveryCooldown)));
+		stack.update(SplatcraftComponents.TANK_DATA, SplatcraftComponents.TankData.DEFAULT, v -> v.withInkRecoveryCooldown(
+			stack.has(SplatcraftComponents.TANK_DATA) ?
+				Math.max(stack.get(SplatcraftComponents.TANK_DATA).inkRecoveryCooldown(), recoveryCooldown) :
+				recoveryCooldown
+		));
 	}
 	@Override
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 
-		if (entity instanceof Player player && !world.isClientSide() && SplatcraftGameRules.getLocalizedRule(world, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
+		if (entity instanceof LivingEntity living && !world.isClientSide() && SplatcraftGameRules.getLocalizedRule(world, entity.blockPosition(), SplatcraftGameRules.RECHARGEABLE_INK_TANK))
 		{
 			float ink = getInkAmount(stack);
-			Item using = player.getUseItem().getItem();
+			Item using = living.getUseItem().getItem();
 			float rechargeMult = rechargeMult(stack, true);
 
-			if (rechargeMult > 0 && player.getItemBySlot(EquipmentSlot.CHEST).equals(stack) && ColorUtils.colorEquals(player, stack) && ink < getInkCapacity(stack)
-				&& (!EntityAction.hasEntityAction(player))
-				&& !PlayerCharge.hasCharge(player)
-				&& (!(using instanceof WeaponBaseItem)
+			if (rechargeMult > 0 &&
+				living.getItemBySlot(EquipmentSlot.CHEST).equals(stack) &&
+				ColorUtils.colorEquals(living, stack) &&
+				ink < getInkCapacity(stack)
+				&& (!EntityAction.hasEntityAction(living))
+				&& !EntityStoredCharge.hasCharge(living)
+				&& (WeaponHandler.getWeaponHand(living, (x, y) -> y.preventsChargingInkTank(x, living)).isEmpty()
 				|| (using instanceof RollerItem r && !r.isMoving))
 			)
 			{
-				setInkAmount(stack, ink + (5.0f / ((InkBlockUtils.canSquidHide(player) && EntityInfoCapability.isSquid(player)) ? 3f : 10f)) * rechargeMult);
+				float inkToRecover = 0.5f;
+				if (EntityInfoCapability.isSquid(living) && InkBlockUtils.canSquidHide(living))
+					inkToRecover *= 10f / 3f;
+
+				// if a weapon is being used but doesnt prevent charging the ink tank (like chargers without enough ink), charge the ink tank slower
+				if (WeaponHandler.getWeaponHand(living, (x, y) -> y.preventsChanging(x, living) && !y.preventsChargingInkTank(x, living)).isPresent())
+					inkToRecover /= 2;
+
+				inkToRecover *= rechargeMult;
+
+				setInkAmount(stack, ink + inkToRecover);
 			}
 		}
 	}
@@ -179,14 +198,21 @@ public class InkTankItem extends ColoredArmorItem implements ISplatcraftForgeIte
 	{
 		return false;
 	}
-	public boolean canUse(Item item)
+	public static boolean canUse(Item itemToTest, ItemStack tank)
 	{
-		boolean inWhitelist = item.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_WHITELIST.get(this));
-		boolean inBlacklist = item.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_BLACKLIST.get(this));
+		boolean inWhitelist = itemToTest.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_WHITELIST.get(tank.getItem()));
+		boolean inBlacklist = itemToTest.builtInRegistryHolder().is(SplatcraftTags.Items.INK_TANK_BLACKLIST.get(tank.getItem()));
 
 		return !inBlacklist && inWhitelist;
 	}
-	public void refill(ItemStack stack)
+	public static boolean canUse(ItemStack itemToTest, ItemStack tank)
+	{
+		boolean inWhitelist = itemToTest.is(SplatcraftTags.Items.INK_TANK_WHITELIST.get(tank.getItem()));
+		boolean inBlacklist = itemToTest.is(SplatcraftTags.Items.INK_TANK_BLACKLIST.get(tank.getItem()));
+
+		return !inBlacklist && inWhitelist;
+	}
+	public static void refill(ItemStack stack)
 	{
 		setInkAmount(stack, Float.POSITIVE_INFINITY);
 	}

@@ -212,7 +212,7 @@ public class RendererHandler
 				String key = msgChildren.getString();
 
 				if (players.containsKey(key))
-					msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ClientUtils.getClientPlayerColor(players.get(key)).getColor())));
+					msgChildren.setStyle(msgChildren.getStyle().withColor(TextColor.fromRgb(ColorUtils.getPlayerColor(players.get(key), level).getColor())));
 			}
 		}
 		return CompoundEventResult.interruptTrue(message);
@@ -255,9 +255,13 @@ public class RendererHandler
 			}
 
 			PoseStack matrixStack = graphics.pose();
-			if (player.getMainHandItem().getItem() instanceof IChargeableWeapon || player.getOffhandItem().getItem() instanceof IChargeableWeapon)
+			if (player.getMainHandItem().getItem() instanceof IChargeableWeapon)
 			{
-				renderChargerGui(graphics, tickDelta, width, height, info, matrixStack);
+				renderChargerGui(graphics, tickDelta, width, height, info, matrixStack, player.getMainHandItem());
+			}
+			else if (player.getOffhandItem().getItem() instanceof IChargeableWeapon)
+			{
+				renderChargerGui(graphics, tickDelta, width, height, info, matrixStack, player.getOffhandItem());
 			}
 
 			InkColor color = ColorUtils.getColorLockedIfConfig(info.getColor());
@@ -280,13 +284,13 @@ public class RendererHandler
 			boolean canUse = true;
 			float inkPctg = 0;
 			boolean isCoolingDown = false;
-			if (player.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof InkTankItem tankItem)
+			if (player.getItemBySlot(EquipmentSlot.CHEST).has(SplatcraftComponents.TANK_DATA))
 			{
 				ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
 				inkPctg = InkTankItem.getInkPercentage(stack);
 				isCoolingDown = !InkTankItem.canRecharge(stack, false);
 				if (isHoldingMatchItem)
-					canUse = tankItem.canUse(player.getMainHandItem().getItem()) || tankItem.canUse(player.getOffhandItem().getItem());
+					canUse = InkTankItem.canUse(player.getMainHandItem(), stack) || InkTankItem.canUse(player.getOffhandItem(), stack);
 			}
 			if (info.isSquid() || showLowInkWarning || !canUse)
 			{
@@ -498,7 +502,7 @@ public class RendererHandler
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		matrixStack.popPose();
 	}
-	private static void renderChargerGui(GuiGraphics graphics, float frameTime, int width, int height, EntityInfo info, PoseStack matrixStack)
+	private static void renderChargerGui(GuiGraphics graphics, float frameTime, int width, int height, EntityInfo info, PoseStack matrixStack, ItemStack itemStack)
 	{
 		matrixStack.pushPose();
 		RenderSystem.enableBlend();
@@ -506,23 +510,20 @@ public class RendererHandler
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 
 		graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 0, 30, 9, 256, 256);
-		if (info.getPlayerCharge() != null)
+		float charge = info.getStoredCharge().map(v -> v.charge).orElse(itemStack.get(SplatcraftComponents.CHARGE_DATA).getCharge(frameTime));
+
+		if (charge > 1)
 		{
-			PlayerCharge playerCharge = info.getPlayerCharge();
-			float charge = Mth.lerp(frameTime, playerCharge.prevCharge, playerCharge.charge);
+			RenderSystem.setShaderColor(1, 1, 1, 0.5f);
+			graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 9, 30, 9, 256, 256);
 
-			if (charge > 1)
-			{
-				RenderSystem.setShaderColor(1, 1, 1, playerCharge.getDischargeValue(frameTime) * 0.05f);
-				graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 9, 30, 9, 256, 256);
-
-				if (Math.floor(charge) != charge)
-					charge = charge % 1f;
-			}
-
-			RenderSystem.setShaderColor(1, 1, 1, playerCharge.getDischargeValue(frameTime));
-			graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, (int) (30 * charge), 9, 88, 9, (int) (30 * charge), 9, 256, 256);
+			if (Math.floor(charge) != charge)
+				charge = charge % 1f;
 		}
+
+		RenderSystem.setShaderColor(1, 1, 1, 0.5f);
+		graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, (int) (30 * charge), 9, 88, 9, (int) (30 * charge), 9, 256, 256);
+
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 
 		matrixStack.popPose();

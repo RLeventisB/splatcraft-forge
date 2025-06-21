@@ -30,7 +30,7 @@ public class EntityInfo
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),
 		CodecUtils.hashMapCodec(Codec.STRING.comapFlatMap(v -> CodecUtils.exceptionCatchDataResult(() -> Integer.decode(v)), Object::toString), ItemStack.CODEC).optionalFieldOf("match_inventory", new Object2ObjectOpenHashMap<>(41)).forGetter(EntityInfo::getMatchInventory),
 		EntityAction.SERIALIZER_CODEC.lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
-		PlayerCharge.CODEC.lenientOptionalFieldOf("player_charge").forGetter(v -> Optional.ofNullable(v.getPlayerCharge())),
+		EntityStoredCharge.CODEC.lenientOptionalFieldOf("entity_charge").forGetter(v -> v.getStoredCharge()),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeState),
 		PlayingData.CODEC.optionalFieldOf("playing_data", PlayingData.DEFAULT).forGetter(EntityInfo::playingData),
@@ -44,7 +44,7 @@ public class EntityInfo
 	private Optional<Direction> climbedDirection = Optional.empty();
 	private Object2ObjectOpenHashMap<Integer, ItemStack> matchInventory = new Object2ObjectOpenHashMap<>();
 	private EntityAction entityAction = null;
-	private PlayerCharge playerCharge = null;
+	private Optional<EntityStoredCharge> storedCharge = Optional.empty();
 	private ItemStack inkBand = ItemStack.EMPTY;
 	private float squidSurgeState = 0;
 	private PlayingData playingData = PlayingData.DEFAULT;
@@ -65,7 +65,7 @@ public class EntityInfo
 	                  Optional<Direction> climbedDirection,
 	                  Object2ObjectOpenHashMap<Integer, ItemStack> matchInventory,
 	                  Optional<EntityAction> entityAction,
-	                  Optional<PlayerCharge> playerCharge,
+	                  Optional<EntityStoredCharge> playerCharge,
 	                  ItemStack inkBand,
 	                  float squidSurgeCharge,
 	                  PlayingData playingData,
@@ -79,7 +79,7 @@ public class EntityInfo
 		this.climbedDirection = climbedDirection;
 		this.matchInventory = matchInventory;
 		this.entityAction = entityAction.orElse(null);
-		this.playerCharge = playerCharge.orElse(null);
+		this.storedCharge = playerCharge;
 		this.inkBand = inkBand;
 		this.squidSurgeState = squidSurgeCharge;
 		this.playingData = playingData;
@@ -168,13 +168,17 @@ public class EntityInfo
 	{
 		return entityAction != null && entityAction.getTime() > 0;
 	}
-	public PlayerCharge getPlayerCharge()
+	public Optional<EntityStoredCharge> getStoredCharge()
 	{
-		return playerCharge;
+		return storedCharge;
 	}
-	public void setPlayerCharge(PlayerCharge charge)
+	public void setStoredCharge(EntityStoredCharge charge)
 	{
-		playerCharge = charge;
+		storedCharge = Optional.ofNullable(charge);
+	}
+	public void setStoredCharge(Optional<EntityStoredCharge> charge)
+	{
+		storedCharge = charge;
 	}
 	public boolean isDoingSquidSurge()
 	{
@@ -233,7 +237,6 @@ public class EntityInfo
 	public void flagSquidCancel()
 	{
 		flagSquidCancel(SQUID_LAG_DURATION);
-		setSquidSurgeState((byte) Math.clamp(squidSurgeState, -20, 0));
 	}
 	public void flagSquidCancel(int frames)
 	{

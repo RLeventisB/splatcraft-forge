@@ -12,7 +12,7 @@
     "shot": {
         "endlag_ticks": 15,
         "ink_consumption": [1.9, 10.5],
-        "ink_recovery_cooldown": 7
+        "ink_recovery_cooldown": 20
     },
     "charge": {
         "charge_time_ticks": 45,

@@ -1,6 +1,7 @@
 package net.splatcraft.handlers;
 
 import net.minecraft.util.AbortableIterationConsumer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -19,22 +20,26 @@ import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.InkColor;
-import net.splatcraft.util.PlayerCharge;
 import net.splatcraft.util.action.EntityAction;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 public class WeaponHandler
 {
 	private static final Map<LivingEntity, OldEntityTransformData> prevPosMap = new LinkedHashMap<>();
+	private static final Map<LivingEntity, Short> weaponUseTime = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, (entity, dmgSource) ->
 		{
 			prevPosMap.remove(entity);
+			weaponUseTime.remove(entity);
 			return EventResult.pass();
 		});
 
@@ -52,7 +57,7 @@ public class WeaponHandler
 			}
 			if (usagePreventedByCooldown || !player.isUsingItem() || player.getUseItemRemainingTicks() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
 			{
-				PlayerCharge.dischargeWeapon(player);
+				EntityStoredCharge.dischargeWeapon(player);
 			}
 		});
 
@@ -65,8 +70,28 @@ public class WeaponHandler
 		{
 			if (EntityInfoCapability.hasCapability(entity))
 			{
-				EntityInfo playerInfo = EntityInfoCapability.get(entity);
-				playerInfo.reduceSquidAnimationTick();
+				EntityInfo entityInfo = EntityInfoCapability.get(entity);
+				entityInfo.reduceSquidAnimationTick();
+			}
+			return AbortableIterationConsumer.Continuation.CONTINUE;
+		}));
+		if (Services.PLATFORM.isClientSide())
+			registerClientEvents();
+	}
+	private static void registerClientEvents()
+	{
+		Services.PLATFORM.registerListener(TickEvents.ClientLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
+		{
+			Optional<InteractionHand> hand = WeaponHandler.getUsingWeaponHand(entity);
+			if (hand.isPresent())
+			{
+				short useTime = weaponUseTime.computeIfAbsent(entity, v -> (short) 0);
+				useTime++;
+				weaponUseTime.put(entity, useTime);
+			}
+			else
+			{
+				weaponUseTime.remove(entity);
 			}
 			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
@@ -147,6 +172,42 @@ public class WeaponHandler
 		return prevPosMap.containsKey(entity) ? prevPosMap.get(entity) : new OldEntityTransformData(
 			entity.position(), entity.getPosition(0),
 			new Vec2(entity.getXRot(), entity.getYRot()), new Vec2(entity.xRotO, entity.yRotO));
+	}
+	public static boolean canContinueShooting(LivingEntity living)
+	{
+		return living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse);
+	}
+	public static Optional<InteractionHand> getUsingWeaponHand(LivingEntity entity)
+	{
+		return getWeaponHand(entity, (x, y) -> y.preventsChanging(x, entity));
+	}
+	public static Optional<InteractionHand> getWeaponHand(LivingEntity entity, Predicate<ItemStack> predicate)
+	{
+		for (var hand : InteractionHand.values())
+		{
+			ItemStack itemStack = entity.getItemInHand(hand);
+			if (itemStack.getItem() instanceof WeaponBaseItem<?> weapon && predicate.test(itemStack))
+			{
+				return Optional.of(hand);
+			}
+		}
+		return Optional.empty();
+	}
+	public static Optional<InteractionHand> getWeaponHand(LivingEntity entity, BiPredicate<ItemStack, WeaponBaseItem<?>> predicate)
+	{
+		for (var hand : InteractionHand.values())
+		{
+			ItemStack itemStack = entity.getItemInHand(hand);
+			if (itemStack.getItem() instanceof WeaponBaseItem<?> weapon && predicate.test(itemStack, weapon))
+			{
+				return Optional.of(hand);
+			}
+		}
+		return Optional.empty();
+	}
+	public static short getWeaponUseTime(LivingEntity entity)
+	{
+		return weaponUseTime.getOrDefault(entity, (short) -1);
 	}
 	public static class OldEntityTransformData
 	{

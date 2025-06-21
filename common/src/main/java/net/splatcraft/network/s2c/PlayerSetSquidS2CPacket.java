@@ -5,8 +5,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.handlers.SquidFormHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -44,9 +43,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 		{
 			return;
 		}
-		EntityInfo target = EntityInfoCapability.get(player);
-		target.setIsSquid(squid);
-		if (!squid)
-			target.flagSquidCancel();
+
+		SquidFormHandler.setSquid(player, squid);
 	}
 }

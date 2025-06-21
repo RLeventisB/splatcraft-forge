@@ -1,7 +1,10 @@
 package net.splatcraft.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -9,6 +12,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
@@ -16,6 +21,7 @@ import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.client.layer.InkTankFeature;
 import net.splatcraft.handlers.SquidFormHandler;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.registries.SplatcraftEntities;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,6 +29,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
 
 public class PlayerMixins
 {
@@ -72,6 +80,24 @@ public class PlayerMixins
 			{
 				ci.cancel();
 			}
+		}
+	}
+	@Mixin(HumanoidModel.class)
+	public static class WeaponUsageModelMixin
+	{
+		@WrapOperation(method = "setupAnim*", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isUsingItem()Z"))
+		public boolean splatcraft$addWeaponUsageAsUsingItem(LivingEntity instance, Operation<Boolean> original)
+		{
+			Optional<InteractionHand> hand = WeaponHandler.getUsingWeaponHand(instance);
+			if (hand.isPresent())
+				return true;
+			return original.call(instance);
+		}
+		@WrapOperation(method = "setupAnim*", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getUsedItemHand()Lnet/minecraft/world/InteractionHand;"))
+		public InteractionHand splatcraft$retrieveUsedWeaponHand(LivingEntity instance, Operation<InteractionHand> original)
+		{
+			Optional<InteractionHand> hand = WeaponHandler.getUsingWeaponHand(instance);
+			return hand.orElseGet(() -> original.call(instance));
 		}
 	}
 }

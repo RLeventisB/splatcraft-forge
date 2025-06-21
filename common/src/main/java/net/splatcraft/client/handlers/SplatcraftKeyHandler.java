@@ -5,7 +5,8 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -24,23 +26,25 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.SpecialProviderItem;
+import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestSpecialUsageDataPacket;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
-import net.splatcraft.network.c2s.UpdateChargeStatePacket;
 import net.splatcraft.platform.Services;
+import net.splatcraft.platform.event.EventResult;
+import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.PlayerCharge;
+import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.action.EntityAction;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.Optional;
 
 public class SplatcraftKeyHandler
 {
@@ -59,6 +63,14 @@ public class SplatcraftKeyHandler
 		Services.PLATFORM.registerKeyMapping(SPECIAL_WEAPON_KEYBIND.key);
 		Services.PLATFORM.registerKeyMapping(SQUID_KEYBIND.key);
 		Services.PLATFORM.registerListener(TickEvents.ClientBefore.class, SplatcraftKeyHandler::onClientTick);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickItem.class, SplatcraftKeyHandler::onRightClick);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, SplatcraftKeyHandler::onRightClick);
+	}
+	private static EventResult onRightClick(Player player, InteractionHand hand, Direction direction, ItemStack stack, Level level, BlockPos pos)
+	{
+		if (!stack.isEmpty() && player.isLocalPlayer() && !(stack.getItem() instanceof WeaponBaseItem<?>)) // add delay for placing blocks, or other things
+			squidAndSubDelay = 5;
+		return EventResult.PASS;
 	}
 	public static boolean isSubWeaponHotkeyDown()
 	{
@@ -78,50 +90,77 @@ public class SplatcraftKeyHandler
 			return;
 		}
 
-		tickKeys(mc);
+		tickKeys(player, mc);
 
-		if (!SHOOT_KEYBIND.active && PlayerCharge.hasCharge(player) && EntityInfoCapability.isSquid(player)) //Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
-		{
-			PlayerCharge.getCharge(player).reset();
-			SplatcraftPacketHandler.sendToServer(new UpdateChargeStatePacket(false));
-		}
-
-		tickAutoSquidDelay(player);
-
-		if ((EntityAction.hasActionAnd(player, v -> !(SQUID_KEYBIND.active && v.isCancellable())))
-			|| CommonUtils.anyWeaponOnCooldown(player) || ShootingHandler.isDoingShootingAction(player))
-		{
-			return;
-		}
-
-		ToggleableKey last = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
+		ToggleableKey lastPressedKey = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
 
 		EntityInfo info = EntityInfoCapability.get(player);
-		if (SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last))
+
+		tickSquidAndCharge(player, info, lastPressedKey);
+
+		tickSubWeapon(mc, player, lastPressedKey, info);
+
+		if (SPECIAL_WEAPON_KEYBIND.equals(lastPressedKey) && !EntityStoredCharge.hasCharge(player))
+			tickSpecialWeapon(player);
+
+		tickAutoSquidDelay(player);
+	}
+	private static void tickSpecialWeapon(Player player)
+	{
+		Inventory inventory = player.getInventory();
+		Pair<ItemStack, Integer> providerPair = CommonUtils.getStackAndIndexInInventory(player, stack -> stack.getItem() instanceof SpecialProviderItem);
+		if (providerPair.getFirst().isEmpty())
 		{
-			// Unsquid so we can actually fire
-			ClientUtils.setSquid(info, false);
+			player.displayClientMessage(Component.translatable("status.cant_use"), true);
 		}
+		else
+		{
+			SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
+			SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
+			Pair<ItemStack, Integer> weaponPair = null;
+			if (providerData.testWeapon(inventory.getSelected()))
+			{
+				weaponPair = Pair.of(inventory.getSelected(), inventory.selected);
+			}
+			else if (providerData.testWeapon(inventory.getItem(Inventory.SLOT_OFFHAND)))
+			{
+				weaponPair = Pair.of(inventory.getItem(Inventory.SLOT_OFFHAND), Inventory.SLOT_OFFHAND);
+			}
+			if (weaponPair == null)
+			{
+				// todo: error message
+			}
+			else
+			{
+				SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
+			}
+		}
+	}
+	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey last, EntityInfo info)
+	{
+		if (EntityAction.hasActionAnd(player, v -> !v.isCancellable()) ||
+			CommonUtils.anyWeaponOnCooldown(player) ||
+			ShootingHandler.isDoingShootingAction(player) ||
+			EntityStoredCharge.hasCharge(player)) // dont allow sub code to execute if the player has a charge or else everything breaks
+			return;
 
 		Inventory inventory = player.getInventory();
+
 		if (SUB_WEAPON_KEYBIND.equals(last))
 		{
-			ItemStack sub = CommonUtils.getItemInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
+			Pair<ItemStack, Integer> sub = CommonUtils.getStackAndIndexInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
 
-			if (sub.isEmpty() || (info.isSquid() && !player.level().noBlockCollision(player,
-				new AABB(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3))))
+			if (sub.getSecond() == -1 || (info.isSquid() && !hasEnoughSpaceToTransformBack(player)))
 			{
 				player.displayClientMessage(Component.translatable("status.cant_use"), true);
 			}
 			else
 			{
-				ClientUtils.setSquid(info, false);
-
 				if (SUB_WEAPON_KEYBIND.pressed)
 				{
-					if (!player.getItemInHand(InteractionHand.OFF_HAND).equals(sub))
+					if (!player.getItemInHand(InteractionHand.OFF_HAND).equals(sub.getFirst()))
 					{
-						slot = inventory.findSlotMatchingItem(sub);
+						slot = sub.getSecond();
 						SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 
 						ItemStack stack = player.getOffhandItem();
@@ -155,71 +194,83 @@ public class SplatcraftKeyHandler
 				slot = -1;
 			}
 		}
+	}
+	public static boolean pressedSquidKeyWhileHoldingCharge(LivingEntity entity)
+	{
+		return SQUID_KEYBIND.pressed && entity.isUsingItem() && entity.getUseItem().getItem() instanceof IChargeableWeapon chargeableWeapon
+			&& chargeableWeapon.canStore(entity.getUseItem());
+	}
+	public static boolean hasEnoughSpaceToTransformBack(LivingEntity entity)
+	{
+		return entity.level().noBlockCollision(entity,
+			new AABB(entity.getX() + -0.3, entity.getY(), entity.getZ() + -0.3, entity.getX() + 0.3, entity.getY() + 0.6, entity.getZ() + 0.3));
+	}
+	public static void tickSquidAndCharge(LivingEntity entity, EntityInfo info, ToggleableKey last)
+	{
+		if (EntityAction.hasActionAnd(entity, v -> !v.isCancellable()) ||
+			CommonUtils.anyWeaponOnCooldown(entity) ||
+			(ShootingHandler.isDoingShootingAction(entity) && !pressedSquidKeyWhileHoldingCharge(entity)))
+			return;
 
-		if (SPECIAL_WEAPON_KEYBIND.equals(last))
+		if (info.isSquid())
 		{
-			Pair<ItemStack, Integer> providerPair = CommonUtils.getStackAndIndexInInventory(player, stack -> stack.getItem() instanceof SpecialProviderItem);
-			if (providerPair.getFirst().isEmpty())
+			//Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
+			if (EntityStoredCharge.hasCharge(entity) && !SHOOT_KEYBIND.active)
 			{
-				player.displayClientMessage(Component.translatable("status.cant_use"), true);
+				EntityStoredCharge.emptyCharge(entity);
+			}
+
+			if (!hasEnoughSpaceToTransformBack(entity))
+				return;
+
+			if (EntityStoredCharge.hasCharge(entity))
+			{
+				if (SQUID_KEYBIND.pressed)
+					ClientUtils.setSquid(entity, info, false, true);
 			}
 			else
 			{
-				SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
-				SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
-				Pair<ItemStack, Integer> weaponPair = null;
-				if (providerData.testWeapon(inventory.getSelected()))
-				{
-					weaponPair = Pair.of(inventory.getSelected(), inventory.selected);
-				}
-				else if (providerData.testWeapon(inventory.getItem(Inventory.SLOT_OFFHAND)))
-				{
-					weaponPair = Pair.of(inventory.getItem(Inventory.SLOT_OFFHAND), Inventory.SLOT_OFFHAND);
-				}
-				if (weaponPair == null)
-				{
-
-				}
-				else
-				{
-					SQUID_KEYBIND.active = false;
-					SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
-				}
+				if (!SQUID_KEYBIND.active || SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last) || SPECIAL_WEAPON_KEYBIND.equals(last))
+					ClientUtils.setSquid(entity, info, false, false);
 			}
 		}
-
-		if (player.getVehicle() == null &&
-			player.level().noBlockCollision(player,
-				new AABB(player.getX() + -0.3, player.getY(), player.getZ() + -0.3, player.getX() + 0.3, player.getY() + 0.6, player.getZ() + 0.3)))
+		else
 		{
-			if (SQUID_KEYBIND.equals(last) || !SQUID_KEYBIND.active)
+			if (SUB_WEAPON_KEYBIND.equals(last) || SPECIAL_WEAPON_KEYBIND.equals(last) || squidAndSubDelay > 0)
+				return;
+
+			if (pressedSquidKeyWhileHoldingCharge(entity))
 			{
-				ClientUtils.setSquid(info, SQUID_KEYBIND.active);
+				SQUID_KEYBIND.active = true;
+
+				ClientUtils.setSquid(entity, info, true, true);
+			}
+//			else if (SQUID_KEYBIND.active && !SHOOT_KEYBIND.equals(last))
+			else if (SQUID_KEYBIND.active && !SHOOT_KEYBIND.active)
+			{
+				ClientUtils.setSquid(entity, info, true, false);
 			}
 		}
 	}
+	@OnlyIn(Dist.CLIENT)
 	private static void tickAutoSquidDelay(Player player)
 	{
 		if (!Minecraft.getInstance().isPaused())
 		{
-			Optional<EntityAction> optional = EntityAction.getEntityActionOptional(player);
-			if (SHOOT_KEYBIND.active || SUB_WEAPON_KEYBIND.active || optional.isPresent())
+			if (squidAndSubDelay > 0)
 			{
-				//autosquid delay set to 5 seconds for chargeables if cooldown hasn't been received yet
-				// i think its better that actions manage their own squid endlag tho
-				/*squidAndSubDelay = optional.map(
-					entityAction -> (int) (entityAction.getTime() + 10)
-				).orElseGet(
-					() -> (player.getUseItem().getItem() instanceof IChargeableWeapon ? 20 : 5)
-				);*/
-			}
-			else if (squidAndSubDelay > 0)
-			{
+				// this is to fix whenever a player shoots again just in time the sub delay reaches 0, allowing them to literally cancel all endlag and enter squid form lol
+				// in that case the shot is done server-side, were isUsingItem is true because of delay
+				boolean isDoingAction = WeaponHandler.getUsingWeaponHand(player).isPresent() || EntityAction.hasEntityAction(player);
+				if (isDoingAction && squidAndSubDelay == 1 && !pressedSquidKeyWhileHoldingCharge(player))
+					return;
+
 				squidAndSubDelay--;
 			}
 		}
 	}
-	private static void tickKeys(Minecraft mc)
+	@OnlyIn(Dist.CLIENT)
+	private static void tickKeys(Player player, Minecraft mc)
 	{
 		boolean canHold = canHoldKeys(mc);
 
@@ -249,11 +300,13 @@ public class SplatcraftKeyHandler
 			pressState.remove(key);
 		}
 	}
+	@OnlyIn(Dist.CLIENT)
 	private static boolean canHoldKeys(Minecraft mc)
 	{
 		return mc.screen == null && mc.getOverlay() == null;
 	}
 	@SuppressWarnings("all") // VanillaCopy
+	@OnlyIn(Dist.CLIENT)
 	public static void startUsingItemInHand(InteractionHand hand)
 	{
 		Minecraft mc = Minecraft.getInstance();
@@ -347,12 +400,13 @@ public class SplatcraftKeyHandler
 			}
 		}
 	}
-	public static void setSquidDelay(LivingEntity entity, float delay)
+	public static void setSquidDelayInternal(float delay)
 	{
 		int delayInt = (int) delay;
-		if (delayInt > squidAndSubDelay && entity instanceof LocalPlayer)
-			squidAndSubDelay = delayInt;
+		if (delayInt > SplatcraftKeyHandler.squidAndSubDelay)
+			SplatcraftKeyHandler.squidAndSubDelay = delayInt;
 	}
+
 	public enum KeyMode
 	{
 		HOLD,
@@ -371,9 +425,17 @@ public class SplatcraftKeyHandler
 		}
 		public void tick(KeyMode mode, boolean canHold)
 		{
+			tick(mode, canHold, true);
+		}
+		public void tick(KeyMode mode, boolean canHold, boolean tickMode)
+		{
 			boolean isKeyDown = key.isDown() && canHold;
 			pressed = isKeyDown && !previousKeyDown;
 			released = !isKeyDown && previousKeyDown;
+
+			if (!tickMode)
+				return;
+
 			switch (mode)
 			{
 				case HOLD -> active = isKeyDown;
@@ -390,28 +452,6 @@ public class SplatcraftKeyHandler
 		public boolean isActive()
 		{
 			return active;
-		}
-		public KeyState getKeybindState()
-		{
-			if (active)
-			{
-				if (pressed)
-					return KeyState.JUST_PRESSED;
-				return KeyState.PRESSED;
-			}
-			else
-			{
-				if (released)
-					return KeyState.JUST_RELEASED;
-				return KeyState.RELEASED;
-			}
-		}
-		public enum KeyState
-		{
-			RELEASED,
-			JUST_PRESSED,
-			PRESSED,
-			JUST_RELEASED
 		}
 	}
 }

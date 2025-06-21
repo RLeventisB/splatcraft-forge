@@ -26,6 +26,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.platform.Services;
@@ -39,10 +40,13 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.registries.SplatcraftStats;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
 
 public class SquidFormHandler
 {
@@ -120,33 +124,35 @@ public class SquidFormHandler
 				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
 			}
 
-			BlockPos posBelow = InkBlockUtils.getBlockStandingOnPos(player);
-			Block blockBelow = player.level().getBlockState(posBelow).getBlock();
-
-			if (blockBelow instanceof SpawnPadBlock.Aux aux)
+			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockStandingOnPos(player);
+			posBelowOptional.ifPresent(posBelow ->
 			{
-				BlockPos newPos = aux.getParentPos(player.level().getBlockState(posBelow), posBelow);
-				if (player.level().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
+				Block blockBelow = player.level().getBlockState(posBelow).getBlock();
+				if (blockBelow instanceof SpawnPadBlock.Aux aux)
 				{
-					posBelow = newPos;
-					blockBelow = player.level().getBlockState(newPos).getBlock();
+					BlockPos newPos = aux.getParentPos(player.level().getBlockState(posBelow), posBelow);
+					if (player.level().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
+					{
+						posBelow = newPos;
+						blockBelow = player.level().getBlockState(newPos).getBlock();
+					}
 				}
-			}
 
-			if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
-			{
-				ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
-			}
-
-			if (blockBelow instanceof SpawnPadBlock)
-			{
-				InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
-
-				if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
+				if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
 				{
-					serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+					ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
 				}
-			}
+
+				if (blockBelow instanceof SpawnPadBlock)
+				{
+					InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
+
+					if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
+					{
+						serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+					}
+				}
+			});
 		}
 		if (InkOverlayCapability.hasCapability(player))
 		{
@@ -251,6 +257,41 @@ public class SquidFormHandler
 		if (EntityInfoCapability.get(entity).isSquid() && InkBlockUtils.canSquidSwim(entity))
 		{
 			entity.setDeltaMovement(entity.getDeltaMovement().x, entity.getDeltaMovement().y * 1.1, entity.getDeltaMovement().z);
+		}
+	}
+	public static void setSquid(LivingEntity entity, boolean newSquid)
+	{
+		setSquid(entity, EntityInfoCapability.get(entity), newSquid);
+	}
+	public static void setSquid(LivingEntity entity, EntityInfo info, boolean newSquid)
+	{
+		if (info.isSquid() == newSquid)
+			return;
+
+		info.setIsSquid(newSquid);
+		if (!newSquid)
+			info.flagSquidCancel();
+
+		if (newSquid)
+		{
+			Optional<InteractionHand> usedWeaponHand = WeaponHandler.getWeaponHand(entity,
+				(x, y) -> y instanceof IChargeableWeapon chargeable && chargeable.canStore(x));
+			usedWeaponHand.ifPresent(hand -> EntityStoredCharge.storeCharge(entity, entity.getItemInHand(hand)));
+		}
+		else
+		{
+			if (EntityStoredCharge.hasCharge(entity))
+			{
+				for (InteractionHand hand : InteractionHand.values())
+				{
+					if (EntityStoredCharge.chargeMatches(entity, entity.getItemInHand(hand)))
+					{
+						EntityStoredCharge.retrieveCharge(entity, entity.getItemInHand(hand));
+						entity.startUsingItem(hand);
+						break;
+					}
+				}
+			}
 		}
 	}
 	public enum SquidState implements StringRepresentable

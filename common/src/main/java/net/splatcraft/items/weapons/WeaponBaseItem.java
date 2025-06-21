@@ -120,10 +120,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	}
 	public static boolean reduceInk(LivingEntity entity, Item item, float amount, float recoveryCooldown, boolean sendMessage, boolean force)
 	{
-		if (!force && !enoughInk(entity, item, amount, recoveryCooldown, sendMessage, false)) return false;
+		if (!enoughInk(entity, item, amount, recoveryCooldown, sendMessage, false) && !force) return false;
 		ItemStack tank = entity.getItemBySlot(EquipmentSlot.CHEST);
-		if (tank.getItem() instanceof InkTankItem)
-			InkTankItem.setInkAmount(tank, InkTankItem.getInkAmount(tank) - amount);
+		InkTankItem.setInkAmount(tank, InkTankItem.getInkAmount(tank) - amount);
 		return true;
 	}
 	public static boolean refundInk(LivingEntity entity, float amount)
@@ -145,19 +144,13 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		{
 			return true;
 		}
-		if (tank.getItem() instanceof InkTankItem tankItem)
-		{
-			boolean enoughInk = InkTankItem.getInkAmount(tank) - consumption >= 0
-				&& (item == null || tankItem.canUse(item));
-			if (!sub || enoughInk)
-				InkTankItem.setRecoveryCooldown(tank, recoveryCooldown);
-			if (!enoughInk && sendMessage)
-				sendNoInkMessage(entity, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
-			return enoughInk;
-		}
-		if (sendMessage)
+		boolean enoughInk = InkTankItem.getInkAmount(tank) - consumption >= 0
+			&& (item == null || InkTankItem.canUse(item, tank));
+		if (!sub || enoughInk)
+			InkTankItem.setRecoveryCooldown(tank, recoveryCooldown);
+		if (!enoughInk && sendMessage)
 			sendNoInkMessage(entity, sub ? SplatcraftSounds.noInkSub : SplatcraftSounds.noInkMain);
-		return false;
+		return enoughInk;
 	}
 	public static boolean hasInkInTank(LivingEntity entity, Item item)
 	{
@@ -169,7 +162,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			return true;
 		}
 
-		return InkTankItem.getInkAmount(tank) > 0 && ((InkTankItem) tank.getItem()).canUse(item);
+		return InkTankItem.getInkAmount(tank) > 0 && InkTankItem.canUse(item, tank);
 	}
 	public static void sendNoInkMessage(LivingEntity entity, SoundEvent sound)
 	{
@@ -384,5 +377,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
 	{
 		return false;
+	}
+	public boolean preventsChargingInkTank(ItemStack stack, LivingEntity entity)
+	{
+		return preventsChanging(stack, entity);
 	}
 }

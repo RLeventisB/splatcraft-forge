@@ -3,6 +3,7 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -62,7 +63,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
 		chargeData = SplatcraftConvertors.convert(data.charge);
-		
+
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.fullDamageToMobs);
@@ -153,23 +154,27 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		}
 	}
 	public record ChargeDataRecord(
-		int minChargeTime,
-		int chargeTime,
+		float chargeStartup,
+		float chargeTime,
 		float airborneChargeRate,
 		float emptyTankChargeRate,
-		int chargeStorageTime
+		int chargeStorageTime,
+		int chargeStorageSquidLag,
+		int chargeStorageShootLag
 	)
 	{
 		public static final Codec<ChargeDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("min_charge_time_ticks", 8).forGetter(ChargeDataRecord::minChargeTime),
-				Codec.intRange(1, Integer.MAX_VALUE).fieldOf("charge_time_ticks").forGetter(ChargeDataRecord::chargeTime),
+				ExtraCodecs.POSITIVE_FLOAT.optionalFieldOf("charge_startup", 8f).forGetter(ChargeDataRecord::chargeStartup),
+				ExtraCodecs.POSITIVE_FLOAT.fieldOf("charge_time_ticks").forGetter(ChargeDataRecord::chargeTime),
 				Codec.floatRange(0, 1).optionalFieldOf("airborne_charge_rate", 1f / 3).forGetter(ChargeDataRecord::airborneChargeRate),
 				Codec.floatRange(0, 1).optionalFieldOf("empty_tank_charge_rate", 1f / 3).forGetter(ChargeDataRecord::emptyTankChargeRate),
-				Codec.INT.optionalFieldOf("charge_storage_ticks", 25).forGetter(ChargeDataRecord::chargeStorageTime)
+				Codec.INT.optionalFieldOf("charge_storage_ticks", 25).forGetter(ChargeDataRecord::chargeStorageTime),
+				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_squid_lag", 20).forGetter(ChargeDataRecord::chargeStorageSquidLag),
+				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_shooting_lag", 10).forGetter(ChargeDataRecord::chargeStorageShootLag)
 			).apply(instance, ChargeDataRecord::new)
 		);
-		public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(8, 30, 1f / 3, 1f / 3, 25);
+		public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(8f, 30, 1f / 3, 1f / 3, 25, 20, 10);
 		public float getChargePercentPerTick()
 		{
 			return 1f / chargeTime;
@@ -177,21 +182,23 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 	}
 	public record ShotDataRecord(
 		int endlagTicks,
+		int miscEndlagTicks,
 		ChargeValueRecord inkConsumption,
 		float inkRecoveryCooldown,
 		int shotsCount
-	
+
 	)
 	{
 		public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.INT.fieldOf("endlag_ticks").forGetter(ShotDataRecord::endlagTicks),
+				Codec.INT.optionalFieldOf("other_actions_endlag_ticks", 10).forGetter(t -> t.miscEndlagTicks()),
 				ChargeValueRecord.CODEC.fieldOf("ink_consumption").forGetter(ShotDataRecord::inkConsumption),
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown),
 				Codec.intRange(0, Integer.MAX_VALUE).optionalFieldOf("shots_after_charge", 1).forGetter(ShotDataRecord::shotsCount)
 			).apply(instance, ShotDataRecord::new)
 		);
-		public static final ShotDataRecord DEFAULT = new ShotDataRecord(10, ChargeValueRecord.DEFAULT, 25, 1);
+		public static final ShotDataRecord DEFAULT = new ShotDataRecord(10, 10, ChargeValueRecord.DEFAULT, 25, 1);
 	}
 	public record ChargeValueRecord(float minValue, float maxValue, float fullValue)
 	{
@@ -211,13 +218,13 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		{
 			if (values.isEmpty())
 				return DataResult.error(() -> "Not enough values was providen by the list.");
-			
+
 			if (values.size() == 1)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(0), values.get(0)));
-			
+
 			if (values.size() == 2)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(1)));
-			
+
 			return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(2)));
 		}
 		public static ChargeValueRecord create(float... values)
