@@ -200,7 +200,11 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		);
 		public static final ShotDataRecord DEFAULT = new ShotDataRecord(10, 10, ChargeValueRecord.DEFAULT, 25, 1);
 	}
-	public record ChargeValueRecord(float minValue, float maxValue, float fullValue)
+	public record ChargeValueRecord(
+		float minValue,
+		float maxValue,
+		float fullValue
+	)
 	{
 		public static final Codec<ChargeValueRecord> OBJECT_PAIR_CODEC = RecordCodecBuilder.create(
 			inst -> inst.group(
