@@ -11,9 +11,10 @@
         "lifespan": 15
     },
     "shot": {
-        "startup_ticks": 14,
-        "startup_ticks_from_squid": 24,
-        "endlag_ticks": 46,
+        "startup_ticks": 10,
+        "startup_ticks_from_squid": 15,
+        "repeat_ticks": 60,
+        "endlag_ticks": 30,
         "speed": 10.8,
         "accuracy_data": {
             "ground_deviation_degrees": 0,

@@ -161,9 +161,9 @@ public class CommonRecords
 			Optional.empty(),
 			Optional.empty()
 		);
-		public static Optional<OptionalProjectileDataRecord> from(ProjectileDataRecord projectile) // this is horrible
+		public static OptionalProjectileDataRecord from(ProjectileDataRecord projectile) // this is horrible
 		{
-			return Optional.of(new OptionalProjectileDataRecord(
+			return new OptionalProjectileDataRecord(
 				Optional.of(projectile.size),
 				Optional.of(projectile.visualSize),
 				Optional.of(projectile.lifeTicks),
@@ -178,7 +178,7 @@ public class CommonRecords
 				Optional.of(projectile.minDamage),
 				Optional.of(projectile.damageDecayStartTick),
 				Optional.of(projectile.damageDecayPerTick)
-			));
+			);
 		}
 		public static ProjectileDataRecord mergeWithBase(Optional<OptionalProjectileDataRecord> modified, ProjectileDataRecord base)
 		{
@@ -251,7 +251,7 @@ public class CommonRecords
 		Optional<Float> miscEndlagTicks,
 		Optional<Float> speed,
 		Optional<Integer> projectileCount,
-		Optional<ShotDeviationDataRecord> accuracyData,
+		Optional<OptionalShotDeviationDataRecord> accuracyData,
 		Optional<Float> pitchCompensation,
 		Optional<Float> inkConsumption,
 		Optional<Float> inkRecoveryCooldown
@@ -266,7 +266,7 @@ public class CommonRecords
 				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks").forGetter(OptionalShotDataRecord::miscEndlagTicks),
 				Codec.FLOAT.optionalFieldOf("speed").forGetter(OptionalShotDataRecord::speed),
 				Codec.INT.optionalFieldOf("shot_count").forGetter(OptionalShotDataRecord::projectileCount),
-				ShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data").forGetter(OptionalShotDataRecord::accuracyData),
+				OptionalShotDeviationDataRecord.CODEC.optionalFieldOf("accuracy_data").forGetter(OptionalShotDataRecord::accuracyData),
 				Codec.FLOAT.optionalFieldOf("pitch_compensation").forGetter(OptionalShotDataRecord::pitchCompensation),
 				Codec.FLOAT.optionalFieldOf("ink_consumption").forGetter(OptionalShotDataRecord::inkConsumption),
 				Codec.FLOAT.optionalFieldOf("ink_recovery_cooldown").forGetter(OptionalShotDataRecord::inkRecoveryCooldown)
@@ -285,9 +285,9 @@ public class CommonRecords
 			Optional.empty(),
 			Optional.empty()
 		);
-		public static Optional<OptionalShotDataRecord> from(ShotDataRecord shot)
+		public static OptionalShotDataRecord from(ShotDataRecord shot)
 		{
-			return Optional.of(new OptionalShotDataRecord(
+			return new OptionalShotDataRecord(
 				Optional.of(shot.startupTicks),
 				Optional.of(shot.squidStartupTicks),
 				Optional.of(shot.repeatTicks),
@@ -295,11 +295,11 @@ public class CommonRecords
 				Optional.of(shot.miscEndlagTicks),
 				Optional.of(shot.speed),
 				Optional.of(shot.projectileCount),
-				Optional.of(shot.accuracyData),
+				Optional.of(OptionalShotDeviationDataRecord.from(shot.accuracyData)),
 				Optional.of(shot.pitchCompensation),
 				Optional.of(shot.inkConsumption),
 				Optional.of(shot.inkRecoveryCooldown)
-			));
+			);
 		}
 		public static ShotDataRecord mergeWithBase(Optional<OptionalShotDataRecord> modified, ShotDataRecord base)
 		{
@@ -315,7 +315,7 @@ public class CommonRecords
 				modifiedGet.miscEndlagTicks().orElse(base.miscEndlagTicks()),
 				modifiedGet.speed().orElse(base.speed()),
 				modifiedGet.projectileCount().orElse(base.projectileCount()),
-				modifiedGet.accuracyData().orElse(base.accuracyData()),
+				OptionalShotDeviationDataRecord.mergeWithBase(modifiedGet.accuracyData, base.accuracyData),
 				modifiedGet.pitchCompensation().orElse(base.pitchCompensation()),
 				modifiedGet.inkConsumption().orElse(base.inkConsumption()),
 				modifiedGet.inkRecoveryCooldown().orElse(base.inkRecoveryCooldown())
@@ -360,6 +360,82 @@ public class CommonRecords
 		public float getMaximumDeviation()
 		{
 			return Math.max(Math.max(minDeviateChance, maxDeviateChance), deviationChanceWhenAirborne);
+		}
+	}
+	public record OptionalShotDeviationDataRecord(
+		Optional<Float> groundShotDeviation,
+		Optional<Float> airborneShotDeviation,
+		Optional<Float> minDeviateChance,
+		Optional<Float> maxDeviateChance,
+		Optional<Float> deviationChanceWhenAirborne,
+		Optional<Float> chanceIncreasePerShot,
+		Optional<Float> chanceDecreaseDelay,
+		Optional<Float> chanceDecreasePerTick,
+		Optional<Float> airborneContractDelay,
+		Optional<Float> airborneContractTimeToDecrease
+	)
+	{
+		public static final Codec<OptionalShotDeviationDataRecord> CODEC = RecordCodecBuilder.create(
+			instance -> instance.group(
+				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("ground_deviation_degrees").forGetter(OptionalShotDeviationDataRecord::groundShotDeviation),
+				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("airborne_deviation_degrees").forGetter(OptionalShotDeviationDataRecord::airborneShotDeviation),
+
+				Codec.floatRange(0, 1).optionalFieldOf("chance_min").forGetter(OptionalShotDeviationDataRecord::minDeviateChance),
+				Codec.floatRange(0, 1).optionalFieldOf("chance_max").forGetter(OptionalShotDeviationDataRecord::maxDeviateChance),
+				Codec.floatRange(0, 1).optionalFieldOf("chance_set_airborne").forGetter(OptionalShotDeviationDataRecord::deviationChanceWhenAirborne),
+				Codec.floatRange(0, 1).optionalFieldOf("chance_increase_per_shot").forGetter(OptionalShotDeviationDataRecord::chanceIncreasePerShot),
+
+				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_inactive_to_decrease").forGetter(OptionalShotDeviationDataRecord::chanceDecreaseDelay),
+				Codec.FLOAT.optionalFieldOf("chance_decrease_when_inactive").forGetter(OptionalShotDeviationDataRecord::chanceDecreasePerTick),
+
+				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("delay_to_decrease_airborne_deviation").forGetter(OptionalShotDeviationDataRecord::airborneContractDelay),
+				Codec.floatRange(0, Float.MAX_VALUE).optionalFieldOf("time_to_decrease_airborne_deviation").forGetter(OptionalShotDeviationDataRecord::airborneContractTimeToDecrease)
+			).apply(instance, OptionalShotDeviationDataRecord::new)
+		);
+		public static final OptionalShotDeviationDataRecord DEFAULT = new OptionalShotDeviationDataRecord(Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty()
+		);
+		public static OptionalShotDeviationDataRecord from(ShotDeviationDataRecord deviation)
+		{
+			return new OptionalShotDeviationDataRecord(
+				Optional.of(deviation.groundShotDeviation),
+				Optional.of(deviation.airborneShotDeviation),
+				Optional.of(deviation.minDeviateChance),
+				Optional.of(deviation.maxDeviateChance),
+				Optional.of(deviation.deviationChanceWhenAirborne),
+				Optional.of(deviation.chanceIncreasePerShot),
+				Optional.of(deviation.chanceDecreaseDelay),
+				Optional.of(deviation.chanceDecreasePerTick),
+				Optional.of(deviation.airborneContractDelay),
+				Optional.of(deviation.airborneContractTimeToDecrease)
+			);
+		}
+		public static ShotDeviationDataRecord mergeWithBase(Optional<OptionalShotDeviationDataRecord> modified, ShotDeviationDataRecord base)
+		{
+			if (modified.isEmpty())
+				return base;
+
+			OptionalShotDeviationDataRecord modifiedGet = modified.get();
+			return new ShotDeviationDataRecord(
+				modifiedGet.groundShotDeviation().orElse(base.groundShotDeviation()),
+				modifiedGet.airborneShotDeviation().orElse(base.airborneShotDeviation()),
+				modifiedGet.minDeviateChance().orElse(base.minDeviateChance()),
+				modifiedGet.maxDeviateChance().orElse(base.maxDeviateChance()),
+				modifiedGet.deviationChanceWhenAirborne().orElse(base.deviationChanceWhenAirborne()),
+				modifiedGet.chanceIncreasePerShot().orElse(base.chanceIncreasePerShot()),
+				modifiedGet.chanceDecreaseDelay().orElse(base.chanceDecreaseDelay()),
+				modifiedGet.chanceDecreasePerTick().orElse(base.chanceDecreasePerTick()),
+				modifiedGet.airborneContractDelay().orElse(base.airborneContractDelay()),
+				modifiedGet.airborneContractTimeToDecrease().orElse(base.airborneContractTimeToDecrease())
+			);
 		}
 	}
 	public record InkUsageDataRecord(

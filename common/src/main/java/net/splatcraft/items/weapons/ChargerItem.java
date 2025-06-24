@@ -49,6 +49,17 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		return register.register(name, () -> new ChargerItem(parent.value().components().get(SplatcraftComponents.WEAPON_SETTING_ID).toString()));
 	}
 	@OnlyIn(Dist.CLIENT)
+	protected void playChargingSound(LivingEntity entity)
+	{
+		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUUID().equals(entity.getUUID()) || (chargingSound != null && !chargingSound.isStopped()))
+		{
+			return;
+		}
+
+		chargingSound = new ChargerChargingTickableSound(ClientUtils.getClientPlayer(), SplatcraftSounds.chargerCharge, 1);
+		Minecraft.getInstance().getSoundManager().play(chargingSound);
+	}
+	@OnlyIn(Dist.CLIENT)
 	protected static void playChargeReadySound(LivingEntity entity)
 	{
 		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(entity.getUUID()))
@@ -124,17 +135,6 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		}
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 	}
-	@OnlyIn(Dist.CLIENT)
-	protected void playChargingSound(LivingEntity entity)
-	{
-		if (ClientUtils.getClientPlayer() == null || !ClientUtils.getClientPlayer().getUUID().equals(entity.getUUID()) || (chargingSound != null && !chargingSound.isStopped()))
-		{
-			return;
-		}
-
-		chargingSound = new ChargerChargingTickableSound(ClientUtils.getClientPlayer(), SplatcraftSounds.chargerCharge, 1);
-		Minecraft.getInstance().getSoundManager().play(chargingSound);
-	}
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
@@ -173,11 +173,6 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		return preventsChanging(stack, entity) &&
 			chargingWeapon &&
 			enoughInk(entity, stack.getItem(), consumptionForNextTick, 0, false);
-	}
-	@Override
-	public float getPreviousCharge(ItemStack stack)
-	{
-		return 0;
 	}
 	@Override
 	public int getChargeLevels(ItemStack stack)

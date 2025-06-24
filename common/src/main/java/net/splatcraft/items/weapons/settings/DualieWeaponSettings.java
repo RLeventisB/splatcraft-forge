@@ -22,6 +22,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings("default");
 	public ProjectileDataRecord standardProjectileData = ProjectileDataRecord.DEFAULT, turretProjectileData = ProjectileDataRecord.DEFAULT;
 	public ShotDataRecord standardShotData = ShotDataRecord.DEFAULT, turretShotData = ShotDataRecord.DEFAULT;
+	public Optional<OptionalProjectileDataRecord> turretProjectileMods = Optional.empty();
+	public Optional<OptionalShotDataRecord> turretShotMods = Optional.empty();
 	public RollDataRecord rollData = RollDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
 	public DualieWeaponSettings(String name)
@@ -36,7 +38,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		{
 			return projectile.calculateDamageDecay(turretProjectileData.baseDamage(), turretProjectileData.damageDecayStartTick(), turretProjectileData.damageDecayPerTick(), turretProjectileData.minDamage());
 		}
-		
+
 		return projectile.calculateDamageDecay(standardProjectileData.baseDamage(), standardProjectileData.damageDecayStartTick(), standardProjectileData.damageDecayPerTick(), standardProjectileData.minDamage());
 	}
 	@Override
@@ -62,11 +64,13 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public void processData(DataRecord data)
 	{
 		standardProjectileData = SplatcraftConvertors.convert(data.projectile);
-		turretProjectileData = SplatcraftConvertors.convert(data.turretProjectile);
+		turretProjectileData = SplatcraftConvertors.convert(OptionalProjectileDataRecord.mergeWithBase(data.turretProjectile, data.projectile));
+		turretProjectileMods = data.turretProjectile;
 		standardShotData = SplatcraftConvertors.convert(data.shot);
-		turretShotData = SplatcraftConvertors.convert(data.turretShot);
+		turretShotData = SplatcraftConvertors.convert(OptionalShotDataRecord.mergeWithBase(data.turretShot, data.shot));
+		turretShotMods = data.turretShot;
 		rollData = SplatcraftConvertors.convert(data.roll);
-		
+
 		setMoveSpeed(data.moveSpeed);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
@@ -77,8 +81,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		return new DataRecord(
 			standardProjectileData,
 			standardShotData,
-			turretProjectileData,
-			turretShotData,
+			turretProjectileMods,
+			turretShotMods,
 			rollData,
 			moveSpeed,
 			bypassesMobDamage,
@@ -105,8 +109,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public record DataRecord(
 		ProjectileDataRecord projectile,
 		ShotDataRecord shot,
-		ProjectileDataRecord turretProjectile,
-		ShotDataRecord turretShot,
+		Optional<OptionalProjectileDataRecord> turretProjectile,
+		Optional<OptionalShotDataRecord> turretShot,
 		RollDataRecord roll,
 		float moveSpeed,
 		boolean bypassesMobDamage,
@@ -117,21 +121,14 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 			instance -> instance.group(
 				ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::projectile),
 				ShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::shot),
-				OptionalProjectileDataRecord.CODEC.optionalFieldOf("turret_projectile").forGetter((DataRecord v) -> OptionalProjectileDataRecord.from(v.turretProjectile)),
-				OptionalShotDataRecord.CODEC.optionalFieldOf("turret_shot").forGetter((DataRecord v) -> OptionalShotDataRecord.from(v.turretShot)),
+				OptionalProjectileDataRecord.CODEC.optionalFieldOf("turret_projectile").forGetter(DataRecord::turretProjectile),
+				OptionalShotDataRecord.CODEC.optionalFieldOf("turret_shot").forGetter(DataRecord::turretShot),
 				RollDataRecord.CODEC.fieldOf("dodge_roll").forGetter(DataRecord::roll),
 				Codec.FLOAT.optionalFieldOf("mobility", 1f).forGetter(DataRecord::moveSpeed),
 				Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
-			).apply(instance, DataRecord::create)
+			).apply(instance, DataRecord::new)
 		);
-		public static DataRecord create(ProjectileDataRecord projectile, ShotDataRecord shot, Optional<OptionalProjectileDataRecord> turretProjectile, Optional<OptionalShotDataRecord> turretShot, RollDataRecord roll, float mobility, boolean bypassesMobDamage, boolean isSecret)
-		{
-			return new DataRecord(projectile, shot,
-				OptionalProjectileDataRecord.mergeWithBase(turretProjectile, projectile),
-				OptionalShotDataRecord.mergeWithBase(turretShot, shot),
-				roll, mobility, bypassesMobDamage, isSecret);
-		}
 	}
 	public record RollDataRecord(
 		float count,
