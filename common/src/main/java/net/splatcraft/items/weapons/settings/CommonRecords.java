@@ -3,6 +3,7 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.Mth;
 
 import java.util.Optional;
 
@@ -360,6 +361,21 @@ public class CommonRecords
 		public float getMaximumDeviation()
 		{
 			return Math.max(Math.max(minDeviateChance, maxDeviateChance), deviationChanceWhenAirborne);
+		}
+		public static ShotDeviationDataRecord lerp(float delta, ShotDeviationDataRecord dataStart, ShotDeviationDataRecord dataEnd)
+		{
+			return new ShotDeviationDataRecord(
+				Mth.lerp(delta, dataStart.groundShotDeviation(), dataEnd.groundShotDeviation()),
+				Mth.lerp(delta, dataStart.airborneShotDeviation(), dataEnd.airborneShotDeviation()),
+				Mth.lerp(delta, dataStart.minDeviateChance(), dataEnd.minDeviateChance()),
+				Mth.lerp(delta, dataStart.maxDeviateChance(), dataEnd.maxDeviateChance()),
+				Mth.lerp(delta, dataStart.deviationChanceWhenAirborne(), dataEnd.deviationChanceWhenAirborne()),
+				Mth.lerp(delta, dataStart.chanceIncreasePerShot(), dataEnd.chanceIncreasePerShot()),
+				Mth.lerp(delta, dataStart.chanceDecreaseDelay(), dataEnd.chanceDecreaseDelay()),
+				Mth.lerp(delta, dataStart.chanceDecreasePerTick(), dataEnd.chanceDecreasePerTick()),
+				Mth.lerp(delta, dataStart.airborneContractDelay(), dataEnd.airborneContractDelay()),
+				Mth.lerp(delta, dataStart.airborneContractTimeToDecrease(), dataEnd.airborneContractTimeToDecrease())
+			);
 		}
 	}
 	public record OptionalShotDeviationDataRecord(

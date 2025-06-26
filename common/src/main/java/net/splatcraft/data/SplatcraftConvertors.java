@@ -17,6 +17,7 @@ import static net.splatcraft.items.weapons.settings.ChargerWeaponSettings.Charge
 import static net.splatcraft.items.weapons.settings.CommonRecords.*;
 import static net.splatcraft.items.weapons.settings.RollerWeaponSettings.*;
 import static net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SingularSloshShotData;
+import static net.splatcraft.items.weapons.settings.SplatlingWeaponSettings.SplatlingShotDataRecord;
 
 public class SplatcraftConvertors
 {
@@ -349,7 +350,7 @@ public class SplatcraftConvertors
 			dataRecord.shotsCount()
 		);
 	}
-	public static ChargeDataRecord convert(ChargerWeaponSettings.ChargeDataRecord dataRecord)
+	public static ChargeDataRecord convert(ChargeDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -362,6 +363,101 @@ public class SplatcraftConvertors
 			dataRecord.chargeStorageTime() / SplatoonFramesPerMinecraftTick,
 			dataRecord.chargeStorageSquidLag() / SplatoonFramesPerMinecraftTick,
 			dataRecord.chargeStorageShootLag() / SplatoonFramesPerMinecraftTick
+		);
+	}
+	public static SplatlingShotDataRecord convert(SplatlingShotDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+
+		return new SplatlingShotDataRecord(
+			dataRecord.repeatTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.projectileCount(),
+			dataRecord.projectileSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeUsePerShot(),
+			convert(dataRecord.accuracyData()),
+			dataRecord.pitchCompensation(),
+			dataRecord.mobility()
+		);
+	}
+	public static SplatlingWeaponSettings.ChargeDataRecord convert(SplatlingWeaponSettings.ChargeDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+
+		return new SplatlingWeaponSettings.ChargeDataRecord(
+			dataRecord.minChargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.firstChargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.secondChargeTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.emptyTankFirstChargeRate(),
+			dataRecord.emptyTankSecondChargeRate(),
+			dataRecord.airborneFirstChargeRate(),
+			dataRecord.airborneSecondChargeRate(),
+			dataRecord.moveSpeed(),
+			dataRecord.chargeStorageTime() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeStorageSquidLag() / SplatoonFramesPerMinecraftTick,
+			dataRecord.chargeStorageShootLag() / SplatoonFramesPerMinecraftTick,
+			dataRecord.canRechargeWhileFiring()
+		);
+	}
+	public static SplatlingWeaponSettings.OptionalSplatlingShotDataRecord convert(SplatlingWeaponSettings.OptionalSplatlingShotDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+
+		return new SplatlingWeaponSettings.OptionalSplatlingShotDataRecord(
+			dataRecord.repeatTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.endlagTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.miscEndlagTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.projectileCount(),
+			dataRecord.projectileSpeed().map(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
+			dataRecord.chargeUsePerShot(),
+			dataRecord.accuracyData().map(SplatcraftConvertors::convert),
+			dataRecord.pitchCompensation(),
+			dataRecord.mobility()
+		);
+	}
+	private static OptionalShotDeviationDataRecord convert(OptionalShotDeviationDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+
+		return new OptionalShotDeviationDataRecord(
+			dataRecord.groundShotDeviation(),
+			dataRecord.airborneShotDeviation(),
+			dataRecord.minDeviateChance(),
+			dataRecord.maxDeviateChance(),
+			dataRecord.deviationChanceWhenAirborne(),
+			dataRecord.chanceIncreasePerShot(),
+			dataRecord.chanceDecreaseDelay().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.chanceDecreasePerTick().map(v -> v * SplatoonFramesPerMinecraftTick),
+			dataRecord.airborneContractDelay().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.airborneContractTimeToDecrease().map(v -> v / SplatoonFramesPerMinecraftTick)
+
+		);
+	}
+	public static OptionalProjectileDataRecord convert(OptionalProjectileDataRecord dataRecord)
+	{
+		if (SkipConverting)
+			return dataRecord;
+
+		return new OptionalProjectileDataRecord(
+			dataRecord.size().map(v -> v / DistanceUnitsPerMinecraftSquare * 2),
+			dataRecord.visualSize().map(v -> v / DistanceUnitsPerMinecraftSquare * 2),
+			dataRecord.lifeTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.delaySpeedMult(),
+			dataRecord.horizontalDrag().map(v -> (float) Math.pow(v, SplatoonFramesPerMinecraftTick)),
+			dataRecord.straightShotTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
+			dataRecord.gravity().map(v -> v * SplatoonFramesPerMinecraftTick / DistanceUnitsPerMinecraftSquare),
+			dataRecord.inkCoverageImpact().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.inkDropCoverage().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.distanceBetweenInkDrops().map(v -> v / DistanceUnitsPerMinecraftSquare),
+			dataRecord.baseDamage().map(v -> v / SplatoonHealthPerMinecraftHealth),
+			dataRecord.minDamage().map(v -> v / SplatoonHealthPerMinecraftHealth),
+			dataRecord.damageDecayStartTick().map(v -> v / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick),
+			dataRecord.damageDecayPerTick().map(v -> v / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick)
 		);
 	}
 	public static NumberRange.FloatRange convertLength(NumberRange.FloatRange range)

@@ -1,0 +1,66 @@
+{
+    "type": "splatcraft:splatling",
+    "projectile": {
+        "size": 2,
+        "delay_speed_mult": 0.93,
+        "ink_coverage_on_impact": 21.6,
+        "ink_drop_coverage": 12.8,
+        "distance_between_drops": 110,
+        "straight_shot_ticks": 8,
+        "base_damage": 28,
+        "decayed_damage": 14,
+        "damage_decay_start_tick": 11,
+        "damage_decay_per_tick": 1.75
+    },
+    "shot": {
+        "repeat_ticks": 3,
+        "endlag_ticks": 4,
+        "other_actions_endlag_ticks": 4,
+        "projectile_speed": 11,
+        "charge_usage_per_shot": 0.03,
+        "mobility": 0.86,
+        "accuracy_data": {
+            "ground_deviation_degrees": 6,
+            "airborne_deviation_degrees": 12,
+            "chance_min": 0,
+            "chance_max": 0.4,
+            "chance_set_airborne": 0.4
+        }
+    },
+    "second_charge_projectile": {
+        "delay_speed_mult": 0.45,
+        "ink_coverage_on_impact": 16.56,
+        "ink_drop_coverage": 11,
+        "distance_between_drops": 240,
+        "base_damage": 30,
+        "decayed_damage": 15,
+        "damage_decay_start_tick": 11,
+        "damage_decay_per_tick": 1.88
+    },
+    "second_charge_shot": {
+        "repeat_ticks": 5,
+        "mobility": 0.5,
+        "projectile_speed": 22.2,
+        "charge_usage_per_shot": 0.05,
+        "accuracy_data": {
+            "ground_deviation_degrees": 1.5,
+            "airborne_deviation_degrees": 4
+        }
+    },
+    "charge": {
+        "first_charge_time_ticks": 48,
+        "second_charge_time_ticks": 72,
+        "empty_tank_first_charge_rate": 0.25,
+        "empty_tank_second_charge_rate": 0.25,
+        "airborne_first_charge_rate": 0.25,
+        "airborne_second_charge_rate": 0.25,
+        "mobility_while_charging": 0.86,
+        "can_recharge_while_firing": true
+    },
+    "shot_time_for_second_level": 40,
+    "shot_transition_time": 10,
+    "max_ink_consumption": 22.5,
+    "ink_recovery_cooldown": 30,
+    "shot_data_selection_type": "TIME_USED",
+    "full_damage_to_mobs": false
+}

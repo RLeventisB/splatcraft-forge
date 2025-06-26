@@ -76,6 +76,7 @@ public abstract class ExtraSaveData
 	static
 	{
 		Registry.register(REGISTRY, Splatcraft.identifierOf("charge_data"), ChargeExtraData.class);
+		Registry.register(REGISTRY, Splatcraft.identifierOf("splatling_data"), SplatlingExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("blaster_explosion_data"), ExplosionExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("slosher_data"), SloshExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("dualie_data"), DualieExtraData.class);
@@ -127,6 +128,29 @@ public abstract class ExtraSaveData
 		public ChargeExtraData copy()
 		{
 			return new ChargeExtraData(charge);
+		}
+	}
+	public static final class SplatlingExtraData extends ExtraSaveData
+	{
+		public final float dataIndex;
+		public SplatlingExtraData(float dataIndex)
+		{
+			this.dataIndex = dataIndex;
+		}
+		@Override
+		public void save(@NotNull RegistryFriendlyByteBuf buffer)
+		{
+			buffer.writeFloat(dataIndex);
+		}
+		@Override
+		public SplatlingExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
+		{
+			return new SplatlingExtraData(buffer.readFloat());
+		}
+		@Override
+		public SplatlingExtraData copy()
+		{
+			return new SplatlingExtraData(dataIndex);
 		}
 	}
 	public static class ExplosionExtraData extends ExtraSaveData

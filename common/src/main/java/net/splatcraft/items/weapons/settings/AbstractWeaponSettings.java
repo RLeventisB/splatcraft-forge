@@ -55,7 +55,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		{
 			SPEED_MODIFIER = new AttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		}
-		
+
 		return SPEED_MODIFIER;
 	}
 	public SELF setMoveSpeed(float value)
@@ -94,7 +94,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	public abstract float getSpeedForRender(Player player, ItemStack mainHandItem);
 	public void onStartReading(JsonObject json)
 	{
-	
+
 	}
 	public void deserialize(ResourceLocation key, JsonObject json)
 	{

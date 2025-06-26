@@ -129,12 +129,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
-	public InkProjectileEntity setSplatlingStats(SplatlingWeaponSettings settings, float charge)
+	public InkProjectileEntity setSplatlingStats(SplatlingWeaponSettings settings, float dataIndex)
 	{
-		CommonRecords.ProjectileDataRecord projectileData = charge > 1 ? settings.secondChargeLevelProjectile : settings.firstChargeLevelProjectile;
+		CommonRecords.ProjectileDataRecord projectileData = settings.interpolateData(dataIndex).getFirst();
 
 		setCommonProjectileStats(projectileData);
-		addExtraData(new ExtraSaveData.ChargeExtraData(charge));
+		addExtraData(new ExtraSaveData.SplatlingExtraData(dataIndex));
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}

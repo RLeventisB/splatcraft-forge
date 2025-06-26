@@ -1,46 +1,45 @@
 {
     "type": "splatcraft:splatling",
     "projectile": {
-        "size": 1,
-        "delay_speed_mult": 1,
-        "count": 10.5,
-        "ink_coverage_on_impact": 0.85,
-        "ink_drop_coverage": 0.75,
-        "distance_between_drops": 3,
-        "straight_shot_ticks": 2,
-        "gravity": 0.075,
-        "base_damage": 6.4,
-        "decayed_damage": 3.2,
-        "damage_decay_start_tick": 3,
-        "damage_decay_per_tick": 0.4
+        "size": 2,
+        "delay_speed_mult": 0.87,
+        "ink_coverage_on_impact": 21.6,
+        "ink_drop_coverage": 12.6,
+        "distance_between_drops": 100,
+        "straight_shot_ticks": 8,
+        "base_damage": 32,
+        "decayed_damage": 16,
+        "damage_decay_start_tick": 11,
+        "damage_decay_per_tick": 2
     },
     "shot": {
-        "speed": 1,
-        "delay_speed_mult": 0.73,
-        "firing_speed": 3,
-        "ground_inaccuracy": 6,
-        "airborne_inaccuracy": 12,
-        "pitch_compensation": 0,
-        "ink_consumption": 0
-    },
-    "second_charge_projectile": {
-        "straight_shot_ticks": 4
+        "repeat_ticks": 4,
+        "endlag_ticks": 4,
+        "other_actions_endlag_ticks": 4,
+        "projectile_speed": 10.5,
+        "charge_usage_per_shot": 0.105,
+        "mobility": 0.86,
+        "accuracy_data": {
+            "ground_deviation_degrees": 4,
+            "airborne_deviation_degrees": 8,
+            "chance_min": 0,
+            "chance_max": 0.3,
+            "chance_set_airborne": 0.3
+        }
     },
     "second_charge_shot": {
-        "speed": 15
+        "projectile_speed": 15
     },
     "charge": {
-        "first_charge_time_ticks": 7,
-        "second_charge_time_ticks": 3,
-        "empty_tank_first_charge_time_ticks": 42,
-        "empty_tank_second_charge_time_ticks": 18,
-        "total_firing_duration": 24,
-        "charge_storage_ticks": 0,
-        "mobility_while_charging": 0.7,
-        "can_recharge_while_firing": false
+        "first_charge_time_ticks": 18,
+        "second_charge_time_ticks": 27,
+        "empty_tank_first_charge_rate": 0.25,
+        "empty_tank_second_charge_rate": 0.25,
+        "airborne_first_charge_rate": 0.25,
+        "airborne_second_charge_rate": 0.25,
+        "mobility_while_charging": 0.72
     },
-    "max_ink_consumption": 17.25,
-    "ink_recovery_cooldown": 10,
-    "full_damage_to_mobs": false,
-    "mobility": 0.86
+    "max_ink_consumption": 15,
+    "ink_recovery_cooldown": 30,
+    "full_damage_to_mobs": false
 }

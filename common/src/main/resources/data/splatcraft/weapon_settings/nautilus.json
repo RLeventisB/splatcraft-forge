@@ -1,43 +1,45 @@
 {
     "type": "splatcraft:splatling",
     "projectile": {
-        "size": 0.85,
-        "speed": 2.2,
-        "decayed_speed": 2,
-        "count": 1,
-        "ink_coverage_on_impact": 0.85,
-        "ink_drop_coverage": 0.75,
-        "distance_between_drops": 2,
-        "straight_shot_ticks": 2,
-        "gravity": 0.075,
-        "base_damage": 6.4,
-        "decayed_damage": 3.2,
-        "damage_decay_start_tick": 3,
-        "damage_decay_per_tick": 0.4
+        "size": 2,
+        "delay_speed_mult": 0.41,
+        "ink_coverage_on_impact": 16.8,
+        "ink_drop_coverage": 12.6,
+        "distance_between_drops": 120,
+        "straight_shot_ticks": 3,
+        "base_damage": 32,
+        "decayed_damage": 16,
+        "damage_decay_start_tick": 7,
+        "damage_decay_per_tick": 2
     },
     "shot": {
-        "firing_speed": 3,
-        "ground_inaccuracy": 2,
-        "airborne_inaccuracy": 3,
-        "pitch_compensation": 0,
-        "ink_consumption": 0
-    },
-    "second_charge_projectile": {
-    },
-    "second_charge_shot": {
+        "repeat_ticks": 4,
+        "endlag_ticks": 4,
+        "other_actions_endlag_ticks": 4,
+        "projectile_speed": 44.333,
+        "charge_usage_per_shot": 0.066666,
+        "mobility": 0.7,
+        "accuracy_data": {
+            "ground_deviation_degrees": 3.3,
+            "airborne_deviation_degrees": 3.6,
+            "chance_min": 0,
+            "chance_max": 0.3,
+            "chance_set_airborne": 0.3
+        }
     },
     "charge": {
-        "first_charge_time_ticks": 12,
-        "second_charge_time_ticks": 12,
-        "empty_tank_first_charge_time_ticks": 60,
-        "empty_tank_second_charge_time_ticks": 60,
-        "total_firing_duration": 40,
-        "charge_storage_ticks": 66,
+        "first_charge_time_ticks": 38,
+        "second_charge_time_ticks": 76,
+        "empty_tank_first_charge_rate": 0.2,
+        "empty_tank_second_charge_rate": 0.2,
+        "airborne_first_charge_rate": 0.2,
+        "airborne_second_charge_rate": 0.2,
         "mobility_while_charging": 0.4,
+        "charge_storage_ticks": 200,
+        "charge_storage_shooting_lag": 15,
         "can_recharge_while_firing": true
     },
     "max_ink_consumption": 15,
-    "ink_recovery_cooldown": 13,
-    "full_damage_to_mobs": false,
-    "mobility": 0.86
+    "ink_recovery_cooldown": 40,
+    "full_damage_to_mobs": false
 }
