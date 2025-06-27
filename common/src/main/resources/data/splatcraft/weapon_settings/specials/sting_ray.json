@@ -1,6 +1,6 @@
 {
     "type": "splatcraft:special_weapon",
-    "sub_type": "sting_ray",
+    "special_type": "sting_ray",
     "special_duration": 7.17,
     "startup_ticks": 42,
     "shockwave_delay": 90,

@@ -21,6 +21,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.items.InkTankItem;
+import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.items.weapons.settings.SplatlingWeaponSettings;
 import net.splatcraft.platform.DeferredRegister;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Optional;
 
-public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> implements IChargeableWeapon
+public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseItem<SplatlingWeaponSettings<T>> implements IChargeableWeapon
 {
 	private static final int MAX_CHARGES = 2;
 	public SplatlingChargingTickableSound chargingSound;
@@ -112,9 +113,9 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 		}
 	*/
 	@Override
-	public Class<SplatlingWeaponSettings> getSettingsClass()
+	public Class<SplatlingWeaponSettings<T>> getSettingsClass()
 	{
-		return SplatlingWeaponSettings.class;
+		return (Class<SplatlingWeaponSettings<T>>) SplatlingWeaponSettings.CLASS;
 	}
 	/*
 		@Override
@@ -218,7 +219,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	{
 		if (entity instanceof LivingEntity living)
 		{
-			SplatlingWeaponSettings settings = getSettings(stack);
+			SplatlingWeaponSettings<T> settings = getSettings(stack);
 
 			float chargeMult = 0f;
 			if (living.isUsingItem())
@@ -303,7 +304,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		SplatlingWeaponSettings settings = getSettings(stack);
+		SplatlingWeaponSettings<T> settings = getSettings(stack);
 		if (!enoughInk(entity, this, 0.1f, 0, false))
 			return;
 
@@ -331,7 +332,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	@Override
 	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
-		SplatlingWeaponSettings settings = getSettings(stack);
+		SplatlingWeaponSettings<T> settings = getSettings(stack);
 
 		SplatcraftComponents.SplatlingFiringData firingData = stack.get(SplatcraftComponents.SPLATLING_FIRING_DATA);
 		boolean charging = firingData.charging().equals(Optional.of(true));
@@ -353,7 +354,7 @@ public class SplatlingItem extends WeaponBaseItem<SplatlingWeaponSettings> imple
 	public void retrieveCharge(LivingEntity entity, ItemStack stack, float charge)
 	{
 		IChargeableWeapon.super.retrieveCharge(entity, stack, charge);
-		SplatlingWeaponSettings settings = getSettings(stack);
+		SplatlingWeaponSettings<T> settings = getSettings(stack);
 		CommonUtils.setSquidDelay(entity, settings.chargeData.chargeStorageSquidLag());
 		stack.update(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT, v -> v.retrieveCharge(settings));
 

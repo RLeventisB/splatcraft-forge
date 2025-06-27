@@ -135,7 +135,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(ChargerWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(SlosherWeaponSettings.class));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(BlasterWeaponSettings.class));
-			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(SplatlingWeaponSettings.class));
+			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(SplatlingWeaponSettings.CLASS));
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(DualieWeaponSettings.class));
 			int index = data.weaponIdFilter().map(weaponIds::indexOf).orElse(-1);
 			index++;

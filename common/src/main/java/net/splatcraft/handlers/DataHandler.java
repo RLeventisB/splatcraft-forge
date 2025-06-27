@@ -47,7 +47,7 @@ public class DataHandler
 			put(Splatcraft.MODID + ":charger", ChargerWeaponSettings.class);
 			put(Splatcraft.MODID + ":slosher", SlosherWeaponSettings.class);
 			put(Splatcraft.MODID + ":dualie", DualieWeaponSettings.class);
-			put(Splatcraft.MODID + ":splatling", SplatlingWeaponSettings.class);
+			put(Splatcraft.MODID + ":splatling", SplatlingWeaponSettings.CLASS);
 			try
 			{
 				put(Splatcraft.MODID + ":sub_weapon", (Class<? extends AbstractWeaponSettings<?, ?>>) Class.forName("net.splatcraft.items.weapons.settings.SubWeaponSettings"));
@@ -75,20 +75,20 @@ public class DataHandler
 		{
 			CLASS_SETTINGS_MAP.reset();
 			SETTINGS.clear();
-			
+
 			resourceList.forEach((key, element) ->
 			{
 				JsonObject json = element.getAsJsonObject();
 				try
 				{
 					String type = GsonHelper.getAsString(json, "type");
-					
+
 					if (!SETTING_TYPES.containsKey(type))
 						return;
-					
+
 					AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(String.class).newInstance(key.toString());
 					settings.deserialize(key, json);
-					
+
 					settings.registerStatTooltips();
 					SETTINGS.put(key, settings);
 				}

@@ -11,6 +11,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.NumberRange;
 import net.splatcraft.util.WeaponTooltip;
 
@@ -21,7 +22,7 @@ import java.util.Map;
 import static net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
-public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T>
+public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T, ResourceLocation>
 {
 	public static final SubWeaponSettings<?> DEFAULT = new SubWeaponSettings<>("default");
 	public T subDataRecord;
@@ -33,7 +34,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	@Override
 	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return new Map.Entry[] {
+		return new Map.Entry[]{
 			Map.entry(Splatcraft.identifierOf("throwable_exploding"), SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
 			Map.entry(Splatcraft.identifierOf("burst_bomb"), SubWeaponRecords.BurstBombDataRecord.CODEC),
 			Map.entry(Splatcraft.identifierOf("curling_bomb"), SubWeaponRecords.CurlingBombDataRecord.CODEC)
@@ -54,7 +55,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	{
 		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
 		subDataRecord = SplatcraftConvertors.convert(subData);
-		
+
 		setSecret(dataRecord.isSecret);
 		setMoveSpeed(dataRecord.mobility);
 	}
@@ -67,7 +68,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	public List<WeaponTooltip<SubWeaponSettings<T>>> tooltipsToRegister()
 	{
 		List<WeaponTooltip<SubWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
-		
+
 		weaponTooltips.add(new WeaponTooltip<>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().consumption(), WeaponTooltip.RANKER_DESCENDING));
 		weaponTooltips.add(new WeaponTooltip<>("ink_recovery", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().recoveryCooldown(), WeaponTooltip.RANKER_DESCENDING));
 		subDataRecord.addTooltips(weaponTooltips);
@@ -77,6 +78,11 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	public MapCodec<DataRecord> getMapCodec()
 	{
 		return DataRecord.CODEC;
+	}
+	@Override
+	public Codec<ResourceLocation> getDynamicCodecKeyCodec()
+	{
+		return CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC;
 	}
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)

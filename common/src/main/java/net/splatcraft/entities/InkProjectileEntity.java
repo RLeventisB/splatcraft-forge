@@ -129,7 +129,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
-	public InkProjectileEntity setSplatlingStats(SplatlingWeaponSettings settings, float dataIndex)
+	public InkProjectileEntity setSplatlingStats(SplatlingWeaponSettings<?> settings, float dataIndex)
 	{
 		CommonRecords.ProjectileDataRecord projectileData = settings.interpolateData(dataIndex).getFirst();
 

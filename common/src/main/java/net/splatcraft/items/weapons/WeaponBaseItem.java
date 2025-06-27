@@ -63,7 +63,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		put(ChargerWeaponSettings.class, ChargerWeaponSettings.DEFAULT);
 		put(SlosherWeaponSettings.class, SlosherWeaponSettings.DEFAULT);
 		put(DualieWeaponSettings.class, DualieWeaponSettings.DEFAULT);
-		put(SplatlingWeaponSettings.class, SplatlingWeaponSettings.DEFAULT);
+		put(SplatlingWeaponSettings.CLASS, SplatlingWeaponSettings.DEFAULT);
 	}};
 	public boolean isSecret;
 	public WeaponBaseItem(String settingsId)

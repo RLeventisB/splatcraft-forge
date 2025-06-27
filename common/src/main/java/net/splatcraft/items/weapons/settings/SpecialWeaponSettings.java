@@ -20,7 +20,7 @@ import java.util.Map;
 
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
-public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SpecialWeaponSettings<T>, SpecialWeaponSettings.DataRecord, T>
+public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SpecialWeaponSettings<T>, SpecialWeaponSettings.DataRecord, T, ResourceLocation>
 {
 	public static final SpecialWeaponSettings<?> DEFAULT = new SpecialWeaponSettings<>("default");
 	public T specialDataRecord;
@@ -32,7 +32,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	@Override
 	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return new Map.Entry[] {
+		return new Map.Entry[]{
 			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC)
 		};
 	}
@@ -61,7 +61,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public List<WeaponTooltip<SpecialWeaponSettings<T>>> tooltipsToRegister()
 	{
 		List<WeaponTooltip<SpecialWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
-		
+
 		specialDataRecord.addTooltips(weaponTooltips);
 		return weaponTooltips;
 	}
@@ -69,6 +69,16 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public MapCodec<DataRecord> getMapCodec()
 	{
 		return DataRecord.CODEC;
+	}
+	@Override
+	public Codec<ResourceLocation> getDynamicCodecKeyCodec()
+	{
+		return CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC;
+	}
+	@Override
+	public String getDynamicCodecKeyName()
+	{
+		return "special_type";
 	}
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)

@@ -370,12 +370,12 @@ public class SplatcraftComponents
 		{
 			return tick(entity, stack, settings, chargeMult, onCharge, onChargeRelease, onFiringEnd, onShoot, 1);
 		}
-		public SplatlingFiringData tick(LivingEntity entity, ItemStack stack, SplatlingWeaponSettings settings, float chargeMult, BiConsumer<Float, Float> onCharge, TriConsumer<Float, Float, Short> onChargeRelease, Consumer<Float> onFiringEnd, SplatlingShootAction onShoot, float timeDelta)
+		public SplatlingFiringData tick(LivingEntity entity, ItemStack stack, SplatlingWeaponSettings<?> settings, float chargeMult, BiConsumer<Float, Float> onCharge, TriConsumer<Float, Float, Short> onChargeRelease, Consumer<Float> onFiringEnd, SplatlingShootAction onShoot, float timeDelta)
 		{
 			if (charging.isEmpty())
 			{
 				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
-				if (settings.shotSelectionType == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
+				if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
 				{
 					if (EntityInfoCapability.isSquid(entity))
 					{
@@ -402,7 +402,7 @@ public class SplatcraftComponents
 				if (previousCharging) // just started shooting
 				{
 					float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge;
-					if (settings.shotSelectionType == SplatlingWeaponSettings.ShotDataSelectorType.STATIC)
+					if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.STATIC)
 					{
 						nextShotTypeData = SplatlingWeaponSettings.getShotIndexFromCharge(charge);
 					}
@@ -412,10 +412,10 @@ public class SplatcraftComponents
 				return fireSplatling(stack, settings, onShoot, timeDelta, nextShotTypeData, onFiringEnd);
 			}
 		}
-		private @NotNull SplatlingFiringData chargeSplatling(ItemStack stack, SplatlingWeaponSettings settings, float chargeMult, BiConsumer<Float, Float> onCharge, float timeDelta, boolean evenTick)
+		private @NotNull SplatlingFiringData chargeSplatling(ItemStack stack, SplatlingWeaponSettings<?> settings, float chargeMult, BiConsumer<Float, Float> onCharge, float timeDelta, boolean evenTick)
 		{
 			short nextShotTypeData = shotTypeData;
-			if (settings.shotSelectionType == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED && nextShotTypeData > 0)
+			if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED && nextShotTypeData > 0)
 			{
 //				if (evenTick)
 				{
@@ -514,18 +514,22 @@ public class SplatcraftComponents
 			}
 			nextDelay -= timeDelta;
 			stack.set(SplatcraftComponents.CHARGE_DATA, chargeData);
-			if (settings.shotSelectionType == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED && nextShotTypeData < settings.shotTimeForSecondLevel * 2)
+			if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
 			{
-				nextShotTypeData++;
+				SplatlingWeaponSettings.TimeUsedSelectionData timeUsedData = (SplatlingWeaponSettings.TimeUsedSelectionData) settings.shotSelectionData;
+				if (nextShotTypeData < timeUsedData.shotTimeForSecondLevel() * 2)
+				{
+					nextShotTypeData++;
+				}
 			}
 
 			return new SplatlingFiringData(nextCounter, Optional.of(false), nextDelay, nextShotTypeData, chargeStart);
 		}
-		public SplatlingFiringData retrieveCharge(SplatlingWeaponSettings settings)
+		public SplatlingFiringData retrieveCharge(SplatlingWeaponSettings<?> settings)
 		{
 			return new SplatlingFiringData(-settings.chargeData.chargeStorageShootLag(), Optional.of(true), delay, shotTypeData, chargeStart);
 		}
-		public SplatlingFiringData notifyUsage(LivingEntity entity, SplatlingWeaponSettings settings, ItemStack stack)
+		public SplatlingFiringData notifyUsage(LivingEntity entity, SplatlingWeaponSettings<?> settings, ItemStack stack)
 		{
 			if (!WeaponHandler.canContinueShooting(entity))
 				return this;

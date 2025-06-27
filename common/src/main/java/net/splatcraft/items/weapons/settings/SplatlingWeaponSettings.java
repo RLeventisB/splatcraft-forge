@@ -22,6 +22,7 @@ import net.splatcraft.util.WeaponTooltip.Metrics;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
@@ -29,8 +30,21 @@ import static net.splatcraft.entities.ExtraSaveData.SplatlingExtraData;
 import static net.splatcraft.items.weapons.settings.CommonRecords.OptionalProjectileDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.OptionalShotDeviationDataRecord;
 
-public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWeaponSettings, DataRecord>
+public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SplatlingWeaponSettings<T>, DataRecord, T, SplatlingWeaponSettings.ShotDataSelectorType>
 {
+	public static final Class<? extends AbstractWeaponSettings<?, ?>> CLASS = getClassCasted();
+	private static Class<? extends AbstractWeaponSettings<?, ?>> getClassCasted()
+	{
+		try
+		{
+			return (Class<? extends AbstractWeaponSettings<?, ?>>) Class.forName("net.splatcraft.items.weapons.settings.SplatlingWeaponSettings");
+		}
+		catch (ClassNotFoundException e)
+		{
+			return null;
+		}
+	}
+
 	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
 	public ProjectileDataRecord[] projectileDatas = new ProjectileDataRecord[]{ProjectileDataRecord.DEFAULT};
 	public SplatlingShotDataRecord[] shotDatas = new SplatlingShotDataRecord[]{SplatlingShotDataRecord.DEFAULT};
@@ -40,12 +54,42 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	public boolean bypassesMobDamage = false;
 	public float inkConsumption;
 	public float inkRecoveryCooldown;
-	public ShotDataSelectorType shotSelectionType = ShotDataSelectorType.STATIC;
-	public short shotTimeForSecondLevel;
-	public short shotTransitionTime;
+	public T shotSelectionData;
 	public SplatlingWeaponSettings(String name)
 	{
 		super(name);
+	}
+	@Override
+	public Map.Entry<ShotDataSelectorType, MapCodec<? extends T>>[] getDynamicCodecs()
+	{
+		return new Map.Entry[]{
+			Map.entry(ShotDataSelectorType.TIME_USED, TimeUsedSelectionData.CODEC)
+		};
+	}
+	@Override
+	protected MapCodec<DataRecord> getMapCodec()
+	{
+		return DataRecord.MAP_CODEC;
+	}
+	@Override
+	public String getDynamicCodecKeyName()
+	{
+		return "shot_data_selection_type";
+	}
+	@Override
+	public MapCodec<ShotDataSelectorType> getFieldOfDynamicKey()
+	{
+		return getDynamicCodecKeyCodec().optionalFieldOf(getDynamicCodecKeyName(), ShotDataSelectorType.STATIC);
+	}
+	@Override
+	public Codec<ShotDataSelectorType> getDynamicCodecKeyCodec()
+	{
+		return ShotDataSelectorType.CODEC;
+	}
+	@Override
+	public T getDynamicDataToSerialize()
+	{
+		return shotSelectionData;
 	}
 	private static float calculateSplatlingAproxRange(ProjectileDataRecord projSettings, float speed)
 	{
@@ -61,7 +105,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		return projectile.calculateDamageDecay(projectileData.baseDamage(), projectileData.damageDecayStartTick(), projectileData.damageDecayPerTick(), projectileData.minDamage());
 	}
 	@Override
-	public List<WeaponTooltip<SplatlingWeaponSettings>> tooltipsToRegister()
+	public List<WeaponTooltip<SplatlingWeaponSettings<T>>> tooltipsToRegister()
 	{
 		return List.of(
 			new WeaponTooltip<>("range", Metrics.BLOCKS, settings ->
@@ -69,11 +113,6 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 			new WeaponTooltip<>("charge_speed", Metrics.SECONDS, settings -> (settings.chargeData.firstChargeTime + settings.chargeData.secondChargeTime) / 20f, WeaponTooltip.RANKER_DESCENDING),
 			new WeaponTooltip<>("mobility", Metrics.MULTIPLIER, settings -> settings.getMoveSpeed(true, 0), WeaponTooltip.RANKER_ASCENDING)
 		);
-	}
-	@Override
-	public Codec<DataRecord> getCodec()
-	{
-		return DataRecord.CODEC;
 	}
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
@@ -84,7 +123,7 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		).getSecond().accuracyData();
 	}
 	@Override
-	public void processData(DataRecord data)
+	protected void processResult(DataRecord data, T subData)
 	{
 		secondLevelShotMods = data.secondChargeShot.map(SplatcraftConvertors::convert);
 		fullLevelShotMods = data.fullChargeShot.map(SplatcraftConvertors::convert);
@@ -107,10 +146,8 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
+		shotSelectionData = SplatcraftConvertors.convert(subData);
 		chargeData = SplatcraftConvertors.convert(data.charge);
-		shotTimeForSecondLevel = (short) (SplatcraftConvertors.SkipConverting ? data.shotTimeForSecondLevel : (data.shotTimeForSecondLevel / SplatcraftConvertors.SplatoonFramesPerMinecraftTick));
-		shotTransitionTime = (short) (SplatcraftConvertors.SkipConverting ? data.shotTransitionTime : (data.shotTransitionTime / SplatcraftConvertors.SplatoonFramesPerMinecraftTick));
-		shotSelectionType = data.shotSelectionType;
 		setInkConsumption(data.inkConsumption);
 		setInkRecoveryCooldown(SplatcraftConvertors.SkipConverting ? data.inkRecoveryCooldown : (data.inkRecoveryCooldown / SplatcraftConvertors.SplatoonFramesPerMinecraftTick));
 	}
@@ -126,9 +163,6 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 			chargeData,
 			inkConsumption,
 			inkRecoveryCooldown,
-			shotTimeForSecondLevel,
-			shotTransitionTime,
-			shotSelectionType,
 			bypassesMobDamage,
 			isSecret);
 	}
@@ -140,17 +174,17 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 			stack.get(SplatcraftComponents.SPLATLING_FIRING_DATA).shotTypeData()
 		).getSecond().projectileSpeed();
 	}
-	public SplatlingWeaponSettings setBypassesMobDamage(boolean bypassesMobDamage)
+	public SplatlingWeaponSettings<T> setBypassesMobDamage(boolean bypassesMobDamage)
 	{
 		this.bypassesMobDamage = bypassesMobDamage;
 		return this;
 	}
-	public SplatlingWeaponSettings setInkConsumption(float inkConsumption)
+	public SplatlingWeaponSettings<T> setInkConsumption(float inkConsumption)
 	{
 		this.inkConsumption = inkConsumption;
 		return this;
 	}
-	public SplatlingWeaponSettings setInkRecoveryCooldown(float inkRecoveryCooldown)
+	public SplatlingWeaponSettings<T> setInkRecoveryCooldown(float inkRecoveryCooldown)
 	{
 		this.inkRecoveryCooldown = inkRecoveryCooldown;
 		return this;
@@ -161,18 +195,20 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 	}
 	public float getShotTypeIndex(float charge, short data)
 	{
-		return switch (shotSelectionType)
+		return switch (getDynamicDataKey())
 		{
 			case STATIC -> Mth.clamp(data, 0, 2);
 			case CURRENT_CHARGE -> getShotIndexFromCharge(charge);
 			case TIME_USED ->
 			{
-				if (data >= shotTimeForSecondLevel + shotTransitionTime)
+				TimeUsedSelectionData timeUsedData = (TimeUsedSelectionData) shotSelectionData;
+				if (data >= timeUsedData.shotTimeForSecondLevel + timeUsedData.shotTransitionTime)
 					yield 1;
-				if (data >= shotTimeForSecondLevel)
-					yield ((float) data - shotTimeForSecondLevel) / shotTransitionTime;
+				if (data >= timeUsedData.shotTimeForSecondLevel)
+					yield ((float) data - timeUsedData.shotTimeForSecondLevel) / timeUsedData.shotTransitionTime;
 				yield 0;
 			}
+			case SHOTS_FIRED -> 0.0F;
 		};
 	}
 	public Pair<ProjectileDataRecord, SplatlingShotDataRecord> interpolateData(float progress)
@@ -260,14 +296,11 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 		ChargeDataRecord charge,
 		float inkConsumption,
 		float inkRecoveryCooldown,
-		short shotTimeForSecondLevel,
-		short shotTransitionTime,
-		ShotDataSelectorType shotSelectionType,
 		boolean bypassesMobDamage,
 		boolean isSecret
 	)
 	{
-		public static final Codec<DataRecord> CODEC = RecordCodecBuilder.create(
+		public static final MapCodec<DataRecord> MAP_CODEC = RecordCodecBuilder.mapCodec(
 			instance -> instance.group(
 				ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(DataRecord::baseProjectile),
 				SplatlingShotDataRecord.CODEC.fieldOf("shot").forGetter(DataRecord::baseShot),
@@ -278,19 +311,18 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				ChargeDataRecord.CODEC.fieldOf("charge").forGetter(DataRecord::charge),
 				Codec.FLOAT.fieldOf("max_ink_consumption").forGetter(DataRecord::inkConsumption),
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(DataRecord::inkRecoveryCooldown),
-				Codec.SHORT.optionalFieldOf("shot_time_for_second_level", (short) 0).forGetter(DataRecord::shotTimeForSecondLevel),
-				Codec.SHORT.optionalFieldOf("shot_transition_time", (short) 0).forGetter(DataRecord::shotTransitionTime),
-				ShotDataSelectorType.CODEC.optionalFieldOf("shot_data_selection_type", ShotDataSelectorType.STATIC).forGetter(DataRecord::shotSelectionType),
 				Codec.BOOL.optionalFieldOf("full_damage_to_mobs", false).forGetter(DataRecord::bypassesMobDamage),
 				Codec.BOOL.optionalFieldOf("is_secret", false).forGetter(DataRecord::isSecret)
 			).apply(instance, DataRecord::new)
 		);
+		public static final Codec<DataRecord> CODEC = MAP_CODEC.codec();
 	}
 	public enum ShotDataSelectorType implements StringRepresentable
 	{
 		STATIC, // maintain the data type used for the duration of the barrage, default behaviour
 		CURRENT_CHARGE, // update the data according to the current charge, this means if a splatling goes from a second level to the first one, the shot uses the first level data,
-		TIME_USED; // ballpoint-like type, when firing for an specified amount, use the second charge data
+		TIME_USED, // ballpoint-like type, when firing for an specified amount, use the second charge data
+		SHOTS_FIRED; // actually ballpoint-like type, after a set amount of shots, use the second charge data
 		public static final Codec<ShotDataSelectorType> CODEC = StringRepresentable.fromEnum(ShotDataSelectorType::values);
 		@Override
 		public @NotNull String getSerializedName()
@@ -451,6 +483,26 @@ public class SplatlingWeaponSettings extends AbstractWeaponSettings<SplatlingWea
 				OptionalShotDeviationDataRecord.mergeWithBase(modifiedGet.accuracyData, base.accuracyData),
 				modifiedGet.pitchCompensation.orElse(base.pitchCompensation),
 				modifiedGet.mobility.orElse(base.mobility)
+			);
+		}
+	}
+	public record TimeUsedSelectionData(
+		short shotTimeForSecondLevel,
+		short shotTransitionTime
+	) implements DynamicDataRecord<TimeUsedSelectionData>
+	{
+		public static final MapCodec<TimeUsedSelectionData> CODEC = RecordCodecBuilder.mapCodec(
+			inst -> inst.group(
+				Codec.SHORT.optionalFieldOf("shot_time_for_second_level", (short) 0).forGetter(TimeUsedSelectionData::shotTimeForSecondLevel),
+				Codec.SHORT.optionalFieldOf("shot_transition_time", (short) 0).forGetter(TimeUsedSelectionData::shotTransitionTime)
+			).apply(inst, TimeUsedSelectionData::new)
+		);
+		@Override
+		public TimeUsedSelectionData convertSelf()
+		{
+			return new TimeUsedSelectionData(
+				(short) (shotTimeForSecondLevel / SplatcraftConvertors.SplatoonFramesPerMinecraftTick),
+				(short) (shotTransitionTime / SplatcraftConvertors.SplatoonFramesPerMinecraftTick)
 			);
 		}
 	}
