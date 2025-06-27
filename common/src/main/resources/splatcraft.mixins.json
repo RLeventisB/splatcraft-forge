@@ -23,29 +23,7 @@
         "accessors.GameRuleAccessor"
     ],
     "client": [
-        "CooldownSlotMixin",
-        "EntityLayerMixin",
-        "EntityMixins$EntityRendererMixin",
-        "GameRendererMixin",
-        "ItemRenderingMixins$HeldItemRendererMixin",
-        "ItemRenderingMixins$ItemRendererMixin",
-        "MatchMixins$AbstractClientPlayerMixin",
-        "MatchMixins$ClientInteractionManagerMixin",
-        "MatchMixins$ClientPlayerMixinCommon",
-        "MatchMixins$HeldItemRendererMixin",
-        "MatchMixins$MatchCameraMixin",
-        "MatchMixins$PlayerRendererMixin",
-        "PlayerMixins$LocalPlayerMixinFabric",
-        "PlayerMixins$PlayerRendererMixin",
-        "PlayerMixins$WeaponUsageModelMixin",
-        "PlayerModelMixin",
-        "PlayerTabOverlayMixin",
-        "RecipeCategoryMixin",
-        "WeaponHotkeyMixin$MinecraftInstance",
-        "WeaponHotkeyMixin$PlayerControllerMix",
-        "accessors.ChunkRegionAccessor",
-        "accessors.GameRendererFovAccessor",
-        "accessors.MinecraftClientAccessor"
+        "CooldownSlotMixin$MinecraftPart", "CooldownSlotMixin$MouseHandlerPart", "EntityLayerMixin", "EntityMixins$EntityRendererMixin", "GameRendererMixin", "ItemRenderingMixins$HeldItemRendererMixin", "ItemRenderingMixins$ItemRendererMixin", "MatchMixins$AbstractClientPlayerMixin", "MatchMixins$ClientInteractionManagerMixin", "MatchMixins$ClientPlayerMixinCommon", "MatchMixins$HeldItemRendererMixin", "MatchMixins$MatchCameraMixin", "MatchMixins$PlayerRendererMixin", "PlayerMixins$LocalPlayerMixinFabric", "PlayerMixins$PlayerRendererMixin", "PlayerMixins$WeaponUsageModelMixin", "PlayerModelMixin", "PlayerTabOverlayMixin", "RecipeCategoryMixin", "WeaponHotkeyMixin$MinecraftInstance", "WeaponHotkeyMixin$PlayerControllerMix", "accessors.ChunkRegionAccessor", "accessors.GameRendererFovAccessor", "accessors.MinecraftClientAccessor"
     ],
     "server": [],
     "injectors": {

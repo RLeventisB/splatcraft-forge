@@ -57,10 +57,10 @@
         "mobility_while_charging": 0.86,
         "can_recharge_while_firing": true
     },
-    "shot_time_for_second_level": 40,
+    "shot_time_for_second_level": 30,
     "shot_transition_time": 10,
-    "max_ink_consumption": 22.5,
-    "ink_recovery_cooldown": 30,
+    "max_ink_consumption": 25,
+    "ink_recovery_cooldown": 40,
     "shot_data_selection_type": "TIME_USED",
     "full_damage_to_mobs": false
 }
