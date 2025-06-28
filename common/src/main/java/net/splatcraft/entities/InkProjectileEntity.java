@@ -574,18 +574,18 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		entityData.set(SHOOT_DIRECTION, shotDirection.toVector3f());
 	}
 	@Override
-	public void onVelocityCalculated(Vec3 velocity, float speed)
+	public void onVelocityCalculated(Vec3 direction, float speed)
 	{
 		hasImpulse = true;
 
-		double d0 = velocity.horizontalDistance();
-		float yaw = (float) (Mth.atan2(velocity.x, velocity.z) * Mth.RAD_TO_DEG);
-		float pitch = (float) (Mth.atan2(velocity.y, d0) * Mth.RAD_TO_DEG);
+		double d0 = direction.horizontalDistance();
+		float yaw = (float) (Mth.atan2(direction.x, direction.z) * Mth.RAD_TO_DEG);
+		float pitch = (float) (Mth.atan2(direction.y, d0) * Mth.RAD_TO_DEG);
 		setYRot(yaw);
 		setXRot(pitch);
 		yRotO = yaw;
 		xRotO = pitch;
-		setDeltaMovement(velocity);
+		setDeltaMovement(direction);
 
 		entityData.set(SPEED, speed);
 	}

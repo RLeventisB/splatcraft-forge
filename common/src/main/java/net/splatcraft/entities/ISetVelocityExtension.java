@@ -43,7 +43,7 @@ public interface ISetVelocityExtension
 		shotDirection = shotDirection.scale(speed);
 		onVelocityCalculated(shotDirection, speed);
 	}
-	default void onVelocityCalculated(Vec3 velocity, float speed)
+	default void onVelocityCalculated(Vec3 direction, float speed)
 	{
 
 	}

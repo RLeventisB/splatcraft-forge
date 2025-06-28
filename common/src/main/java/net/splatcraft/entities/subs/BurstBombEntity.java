@@ -67,10 +67,20 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 	@Override
 	public void updateRotation()
 	{
-		float angle = -tickCount * Mth.RAD_TO_DEG * 0.4f;
 		Vec3 vec3 = getDeltaMovement();
+		float angle = -tickCount * Mth.RAD_TO_DEG * 0.4f;
+		float yRot = (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG);
+		if (firstTick)
+		{
+			setYRot(yRot);
+			xRotO = angle;
+			yRotO = yRot;
+		}
+		else
+		{
+			setYRot(lerpRotation(yRotO, yRot));
+		}
 		setXRot(angle);
-		setYRot(lerpRotation(yRotO, (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG)));
 	}
 	@Override
 	protected Item getDefaultItem()

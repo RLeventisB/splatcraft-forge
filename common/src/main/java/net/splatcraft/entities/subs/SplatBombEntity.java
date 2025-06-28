@@ -120,7 +120,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	@Override
 	protected void onHitBlock(BlockHitResult result)
 	{
-		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (getBlockY() - getBlockY()) <= 0)
+		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (getY() - getBlockY()) <= 0)
 			return;
 
 		double velocityX = getDeltaMovement().x;
@@ -131,7 +131,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 
 		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
 			setDeltaMovement(-velocityX, velocityY, velocityZ);
-		if (blockFace == Direction.DOWN)
+		if ((blockFace == Direction.DOWN || blockFace == Direction.UP) && Math.abs(velocityY) >= 1.2)
 			setDeltaMovement(velocityX, -velocityY * .3, velocityZ);
 		if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
 			setDeltaMovement(velocityX, velocityY, -velocityZ);

@@ -33,7 +33,7 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 			AbstractSubWeaponEntity<SubWeaponRecords.ThrowableExplodingSubDataRecord> proj = AbstractSubWeaponEntity.create(getEntityType(stack), world, entity, stack.copy());
 
 			proj.setItem(stack.copy());
-			proj.setDeltaMovement(entity, entity.getXRot(), entity.getYRot(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
+			proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), subData.throwAngle(), subData.throwVelocity(), 0, 1f);
 			world.addFreshEntity(proj);
 		}
 		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);

@@ -8,6 +8,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -71,6 +72,8 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	@Override
 	public void tick()
 	{
+		updateRotation();
+		
 		super.tick();
 
 		if (isUnderWater())
@@ -89,11 +92,32 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 
 		handleMovement();
 
-		updateRotation();
 		float f = getFriction();
 		if (f != -1)
 			setDeltaMovement(getDeltaMovement().scale(f));
 		applyGravity();
+	}
+	@Override
+	public void updateRotation()
+	{
+		Vec3 motion = getDeltaMovement();
+		if (!Vec3.ZERO.equals(motion))
+		{
+			float pitch = (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG);
+			float yaw = (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG);
+			if (firstTick)
+			{
+				setXRot(pitch);
+				setYRot(yaw);
+				xRotO = pitch;
+				yRotO = yaw;
+			}
+			else
+			{
+				setXRot(lerpRotation(xRotO, pitch));
+				setYRot(lerpRotation(yRotO, yaw));
+			}
+		}
 	}
 	public void handleMovement()
 	{
@@ -114,9 +138,17 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		}
 	}
 	@Override
-	public void shootFromRotation(@NotNull Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
+	public void shootFromRotation(@NotNull Entity shooter, float pitch, float yaw, float pitchOffset, float speed, float divergence)
 	{
-		ISetVelocityExtension.super.setDeltaMovement(shooter, pitch, yaw, roll, speed, divergence);
+		shootFromRotation(shooter, pitch, yaw, pitchOffset, speed, divergence, 0.8f);
+	}
+	public void shootFromRotation(@NotNull Entity shooter, float pitch, float yaw, float pitchOffset, float speed, float divergence, float throwerImpulse)
+	{
+		ISetVelocityExtension.super.setDeltaMovement(shooter, pitch, yaw, pitchOffset, speed, divergence, throwerImpulse);
+		setYRot(yaw);
+		setXRot(pitch);
+		yRotO = yaw;
+		xRotO = pitch;
 	}
 	@Override
 	public void shoot(double x, double y, double z, float power, float uncertainty)
@@ -124,9 +156,9 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		ISetVelocityExtension.super.setDeltaMovement(x, y, z, power, uncertainty);
 	}
 	@Override
-	public void onVelocityCalculated(Vec3 velocity, float speed)
+	public void onVelocityCalculated(Vec3 direction, float speed)
 	{
-		setDeltaMovement(velocity);
+		setDeltaMovement(direction);
 	}
 	public double getDefaultGravity()
 	{
