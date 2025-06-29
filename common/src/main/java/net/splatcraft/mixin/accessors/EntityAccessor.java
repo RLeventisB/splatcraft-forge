@@ -13,4 +13,6 @@ public interface EntityAccessor
 	{
 		throw new AssertionError();
 	}
+	@Invoker
+	Vec3 invokeCollide(Vec3 vec);
 }

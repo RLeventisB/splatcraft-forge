@@ -11,11 +11,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -24,6 +23,7 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.CurlingBombDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
@@ -64,8 +64,6 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	@Override
 	public void tick()
 	{
-		super.tick();
-
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
 
 		double spd = getDeltaMovement().horizontalDistance();
@@ -83,31 +81,75 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			playedActivationSound = true;
 		}
 
+		if (fuseTime <= 0)
+		{
+			Vec3 center = getBoundingBox().getCenter();
+			explode(curlingData, center);
+			return;
+		}
+
 		if (!level().isClientSide())
 		{
 			doTrail(spd > 1.0E-3, settings);
 		}
+
+		applyFloorFriction(slowingDown);
+		updateRotation();
+
+		if (spd > 0.01 && fuseTime % (int) Math.max(1, (1 - spd) * 10) == 0)
+		{
+			level().broadcastEntityEvent(this, (byte) 2);
+		}
+
+		superTick();
+
+		if (isUnderWater())
+		{
+			level().broadcastEntityEvent(this, (byte) -1);
+			discard();
+		}
+
+		processMovement();
+	}
+	private void processMovement()
+	{
+		Vec3 deltaMovement = getDeltaMovement();
+		Vec3 collidedDeltaMovement = ((EntityAccessor) this).invokeCollide(deltaMovement);
+		if (!Mth.equal(deltaMovement.x, collidedDeltaMovement.x))
+			deltaMovement = deltaMovement.with(Direction.Axis.X, reflectVelocity(Direction.Axis.X, deltaMovement));
+		if (!Mth.equal(deltaMovement.z, collidedDeltaMovement.z))
+			deltaMovement = deltaMovement.with(Direction.Axis.Z, reflectVelocity(Direction.Axis.Z, deltaMovement));
+
+		if (deltaMovement.y != collidedDeltaMovement.y)
+		{
+			if (deltaMovement.y < collidedDeltaMovement.y && collidedDeltaMovement.y <= 0)
+			{
+				if (deltaMovement.y < -0.7)
+					deltaMovement = deltaMovement.with(Direction.Axis.Y, reflectVelocity(Direction.Axis.Y, deltaMovement));
+				else
+					deltaMovement = deltaMovement.with(Direction.Axis.Y, 0);
+			}
+		}
+		EntityHitResult hitResult = ProjectileUtil.getEntityHitResult(level(), this, position(), position().add(collidedDeltaMovement), getBoundingBox(), this::canHitEntity, 0.5f);
+		if (hitResult != null)
+			onHitEntity(hitResult);
+
+		setDeltaMovement(deltaMovement);
+		setPos(position().add(collidedDeltaMovement));
+
+		applyGravity();
+	}
+	private void applyFloorFriction(boolean slowingDown)
+	{
 		float horizontalFriction = 1f;
 		if (onGround())
-			horizontalFriction = level().getBlockState(BlockPos.containing(getX(), getY() - 1.0D, getZ())).getBlock().getFriction() / 0.6f;
+			horizontalFriction = level().getBlockState(getOnPos()).getBlock().getFriction() / 0.6f;
 		if (slowingDown)
 		{
 			horizontalFriction *= 0.8f;
 		}
 		horizontalFriction = Mth.clamp(horizontalFriction, 0, 1);
 		setDeltaMovement(getDeltaMovement().multiply(horizontalFriction, 1f, horizontalFriction));
-
-		if (fuseTime <= 0)
-		{
-			Vec3 center = getBoundingBox().getCenter();
-			explode(curlingData, center);
-		}
-		else if (spd > 0.01 && fuseTime % (int) Math.max(1, (1 - spd) * 10) == 0)
-		{
-			level().broadcastEntityEvent(this, (byte) 2);
-		}
-
-		move(MoverType.SELF, getDeltaMovement());
 	}
 	public void explode(CurlingBombDataRecord settings, Vec3 impactPos)
 	{
@@ -123,6 +165,8 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	@Override
 	public void handleMovement()
 	{
+		setDeltaMovement(((EntityAccessor) this).invokeCollide(getDeltaMovement()));
+		setPos(position().add(getDeltaMovement()));
 	}
 	@Override
 	public float getFriction()
@@ -140,7 +184,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 				Vec3 normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
 				double sideX = -normalized.z;
 				double sideZ = normalized.x;
-				for (int i = 0; i <= 2; i++)
+				for (int i = 1; i <= 2; i++)
 				{
 					double y = getBlockY() - i;
 					BlockPos side = BlockPos.containing(Math.floor(getX() + sideX * j), y, Math.floor(getZ() + sideZ * j));
@@ -201,34 +245,25 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
 			setDeltaMovement(velocityX, velocityY, -velocityZ);
 	}
-	@Override
-	protected void onHitBlock(@NotNull BlockHitResult result)
+	protected double reflectVelocity(Direction.Axis axis, Vec3 velocity)
 	{
-		Vec3 velocity = getDeltaMovement().add(0, getDefaultGravity(), 0);
-		if (canStepUp(velocity))
-			return;
-
 		double velocityX = velocity.x;
 		double velocityY = velocity.y;
 		double velocityZ = velocity.z;
 
-		Direction blockFace = result.getDirection();
-
-		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (blockPosition().getY() - position().y()) < .7f)
-			return;
-
-		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
-			setDeltaMovement(-velocityX, velocityY, velocityZ);
-		if (Math.abs(velocityY) >= 0.05 && (blockFace == Direction.DOWN))
-			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
-		if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
-			setDeltaMovement(velocityX, velocityY, -velocityZ);
+		return switch (axis)
+		{
+			case X -> -velocityX;
+			case Y -> -velocityY * .5;
+			case Z -> -velocityZ;
+		};
 	}
 	public float getFlashIntensity(float partialTicks)
 	{
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
 		if (settings.subDataRecord == null)
 			return 0;
+
 		if (fuseTime <= settings.subDataRecord.warningFrame())
 		{
 			return settings.subDataRecord.warningFrame() - Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) * 0.85f;
