@@ -1,8 +1,10 @@
 package net.splatcraft.util.action.specials;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -18,6 +20,7 @@ import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseSpecialAction extends EntityActionWithTime
 {
@@ -86,5 +89,13 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	public EntitySlot getItemSlot()
 	{
 		return weaponSlot;
+	}
+
+	public void transformHeldWeaponRender(float[] dataArray, AtomicBoolean doRender, InteractionHand hand, float tickDelta, float time, PoseStack matrices)
+	{
+		if (time < 3)
+			dataArray[0] = -0.5f * time / 3f;
+		else
+			doRender.set(false);
 	}
 }

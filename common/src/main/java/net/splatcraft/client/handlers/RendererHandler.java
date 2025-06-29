@@ -61,6 +61,7 @@ import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -70,6 +71,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
 
@@ -110,63 +112,79 @@ public class RendererHandler
 			return false;
 		}
 
+		AtomicBoolean doRender = new AtomicBoolean(true);
 		Optional<EntityAction> actionOptional = EntityAction.getActionIf(player, v -> v.getItemSlot().isItemForSlot(player, hand));
-		if (actionOptional.isPresent())
+		actionOptional.ifPresent(action ->
 		{
-			EntityAction action = actionOptional.get();
 			float time = action.getTime() - tickDelta;
 			float maxTime = action.getMaxTime();
-			float yOff = -0.5f * (time / maxTime);
+			float yOff = 0;
 			float weaponRotation = 0;
 
-			if (player.getItemInHand(hand).getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
+			if (action instanceof BaseSpecialAction specialAction)
 			{
-				switch (weaponBaseItem.getPose(player, player.getItemInHand(hand)))
+				if (time < 3)
+					yOff = -0.5f * time / 3f;
+				else
 				{
-					case ROLLER_SWING:
-						if (actionOptional.get() instanceof RollerItem.InitialSwingAction swingAction)
-						{
-							float distFromSwingFrame = time - (swingAction.attackFrame + 0.4f);
-							float startupTime = maxTime - swingAction.attackFrame;
-							if (distFromSwingFrame >= 0)
+					float[] dataArray = {yOff, weaponRotation};
+					specialAction.transformHeldWeaponRender(dataArray, doRender, hand, tickDelta, time, matrices);
+					yOff = dataArray[0];
+					weaponRotation = dataArray[1];
+				}
+			}
+			else
+			{
+				yOff = -0.5f * (time / maxTime);
+				if (player.getItemInHand(hand).getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
+				{
+					switch (weaponBaseItem.getPose(player, player.getItemInHand(hand)))
+					{
+						case ROLLER_SWING:
+							if (action instanceof RollerItem.InitialSwingAction swingAction)
 							{
-								yOff = Math.min(1.5f, (1f - Mth.square(distFromSwingFrame / startupTime)) * 3f);
+								float distFromSwingFrame = time - (swingAction.attackFrame + 0.4f);
+								float startupTime = maxTime - swingAction.attackFrame;
+								if (distFromSwingFrame >= 0)
+								{
+									yOff = Math.min(1.5f, (1f - Mth.square(distFromSwingFrame / startupTime)) * 3f);
+								}
+								else
+								{
+									yOff = Math.max(0f, 1.5f + distFromSwingFrame * 0.7f);
+								}
+
+								if (!swingAction.isGrounded())
+								{
+									weaponRotation = yOff * 0.5f;
+									yOff = 0;
+								}
 							}
-							else
+
+							break;
+						case BRUSH:
+							matrices.mulPose(Axis.YN.rotation(yOff * ((player.getMainArm() == HumanoidArm.RIGHT ? hand.equals(InteractionHand.MAIN_HAND) : hand.equals(InteractionHand.OFF_HAND)) ? 1 : -1)));
+							yOff = 0;
+							break;
+						case TURRET_FIRE:
+							yOff = 0;
+
+							break;
+						case DUAL_FIRE:
+							if (action instanceof DualieItem.DodgeRollAction dodgeRollAction && dodgeRollAction.preventWeaponUse())
 							{
-								yOff = Math.max(0f, 1.5f + distFromSwingFrame * 0.7f);
+								yOff = -(time - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
 							}
 
-							if (!swingAction.isGrounded())
-							{
-								weaponRotation = yOff * 0.5f;
-								yOff = 0;
-							}
-						}
-
-						break;
-					case BRUSH:
-						matrices.mulPose(Axis.YN.rotation(yOff * ((player.getMainArm() == HumanoidArm.RIGHT ? hand.equals(InteractionHand.MAIN_HAND) : hand.equals(InteractionHand.OFF_HAND)) ? 1 : -1)));
-						yOff = 0;
-						break;
-					case TURRET_FIRE:
-						yOff = 0;
-
-						break;
-					case DUAL_FIRE:
-						if (actionOptional.get() instanceof DualieItem.DodgeRollAction dodgeRollAction && dodgeRollAction.preventWeaponUse())
-						{
-							yOff = -(time - dodgeRollAction.turretModeFrame) / (maxTime - dodgeRollAction.turretModeFrame);
-						}
-
-						break;
+							break;
+					}
 				}
 			}
 			if (weaponRotation != 0)
 				matrices.mulPose(Axis.XP.rotation(weaponRotation));
 			matrices.translate(0, yOff, 0);
-		}
-		return true;
+		});
+		return doRender.get();
 	}
 	public static <T extends DynamicDataRecord<T>> boolean renderSubWeapon(ItemStack stack, SubWeaponItem<T> subWeaponItem, PoseStack poseStack, MultiBufferSource source, int light, float partialTicks, boolean leftHanded)
 	{

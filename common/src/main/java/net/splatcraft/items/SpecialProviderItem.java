@@ -1,5 +1,6 @@
 package net.splatcraft.items;
 
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -203,8 +204,8 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			return;
 		}
 
-		EntitySlot entitySlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack);
-		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUUID(), entitySlot), serverPlayer);
+		Pair<EntitySlot, EntitySlot> providerAndWeaponSlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack, weaponStack);
+		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUUID(), providerAndWeaponSlot.getFirst(), providerAndWeaponSlot.getSecond()), serverPlayer);
 
 		entity.startUsingItem(hand);
 	}

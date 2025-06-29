@@ -2,6 +2,7 @@ package net.splatcraft.handlers;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,13 +15,12 @@ import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
-import org.apache.commons.lang3.function.TriConsumer;
 
 import java.util.Map;
 
 public class SpecialHandler
 {
-	public static final Map<ResourceLocation, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot>> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
+	public static final Map<ResourceLocation, SpecialExecutorAction> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
 	private static Supplier<Map<ResourceLocation, SpecialWeaponSettings<?>>> specialMapSupplier;
 	public static void registerSpecials()
 	{
@@ -32,12 +32,12 @@ public class SpecialHandler
 				.toArray(Map.Entry[]::new))
 		);
 		specialExecutor.clear();
-		registerSpecialExecutor(SpecialWeaponRecords.StingRayDataRecord.ID, (entity, settings, slot) ->
+		registerSpecialExecutor(SpecialWeaponRecords.StingRayDataRecord.ID, (entity, settings, providerSlot, weaponSlot) ->
 		{
-			EntityAction.setEntityAction(entity, new StingRayAction(settings, EntitySlot.createForUsed(entity), slot));
+			EntityAction.setEntityAction(entity, new StingRayAction(settings, weaponSlot, providerSlot));
 		});
 	}
-	public static void registerSpecialExecutor(ResourceLocation specialId, TriConsumer<LivingEntity, SpecialWeaponSettings, EntitySlot> delegate)
+	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate)
 	{
 		specialExecutor.put(specialId.withPrefix("specials/"), delegate);
 	}
@@ -98,25 +98,31 @@ public class SpecialHandler
 		}
 		return null;
 	}
-	public static EntitySlot startUsingSpecial(LivingEntity entity, ResourceLocation specialId)
+	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId)
 	{
-		return startUsingSpecial(entity, specialId, ItemStack.EMPTY);
+		startUsingSpecial(entity, specialId, EntitySlot.EMPTY, EntitySlot.createForUsed(entity));
 	}
-	public static EntitySlot startUsingSpecial(LivingEntity entity, ResourceLocation specialId, ItemStack providerStack)
+	public static Pair<EntitySlot, EntitySlot> startUsingSpecial(LivingEntity entity, ResourceLocation specialId, ItemStack providerStack, ItemStack weaponStack)
 	{
 		if (!providerStack.isEmpty())
 			SplatcraftComponents.applyToComponentIfContains(providerStack, SplatcraftComponents.SPECIAL_PROVIDER_DATA, v -> v.withStoredPoints(0));
 
-		EntitySlot slot = EntitySlot.searchAndCreateWithStack(entity, providerStack);
-		startUsingSpecial(entity, specialId, slot);
-		return slot;
+		EntitySlot providerSlot = EntitySlot.searchAndCreateWithStack(entity, providerStack);
+		EntitySlot weaponSlot = EntitySlot.searchAndCreateWithStack(entity, weaponStack);
+		startUsingSpecial(entity, specialId, providerSlot, weaponSlot);
+		return Pair.of(providerSlot, weaponSlot);
 	}
-	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId, EntitySlot slot)
+	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId, EntitySlot providerSlot, EntitySlot weaponSlot)
 	{
 		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
 		if (settings instanceof SpecialWeaponSettings specialSettings)
 		{
-			specialExecutor.get(specialId).accept(entity, specialSettings, slot);
+			specialExecutor.get(specialId).execute(entity, specialSettings, providerSlot, weaponSlot);
 		}
+	}
+	@FunctionalInterface
+	public interface SpecialExecutorAction
+	{
+		public void execute(LivingEntity entity, SpecialWeaponSettings settings, EntitySlot providerSlot, EntitySlot weaponSlot);
 	}
 }
