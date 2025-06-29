@@ -39,7 +39,7 @@ public abstract class ProjectileMixin
 		{
 			return entity instanceof InkProjectileEntity || entity instanceof InkDropEntity || entity instanceof AbstractSubWeaponEntity<?>;
 		}
-		@Inject(method = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
+		@Inject(method = "getEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;F)Lnet/minecraft/world/phys/EntityHitResult;", at = @At(value = "RETURN"), cancellable = true)
 		private static void splatcraft$addHitLocation(Level world, Entity pProjectile, Vec3 pStartVec, Vec3 pEndVec, AABB pBoundingBox, Predicate<Entity> pFilter, float pInflationAmount, CallbackInfoReturnable<EntityHitResult> cir, @Local(ordinal = 1) Entity entity)
 		{
 			if (entity != null && splatcraft$isEntityThatRequiresHitpos(pProjectile) && splatcraft$hitPos != null)

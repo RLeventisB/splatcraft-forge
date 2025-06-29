@@ -62,7 +62,7 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 			proj.setCookScale(cookProgress);
 			proj.setInitialFuseTime(curlingData.fuseTime().getValue(cookProgress));
 			proj.setItem(stack);
-			proj.setDeltaMovement(entity, 0, entity.getYRot(), -30, curlingData.travelSpeedRange().getValue(cookProgress), 0, 0);
+			proj.setDeltaMovement(entity, 0, entity.getYRot(), curlingData.throwAngle(), curlingData.travelSpeedRange().getValue(cookProgress), 0, 0);
 			level.addFreshEntity(proj);
 		}
 		level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);

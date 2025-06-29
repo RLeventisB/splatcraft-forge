@@ -29,7 +29,6 @@
     "ink_splash_radius": 50,
     "fuse_time": 40,
     "throw_velocity": 6.2,
-    "throw_angle": -5,
     "ink_usage": {
         "consumption": 70,
         "recovery_cooldown": 60

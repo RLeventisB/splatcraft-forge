@@ -22,7 +22,8 @@ public class SubWeaponRecords
 		float inkSplashRadius,
 		int fuseTime,
 		float throwVelocity,
-		float throwAngle
+		float throwerImpulse,
+		float pitchOffset
 	) implements DynamicDataRecord<ThrowableExplodingSubDataRecord>
 	{
 		public static final MapCodec<ThrowableExplodingSubDataRecord> CODEC = RecordCodecBuilder.mapCodec(
@@ -32,7 +33,8 @@ public class SubWeaponRecords
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(ThrowableExplodingSubDataRecord::inkSplashRadius),
 				Codec.INT.fieldOf("fuse_time").forGetter(ThrowableExplodingSubDataRecord::fuseTime),
 				Codec.FLOAT.fieldOf("throw_velocity").forGetter(ThrowableExplodingSubDataRecord::throwVelocity),
-				Codec.FLOAT.fieldOf("throw_angle").forGetter(ThrowableExplodingSubDataRecord::throwAngle)
+				Codec.FLOAT.optionalFieldOf("thrower_impulse", 0.8f).forGetter(ThrowableExplodingSubDataRecord::throwerImpulse),
+				Codec.FLOAT.optionalFieldOf("pitch_offset", -5f).forGetter(ThrowableExplodingSubDataRecord::pitchOffset)
 			).apply(inst, ThrowableExplodingSubDataRecord::new)
 		);
 		public static final ThrowableExplodingSubDataRecord DEFAULT = new ThrowableExplodingSubDataRecord(
@@ -41,7 +43,8 @@ public class SubWeaponRecords
 			0,
 			0,
 			0,
-			0
+			0.8f,
+			-5f
 		);
 		@Override
 		public ThrowableExplodingSubDataRecord convertSelf()
@@ -52,7 +55,8 @@ public class SubWeaponRecords
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				fuseTime,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
-				throwAngle
+				throwerImpulse,
+				pitchOffset
 			);
 		}
 	}
@@ -62,7 +66,8 @@ public class SubWeaponRecords
 		float inkSplashRadius,
 		float directDamage,
 		float throwVelocity,
-		float throwAngle
+		float throwerImpulse,
+		float pitchOffset
 	) implements DynamicDataRecord<BurstBombDataRecord>
 	{
 		public static final MapCodec<BurstBombDataRecord> CODEC = RecordCodecBuilder.mapCodec(
@@ -72,7 +77,8 @@ public class SubWeaponRecords
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(BurstBombDataRecord::inkSplashRadius),
 				Codec.FLOAT.fieldOf("contact_damage").forGetter(BurstBombDataRecord::directDamage),
 				Codec.FLOAT.fieldOf("throw_velocity").forGetter(BurstBombDataRecord::throwVelocity),
-				Codec.FLOAT.fieldOf("throw_angle").forGetter(BurstBombDataRecord::throwAngle)
+				Codec.FLOAT.optionalFieldOf("thrower_impulse", 0.8f).forGetter(BurstBombDataRecord::throwerImpulse),
+				Codec.FLOAT.optionalFieldOf("pitch_offset", -5f).forGetter(BurstBombDataRecord::pitchOffset)
 			).apply(inst, BurstBombDataRecord::new)
 		);
 		public static final BurstBombDataRecord DEFAULT = new BurstBombDataRecord(
@@ -81,7 +87,8 @@ public class SubWeaponRecords
 			0,
 			0,
 			0,
-			0
+			0.8f,
+			-5f
 		);
 		@Override
 		public BurstBombDataRecord convertSelf()
@@ -92,7 +99,8 @@ public class SubWeaponRecords
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				directDamage / SplatoonHealthPerMinecraftHealth,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
-				throwAngle
+				throwerImpulse,
+				pitchOffset
 			);
 		}
 	}
@@ -105,6 +113,7 @@ public class SubWeaponRecords
 		InkUsageDataRecord maxCookInkUsage,
 		NumberRange.IntRange fuseTime,
 		float contactDamage,
+		float throwAngle,
 		float maxCookRadiusBonus,
 		int warningFrame
 	) implements DynamicDataRecord<CurlingBombDataRecord>
@@ -119,6 +128,7 @@ public class SubWeaponRecords
 				InkUsageDataRecord.CODEC.fieldOf("max_cook_ink_usage").forGetter(CurlingBombDataRecord::maxCookInkUsage),
 				NumberRange.IntRange.CODEC.fieldOf("fuse_time_range").forGetter(CurlingBombDataRecord::fuseTime),
 				Codec.FLOAT.optionalFieldOf("contact_damage", 20f).forGetter(CurlingBombDataRecord::contactDamage),
+				Codec.FLOAT.optionalFieldOf("throw_angle", -20f).forGetter(CurlingBombDataRecord::throwAngle),
 				Codec.FLOAT.optionalFieldOf("max_cook_explosion_radius_bonus", 3f).forGetter(CurlingBombDataRecord::maxCookRadiusBonus),
 				Codec.INT.fieldOf("warning_frame").forGetter(CurlingBombDataRecord::warningFrame)
 			).apply(inst, CurlingBombDataRecord::new)
@@ -132,6 +142,7 @@ public class SubWeaponRecords
 			InkUsageDataRecord.DEFAULT,
 			NumberRange.IntRange.ZERO,
 			20,
+			-20,
 			3,
 			60
 		);
@@ -147,6 +158,7 @@ public class SubWeaponRecords
 				convert(maxCookInkUsage),
 				convertTime(fuseTime),
 				contactDamage / SplatoonHealthPerMinecraftHealth,
+				throwAngle,
 				maxCookRadiusBonus / DistanceUnitsPerMinecraftSquare,
 				warningFrame / SplatoonFramesPerMinecraftTick
 			);

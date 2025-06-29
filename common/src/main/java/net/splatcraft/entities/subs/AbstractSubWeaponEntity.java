@@ -73,13 +73,14 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	public void tick()
 	{
 		updateRotation();
-		
-		super.tick();
+
+		superTick();
 
 		if (isUnderWater())
 		{
 			level().broadcastEntityEvent(this, (byte) -1);
 			discard();
+			return;
 		}
 
 		HitResult hitResult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
@@ -93,9 +94,13 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		handleMovement();
 
 		float f = getFriction();
-		if (f != -1)
+		if (f != 1)
 			setDeltaMovement(getDeltaMovement().scale(f));
 		applyGravity();
+	}
+	public void superTick()
+	{
+		super.tick();
 	}
 	@Override
 	public void updateRotation()
