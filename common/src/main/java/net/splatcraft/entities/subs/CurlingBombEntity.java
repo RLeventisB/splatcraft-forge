@@ -1,5 +1,6 @@
 package net.splatcraft.entities.subs;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -11,7 +12,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -30,6 +30,7 @@ import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRecord> implements ObjectCollideListenerEntity
 {
@@ -109,9 +110,9 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			discard();
 		}
 
-		processMovement();
+		processMovement(settings);
 	}
-	private void processMovement()
+	private void processMovement(SubWeaponSettings<CurlingBombDataRecord> settings)
 	{
 		Vec3 deltaMovement = getDeltaMovement();
 		Vec3 collidedDeltaMovement = ((EntityAccessor) this).invokeCollide(deltaMovement);
@@ -124,20 +125,68 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		{
 			if (deltaMovement.y < collidedDeltaMovement.y && collidedDeltaMovement.y <= 0)
 			{
-				if (deltaMovement.y < -0.7)
+				if (deltaMovement.y < -0.9)
 					deltaMovement = deltaMovement.with(Direction.Axis.Y, reflectVelocity(Direction.Axis.Y, deltaMovement));
 				else
 					deltaMovement = deltaMovement.with(Direction.Axis.Y, 0);
 			}
 		}
-		EntityHitResult hitResult = ProjectileUtil.getEntityHitResult(level(), this, position(), position().add(collidedDeltaMovement), getBoundingBox(), this::canHitEntity, 0.5f);
+
+		Pair<EntityHitResult, Direction> hitResult = getEntityHit(position(), (deltaMovement));
 		if (hitResult != null)
-			onHitEntity(hitResult);
+			deltaMovement = onHitEntity(hitResult.getFirst(), deltaMovement, settings.subDataRecord.bounceOnEntityHit() ? hitResult.getSecond() : null);
 
 		setDeltaMovement(deltaMovement);
 		setPos(position().add(collidedDeltaMovement));
 
 		applyGravity();
+	}
+	private Pair<EntityHitResult, Direction> getEntityHit(Vec3 startPos, Vec3 deltaMovement)
+	{
+		double minDistance = Double.MAX_VALUE;
+		Direction dir = null;
+		Entity entity = null;
+		Vec3 endVec = startPos.add(deltaMovement);
+
+		for (Entity entity1 : level().getEntities(this, getBoundingBox().expandTowards(deltaMovement).inflate(1.0f), this::canHitEntity))
+		{
+			AABB aabb = entity1.getBoundingBox().inflate(0.5);
+			Optional<Pair<Vec3, Direction>> clipData = aabbClip(aabb, startPos, endVec);
+			if (clipData.isPresent())
+			{
+				double distance = startPos.distanceToSqr(clipData.get().getFirst());
+				if (distance < minDistance)
+				{
+					entity = entity1;
+					dir = clipData.get().getSecond();
+					minDistance = distance;
+				}
+			}
+		}
+
+		return entity == null ? null : Pair.of(new EntityHitResult(entity), dir);
+	}
+	@Override
+	protected boolean canHitEntity(Entity target)
+	{
+		return super.canHitEntity(target) && getOwner() != target;
+	}
+	private Optional<Pair<Vec3, Direction>> aabbClip(AABB aabb, Vec3 from, Vec3 to)
+	{
+		double[] adouble = new double[]{(double) 1.0F};
+		double d0 = to.x - from.x;
+		double d1 = to.y - from.y;
+		double d2 = to.z - from.z;
+		Direction direction = AABB.getDirection(aabb, from, adouble, null, d0, d1, d2);
+		if (direction == null)
+		{
+			return Optional.empty();
+		}
+		else
+		{
+			double d3 = adouble[0];
+			return Optional.of(Pair.of(from.add(d3 * d0, d3 * d1, d3 * d2), direction));
+		}
 	}
 	private void applyFloorFriction(boolean slowingDown)
 	{
@@ -223,27 +272,23 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		}
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
-	@Override
-	protected void onHitEntity(EntityHitResult result)
+	protected Vec3 onHitEntity(EntityHitResult result, Vec3 velocity, Direction hitDirecion)
 	{
 		if (result.getEntity() instanceof LivingEntity livingEntity)
 		{
 			InkDamageUtils.doRollDamage(livingEntity, getSettings().subDataRecord.contactDamage(), getOwner(), this, sourceWeapon);
 		}
 
-		double velocityX = getDeltaMovement().x;
-		double velocityY = getDeltaMovement().y;
-		double velocityZ = getDeltaMovement().z;
-		double absVelocityX = Math.abs(velocityX);
-		double absVelocityY = Math.abs(velocityY);
-		double absVelocityZ = Math.abs(velocityZ);
+		if (hitDirecion == null)
+			return velocity;
 
-		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
-			setDeltaMovement(-velocityX, velocityY, velocityZ);
-		if (absVelocityY >= .05 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
-			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
-		if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
-			setDeltaMovement(velocityX, velocityY, -velocityZ);
+		if (hitDirecion.getAxis() == Direction.Axis.X)
+			velocity = new Vec3(-velocity.x, velocity.y, velocity.z);
+		if (Math.abs(velocity.y) >= .05 && Math.abs(velocity.y) >= Math.abs(velocity.x) && Math.abs(velocity.y) >= Math.abs(velocity.z))
+			velocity = new Vec3(velocity.x, -velocity.y * .5, velocity.z);
+		if (Math.abs(velocity.z) >= Math.abs(velocity.y) && Math.abs(velocity.z) >= Math.abs(velocity.x))
+			velocity = new Vec3(velocity.x, velocity.y, -velocity.z);
+		return velocity;
 	}
 	protected double reflectVelocity(Direction.Axis axis, Vec3 velocity)
 	{

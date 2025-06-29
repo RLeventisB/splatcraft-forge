@@ -115,6 +115,7 @@ public class SubWeaponRecords
 		float contactDamage,
 		float throwAngle,
 		float maxCookRadiusBonus,
+		boolean bounceOnEntityHit,
 		int warningFrame
 	) implements DynamicDataRecord<CurlingBombDataRecord>
 	{
@@ -130,6 +131,7 @@ public class SubWeaponRecords
 				Codec.FLOAT.optionalFieldOf("contact_damage", 20f).forGetter(CurlingBombDataRecord::contactDamage),
 				Codec.FLOAT.optionalFieldOf("throw_angle", -20f).forGetter(CurlingBombDataRecord::throwAngle),
 				Codec.FLOAT.optionalFieldOf("max_cook_explosion_radius_bonus", 3f).forGetter(CurlingBombDataRecord::maxCookRadiusBonus),
+				Codec.BOOL.optionalFieldOf("bounce_on_entity_hit", false).forGetter(CurlingBombDataRecord::bounceOnEntityHit),
 				Codec.INT.fieldOf("warning_frame").forGetter(CurlingBombDataRecord::warningFrame)
 			).apply(inst, CurlingBombDataRecord::new)
 		);
@@ -144,6 +146,7 @@ public class SubWeaponRecords
 			20,
 			-20,
 			3,
+			false,
 			60
 		);
 		@Override
@@ -160,6 +163,7 @@ public class SubWeaponRecords
 				contactDamage / SplatoonHealthPerMinecraftHealth,
 				throwAngle,
 				maxCookRadiusBonus / DistanceUnitsPerMinecraftSquare,
+				bounceOnEntityHit,
 				warningFrame / SplatoonFramesPerMinecraftTick
 			);
 		}

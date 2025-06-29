@@ -14,8 +14,8 @@ import java.util.List;
 public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponSettings, ShooterWeaponSettings.DataRecord>
 {
 	public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings("default");
-	public CommonRecords.ProjectileDataRecord projectileData = CommonRecords.ProjectileDataRecord.DEFAULT;
-	public CommonRecords.ShotDataRecord shotData = CommonRecords.ShotDataRecord.DEFAULT;
+	public CommonRecords.ProjectileDataRecord projectileData;
+	public CommonRecords.ShotDataRecord shotData;
 	public boolean bypassesMobDamage = false;
 	public ShooterWeaponSettings(String name)
 	{
