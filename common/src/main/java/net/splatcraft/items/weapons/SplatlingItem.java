@@ -76,7 +76,12 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 			chargingSound = new SplatlingChargingTickableSound(clientPlayer, soundEvent, 2);
 			if (soundExists)
 				chargingSound.fadeIn();
-			Minecraft.getInstance().getSoundManager().play(chargingSound);
+
+			// this method makes concurrency very angry!!!
+			synchronized (this)
+			{
+				Minecraft.getInstance().getSoundManager().play(chargingSound);
+			}
 		}
 	}
 	@OnlyIn(Dist.CLIENT)

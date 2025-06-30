@@ -42,7 +42,7 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 	public void render(StingRayBeamEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource buffer, int packedLight)
 	{
 		float lifespan = entity.getLifespan() + partialTicks;
-		float worldTimeMod10 = Math.floorMod(entity.level().getGameTime(), 10) + partialTicks;
+		float worldTimeMod10 = Mth.positiveModulo(lifespan / 100f, 10);
 		InkColor color = entity.getColor();
 		byte state = entity.getState();
 
@@ -52,17 +52,17 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			{
 				float progress = lifespan / entity.getStartup();
 
-				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), true));
-				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(255)), partialTicks, 0);
+				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
+				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(64)), partialTicks, 0, 1f);
 
-				builder = buffer.getBuffer(RenderType.beaconBeam(SHOCKWAVE_TEXTURE, true));
-				renderBeam(builder, matrixStack, entity, 8, 0f, 1f, Mth.lerp((float) Math.pow(progress, 1.3f), 3f, entity.getRayWidth()), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(128)), partialTicks, worldTimeMod10 * 6.4f);
+				builder = buffer.getBuffer(RenderType.entityTranslucent(SHOCKWAVE_TEXTURE));
+				renderBeam(builder, matrixStack, entity, 8, 0f, 1f, Mth.lerp((float) Math.pow(progress, 1.3f), 3f, entity.getRayWidth()), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(32)), partialTicks, worldTimeMod10 * 12.8f, 1f);
 			}
 			break;
 			case 1:
 			{
-				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), false));
-				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0);
+				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
+				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0, 1f);
 			}
 
 			break;
@@ -70,24 +70,24 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 			{
 				float progress = Math.min(1f, (lifespan - entity.getShockwaveDelay()) / 10f);
 
-				VertexConsumer builder = buffer.getBuffer(RenderType.beaconBeam(getTextureLocation(entity), false));
-				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0);
+				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
+				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0, 1f);
 
-				builder = buffer.getBuffer(RenderType.beaconBeam(SHOCKWAVE_TEXTURE, true));
-				int colorRGB = color.getColorWithAlpha((int) (progress * progress * 128));
+				builder = buffer.getBuffer(RenderType.entityTranslucent(SHOCKWAVE_TEXTURE));
+				int colorRGB = color.getColorWithAlpha((int) (progress * progress * 72));
 				colorRGB = FastColor.ARGB32.lerp(progress * 0.7f, -1, colorRGB);
-				float zOffset = -worldTimeMod10 * 6.4f * 5f;
-				float roll = worldTimeMod10 * 36;
-				renderBeam(builder, matrixStack, entity, 8, roll, 1f, entity.getShockwaveWidth(), colorRGB, partialTicks, zOffset);
+				float zOffset = -worldTimeMod10 * 32.0f;
+				float roll = worldTimeMod10 * 500;
+				renderBeam(builder, matrixStack, entity, 8, roll, 1f, entity.getShockwaveWidth(), colorRGB, partialTicks, zOffset, 0.4f);
 			}
 			break;
 		}
 	}
-	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final int sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
+	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final int sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset, float vScale)
 	{
-		renderBeam(builder, stack, entity, (byte) sides, roll, firstRingDistance, beamWidth, color, partialTicks, vOffset);
+		renderBeam(builder, stack, entity, (byte) sides, roll, firstRingDistance, beamWidth, color, partialTicks, vOffset, vScale);
 	}
-	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final byte sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset)
+	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final byte sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset, float vScale)
 	{
 		final Vector3f ZERO = new Vector3f();
 
@@ -111,8 +111,8 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 		for (byte i = 0; i < sides; i++)
 		{
 			byte nextI = (byte) ((i + 1) % sides);
-			drawVertices(ZERO, ZERO, firstRingPoints[i], firstRingPoints[nextI], builder, stack, color, vOffset, firstRingDistance + vOffset);
-			drawVertices(firstRingPoints[i], firstRingPoints[nextI], endPoints[i], endPoints[nextI], builder, stack, color, firstRingDistance + vOffset, RAY_LENGTH + vOffset);
+			drawVertices(ZERO, ZERO, firstRingPoints[i], firstRingPoints[nextI], builder, stack, color, vOffset * vScale, (firstRingDistance + vOffset) * vScale);
+			drawVertices(firstRingPoints[i], firstRingPoints[nextI], endPoints[i], endPoints[nextI], builder, stack, color, (firstRingDistance + vOffset) * vScale, (RAY_LENGTH + vOffset) * vScale);
 		}
 	}
 	private void drawVertices(Vector3f p1, Vector3f p2, Vector3f p3, Vector3f p4, VertexConsumer builder, PoseStack stack, final int color, final float minV, final float maxV)

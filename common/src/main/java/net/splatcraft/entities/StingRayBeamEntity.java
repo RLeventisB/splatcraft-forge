@@ -328,14 +328,6 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		setYRot(Mth.rotLerp(finalTurningValue, getYRot(), owner.getYRot()));
 	}
 	@Override
-	public void kill()
-	{
-		if (getOwner() != null && getOwner().isAlive())
-			return;
-
-		super.kill();
-	}
-	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
 		builder.define(COLOR, ColorUtils.getDefaultColor());

@@ -93,7 +93,7 @@ public class PlayerPosingHandler
 						break;
 					case SPLATLING:
 						mainHand.yRot = -0.1F + model.getHead().yRot;
-						mainHand.xRot = model.getHead().xRot;
+						mainHand.xRot = model.getHead().xRot - 0.6F;
 
 						break;
 					case BUCKET_SWING:
