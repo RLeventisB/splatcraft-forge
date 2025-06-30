@@ -127,7 +127,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			setData(stack, data);
 
 			if (serverPlayer != null)
-				serverPlayer.sendSystemMessage(Component.literal("Set weapon to ").withStyle(ChatFormatting.RED).append(data.getWeaponFilterText()), true);
+				serverPlayer.sendSystemMessage(Component.literal("Set weapon filter to ").withStyle(ChatFormatting.RED).append(data.getWeaponFilterText()), true);
 		}
 		else
 		{
