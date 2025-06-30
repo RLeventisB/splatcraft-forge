@@ -17,6 +17,7 @@ import net.splatcraft.util.WeaponTooltip;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 
@@ -121,10 +122,14 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 		public static final SpecialCostData DEFAULT = new SpecialCostData(200, new Object2ObjectOpenHashMap<>(0));
 		public int getCost(ItemStack stack)
 		{
-			if (!pointOverride.isEmpty() && stack.getItem() instanceof WeaponBaseItem<?> weaponItem)
+			Optional<ResourceLocation> settingId = WeaponBaseItem.getWeaponId(stack);
+			return settingId.map(this::getCost).orElse(defaultPoints);
+		}
+		public int getCost(ResourceLocation weaponId)
+		{
+			if (weaponId != null && !pointOverride.isEmpty())
 			{
-				ResourceLocation settingId = weaponItem.getSettingsAndValidId(stack).getFirst();
-				Integer overridenPoints = pointOverride.get(settingId);
+				Integer overridenPoints = pointOverride.get(weaponId);
 				if (overridenPoints != null)
 					return overridenPoints;
 			}

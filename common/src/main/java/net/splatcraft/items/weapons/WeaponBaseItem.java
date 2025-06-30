@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> extends Item implements IColoredItem, ISplatcraftForgeItemDummy
@@ -178,6 +179,10 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound, SoundSource.PLAYERS, 0.8F,
 			CommonUtils.nextTriangular(entity.level().getRandom(), 0.95f, 0.095f));
 	}
+	public static Optional<ResourceLocation> getWeaponId(ItemStack weaponStack)
+	{
+		return Optional.ofNullable(weaponStack.getOrDefault(SplatcraftComponents.WEAPON_SETTING_ID, null));
+	}
 	public abstract Class<S> getSettingsClass();
 	public S getSettings(ItemStack stack)
 	{
@@ -185,14 +190,13 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	}
 	public Pair<ResourceLocation, S> getSettingsAndValidId(ItemStack stack)
 	{
-		ResourceLocation id;
-		if (stack.has(SplatcraftComponents.WEAPON_SETTING_ID))
+		Optional<ResourceLocation> id = getWeaponId(stack);
+		if (id.isPresent())
 		{
-			id = stack.get(SplatcraftComponents.WEAPON_SETTING_ID);
-			AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(id);
+			AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(id.get());
 			if (settings != null && getSettingsClass().isInstance(settings))
 			{
-				return Pair.of(id, getSettingsClass().cast(settings));
+				return Pair.of(id.get(), getSettingsClass().cast(settings));
 			}
 		}
 		return Pair.of(null, (S) DEFAULTS.get(getSettingsClass()));

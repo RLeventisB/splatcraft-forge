@@ -28,20 +28,16 @@ import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendSpecialUsageDataPacket;
 import net.splatcraft.registries.SplatcraftComponents.SpecialProviderData;
-import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.action.EntityAction;
-import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Optional;
 
 import static net.splatcraft.registries.SplatcraftComponents.SPECIAL_PROVIDER_DATA;
 
 public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDummy
 {
-	public boolean selectingItem;
 	public SpecialProviderItem()
 	{
 		super(new Properties().durability(1).component(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT));
@@ -49,7 +45,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	@Override
 	public @NotNull Component getName(ItemStack stack)
 	{
-		if (stack.has(SPECIAL_PROVIDER_DATA))
+		if (!stack.has(SPECIAL_PROVIDER_DATA))
 			return Component.translatable(getDescriptionId());
 		return Component.translatable(getDescriptionId() + ".active", getData(stack).getSpecialText());
 	}
@@ -66,12 +62,14 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		}
 
 		if (data.weaponIdFilter().isPresent())
-			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_linked_weapon", data.getWeaponText()));
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_linked_weapon", data.getWeaponFilterText()));
+		else
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_no_weapon").withStyle(ChatFormatting.GRAY));
 
-		tooltip.add(data.specialId().isEmpty() ?
-			Component.translatable(getDescriptionId() + ".tooltip_no_special").withStyle(ChatFormatting.GRAY) :
-			Component.translatable(getDescriptionId() + ".tooltip_linked_special", data.getSpecialText())
-		);
+		if (data.specialId().isEmpty())
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_no_special").withStyle(ChatFormatting.GRAY));
+		else
+			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip_linked_special", data.getSpecialText()));
 	}
 	@Override
 	public boolean isBarVisible(ItemStack stack)
@@ -89,15 +87,10 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	{
 		SpecialProviderData data = getData(stack);
 		float progress = 0;
-		Player player = ClientUtils.getClientPlayer();
-		Optional<BaseSpecialAction> optional = EntityAction.getSpecificActionIf(player, v -> v.isProviderStack(player, stack), BaseSpecialAction.class);
-		if (optional.isPresent())
+
+		if (data != null)
 		{
-			progress = optional.get().getProgress();
-		}
-		else if (data != null)
-		{
-			progress = Math.min(1f, (float) data.storedPoints() / SpecialHandler.getRequiredSpecialPoints(player.getUseItem(), stack));
+			progress = data.storedCharge();
 		}
 		return (int) (progress * 13f);
 	}
@@ -109,22 +102,10 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		if (world.isClientSide)
 			return InteractionResultHolder.pass(stack);
 
+		// todo: some interactive menu for this lol
 		ServerPlayer serverPlayer = user instanceof ServerPlayer ? (ServerPlayer) user : null;
 
 		if (user.isShiftKeyDown())
-		{
-			SpecialProviderData data = getData(stack);
-			if (data == null)
-				data = SpecialProviderData.DEFAULT;
-			List<ResourceLocation> specialIds = SpecialHandler.getSpecialMap().keySet().stream().toList();
-			int index = data.specialId().map(specialIds::indexOf).orElse(-1);
-			index++;
-			index %= specialIds.size();
-			setData(stack, data.withSpecialId(specialIds.get(index)));
-			if (serverPlayer != null)
-				serverPlayer.sendSystemMessage(Component.literal("Set special to" + specialIds.get(index)).withStyle(ChatFormatting.RED), true);
-		}
-		else
 		{
 			SpecialProviderData data = getData(stack);
 			if (data == null)
@@ -140,12 +121,26 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			weaponIds.addAll(DataHandler.WeaponStatsListener.getSettingsForClass(DualieWeaponSettings.class));
 			int index = data.weaponIdFilter().map(weaponIds::indexOf).orElse(-1);
 			index++;
-			index %= weaponIds.size();
-			data = data.withWeaponIdFilter(weaponIds.get(index));
+			if (index >= weaponIds.size())
+				index = -1;
+			data = data.withWeaponIdFilter(index == -1 ? null : weaponIds.get(index));
 			setData(stack, data);
 
 			if (serverPlayer != null)
-				serverPlayer.sendSystemMessage(Component.literal("Set weapon to " + data.getWeaponText()).withStyle(ChatFormatting.RED), true);
+				serverPlayer.sendSystemMessage(Component.literal("Set weapon to ").withStyle(ChatFormatting.RED).append(data.getWeaponFilterText()), true);
+		}
+		else
+		{
+			SpecialProviderData data = getData(stack);
+			if (data == null)
+				data = SpecialProviderData.DEFAULT;
+			List<ResourceLocation> specialIds = SpecialHandler.getSpecialMap().keySet().stream().toList();
+			int index = data.specialId().map(specialIds::indexOf).orElse(-1);
+			index++;
+			index %= specialIds.size();
+			setData(stack, data.withSpecialId(specialIds.get(index)));
+			if (serverPlayer != null)
+				serverPlayer.sendSystemMessage(Component.literal("Set special to ").withStyle(ChatFormatting.RED).append(data.getSpecialText()), true);
 		}
 
 		return InteractionResultHolder.pass(stack);
@@ -197,7 +192,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			return;
 		}
 
-		if (!SpecialHandler.passesSpecialCost(weaponStack, providerStack, data.specialId().get()))
+		if (!SpecialHandler.passesSpecialCost(providerStack))
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.translatable("status.not_enough_points_special").withStyle(ChatFormatting.RED), true);

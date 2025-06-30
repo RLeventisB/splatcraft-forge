@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SpecialWeaponRecords;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
@@ -17,10 +17,12 @@ import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class SpecialHandler
 {
 	public static final Map<ResourceLocation, SpecialExecutorAction> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
+	public static final Integer DEFAULT_SPECIAL_COST = 200;
 	private static Supplier<Map<ResourceLocation, SpecialWeaponSettings<?>>> specialMapSupplier;
 	public static void registerSpecials()
 	{
@@ -28,7 +30,7 @@ public class SpecialHandler
 		specialMapSupplier = Suppliers.memoize(() ->
 			Map.ofEntries(DataHandler.WeaponStatsListener.SETTINGS.entrySet().stream()
 				.filter(v -> v.getValue() instanceof SpecialWeaponSettings<?>)
-				.map(v -> Map.entry(v.getKey(), (SpecialWeaponSettings) v.getValue()))
+				.map(v -> Map.entry(v.getKey().withPath(key -> key.replaceFirst("specials/", "")), (SpecialWeaponSettings) v.getValue()))
 				.toArray(Map.Entry[]::new))
 		);
 		specialExecutor.clear();
@@ -39,74 +41,63 @@ public class SpecialHandler
 	}
 	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate)
 	{
-		specialExecutor.put(specialId.withPrefix("specials/"), delegate);
+		specialExecutor.put(specialId, delegate);
 	}
 	public static Map<ResourceLocation, SpecialWeaponSettings<?>> getSpecialMap()
 	{
 		return specialMapSupplier.get();
 	}
-	public static boolean passesSpecialCost(ItemStack weaponStack, ItemStack providerStack, ResourceLocation specialId)
+	public static boolean passesSpecialCost(ItemStack providerStack)
 	{
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
 
-		int specialPoints = data == null ? 0 : data.storedPoints();
-		SpecialWeaponSettings<?> settings = getSpecialSettings(specialId);
-		int requiredSpecialPoints = getRequiredSpecialPoints(weaponStack, data, settings);
-		return specialPoints >= requiredSpecialPoints;
+		return data != null && data.storedCharge() >= 1;
 	}
-	public static int getRequiredSpecialPoints(ItemStack weaponStack, ItemStack providerStack)
+	public static int getSpecialCost(ItemStack weaponStack, ItemStack providerStack)
 	{
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-		return getRequiredSpecialPoints(weaponStack, data, data == null || data.specialId().isEmpty() ? null : getSpecialSettings(data.specialId().get()));
-	}
-	public static int getRequiredSpecialPoints(ItemStack weaponStack, SplatcraftComponents.SpecialProviderData data, SpecialWeaponSettings<?> settings)
-	{
-		int requiredSpecialPoints;
-		if (data == null || data.pointsPerSpecialOverride().isEmpty())
+		if (data == null || data.specialId().isEmpty())
+			return DEFAULT_SPECIAL_COST;
+
+		Optional<ResourceLocation> weaponId = WeaponBaseItem.getWeaponId(weaponStack);
+		if (weaponId.isEmpty())
 		{
-			if (settings == null)
-				requiredSpecialPoints = 200;
-			else
-				requiredSpecialPoints = settings.dataRecord.costData().getCost(weaponStack);
+			SpecialWeaponSettings<?> specialSettings = getSpecialSettings(data.specialId().get());
+			if (specialSettings == null)
+				return DEFAULT_SPECIAL_COST;
+
+			return specialSettings.dataRecord.costData().defaultPoints();
 		}
-		else
-		{
-			requiredSpecialPoints = data.pointsPerSpecialOverride().get();
-		}
-		return requiredSpecialPoints;
+
+		return getSpecialCost(weaponId.get(), data.specialId().get());
 	}
-	public static int getSpecialPoints(ItemStack providerStack)
+	public static int getSpecialCost(ResourceLocation weaponId, ResourceLocation specialId)
 	{
-		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-		return data == null ? 0 : data.storedPoints();
+		SpecialWeaponSettings<?> specialSettings = getSpecialSettings(specialId);
+		if (specialSettings == null)
+			return DEFAULT_SPECIAL_COST;
+		return specialSettings.dataRecord.costData().getCost(weaponId);
 	}
 	public static <T extends DynamicDataRecord<T>> SpecialWeaponSettings<T> getSpecialSettings(ResourceLocation identifier, Class<T> specialDataClass)
 	{
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(identifier);
-		if (settings instanceof SpecialWeaponSettings specialSettings && specialDataClass.isInstance(specialSettings.specialDataRecord))
+		SpecialWeaponSettings settings = getSpecialMap().get(identifier);
+		if (settings != null && specialDataClass.isInstance(settings.specialDataRecord))
 		{
-			return specialSettings;
+			return settings;
 		}
 		return null;
 	}
 	public static SpecialWeaponSettings<?> getSpecialSettings(ResourceLocation specialId)
 	{
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
-		if (settings instanceof SpecialWeaponSettings specialSettings)
+		SpecialWeaponSettings settings = getSpecialMap().get(specialId);
+		if (settings != null)
 		{
-			return specialSettings;
+			return settings;
 		}
 		return null;
 	}
-	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId)
-	{
-		startUsingSpecial(entity, specialId, EntitySlot.EMPTY, EntitySlot.createForUsed(entity));
-	}
 	public static Pair<EntitySlot, EntitySlot> startUsingSpecial(LivingEntity entity, ResourceLocation specialId, ItemStack providerStack, ItemStack weaponStack)
 	{
-		if (!providerStack.isEmpty())
-			SplatcraftComponents.applyToComponentIfContains(providerStack, SplatcraftComponents.SPECIAL_PROVIDER_DATA, v -> v.withStoredPoints(0));
-
 		EntitySlot providerSlot = EntitySlot.searchAndCreateWithStack(entity, providerStack);
 		EntitySlot weaponSlot = EntitySlot.searchAndCreateWithStack(entity, weaponStack);
 		startUsingSpecial(entity, specialId, providerSlot, weaponSlot);
@@ -114,11 +105,11 @@ public class SpecialHandler
 	}
 	public static void startUsingSpecial(LivingEntity entity, ResourceLocation specialId, EntitySlot providerSlot, EntitySlot weaponSlot)
 	{
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(specialId);
-		if (settings instanceof SpecialWeaponSettings specialSettings)
-		{
-			specialExecutor.get(specialId).execute(entity, specialSettings, providerSlot, weaponSlot);
-		}
+		SpecialWeaponSettings settings = getSpecialMap().get(specialId);
+		if (settings == null)
+			return;
+
+		specialExecutor.get(specialId).execute(entity, settings, providerSlot, weaponSlot);
 	}
 	@FunctionalInterface
 	public interface SpecialExecutorAction

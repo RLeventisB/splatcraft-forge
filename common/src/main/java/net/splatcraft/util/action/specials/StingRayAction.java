@@ -71,6 +71,7 @@ public class StingRayAction extends BaseSpecialAction
 		{
 			usageTick = 0;
 		}
+		super.tick(entity);
 	}
 	@Override
 	public boolean canEnd(LivingEntity entity)

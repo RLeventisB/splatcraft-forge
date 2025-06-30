@@ -25,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.ChargerWeaponSettings;
@@ -790,7 +791,7 @@ public class SplatcraftComponents
 		Optional<ResourceLocation> weaponIdFilter,
 		Optional<Integer> pointsPerSpecialOverride,
 		boolean allowSubs,
-		int storedPoints
+		float storedCharge
 	)
 	{
 		public static final Codec<SpecialProviderData> CODEC = RecordCodecBuilder.create(
@@ -799,7 +800,7 @@ public class SplatcraftComponents
 				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id_filter").forGetter(SpecialProviderData::weaponIdFilter),
 				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
 				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
-				Codec.INT.optionalFieldOf("stored_points", 0).forGetter(SpecialProviderData::storedPoints)
+				Codec.FLOAT.optionalFieldOf("stored_charge", 0f).forGetter(SpecialProviderData::storedCharge)
 			).apply(inst, SpecialProviderData::new)
 		);
 		public static final StreamCodec<ByteBuf, SpecialProviderData> STREAM_CODEC = StreamCodec.composite(
@@ -807,7 +808,7 @@ public class SplatcraftComponents
 			ByteBufCodecs.optional(CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_STREAM_CODEC), SpecialProviderData::weaponIdFilter,
 			ByteBufCodecs.optional(ByteBufCodecs.INT), SpecialProviderData::pointsPerSpecialOverride,
 			ByteBufCodecs.BOOL, SpecialProviderData::allowSubs,
-			ByteBufCodecs.INT, SpecialProviderData::storedPoints,
+			ByteBufCodecs.FLOAT, SpecialProviderData::storedCharge,
 			SpecialProviderData::new
 		);
 		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), true, 0);
@@ -831,41 +832,58 @@ public class SplatcraftComponents
 
 			return Objects.equals(weaponIdFilter.get(), weaponId);
 		}
-		public String getSpecialTranslationKey()
-		{
-			return specialId.map(identifier -> "special_weapon." + identifier.toLanguageKey()).orElse("special_weapon.none");
-		}
 		public Component getSpecialText()
 		{
-			return Component.translatable(getSpecialTranslationKey());
+			return specialId.map(identifier -> Component.translatable("special_weapon." + identifier.toLanguageKey())).orElse(Component.literal("none"));
 		}
-		public Component getWeaponText()
+		public Component getWeaponFilterText()
 		{
-			return Component.translatable(weaponIdFilter.get().toLanguageKey("item"));
+			return weaponIdFilter.map(WeaponHandler::getWeaponNameComponent).orElseGet(() -> Component.literal("none"));
 		}
 		public SpecialProviderData withSpecialId(ResourceLocation id)
 		{
-			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, allowSubs, storedPoints);
+			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withWeaponIdFilter(ResourceLocation id)
 		{
-			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedPoints);
+			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withOverridenSpecialCost(int cost)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, Optional.of(cost), allowSubs, storedPoints);
+			return new SpecialProviderData(specialId, weaponIdFilter, Optional.of(cost), allowSubs, storedCharge);
 		}
-		public SpecialProviderData withStoredPoints(int points)
+		public SpecialProviderData withOverridenSpecialCost(Optional<Integer> cost)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowSubs, points);
+			return new SpecialProviderData(specialId, weaponIdFilter, cost, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withAllowedSubs(boolean allowedSubs)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowedSubs, storedPoints);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowedSubs, storedCharge);
 		}
-		public SpecialProviderData incrementStoredPoints(int points)
+		public SpecialProviderData withStoredCharge(float charge)
 		{
-			return withStoredPoints(storedPoints + points);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowSubs, charge);
+		}
+		public SpecialProviderData withStoredPoints(int points, Optional<ResourceLocation> weaponId)
+		{
+			return withStoredCharge((float) points / getPointsPerSpecial(weaponId));
+		}
+		public SpecialProviderData incrementStoredCharge(float charge)
+		{
+			return withStoredCharge(Math.min(storedCharge + charge, 1f));
+		}
+		public SpecialProviderData incrementStoredPoints(int points, Optional<ResourceLocation> weaponId)
+		{
+			return incrementStoredCharge((float) points / getPointsPerSpecial(weaponId));
+		}
+		public int getPointsPerSpecial(Optional<ResourceLocation> weaponId)
+		{
+			return pointsPerSpecialOverride.orElseGet(() ->
+			{
+				if (specialId.isPresent() && weaponId.isPresent())
+					return SpecialHandler.getSpecialCost(weaponId.get(), specialId.get());
+				return SpecialHandler.DEFAULT_SPECIAL_COST;
+			});
 		}
 	}
 	public record ChargeData(float charge, float previousCharge, float chargeDeltaTime)

@@ -56,7 +56,7 @@ public class DataHandler
 			catch (ClassNotFoundException ignored)
 			{
 			}
-		}}; //TODO make better registry probably
+		}};
 		public static final BiMap<ResourceLocation, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
 		public static final ReseteableMemoizedPredicate<Class<? extends AbstractWeaponSettings<?, ?>>, List<ResourceLocation>> CLASS_SETTINGS_MAP
 			= new ReseteableMemoizedPredicate<>((Class<? extends AbstractWeaponSettings<?, ?>> clazz) -> SETTINGS.entrySet().stream().filter(v -> clazz.isInstance(v.getValue())).map(Map.Entry::getKey).toList());

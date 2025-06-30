@@ -12,6 +12,7 @@ import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
@@ -55,7 +56,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		return providerSlot.isItemForSlot(entity, stack);
 	}
-	public float getProgress()
+	public float getSpecialCharge(ItemStack providerStack, float currentCharge)
 	{
 		return getTime() / getMaxTime();
 	}
@@ -79,6 +80,17 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 			else
 				SquidFormHandler.setSquid(entity, info, false);
 		});
+	}
+	@Override
+	public void tick(LivingEntity entity)
+	{
+		Optional<ItemStack> providerStackOptional = providerSlot.tryGetItemFrom(entity);
+		providerStackOptional.ifPresent(providerStack ->
+		{
+			SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
+			providerStack.set(SplatcraftComponents.SPECIAL_PROVIDER_DATA, data.withStoredCharge(getSpecialCharge(providerStack, data.storedCharge())));
+		});
+		super.tick(entity);
 	}
 	@Override
 	public boolean preventWeaponUse()

@@ -1,5 +1,8 @@
 package net.splatcraft.handlers;
 
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -208,6 +211,14 @@ public class WeaponHandler
 	public static short getWeaponUseTime(LivingEntity entity)
 	{
 		return weaponUseTime.getOrDefault(entity, (short) -1);
+	}
+	public static Component getWeaponNameComponent(ResourceLocation weaponId)
+	{
+		if (I18n.exists("weaponRecipe." + weaponId)) // exception for weapons that dont have a set name (for example, nautilus (79 or 47), aerospray (MG, RG, or PG))
+		{
+			return Component.translatable("weaponRecipe." + weaponId);
+		}
+		return Component.translatable(weaponId.toLanguageKey("item"));
 	}
 	public static class OldEntityTransformData
 	{
