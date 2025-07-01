@@ -38,7 +38,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		{
 			return projectile.calculateDamageDecay(turretProjectileData.baseDamage(), turretProjectileData.damageDecayStartTick(), turretProjectileData.damageDecayPerTick(), turretProjectileData.minDamage());
 		}
-
+		
 		return projectile.calculateDamageDecay(standardProjectileData.baseDamage(), standardProjectileData.damageDecayStartTick(), standardProjectileData.damageDecayPerTick(), standardProjectileData.minDamage());
 	}
 	@Override
@@ -58,19 +58,19 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return EntityAction.hasEntityAction(entity) && EntityAction.getEntityAction(entity) instanceof DualieItem.DodgeRollAction ? turretShotData.accuracyData() : standardShotData.accuracyData();
+		return EntityAction.hasSpecificEntityAction(entity, DualieItem.DodgeRollAction.class) ? turretShotData.accuracyData() : standardShotData.accuracyData();
 	}
 	@Override
 	public void processData(DataRecord data)
 	{
 		standardProjectileData = SplatcraftConvertors.convert(data.projectile);
 		turretProjectileData = SplatcraftConvertors.convert(OptionalProjectileDataRecord.mergeWithBase(data.turretProjectile, data.projectile));
-		turretProjectileMods = data.turretProjectile;
+		turretProjectileMods = data.turretProjectile.map(SplatcraftConvertors::convert);
 		standardShotData = SplatcraftConvertors.convert(data.shot);
 		turretShotData = SplatcraftConvertors.convert(OptionalShotDataRecord.mergeWithBase(data.turretShot, data.shot));
-		turretShotMods = data.turretShot;
+		turretShotMods = data.turretShot.map(SplatcraftConvertors::convert);
 		rollData = SplatcraftConvertors.convert(data.roll);
-
+		
 		setMoveSpeed(data.moveSpeed);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

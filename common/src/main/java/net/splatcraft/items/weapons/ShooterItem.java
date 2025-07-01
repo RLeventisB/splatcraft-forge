@@ -62,7 +62,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 								fire(settings, world, stack, living, accumulatedTime);
 							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
 						},
-						(accumulatedTime) -> v -> v)
+						(v) -> WeaponHandler.canContinueShooting(living))
 			);
 		}
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);

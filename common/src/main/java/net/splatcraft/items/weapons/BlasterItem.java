@@ -51,17 +51,14 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 				SplatcraftComponents.SHOOTER_FIRING_DATA,
 				SplatcraftComponents.ShooterFiringData.DEFAULT,
 				data ->
-				{
-					SplatcraftComponents.ShooterFiringData updatedData = data.tick(
+					data.tick(
 						(accumulatedTime) ->
 						{
 							if (!EntityInfoCapability.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime);
 							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
 						},
-						(accumulatedTime) -> v -> v);
-					return updatedData;
-				}
+						(v) -> WeaponHandler.canContinueShooting(living))
 			);
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
 	}

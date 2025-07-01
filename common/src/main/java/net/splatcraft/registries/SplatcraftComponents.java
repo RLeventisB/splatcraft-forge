@@ -1,5 +1,6 @@
 package net.splatcraft.registries;
 
+import com.google.common.base.Predicates;
 import com.mojang.datafixers.Products;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
@@ -43,10 +44,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 
 public class SplatcraftComponents
 {
@@ -155,28 +153,49 @@ public class SplatcraftComponents
 				Codec.BOOL.fieldOf("repeat_queued").forGetter(FiringData::isRepeating)
 			);
 		}
-
 		default SELF tick(TimeAwareAction<SELF> onAction)
 		{
-			return tick(onAction, v -> y -> y, 1f);
+			return tick(onAction, v -> y -> y, Predicates.alwaysTrue(), 1f);
 		}
-		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone)
+		default SELF tick(TimeAwareAction<SELF> onAction, Predicate<SELF> isStillRepeating)
 		{
-			return tick(onAction, onActionDone, 1f);
+			return tick(onAction, v -> y -> y, isStillRepeating, 1f);
 		}
-		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, float timeDelta)
+		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, Predicate<SELF> isStillRepeating)
+		{
+			return tick(onAction, onActionDone, isStillRepeating, 1f);
+		}
+		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, Predicate<SELF> isStillRepeating, float timeDelta)
 		{
 			SELF self = (SELF) this;
 			if (Float.isNaN(counter()))
 				return self;
-
+			
 			// behavior: if time > 0, its the first iteration, after that its kept in the interval [0, -repeatTime[ if the is repeating flag is on
 			// if the is repeating flag is off, when the counter reaches -repeatTime - endlagTime the action is done!!
-
+			
 			float nextTime = counter() - timeDelta;
+			float repeatCheckInstant = -self.repeatTime() / 2;
+			
 			if (self.counter() > 0 && nextTime <= 0) // first iteration
 			{
 				self = onAction.run(-nextTime).apply(self);
+			}
+			// fix for slow weapons (like blasters) that cancels the repeating flag if they're not shooting after the endlag is done
+			// or if the counter is before the startup and the entity isn't shooting (like for dualies)
+			if (self.isRepeating() && counter() > repeatCheckInstant && nextTime <= repeatCheckInstant)
+			{
+				if (!isStillRepeating.test(self))
+				{
+					self = self.withRepeatingFlag(false);
+				}
+			}
+			if (counter() > startupTime() && nextTime <= startupTime())
+			{
+				if (!isStillRepeating.test(self))
+				{
+					return self.withCounter(Float.NaN);
+				}
 			}
 			while (self.isRepeating() && nextTime <= -self.repeatTime()) // repeating iteration
 			{
@@ -186,9 +205,10 @@ public class SplatcraftComponents
 			if (nextTime <= -self.repeatTime() - self.endlagTime()) // last iteration
 			{
 				self = onActionDone.run(-(nextTime + self.repeatTime() + self.endlagTime())).apply(self);
-				return self.withCounter(Float.NaN);
+				if (!self.isRepeating())
+					return self.withCounter(Float.NaN);
 			}
-
+			
 			return self.withCounter(nextTime);
 		}
 		boolean isRepeating();
@@ -235,7 +255,7 @@ public class SplatcraftComponents
 		{
 			if (Float.isNaN(counter()))
 				return this;
-
+			
 			// if the counter is higher than 0, it acts as a "delay" to charging, otherwise if the counter is less than 0 its because the weapon is on endlag, otherwise, the weapon is charging
 			if (counter < 0)
 			{
@@ -249,9 +269,9 @@ public class SplatcraftComponents
 				}
 				return new ChargerFiringData(nextCounter, true, false);
 			}
-
+			
 			boolean newCharging = charging && WeaponHandler.canContinueShooting(entity);
-
+			
 			if (counter > 0)
 			{
 				float nextCounter = counter - timeDelta;
@@ -264,14 +284,14 @@ public class SplatcraftComponents
 					return new ChargerFiringData(nextCounter, newCharging, queuedShot);
 				}
 			}
-
+			
 			float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge;
 			if (charge < 1)
 			{
 				if (charge == 0 && !newCharging) // tap shot
 				{
 					onCharge.accept(0f, 0f);
-
+					
 					return fireShotAndGoToEndlag(settings, onRelease, stack, 0, -(counter - timeDelta), 0);
 				}
 				float chargeTime = settings.chargeData.chargeTime();
@@ -287,12 +307,12 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				float finalNextCharge = nextCharge;
 				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(finalNextCharge).registerChargeDeltaTime(cutoffTime));
-
+				
 				onCharge.accept(charge, nextCharge);
-
+				
 				if (!newCharging)
 				{
 					return fireShotAndGoToEndlag(settings, onRelease, stack, nextCharge, timeDelta, cutoffTime);
@@ -301,15 +321,15 @@ public class SplatcraftComponents
 			else
 			{
 				onCharge.accept(1f, 1f);
-
+				
 				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(1).registerChargeDeltaTime(1));
-
+				
 				if (!newCharging)
 				{
 					return fireShotAndGoToEndlag(settings, onRelease, stack, 1, 0, 1f);
 				}
 			}
-
+			
 			return new ChargerFiringData(0, true, queuedShot);
 		}
 		public ChargerFiringData retrieveCharge(ChargerWeaponSettings settings)
@@ -326,18 +346,17 @@ public class SplatcraftComponents
 		{
 			if (!WeaponHandler.canContinueShooting(entity))
 				return this;
-
+			
 			if (Float.isNaN(counter))
 				return new ChargerFiringData(settings.chargeData.chargeStartup(), true, true);
-
+			
 			if (counter < 0)
 				return new ChargerFiringData(counter, false, true);
-
+			
 			if (!charging)
 				return new ChargerFiringData(counter, false, true);
 			return new ChargerFiringData(counter, true, false);
 		}
-
 		public boolean preventsChanging()
 		{
 			return !Float.isNaN(counter);
@@ -393,7 +412,7 @@ public class SplatcraftComponents
 			boolean previousCharging = charging.get();
 			boolean using = WeaponHandler.canContinueShooting(entity) || counter < 0f;
 			boolean nextCharging = previousCharging && using;
-
+			
 			if (nextCharging)
 			{
 				return chargeSplatling(stack, settings, chargeMult, onCharge, timeDelta, entity.getUseItemRemainingTicks() % 2 == 0);
@@ -409,7 +428,7 @@ public class SplatcraftComponents
 					}
 					onChargeRelease.accept(charge, chargeStart, nextShotTypeData);
 				}
-
+				
 				return fireSplatling(stack, settings, onShoot, timeDelta, nextShotTypeData, onFiringEnd);
 			}
 		}
@@ -427,7 +446,7 @@ public class SplatcraftComponents
 			{
 				nextShotTypeData = 0;
 			}
-
+			
 			AtomicReference<Float> nextDelay = new AtomicReference<>(0f);
 			stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v ->
 			{
@@ -437,7 +456,7 @@ public class SplatcraftComponents
 					onCharge.accept(2f, 2f);
 					return v.updateCharge(2).registerChargeDeltaTime(1);
 				}
-
+				
 				float nextCharge = charge + settings.chargeData.getChargeStep(charge) * chargeMult;
 				float cutoffTime;
 				if (nextCharge > 2)
@@ -450,21 +469,21 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				onCharge.accept(charge, nextCharge);
 				return v.updateCharge(nextCharge).registerChargeDeltaTime(cutoffTime);
 			});
-
+			
 			float nextCounter = counter;
 			if (nextCounter < 0)
 				nextCounter = Math.min(0, nextCounter + timeDelta);
-
+			
 			return new SplatlingFiringData(nextCounter, Optional.of(true), nextDelay.get(), nextShotTypeData, chargeStart);
 		}
 		private @NotNull SplatlingFiringData fireSplatling(ItemStack stack, SplatlingWeaponSettings settings, SplatlingShootAction onShoot, float timeDelta, short nextShotTypeData, Consumer<Float> onFiringEnd)
 		{
 			ChargeData chargeData = stack.get(SplatcraftComponents.CHARGE_DATA);
-
+			
 			float nextCounter = counter;
 			float nextDelay = delay;
 			if (nextCounter > 0)
@@ -484,7 +503,7 @@ public class SplatcraftComponents
 					nextDelay += nextCounter;
 				}
 			}
-
+			
 			CommonRecords.ProjectileDataRecord projectileData;
 			SplatlingWeaponSettings.SplatlingShotDataRecord shotData;
 			chargeData = chargeData.withPreviousCharge(chargeData.charge);
@@ -494,7 +513,7 @@ public class SplatcraftComponents
 				Pair<CommonRecords.ProjectileDataRecord, SplatlingWeaponSettings.SplatlingShotDataRecord> dataPair = settings.interpolateData(index);
 				projectileData = dataPair.getFirst();
 				shotData = dataPair.getSecond();
-
+				
 				float nextCharge = chargeData.charge - shotData.chargeUsePerShot();
 				float cutoffTime;
 				if (nextCharge < 0)
@@ -507,10 +526,10 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				chargeData = chargeData.withCharge(nextCharge).registerChargeDeltaTime(cutoffTime);
 				onShoot.run(projectileData, shotData, -nextDelay, index);
-
+				
 				nextDelay += shotData.repeatTicks();
 			}
 			nextDelay -= timeDelta;
@@ -523,7 +542,7 @@ public class SplatcraftComponents
 					nextShotTypeData++;
 				}
 			}
-
+			
 			return new SplatlingFiringData(nextCounter, Optional.of(false), nextDelay, nextShotTypeData, chargeStart);
 		}
 		public SplatlingFiringData retrieveCharge(SplatlingWeaponSettings<?> settings)
@@ -534,16 +553,15 @@ public class SplatcraftComponents
 		{
 			if (!WeaponHandler.canContinueShooting(entity))
 				return this;
-
+			
 			if (charging.isEmpty()) // first use
 				return new SplatlingFiringData(-settings.chargeData.minChargeTime(), Optional.of(true), 0f, (short) 0, 0);
-
+			
 			if (!charging.get() && settings.chargeData.canRechargeWhileFiring()) // firing, if the weapon is allowed to recharge, then do that
 				return new SplatlingFiringData(0f, Optional.of(true), 0f, shotTypeData, stack.get(SplatcraftComponents.CHARGE_DATA).charge);
-
+			
 			return this;
 		}
-
 		public boolean preventsChanging()
 		{
 			return !Float.isNaN(counter);
@@ -557,7 +575,6 @@ public class SplatcraftComponents
 	public record ShooterFiringData(float counter, float startupTime, float repeatTime, float endlagTime,
 	                                boolean isRepeating) implements FiringData<ShooterFiringData>
 	{
-
 		public static final Codec<ShooterFiringData> CODEC = RecordCodecBuilder.create(inst ->
 			FiringData.codecStart(inst).
 				apply(inst, ShooterFiringData::new)
@@ -608,9 +625,13 @@ public class SplatcraftComponents
 		}
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings)
 		{
-			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
-
 			float startup = CommonUtils.startupSquidSwitch(entity, settings);
+			return notifyUsing(entity, settings, startup);
+		}
+		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings, float startup)
+		{
+			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
+			
 			return initialize(startup, startup, settings.repeatTicks(), settings.endlagTicks());
 		}
 	}
@@ -816,20 +837,20 @@ public class SplatcraftComponents
 		{
 			if (stack.isEmpty())
 				return false;
-
+			
 			if (weaponIdFilter.isEmpty())
 				return true;
-
+			
 			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 				return false;
-
+			
 			if (allowSubs && weaponItem instanceof SubWeaponItem<?>)
 				return true;
-
+			
 			ResourceLocation weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
 			if (weaponId == null)
 				return false;
-
+			
 			return Objects.equals(weaponIdFilter.get(), weaponId);
 		}
 		public Component getSpecialText()
@@ -902,7 +923,6 @@ public class SplatcraftComponents
 				Codec.FLOAT.fieldOf("charge_delta_time").forGetter(ChargeData::chargeDeltaTime)
 			).apply(inst, ChargeData::new)
 		);
-
 		public ChargeData updateCharge(float charge)
 		{
 			return new ChargeData(charge, this.charge, chargeDeltaTime);
