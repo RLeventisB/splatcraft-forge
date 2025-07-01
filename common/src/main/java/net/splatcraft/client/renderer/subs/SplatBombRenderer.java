@@ -22,19 +22,18 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
 		MODEL = new SplatBombModel(context.bakeLayer(SplatBombModel.LAYER_LOCATION));
 	}
 	@Override
-	public void render(SplatBombEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+	public void render(SplatBombEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
-		
 		poseStack.pushPose();
 		
-		if (!entityIn.isItem)
+		if (!entity.isItem)
 		{
-			poseStack.translate(0.0D, 0.2, 0.0D);
-			poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) *
+			poseStack.translate(0.0D, 0.25, 0.0D);
+			poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) *
 				2 - 90f));
-			poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot()) * 2 - 180f));
+			poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) * 2 - 180f));
 			
-			float f = entityIn.getFlashIntensity(partialTicks);
+			float f = entity.getFlashIntensity(partialTicks);
 			float f1 = 1.0F + Mth.sin(f * 100.0F) * f * 0.01F;
 			f = Mth.clamp(f, 0.0F, 1.0F);
 			f *= f;
@@ -42,9 +41,10 @@ public class SplatBombRenderer extends SubWeaponRenderer<SplatBombEntity, SplatB
 			float f2 = (1.0F + f * 0.4F) * f1;
 			float f3 = (1.0F + f * 0.1F) / f1;
 			poseStack.scale(f2, f3, f2);
+			poseStack.translate(0.0D, 0.2, 0.0D);
 		}
 		
-		super.render(entityIn, entityYaw, partialTicks, poseStack, bufferIn, packedLightIn);
+		super.render(entity, entityYaw, partialTicks, poseStack, bufferIn, packedLightIn);
 		poseStack.popPose();
 	}
 	@Override

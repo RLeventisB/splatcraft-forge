@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 {
-	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(InkSquidEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(InkSquidEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
 	public InkSquidEntity(EntityType<? extends PathfinderMob> type, Level world)
 	{
 		super(type, world);
@@ -83,9 +83,9 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 	public void tick()
 	{
 		super.tick();
-
+		
 		BlockPos pos = getBlockPosBelowThatAffectsMyMovement();
-
+		
 		if (level().getBlockState(pos).getBlock() == SplatcraftBlocks.inkwell.get() && level().getBlockEntity(pos) instanceof InkColorTileEntity te)
 		{
 			if (te.getInkColor() != getColor())

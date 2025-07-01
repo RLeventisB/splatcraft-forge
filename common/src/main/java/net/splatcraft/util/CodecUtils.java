@@ -13,11 +13,13 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ResourceLocationException;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,7 +103,7 @@ public class CodecUtils
 				return ResourceLocation.fromNamespaceAndPath(defaultNamespace, path);
 			}
 		}
-
+		
 		return ResourceLocation.fromNamespaceAndPath(defaultNamespace, id);
 	}
 	public static class Codecs
@@ -146,6 +148,11 @@ public class CodecUtils
 			Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 			Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
 		).apply(inst, Vec2::new));
+		public static final StreamCodec<RegistryFriendlyByteBuf, Vec3> VEC_3_PACKET_CODEC = StreamCodec.composite(
+			ByteBufCodecs.DOUBLE, Vec3::x,
+			ByteBufCodecs.DOUBLE, Vec3::y,
+			ByteBufCodecs.DOUBLE, Vec3::z,
+			Vec3::new);
 	}
 	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{
@@ -179,14 +186,14 @@ public class CodecUtils
 		{
 			final M read = mapCreator.get();
 			final Stream.Builder<Pair<T, T>> failed = Stream.builder();
-
+			
 			final DataResult<Unit> result = input.entries().reduce(
 				DataResult.success(Unit.INSTANCE, Lifecycle.stable()),
 				(r, pair) ->
 				{
 					final DataResult<K> key = keyCodec().parse(ops, pair.getFirst());
 					final DataResult<V> value = elementCodec().parse(ops, pair.getSecond());
-
+					
 					final DataResult<Pair<K, V>> entryResult = key.apply2stable(Pair::of, value);
 					final Optional<Pair<K, V>> entry = entryResult.resultOrPartial();
 					if (entry.isPresent())
@@ -202,14 +209,14 @@ public class CodecUtils
 					{
 						failed.add(pair);
 					}
-
+					
 					return r.apply2stable((u, p) -> u, entryResult);
 				},
 				(r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
 			);
-
+			
 			final T errors = ops.createMap(failed.build());
-
+			
 			return result.map(unit -> read).setPartial(read).mapError(e -> e + " missed input: " + errors);
 		}
 		<T> RecordBuilder<T> encode(final M input, final DynamicOps<T> ops, final RecordBuilder<T> prefix)

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 {
 	public static final float DROP_SIZE = 0.7f;
-	private static final EntityDataAccessor<InkColor> DROP_COLOR = SynchedEntityData.defineId(InkDropEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<InkColor> DROP_COLOR = SynchedEntityData.defineId(InkDropEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
 	private static final EntityDataAccessor<Float> IMPACT_SIZE = SynchedEntityData.defineId(InkDropEntity.class, EntityDataSerializers.FLOAT);
 	public float lifespan = 600;
 	public InkBlockUtils.InkType inkType;

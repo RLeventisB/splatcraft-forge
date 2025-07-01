@@ -36,10 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StingRayBeamEntity extends Projectile implements IColoredEntity
 {
-	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
 	private static final EntityDataAccessor<Integer> TIME_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, EntityDataSerializers.INT);
-	private static final EntityDataAccessor<Vector2f> WIDTH_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
-	private static final EntityDataAccessor<Vector2f> TURNING_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2DATAHANDLER);
+	private static final EntityDataAccessor<Vector2f> WIDTH_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2_DATA_HANDLER);
+	private static final EntityDataAccessor<Vector2f> TURNING_VALUES = SynchedEntityData.defineId(StingRayBeamEntity.class, CommonUtils.VEC2_DATA_HANDLER);
 	public float rayDamage, shockwaveDamage, paintingRadius, paintingClipSize;
 	public InkBlockUtils.InkType inkType;
 	public StingRayBeamEntity(EntityType<StingRayBeamEntity> type, Level world)
@@ -111,14 +111,14 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		double ty2 = relativeBox.maxY / rayDirection.y;
 		double tz1 = relativeBox.minZ / rayDirection.y;
 		double tz2 = relativeBox.maxZ / rayDirection.y;
-
+		
 		double p1 = Math.max(0.0, Math.max(tx1, Math.min(ty1, tz1)));
 		double p2 = Math.max(0.0, Math.min(tx2, Math.max(ty2, tz2)));
-
+		
 		double x = Mth.clamp((rayDirection.x * p1 + rayDirection.x * p2) / 2, relativeBox.minX, relativeBox.maxX);
 		double y = Mth.clamp((rayDirection.y * p1 + rayDirection.y * p2) / 2, relativeBox.minY, relativeBox.maxY);
 		double z = Mth.clamp((rayDirection.z * p1 + rayDirection.z * p2) / 2, relativeBox.minZ, relativeBox.maxZ);
-
+		
 		double t = Math.max(0.0, rayDirection.dot(new Vec3(x, y, z)) / rayDirection.lengthSqr());
 		x = rayDirection.x * t - x;
 		y = rayDirection.y * t - y;
@@ -130,9 +130,9 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		double x = relativePoint.x;
 		double y = relativePoint.y;
 		double z = relativePoint.z;
-
+		
 		double t = Math.max(0.0, rayDirection.dot(relativePoint) / rayDirection.lengthSqr());
-
+		
 		x = rayDirection.x * t - x;
 		y = rayDirection.y * t - y;
 		z = rayDirection.z * t - z;
@@ -150,22 +150,22 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			playSound(this);
 		}
-
+		
 		super.tick();
-
+		
 		updateRotation();
-
+		
 		if (!(getOwner() instanceof LivingEntity owner) || !owner.isAlive() || EntityInfoCapability.isSquid(owner))
 		{
 			discard();
 			return;
 		}
-
+		
 		if (!owner.isUsingItem() || !EntityAction.hasSpecificEntityAction(owner, StingRayAction.class))
 		{
 			markOwnerStopShooting();
 		}
-
+		
 		int lifespan = getLifespan();
 		if (hasOwnerStopShooting())
 		{
@@ -177,13 +177,13 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			setLifespan(lifespan + 1);
 			return;
 		}
-
+		
 		tickRay(owner, lifespan);
 	}
 	public void tickRay(LivingEntity owner, int lifespan)
 	{
 		Vec3 forward = updatePosForward(owner);
-
+		
 		if (isBeamActive())
 		{
 			if (level().isClientSide)
@@ -203,7 +203,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				paint(forward);
 			}
 		}
-
+		
 		setLifespan(lifespan + 1);
 	}
 	public void paint(Vec3 forward)
@@ -212,7 +212,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		BlockHitResult result = level().clip(context);
 		if (result.getType() == HitResult.Type.MISS)
 			return;
-
+		
 		Vec3 smallNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal()).scale(0.01);
 		InkExplosion.createInkExplosion(this, result.getLocation().add(smallNormal), paintingRadius, inkType, ItemStack.EMPTY);
 	}
@@ -229,9 +229,9 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			if (!canHitEntity(entity))
 				continue;
-
+			
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Vec3[] boxPoints = new Vec3[]{
+			Vec3[] boxPoints = new Vec3[] {
 				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.minZ),
 				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.maxZ),
 				new Vec3(relativeBox.minX, relativeBox.maxY, relativeBox.minZ),
@@ -241,7 +241,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.minZ),
 				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.maxZ),
 			};
-
+			
 			boolean isOnForwardPlane = false;
 			for (Vec3 point : boxPoints)
 			{
@@ -251,11 +251,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 					break;
 				}
 			}
-
+			
 			if (isOnForwardPlane)
 			{
 				double distance = getDistance(forward, relativeBox);
-
+				
 				if (distance < getRayWidth())
 				{
 					hit(entity, rayDamage, canDoSound);
@@ -273,11 +273,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-
+		
 		if (target instanceof LivingEntity livingTarget)
 		{
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
-
+			
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
 			if (!level().isClientSide && didDamage && playSound.get())
 			{
@@ -319,10 +319,10 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-
+		
 		xRotO = getXRot();
 		yRotO = getYRot();
-
+		
 		float finalTurningValue = hasStartedToShowTheHellspawn() ? getTurningValueWithShockwave() : getTurningValue();
 		setXRot(Mth.rotLerp(finalTurningValue, getXRot(), owner.getXRot()));
 		setYRot(Mth.rotLerp(finalTurningValue, getYRot(), owner.getYRot()));

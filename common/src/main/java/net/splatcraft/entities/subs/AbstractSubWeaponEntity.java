@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Data>> extends Projectile implements IColoredEntity, ISetVelocityExtension
 {
 	protected static final ResourceKey<DamageType> SPLASH_DAMAGE_TYPE = SplatcraftDamageTypes.INK_SPLAT;
-	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, CommonUtils.INKCOLORDATAHANDLER);
+	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
 	private static final EntityDataAccessor<ItemStack> DATA_ITEM_STACK = SynchedEntityData.defineId(AbstractSubWeaponEntity.class, EntityDataSerializers.ITEM_STACK);
 	public boolean isItem = false;
 	public boolean bypassMobDamageMultiplier = false;
@@ -55,42 +55,42 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		A result = create(type, world, thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ(), color, inkType, sourceWeapon);
 		result.setOwner(thrower);
-
+		
 		return result;
 	}
 	public static <Data extends DynamicDataRecord<Data>, A extends AbstractSubWeaponEntity<Data>> A create(EntityType<A> type, Level world, double x, double y, double z, InkColor color, InkBlockUtils.InkType inkType, ItemStack sourceWeapon)
 	{
 		A result = type.create(world);
-		result.setPosRaw(x, y, z);
+		result.setPos(x, y, z);
 		result.setColor(color);
 		result.inkType = inkType;
 		result.sourceWeapon = sourceWeapon;
 		result.setItem(sourceWeapon);
-
+		
 		return result;
 	}
 	@Override
 	public void tick()
 	{
 		updateRotation();
-
+		
 		superTick();
-
+		
 		if (isUnderWater())
 		{
 			level().broadcastEntityEvent(this, (byte) -1);
 			discard();
 			return;
 		}
-
+		
 		HitResult hitResult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
 		if (hitResult.getType() != HitResult.Type.MISS)
 		{
 			hitTargetOrDeflectSelf(hitResult);
 		}
-
+		
 		checkInsideBlocks();
-
+		
 		handleMovement();
 
 		float f = getFriction();
@@ -136,7 +136,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	public void handleEntityEvent(byte id)
 	{
 		super.handleEntityEvent(id);
-
+		
 		if (id == -1)
 		{
 			level().addParticle(new InkExplosionParticleData(getColor(), .5f), getX(), getY(), getZ(), 0, 0, 0);
@@ -184,7 +184,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
 		nbt.putString("InkType", inkType.getIdString());
 		nbt.put("SourceWeapon", sourceWeapon.save(registryAccess()));
-
+		
 		ItemStack itemstack = getItemRaw();
 		if (!itemstack.isEmpty())
 			nbt.put("Item", itemstack.save(level().registryAccess()));
@@ -198,7 +198,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		bypassMobDamageMultiplier = nbt.getBoolean("DypassMobDamageMultiplier");
 		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 		sourceWeapon = ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("SourceWeapon")).getOrThrow().getFirst();
-
+		
 		ItemStack itemstack = ItemStack.parseOptional(registryAccess(), nbt.getCompound("Item"));
 		setItem(itemstack);
 		super.readAdditionalSaveData(nbt);

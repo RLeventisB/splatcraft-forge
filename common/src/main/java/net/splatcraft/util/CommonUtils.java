@@ -68,13 +68,14 @@ import org.joml.Vector3f;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 public class CommonUtils
 {
-	public static final EntityDataSerializer<Vector2f> VEC2DATAHANDLER = new EntityDataSerializer<>()
+	public static final EntityDataSerializer<Vector2f> VEC2_DATA_HANDLER = new EntityDataSerializer<>()
 	{
 		public static final StreamCodec<RegistryFriendlyByteBuf, Vector2f> PACKET_CODEC = StreamCodec.composite(
 			ByteBufCodecs.FLOAT, Vector2f::x,
@@ -91,26 +92,10 @@ public class CommonUtils
 			return new Vector2f(vec2.x, vec2.y);
 		}
 	};
-	public static final EntityDataSerializer<InkColor> INKCOLORDATAHANDLER = EntityDataSerializer.forValueType(InkColor.PACKET_CODEC);
+	public static final EntityDataSerializer<InkColor> INKCOLOR_DATA_HANDLER = EntityDataSerializer.forValueType(InkColor.PACKET_CODEC);
 	public static final EntityDataSerializer<UUID> UUID_DATA_HANDLER = EntityDataSerializer.forValueType(UUIDUtil.STREAM_CODEC);
-	public static final EntityDataSerializer<Vec3> VEC3DDATAHANDLER = new EntityDataSerializer<>()
-	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Vec3> PACKET_CODEC = StreamCodec.composite(
-			ByteBufCodecs.DOUBLE, Vec3::x,
-			ByteBufCodecs.DOUBLE, Vec3::y,
-			ByteBufCodecs.DOUBLE, Vec3::z,
-			Vec3::new);
-		@Override
-		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, Vec3> codec()
-		{
-			return PACKET_CODEC;
-		}
-		@Override
-		public @NotNull Vec3 copy(@NotNull Vec3 vec)
-		{
-			return new Vec3(vec.x, vec.y, vec.z);
-		}
-	};
+	public static final EntityDataSerializer<Vec3> VEC3_DATA_HANDLER = EntityDataSerializer.forValueType(CodecUtils.Codecs.VEC_3_PACKET_CODEC);
+	public static final EntityDataSerializer<Optional<Vec3>> OPTIONAL_VEC3_DATA_HANDLER = EntityDataSerializer.forValueType(ByteBufCodecs.optional(CodecUtils.Codecs.VEC_3_PACKET_CODEC));
 	public static CustomPacketPayload.Type<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPacketPayload.Type<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));
@@ -143,7 +128,7 @@ public class CommonUtils
 	public static TimedTextDisplayEntity spawnTestText(Level world, Vec3 pos, Component text, int durationTicks)
 	{
 		TimedTextDisplayEntity entity = null;
-
+		
 		if (world != null)
 		{
 			entity = new TimedTextDisplayEntity(EntityType.TEXT_DISPLAY, world, durationTicks);
@@ -151,13 +136,13 @@ public class CommonUtils
 			entity.setText(text);
 			world.addFreshEntity(entity);
 		}
-
+		
 		return entity;
 	}
 	public static void spawnTestParticle(Vec3 pos, Color color)
 	{
 		float[] rgb = color.getRGBColorComponents(null);
-
+		
 		spawnTestParticle(getCurrentWorld(), new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
 	}
 	public static void spawnTestBlockParticle(Vec3 pos, BlockState state)
@@ -215,7 +200,7 @@ public class CommonUtils
 	{
 		if (level.isClientSide() || stack.isEmpty())
 			return;
-
+		
 		double d0 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
 		double d1 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
 		double d2 = (double) (level.random.nextFloat() * 0.5F) + 0.25D;
@@ -228,14 +213,14 @@ public class CommonUtils
 		ItemStack itemstack = ProjectileWeaponItem.getHeldProjectile(entity, predicate);
 		if (!itemstack.isEmpty())
 			return itemstack;
-
+		
 		for (int i = 0; i < entity.getInventory().getContainerSize(); ++i)
 		{
 			ItemStack itemstack1 = entity.getInventory().getItem(i);
 			if (predicate.test(itemstack1))
 				return itemstack1;
 		}
-
+		
 		return ItemStack.EMPTY;
 	}
 	// horrible redaction incoming
@@ -258,7 +243,7 @@ public class CommonUtils
 		Pair<ItemStack, Integer> dataPair = getHeldProjectileAndIndex(entity, predicate);
 		if (dataPair.getSecond() != -1)
 			return dataPair;
-
+		
 		if (entity instanceof Player player)
 		{
 			Inventory inventory = player.getInventory();
@@ -269,7 +254,7 @@ public class CommonUtils
 					return Pair.of(stack, i);
 			}
 		}
-
+		
 		return Pair.of(ItemStack.EMPTY, -1);
 	}
 	/**
@@ -411,7 +396,7 @@ public class CommonUtils
 	}
 	public static void doForgeEmptyClickEvent(LocalPlayer player, InteractionHand hand)
 	{
-
+	
 	}
 	public static ItemStack callGetPickItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player)
 	{
@@ -454,7 +439,7 @@ public class CommonUtils
 	{
 		if (booleans.length == 0)
 			return;
-
+		
 		byte currentByte = 0;
 		for (int index = 0; index < booleans.length; index++)
 		{

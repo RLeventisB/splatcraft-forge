@@ -1,4 +1,4 @@
-﻿package net.splatcraft.platform;
+package net.splatcraft.platform;
 
 import org.jetbrains.annotations.Nullable;
 
