@@ -66,19 +66,19 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public void tick(float timeDelta)
 	{
 		Vec3 vel = getDeltaMovement();
-
+		
 		if (isInLiquid() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
 		{
 			discard();
 			return;
 		}
-
+		
 		if (!level().isClientSide && (lifespan -= timeDelta) <= 0)
 		{
 			discard();
 			return;
 		}
-
+		
 		this.timeDelta = timeDelta;
 		super.tick();
 		this.timeDelta = 1;
@@ -101,11 +101,23 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public void updateRotation()
 	{
 		Vec3 motion = getDeltaMovement();
-
+		
 		if (!Vec3.ZERO.equals(motion))
 		{
-			setYRot((float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG));
-			setXRot((float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG));
+			float pitch = (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG);
+			float yaw = (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG);
+			if (tickCount == 1)
+			{
+				setXRot(pitch);
+				setYRot(yaw);
+				xRotO = pitch;
+				yRotO = yaw;
+			}
+			else
+			{
+				setXRot(lerpRotation(xRotO, pitch));
+				setYRot(lerpRotation(yRotO, yaw));
+			}
 		}
 	}
 	@Override
@@ -113,13 +125,13 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	{
 		if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()) || result.isInside())
 			return;
-
+		
 		if (level().getBlockState(result.getBlockPos()).getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
 			coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
 			return;
-
+		
 		super.onHitBlock(result);
-
+		
 		if (!level().isClientSide())
 		{
 			InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this), getImpactCoverage(), inkType, ItemStack.EMPTY);
@@ -135,20 +147,15 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		}
 	}
 	@Override
-	public void shootFromRotation(@NotNull Entity thrower, float pitch, float yaw, float pitchOffset, float velocity, float inaccuracy)
-	{
-		super.shootFromRotation(thrower, pitch, yaw, pitchOffset, velocity, inaccuracy);
-		InkExplosion.createInkExplosion(getOwner(), thrower.position(), 0.75f, inkType, ItemStack.EMPTY);
-	}
-	@Override
 	public void shoot(double x, double y, double z, float velocity, float inaccuracy)
 	{
 		Vec3 vec3 = (new Vec3(x, y, z)).normalize().scale(velocity).add(random.nextGaussian() * 0.0075 * inaccuracy, random.nextGaussian() * 0.0075D * inaccuracy, random.nextGaussian() * 0.0075 * inaccuracy);
-
+		
 		setDeltaMovement(vec3);
-		double d0 = vec3.horizontalDistance();
 		setYRot((float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG));
-		setXRot((float) (Mth.atan2(vec3.y, d0) * Mth.RAD_TO_DEG));
+		setXRot((float) (Mth.atan2(vec3.y, vec3.horizontalDistance()) * Mth.RAD_TO_DEG));
+		yRotO = getYRot();
+		xRotO = getXRot();
 	}
 	@Override
 	public void onHit(@NotNull HitResult result)
@@ -185,19 +192,19 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public void readAdditionalSaveData(@NotNull CompoundTag nbt)
 	{
 		super.readAdditionalSaveData(nbt);
-
+		
 		ListTag directionTag = nbt.getList("DeltaMotion", DoubleTag.TAG_DOUBLE);
 		setDeltaMovement(new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
-
+		
 		setImpactCoverage(nbt.getFloat("ImpactCoverage"));
-
+		
 		setColor(InkColor.getFromNbt(nbt.get("DropColor")));
-
+		
 		if (nbt.contains("Lifespan"))
 			lifespan = nbt.getFloat("Lifespan");
-
+		
 		setInvisible(nbt.getBoolean("Invisible"));
-
+		
 		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 	}
 	@Override
@@ -209,16 +216,16 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		directionTag.add(DoubleTag.valueOf(direction.y));
 		directionTag.add(DoubleTag.valueOf(direction.z));
 		nbt.put("DeltaMotion", directionTag);
-
+		
 		nbt.putFloat("ImpactCoverage", getImpactCoverage());
 		nbt.put("DropColor", getColor().getNbt());
-
+		
 		nbt.putFloat("Lifespan", lifespan);
-
+		
 		nbt.putBoolean("Invisible", isInvisible());
-
+		
 		nbt.putString("InkType", inkType.getIdString());
-
+		
 		super.addAdditionalSaveData(nbt);
 	}
 	@Override

@@ -506,6 +506,14 @@ public class CommonUtils
 				SplatcraftKeyHandler.setSquidDelayInternal(delay);
 		}
 	}
+	public static Vec3 createVec3(float value)
+	{
+		return new Vec3(value, value, value);
+	}
+	public static Vec3 createVec3(double value)
+	{
+		return new Vec3(value, value, value);
+	}
 	public record Result(float delay, float value)
 	{
 	}

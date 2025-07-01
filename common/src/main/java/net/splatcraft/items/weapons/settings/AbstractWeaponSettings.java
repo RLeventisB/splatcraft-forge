@@ -55,7 +55,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		{
 			SPEED_MODIFIER = new AttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		}
-
+		
 		return SPEED_MODIFIER;
 	}
 	public SELF setMoveSpeed(float value)
@@ -92,13 +92,8 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		buffer.writeJsonWithCodec(getCodec(), getDataToSerialize());
 	}
 	public abstract float getSpeedForRender(Player player, ItemStack mainHandItem);
-	public void onStartReading(JsonObject json)
-	{
-
-	}
 	public void deserialize(ResourceLocation key, JsonObject json)
 	{
-		onStartReading(json);
 		getCodec().parse(JsonOps.INSTANCE, json).resultOrPartial(msg -> Splatcraft.LOGGER.error("Failed to load weapon settings for %s: %s".formatted(key, msg))).ifPresent(
 			this::processResult
 		);

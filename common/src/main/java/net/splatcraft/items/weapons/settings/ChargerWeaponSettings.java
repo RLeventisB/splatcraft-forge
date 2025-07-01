@@ -63,7 +63,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
 		chargeData = SplatcraftConvertors.convert(data.charge);
-
+		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.fullDamageToMobs);
@@ -170,8 +170,8 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 				Codec.floatRange(0, 1).optionalFieldOf("airborne_charge_rate", 1f / 3).forGetter(ChargeDataRecord::airborneChargeRate),
 				Codec.floatRange(0, 1).optionalFieldOf("empty_tank_charge_rate", 1f / 3).forGetter(ChargeDataRecord::emptyTankChargeRate),
 				Codec.INT.optionalFieldOf("charge_storage_ticks", 25).forGetter(ChargeDataRecord::chargeStorageTime),
-				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_squid_lag", 20).forGetter(ChargeDataRecord::chargeStorageSquidLag),
-				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_shooting_lag", 10).forGetter(ChargeDataRecord::chargeStorageShootLag)
+				ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("charge_storage_squid_lag", 20).forGetter(ChargeDataRecord::chargeStorageSquidLag),
+				ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("charge_storage_shooting_lag", 10).forGetter(ChargeDataRecord::chargeStorageShootLag)
 			).apply(instance, ChargeDataRecord::new)
 		);
 		public static final ChargeDataRecord DEFAULT = new ChargeDataRecord(8f, 30, 1f / 3, 1f / 3, 25, 20, 10);
@@ -186,7 +186,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		ChargeValueRecord inkConsumption,
 		float inkRecoveryCooldown,
 		int shotsCount
-
+	
 	)
 	{
 		public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
@@ -222,13 +222,13 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		{
 			if (values.isEmpty())
 				return DataResult.error(() -> "Not enough values was providen by the list.");
-
+			
 			if (values.size() == 1)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(0), values.get(0)));
-
+			
 			if (values.size() == 2)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(1)));
-
+			
 			return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(2)));
 		}
 		public static ChargeValueRecord create(float... values)

@@ -58,6 +58,12 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		return register.register(name, () -> new SplatlingItem(parent.value().components().get(SplatcraftComponents.WEAPON_SETTING_ID).toString()));
 	}
 	@OnlyIn(Dist.CLIENT)
+	protected static void playChargeReadySound(LivingEntity entity, float pitch)
+	{
+		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(entity.getUUID()))
+			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.splatlingReady, pitch, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
+	}
+	@OnlyIn(Dist.CLIENT)
 	protected void playChargingSound(LivingEntity entity, ItemStack stack)
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
@@ -65,9 +71,9 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		{
 			return;
 		}
-
+		
 		SoundEvent soundEvent = stack.get(SplatcraftComponents.CHARGE_DATA).charge() > 1 ? SplatcraftSounds.splatlingChargeSecondLevel : SplatcraftSounds.splatlingCharge;
-
+		
 		if (chargingSound == null || chargingSound.isStopped() || !chargingSound.getSoundEvent().equals(soundEvent))
 		{
 			boolean soundExists = chargingSound != null;
@@ -76,19 +82,13 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 			chargingSound = new SplatlingChargingTickableSound(clientPlayer, soundEvent, 2);
 			if (soundExists)
 				chargingSound.fadeIn();
-
+			
 			// this method makes concurrency very angry!!!
 			synchronized (this)
 			{
 				Minecraft.getInstance().getSoundManager().play(chargingSound);
 			}
 		}
-	}
-	@OnlyIn(Dist.CLIENT)
-	protected static void playChargeReadySound(LivingEntity entity, float pitch)
-	{
-		if (ClientUtils.getClientPlayer() != null && ClientUtils.getClientPlayer().getUUID().equals(entity.getUUID()))
-			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SplatcraftSounds.splatlingReady, pitch, Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.PLAYERS)));
 	}
 	/*
 		// its time for boilerplate code
@@ -225,7 +225,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		if (entity instanceof LivingEntity living)
 		{
 			SplatlingWeaponSettings<T> settings = getSettings(stack);
-
+			
 			float chargeMult = 0f;
 			if (living.isUsingItem())
 			{
@@ -233,23 +233,23 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 				chargeMult = 1f;
 				if (!entity.onGround())
 					chargeMult *= charge >= 1 ? settings.chargeData.airborneSecondChargeRate() : settings.chargeData.airborneFirstChargeRate();
-
+				
 				float consumptionForNextTick = settings.inkConsumption * charge * 0.5f;
 				if (!enoughInk(living, stack.getItem(), consumptionForNextTick, 0, !level.isClientSide && living.getTicksUsingItem() % 4 == 0))
 				{
 					float rechargeMult = Mth.clamp((InkTankItem.getInkAmount(living.getItemBySlot(EquipmentSlot.CHEST)) - consumptionForNextTick) / consumptionForNextTick, 0, 1);
-
+					
 					chargeMult *= Mth.lerp(rechargeMult, charge >= 1 ? settings.chargeData.emptyTankSecondChargeRate() : settings.chargeData.emptyTankFirstChargeRate(), 1f);
 				}
 			}
-
+			
 			float finalChargeMult = chargeMult;
 			stack.update(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT, v -> v.tick(living, stack, settings, finalChargeMult, (prevCharge, newCharge) ->
 			{
 				if (Services.PLATFORM.isClientSide())
 				{
 					playChargingSound(living, stack);
-
+					
 					if (prevCharge < MAX_CHARGES && newCharge >= Math.ceil(prevCharge) && prevCharge > 0)
 						playChargeReadySound(living, newCharge / MAX_CHARGES);
 				}
@@ -312,10 +312,10 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		SplatlingWeaponSettings<T> settings = getSettings(stack);
 		if (!enoughInk(entity, this, 0.1f, 0, false))
 			return;
-
+		
 		if (entity instanceof Player player && player.getCooldowns().isOnCooldown(this))
 			return;
-
+		
 		stack.update(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT,
 			v -> v.notifyUsage(entity, settings, stack));
 	}
@@ -338,11 +338,11 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
 		SplatlingWeaponSettings<T> settings = getSettings(stack);
-
+		
 		SplatcraftComponents.SplatlingFiringData firingData = stack.get(SplatcraftComponents.SPLATLING_FIRING_DATA);
 		boolean charging = firingData.charging().equals(Optional.of(true));
 		double appliedMobility = settings.getMoveSpeed(charging, settings.getShotTypeIndex(getCharge(stack), firingData.shotTypeData()));
-
+		
 		return new AttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 	@Override
@@ -362,7 +362,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		SplatlingWeaponSettings<T> settings = getSettings(stack);
 		CommonUtils.setSquidDelay(entity, settings.chargeData.chargeStorageSquidLag());
 		stack.update(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT, v -> v.retrieveCharge(settings));
-
+		
 		if (entity.level().isClientSide())
 		{
 			playChargeReadySound(entity, Mth.floor(charge) / MAX_CHARGES);
@@ -373,6 +373,6 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 	{
 		return
 			getSettings(stack).chargeData.chargeStorageTime() > 0 &&
-				stack.get(SplatcraftComponents.CHARGE_DATA).charge() >= 1;
+				stack.get(SplatcraftComponents.CHARGE_DATA).charge() > 0;
 	}
 }

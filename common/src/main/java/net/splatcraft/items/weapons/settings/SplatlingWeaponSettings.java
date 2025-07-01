@@ -44,10 +44,9 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			return null;
 		}
 	}
-
 	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
-	public ProjectileDataRecord[] projectileDatas = new ProjectileDataRecord[]{ProjectileDataRecord.DEFAULT};
-	public SplatlingShotDataRecord[] shotDatas = new SplatlingShotDataRecord[]{SplatlingShotDataRecord.DEFAULT};
+	public ProjectileDataRecord[] projectileDatas = new ProjectileDataRecord[] {ProjectileDataRecord.DEFAULT};
+	public SplatlingShotDataRecord[] shotDatas = new SplatlingShotDataRecord[] {SplatlingShotDataRecord.DEFAULT};
 	public Optional<OptionalProjectileDataRecord> secondLevelProjectileMods = Optional.empty(), fullLevelProjectileMods = Optional.empty();
 	public Optional<OptionalSplatlingShotDataRecord> secondLevelShotMods = Optional.empty(), fullLevelShotMods = Optional.empty();
 	public ChargeDataRecord chargeData = ChargeDataRecord.DEFAULT;
@@ -62,7 +61,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	@Override
 	public Map.Entry<ShotDataSelectorType, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return new Map.Entry[]{
+		return new Map.Entry[] {
 			Map.entry(ShotDataSelectorType.TIME_USED, TimeUsedSelectionData.CODEC)
 		};
 	}
@@ -129,21 +128,21 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 		fullLevelShotMods = data.fullChargeShot.map(SplatcraftConvertors::convert);
 		secondLevelProjectileMods = data.secondChargeProjectile.map(SplatcraftConvertors::convert);
 		fullLevelProjectileMods = data.fullChargeProjectile.map(SplatcraftConvertors::convert);
-
+		
 		ProjectileDataRecord secondChargeProjectile = OptionalProjectileDataRecord.mergeWithBase(data.secondChargeProjectile, data.baseProjectile);
 		SplatlingShotDataRecord secondChargeShot = OptionalSplatlingShotDataRecord.mergeWithBase(data.secondChargeShot, data.baseShot);
-
-		projectileDatas = new ProjectileDataRecord[]{
+		
+		projectileDatas = new ProjectileDataRecord[] {
 			SplatcraftConvertors.convert(data.baseProjectile),
 			SplatcraftConvertors.convert(secondChargeProjectile),
 			SplatcraftConvertors.convert(OptionalProjectileDataRecord.mergeWithBase(data.fullChargeProjectile, secondChargeProjectile))
 		};
-		shotDatas = new SplatlingShotDataRecord[]{
+		shotDatas = new SplatlingShotDataRecord[] {
 			SplatcraftConvertors.convert(data.baseShot),
 			SplatcraftConvertors.convert(secondChargeShot),
 			SplatcraftConvertors.convert(OptionalSplatlingShotDataRecord.mergeWithBase(data.fullChargeShot, secondChargeShot))
 		};
-
+		
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
 		shotSelectionData = SplatcraftConvertors.convert(subData);
@@ -250,7 +249,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			progress -= intProgress;
 			shotMoveSpeed = lerpShotData(progress, shotDatas[intProgress], shotDatas[intProgress + 1]).mobility;
 		}
-
+		
 		return charging ? chargeData.moveSpeed.orElse(moveSpeed) : shotMoveSpeed;
 	}
 	public ProjectileDataRecord lerpProjectileData(float progress, ProjectileDataRecord dataStart, ProjectileDataRecord dataEnd)
@@ -356,8 +355,8 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 				Codec.floatRange(0, 1).optionalFieldOf("airborne_second_charge_rate", 1 / 3f).forGetter(ChargeDataRecord::airborneSecondChargeRate),
 				Codec.FLOAT.optionalFieldOf("mobility_while_charging").forGetter(ChargeDataRecord::moveSpeed),
 				Codec.INT.optionalFieldOf("charge_storage_ticks", 0).forGetter(ChargeDataRecord::chargeStorageTime),
-				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_squid_lag", 20).forGetter(ChargeDataRecord::chargeStorageSquidLag),
-				ExtraCodecs.POSITIVE_INT.optionalFieldOf("charge_storage_shooting_lag", 10).forGetter(ChargeDataRecord::chargeStorageShootLag),
+				ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("charge_storage_squid_lag", 3).forGetter(ChargeDataRecord::chargeStorageSquidLag),
+				ExtraCodecs.NON_NEGATIVE_INT.optionalFieldOf("charge_storage_shooting_lag", 10).forGetter(ChargeDataRecord::chargeStorageShootLag),
 				Codec.BOOL.optionalFieldOf("can_recharge_while_firing", false).forGetter(ChargeDataRecord::canRechargeWhileFiring)
 			).apply(instance, ChargeDataRecord::new)
 		);
@@ -371,7 +370,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			1 / 3f,
 			Optional.empty(),
 			0,
-			20,
+			3,
 			10,
 			false);
 		public float getChargeStep(float currentCharge)
@@ -471,7 +470,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 		{
 			if (modified.isEmpty())
 				return base;
-
+			
 			OptionalSplatlingShotDataRecord modifiedGet = modified.get();
 			return new SplatlingShotDataRecord(
 				modifiedGet.repeatTicks.orElse(base.repeatTicks),

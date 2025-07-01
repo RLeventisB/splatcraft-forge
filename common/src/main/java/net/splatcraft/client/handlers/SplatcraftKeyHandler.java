@@ -197,8 +197,7 @@ public class SplatcraftKeyHandler
 	}
 	public static boolean pressedSquidKeyWhileHoldingCharge(LivingEntity entity)
 	{
-		return SQUID_KEYBIND.pressed && entity.isUsingItem() && entity.getUseItem().getItem() instanceof IChargeableWeapon chargeableWeapon
-			&& chargeableWeapon.canStore(entity.getUseItem());
+		return SQUID_KEYBIND.pressed && entity.isUsingItem() && entity.getUseItem().getItem() instanceof IChargeableWeapon;
 	}
 	public static boolean hasEnoughSpaceToTransformBack(LivingEntity entity)
 	{
