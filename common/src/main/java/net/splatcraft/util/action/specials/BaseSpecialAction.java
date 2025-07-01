@@ -38,7 +38,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	}
 	public static <T extends BaseSpecialAction> Products.P4<RecordCodecBuilder.Mu<T>, Float, Float, EntitySlot, EntitySlot> specialCodecStart(RecordCodecBuilder.Instance<T> instance)
 	{
-		return EntityActionWithTime.codecStart(instance)
+		return codecStart(instance)
 			.and(instance.group(
 				getWeaponSlotCodec(),
 				getProviderSlotCodec()
@@ -68,10 +68,10 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		{
 			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
 			world.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
-
+			
 			return;
 		}
-
+		
 		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
 		optional.ifPresent(info ->
 		{
@@ -102,7 +102,6 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		return weaponSlot;
 	}
-
 	public void transformHeldWeaponRender(float[] dataArray, AtomicBoolean doRender, InteractionHand hand, float tickDelta, float time, PoseStack matrices)
 	{
 		if (time < 3)

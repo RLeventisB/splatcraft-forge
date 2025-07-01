@@ -43,14 +43,14 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	@Override
 	public CommonRecords.ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return shotData.accuracyData();
+		return shotData == null ? CommonRecords.ShotDeviationDataRecord.DEFAULT : shotData.accuracyData();
 	}
 	@Override
 	public void processData(DataRecord data)
 	{
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
-
+		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

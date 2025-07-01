@@ -116,6 +116,8 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
+		if (getDynamicDataKey() == null)
+			return ShotDeviationDataRecord.DEFAULT;
 		return getShotData(
 			stack.get(SplatcraftComponents.CHARGE_DATA).charge(),
 			stack.get(SplatcraftComponents.SPLATLING_FIRING_DATA).shotTypeData()

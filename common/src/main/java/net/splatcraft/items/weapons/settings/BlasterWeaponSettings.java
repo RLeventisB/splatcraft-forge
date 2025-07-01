@@ -49,7 +49,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return shotData.accuracyData();
+		return shotData == null ? ShotDeviationDataRecord.DEFAULT : shotData.accuracyData();
 	}
 	@Override
 	public void processData(DataRecord data)
@@ -57,7 +57,7 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
 		blasterData = SplatcraftConvertors.convert(data.blast);
-
+		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

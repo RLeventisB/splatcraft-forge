@@ -58,7 +58,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	@Override
 	public ShotDeviationDataRecord getShotDeviationData(ItemStack stack, LivingEntity entity)
 	{
-		return EntityAction.hasSpecificEntityAction(entity, DualieItem.DodgeRollAction.class) ? turretShotData.accuracyData() : standardShotData.accuracyData();
+		return turretShotData == null ? ShotDeviationDataRecord.DEFAULT : EntityAction.hasSpecificEntityAction(entity, DualieItem.DodgeRollAction.class) ? turretShotData.accuracyData() : standardShotData.accuracyData();
 	}
 	@Override
 	public void processData(DataRecord data)
