@@ -12,7 +12,6 @@ import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,22 +41,27 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 		for (int i = buffer.readInt(); i > 0; i--)
 		{
 			ResourceLocation key = buffer.readResourceLocation();
+			String jsonString = null;
 			try
 			{
-				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(buffer.readUtf()).getConstructor(String.class).newInstance(key.toString());
-				JsonObject json = GsonHelper.parse(buffer.readUtf());
+				String className = buffer.readUtf();
+				jsonString = buffer.readUtf();
+				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(className).getConstructor(String.class).newInstance(key.toString());
+				JsonObject json = GsonHelper.parse(jsonString);
 				setting.deserialize(key, json);
-
+				
 				setting.registerStatTooltips();
 				settings.add(Map.entry(key, setting));
 			}
-			catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-			       NoSuchMethodException | ClassCastException e)
+			catch (Exception e)
 			{
-				Splatcraft.LOGGER.error("Error upon reading data for {}", key);
+				if (jsonString != null)
+					Splatcraft.LOGGER.error("Error upon reading data for {}, inner exception: \n{}\nWeapon JSON: {}", key, e, jsonString);
+				else
+					Splatcraft.LOGGER.error("Error upon reading data for {}, inner exception: \n{}", key, e);
 			}
 		}
-
+		
 		SplatcraftConvertors.SkipConverting = false;
 		return new UpdateWeaponSettingsPacket(settings);
 	}
@@ -70,7 +74,7 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeInt(settings.size());
-
+		
 		for (Map.Entry<ResourceLocation, AbstractWeaponSettings<?, ?>> entry : settings)
 		{
 			buffer.writeResourceLocation(entry.getKey());
