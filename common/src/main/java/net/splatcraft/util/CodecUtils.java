@@ -22,12 +22,10 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2f;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -148,11 +146,18 @@ public class CodecUtils
 			Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
 			Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
 		).apply(inst, Vec2::new));
+		public static final Codec<Vector2f> VECTOR2F_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+			Codec.FLOAT.fieldOf("x").forGetter(v -> v.x),
+			Codec.FLOAT.fieldOf("y").forGetter(v -> v.y)
+		).apply(inst, Vector2f::new));
+		public static final Codec<Vector2f> VECTOR2F_LIST_CODEC = Codec.list(Codec.FLOAT, 2, 2).xmap(v -> new Vector2f(v.get(0), v.get(1)), v -> List.of(v.x(), v.y()));
+		public static final Codec<Vector2f> VECTOR2F_SINGLE_NUMBER_CODEC = Codec.FLOAT.xmap(Vector2f::new, Vector2f::x);
 		public static final StreamCodec<RegistryFriendlyByteBuf, Vec3> VEC_3_PACKET_CODEC = StreamCodec.composite(
 			ByteBufCodecs.DOUBLE, Vec3::x,
 			ByteBufCodecs.DOUBLE, Vec3::y,
 			ByteBufCodecs.DOUBLE, Vec3::z,
 			Vec3::new);
+		public static final Codec<Vector2f> VECTOR2_MULTI_CODEC = Codec.withAlternative(VECTOR2F_CODEC, Codec.withAlternative(VECTOR2F_LIST_CODEC, VECTOR2F_SINGLE_NUMBER_CODEC));
 	}
 	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{

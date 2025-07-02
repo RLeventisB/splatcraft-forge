@@ -499,6 +499,14 @@ public class CommonUtils
 	{
 		return new Vec3(value, value, value);
 	}
+	public static Vec3 limitTo(AABB box, Vec3 position)
+	{
+		return new Vec3(
+			Math.clamp(position.x, box.minX, box.maxX),
+			Math.clamp(position.y, box.minY, box.maxY),
+			Math.clamp(position.z, box.minZ, box.maxZ)
+		);
+	}
 	public record Result(float delay, float value)
 	{
 	}

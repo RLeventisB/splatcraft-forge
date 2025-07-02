@@ -20,12 +20,12 @@ public interface ISetVelocityExtension
 		double f1 = -Math.sin((pitch));
 		double f2 = Math.cos(yaw) * Math.cos(pitch);
 		setDeltaMovement(f, f1, f2, speed, inaccuracy);
-
+		
 		if (throwerImpulse == 0)
 			return;
-
+		
 		Vec3 posDiff = new Vec3(0, 0, 0);
-
+		
 		if (thrower != null)
 		{
 			posDiff = thrower.getKnownMovement();
@@ -33,7 +33,7 @@ public interface ISetVelocityExtension
 				posDiff.multiply(1, 0, 1);
 			posDiff = posDiff.scale(throwerImpulse);
 		}
-
+		
 		addDeltaMovement(posDiff);
 	}
 	default void setDeltaMovement(double x, double y, double z, float speed, float inaccuracy)
@@ -45,15 +45,11 @@ public interface ISetVelocityExtension
 	}
 	default void onVelocityCalculated(Vec3 direction, float speed)
 	{
-
-	}
-	default void setDeltaMovement(float x, float y, float z)
-	{
-		setDeltaMovement((double) x, y, z);
+	
 	}
 	default void onShotDirectionCalculated(Vec3 shotDirection)
 	{
-
+	
 	}
 	default Vec3 calculateShotDirection(double x, double y, double z, float inaccuracy)
 	{

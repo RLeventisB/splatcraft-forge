@@ -177,10 +177,6 @@ public class SplatcraftComponents
 			float nextTime = counter() - timeDelta;
 			float repeatCheckInstant = -self.repeatTime() / 2;
 			
-			if (self.counter() > 0 && nextTime <= 0) // first iteration
-			{
-				self = onAction.run(-nextTime).apply(self);
-			}
 			// fix for slow weapons (like blasters) that cancels the repeating flag if they're not shooting after the endlag is done
 			// or if the counter is before the startup and the entity isn't shooting (like for dualies)
 			if (self.isRepeating() && counter() > repeatCheckInstant && nextTime <= repeatCheckInstant)
@@ -196,6 +192,10 @@ public class SplatcraftComponents
 				{
 					return self.withCounter(Float.NaN);
 				}
+			}
+			if (self.counter() > 0 && nextTime <= 0) // first iteration
+			{
+				self = onAction.run(-nextTime).apply(self);
 			}
 			while (self.isRepeating() && nextTime <= -self.repeatTime()) // repeating iteration
 			{
@@ -632,7 +632,7 @@ public class SplatcraftComponents
 		{
 			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
 			
-			return initialize(startup, startup, settings.repeatTicks(), settings.endlagTicks());
+			return initialize(startup, settings.startupTicks(), settings.repeatTicks(), settings.endlagTicks());
 		}
 	}
 	public record RemoteInfo(Optional<String> stageId, Optional<ResourceKey<Level>> worldKey, Optional<String> targets,

@@ -1,14 +1,13 @@
 package net.splatcraft.entities;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.FloatTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
@@ -629,8 +628,10 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		if (nbt.contains("StraightShotTime"))
 			straightShotTime = nbt.getFloat("StraightShotTime");
 		
-		ListTag directionTag = nbt.getList("Direction", FloatTag.TAG_FLOAT);
-		entityData.set(SHOOT_DIRECTION, new Vector3f(directionTag.getFloat(0), directionTag.getFloat(1), directionTag.getFloat(2)));
+		ExtraCodecs.VECTOR3F.parse(NbtOps.INSTANCE, nbt.get("Direction")).result().ifPresent(direction ->
+		{
+			entityData.set(SHOOT_DIRECTION, direction);
+		});
 		
 		distanceBetweenDrops = nbt.getFloat("TrailFrequency");
 		dropImpactSize = nbt.getFloat("TrailSize");
@@ -669,12 +670,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		nbt.putFloat("MaxStraightShotTime", getMaxStraightShotTime());
 		nbt.putFloat("StraightShotTime", straightShotTime);
 		
-		ListTag directionTag = new ListTag();
-		Vector3f direction = getShotDirection();
-		directionTag.add(FloatTag.valueOf(direction.x));
-		directionTag.add(FloatTag.valueOf(direction.y));
-		directionTag.add(FloatTag.valueOf(direction.z));
-		nbt.put("Direction", directionTag);
+		ExtraCodecs.VECTOR3F.encodeStart(NbtOps.INSTANCE, getShotDirection()).result().ifPresent(tag -> nbt.put("Direction", tag));
 		
 		nbt.putDouble("Gravity", getDefaultGravity());
 		nbt.putFloat("Lifespan", lifespan);
