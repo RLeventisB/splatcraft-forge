@@ -1,7 +1,6 @@
 package net.splatcraft.registries;
 
 import com.google.common.base.Predicates;
-import com.mojang.datafixers.Products;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -44,7 +43,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class SplatcraftComponents
 {
@@ -141,98 +143,6 @@ public class SplatcraftComponents
 	{
 		getOptional(stack, type).ifPresent(component -> stack.set(type, applier.apply(component)));
 	}
-	public interface FiringData<SELF extends FiringData<SELF>>
-	{
-		static <T extends FiringData> Products.P5<RecordCodecBuilder.Mu<T>, Float, Float, Float, Float, Boolean> codecStart(RecordCodecBuilder.Instance<T> instance)
-		{
-			return instance.group(
-				Codec.FLOAT.fieldOf("counter").forGetter(FiringData::counter),
-				Codec.FLOAT.fieldOf("startup_time").forGetter(FiringData::startupTime),
-				Codec.FLOAT.fieldOf("repeat_time").forGetter(FiringData::repeatTime),
-				Codec.FLOAT.fieldOf("endlag_time").forGetter(FiringData::endlagTime),
-				Codec.BOOL.fieldOf("repeat_queued").forGetter(FiringData::isRepeating)
-			);
-		}
-		default SELF tick(TimeAwareAction<SELF> onAction)
-		{
-			return tick(onAction, v -> y -> y, Predicates.alwaysTrue(), 1f);
-		}
-		default SELF tick(TimeAwareAction<SELF> onAction, Predicate<SELF> isStillRepeating)
-		{
-			return tick(onAction, v -> y -> y, isStillRepeating, 1f);
-		}
-		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, Predicate<SELF> isStillRepeating)
-		{
-			return tick(onAction, onActionDone, isStillRepeating, 1f);
-		}
-		default SELF tick(TimeAwareAction<SELF> onAction, TimeAwareAction<SELF> onActionDone, Predicate<SELF> isStillRepeating, float timeDelta)
-		{
-			SELF self = (SELF) this;
-			if (Float.isNaN(counter()))
-				return self;
-			
-			// behavior: if time > 0, its the first iteration, after that its kept in the interval [0, -repeatTime[ if the is repeating flag is on
-			// if the is repeating flag is off, when the counter reaches -repeatTime - endlagTime the action is done!!
-			
-			float nextTime = counter() - timeDelta;
-			float repeatCheckInstant = -self.repeatTime() / 2;
-			
-			// fix for slow weapons (like blasters) that cancels the repeating flag if they're not shooting after the endlag is done
-			// or if the counter is before the startup and the entity isn't shooting (like for dualies)
-			if (self.isRepeating() && counter() > repeatCheckInstant && nextTime <= repeatCheckInstant)
-			{
-				if (!isStillRepeating.test(self))
-				{
-					self = self.withRepeatingFlag(false);
-				}
-			}
-			if (counter() > startupTime() && nextTime <= startupTime())
-			{
-				if (!isStillRepeating.test(self))
-				{
-					return self.withCounter(Float.NaN);
-				}
-			}
-			if (self.counter() > 0 && nextTime <= 0) // first iteration
-			{
-				self = onAction.run(-nextTime).apply(self);
-			}
-			while (self.isRepeating() && nextTime <= -self.repeatTime()) // repeating iteration
-			{
-				nextTime += self.repeatTime();
-				self = onAction.run(-nextTime).apply(self);
-			}
-			if (nextTime <= -self.repeatTime() - self.endlagTime()) // last iteration
-			{
-				self = onActionDone.run(-(nextTime + self.repeatTime() + self.endlagTime())).apply(self);
-				if (!self.isRepeating())
-					return self.withCounter(Float.NaN);
-			}
-			
-			return self.withCounter(nextTime);
-		}
-		boolean isRepeating();
-		float startupTime();
-		float repeatTime();
-		float endlagTime();
-		float counter();
-		SELF withRepeatingFlag(boolean repeating);
-		SELF withStartupTime(float startupTime);
-		SELF withRepeatTime(float repeatTime);
-		SELF withEndlagTime(float endlagTime);
-		SELF withCounter(float counter);
-		boolean preventsChanging();
-		default SELF initialize(float counter, float startupTime, float repeatTime, float endlagTime)
-		{
-			return initialize(counter, startupTime, repeatTime, endlagTime, true);
-		}
-		SELF initialize(float counter, float startupTime, float repeatTime, float endlagTime, boolean withRepeatingFlag);
-		@FunctionalInterface
-		interface TimeAwareAction<SELF>
-		{
-			UnaryOperator<SELF> run(float extraTime);
-		}
-	}
 	public record ChargerFiringData(float counter, boolean charging, boolean queuedShot)
 	{
 		public static final ChargerFiringData DEFAULT = new ChargerFiringData(Float.NaN, false, false);
@@ -259,7 +169,7 @@ public class SplatcraftComponents
 			// if the counter is higher than 0, it acts as a "delay" to charging, otherwise if the counter is less than 0 its because the weapon is on endlag, otherwise, the weapon is charging
 			if (counter < 0)
 			{
-				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
+				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
 				float nextCounter = counter + timeDelta;
 				if (nextCounter >= 0)
 				{
@@ -573,66 +483,133 @@ public class SplatcraftComponents
 		}
 	}
 	public record ShooterFiringData(float counter, float startupTime, float repeatTime, float endlagTime,
-	                                boolean isRepeating) implements FiringData<ShooterFiringData>
+	                                float repeatPunishTime,
+	                                boolean isRepeating)
 	{
 		public static final Codec<ShooterFiringData> CODEC = RecordCodecBuilder.create(inst ->
-			FiringData.codecStart(inst).
-				apply(inst, ShooterFiringData::new)
+			inst.group(
+				Codec.FLOAT.fieldOf("counter").forGetter(ShooterFiringData::counter),
+				Codec.FLOAT.fieldOf("startup_time").forGetter(ShooterFiringData::startupTime),
+				Codec.FLOAT.fieldOf("repeat_time").forGetter(ShooterFiringData::repeatTime),
+				Codec.FLOAT.fieldOf("endlag_time").forGetter(ShooterFiringData::endlagTime),
+				Codec.FLOAT.fieldOf("repeat_punish_time").forGetter(ShooterFiringData::repeatPunishTime),
+				Codec.BOOL.fieldOf("repeat_queued").forGetter(ShooterFiringData::isRepeating)
+			).apply(inst, ShooterFiringData::new)
 		);
-		public static final ShooterFiringData DEFAULT = new ShooterFiringData(0, 1, 1, 1, false);
+		public static final ShooterFiringData DEFAULT = new ShooterFiringData(0, 1, 1, 1, 0, false);
 		public static final StreamCodec<ByteBuf, ShooterFiringData> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.FLOAT, FiringData::counter,
-			ByteBufCodecs.FLOAT, FiringData::startupTime,
-			ByteBufCodecs.FLOAT, FiringData::repeatTime,
-			ByteBufCodecs.FLOAT, FiringData::endlagTime,
-			ByteBufCodecs.BOOL, FiringData::isRepeating,
+			ByteBufCodecs.FLOAT, ShooterFiringData::counter,
+			ByteBufCodecs.FLOAT, ShooterFiringData::startupTime,
+			ByteBufCodecs.FLOAT, ShooterFiringData::repeatTime,
+			ByteBufCodecs.FLOAT, ShooterFiringData::endlagTime,
+			ByteBufCodecs.FLOAT, ShooterFiringData::repeatPunishTime,
+			ByteBufCodecs.BOOL, ShooterFiringData::isRepeating,
 			ShooterFiringData::new
 		);
-		@Override
 		public ShooterFiringData withRepeatingFlag(boolean repeating)
 		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeating);
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, repeating);
 		}
-		@Override
 		public ShooterFiringData withStartupTime(float startupTime)
 		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
-		@Override
 		public ShooterFiringData withRepeatTime(float repeatTime)
 		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
-		@Override
 		public ShooterFiringData withEndlagTime(float endlagTime)
 		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
-		@Override
+		public ShooterFiringData withRepeatPunishTime(float repeatPunishTime)
+		{
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
+		}
 		public ShooterFiringData withCounter(float counter)
 		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, isRepeating);
+			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
-		@Override
 		public boolean preventsChanging()
 		{
 			return !Float.isNaN(counter);
 		}
-		@Override
-		public ShooterFiringData initialize(float counter, float startupTime, float repeatTime, float endlagTime, boolean withRepeatingFlag)
-		{
-			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, withRepeatingFlag);
-		}
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings)
 		{
-			float startup = CommonUtils.startupSquidSwitch(entity, settings);
+			float startup = Math.max(CommonUtils.startupSquidSwitch(entity, settings), repeatPunishTime);
 			return notifyUsing(entity, settings, startup);
 		}
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings, float startup)
 		{
 			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
 			
-			return initialize(startup, settings.startupTicks(), settings.repeatTicks(), settings.endlagTicks());
+			return new ShooterFiringData(startup, settings.startupTicks(), settings.repeatTicks(), settings.endlagTicks(), 0f, true);
+		}
+		public ShooterFiringData tick(TimeAwareAction onAction)
+		{
+			return tick(onAction, (v, y) -> v, Predicates.alwaysTrue(), 1f);
+		}
+		public ShooterFiringData tick(TimeAwareAction onAction, Predicate<ShooterFiringData> isStillRepeating)
+		{
+			return tick(onAction, (v, y) -> v, isStillRepeating, 1f);
+		}
+		public ShooterFiringData tick(TimeAwareAction onAction, TimeAwareAction onActionDone, Predicate<ShooterFiringData> isStillRepeating)
+		{
+			return tick(onAction, onActionDone, isStillRepeating, 1f);
+		}
+		public ShooterFiringData tick(TimeAwareAction onAction, TimeAwareAction onActionDone, Predicate<ShooterFiringData> isStillRepeating, float timeDelta)
+		{
+			if (Float.isNaN(counter()))
+				return repeatPunishTime > 0 ? withRepeatPunishTime(Math.max(0, repeatPunishTime - timeDelta)) : this;
+			
+			ShooterFiringData self = this;
+			
+			// behavior: if time > 0, its the first iteration, after that its kept in the interval [0, -repeatTime[ if the is repeating flag is on
+			// if the is repeating flag is off, when the counter reaches -repeatTime - endlagTime the action is done!!
+			
+			float nextTime = counter() - timeDelta;
+			float repeatCheckInstant = -self.endlagTime();
+			if (repeatPunishTime > 0)
+				self = self.withRepeatPunishTime(Math.max(0, repeatPunishTime - timeDelta));
+			
+			// fix for slow weapons (like blasters) that cancels the repeating flag if they're not shooting after the endlag is done
+			// or if the counter is before the startup and the entity isn't shooting (like for dualies)
+			if (self.isRepeating() && counter() > repeatCheckInstant && nextTime <= repeatCheckInstant)
+			{
+				if (!isStillRepeating.test(self))
+				{
+					self = self.withRepeatingFlag(false);
+				}
+			}
+			if (counter() > startupTime() && nextTime <= startupTime())
+			{
+				if (!isStillRepeating.test(self))
+				{
+					return self.withCounter(Float.NaN);
+				}
+			}
+			if (self.counter() > 0 && nextTime <= 0) // first iteration
+			{
+				self = onAction.run(self, -nextTime).withRepeatPunishTime(repeatTime + nextTime);
+			}
+			while (self.isRepeating() && nextTime <= -self.repeatTime()) // repeating iteration
+			{
+				nextTime += self.repeatTime();
+				self = onAction.run(self, -nextTime).withRepeatPunishTime(repeatTime + nextTime);
+			}
+			if (!self.isRepeating() && nextTime <= -self.endlagTime()) // last iteration
+			{
+				self = onActionDone.run(self, -(nextTime + self.repeatTime() + self.endlagTime()));
+				if (!self.isRepeating())
+					return self.withCounter(Float.NaN);
+			}
+			
+			return self.withCounter(nextTime);
+		}
+		@FunctionalInterface
+		public interface TimeAwareAction
+		{
+			ShooterFiringData run(ShooterFiringData data, float extraTime);
 		}
 	}
 	public record RemoteInfo(Optional<String> stageId, Optional<ResourceKey<Level>> worldKey, Optional<String> targets,

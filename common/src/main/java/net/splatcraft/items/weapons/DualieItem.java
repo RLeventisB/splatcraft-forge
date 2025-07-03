@@ -185,11 +185,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				data ->
 				{
 					return data.tick(
-						(accumulatedTime) ->
+						(firingData, accumulatedTime) ->
 						{
 							if (!EntityInfoCapability.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime, hand);
-							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
+							return WeaponHandler.canContinueShooting(living) ? firingData : firingData.withRepeatingFlag(false);
 						},
 						(v) -> WeaponHandler.canContinueShooting(living));
 				}

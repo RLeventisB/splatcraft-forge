@@ -56,11 +56,11 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 				stack, SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
 				data ->
 					data.tick(
-						(accumulatedTime) ->
+						(firingData, accumulatedTime) ->
 						{
 							if (!EntityInfoCapability.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime);
-							return v -> WeaponHandler.canContinueShooting(living) ? v : v.withRepeatingFlag(false);
+							return WeaponHandler.canContinueShooting(living) ? firingData : firingData.withRepeatingFlag(false);
 						},
 						(v) -> WeaponHandler.canContinueShooting(living))
 			);
