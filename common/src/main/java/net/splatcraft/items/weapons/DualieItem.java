@@ -257,7 +257,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			SplatcraftComponents.SHOOTER_FIRING_DATA,
 			SplatcraftComponents.ShooterFiringData.DEFAULT,
 			data ->
-				data.notifyUsing(entity, mainShotData, mainStartup)
+				data.notifyUsing(entity, mainShotData, mainStartup, mainStartup)
 		);
 		
 		InteractionHand hand = entity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
@@ -277,7 +277,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			SplatcraftComponents.SHOOTER_FIRING_DATA,
 			SplatcraftComponents.ShooterFiringData.DEFAULT,
 			data ->
-				data.notifyUsing(entity, offhandShotData, otherStartup)
+				data.notifyUsing(entity, offhandShotData, otherStartup, CommonUtils.startupSquidSwitch(entity, offhandShotData))
 		);
 	}
 	public void fire(DualieWeaponSettings settings, Level level, ItemStack stack, LivingEntity entity, float accumulatedTime, InteractionHand hand)

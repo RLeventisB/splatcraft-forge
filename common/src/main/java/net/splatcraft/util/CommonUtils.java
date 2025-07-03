@@ -357,7 +357,6 @@ public class CommonUtils
 		EntityInfoCapability.getOptional(entity).ifPresent(info ->
 		{
 			didCancel.set(info.hasHigherStartup());
-			info.resetHigherStartup();
 		});
 		return didCancel.get() ? withCancel : withoutCancel;
 	}

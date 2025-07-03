@@ -483,8 +483,7 @@ public class SplatcraftComponents
 		}
 	}
 	public record ShooterFiringData(float counter, float startupTime, float repeatTime, float endlagTime,
-	                                float repeatPunishTime,
-	                                boolean isRepeating)
+	                                float repeatPunishTime, boolean isRepeating)
 	{
 		public static final Codec<ShooterFiringData> CODEC = RecordCodecBuilder.create(inst ->
 			inst.group(
@@ -536,14 +535,15 @@ public class SplatcraftComponents
 		}
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings)
 		{
-			float startup = Math.max(CommonUtils.startupSquidSwitch(entity, settings), repeatPunishTime);
-			return notifyUsing(entity, settings, startup);
+			float initialStartup = CommonUtils.startupSquidSwitch(entity, settings);
+			float startup = Math.max(initialStartup, repeatPunishTime);
+			return notifyUsing(entity, settings, startup, initialStartup);
 		}
-		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings, float startup)
+		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings, float startup, float initialStartup)
 		{
 			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
 			
-			return new ShooterFiringData(startup, settings.startupTicks(), settings.repeatTicks(), settings.endlagTicks(), 0f, true);
+			return new ShooterFiringData(startup, initialStartup, settings.repeatTicks(), settings.endlagTicks(), 0f, true);
 		}
 		public ShooterFiringData tick(TimeAwareAction onAction)
 		{
