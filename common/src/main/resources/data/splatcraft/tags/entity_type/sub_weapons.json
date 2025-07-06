@@ -4,6 +4,7 @@
         "splatcraft:splat_bomb",
         "splatcraft:suction_bomb",
         "splatcraft:burst_bomb",
-        "splatcraft:curling_bomb"
+        "splatcraft:curling_bomb",
+        "splatcraft:torpedo"
     ]
 }

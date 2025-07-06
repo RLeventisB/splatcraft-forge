@@ -1,33 +1,31 @@
 package net.splatcraft.entities.subs;
 
-import net.minecraft.core.BlockPos;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.entities.ObjectCollideListenerEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.ThrowableExplodingSubDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkExplosion;
-import org.jetbrains.annotations.NotNull;
 
-public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity
+public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity, IBouncyEntity
 {
 	public static final int FLASH_DURATION = 10;
+	private static final Vec3 REFLECTION_COEFFICIENT = new Vec3(
+		-0.86, -0.5, -0.86
+	);
 	protected int fuseTime = 0;
-	protected int prevFuseTime = 0;
 	protected boolean playedActivationSound = false;
 	public SplatBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, Level world)
 	{
@@ -42,21 +40,9 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	public void tick()
 	{
 		super.tick();
-
-		prevFuseTime = fuseTime;
+		
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
-
-		if (!onGround() || distanceToSqr(getDeltaMovement()) > (double) 1.0E-5F)
-		{
-			float f1 = 0.98F;
-			if (onGround())
-				f1 = level().getBlockState(BlockPos.containing(getX(), getY() - 1.0D, getZ())).getBlock().getFriction();
-
-			f1 = (float) Math.min(0.98, f1 * 1.5f);
-
-			setDeltaMovement(getDeltaMovement().multiply(f1, 0.98D, f1));
-		}
-
+		
 		if (onGround())
 		{
 			fuseTime++;
@@ -71,8 +57,6 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
-
-		move(MoverType.SELF, getDeltaMovement());
 	}
 	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings, Vec3 impactPos)
 	{
@@ -85,8 +69,41 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		level().playSound(null, impactPos.x, impactPos.y, impactPos.z, SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 	}
 	@Override
+	public Vec3 getFriction()
+	{
+		double f1 = 0.94;
+		if (onGround())
+			f1 = level().getBlockState(getOnPos()).getBlock().getFriction() * 1.2f;
+		
+		f1 = Math.min(0.94, f1);
+		
+		return new Vec3(f1, 0.94, f1);
+	}
+	@Override
 	public void handleMovement()
 	{
+		Vec3 oldDeltaMovement = getDeltaMovement();
+		
+		Pair<Vec3, Vec3> collidedAndNewVelocity = doBounceLogic(this, oldDeltaMovement, this::canHitEntity, false);
+		
+		setDeltaMovement(collidedAndNewVelocity.getSecond());
+		setPos(position().add(collidedAndNewVelocity.getFirst()));
+		
+		setOnGroundWithMovement(oldDeltaMovement.y < collidedAndNewVelocity.getFirst().y && oldDeltaMovement.y < 0, collidedAndNewVelocity.getFirst());
+	}
+	@Override
+	public double getDefaultGravity()
+	{
+		return 0.15;
+	}
+	@Override
+	public Vec3 reflectVelocity(Direction.Axis axis, Vec3 newVelocity, Vec3 oldVelocity)
+	{
+		if (axis == Direction.Axis.Y)
+			if (oldVelocity.y < newVelocity.y && newVelocity.y <= 0 && oldVelocity.y <= -0.6 && oldVelocity.horizontalDistanceSqr() < 1.1)
+				return oldVelocity.with(Direction.Axis.Y, 0);
+		
+		return IBouncyEntity.super.reflectVelocity(axis, newVelocity, oldVelocity);
 	}
 	@Override
 	public void handleEntityEvent(byte id)
@@ -99,53 +116,25 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)
 	@Override
-	protected void onHitEntity(@NotNull EntityHitResult result)
+	public Vec3 reflectionCoefficient(Vec3 velocity)
 	{
-		super.onHitEntity(result);
-
-		double velocityX = getDeltaMovement().x * 0.3;
-		double velocityY = getDeltaMovement().y;
-		double velocityZ = getDeltaMovement().z * 0.3;
-		double absVelocityX = Math.abs(velocityX);
-		double absVelocityY = Math.abs(velocityY);
-		double absVelocityZ = Math.abs(velocityZ);
-
-		if (absVelocityX >= absVelocityY && absVelocityX >= absVelocityZ)
-			setDeltaMovement(-velocityX, velocityY, velocityZ);
-		if (absVelocityY >= .02 && absVelocityY >= absVelocityX && absVelocityY >= absVelocityZ)
-			setDeltaMovement(velocityX, -velocityY * .5, velocityZ);
-		if (absVelocityZ >= absVelocityY && absVelocityZ >= absVelocityX)
-			setDeltaMovement(velocityX, velocityY, -velocityZ);
-	}
-	@Override
-	protected void onHitBlock(BlockHitResult result)
-	{
-		if (level().getBlockState(result.getBlockPos()).getCollisionShape(level(), result.getBlockPos()).bounds().maxY - (getY() - getBlockY()) <= 0)
-			return;
-
-		double velocityX = getDeltaMovement().x;
-		double velocityY = getDeltaMovement().y;
-		double velocityZ = getDeltaMovement().z;
-
-		Direction blockFace = result.getDirection();
-
-		if (blockFace == Direction.EAST || blockFace == Direction.WEST)
-			setDeltaMovement(-velocityX, velocityY, velocityZ);
-		if ((blockFace == Direction.DOWN || blockFace == Direction.UP) && Math.abs(velocityY) >= 1.2)
-			setDeltaMovement(velocityX, -velocityY * .3, velocityZ);
-		if (blockFace == Direction.NORTH || blockFace == Direction.SOUTH)
-			setDeltaMovement(velocityX, velocityY, -velocityZ);
+		return REFLECTION_COEFFICIENT;
 	}
 	public float getFlashIntensity(float partialTicks)
 	{
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
 		if (settings.subDataRecord == null)
 			return 0;
-		return Math.max(0, Mth.lerpInt(partialTicks, prevFuseTime, fuseTime) - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
+		return Math.max(0, fuseTime - 1 + partialTicks - (settings.subDataRecord.fuseTime() - FLASH_DURATION)) * 0.85f / FLASH_DURATION;
 	}
 	@Override
 	public void onCollidedWithObjectEntity(Entity entity)
 	{
 		explode(getSettings(), getBoundingBox().getCenter());
+	}
+	@Override
+	public Vec3 collide(Vec3 vec3)
+	{
+		return ((EntityAccessor) this).invokeCollide(vec3);
 	}
 }

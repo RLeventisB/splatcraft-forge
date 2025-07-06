@@ -86,6 +86,10 @@ public class InkExplosion
 	{
 		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE);
 	}
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon)
+	{
+		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, AttackId.NONE);
+	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
 		if (source == null || source.level().isClientSide)
@@ -111,7 +115,7 @@ public class InkExplosion
 		{
 			createDrop(
 				world, owner, center,
-				yawGetter.apply(i) * Mth.TWO_PI, -splashData.splashPitchRange().getValue(random.nextFloat()) * Mth.PI,
+				yawGetter.apply(i) * Mth.TWO_PI, -splashData.splashPitchRange().getValue(random.nextFloat()) * Mth.DEG_TO_RAD,
 				splashData.splashVelocityRange().getValue(random.nextFloat()),
 				splashData.splashPaintRadius(), color, inkType
 			);

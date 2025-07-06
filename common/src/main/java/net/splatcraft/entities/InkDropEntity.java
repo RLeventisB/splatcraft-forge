@@ -1,8 +1,7 @@
 package net.splatcraft.entities;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -35,6 +34,9 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public float lifespan = 600;
 	public InkBlockUtils.InkType inkType;
 	private float timeDelta;
+	private DamageRangesRecord explosionData;
+	private ItemStack sourceWeapon;
+	private AttackId attackId;
 	public InkDropEntity(EntityType<InkDropEntity> type, Level world)
 	{
 		super(type, world);
@@ -65,6 +67,8 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	}
 	public void tick(float timeDelta)
 	{
+		this.timeDelta = timeDelta;
+		
 		Vec3 vel = getDeltaMovement();
 		
 		if (isInLiquid() || Double.isNaN(vel.x) || Double.isNaN(vel.y) || Double.isNaN(vel.z))
@@ -79,8 +83,9 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 			return;
 		}
 		
-		this.timeDelta = timeDelta;
+		setDeltaMovement(vel.multiply(0.9, 1, 0.9));
 		super.tick();
+		
 		this.timeDelta = 1;
 	}
 	@Override
@@ -108,16 +113,11 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 			float yaw = (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG);
 			if (tickCount == 1)
 			{
-				setXRot(pitch);
-				setYRot(yaw);
 				xRotO = pitch;
 				yRotO = yaw;
 			}
-			else
-			{
-				setXRot(lerpRotation(xRotO, pitch));
-				setYRot(lerpRotation(yRotO, yaw));
-			}
+			setXRot(pitch);
+			setYRot(yaw);
 		}
 	}
 	@Override
@@ -134,7 +134,11 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		
 		if (!level().isClientSide())
 		{
-			InkExplosion.createInkExplosion(getOwner(), InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this), getImpactCoverage(), inkType, ItemStack.EMPTY);
+			Vec3 pos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this);
+			if (sourceWeapon == null || sourceWeapon.isEmpty() || explosionData == null)
+				InkExplosion.createInkExplosion(getOwner(), pos, getImpactCoverage(), inkType, ItemStack.EMPTY);
+			else
+				InkExplosion.createInkExplosion(getOwner(), pos, getImpactCoverage(), explosionData, inkType, sourceWeapon, attackId);
 			discard();
 		}
 		else
@@ -193,8 +197,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	{
 		super.readAdditionalSaveData(nbt);
 		
-		ListTag directionTag = nbt.getList("DeltaMotion", DoubleTag.TAG_DOUBLE);
-		setDeltaMovement(new Vec3(directionTag.getDouble(0), directionTag.getDouble(1), directionTag.getDouble(2)));
+		Vec3.CODEC.parse(NbtOps.INSTANCE, nbt.get("DeltaMotion")).result().ifPresent(this::setDeltaMovement);
 		
 		setImpactCoverage(nbt.getFloat("ImpactCoverage"));
 		
@@ -203,19 +206,21 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		if (nbt.contains("Lifespan"))
 			lifespan = nbt.getFloat("Lifespan");
 		
-		setInvisible(nbt.getBoolean("Invisible"));
+		if (nbt.contains("SourceWeapon"))
+			sourceWeapon = ItemStack.parseOptional(level().registryAccess(), nbt.getCompound("SourceWeapon"));
+		
+		if (nbt.contains("CollisionData"))
+			DamageRangesRecord.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound("CollisionData")).ifSuccess(data -> explosionData = data);
+		
+		if (nbt.contains("AttackId"))
+			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
 		
 		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
 	}
 	@Override
 	public void addAdditionalSaveData(CompoundTag nbt)
 	{
-		ListTag directionTag = new ListTag();
-		Vec3 direction = getDeltaMovement();
-		directionTag.add(DoubleTag.valueOf(direction.x));
-		directionTag.add(DoubleTag.valueOf(direction.y));
-		directionTag.add(DoubleTag.valueOf(direction.z));
-		nbt.put("DeltaMotion", directionTag);
+		Vec3.CODEC.encodeStart(NbtOps.INSTANCE, getDeltaMovement()).result().ifPresent(tag -> nbt.put("DeltaMotion", tag));
 		
 		nbt.putFloat("ImpactCoverage", getImpactCoverage());
 		nbt.put("DropColor", getColor().getNbt());
@@ -225,6 +230,15 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		nbt.putBoolean("Invisible", isInvisible());
 		
 		nbt.putString("InkType", inkType.getIdString());
+		
+		if (sourceWeapon != null && !sourceWeapon.isEmpty())
+			nbt.put("SourceWeapon", sourceWeapon.save(level().registryAccess()));
+		
+		if (explosionData != null)
+			DamageRangesRecord.CODEC.encodeStart(NbtOps.INSTANCE, explosionData).ifSuccess(tag -> nbt.put("CollisionData", tag));
+		
+		if (attackId != null)
+			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
 		
 		super.addAdditionalSaveData(nbt);
 	}
@@ -255,5 +269,11 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public void setImpactCoverage(float splashSize)
 	{
 		entityData.set(IMPACT_SIZE, splashSize);
+	}
+	public void setExplosionData(ItemStack stack, DamageRangesRecord damageRanges, AttackId dropletAttackId)
+	{
+		sourceWeapon = stack;
+		explosionData = damageRanges;
+		attackId = dropletAttackId;
 	}
 }

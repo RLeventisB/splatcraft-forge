@@ -8,9 +8,11 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.DamageRangesRecord;
 import net.splatcraft.util.NumberRange;
 import net.splatcraft.util.NumberRange.FloatRange;
+import org.joml.Vector2f;
 
 import static net.splatcraft.data.SplatcraftConvertors.*;
 
@@ -33,7 +35,7 @@ public class SubWeaponRecords
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(ThrowableExplodingSubDataRecord::inkSplashRadius),
 				Codec.INT.fieldOf("fuse_time").forGetter(ThrowableExplodingSubDataRecord::fuseTime),
 				Codec.FLOAT.fieldOf("throw_velocity").forGetter(ThrowableExplodingSubDataRecord::throwVelocity),
-				Codec.FLOAT.optionalFieldOf("thrower_impulse", 0.8f).forGetter(ThrowableExplodingSubDataRecord::throwerImpulse),
+				Codec.FLOAT.optionalFieldOf("thrower_impulse", 1f).forGetter(ThrowableExplodingSubDataRecord::throwerImpulse),
 				Codec.FLOAT.optionalFieldOf("pitch_offset", -5f).forGetter(ThrowableExplodingSubDataRecord::pitchOffset)
 			).apply(inst, ThrowableExplodingSubDataRecord::new)
 		);
@@ -77,7 +79,7 @@ public class SubWeaponRecords
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(BurstBombDataRecord::inkSplashRadius),
 				Codec.FLOAT.fieldOf("contact_damage").forGetter(BurstBombDataRecord::directDamage),
 				Codec.FLOAT.fieldOf("throw_velocity").forGetter(BurstBombDataRecord::throwVelocity),
-				Codec.FLOAT.optionalFieldOf("thrower_impulse", 0.8f).forGetter(BurstBombDataRecord::throwerImpulse),
+				Codec.FLOAT.optionalFieldOf("thrower_impulse", 1f).forGetter(BurstBombDataRecord::throwerImpulse),
 				Codec.FLOAT.optionalFieldOf("pitch_offset", -5f).forGetter(BurstBombDataRecord::pitchOffset)
 			).apply(inst, BurstBombDataRecord::new)
 		);
@@ -165,6 +167,59 @@ public class SubWeaponRecords
 				maxCookRadiusBonus / DistanceUnitsPerMinecraftSquare,
 				bounceOnEntityHit,
 				warningFrame / SplatoonFramesPerMinecraftTick
+			);
+		}
+	}
+	public record TorpedoDataRecord(
+		DamageRangesRecord mainExplosionDamageRange,
+		DamageRangesRecord dropletDamageRange,
+		SplashAroundDataRecord dropletData,
+		float mainInkSplashRadius,
+		float health,
+		float throwVelocity,
+		float throwerImpulse,
+		float pitchOffset,
+		Vector2f searchRange,
+		float moveSpeed,
+		int searchDelay,
+		int movementDelay,
+		int fuseTime
+	) implements DynamicDataRecord<TorpedoDataRecord>
+	{
+		public static final MapCodec<TorpedoDataRecord> CODEC = RecordCodecBuilder.mapCodec(
+			inst -> inst.group(
+				DamageRangesRecord.CODEC.fieldOf("main_explosion_damage_ranges").forGetter(TorpedoDataRecord::mainExplosionDamageRange),
+				DamageRangesRecord.CODEC.fieldOf("droplet_damage_ranges").forGetter(TorpedoDataRecord::dropletDamageRange),
+				SplashAroundDataRecord.CODEC.fieldOf("droplet_data").forGetter(TorpedoDataRecord::dropletData),
+				Codec.FLOAT.fieldOf("main_ink_splash_radius").forGetter(TorpedoDataRecord::mainInkSplashRadius),
+				Codec.FLOAT.fieldOf("health").forGetter(TorpedoDataRecord::health),
+				Codec.FLOAT.fieldOf("throw_velocity").forGetter(TorpedoDataRecord::throwVelocity),
+				Codec.FLOAT.optionalFieldOf("thrower_impulse", 1f).forGetter(TorpedoDataRecord::throwerImpulse),
+				Codec.FLOAT.optionalFieldOf("pitch_offset", 0f).forGetter(TorpedoDataRecord::pitchOffset),
+				CodecUtils.Codecs.VECTOR2_MULTI_CODEC.optionalFieldOf("search_range", new Vector2f(100f, 100f)).forGetter(TorpedoDataRecord::searchRange),
+				Codec.FLOAT.optionalFieldOf("move_speed", 6f).forGetter(TorpedoDataRecord::moveSpeed),
+				Codec.INT.optionalFieldOf("search_delay", 60).forGetter(TorpedoDataRecord::searchDelay),
+				Codec.INT.optionalFieldOf("movement_delay", 60).forGetter(TorpedoDataRecord::movementDelay),
+				Codec.INT.optionalFieldOf("fuse_time", 30).forGetter(TorpedoDataRecord::movementDelay)
+			).apply(inst, TorpedoDataRecord::new)
+		);
+		@Override
+		public TorpedoDataRecord convertSelf()
+		{
+			return new TorpedoDataRecord(
+				convert(mainExplosionDamageRange),
+				convert(dropletDamageRange),
+				convert(dropletData),
+				mainInkSplashRadius / DistanceUnitsPerMinecraftSquare,
+				health / SplatoonHealthPerMinecraftHealth,
+				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
+				throwerImpulse,
+				pitchOffset,
+				searchRange.div(DistanceUnitsPerMinecraftSquare, new Vector2f()),
+				moveSpeed / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
+				searchDelay / SplatoonFramesPerMinecraftTick,
+				movementDelay / SplatoonFramesPerMinecraftTick,
+				fuseTime / SplatoonFramesPerMinecraftTick
 			);
 		}
 	}

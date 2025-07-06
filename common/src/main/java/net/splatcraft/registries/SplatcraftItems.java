@@ -25,10 +25,7 @@ import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.items.weapons.*;
-import net.splatcraft.items.weapons.subs.BurstBombSubWeaponItem;
-import net.splatcraft.items.weapons.subs.CurlingSubWeaponItem;
-import net.splatcraft.items.weapons.subs.SubWeaponItem;
-import net.splatcraft.items.weapons.subs.ThrowableBombSubWeaponItem;
+import net.splatcraft.items.weapons.subs.*;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
@@ -134,6 +131,7 @@ public class SplatcraftItems
 	public static final RegistrySupplier<SubWeaponItem> burstBomb = REGISTRY.register("burst_bomb", () -> new BurstBombSubWeaponItem(SplatcraftEntities.BURST_BOMB, "burst_bomb"));
 	public static final RegistrySupplier<SubWeaponItem> suctionBomb = REGISTRY.register("suction_bomb", () -> new ThrowableBombSubWeaponItem(SplatcraftEntities.SUCTION_BOMB, "suction_bomb"));
 	public static final RegistrySupplier<SubWeaponItem> curlingBomb = REGISTRY.register("curling_bomb", () -> new CurlingSubWeaponItem(SplatcraftEntities.CURLING_BOMB, "curling_bomb"));
+	public static final RegistrySupplier<SubWeaponItem> torpedo = REGISTRY.register("torpedo", () -> new TorpedoSubWeaponItem(SplatcraftEntities.TORPEDO, "torpedo"));
 	//Materials
 	public static final RegistrySupplier<Item> sardinium = REGISTRY.register("sardinium", () -> new Item(new Item.Properties()));
 	public static final RegistrySupplier<Item> sardiniumBlock = REGISTRY.register("sardinium_block", () -> new BlockItem(SplatcraftBlocks.sardiniumBlock.value()));
@@ -219,7 +217,7 @@ public class SplatcraftItems
 			add(allowedColorBarrier.value());
 			add(deniedColorBarrier.value());
 		}});
-
+		
 		DispenserBlock.registerBehavior(emptyInkwell.value(), new PlaceBlockDispenseBehavior());
 		DispenserBlock.registerBehavior(inkwell.value(), new PlaceBlockDispenseBehavior());
 	}
@@ -241,34 +239,34 @@ public class SplatcraftItems
 		ResourceLocation inkProperty = Splatcraft.identifierOf("ink");
 		ResourceLocation isLeftProperty = Splatcraft.identifierOf("is_left");
 		ResourceLocation unfoldedProperty = Splatcraft.identifierOf("unfolded");
-
+		
 		for (RemoteItem remote : RemoteItem.remotes)
 		{
 			Services.PLATFORM.registerItemProperty(remote, activeProperty, remote.getActiveProperty());
 			Services.PLATFORM.registerItemProperty(remote, modeProperty, remote.getModeProperty());
 		}
-
+		
 		for (InkTankItem tank : InkTankItem.inkTanks)
 		{
 			Services.PLATFORM.registerItemProperty(tank, inkProperty, (stack, level, entity, seed) -> InkTankItem.getInkPercentage(stack));
 		}
-
+		
 		for (DualieItem dualie : DualieItem.dualies)
 		{
 			Services.PLATFORM.registerItemProperty(dualie, isLeftProperty, dualie.getIsLeft());
 		}
-
+		
 		for (RollerItem roller : RollerItem.rollers)
 		{
 			Services.PLATFORM.registerItemProperty(roller, unfoldedProperty, roller.getUnfolded());
 		}
-
+		
 		ClampedItemPropertyFunction coloredProperty = (stack, level, entity, seed) -> !ColorUtils.getInkColor(stack).isValid() ? 0 : 1;
 		Services.PLATFORM.registerItemProperty(canvas.value(), Splatcraft.identifierOf("inked"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coralite.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteSlab.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteStairs.value(), Splatcraft.identifierOf("colored"), coloredProperty);
-
+		
 		InkTankFeature.register(inkTank.value(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
 		InkTankFeature.register(classicInkTank.value(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
 		InkTankFeature.register(inkTankJr.value(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);

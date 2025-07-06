@@ -42,6 +42,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
 			
 			//0.30000001192092896D
 			matrixStack.pushPose();
+			matrixStack.translate(0, entity.getBbHeight() / 2, 0);
 			matrixStack.mulPose(Axis.YP.rotationDegrees(entityYaw - 180.0F));
 			matrixStack.mulPose(Axis.XP.rotationDegrees(entity.getViewXRot(partialTicks)));
 			matrixStack.scale(size, size, (float) (size + size * entity.getDeltaMovement().length()));

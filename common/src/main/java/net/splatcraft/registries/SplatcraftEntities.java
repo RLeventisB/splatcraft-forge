@@ -33,20 +33,11 @@ import net.splatcraft.client.models.projectiles.BlasterInkProjectileModel;
 import net.splatcraft.client.models.projectiles.InkProjectileModel;
 import net.splatcraft.client.models.projectiles.RollerInkProjectileModel;
 import net.splatcraft.client.models.projectiles.ShooterInkProjectileModel;
-import net.splatcraft.client.models.subs.BurstBombModel;
-import net.splatcraft.client.models.subs.CurlingBombModel;
-import net.splatcraft.client.models.subs.SplatBombModel;
-import net.splatcraft.client.models.subs.SuctionBombModel;
+import net.splatcraft.client.models.subs.*;
 import net.splatcraft.client.renderer.*;
-import net.splatcraft.client.renderer.subs.BurstBombRenderer;
-import net.splatcraft.client.renderer.subs.CurlingBombRenderer;
-import net.splatcraft.client.renderer.subs.SplatBombRenderer;
-import net.splatcraft.client.renderer.subs.SuctionBombRenderer;
+import net.splatcraft.client.renderer.subs.*;
 import net.splatcraft.entities.*;
-import net.splatcraft.entities.subs.BurstBombEntity;
-import net.splatcraft.entities.subs.CurlingBombEntity;
-import net.splatcraft.entities.subs.SplatBombEntity;
-import net.splatcraft.entities.subs.SuctionBombEntity;
+import net.splatcraft.entities.subs.*;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
@@ -68,6 +59,7 @@ public class SplatcraftEntities
 	public static final RegistrySupplier<EntityType<SuctionBombEntity>> SUCTION_BOMB = create("suction_bomb", SuctionBombEntity::new, MobCategory.MISC, 0.3f, 0.3f);
 	public static final RegistrySupplier<EntityType<SplatBombEntity>> SPLAT_BOMB = create("splat_bomb", SplatBombEntity::new, MobCategory.MISC, 0.5f, 0.5f);
 	public static final RegistrySupplier<EntityType<CurlingBombEntity>> CURLING_BOMB = create("curling_bomb", CurlingBombEntity::new, MobCategory.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<TorpedoEntity>> TORPEDO = create("torpedo", TorpedoEntity::new, MobCategory.MISC, 0.7f, 0.7f);
 	// Special Weapons
 	public static final RegistrySupplier<EntityType<StingRayBeamEntity>> STING_RAY_PROJECTILE = create("sting_ray_beam", StingRayBeamEntity::new, MobCategory.MISC, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, MobCategory classification, float width, float height)
@@ -90,6 +82,7 @@ public class SplatcraftEntities
 		Services.PLATFORM.registerEntityRenderer(BURST_BOMB, BurstBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(SUCTION_BOMB, SuctionBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(CURLING_BOMB, CurlingBombRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(TORPEDO, TorpedoRenderer::new);
 		
 		Services.PLATFORM.registerEntityRenderer(SPAWN_SHIELD, SpawnShieldRenderer::new);
 		
@@ -105,6 +98,7 @@ public class SplatcraftEntities
 		Services.PLATFORM.registerEntityLayerRenderer(BurstBombModel.LAYER_LOCATION, BurstBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(SuctionBombModel.LAYER_LOCATION, SuctionBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(CurlingBombModel.LAYER_LOCATION, CurlingBombModel::createBodyLayer);
+		Services.PLATFORM.registerEntityLayerRenderer(TorpedoModel.LAYER_LOCATION, TorpedoModel::createBodyLayer);
 		
 		Services.PLATFORM.registerEntityLayerRenderer(InkProjectileModel.LAYER_LOCATION, InkProjectileModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(ShooterInkProjectileModel.LAYER_LOCATION, ShooterInkProjectileModel::createBodyLayer);

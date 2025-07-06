@@ -1,0 +1,46 @@
+{
+    "type": "splatcraft:sub_weapon",
+    "sub_type": "torpedo",
+    "main_explosion_damage_ranges": {
+        "points": [
+            {
+                "max_range": 26,
+                "damage": 60
+            },
+            {
+                "max_range": 60,
+                "damage": 35
+            }
+        ],
+        "lerp_between": false
+    },
+    "droplet_damage_ranges": {
+        "points": [
+            {
+                "max_range": 26,
+                "damage": 12
+            }
+        ],
+        "lerp_between": false
+    },
+    "droplet_data": {
+        "splash_count": 8,
+        "splash_velocity_range": [4.2, 4.8],
+        "splash_pitch_range": [60, 70],
+        "splash_paint_radius": 20,
+        "angle_randomness": 3
+    },
+    "main_ink_splash_radius": 35,
+    "health": 20,
+    "throw_velocity": 8,
+    "search_range": [100, 40],
+    "movement_delay": 30,
+    "move_speed": 1.4,
+    "search_delay": 9,
+    "thrower_impulse": 0.6,
+    "ink_usage": {
+        "consumption": 65,
+        "recovery_cooldown": 88
+    },
+    "mobility": 1
+}

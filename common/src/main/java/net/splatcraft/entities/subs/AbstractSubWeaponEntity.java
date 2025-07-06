@@ -92,10 +92,11 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		checkInsideBlocks();
 		
 		handleMovement();
-
-		float f = getFriction();
-		if (f != 1)
-			setDeltaMovement(getDeltaMovement().scale(f));
+		
+		Vec3 f = getFriction();
+		if (f.x != 1 || f.y != 1 || f.z != 1)
+			setDeltaMovement(getDeltaMovement().multiply(f));
+		
 		applyGravity();
 	}
 	public void superTick()
@@ -128,9 +129,9 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		setPos(position().add(getDeltaMovement()));
 	}
-	public float getFriction()
+	public Vec3 getFriction()
 	{
-		return 0.94f;
+		return CommonUtils.createVec3(0.94);
 	}
 	@Override
 	public void handleEntityEvent(byte id)
