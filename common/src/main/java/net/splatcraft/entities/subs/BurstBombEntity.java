@@ -4,7 +4,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
@@ -31,11 +30,10 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 	protected void onHitEntity(@NotNull EntityHitResult result)
 	{
 		super.onHitEntity(result);
-
+		
 		SubWeaponSettings<BurstBombDataRecord> settings = getSettings();
-
-		if (result.getEntity() instanceof LivingEntity target)
-			InkDamageUtils.doDamage(target, settings.subDataRecord.directDamage(), getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
+		
+		InkDamageUtils.doDamage(result.getEntity(), settings.subDataRecord.directDamage(), getOwner(), this, sourceWeapon, SPLASH_DAMAGE_TYPE, false, AttackId.NONE);
 		explode(settings, result.getLocation());
 	}
 	@Override
@@ -70,7 +68,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 		Vec3 vec3 = getDeltaMovement();
 		float angle = -tickCount * Mth.RAD_TO_DEG * 0.4f;
 		float yRot = (float) (Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG);
-		if (firstTick)
+		if (tickCount == 1)
 		{
 			setYRot(yRot);
 			xRotO = angle;

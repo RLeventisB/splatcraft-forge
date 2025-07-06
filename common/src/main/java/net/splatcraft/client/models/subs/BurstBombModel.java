@@ -36,11 +36,6 @@ public class BurstBombModel extends AbstractSubWeaponModel<BurstBombEntity>
 		return LayerDefinition.create(meshdefinition, 32, 32);
 	}
 	@Override
-	public void setupAnim(@NotNull BurstBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
-	{
-	
-	}
-	@Override
 	public void renderToBuffer(@NotNull PoseStack poseStack, @NotNull VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color)
 	{
 		bone.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);

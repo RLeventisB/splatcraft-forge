@@ -13,8 +13,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.commands.SuperJumpCommand;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.entities.IColoredEntity;
@@ -24,6 +22,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +30,15 @@ import java.util.Objects;
 
 public class InkDamageUtils
 {
-	public static boolean doSplatDamage(LivingEntity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
+	public static boolean doSplatDamage(Entity target, float damage, Entity source, ItemStack sourceItem, AttackId attackId)
 	{
 		return doDamage(target, damage, source, source, sourceItem, SplatcraftDamageTypes.INK_SPLAT, false, attackId);
 	}
-	public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
+	public static boolean doRollDamage(Entity target, float damage, Entity owner, Entity source, ItemStack sourceItem)
 	{
 		return doDamage(target, damage, source, owner, sourceItem, SplatcraftDamageTypes.ROLL_CRUSH, true, AttackId.NONE);
 	}
-	public static boolean doRollDamage(LivingEntity target, float damage, Entity owner, Entity source, ItemStack sourceItem, AttackId attackId)
+	public static boolean doRollDamage(Entity target, float damage, Entity owner, Entity source, ItemStack sourceItem, AttackId attackId)
 	{
 		return doDamage(target, damage, source, owner, sourceItem, SplatcraftDamageTypes.ROLL_CRUSH, false, attackId);
 	}
@@ -60,14 +59,14 @@ public class InkDamageUtils
 	{
 		return SplatcraftGameRules.getLocalizedRule(level, pos, SplatcraftGameRules.INK_FRIENDLY_FIRE) || !ColorUtils.colorEquals(level, pos, targetColor, sourceColor);
 	}
-	public static boolean doDamage(LivingEntity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown, AttackId attackId)
+	public static boolean doDamage(Entity target, float damage, Entity projectile, Entity owner, ItemStack sourceItem, ResourceKey<DamageType> damageType, boolean applyHurtCooldown, AttackId attackId)
 	{
 		//Negate ink damage when super jumping
-		if (EntityInfoCapability.hasCapability(target))
+		boolean isLiving = target instanceof LivingEntity;
+		LivingEntity livingTarget = isLiving ? (LivingEntity) target : null;
+		if (isLiving && EntityAction.hasSpecificEntityAction(livingTarget, SuperJumpCommand.SuperJump.class))
 		{
-			EntityInfo info = EntityInfoCapability.get(target);
-			if (info.hasActiveAction() && info.getEntityAction() instanceof SuperJumpCommand.SuperJump)
-				return false;
+			return false;
 		}
 		
 		Level targetLevel = target.level();
@@ -76,13 +75,12 @@ public class InkDamageUtils
 		
 		boolean attackIdIsNull = attackId == null;
 		if (!attackIdIsNull)
-		{
 			damage = attackId.getDamage(target, damage);
-		}
+		
 		if (attackIdIsNull || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
 			return false;
 		
-		if (InkOverlayCapability.get(target).isInkproof())
+		if (isLiving && InkOverlayCapability.get(livingTarget).isInkproof())
 			return false;
 		
 		float mobDmgPctg = SplatcraftGameRules.getIntRuleValue(targetLevel, SplatcraftGameRules.INK_MOB_DAMAGE_PERCENTAGE) * 0.01f;
@@ -119,27 +117,27 @@ public class InkDamageUtils
 			target.hurtMarked = false;
 		}
 		
-		if ((!targetColor.isValid() || canInk) && !target.isUnderWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
+		if (isLiving && (!targetColor.isValid() || canInk) && !target.isUnderWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
 		{
-			InkOverlayInfo info = InkOverlayCapability.get(target);
-			if (info.getAmount() < target.getMaxHealth() * 1.5)
+			InkOverlayInfo info = InkOverlayCapability.get(livingTarget);
+			if (info.getAmount() < livingTarget.getMaxHealth() * 1.5)
 				info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
 			
 			info.setColor(color);
 			if (!targetLevel.isClientSide())
 			{
-				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(target, info), target);
+				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(livingTarget, info), target);
 			}
 		}
 		
-		if (!applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
-			target.hurtTime = 0;
+		if (isLiving && !applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
+			livingTarget.hurtTime = 0;
 		
 		return doDamage;
 	}
-	public static boolean isSplatted(LivingEntity target)
+	public static boolean isSplatted(Entity target)
 	{
-		return target instanceof SquidBumperEntity bumperEntity ? !bumperEntity.isPickable() : target.isDeadOrDying();
+		return target instanceof SquidBumperEntity bumperEntity ? !bumperEntity.isPickable() : (target instanceof LivingEntity living && living.isDeadOrDying()) || !target.isAlive();
 	}
 	public static class InkDamageSource extends DamageSource
 	{

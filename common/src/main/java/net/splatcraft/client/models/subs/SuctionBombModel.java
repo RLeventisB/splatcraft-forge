@@ -45,11 +45,6 @@ public class SuctionBombModel extends AbstractSubWeaponModel<SuctionBombEntity>
 		return LayerDefinition.create(meshdefinition, 32, 32);
 	}
 	@Override
-	public void setupAnim(@NotNull SuctionBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
-	{
-	
-	}
-	@Override
 	public void prepareMobModel(@NotNull SuctionBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);

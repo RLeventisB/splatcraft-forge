@@ -23,17 +23,17 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 		MODEL = new SuctionBombModel(context.bakeLayer(SuctionBombModel.LAYER_LOCATION));
 	}
 	@Override
-	public void render(SuctionBombEntity suctionBomb, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+	public void render(SuctionBombEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
 		matrixStack.pushPose();
-		if (!suctionBomb.isItem)
+		if (!entity.isItem)
 		{
-			matrixStack.translate(0, suctionBomb.getBbHeight() / 2, 0);
-			matrixStack.mulPose(Axis.YP.rotationDegrees(suctionBomb.getViewYRot(partialTicks) - 180.0F));
-			matrixStack.mulPose(Axis.XP.rotationDegrees(suctionBomb.getViewXRot(partialTicks) + 90));
+			matrixStack.translate(0, entity.getBbHeight() / 2, 0);
+			matrixStack.mulPose(Axis.YP.rotationDegrees(entity.getViewYRot(partialTicks) - 180.0F));
+			matrixStack.mulPose(Axis.XP.rotationDegrees(entity.getViewXRot(partialTicks) + 90));
 			matrixStack.scale(1, -1, 1);
-
-			float f = suctionBomb.getFlashIntensity(partialTicks);
+			
+			float f = entity.getFlashIntensity(partialTicks);
 			float f1 = 1.0F + Mth.sin(f * 100.0F) * f * 0.01F;
 			f = Mth.clamp(f, 0.0F, 1.0F);
 			f = f * f;
@@ -42,8 +42,8 @@ public class SuctionBombRenderer extends SubWeaponRenderer<SuctionBombEntity, Su
 			float f3 = (1.0F + f * 0.1F) / f1;
 			matrixStack.scale(f2, f3, f2);
 		}
-
-		super.render(suctionBomb, entityYaw, partialTicks, matrixStack, bufferIn, packedLightIn);
+		
+		super.render(entity, entityYaw, partialTicks, matrixStack, bufferIn, packedLightIn);
 		matrixStack.popPose();
 	}
 	@Override

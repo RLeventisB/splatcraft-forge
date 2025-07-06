@@ -27,15 +27,15 @@ public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, Cu
 		MODEL = new CurlingBombModel(context.bakeLayer(CurlingBombModel.LAYER_LOCATION));
 	}
 	@Override
-	public void render(CurlingBombEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+	public void render(CurlingBombEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
 	{
 		matrixStackIn.pushPose();
 		
-		if (!entityIn.isItem)
+		if (!entity.isItem)
 		{
-			matrixStackIn.mulPose(Axis.YP.rotationDegrees(lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 180.0F));
+			matrixStackIn.mulPose(Axis.YP.rotationDegrees(lerp(partialTicks, entity.yRotO, entity.getYRot()) - 180.0F));
 			
-			float f = entityIn.getFlashIntensity(partialTicks);
+			float f = entity.getFlashIntensity(partialTicks);
 			float f1 = 1.0F + sin(f * 100.0F) * f * 0.01F;
 			f = clamp(f, 0.0F, 1.0F);
 			f *= f * f;
@@ -45,7 +45,7 @@ public class CurlingBombRenderer extends SubWeaponRenderer<CurlingBombEntity, Cu
 		}
 		
 		matrixStackIn.translate(0, -1.5, 0);
-		super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+		super.render(entity, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
 		matrixStackIn.popPose();
 	}
 	@Override

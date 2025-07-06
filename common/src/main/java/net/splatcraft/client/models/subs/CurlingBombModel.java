@@ -84,10 +84,6 @@ public class CurlingBombModel extends AbstractSubWeaponModel<CurlingBombEntity>
 		return LayerDefinition.create(meshdefinition, 64, 64);
 	}
 	@Override
-	public void setupAnim(@NotNull CurlingBombEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
-	{
-	}
-	@Override
 	public void prepareMobModel(@NotNull CurlingBombEntity entityIn, float limbSwing, float limbSwingAmount, float partialTick)
 	{
 		super.prepareMobModel(entityIn, limbSwing, limbSwingAmount, partialTick);

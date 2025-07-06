@@ -110,7 +110,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		{
 			float pitch = (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG);
 			float yaw = (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG);
-			if (firstTick)
+			if (tickCount == 1)
 			{
 				setXRot(pitch);
 				setYRot(yaw);
@@ -119,8 +119,8 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 			}
 			else
 			{
-				setXRot(lerpRotation(xRotO, pitch));
-				setYRot(lerpRotation(yRotO, yaw));
+				setXRot(pitch);
+				setYRot(yaw);
 			}
 		}
 	}

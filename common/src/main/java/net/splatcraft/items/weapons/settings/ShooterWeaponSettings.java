@@ -24,6 +24,8 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	@Override
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
 	{
+		if (projectileData == null)
+			return 1f;
 		return projectile.calculateDamageDecay(projectileData.baseDamage(), projectileData.damageDecayStartTick(), projectileData.damageDecayPerTick(), projectileData.minDamage());
 	}
 	@Override

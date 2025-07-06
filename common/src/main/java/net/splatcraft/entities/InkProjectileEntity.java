@@ -11,8 +11,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,9 +25,9 @@ import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
+import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
-public class InkProjectileEntity extends ThrowableItemProjectile implements IColoredEntity, ISetVelocityExtension
+public class InkProjectileEntity extends ThrowableProjectile implements IColoredEntity, ISetVelocityExtension
 {
 	private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
 	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
@@ -200,7 +199,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 	@Override
 	protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder)
 	{
-		super.defineSynchedData(builder);
 		builder.define(PROJ_TYPE, Types.SHOOTER);
 		builder.define(COLOR, ColorUtils.getDefaultColor());
 		builder.define(PROJ_SIZE, new Vector2f(0.2F, 0.6F));
@@ -221,11 +219,6 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			straightShotTime = entityData.get(STRAIGHT_SHOT_TIME);
 		
 		super.onSyncedDataUpdated(data);
-	}
-	@Override
-	protected @NotNull Item getDefaultItem()
-	{
-		return SplatcraftItems.splattershot.get();
 	}
 	@Override
 	public void tick()
@@ -369,7 +362,7 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		{
 			float pitch = (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG);
 			float yaw = (float) (Mth.atan2(motion.x, motion.z) * Mth.RAD_TO_DEG);
-			if (firstTick)
+			if (tickCount == 1)
 			{
 				setXRot(pitch);
 				setYRot(yaw);
@@ -428,24 +421,22 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 			}
 			
 			Entity owner = getOwner();
-			if (target instanceof LivingEntity livingTarget)
+			
+			if (InkDamageUtils.isSplatted(target)) return;
+			
+			boolean didDamage = InkDamageUtils.doDamage(target, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
+			if (!level().isClientSide && didDamage)
 			{
-				if (InkDamageUtils.isSplatted(livingTarget)) return;
-				
-				boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
-				if (!level().isClientSide && didDamage)
+				ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
+				if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
+					Objects.equals(getProjectileType(), Types.BLASTER))
 				{
-					ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-					if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(livingTarget) && dmg > 20 ||
-						Objects.equals(getProjectileType(), Types.BLASTER))
-					{
-						level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.shotDirectHit, SoundSource.PLAYERS, 0.8F, 1);
-					}
-					else
-					{
-						if (owner != null)
-							level().playSound(null, owner.getX(), owner.getY(), owner.getZ(), SplatcraftSounds.shotHit, SoundSource.PLAYERS, 1f, 1f);
-					}
+					level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.shotDirectHit, SoundSource.PLAYERS, 0.8F, 1);
+				}
+				else
+				{
+					if (owner != null)
+						level().playSound(null, owner.getX(), owner.getY(), owner.getZ(), SplatcraftSounds.shotHit, SoundSource.PLAYERS, 1f, 1f);
 				}
 			}
 			
@@ -649,11 +640,12 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		sourceWeapon = ItemStack.parseOptional(registryAccess(), nbt.getCompound("SourceWeapon"));
 		
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(ResourceLocation.parse(nbt.getString(nbt.getString("Settings"))));
+		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(ResourceLocation.parse(nbt.getString("Settings")));
 		if (settings != null)
 			damage = settings;
 		else if (sourceWeapon.getItem() instanceof WeaponBaseItem<?> weapon)
 			damage = weapon.getSettings(sourceWeapon);
+		
 		if (nbt.contains("AttackId"))
 			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
 	}
@@ -686,12 +678,18 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		
 		nbt.putString("ProjectileType", getProjectileType());
 		nbt.putString("InkType", inkType.getIdString());
-		nbt.put("SourceWeapon", sourceWeapon.save(level().registryAccess()));
+		nbt.put("SourceWeapon", sourceWeapon.saveOptional(level().registryAccess()));
+		SplatcraftComponents.getOptional(sourceWeapon, SplatcraftComponents.WEAPON_SETTING_ID).ifPresent(setting ->
+		{
+			ResourceLocation.CODEC.encodeStart(NbtOps.INSTANCE, setting).ifSuccess(tag ->
+			{
+				nbt.put("Settings", tag);
+			});
+		});
 		if (attackId != AttackId.NONE)
 			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
 		
 		super.addAdditionalSaveData(nbt);
-		nbt.remove("Item");
 	}
 	private @NotNull Float getGravitySpeedMult()
 	{
@@ -727,15 +725,9 @@ public class InkProjectileEntity extends ThrowableItemProjectile implements ICol
 		list.add(data);
 		entityData.set(EXTRA_DATA, list);
 	}
-	@Override
 	public @NotNull ItemStack getItem()
 	{
 		return sourceWeapon;
-	}
-	@Deprecated //Modify sourceWeapon variable instead
-	@Override
-	public void setItem(@NotNull ItemStack itemStack)
-	{
 	}
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull Pose pose)
