@@ -15,10 +15,10 @@ import net.splatcraft.items.weapons.settings.SubWeaponRecords.BurstBombDataRecor
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkDamageUtils;
 import net.splatcraft.util.InkExplosion;
+import net.splatcraft.util.structs.AttackId;
 import org.jetbrains.annotations.NotNull;
 
 public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord> implements ObjectCollideListenerEntity
@@ -59,7 +59,7 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 		super.handleEntityEvent(id);
 		if (id == 1)
 		{
-			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxKey() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override

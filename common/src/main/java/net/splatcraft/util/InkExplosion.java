@@ -48,10 +48,10 @@ public class InkExplosion
 	private final List<BlockFace> affectedBlockPositions = Lists.newArrayList();
 	private final Vec3 position;
 	private final InkBlockUtils.InkType inkType;
-	private final DamageRangesRecord dmgCalculator;
+	private final RangedValueCollection dmgCalculator;
 	private final ItemStack weapon;
 	private final InkColor color;
-	public InkExplosion(@Nullable Entity source, double x, double y, double z, DamageRangesRecord damageCalculator, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
+	public InkExplosion(@Nullable Entity source, double x, double y, double z, RangedValueCollection damageCalculator, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
 	{
 		exploder = source;
 		this.paintRadius = paintRadius;
@@ -77,21 +77,21 @@ public class InkExplosion
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(damage, damageRadius), type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, RangedValueCollection.createDamageSimpleLerped(damage, damageRadius), type, weapon, AttackId.NONE);
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, DamageRangesRecord.createSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, RangedValueCollection.createDamageSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon)
 	{
 		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, AttackId.NONE);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, DamageRangesRecord damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
 	{
 		if (source == null || source.level().isClientSide)
 			return;
@@ -142,15 +142,15 @@ public class InkExplosion
 		getBlocksInSphereWithNoise(set, world);
 		
 		affectedBlockPositions.addAll(set);
-		if (DamageRangesRecord.isInsignificant(dmgCalculator))
+		if (RangedValueCollection.isInsignificant(dmgCalculator))
 			return;
-		float radiusSquared = dmgCalculator.getMaxDistance() * dmgCalculator.getMaxDistance();
-		int k1 = Mth.floor(x - dmgCalculator.getMaxDistance() - 1F);
-		int l1 = Mth.floor(x + dmgCalculator.getMaxDistance() + 1F);
-		int i2 = Mth.floor(y - dmgCalculator.getMaxDistance() - 1F);
-		int i1 = Mth.floor(y + dmgCalculator.getMaxDistance() + 1F);
-		int j2 = Mth.floor(z - dmgCalculator.getMaxDistance() - 1F);
-		int j1 = Mth.floor(z + dmgCalculator.getMaxDistance() + 1F);
+		float radiusSquared = dmgCalculator.getMaxKey() * dmgCalculator.getMaxKey();
+		int k1 = Mth.floor(x - dmgCalculator.getMaxKey() - 1F);
+		int l1 = Mth.floor(x + dmgCalculator.getMaxKey() + 1F);
+		int i2 = Mth.floor(y - dmgCalculator.getMaxKey() - 1F);
+		int i1 = Mth.floor(y + dmgCalculator.getMaxKey() + 1F);
+		int j2 = Mth.floor(z - dmgCalculator.getMaxKey() - 1F);
+		int j1 = Mth.floor(z + dmgCalculator.getMaxKey() + 1F);
 		AABB box = new AABB(k1, i2, j2, l1, i1, j1);
 		List<Entity> possibleTargets = new ArrayList<>();
 		List<SpawnShieldEntity> spawnShields = new ArrayList<>();
@@ -200,7 +200,7 @@ public class InkExplosion
 					continue;
 				
 				float seenPercent = Explosion.getSeenPercent(position, entity);
-				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getDamage(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
+				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getValue(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
 			}
 			
 			DyeColor dyeColor = color.getDyeColor();
@@ -281,7 +281,7 @@ public class InkExplosion
 			if (!blockstate.isAir())
 			{
 				float dist = (float) Math.sqrt(blockFace.pos().distToCenterSqr(explosionPos.x, explosionPos.y, explosionPos.z));
-				BlockInkedResult result = InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getDamage(dist));
+				BlockInkedResult result = InkBlockUtils.inkBlock(exploder, world, blockFace.pos(), color, blockFace.face(), inkType, dmgCalculator == null ? 0 : dmgCalculator.getValue(dist));
 				if (result == BlockInkedResult.SUCCESS && blockFace.face().equals(Direction.UP))
 				{
 					pointsToAward++;

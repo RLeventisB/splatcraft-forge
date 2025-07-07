@@ -11,12 +11,11 @@ import net.minecraft.resources.ResourceKey;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.RangedValueCollection;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.TreeMap;
 
 public abstract class ExtraSaveData
 {
@@ -72,7 +71,6 @@ public abstract class ExtraSaveData
 			return new InkProjectileEntity.ExtraDataList(saveData.stream().map(ExtraSaveData::copy).toList());
 		}
 	};
-
 	static
 	{
 		Registry.register(REGISTRY, Splatcraft.identifierOf("charge_data"), ChargeExtraData.class);
@@ -81,7 +79,6 @@ public abstract class ExtraSaveData
 		Registry.register(REGISTRY, Splatcraft.identifierOf("slosher_data"), SloshExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("dualie_data"), DualieExtraData.class);
 	}
-
 	public abstract void save(@NotNull RegistryFriendlyByteBuf buffer);
 	public abstract ExtraSaveData load(@NotNull RegistryFriendlyByteBuf buffer);
 	public abstract ExtraSaveData copy();
@@ -89,12 +86,12 @@ public abstract class ExtraSaveData
 	{
 		public EmptyExtraData()
 		{
-
+		
 		}
 		@Override
 		public void save(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-
+		
 		}
 		@Override
 		public EmptyExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
@@ -155,15 +152,15 @@ public abstract class ExtraSaveData
 	}
 	public static class ExplosionExtraData extends ExtraSaveData
 	{
-		public final DamageRangesRecord damageCalculator;
-		public final DamageRangesRecord sparkDamageCalculator;
+		public final RangedValueCollection damageCalculator;
+		public final RangedValueCollection sparkDamageCalculator;
 		public final float explosionPaint;
 		public final boolean newAttackId;
 		public ExplosionExtraData(BlasterWeaponSettings.DetonationRecord detonationRecord)
 		{
 			this(detonationRecord.damageRadiuses(), detonationRecord.sparkDamageRadiuses(), detonationRecord.explosionPaint(), detonationRecord.newAttackId());
 		}
-		public ExplosionExtraData(DamageRangesRecord damageCalculator, DamageRangesRecord sparkDamageCalculator, float explosionPaint, boolean newAttackId)
+		public ExplosionExtraData(RangedValueCollection damageCalculator, RangedValueCollection sparkDamageCalculator, float explosionPaint, boolean newAttackId)
 		{
 			this.damageCalculator = damageCalculator;
 			this.sparkDamageCalculator = sparkDamageCalculator;
@@ -173,26 +170,26 @@ public abstract class ExtraSaveData
 		@Override
 		public void save(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-			damageCalculator.writeToBuffer(buffer);
-			sparkDamageCalculator.writeToBuffer(buffer);
+			RangedValueCollection.STREAM_CODEC.encode(buffer, damageCalculator);
+			RangedValueCollection.STREAM_CODEC.encode(buffer, sparkDamageCalculator);
 			buffer.writeFloat(explosionPaint);
 			buffer.writeBoolean(newAttackId);
 		}
-		public DamageRangesRecord getRadiuses(boolean spark, float multiplier)
+		public RangedValueCollection getRadiuses(boolean spark, float multiplier)
 		{
 			return (spark ? sparkDamageCalculator : damageCalculator).cloneWithMultiplier(1, multiplier);
 		}
 		@Override
 		public ExplosionExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-			return new ExplosionExtraData(DamageRangesRecord.fromBuffer(buffer), DamageRangesRecord.fromBuffer(buffer), buffer.readFloat(), buffer.readBoolean());
+			return new ExplosionExtraData(RangedValueCollection.STREAM_CODEC.decode(buffer), RangedValueCollection.STREAM_CODEC.decode(buffer), buffer.readFloat(), buffer.readBoolean());
 		}
 		@Override
 		public ExplosionExtraData copy()
 		{
 			return new ExplosionExtraData(
-				new DamageRangesRecord(new TreeMap<>(damageCalculator.damageValues()), damageCalculator.lerpBetween()),
-				new DamageRangesRecord(new TreeMap<>(sparkDamageCalculator.damageValues()), sparkDamageCalculator.lerpBetween()),
+				damageCalculator.cloneWithMultiplier(1, 1),
+				sparkDamageCalculator.cloneWithMultiplier(1, 1),
 				explosionPaint, newAttackId);
 		}
 	}

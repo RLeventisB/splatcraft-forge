@@ -29,7 +29,9 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkDamageUtils;
+import net.splatcraft.util.InkExplosion;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +270,7 @@ public class TorpedoEntity extends AbstractSubWeaponEntity<TorpedoDataRecord> im
 		super.handleEntityEvent(id);
 		if (id == 1)
 		{
-			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.mainExplosionDamageRange().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.mainExplosionDamageRange().getMaxKey() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Override

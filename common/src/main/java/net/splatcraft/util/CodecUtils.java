@@ -13,7 +13,6 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ResourceLocationException;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -152,7 +151,7 @@ public class CodecUtils
 		).apply(inst, Vector2f::new));
 		public static final Codec<Vector2f> VECTOR2F_LIST_CODEC = Codec.list(Codec.FLOAT, 2, 2).xmap(v -> new Vector2f(v.get(0), v.get(1)), v -> List.of(v.x(), v.y()));
 		public static final Codec<Vector2f> VECTOR2F_SINGLE_NUMBER_CODEC = Codec.FLOAT.xmap(Vector2f::new, Vector2f::x);
-		public static final StreamCodec<RegistryFriendlyByteBuf, Vec3> VEC_3_PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, Vec3> VEC_3_PACKET_CODEC = StreamCodec.composite(
 			ByteBufCodecs.DOUBLE, Vec3::x,
 			ByteBufCodecs.DOUBLE, Vec3::y,
 			ByteBufCodecs.DOUBLE, Vec3::z,

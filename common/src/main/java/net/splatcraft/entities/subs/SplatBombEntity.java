@@ -15,9 +15,9 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkExplosion;
+import net.splatcraft.util.structs.AttackId;
 
 public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity, IBouncyEntity
 {
@@ -111,7 +111,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		super.handleEntityEvent(id);
 		if (id == 1)
 		{
-			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxDistance() * 2), getX(), getY(), getZ(), 0, 0, 0);
+			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxKey() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	//Ripped and modified from Minestuck's BouncingProjectileEntity class (with permission)

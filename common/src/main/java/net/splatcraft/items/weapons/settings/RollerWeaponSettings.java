@@ -9,8 +9,8 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.util.structs.DamageRangesRecord;
 import net.splatcraft.util.structs.NumberRange.FloatRange;
+import net.splatcraft.util.structs.RangedValueCollection;
 import net.splatcraft.util.structs.WeaponTooltip;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,13 +40,13 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		{
 			RollerProjectileDataRecord projectileData = swingData.projectileData;
 			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
-			return projectileData.damageRanges.getDamage(0) * timeDamagePercent;
+			return projectileData.damageRanges.getValue(0) * timeDamagePercent;
 		}
 		float distance = data.spawnPos.distance(projectile.position().toVector3f());
 		
 		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot || isBrush).projectileData();
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
-		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
+		return projectileData.getDamageRanges(data.weakBullet).getValue(distance) * timeDamagePercent;
 	}
 	@Override
 	public List<WeaponTooltip<RollerWeaponSettings>> tooltipsToRegister()
@@ -75,13 +75,13 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		bypassesMobDamage = data.fullDamageToMobs;
 		isSecret = data.isSecret;
 		
-		rollData = SplatcraftConvertors.convert(data.roll);
-		swingData = SplatcraftConvertors.convert(data.swing);
+		rollData = SplatcraftConvertors.convertDamage(data.roll);
+		swingData = SplatcraftConvertors.convertDamage(data.swing);
 		if (!isBrush)
 		{
 			if (data.fling.isEmpty())
 				throw new AssertionError("Error upon reading roller weapon settings! Fling (or vertical swing) data is not present.");
-			flingData = SplatcraftConvertors.convert(data.fling.get());
+			flingData = SplatcraftConvertors.convertDamage(data.fling.get());
 		}
 		else
 			flingData = null;
@@ -150,8 +150,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		float damageFalloffStartTick,
 		float damageFalloffEndTick,
 		float maxDamageFalloffPercent,
-		DamageRangesRecord damageRanges,
-		Optional<DamageRangesRecord> weakDamageRanges
+		RangedValueCollection damageRanges,
+		Optional<RangedValueCollection> weakDamageRanges
 	)
 	{
 		public static final Codec<RollerProjectileDataRecord> CODEC = RecordCodecBuilder.create(
@@ -168,12 +168,12 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.FLOAT.optionalFieldOf("damage_falloff_start_tick", 25.0f).forGetter(RollerProjectileDataRecord::damageFalloffStartTick),
 				Codec.FLOAT.optionalFieldOf("damage_falloff_end_tick", 45.0f).forGetter(RollerProjectileDataRecord::damageFalloffEndTick),
 				Codec.FLOAT.optionalFieldOf("max_falloff_damage_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
-				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
-				DamageRangesRecord.CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
+				RangedValueCollection.DAMAGE_CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
 			
 			).apply(instance, RollerProjectileDataRecord::create)
 		);
-		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, DamageRangesRecord.DEFAULT, Optional.empty());
+		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, RangedValueCollection.EMPTY, Optional.empty());
 		public static RollerProjectileDataRecord create(float size,
 		                                                Optional<Float> visualSize,
 		                                                float delaySpeedMult,
@@ -186,8 +186,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		                                                float damageFalloffStartTick,
 		                                                float damageFalloffEndTick,
 		                                                float maxDamageFalloffPercent,
-		                                                DamageRangesRecord damageRanges,
-		                                                Optional<DamageRangesRecord> weakDamageRanges)
+		                                                RangedValueCollection damageRanges,
+		                                                Optional<RangedValueCollection> weakDamageRanges)
 		{
 			return new RollerProjectileDataRecord(size,
 				visualSize.orElse(size * 3),
@@ -204,7 +204,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				damageRanges,
 				weakDamageRanges);
 		}
-		public DamageRangesRecord getDamageRanges(boolean weakBullet)
+		public RangedValueCollection getDamageRanges(boolean weakBullet)
 		{
 			return weakBullet && weakDamageRanges.isPresent() ? weakDamageRanges.get() : damageRanges;
 		}

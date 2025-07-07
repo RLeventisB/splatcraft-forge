@@ -24,7 +24,10 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkDamageUtils;
+import net.splatcraft.util.InkExplosion;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.BlockInkedResult;
 import org.jetbrains.annotations.NotNull;
@@ -198,7 +201,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public void handleEntityEvent(byte id)
 	{
 		super.handleEntityEvent(id);
-		float maxDistance = getSettings().subDataRecord.damageRanges().getMaxDistance();
+		float maxDistance = getSettings().subDataRecord.damageRanges().getMaxKey();
 		if (id == 1)
 		{
 			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), (maxDistance + getCookProgress()) * 2), getX(), getY(), getZ(), 0, 0, 0);

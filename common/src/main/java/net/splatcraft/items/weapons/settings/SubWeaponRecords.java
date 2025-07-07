@@ -9,9 +9,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.CodecUtils;
-import net.splatcraft.util.structs.DamageRangesRecord;
 import net.splatcraft.util.structs.NumberRange;
 import net.splatcraft.util.structs.NumberRange.FloatRange;
+import net.splatcraft.util.structs.RangedValueCollection;
 import org.joml.Vector2f;
 
 import static net.splatcraft.data.SplatcraftConvertors.*;
@@ -19,7 +19,7 @@ import static net.splatcraft.data.SplatcraftConvertors.*;
 public class SubWeaponRecords
 {
 	public record ThrowableExplodingSubDataRecord(
-		DamageRangesRecord damageRanges,
+		RangedValueCollection damageRanges,
 		SplashAroundDataRecord inkSplashes,
 		float inkSplashRadius,
 		int fuseTime,
@@ -30,7 +30,7 @@ public class SubWeaponRecords
 	{
 		public static final MapCodec<ThrowableExplodingSubDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
-				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(ThrowableExplodingSubDataRecord::damageRanges),
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_ranges").forGetter(ThrowableExplodingSubDataRecord::damageRanges),
 				SplashAroundDataRecord.CODEC.fieldOf("ink_splashes").forGetter(ThrowableExplodingSubDataRecord::inkSplashes),
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(ThrowableExplodingSubDataRecord::inkSplashRadius),
 				Codec.INT.fieldOf("fuse_time").forGetter(ThrowableExplodingSubDataRecord::fuseTime),
@@ -40,7 +40,7 @@ public class SubWeaponRecords
 			).apply(inst, ThrowableExplodingSubDataRecord::new)
 		);
 		public static final ThrowableExplodingSubDataRecord DEFAULT = new ThrowableExplodingSubDataRecord(
-			DamageRangesRecord.DEFAULT,
+			RangedValueCollection.EMPTY,
 			SplashAroundDataRecord.DEFAULT,
 			0,
 			0,
@@ -52,8 +52,8 @@ public class SubWeaponRecords
 		public ThrowableExplodingSubDataRecord convertSelf()
 		{
 			return new ThrowableExplodingSubDataRecord(
-				convert(damageRanges),
-				convert(inkSplashes),
+				convertDamage(damageRanges),
+				convertDamage(inkSplashes),
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				fuseTime,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
@@ -63,7 +63,7 @@ public class SubWeaponRecords
 		}
 	}
 	public record BurstBombDataRecord(
-		DamageRangesRecord damageRanges,
+		RangedValueCollection damageRanges,
 		SplashAroundDataRecord inkSplashes,
 		float inkSplashRadius,
 		float directDamage,
@@ -74,7 +74,7 @@ public class SubWeaponRecords
 	{
 		public static final MapCodec<BurstBombDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
-				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(BurstBombDataRecord::damageRanges),
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_ranges").forGetter(BurstBombDataRecord::damageRanges),
 				SplashAroundDataRecord.CODEC.fieldOf("ink_splashes").forGetter(BurstBombDataRecord::inkSplashes),
 				Codec.FLOAT.fieldOf("ink_splash_radius").forGetter(BurstBombDataRecord::inkSplashRadius),
 				Codec.FLOAT.fieldOf("contact_damage").forGetter(BurstBombDataRecord::directDamage),
@@ -84,7 +84,7 @@ public class SubWeaponRecords
 			).apply(inst, BurstBombDataRecord::new)
 		);
 		public static final BurstBombDataRecord DEFAULT = new BurstBombDataRecord(
-			DamageRangesRecord.DEFAULT,
+			RangedValueCollection.EMPTY,
 			SplashAroundDataRecord.DEFAULT,
 			0,
 			0,
@@ -96,8 +96,8 @@ public class SubWeaponRecords
 		public BurstBombDataRecord convertSelf()
 		{
 			return new BurstBombDataRecord(
-				convert(damageRanges),
-				convert(inkSplashes),
+				convertDamage(damageRanges),
+				convertDamage(inkSplashes),
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				directDamage / SplatoonHealthPerMinecraftHealth,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
@@ -107,7 +107,7 @@ public class SubWeaponRecords
 		}
 	}
 	public record CurlingBombDataRecord(
-		DamageRangesRecord damageRanges,
+		RangedValueCollection damageRanges,
 		SplashAroundDataRecord inkSplashes,
 		FloatRange inkExplosionRange,
 		FloatRange travelSpeedRange,
@@ -123,7 +123,7 @@ public class SubWeaponRecords
 	{
 		public static final MapCodec<CurlingBombDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
-				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(CurlingBombDataRecord::damageRanges),
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_ranges").forGetter(CurlingBombDataRecord::damageRanges),
 				SplashAroundDataRecord.CODEC.fieldOf("ink_splashes").forGetter(CurlingBombDataRecord::inkSplashes),
 				NumberRange.FloatRange.CODEC.fieldOf("ink_explosion_range").forGetter(CurlingBombDataRecord::inkExplosionRange),
 				NumberRange.FloatRange.CODEC.fieldOf("travel_speed_range").forGetter(CurlingBombDataRecord::travelSpeedRange),
@@ -138,7 +138,7 @@ public class SubWeaponRecords
 			).apply(inst, CurlingBombDataRecord::new)
 		);
 		public static final CurlingBombDataRecord DEFAULT = new CurlingBombDataRecord(
-			DamageRangesRecord.DEFAULT,
+			RangedValueCollection.EMPTY,
 			SplashAroundDataRecord.DEFAULT,
 			NumberRange.FloatRange.ZERO,
 			NumberRange.FloatRange.ZERO,
@@ -155,12 +155,12 @@ public class SubWeaponRecords
 		public CurlingBombDataRecord convertSelf()
 		{
 			return new CurlingBombDataRecord(
-				convert(damageRanges),
-				convert(inkSplashes),
+				convertDamage(damageRanges),
+				convertDamage(inkSplashes),
 				convertLength(inkExplosionRange),
 				convertSpeed(travelSpeedRange),
 				convertLength(trailSizeRange),
-				convert(maxCookInkUsage),
+				convertDamage(maxCookInkUsage),
 				convertTime(fuseTime),
 				contactDamage / SplatoonHealthPerMinecraftHealth,
 				throwAngle,
@@ -171,8 +171,8 @@ public class SubWeaponRecords
 		}
 	}
 	public record TorpedoDataRecord(
-		DamageRangesRecord mainExplosionDamageRange,
-		DamageRangesRecord dropletDamageRange,
+		RangedValueCollection mainExplosionDamageRange,
+		RangedValueCollection dropletDamageRange,
 		SplashAroundDataRecord dropletData,
 		float mainInkSplashRadius,
 		float health,
@@ -188,8 +188,8 @@ public class SubWeaponRecords
 	{
 		public static final MapCodec<TorpedoDataRecord> CODEC = RecordCodecBuilder.mapCodec(
 			inst -> inst.group(
-				DamageRangesRecord.CODEC.fieldOf("main_explosion_damage_ranges").forGetter(TorpedoDataRecord::mainExplosionDamageRange),
-				DamageRangesRecord.CODEC.fieldOf("droplet_damage_ranges").forGetter(TorpedoDataRecord::dropletDamageRange),
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("main_explosion_damage_ranges").forGetter(TorpedoDataRecord::mainExplosionDamageRange),
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("droplet_damage_ranges").forGetter(TorpedoDataRecord::dropletDamageRange),
 				SplashAroundDataRecord.CODEC.fieldOf("droplet_data").forGetter(TorpedoDataRecord::dropletData),
 				Codec.FLOAT.fieldOf("main_ink_splash_radius").forGetter(TorpedoDataRecord::mainInkSplashRadius),
 				Codec.FLOAT.fieldOf("health").forGetter(TorpedoDataRecord::health),
@@ -207,9 +207,9 @@ public class SubWeaponRecords
 		public TorpedoDataRecord convertSelf()
 		{
 			return new TorpedoDataRecord(
-				convert(mainExplosionDamageRange),
-				convert(dropletDamageRange),
-				convert(dropletData),
+				convertDamage(mainExplosionDamageRange),
+				convertDamage(dropletDamageRange),
+				convertDamage(dropletData),
 				mainInkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				health / SplatoonHealthPerMinecraftHealth,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,

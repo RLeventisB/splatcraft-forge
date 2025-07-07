@@ -25,8 +25,8 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.util.*;
 import net.splatcraft.util.structs.AttackId;
-import net.splatcraft.util.structs.DamageRangesRecord;
 import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.RangedValueCollection;
 import org.jetbrains.annotations.NotNull;
 
 public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
@@ -37,7 +37,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	public float lifespan = 600;
 	public InkBlockUtils.InkType inkType;
 	private float timeDelta;
-	private DamageRangesRecord explosionData;
+	private RangedValueCollection explosionData;
 	private ItemStack sourceWeapon;
 	private AttackId attackId;
 	public InkDropEntity(EntityType<InkDropEntity> type, Level world)
@@ -213,7 +213,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 			sourceWeapon = ItemStack.parseOptional(level().registryAccess(), nbt.getCompound("SourceWeapon"));
 		
 		if (nbt.contains("CollisionData"))
-			DamageRangesRecord.CODEC.parse(NbtOps.INSTANCE, nbt.getCompound("CollisionData")).ifSuccess(data -> explosionData = data);
+			RangedValueCollection.DAMAGE_CODEC.parse(NbtOps.INSTANCE, nbt.getCompound("CollisionData")).ifSuccess(data -> explosionData = data);
 		
 		if (nbt.contains("AttackId"))
 			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
@@ -238,7 +238,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 			nbt.put("SourceWeapon", sourceWeapon.save(level().registryAccess()));
 		
 		if (explosionData != null)
-			DamageRangesRecord.CODEC.encodeStart(NbtOps.INSTANCE, explosionData).ifSuccess(tag -> nbt.put("CollisionData", tag));
+			RangedValueCollection.DAMAGE_CODEC.encodeStart(NbtOps.INSTANCE, explosionData).ifSuccess(tag -> nbt.put("CollisionData", tag));
 		
 		if (attackId != null)
 			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
@@ -273,7 +273,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	{
 		entityData.set(IMPACT_SIZE, splashSize);
 	}
-	public void setExplosionData(ItemStack stack, DamageRangesRecord damageRanges, AttackId dropletAttackId)
+	public void setExplosionData(ItemStack stack, RangedValueCollection damageRanges, AttackId dropletAttackId)
 	{
 		sourceWeapon = stack;
 		explosionData = damageRanges;

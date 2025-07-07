@@ -83,8 +83,8 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 	@Override
 	public void processData(DataRecord data)
 	{
-		shotData = SplatcraftConvertors.convert(data.shot);
-		baseProjectile = SplatcraftConvertors.convert(data.baseProjectile);
+		shotData = SplatcraftConvertors.convertDamage(data.shot);
+		baseProjectile = SplatcraftConvertors.convertDamage(data.baseProjectile);
 		mergedProjectileData = new ProjectileDataRecord[shotData.sloshes.size()];
 		for (int i = 0; i < shotData.sloshes.size(); i++)
 		{
