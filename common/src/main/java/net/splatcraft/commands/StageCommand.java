@@ -36,7 +36,7 @@ import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;

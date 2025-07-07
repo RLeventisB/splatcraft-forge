@@ -19,7 +19,7 @@ import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.AttackId;
+import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;

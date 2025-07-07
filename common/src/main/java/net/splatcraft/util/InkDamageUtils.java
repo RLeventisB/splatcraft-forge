@@ -23,6 +23,8 @@ import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

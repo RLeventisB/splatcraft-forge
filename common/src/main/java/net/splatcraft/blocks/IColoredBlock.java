@@ -4,9 +4,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.splatcraft.tileentities.InkColorTileEntity;
-import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.structs.BlockInkedResult;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 public interface IColoredBlock

@@ -19,7 +19,7 @@ import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

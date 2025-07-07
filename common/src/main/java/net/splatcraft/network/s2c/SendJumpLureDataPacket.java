@@ -7,7 +7,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

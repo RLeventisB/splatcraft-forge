@@ -29,7 +29,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkVatTileEntity;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

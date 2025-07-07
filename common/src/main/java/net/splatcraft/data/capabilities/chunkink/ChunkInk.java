@@ -8,8 +8,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

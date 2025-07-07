@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.splatcraft.crafting.InkVatColorRecipe;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

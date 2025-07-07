@@ -1,4 +1,4 @@
-package net.splatcraft.util;
+package net.splatcraft.util.structs;
 
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.util.CodecUtils;
 
 import java.util.Collection;
 import java.util.List;

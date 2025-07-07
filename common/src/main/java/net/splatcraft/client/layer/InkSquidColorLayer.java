@@ -11,7 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.InkSquidModel;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class InkSquidColorLayer extends RenderLayer<LivingEntity, InkSquidModel>

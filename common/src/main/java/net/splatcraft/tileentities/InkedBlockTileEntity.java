@@ -16,8 +16,8 @@ import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -43,12 +43,12 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 				world.setBlock(pos, inkedBlock.savedState, 2);
 				if (inkedBlock.hasPermanentColor())
 					ChunkInkCapability.get(world, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos));
-
+				
 				for (int i = 0; i < 6; i++)
 				{
 					InkBlockUtils.inkBlock(world, pos, inkedBlock.getInkColor(), i, getInkType(state), 0);
 				}
-
+				
 				if (inkedBlock.hasSavedColor() && inkedBlock.getSavedState().getBlock() instanceof IColoredBlock coloredBlock)
 				{
 					if (inkedBlock.getSavedState().getBlock() instanceof EntityBlock blockEntityProvider)

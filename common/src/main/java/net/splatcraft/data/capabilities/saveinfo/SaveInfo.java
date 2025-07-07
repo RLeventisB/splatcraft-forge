@@ -20,7 +20,7 @@ import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.CodecUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.Collection;
 import java.util.Comparator;

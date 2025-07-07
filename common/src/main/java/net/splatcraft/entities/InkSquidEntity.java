@@ -21,7 +21,7 @@ import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class InkSquidEntity extends PathfinderMob implements IColoredEntity

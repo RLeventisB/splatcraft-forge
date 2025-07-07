@@ -31,7 +31,7 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

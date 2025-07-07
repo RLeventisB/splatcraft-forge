@@ -1,4 +1,4 @@
-package net.splatcraft.util;
+package net.splatcraft.util.structs;
 
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
@@ -17,7 +17,7 @@ public class InkColorTranslatableContents extends TranslatableContents
 	public InkColorTranslatableContents(InkColor color, Object... pArgs)
 	{
 		super(getKeyForColor(color), "#" + String.format("%06X", color.getColor()).toUpperCase(), pArgs);
-		inverted = new TranslatableContents("ink_color.invert", null, new MutableComponent[]{
+		inverted = new TranslatableContents("ink_color.invert", null, new MutableComponent[] {
 			MutableComponent.create(new TranslatableContents(
 				getKeyForColor(color.getInverted()),
 				getFallback(),
@@ -34,7 +34,7 @@ public class InkColorTranslatableContents extends TranslatableContents
 	public <T> @NotNull Optional<T> visit(FormattedText.@NotNull ContentConsumer<T> visitor)
 	{
 		Language language = Language.getInstance();
-
+		
 		if (!language.has(getKey()))
 		{
 			ResourceLocation alias = InkColorRegistry.getColorAlias(color.getInverted());
@@ -43,7 +43,7 @@ public class InkColorTranslatableContents extends TranslatableContents
 				return inverted.visit(visitor);
 			}
 		}
-
+		
 		return super.visit(visitor);
 	}
 }

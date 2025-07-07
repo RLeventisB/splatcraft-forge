@@ -30,6 +30,8 @@ import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

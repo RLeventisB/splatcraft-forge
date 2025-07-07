@@ -18,7 +18,7 @@ import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 public class InkWaxerItem extends Item

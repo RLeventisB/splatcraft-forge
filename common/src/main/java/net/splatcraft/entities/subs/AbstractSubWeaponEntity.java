@@ -30,7 +30,7 @@ import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Data>> extends Projectile implements IColoredEntity, ISetVelocityExtension

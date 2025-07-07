@@ -13,7 +13,7 @@ import net.splatcraft.client.models.projectiles.InkDropModel;
 import net.splatcraft.client.models.projectiles.ShooterInkProjectileModel;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements RenderLayerParent<InkDropEntity, InkDropModel>

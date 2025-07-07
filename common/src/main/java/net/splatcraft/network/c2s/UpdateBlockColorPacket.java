@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.tileentities.InkVatTileEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class UpdateBlockColorPacket extends PlayC2SPacket

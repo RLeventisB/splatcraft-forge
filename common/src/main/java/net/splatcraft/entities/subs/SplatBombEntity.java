@@ -15,7 +15,7 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.AttackId;
+import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkExplosion;
 

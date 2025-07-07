@@ -13,7 +13,7 @@ import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.remotes.ColorChangerItem;
 import net.splatcraft.items.remotes.RemoteItem;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 public class ReplaceColorCommand
 {

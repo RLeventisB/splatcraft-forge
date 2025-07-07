@@ -13,7 +13,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateColorScoresPacket;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -17,7 +17,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.splatcraft.blocks.CrateBlock;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

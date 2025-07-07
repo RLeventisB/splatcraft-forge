@@ -8,7 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;

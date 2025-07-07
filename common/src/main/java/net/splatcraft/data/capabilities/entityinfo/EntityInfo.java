@@ -12,6 +12,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.InkColor;
 
 import java.time.Instant;
 import java.util.Optional;

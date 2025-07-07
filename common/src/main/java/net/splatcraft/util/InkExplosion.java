@@ -25,6 +25,7 @@ import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.util.structs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;

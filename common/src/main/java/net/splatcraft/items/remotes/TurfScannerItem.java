@@ -20,7 +20,7 @@ import net.splatcraft.network.s2c.SendScanTurfResultsPacket;
 import net.splatcraft.registries.SplatcraftStats;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.Collection;
 import java.util.Map;

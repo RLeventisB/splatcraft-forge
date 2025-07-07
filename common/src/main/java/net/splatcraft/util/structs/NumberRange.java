@@ -1,4 +1,4 @@
-package net.splatcraft.util;
+package net.splatcraft.util.structs;
 
 import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;

@@ -28,7 +28,7 @@ import net.splatcraft.tileentities.container.InkVatContainer;
 import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

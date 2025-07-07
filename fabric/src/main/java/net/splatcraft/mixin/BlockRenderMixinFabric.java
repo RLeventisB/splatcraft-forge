@@ -23,7 +23,7 @@ import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.mixin.accessors.ChunkRegionAccessor;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,7 +52,7 @@ public class BlockRenderMixinFabric
 			return splatcraft$overrideRender ? SplatcraftBlocks.inkedBlock.value().defaultBlockState() : original.call(instance, pos);
 		}
 		@Inject(method = "compile", at = @At(value = "INVOKE",
-				target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
+			target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
 		public void splatcraft$getBlockData(SectionPos sectionPos, RenderChunkRegion renderRegion, VertexSorting vertexSorter, SectionBufferBuilderPack allocatorStorage, CallbackInfoReturnable<SectionCompiler.Results> cir, @Local(ordinal = 2) BlockPos blockPos3)
 		{
 			splatcraft$world = ((ChunkRegionAccessor) renderRegion).getLevel();
@@ -60,14 +60,14 @@ public class BlockRenderMixinFabric
 			splatcraft$overrideRender = InkBlockUtils.isInkedAny(splatcraft$world, splatcraft$blockPos) && splatcraft$world.getBlockState(splatcraft$blockPos).is(SplatcraftTags.Blocks.RENDER_AS_CUBE);
 		}
 		@WrapOperation(method = "compile", at = @At(value = "INVOKE",
-				target = "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;getChunkRenderType(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;"))
+			target = "Lnet/minecraft/client/renderer/ItemBlockRenderTypes;getChunkRenderType(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/RenderType;"))
 		public RenderType getRenderLayer(BlockState state, Operation<RenderType> original)
 		{
 			RenderType originalLayer = original.call(state);
 			if (!ChunkInkCapability.has(splatcraft$world, splatcraft$blockPos))
 				return originalLayer;
 			ChunkInk chunkInk = ChunkInkCapability.get(splatcraft$world, splatcraft$blockPos);
-
+			
 			if (chunkInk != null && chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(splatcraft$blockPos)))
 			{
 				return RenderType.translucent();
@@ -91,7 +91,7 @@ public class BlockRenderMixinFabric
 				{
 					return;
 				}
-
+				
 				ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(splatcraft$world, splatcraft$blockPos);
 				if (ink != null && ink.isInkedAny() && ink.isInked(face.get3DDataValue()))
 				{
@@ -104,7 +104,7 @@ public class BlockRenderMixinFabric
 						for (BakedQuad quad : originalList)
 						{
 							modifiedList.add(new BakedQuad(Arrays.copyOf(quad.getVertices(), quad.getVertices().length),
-									0, quad.getDirection(), ChunkInkHandler.Render.getInkedBlockSprite(), quad.isShade()));
+								0, quad.getDirection(), ChunkInkHandler.Render.getInkedBlockSprite(), quad.isShade()));
 						}
 						cir.setReturnValue(modifiedList);
 					}

@@ -22,7 +22,7 @@ import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.tileentities.StageBarrierTileEntity;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class StageBarrierTileEntityRenderer implements BlockEntityRenderer<StageBarrierTileEntity>

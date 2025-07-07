@@ -35,7 +35,7 @@ import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
 

@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.DamageRangesRecord;
+import net.splatcraft.util.structs.DamageRangesRecord;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 

@@ -62,6 +62,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
+import net.splatcraft.util.structs.InkColor;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;

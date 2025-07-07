@@ -12,7 +12,7 @@ import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.CodecUtils;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	@Override
 	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return new Map.Entry[]{
+		return new Map.Entry[] {
 			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC)
 		};
 	}
@@ -62,7 +62,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public List<WeaponTooltip<SpecialWeaponSettings<T>>> tooltipsToRegister()
 	{
 		List<WeaponTooltip<SpecialWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
-
+		
 		specialDataRecord.addTooltips(weaponTooltips);
 		return weaponTooltips;
 	}

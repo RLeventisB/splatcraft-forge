@@ -28,7 +28,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.tileentities.IHasTeam;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

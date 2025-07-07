@@ -11,7 +11,7 @@ import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.settings.CommonRecords.*;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip;
 import net.splatcraft.util.action.EntityAction;
 
 import java.util.List;

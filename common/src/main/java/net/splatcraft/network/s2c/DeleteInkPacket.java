@@ -12,7 +12,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.List;
 import java.util.Optional;

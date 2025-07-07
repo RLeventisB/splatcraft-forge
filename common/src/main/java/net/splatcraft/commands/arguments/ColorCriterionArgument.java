@@ -10,7 +10,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.handlers.ScoreboardHandler;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.concurrent.CompletableFuture;
 

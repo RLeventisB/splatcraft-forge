@@ -9,16 +9,16 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.util.DamageRangesRecord;
-import net.splatcraft.util.NumberRange.FloatRange;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.NumberRange.FloatRange;
+import net.splatcraft.util.structs.WeaponTooltip;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
 
 import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
-import static net.splatcraft.util.NumberRange.IntRange;
+import static net.splatcraft.util.structs.NumberRange.IntRange;
 
 public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSettings, RollerWeaponSettings.DataRecord>
 {
@@ -43,7 +43,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 			return projectileData.damageRanges.getDamage(0) * timeDamagePercent;
 		}
 		float distance = data.spawnPos.distance(projectile.position().toVector3f());
-
+		
 		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot || isBrush).projectileData();
 		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
 		return projectileData.getDamageRanges(data.weakBullet).getDamage(distance) * timeDamagePercent;
@@ -71,10 +71,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public void processData(DataRecord data)
 	{
 		isBrush = data.isBrush;
-
+		
 		bypassesMobDamage = data.fullDamageToMobs;
 		isSecret = data.isSecret;
-
+		
 		rollData = SplatcraftConvertors.convert(data.roll);
 		swingData = SplatcraftConvertors.convert(data.swing);
 		if (!isBrush)
@@ -170,7 +170,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.FLOAT.optionalFieldOf("max_falloff_damage_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
 				DamageRangesRecord.CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
 				DamageRangesRecord.CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
-
+			
 			).apply(instance, RollerProjectileDataRecord::create)
 		);
 		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, DamageRangesRecord.DEFAULT, Optional.empty());

@@ -15,7 +15,7 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class SingleUseSubRecipe extends CustomRecipe

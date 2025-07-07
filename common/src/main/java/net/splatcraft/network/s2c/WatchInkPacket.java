@@ -10,7 +10,7 @@ import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -32,7 +32,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 		int size = buffer.readInt();
 		for (int i = 0; i < size; i++)
 			dirty.put(RelativeBlockPos.fromBuf(buffer), ChunkInk.BlockEntry.readFromBuffer(buffer));
-
+		
 		return new WatchInkPacket(pos, dirty);
 	}
 	@Override
@@ -57,7 +57,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 	{
 		buffer.writeChunkPos(chunkPos);
 		buffer.writeInt(dirty.size());
-
+		
 		for (Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry> pair : dirty.entrySet())
 		{
 			RelativeBlockPos blockPos = pair.getKey();

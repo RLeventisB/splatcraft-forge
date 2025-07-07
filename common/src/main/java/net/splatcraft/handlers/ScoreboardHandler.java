@@ -10,7 +10,7 @@ import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.platform.DeferredRegister;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.*;
 

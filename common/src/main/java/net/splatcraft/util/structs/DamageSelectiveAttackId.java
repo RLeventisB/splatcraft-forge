@@ -1,4 +1,4 @@
-package net.splatcraft.util;
+package net.splatcraft.util.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.Entity;
+import net.splatcraft.util.CodecUtils;
 
 public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttackId
 {

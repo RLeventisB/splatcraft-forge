@@ -15,7 +15,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.ArrayList;
 import java.util.List;

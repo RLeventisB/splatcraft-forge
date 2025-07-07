@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
 import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.util.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.List;
 

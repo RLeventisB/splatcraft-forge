@@ -43,8 +43,8 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.RelativeBlockPos;
 
 import java.util.*;
 import java.util.function.Function;
@@ -109,7 +109,7 @@ public class ChunkInkHandler
 	}
 	public static EventResult onBlockBreak(Player player, LevelAccessor level, BlockPos pos, BlockState state)
 	{
-		InkBlockUtils.clearBlock((Level)level, pos, true);
+		InkBlockUtils.clearBlock((Level) level, pos, true);
 		return EventResult.pass();
 	}
 	private static void checkForInkRemoval(Level world, BlockPos pos, Direction[] directionsToCheck)

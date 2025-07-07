@@ -45,10 +45,10 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftLoot;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.CrateTileEntity;
-import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.structs.BlockInkedResult;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

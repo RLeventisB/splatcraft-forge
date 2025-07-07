@@ -1,4 +1,4 @@
-package net.splatcraft.util;
+package net.splatcraft.util.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -91,7 +91,7 @@ public class RelativeBlockPos extends Vec3i
 		tag.putByte("X", (byte) getX());
 		tag.putInt("Y", getY());
 		tag.putByte("Z", (byte) getZ());
-
+		
 		return tag;
 	}
 	/**
@@ -105,7 +105,7 @@ public class RelativeBlockPos extends Vec3i
 		buf.writeByte(getX());
 		buf.writeInt(getY());
 		buf.writeByte(getZ());
-
+		
 		return buf;
 	}
 	@Override

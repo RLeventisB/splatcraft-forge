@@ -60,6 +60,7 @@ import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;

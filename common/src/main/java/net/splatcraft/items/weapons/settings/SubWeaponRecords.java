@@ -9,9 +9,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
 import net.splatcraft.util.CodecUtils;
-import net.splatcraft.util.DamageRangesRecord;
-import net.splatcraft.util.NumberRange;
-import net.splatcraft.util.NumberRange.FloatRange;
+import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.NumberRange;
+import net.splatcraft.util.structs.NumberRange.FloatRange;
 import org.joml.Vector2f;
 
 import static net.splatcraft.data.SplatcraftConvertors.*;

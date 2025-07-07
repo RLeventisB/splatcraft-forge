@@ -15,7 +15,7 @@ import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class SpawnShieldEntity extends Entity implements IColoredEntity

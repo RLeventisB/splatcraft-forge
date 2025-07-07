@@ -14,7 +14,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.RelativeBlockPos;
+import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -38,14 +38,14 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		ChunkPos chunkPos = buffer.readChunkPos();
 		int changedBlocks = buffer.readInt();
 		HashMap<BlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>(changedBlocks);
-
+		
 		for (int i = 0; i < changedBlocks; i++)
 		{
 			BlockPos pos = buffer.readBlockPos();
 			ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
 			dirty.put(pos, entry);
 		}
-
+		
 		return new UpdateInkPacket(chunkPos, dirty);
 	}
 	@Override
@@ -73,7 +73,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		for (var blockPosTupleEntry : dirty.entrySet())
 		{
 			BlockPos blockPos = blockPosTupleEntry.getKey();
-
+			
 			buffer.writeBlockPos(blockPos);
 			blockPosTupleEntry.getValue().writeToBuffer(buffer);
 		}
@@ -83,11 +83,11 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 	public void execute()
 	{
 		ClientLevel world = Minecraft.getInstance().level;
-
+		
 		if (world != null)
 		{
 			ChunkInk chunkInk = ChunkInkCapability.get(world, chunkPos);
-
+			
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{
 				BlockPos pos = entry.getKey();

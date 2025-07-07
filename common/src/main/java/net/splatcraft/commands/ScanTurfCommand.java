@@ -17,7 +17,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.registries.SplatcraftStats;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.Collection;
 import java.util.Collections;

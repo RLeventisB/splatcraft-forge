@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

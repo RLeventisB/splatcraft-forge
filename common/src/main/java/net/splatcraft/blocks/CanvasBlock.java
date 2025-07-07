@@ -22,10 +22,10 @@ import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
-import net.splatcraft.util.BlockInkedResult;
+import net.splatcraft.util.structs.BlockInkedResult;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

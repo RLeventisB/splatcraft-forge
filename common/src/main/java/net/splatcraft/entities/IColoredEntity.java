@@ -1,7 +1,7 @@
 package net.splatcraft.entities;
 
 import net.minecraft.world.damagesource.DamageSource;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 public interface IColoredEntity
 {

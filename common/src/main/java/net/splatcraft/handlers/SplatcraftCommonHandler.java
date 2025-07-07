@@ -35,6 +35,9 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.InkColor;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;

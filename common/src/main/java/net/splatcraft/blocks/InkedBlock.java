@@ -31,6 +31,8 @@ import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.tileentities.InkedBlockTileEntity;
 import net.splatcraft.util.*;
+import net.splatcraft.util.structs.BlockInkedResult;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

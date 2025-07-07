@@ -5,8 +5,8 @@ import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.items.weapons.settings.ChargerWeaponSettings.ChargeDataRecord;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.SlosherShotDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.SplashAroundDataRecord;
-import net.splatcraft.util.DamageRangesRecord;
-import net.splatcraft.util.NumberRange;
+import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.NumberRange;
 
 import java.util.List;
 import java.util.Map;

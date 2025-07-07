@@ -18,7 +18,7 @@ import net.splatcraft.client.models.projectiles.RollerInkProjectileModel;
 import net.splatcraft.client.models.projectiles.ShooterInkProjectileModel;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

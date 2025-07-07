@@ -15,8 +15,8 @@ import net.splatcraft.items.weapons.settings.CommonRecords.OptionalProjectileDat
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings.DataRecord;
-import net.splatcraft.util.WeaponTooltip;
-import net.splatcraft.util.WeaponTooltip.Metrics;
+import net.splatcraft.util.structs.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip.Metrics;
 
 import java.util.ArrayList;
 import java.util.List;

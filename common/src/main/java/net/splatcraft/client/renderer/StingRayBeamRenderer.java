@@ -13,7 +13,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.entities.StingRayBeamEntity;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 

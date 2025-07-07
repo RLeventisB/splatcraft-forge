@@ -31,7 +31,7 @@ import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.container.InkVatContainer;
 import net.splatcraft.tileentities.container.InkVatScreenHandlerContext;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

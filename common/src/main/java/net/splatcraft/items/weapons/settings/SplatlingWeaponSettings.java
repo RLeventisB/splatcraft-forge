@@ -17,8 +17,8 @@ import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 import net.splatcraft.items.weapons.settings.SplatlingWeaponSettings.DataRecord;
 import net.splatcraft.registries.SplatcraftComponents;
-import net.splatcraft.util.WeaponTooltip;
-import net.splatcraft.util.WeaponTooltip.Metrics;
+import net.splatcraft.util.structs.WeaponTooltip;
+import net.splatcraft.util.structs.WeaponTooltip.Metrics;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

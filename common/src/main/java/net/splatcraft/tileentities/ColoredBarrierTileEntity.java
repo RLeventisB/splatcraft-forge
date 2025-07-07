@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class ColoredBarrierTileEntity extends StageBarrierTileEntity implements IHasTeam

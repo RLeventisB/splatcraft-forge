@@ -25,6 +25,8 @@ import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.BlockInkedResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;

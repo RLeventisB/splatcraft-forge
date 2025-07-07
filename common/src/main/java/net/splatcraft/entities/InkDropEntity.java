@@ -24,6 +24,9 @@ import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.util.*;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.DamageRangesRecord;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class InkDropEntity extends ThrowableProjectile implements IColoredEntity

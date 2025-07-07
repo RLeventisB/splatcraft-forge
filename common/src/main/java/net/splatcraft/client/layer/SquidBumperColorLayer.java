@@ -13,7 +13,7 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.SquidBumperModel;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperColorLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>

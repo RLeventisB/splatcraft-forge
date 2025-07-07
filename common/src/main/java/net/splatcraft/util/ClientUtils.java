@@ -34,6 +34,7 @@ import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
+import net.splatcraft.util.structs.InkColor;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.joml.Vector3f;
 

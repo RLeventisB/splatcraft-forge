@@ -3,7 +3,7 @@ package net.splatcraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.splatcraft.handlers.ChunkInkHandler;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 
 public class InkedBakedQuad extends BakedQuad
 {

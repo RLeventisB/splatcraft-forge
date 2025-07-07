@@ -24,7 +24,7 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
-import net.splatcraft.util.InkColor;
+import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.action.EntityAction;
 
 import java.util.LinkedHashMap;
