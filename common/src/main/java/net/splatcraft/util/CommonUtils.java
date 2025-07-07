@@ -285,9 +285,7 @@ public class CommonUtils
 	{
 		if (entity instanceof Player player)
 			return anyWeaponOnCooldown(player);
-		boolean isMainOnCooldown = entity.getMainHandItem().getItem() instanceof WeaponBaseItem;
-		boolean isOffOnCooldown = entity.getOffhandItem().getItem() instanceof WeaponBaseItem;
-		return isMainOnCooldown || isOffOnCooldown;
+		return false;
 	}
 	public static boolean anyWeaponOnCooldown(Player player)
 	{

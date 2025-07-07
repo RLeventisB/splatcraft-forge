@@ -45,17 +45,17 @@ public class WeaponHandler
 			weaponUseTime.remove(entity);
 			return EventResult.pass();
 		});
-
+		
 		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
 			Optional<EntityAction> cooldown = EntityAction.getEntityActionOptional(player);
 			boolean usagePreventedByCooldown = false;
-
+			
 			if (cooldown.isPresent())
 			{
 				if (cooldown.get().getItemSlot() instanceof EntitySlot.PlayerInventorySlot playerSlot)
 					player.getInventory().selected = playerSlot.getSlotIndex();
-
+				
 				usagePreventedByCooldown = tickEntityActions(player, cooldown.get());
 			}
 			if (usagePreventedByCooldown || !player.isUsingItem() || player.getUseItemRemainingTicks() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
@@ -63,7 +63,7 @@ public class WeaponHandler
 				EntityStoredCharge.dischargeWeapon(player);
 			}
 		});
-
+		
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelBefore.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
 			tickPreviousPosMap(entity);
@@ -120,7 +120,7 @@ public class WeaponHandler
 		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
 		{
 			ItemStack stack = action.getStoredStack();
-
+			
 			doEndActions(player, action, stack);
 		}
 		else
@@ -129,10 +129,10 @@ public class WeaponHandler
 				action.onStart(player);
 			action.tick(player);
 			player.setSprinting(false);
-
+			
 			preventedByCooldown = action.preventWeaponUse();
 			ItemStack stack = action.getStoredStack();
-
+			
 			if (action.getTime() <= 1)
 			{
 				if (doEndActions(player, action, stack))
@@ -178,7 +178,7 @@ public class WeaponHandler
 	}
 	public static boolean canContinueShooting(LivingEntity living)
 	{
-		return living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse);
+		return living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse) && !EntityInfoCapability.isSquid(living);
 	}
 	public static Optional<InteractionHand> getUsingWeaponHand(LivingEntity entity)
 	{

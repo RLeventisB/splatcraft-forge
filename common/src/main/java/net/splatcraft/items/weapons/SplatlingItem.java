@@ -20,6 +20,8 @@ import net.splatcraft.client.audio.SplatlingChargingTickableSound;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.SpecialHandler;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
@@ -227,7 +229,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 			SplatlingWeaponSettings<T> settings = getSettings(stack);
 			
 			float chargeMult = 0f;
-			if (living.isUsingItem())
+			if (WeaponHandler.canContinueShooting(living))
 			{
 				float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge();
 				chargeMult = 1f;
@@ -283,29 +285,6 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		}
 		super.inventoryTick(stack, level, entity, itemSlot, isSelected);
 	}
-	/*
-		@Override
-		public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int timeLeft)
-		{
-			super.releaseUsing(stack, world, entity, timeLeft);
-
-			if (world.isClientSide && entity instanceof Player player && player.equals(ClientUtils.getClientPlayer()))
-			{
-				if (EntityAction.hasActionAnd(player, EntityAction::preventWeaponUse))
-					return;
-
-				Optional<EntityStoredCharge> charge = EntityStoredCharge.getChargeOptional(player);
-
-				if (charge.isEmpty())
-					return;
-				if (!SplatcraftKeyHandler.isSquidKeyDown() && charge.get().charge > 0.05f) //checking for squid key press so it doesn't immediately release charge when squidding
-				{
-					SplatlingWeaponSettings settings = getSettings(stack);
-					EntityAction.setEntityAction(player, new EntityCooldown(stack, (int) (settings.chargeData.firingDuration() * charge.get().charge), EntitySlot.createForUsed(player), true, false, !settings.chargeData.canRechargeWhileFiring(), player.onGround()).setCancellable());
-				}
-			}
-		}
-	*/
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
@@ -318,6 +297,12 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		
 		stack.update(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT,
 			v -> v.notifyUsage(entity, settings, stack));
+	}
+	@Override
+	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
+	{
+		return Optional.of(() ->
+			stack.set(SplatcraftComponents.SPLATLING_FIRING_DATA, SplatcraftComponents.SplatlingFiringData.DEFAULT));
 	}
 	@Override
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
@@ -374,5 +359,10 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		return
 			getSettings(stack).chargeData.chargeStorageTime() > 0 &&
 				stack.get(SplatcraftComponents.CHARGE_DATA).charge() > 0;
+	}
+	@Override
+	public boolean preventsSquidForm(ItemStack stack, LivingEntity entity)
+	{
+		return false;
 	}
 }

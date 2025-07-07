@@ -26,6 +26,7 @@ public class SplatcraftPacketHandler
 	public static void registerMessages()
 	{
 		registerMessage(UpdateEntityInfoPacket.ID, UpdateEntityInfoPacket.class, UpdateEntityInfoPacket::decode);
+		registerMessage(VoidedChargePacket.ID, VoidedChargePacket.class, VoidedChargePacket::decode);
 		registerMessage(UpdateEntityActionOnlyPacket.ID, UpdateEntityActionOnlyPacket.class, UpdateEntityActionOnlyPacket::decode);
 		registerMessage(PlayerColorPacket.ID, PlayerColorPacket.class, PlayerColorPacket::decode);
 		registerMessage(PlayerSetSquidC2SPacket.ID, PlayerSetSquidC2SPacket.class, PlayerSetSquidC2SPacket::decode);
@@ -56,7 +57,7 @@ public class SplatcraftPacketHandler
 		registerMessage(RequestSpecialUsageDataPacket.ID, RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
 		registerMessage(SendSpecialUsageDataPacket.ID, SendSpecialUsageDataPacket.class, SendSpecialUsageDataPacket::decode);
 		registerMessage(SendSquidLagPacket.ID, SendSquidLagPacket.class, SendSquidLagPacket::decode);
-
+		
 		//Stage Pad packets
 		registerMessage(SuperJumpToStagePacket.ID, SuperJumpToStagePacket.class, SuperJumpToStagePacket::decode);
 		registerMessage(SendStageWarpDataToPadPacket.ID, SendStageWarpDataToPadPacket.class, SendStageWarpDataToPadPacket::decode);

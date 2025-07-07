@@ -195,7 +195,7 @@ public class SplatcraftComponents
 				}
 			}
 			
-			float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge;
+			float charge = stack.get(CHARGE_DATA).charge;
 			if (charge < 1)
 			{
 				if (charge == 0 && !newCharging) // tap shot
@@ -219,7 +219,7 @@ public class SplatcraftComponents
 				}
 				
 				float finalNextCharge = nextCharge;
-				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(finalNextCharge).registerChargeDeltaTime(cutoffTime));
+				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(finalNextCharge).registerChargeDeltaTime(cutoffTime));
 				
 				onCharge.accept(charge, nextCharge);
 				
@@ -232,7 +232,7 @@ public class SplatcraftComponents
 			{
 				onCharge.accept(1f, 1f);
 				
-				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(1).registerChargeDeltaTime(1));
+				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(1).registerChargeDeltaTime(1));
 				
 				if (!newCharging)
 				{
@@ -249,7 +249,7 @@ public class SplatcraftComponents
 		public @NotNull ChargerFiringData fireShotAndGoToEndlag(ChargerWeaponSettings settings, TimeAwareAction onRelease, ItemStack stack, float charge, float extraTime, float chargeDeltaTime)
 		{
 			onRelease.run(charge, extraTime);
-			stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(chargeDeltaTime));
+			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(chargeDeltaTime));
 			return new ChargerFiringData(-settings.shotData.endlagTicks() + extraTime, false, queuedShot);
 		}
 		public ChargerFiringData notifyUsage(LivingEntity entity, ChargerWeaponSettings settings)
@@ -304,7 +304,8 @@ public class SplatcraftComponents
 		{
 			if (charging.isEmpty())
 			{
-				stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
+				if (stack.get(CHARGE_DATA).charge > 0)
+					stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
 				if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
 				{
 					if (EntityInfoCapability.isSquid(entity))
@@ -331,7 +332,7 @@ public class SplatcraftComponents
 			{
 				if (previousCharging) // just started shooting
 				{
-					float charge = stack.get(SplatcraftComponents.CHARGE_DATA).charge;
+					float charge = stack.get(CHARGE_DATA).charge;
 					if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.STATIC)
 					{
 						nextShotTypeData = SplatlingWeaponSettings.getShotIndexFromCharge(charge);
@@ -358,7 +359,7 @@ public class SplatcraftComponents
 			}
 			
 			AtomicReference<Float> nextDelay = new AtomicReference<>(0f);
-			stack.update(SplatcraftComponents.CHARGE_DATA, ChargeData.DEFAULT, v ->
+			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v ->
 			{
 				float charge = v.charge;
 				if (charge >= 2)
@@ -392,7 +393,7 @@ public class SplatcraftComponents
 		}
 		private @NotNull SplatlingFiringData fireSplatling(ItemStack stack, SplatlingWeaponSettings settings, SplatlingShootAction onShoot, float timeDelta, short nextShotTypeData, Consumer<Float> onFiringEnd)
 		{
-			ChargeData chargeData = stack.get(SplatcraftComponents.CHARGE_DATA);
+			ChargeData chargeData = stack.get(CHARGE_DATA);
 			
 			float nextCounter = counter;
 			float nextDelay = delay;
@@ -443,7 +444,7 @@ public class SplatcraftComponents
 				nextDelay += shotData.repeatTicks();
 			}
 			nextDelay -= timeDelta;
-			stack.set(SplatcraftComponents.CHARGE_DATA, chargeData);
+			stack.set(CHARGE_DATA, chargeData);
 			if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
 			{
 				SplatlingWeaponSettings.TimeUsedSelectionData timeUsedData = (SplatlingWeaponSettings.TimeUsedSelectionData) settings.shotSelectionData;
@@ -468,7 +469,7 @@ public class SplatcraftComponents
 				return new SplatlingFiringData(-settings.chargeData.minChargeTime(), Optional.of(true), 0f, (short) 0, 0);
 			
 			if (!charging.get() && settings.chargeData.canRechargeWhileFiring()) // firing, if the weapon is allowed to recharge, then do that
-				return new SplatlingFiringData(0f, Optional.of(true), 0f, shotTypeData, stack.get(SplatcraftComponents.CHARGE_DATA).charge);
+				return new SplatlingFiringData(0f, Optional.of(true), 0f, shotTypeData, stack.get(CHARGE_DATA).charge);
 			
 			return this;
 		}

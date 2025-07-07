@@ -32,10 +32,10 @@ public interface EntityAction
 		public <T> RecordBuilder<T> encode(EntityAction input, DynamicOps<T> ops, RecordBuilder<T> builder)
 		{
 			ResourceLocation id = CLASS_REGISTRY.getKey(input.getClass());
-
+			
 			builder.add("id", ResourceLocation.CODEC.encodeStart(ops, id));
 			builder.add("data", ops.withEncoder(CODEC_REGISTRY.get(id).get()).apply(input));
-
+			
 			return builder;
 		}
 		@Override
@@ -106,8 +106,12 @@ public interface EntityAction
 		{
 			action.setTime(time);
 		}
-
+		
 		return action;
+	}
+	static <T extends EntityAction> boolean hasSpecificActionAnd(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
+	{
+		return getSpecificActionIf(entity, actionPredicate, clazz).isPresent();
 	}
 	static boolean hasActionAnd(LivingEntity entity, Predicate<EntityAction> actionPredicate)
 	{

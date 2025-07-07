@@ -41,7 +41,7 @@ public class EntityStoredCharge
 		{
 			throw new IllegalArgumentException("Attempted to retrieve charge for a null entity");
 		}
-
+		
 		return EntityInfoCapability.getOptional(entity).map(v -> v.getStoredCharge().isPresent()).orElse(false);
 	}
 	public static boolean chargeMatches(LivingEntity entity, ItemStack stack)
@@ -54,7 +54,7 @@ public class EntityStoredCharge
 		{
 			return;
 		}
-
+		
 		entity.stopUsingItem();
 		setCharge(entity, new EntityStoredCharge(EntitySlot.searchAndCreateWithStack(entity, stack), chargeableWeapon.getCharge(stack), chargeableWeapon.getStorageTime(stack)));
 	}
@@ -70,9 +70,8 @@ public class EntityStoredCharge
 		}
 		EntityStoredCharge charge = getChargeOptional(entity).get();
 		chargeableWeapon.retrieveCharge(entity, stack, charge.charge);
-		emptyCharge(entity);
+		emptyStoredCharge(entity);
 	}
-
 	public static void dischargeWeapon(LivingEntity entity)
 	{
 		Optional<EntityStoredCharge> charge = getChargeOptional(entity);
@@ -82,24 +81,23 @@ public class EntityStoredCharge
 		}
 		else if (!chargeMatches(entity, entity.getMainHandItem()))
 		{
-			emptyCharge(entity);
+			emptyStoredCharge(entity);
 			return;
 		}
-
+		
 		EntityStoredCharge storedCharge = charge.get();
 		storedCharge.remainingTime--;
 		if (storedCharge.remainingTime <= 0)
 		{
-			emptyCharge(entity);
+			emptyStoredCharge(entity);
 			return;
 		}
 		setCharge(entity, storedCharge);
 	}
-	public static void emptyCharge(LivingEntity entity)
+	public static void emptyStoredCharge(LivingEntity entity)
 	{
 		setCharge(entity, null);
 	}
-
 	public void reset()
 	{
 		weaponSlot = EntitySlot.EMPTY;

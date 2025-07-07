@@ -24,4 +24,8 @@ public interface IChargeableWeapon
 	{
 		return false;
 	}
+	default void setCharge(ItemStack stack, float charge)
+	{
+		stack.update(SplatcraftComponents.CHARGE_DATA, SplatcraftComponents.ChargeData.DEFAULT, v -> v.withCharge(charge, charge).registerChargeDeltaTime(1));
+	}
 }

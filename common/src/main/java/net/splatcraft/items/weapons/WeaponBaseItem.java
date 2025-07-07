@@ -33,6 +33,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.items.IColoredItem;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.settings.*;
@@ -98,18 +99,18 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		);
 		SplatcraftItems.inkColoredItems.add(this);
 		SplatcraftItems.weapons.add(this);
-
+		
 		CauldronInteraction.WATER.map().put(this, (state, level, pos, player, hand, stack) ->
 		{
 			if (ColorUtils.isColorLocked(stack) && !player.isShiftKeyDown())
 			{
 				ColorUtils.withColorLocked(stack, false);
-
+				
 				player.awardStat(Stats.USE_CAULDRON);
-
+				
 				if (!player.isCreative())
 					LayeredCauldronBlock.lowerFillLevel(state, level, pos);
-
+				
 				return ItemInteractionResult.sidedSuccess(level.isClientSide);
 			}
 			return ItemInteractionResult.FAIL;
@@ -162,7 +163,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		{
 			return true;
 		}
-
+		
 		return InkTankItem.getInkAmount(tank) > 0 && InkTankItem.canUse(item, tank);
 	}
 	public static void sendNoInkMessage(LivingEntity entity, SoundEvent sound)
@@ -182,6 +183,10 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public static Optional<ResourceLocation> getWeaponId(ItemStack weaponStack)
 	{
 		return Optional.ofNullable(weaponStack.getOrDefault(SplatcraftComponents.WEAPON_SETTING_ID, null));
+	}
+	public static Optional<SpecialHandler.ResetAction> getResetAction(ItemStack stack, LivingEntity entity)
+	{
+		return stack.getItem() instanceof WeaponBaseItem<?> mainWeapon ? mainWeapon.getResetShootingAction(stack, entity) : Optional.empty();
 	}
 	public abstract Class<S> getSettingsClass();
 	public S getSettings(ItemStack stack)
@@ -210,7 +215,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-
+		
 		if (ColorUtils.isColorLocked(stack))
 		{
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
@@ -219,7 +224,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		{
 			tooltip.add(Component.literal(""));
 		}
-
+		
 		if (!stack.has(DataComponents.HIDE_TOOLTIP))
 			getSettings(stack).addStatsToTooltip(tooltip, type);
 	}
@@ -227,7 +232,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-
+		
 		if (entity instanceof LivingEntity livingEntity)
 		{
 			CommonRecords.ShotDeviationDataRecord deviationData = getSettings(stack).getShotDeviationData(stack, livingEntity);
@@ -241,7 +246,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
 				&& EntityInfoCapability.hasCapability(player))
 				ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
-
+			
 			if (player.getCooldowns().isOnCooldown(stack.getItem()))
 			{
 				if (EntityInfoCapability.isSquid(player))
@@ -252,7 +257,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 						SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), false), player);
 					}
 				}
-
+				
 				player.setSprinting(false);
 				if (Inventory.isHotbarSlot(itemSlot))
 				{
@@ -265,7 +270,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.blockPosition().below();
-
+		
 		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
 			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
@@ -280,7 +285,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			ColorUtils.withInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
 			ColorUtils.withColorLocked(stack, false);
 		}
-
+		
 		return false;
 	}
 	@Override
@@ -337,7 +342,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		}
 		// this returns true if there is no cooldown, or the cooldown has preventWeaponUse set as false
 		boolean notPreventedByAction = !EntityAction.hasActionAnd(user, EntityAction::preventWeaponUse);
-
+		
 		if (notPreventedByAction && !(user instanceof Player player && CommonUtils.anyWeaponOnCooldown(player)))
 		{
 			weaponUseTick(world, user, stack, remainingUseTicks);
@@ -351,15 +356,15 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	}
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-
+	
 	}
 	public void onPlayerCooldownEnd(Level world, Player player, ItemStack stack, EntityAction action)
 	{
-
+	
 	}
 	public void onPlayerCooldownTick(Level world, Player player, ItemStack stack, EntityAction action)
 	{
-
+	
 	}
 	public boolean hasSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
@@ -378,9 +383,14 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 	{
 		return !ItemStack.isSameItem(oldStack, newStack);
 	}
+	public abstract Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity);
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
 	{
 		return false;
+	}
+	public boolean preventsSquidForm(ItemStack stack, LivingEntity entity)
+	{
+		return preventsChanging(stack, entity);
 	}
 	public boolean preventsChargingInkTank(ItemStack stack, LivingEntity entity)
 	{

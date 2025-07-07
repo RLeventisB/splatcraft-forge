@@ -1,6 +1,7 @@
 package net.splatcraft.data.capabilities.entityinfo;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.Direction;
@@ -22,7 +23,7 @@ public class EntityInfo
 	public static final float MAX_SQUID_SURGE_CHARGE = 20;
 	public static final float SQUID_SURGE_USAGE_OFFSET = 100;
 	public static final float SQUID_SURGE_ENDLAG = 20;
-	public static final Codec<EntityInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+	public static final MapCodec<EntityInfo> MAP_CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
 		Codec.INT.optionalFieldOf("dodge_count", 0).forGetter(EntityInfo::getDodgeCount),
 		InkColor.RAW_INT_CODEC.optionalFieldOf("color", InkColor.INVALID).forGetter(EntityInfo::getColor),
 		Codec.BOOL.optionalFieldOf("is_squid", false).forGetter(EntityInfo::isSquid),
@@ -30,13 +31,14 @@ public class EntityInfo
 		Direction.CODEC.optionalFieldOf("climbed_direction").forGetter(EntityInfo::getClimbedDirection),
 		CodecUtils.hashMapCodec(Codec.STRING.comapFlatMap(v -> CodecUtils.exceptionCatchDataResult(() -> Integer.decode(v)), Object::toString), ItemStack.CODEC).optionalFieldOf("match_inventory", new Object2ObjectOpenHashMap<>(41)).forGetter(EntityInfo::getMatchInventory),
 		EntityAction.SERIALIZER_CODEC.lenientOptionalFieldOf("entity_action").forGetter(v -> Optional.ofNullable(v.getEntityAction())),
-		EntityStoredCharge.CODEC.lenientOptionalFieldOf("entity_charge").forGetter(v -> v.getStoredCharge()),
+		EntityStoredCharge.CODEC.lenientOptionalFieldOf("entity_charge").forGetter(EntityInfo::getStoredCharge),
 		ItemStack.OPTIONAL_CODEC.fieldOf("ink_band").forGetter(EntityInfo::getInkBand),
 		Codec.FLOAT.optionalFieldOf("squid_surge_charge", 0f).forGetter(EntityInfo::getSquidSurgeState),
 		PlayingData.CODEC.optionalFieldOf("playing_data", PlayingData.DEFAULT).forGetter(EntityInfo::playingData),
 		Codec.INT.optionalFieldOf("higher_startup_ticks", 0).forGetter(EntityInfo::getHigherStartupTicks),
 		SquidState.CODEC.optionalFieldOf("squid_state", SquidState.SURFACED).forGetter(EntityInfo::getSquidState)
 	).apply(inst, EntityInfo::new));
+	public static final Codec<EntityInfo> CODEC = MAP_CODEC.codec();
 	private int dodgeCount;
 	private InkColor color;
 	private boolean isSquid = false;
@@ -213,7 +215,7 @@ public class EntityInfo
 	{
 		if (squidSurgeState < MIN_SQUID_SURGE_CHARGE)
 			return false;
-
+		
 		squidSurgeState = SQUID_SURGE_USAGE_OFFSET + squidSurgeState;
 		return true;
 	}
@@ -221,7 +223,6 @@ public class EntityInfo
 	{
 		squidSurgeState = -SQUID_SURGE_ENDLAG;
 	}
-
 	public int getDodgeCount()
 	{
 		return dodgeCount;
@@ -271,7 +272,7 @@ public class EntityInfo
 	{
 		if (playingData == null)
 			playingData = PlayingData.DEFAULT;
-
+		
 		return playingData.respawnData & 0x7fffffff;
 	}
 	public void setMatchRespawnTimeLeft(int time)
@@ -322,7 +323,6 @@ public class EntityInfo
 		RESPAWNING(true, true, true),
 		SEEING_RESULTS(true, true, true);
 		public final boolean movementDisabled, modifiesCamera, playing;
-
 		MatchState(boolean movementDisabled, boolean modifiesCamera, boolean playing)
 		{
 			this.movementDisabled = movementDisabled;

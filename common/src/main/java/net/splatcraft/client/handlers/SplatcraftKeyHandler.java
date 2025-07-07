@@ -35,6 +35,7 @@ import net.splatcraft.mixin.accessors.MinecraftClientAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestSpecialUsageDataPacket;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
+import net.splatcraft.network.s2c.VoidedChargePacket;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.InteractionEvents;
@@ -44,6 +45,7 @@ import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.action.EntityAction;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public class SplatcraftKeyHandler
@@ -55,7 +57,7 @@ public class SplatcraftKeyHandler
 	private static final ObjectArrayList<ToggleableKey> pressState = new ObjectArrayList<>();
 	public static int squidAndSubDelay = 0; //delays automatically returning into squid form after firing for balancing reasons and to allow packet-based weapons to fire (chargers and splatlings)
 	private static int slot = -1;
-	private static boolean usingSubWeaponHotkey;
+	private static boolean usingSubWeaponHotkey, queuedSubWeapon;
 	@OnlyIn(Dist.CLIENT)
 	public static void registerBindingsAndEvents()
 	{
@@ -92,7 +94,7 @@ public class SplatcraftKeyHandler
 		
 		tickKeys(player, mc);
 		
-		ToggleableKey lastPressedKey = !pressState.isEmpty() ? Iterables.getLast(pressState) : null;
+		ToggleableKey lastPressedKey = getLastPressedKey();
 		
 		EntityInfo info = EntityInfoCapability.get(player);
 		
@@ -100,10 +102,14 @@ public class SplatcraftKeyHandler
 		
 		tickSubWeapon(mc, player, lastPressedKey, info);
 		
-		if (SPECIAL_WEAPON_KEYBIND.equals(lastPressedKey) && !EntityStoredCharge.hasCharge(player))
+		if (SPECIAL_WEAPON_KEYBIND.pressed && !EntityStoredCharge.hasCharge(player))
 			tickSpecialWeapon(player);
 		
 		tickAutoSquidDelay(player);
+	}
+	private static @Nullable ToggleableKey getLastPressedKey()
+	{
+		return Iterables.getLast(pressState, null);
 	}
 	private static void tickSpecialWeapon(Player player)
 	{
@@ -136,8 +142,11 @@ public class SplatcraftKeyHandler
 			}
 		}
 	}
-	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey last, EntityInfo info)
+	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey oldest, EntityInfo info)
 	{
+		if (SUB_WEAPON_KEYBIND.pressed)
+			queuedSubWeapon = true;
+		
 		if (EntityAction.hasActionAnd(player, v -> !v.isCancellable()) ||
 			CommonUtils.anyWeaponOnCooldown(player) ||
 			ShootingHandler.isDoingShootingAction(player) ||
@@ -146,7 +155,7 @@ public class SplatcraftKeyHandler
 		
 		Inventory inventory = player.getInventory();
 		
-		if (SUB_WEAPON_KEYBIND.equals(last))
+		if (SUB_WEAPON_KEYBIND.equals(oldest))
 		{
 			Pair<ItemStack, Integer> sub = CommonUtils.getStackAndIndexInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
 			
@@ -156,7 +165,7 @@ public class SplatcraftKeyHandler
 			}
 			else
 			{
-				if (SUB_WEAPON_KEYBIND.pressed)
+				if (queuedSubWeapon)
 				{
 					if (!player.getItemInHand(InteractionHand.OFF_HAND).equals(sub.getFirst()))
 					{
@@ -171,6 +180,7 @@ public class SplatcraftKeyHandler
 					else if (!usingSubWeaponHotkey) slot = -1;
 					
 					usingSubWeaponHotkey = true;
+					queuedSubWeapon = false;
 					startUsingItemInHand(InteractionHand.OFF_HAND);
 				}
 			}
@@ -195,28 +205,33 @@ public class SplatcraftKeyHandler
 			}
 		}
 	}
-	public static boolean pressedSquidKeyWhileHoldingCharge(LivingEntity entity)
+	public static boolean pressedSquidKeyWhileHoldingChargeable(LivingEntity entity)
 	{
-		return SQUID_KEYBIND.pressed && entity.isUsingItem() && entity.getUseItem().getItem() instanceof IChargeableWeapon;
+		return SQUID_KEYBIND.pressed &&
+			WeaponHandler.getWeaponHand(entity, (x, y) -> y instanceof IChargeableWeapon && y.preventsChanging(x, entity)).isPresent();
 	}
 	public static boolean hasEnoughSpaceToTransformBack(LivingEntity entity)
 	{
 		return entity.level().noBlockCollision(entity,
 			new AABB(entity.getX() + -0.3, entity.getY(), entity.getZ() + -0.3, entity.getX() + 0.3, entity.getY() + 0.6, entity.getZ() + 0.3));
 	}
-	public static void tickSquidAndCharge(LivingEntity entity, EntityInfo info, ToggleableKey last)
+	public static void tickSquidAndCharge(LivingEntity entity, EntityInfo info, ToggleableKey oldest)
 	{
-		if (EntityAction.hasActionAnd(entity, v -> !v.isCancellable()) ||
-			CommonUtils.anyWeaponOnCooldown(entity) ||
-			(ShootingHandler.isDoingShootingAction(entity) && !pressedSquidKeyWhileHoldingCharge(entity)))
-			return;
-		
+		boolean doingActionThatLeavesSquidMode = SHOOT_KEYBIND.equals(oldest) || SUB_WEAPON_KEYBIND.equals(oldest) || SPECIAL_WEAPON_KEYBIND.equals(oldest);
 		if (info.isSquid())
 		{
 			//Resets weapon charge when player is in swim form and not holding down right click. Used to void Charge Storage for Splatlings and Chargers.
 			if (EntityStoredCharge.hasCharge(entity) && !SHOOT_KEYBIND.active)
 			{
-				EntityStoredCharge.emptyCharge(entity);
+				EntityStoredCharge.emptyStoredCharge(entity);
+				for (InteractionHand hand : InteractionHand.values())
+				{
+					ItemStack stack = entity.getItemInHand(hand);
+					if (stack.getItem() instanceof IChargeableWeapon chargeableWeapon)
+						chargeableWeapon.setCharge(stack, 0f);
+				}
+				
+				SplatcraftPacketHandler.sendToServer(new VoidedChargePacket());
 			}
 			
 			if (!hasEnoughSpaceToTransformBack(entity))
@@ -229,25 +244,30 @@ public class SplatcraftKeyHandler
 			}
 			else
 			{
-				if (!SQUID_KEYBIND.active || SHOOT_KEYBIND.equals(last) || SUB_WEAPON_KEYBIND.equals(last) || SPECIAL_WEAPON_KEYBIND.equals(last))
+				if (!SQUID_KEYBIND.active || doingActionThatLeavesSquidMode)
 					ClientUtils.setSquid(entity, info, false, false);
 			}
 		}
 		else
 		{
-			if (SUB_WEAPON_KEYBIND.equals(last) || SPECIAL_WEAPON_KEYBIND.equals(last) || squidAndSubDelay > 0)
+			if (EntityAction.hasActionAnd(entity, v -> !v.isCancellable()) ||
+				CommonUtils.anyWeaponOnCooldown(entity))
 				return;
 			
-			if (pressedSquidKeyWhileHoldingCharge(entity))
+			if (pressedSquidKeyWhileHoldingChargeable(entity))
 			{
 				SQUID_KEYBIND.active = true;
 				
 				ClientUtils.setSquid(entity, info, true, true);
 			}
-//			else if (SQUID_KEYBIND.active && !SHOOT_KEYBIND.equals(last))
-			else if (SQUID_KEYBIND.active && !SHOOT_KEYBIND.active)
+			else
 			{
-				ClientUtils.setSquid(entity, info, true, false);
+				if (SQUID_KEYBIND.active &&
+					WeaponHandler.getWeaponHand(entity, (x, y) -> y.preventsSquidForm(x, entity)).isEmpty() &&
+					!doingActionThatLeavesSquidMode)
+				{
+					ClientUtils.setSquid(entity, info, true, false);
+				}
 			}
 		}
 	}
@@ -261,7 +281,7 @@ public class SplatcraftKeyHandler
 				// this is to fix whenever a player shoots again just in time the sub delay reaches 0, allowing them to literally cancel all endlag and enter squid form lol
 				// in that case the shot is done server-side, were isUsingItem is true because of delay
 				boolean isDoingAction = WeaponHandler.getUsingWeaponHand(player).isPresent() || EntityAction.hasEntityAction(player);
-				if (isDoingAction && squidAndSubDelay == 1 && !pressedSquidKeyWhileHoldingCharge(player))
+				if (isDoingAction && squidAndSubDelay == 1 && !pressedSquidKeyWhileHoldingChargeable(player))
 					return;
 				
 				squidAndSubDelay--;
@@ -273,19 +293,24 @@ public class SplatcraftKeyHandler
 	{
 		boolean canHold = canHoldKeys(mc);
 		
+		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
+		updatePressState(SUB_WEAPON_KEYBIND, squidAndSubDelay, !pressState.contains(SHOOT_KEYBIND) &&
+			!player.isUsingItem());
+		
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SHOOT_KEYBIND, squidAndSubDelay);
+		updatePressState(SHOOT_KEYBIND, squidAndSubDelay, WeaponHandler.getUsingWeaponHand(player).isEmpty());
 		
 		SQUID_KEYBIND.tick(SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
 		updatePressState(SQUID_KEYBIND, 0);
-		
-		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
-		updatePressState(SUB_WEAPON_KEYBIND, squidAndSubDelay);
 		
 		SPECIAL_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SPECIAL_WEAPON_KEYBIND, 0);
 	}
 	private static void updatePressState(ToggleableKey key, int releaseDelay)
+	{
+		updatePressState(key, releaseDelay, true);
+	}
+	private static void updatePressState(ToggleableKey key, int releaseDelay, boolean extraReleaseCondition)
 	{
 		if (key.active)
 		{
@@ -294,7 +319,7 @@ public class SplatcraftKeyHandler
 				pressState.add(key);
 			}
 		}
-		else if (releaseDelay <= 0)
+		else if (releaseDelay <= 0 && extraReleaseCondition)
 		{
 			pressState.remove(key);
 		}

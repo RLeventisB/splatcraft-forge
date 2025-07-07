@@ -11,6 +11,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.ShooterWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
@@ -21,6 +22,8 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 {
@@ -52,8 +55,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 		ShooterWeaponSettings settings = getSettings(stack);
 		if (entity instanceof LivingEntity living)
 		{
-			ShootingHandler.tickShootingComponent(
-				stack, SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
+			stack.update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
 				data ->
 					data.tick(
 						(firingData, accumulatedTime) ->
@@ -100,6 +102,15 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return ShootingHandler.isDoingShootingActionOnBothHands(player) ? PlayerPosingHandler.WeaponPose.DUAL_FIRE : PlayerPosingHandler.WeaponPose.FIRE;
+	}
+	@Override
+	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
+	{
+		if (stack.get(SplatcraftComponents.SHOOTER_FIRING_DATA).counter() > 0)
+			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
+		
+		return Optional.of(() ->
+			stack.set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT));
 	}
 	@Override
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)

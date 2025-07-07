@@ -22,6 +22,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
@@ -311,6 +312,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(level.getRandom(), 0.95F, 0.095F));
 			}
 		}
+	}
+	@Override
+	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
+	{
+		if (stack.get(SplatcraftComponents.SHOOTER_FIRING_DATA).counter() > 0)
+			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
+		
+		return Optional.of(() ->
+			stack.set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT)
+		);
 	}
 	@Override
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)

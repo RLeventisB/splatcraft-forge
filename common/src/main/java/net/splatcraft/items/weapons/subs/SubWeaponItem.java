@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.DispenserBlock;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extends WeaponBaseItem<SubWeaponSettings<Data>>
 {
@@ -44,7 +46,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	{
 		super(settings, v ->
 			v.component(SplatcraftComponents.SUB_WEAPON_ENTITY_ID, (ResourceKey<EntityType<?>>) entityType.unwrapKey().get()), false);
-
+		
 		DispenserBlock.registerBehavior(this, new DispenseBehavior());
 	}
 	public static boolean singleUse(ItemStack stack)
@@ -58,7 +60,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public static <Data extends DynamicDataRecord<Data>> EntityType<AbstractSubWeaponEntity<Data>> getSubEntityTypeStatic(ItemStack stack)
 	{
 		EntityType<?> type = getSubEntityTypeUnrestricted(stack);
-
+		
 		try
 		{
 			return (EntityType<AbstractSubWeaponEntity<Data>>) type;
@@ -140,12 +142,17 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public SubWeaponSettings<Data> getSettings(ItemStack stack)
 	{
 		ResourceLocation id = stack.get(SplatcraftComponents.WEAPON_SETTING_ID);
-
+		
 		if (DataHandler.WeaponStatsListener.SETTINGS.get(id) instanceof SubWeaponSettings<?> data)
 		{
 			return (SubWeaponSettings<Data>) data;
 		}
 		return new SubWeaponSettings<>("default");
+	}
+	@Override
+	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
+	{
+		return Optional.empty();
 	}
 	public static class DispenseBehavior extends DefaultDispenseItemBehavior
 	{
@@ -156,7 +163,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 			{
 				ItemStack thrownStack = stack.copy();
 				thrownStack.remove(SplatcraftComponents.SUB_WEAPON_DATA);
-
+				
 				Level world = source.level();
 				Position position = DispenserBlock.getDispensePosition(source);
 				Direction direction = source.state().getValue(DispenserBlock.FACING);
@@ -164,12 +171,12 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 				projectileentity.shoot(direction.getStepX(), direction.getStepY() + 0.1F, direction.getStepZ(), getPower(), getUncertainty());
 				world.addFreshEntity(projectileentity);
 				stack.shrink(1);
-
+				
 				source.level().playSound(null, source.pos(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
-
+				
 				return stack;
 			}
-
+			
 			Direction direction = source.state().getValue(DispenserBlock.FACING);
 			Position iposition = DispenserBlock.getDispensePosition(source);
 			ItemStack itemstack = stack.split(1);
@@ -184,7 +191,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 		{
 			if (!(stack.getItem() instanceof SubWeaponItem<?> subWeaponItem))
 				return null;
-
+			
 			return AbstractSubWeaponEntity.create(subWeaponItem.getEntityType(stack), level, position.x(), position.y(), position.z(), ColorUtils.getInkColor(stack), InkBlockUtils.InkType.NORMAL, stack);
 		}
 		protected float getUncertainty()

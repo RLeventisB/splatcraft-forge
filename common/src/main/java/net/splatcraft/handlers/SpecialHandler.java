@@ -50,7 +50,7 @@ public class SpecialHandler
 	public static boolean passesSpecialCost(ItemStack providerStack)
 	{
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-
+		
 		return data != null && data.storedCharge() >= 1;
 	}
 	public static int getSpecialCost(ItemStack weaponStack, ItemStack providerStack)
@@ -58,17 +58,17 @@ public class SpecialHandler
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
 		if (data == null || data.specialId().isEmpty())
 			return DEFAULT_SPECIAL_COST;
-
+		
 		Optional<ResourceLocation> weaponId = WeaponBaseItem.getWeaponId(weaponStack);
 		if (weaponId.isEmpty())
 		{
 			SpecialWeaponSettings<?> specialSettings = getSpecialSettings(data.specialId().get());
 			if (specialSettings == null)
 				return DEFAULT_SPECIAL_COST;
-
+			
 			return specialSettings.dataRecord.costData().defaultPoints();
 		}
-
+		
 		return getSpecialCost(weaponId.get(), data.specialId().get());
 	}
 	public static int getSpecialCost(ResourceLocation weaponId, ResourceLocation specialId)
@@ -108,12 +108,20 @@ public class SpecialHandler
 		SpecialWeaponSettings settings = getSpecialMap().get(specialId);
 		if (settings == null)
 			return;
-
+		
 		specialExecutor.get(specialId).execute(entity, settings, providerSlot, weaponSlot);
 	}
 	@FunctionalInterface
 	public interface SpecialExecutorAction
 	{
 		public void execute(LivingEntity entity, SpecialWeaponSettings settings, EntitySlot providerSlot, EntitySlot weaponSlot);
+	}
+	@FunctionalInterface
+	public interface ResetAction
+	{
+		ResetAction RESET_FAILED = () ->
+		{
+		};
+		void run();
 	}
 }

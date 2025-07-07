@@ -11,6 +11,7 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
+import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
@@ -22,6 +23,8 @@ import net.splatcraft.util.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 {
@@ -97,6 +100,16 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
 		return PlayerPosingHandler.WeaponPose.FIRE;
+	}
+	@Override
+	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
+	{
+		if (stack.get(SplatcraftComponents.SHOOTER_FIRING_DATA).counter() > 0)
+			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
+		
+		return Optional.of(() ->
+			stack.set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT)
+		);
 	}
 	@Override
 	public boolean preventsChanging(ItemStack stack, LivingEntity entity)
