@@ -102,6 +102,10 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		return weaponSlot;
 	}
+	public Optional<Float> mobility()
+	{
+		return Optional.empty();
+	}
 	public void transformHeldWeaponRender(float[] dataArray, AtomicBoolean doRender, InteractionHand hand, float tickDelta, float time, PoseStack matrices)
 	{
 		if (time < 3)

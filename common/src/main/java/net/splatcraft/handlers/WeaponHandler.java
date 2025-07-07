@@ -24,8 +24,8 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
-import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.InkColor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -120,8 +120,8 @@ public class WeaponHandler
 		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
 		{
 			ItemStack stack = action.getStoredStack();
-			
-			doEndActions(player, action, stack);
+			if (action.endWhenOnSquid(player))
+				doEndActions(player, action, stack);
 		}
 		else
 		{
@@ -150,6 +150,7 @@ public class WeaponHandler
 	{
 		if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
 			weapon.onPlayerCooldownEnd(player.level(), player, stack, action);
+		
 		if (action.canEnd(player))
 		{
 			EntityAction.setEntityAction(player, null);

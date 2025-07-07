@@ -216,4 +216,8 @@ public interface EntityAction
 	{
 		return true;
 	}
+	default boolean endWhenOnSquid(LivingEntity entity)
+	{
+		return true;
+	}
 }

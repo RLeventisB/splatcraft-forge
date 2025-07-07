@@ -201,22 +201,22 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			}
 			else
 			{
+				float collisionDistance = paint(forward);
 				doCollisions(forward);
-				paint(forward);
 			}
 		}
 		
 		setLifespan(lifespan + 1);
 	}
-	public void paint(Vec3 forward)
+	public float paint(Vec3 forward)
 	{
 		ClipContext context = new ClipContext(position(), position().add(forward.scale(paintingClipSize)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this);
 		BlockHitResult result = level().clip(context);
 		if (result.getType() == HitResult.Type.MISS)
-			return;
+			return Float.POSITIVE_INFINITY;
 		
-		Vec3 smallNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal()).scale(0.01);
-		InkExplosion.createInkExplosion(this, result.getLocation().add(smallNormal), paintingRadius, inkType, ItemStack.EMPTY);
+		InkExplosion.createInkExplosion(this, InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), null), paintingRadius, inkType, ItemStack.EMPTY);
+		return (float) position().distanceToSqr(result.getLocation());
 	}
 	private Vec3 updatePosForward(LivingEntity owner)
 	{

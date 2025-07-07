@@ -37,7 +37,7 @@ public class SpecialWeaponRecords
 				Codec.FLOAT.fieldOf("turning_value_with_shockwave").forGetter(StingRayDataRecord::turningValueWithShockwave),
 				Codec.FLOAT.fieldOf("reveal_radius").forGetter(StingRayDataRecord::revealRadius),
 				Codec.FLOAT.fieldOf("painting_radius").forGetter(StingRayDataRecord::paintingRadius),
-				Codec.FLOAT.optionalFieldOf("painting_search_radius", 1000f).forGetter(StingRayDataRecord::paintSearchRadius)
+				Codec.FLOAT.optionalFieldOf("painting_search_radius", 3000f).forGetter(StingRayDataRecord::paintSearchRadius)
 			).apply(inst, StingRayDataRecord::new)
 		);
 		public static final ResourceLocation ID = Splatcraft.identifierOf("sting_ray");

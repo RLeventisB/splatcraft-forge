@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,6 +34,7 @@ import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 
@@ -47,6 +49,7 @@ public class PlayerMovementHandler
 	private static final AttributeModifier SQUID_SWIM_SPEED = new AttributeModifier(Splatcraft.identifierOf("squid_swim_speed"), 0.2D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(Splatcraft.identifierOf("slow_falling_dummy"), -0.07, AttributeModifier.Operation.ADD_VALUE);
+	private static final ResourceLocation SPECIAL_BONUS_ID = Splatcraft.identifierOf("special_bonus");
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(TickEvents.PlayerBefore.class, PlayerMovementHandler::playerMovement);
@@ -74,6 +77,8 @@ public class PlayerMovementHandler
 			speedAttribute.removeModifier(INK_SWIM_SPEED);
 		if (speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
 			speedAttribute.removeModifier(ENEMY_INK_SPEED);
+		if (speedAttribute.hasModifier(SPECIAL_BONUS_ID))
+			speedAttribute.removeModifier(SPECIAL_BONUS_ID);
 //            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
 //                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
 		
@@ -85,6 +90,15 @@ public class PlayerMovementHandler
 			//player.setVelocity(player.getVelocity().x, Math.min(player.getVelocity().y, 0.05f), player.getVelocity().z);
 			if (!speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
 				speedAttribute.addTransientModifier(ENEMY_INK_SPEED);
+		}
+		
+		if (EntityAction.hasSpecificEntityAction(player, BaseSpecialAction.class))
+		{
+			BaseSpecialAction specialAction = EntityAction.getSpecificEntityAction(player, BaseSpecialAction.class);
+			specialAction.mobility().ifPresent(bonus ->
+			{
+				speedAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, bonus - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+			});
 		}
 		
 		if (playerInfo.isSquid())

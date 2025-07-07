@@ -13,6 +13,8 @@ import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 
+import java.util.Optional;
+
 import static net.splatcraft.items.weapons.settings.SpecialWeaponRecords.StingRayDataRecord;
 
 public class StingRayAction extends BaseSpecialAction
@@ -72,6 +74,23 @@ public class StingRayAction extends BaseSpecialAction
 			usageTick = 0;
 		}
 		super.tick(entity);
+	}
+	@Override
+	public boolean isCancellable()
+	{
+		return true;
+	}
+	@Override
+	public boolean endWhenOnSquid(LivingEntity entity)
+	{
+		return false;
+	}
+	@Override
+	public Optional<Float> mobility()
+	{
+		if (usageTick > 1)
+			return Optional.of(specialData.mobilityOnUse());
+		return super.mobility();
 	}
 	@Override
 	public boolean canEnd(LivingEntity entity)
