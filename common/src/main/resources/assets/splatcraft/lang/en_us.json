@@ -129,6 +129,7 @@
     "item.splatcraft.tooltip.matches_color": "matches your ink color!",
     "item.splatcraft.tooltip.matches_color.inverted": "matches your inverted ink color!",
     "item.splatcraft.wax_applicator": "Wax Applicator",
+    "item.splatcraft.wax_applicator.tooltip": "Right-Click to wax an entire block, making it immutable.\nThe wax can be scrapped off with an axe.\nLeft-Click to remove ink from a face.",
     "item.splatcraft.splattershot": "Splattershot",
     "item.splatcraft.tentatek_splattershot": "Tentatek Splattershot",
     "item.splatcraft.wasabi_splattershot": "Wasabi Splattershot",

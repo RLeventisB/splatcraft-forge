@@ -320,7 +320,7 @@ public class TorpedoEntity extends AbstractSubWeaponEntity<TorpedoDataRecord> im
 		
 		float horizontalFriction = 0.95f;
 		if (onGround())
-			horizontalFriction = level().getBlockState(getOnPos()).getBlock().getFriction();
+			horizontalFriction = level().getBlockState(getOnPos()).getBlock().getFriction() * 1.1f;
 		
 		horizontalFriction = Mth.clamp(horizontalFriction, 0, 1);
 		return new Vec3(horizontalFriction, 0.95f, horizontalFriction);
@@ -361,7 +361,7 @@ public class TorpedoEntity extends AbstractSubWeaponEntity<TorpedoDataRecord> im
 	public Vec3 reflectVelocity(Direction.Axis axis, Vec3 newVelocity, Vec3 oldVelocity)
 	{
 		if (axis == Direction.Axis.Y)
-			if (oldVelocity.y < newVelocity.y && newVelocity.y <= 0 && oldVelocity.y <= -0.7 && oldVelocity.horizontalDistanceSqr() < 0.9)
+			if (oldVelocity.y < newVelocity.y && newVelocity.y <= 0 && oldVelocity.y <= -0.7 && oldVelocity.horizontalDistanceSqr() < 1.2f)
 				return oldVelocity.with(Direction.Axis.Y, 0);
 		
 		return IBouncyEntity.super.reflectVelocity(axis, newVelocity, oldVelocity);

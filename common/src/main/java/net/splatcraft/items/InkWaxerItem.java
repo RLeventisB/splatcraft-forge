@@ -1,13 +1,16 @@
 package net.splatcraft.items;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
@@ -20,6 +23,9 @@ import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class InkWaxerItem extends Item
 {
@@ -27,7 +33,6 @@ public class InkWaxerItem extends Item
 	{
 		super(new Properties().durability(256));
 	}
-	// wait why does it work like this
 	public void onBlockStartBreak(BlockPos pos, Level world, Direction face)
 	{
 		if (InkBlockUtils.isInkedAny(world, pos))
@@ -41,6 +46,13 @@ public class InkWaxerItem extends Item
 			BlockState state = world.getBlockState(pos);
 			world.sendBlockUpdated(pos, state, state, 0);
 		}
+	}
+	@Override
+	public void appendHoverText(@NotNull ItemStack stack, @Nullable TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
+	{
+		super.appendHoverText(stack, context, tooltip, type);
+		
+		tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
 	}
 	@Override
 	public @NotNull InteractionResult useOn(UseOnContext context)
