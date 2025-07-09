@@ -19,9 +19,9 @@ public class NeoForgeDeferredRegister<T> implements DeferredRegister<T>
 	}
 	public static void registerAllRegistries()
 	{
-		NeoForgePlatformHelper.ARGUMENT_REGISTRY.registerEntries();
-		NeoForgePlatformHelper.DATA_SERIALIZER_REGISTRY.registerEntries();
-
+		NeoForgePlatformHelper.getArgumentRegistry().registerEntries();
+		NeoForgePlatformHelper.getDataSerializerRegistry().registerEntries();
+		
 		SplatcraftItems.REGISTRY.registerEntries();
 		SplatcraftRecipeTypes.RECIPE_SERIALIZER_REGISTRY.registerEntries();
 		SplatcraftTileEntities.CONTAINER_REGISTRY.registerEntries();
@@ -46,7 +46,6 @@ public class NeoForgeDeferredRegister<T> implements DeferredRegister<T>
 		DeferredHolder<T, R> register = registry.register(path, supplier);
 		return (RegistrySupplier<R>) new RegistrySupplier<>(register);
 	}
-
 	@Override
 	public void registerEntries()
 	{

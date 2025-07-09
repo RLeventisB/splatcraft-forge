@@ -1,5 +1,6 @@
 package net.splatcraft.platform;
 
+import com.google.common.base.Suppliers;
 import com.mojang.brigadier.arguments.ArgumentType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -69,6 +70,7 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.platform.event.*;
 import net.splatcraft.platform.services.IPlatformHelper;
+import net.splatcraft.platform.services.ModInfo;
 import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,22 +79,31 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class NeoForgePlatformHelper implements IPlatformHelper
 {
-	public static final NeoForgeDeferredRegister<EntityDataSerializer<?>> DATA_SERIALIZER_REGISTRY = new NeoForgeDeferredRegister<>(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, Splatcraft.MODID);
-	public static NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>> ARGUMENT_REGISTRY = new NeoForgeDeferredRegister<>(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, Splatcraft.MODID);
+	private static final Supplier<NeoForgeDeferredRegister<EntityDataSerializer<?>>> DATA_SERIALIZER_REGISTRY = Suppliers.memoize(() -> new NeoForgeDeferredRegister<>(NeoForgeRegistries.ENTITY_DATA_SERIALIZERS, Splatcraft.MODID));
+	private static final Supplier<NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>>> ARGUMENT_REGISTRY =
+		Suppliers.memoize(() -> new NeoForgeDeferredRegister<>(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, Splatcraft.MODID));
 	public static NeoForgePlatformHelper INSTANCE;
-
+	public static NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>> getArgumentRegistry()
+	{
+		return ARGUMENT_REGISTRY.get();
+	}
+	public static NeoForgeDeferredRegister<EntityDataSerializer<?>> getDataSerializerRegistry()
+	{
+		return DATA_SERIALIZER_REGISTRY.get();
+	}
 	public void init()
 	{
 		INSTANCE = this;
 		if (isClientSide())
 			registerClientSideEvents();
-
+		
 		EventHelper.registerEvent(RegisterCommandsEvent.class, (evt) ->
 			invokeConsumerEvent(CommandRegistrationEvent.class, evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection())
 		);
@@ -226,7 +237,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
-
 	@OnlyIn(Dist.CLIENT)
 	private void registerClientSideEvents()
 	{
@@ -249,55 +259,46 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
-
 	@Override
 	public String getPlatformName()
 	{
 		return "NeoForge";
 	}
-
 	@Override
 	public boolean isModLoaded(String modId)
 	{
 		return ModList.get().isLoaded(modId);
 	}
-
 	@Override
 	public boolean isDevelopmentEnvironment()
 	{
 		return !FMLLoader.isProduction();
 	}
-
 	@Override
 	public boolean isClientSide()
 	{
 		return FMLEnvironment.dist == Dist.CLIENT;
 	}
-
 	@Override
 	public boolean hasChunkInk(ChunkAccess chunk)
 	{
 		return chunk.hasData(SplatcraftNeoForgeDataAttachments.CHUNK_INK);
 	}
-
 	@Override
 	public boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk)
 	{
 		return hasChunkInk(chunk) && getChunkInk(chunk).isntEmpty();
 	}
-
 	@Override
 	public ChunkInk getChunkInk(ChunkAccess chunk)
 	{
 		return chunk.getData(SplatcraftNeoForgeDataAttachments.CHUNK_INK);
 	}
-
 	@Override
 	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
 	{
 		chunk.setData(SplatcraftNeoForgeDataAttachments.CHUNK_INK, newData);
 	}
-
 	@Override
 	public SaveInfo getSaveInfo()
 	{
@@ -305,7 +306,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			return SaveInfoCapability.clientSaveInfo;
 		return Services.PLATFORM.getServerInstance().overworld().getData(SplatcraftNeoForgeDataAttachments.SAVE_INFO);
 	}
-
 	@Override
 	public void setSaveInfo(SaveInfo newData)
 	{
@@ -318,31 +318,26 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	{
 		return entity.getData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY);
 	}
-
 	@Override
 	public boolean hasInkOverlayInfo(LivingEntity entity)
 	{
 		return entity.hasData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY);
 	}
-
 	@Override
 	public void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData)
 	{
 		entity.setData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY, newData);
 	}
-
 	@Override
 	public EntityInfo getEntityInfo(LivingEntity entity)
 	{
 		return entity.getData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
 	}
-
 	@Override
 	public boolean hasEntityInfo(LivingEntity entity)
 	{
 		return entity != null && entity.hasData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
 	}
-
 	@Override
 	public void setEntityInfo(LivingEntity entity, EntityInfo newData)
 	{
@@ -380,38 +375,46 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 		}
 		return null;
 	}
-
+	@Override
+	public Collection<ModInfo> getMods()
+	{
+		return FMLLoader.getLoadingModList().getMods().stream().map(NeoForgePlatformHelper::createModInfo).toList();
+	}
+	private static ModInfo createModInfo(net.neoforged.fml.loading.moddiscovery.ModInfo modInfo)
+	{
+		return new ModInfo(
+			modInfo.getModId(),
+			modInfo.getVersion().toString(),
+			modInfo.getDisplayName(),
+			modInfo.getDescription()
+		);
+	}
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
 	{
 		ItemProperties.register(item.asItem(), id, function);
 	}
-
 	@Override
 	public <A extends ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>, I extends ArgumentTypeInfo<A, T>> void registerCommandArgument(String argumentName, Class<A> infoClass, I argumentTypeInfo)
 	{
-		ARGUMENT_REGISTRY.register(argumentName, () -> ArgumentTypeInfos.registerByClass(infoClass, argumentTypeInfo));
+		getArgumentRegistry().register(argumentName, () -> ArgumentTypeInfos.registerByClass(infoClass, argumentTypeInfo));
 	}
-
 	@Override
 	public void registerDataTracker(String name, EntityDataSerializer<?> handler)
 	{
-		DATA_SERIALIZER_REGISTRY.register(name, () -> handler);
+		getDataSerializerRegistry().register(name, () -> handler);
 	}
-
 	@Override
 	public MinecraftServer getServerInstance()
 	{
 		return ServerLifecycleHooks.getCurrentServer();
 	}
-
 	@Override
 	public <T> DeferredRegister<T> createRegistry(Registry<T> registry)
 	{
 		return new NeoForgeDeferredRegister<>(registry, Splatcraft.MODID);
 	}
-
 	@Override
 	public void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item)
 	{
@@ -425,7 +428,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
-
 	@Override
 	public void registerReloadListener(PackType packType, PreparableReloadListener reloadListener)
 	{
@@ -448,7 +450,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			(registerRenderers, blockEntityType, blockEntityRendererProvider) -> registerRenderers.registerBlockEntityRenderer(blockEntityType.get(), blockEntityRendererProvider)
 		);
 	}
-
 	@Override
 	public <T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider)
 	{
@@ -456,7 +457,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			(registerRenderers, entityType, entityRendererProvider) -> registerRenderers.registerEntityRenderer(entityType.get(), entityRendererProvider)
 		);
 	}
-
 	@Override
 	public void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier)
 	{
@@ -464,7 +464,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			EntityRenderersEvent.RegisterLayerDefinitions::registerLayerDefinition
 		);
 	}
-
 	@Override
 	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attributeBuilder)
 	{
@@ -472,19 +471,16 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			(registerAttributes, entityType, attributeSupplier) -> registerAttributes.put(entityType.get(), attributeSupplier.get().build())
 		);
 	}
-
 	@Override
 	public void loadConfig()
 	{
 		SplatcraftConfigImpl.loadConfig();
 	}
-
 	@Override
 	public void initializeConfigs()
 	{
 		SplatcraftConfigImpl.initializeConfigs();
 	}
-
 	@Override
 	public Path getModConfigPath()
 	{

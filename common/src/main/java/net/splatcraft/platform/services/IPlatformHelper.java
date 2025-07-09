@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -101,24 +102,25 @@ public interface IPlatformHelper extends IEventMap
 	void loadConfig();
 	void initializeConfigs();
 	Path getModConfigPath();
-
 	// todo: do a neoforge-like abstract capability id thingy that is resolved when serializing and deserializing by the modloader or something
 	boolean hasChunkInk(ChunkAccess chunk);
 	boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk);
 	ChunkInk getChunkInk(ChunkAccess chunk);
 	void setChunkInk(ChunkAccess chunk, ChunkInk newData);
-
 	SaveInfo getSaveInfo();
 	void setSaveInfo(SaveInfo newData);
-
 	InkOverlayInfo getInkOverlayInfo(LivingEntity entity);
 	boolean hasInkOverlayInfo(LivingEntity entity);
 	void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData);
-
 	EntityInfo getEntityInfo(LivingEntity entity);
 	boolean hasEntityInfo(LivingEntity entity);
 	void setEntityInfo(LivingEntity entity, EntityInfo newData);
 	<T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests);
 	void postConsumerEvent(String eventClassName, Object... params);
 	Object postEvent(String eventClassName, Object... params);
+	Collection<ModInfo> getMods();
+	default boolean anyModThat(Predicate<ModInfo> predicate)
+	{
+		return getMods().stream().anyMatch(predicate);
+	}
 }

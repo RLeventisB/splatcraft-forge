@@ -3,6 +3,7 @@
     "minVersion": "0.8",
     "package": "net.splatcraft.mixin",
     "compatibilityLevel": "JAVA_21",
+    "plugin": "net.splatcraft.mixin.MixinInitializer",
     "mixins": [
         "ForgeDummyInjections$BlockEntityMixin",
         "ForgeDummyInjections$BlockMixin",
@@ -13,7 +14,11 @@
         "BlockRenderMixinForge$BlockRenderManagerMixin",
         "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
         "FabricEventPlacementMixins$ClientMixins",
-        "ForgeDummyInjections$ClientBlockMixin"
+        "ForgeDummyInjections$ClientBlockMixin",
+        "compat.SodiumMixin$AbstractBlockThingMixin",
+        "compat.SodiumMixin$BlockRendererMixin",
+        "compat.SodiumMixin$ChunkMeshBuilderMixin",
+        "compat.SodiumMixin$LevelSliceAccessor"
     ],
     "server": [],
     "injectors": {

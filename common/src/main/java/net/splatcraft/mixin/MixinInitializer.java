@@ -22,8 +22,8 @@ public class MixinInitializer implements IMixinConfigPlugin
 		isOnClient = Services.PLATFORM.isClientSide();
 		try
 		{
-//			sodiumInstalled = Platform.getMods().stream().anyMatch(v -> v.getModId().contains("sodium") || v.getModId().contains("rubidium"));
-//			createInstalled = Platform.getMods().stream().anyMatch(v -> v.getModId().contains("create"));
+			sodiumInstalled = Services.PLATFORM.anyModThat(v -> v.modId().contains("sodium") || v.modId().contains("rubidium") || v.modId().contains("embeddium"));
+			createInstalled = Services.PLATFORM.anyModThat(v -> v.modId().contains("create"));
 		}
 		catch (Exception ignored)
 		{
@@ -37,18 +37,6 @@ public class MixinInitializer implements IMixinConfigPlugin
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
 	{
-		if (mixinClassName.endsWith("HeldItemRendererMixin"))
-		{
-			return isOnClient;
-		}
-		if (mixinClassName.contains("Forge"))
-		{
-			return isOnNeoForge;
-		}
-		if (mixinClassName.contains("Fabric"))
-		{
-			return isOnFabric;
-		}
 		if (mixinClassName.startsWith("net.splatcraft.mixin.compat"))
 		{
 			if (mixinClassName.contains("Sodium"))

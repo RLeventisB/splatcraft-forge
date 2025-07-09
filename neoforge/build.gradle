@@ -40,6 +40,7 @@ neoForge {
 
 dependencies {
     implementation 'mysticdrew:common-networking-neoforge:1.0.16-1.21'
+    implementation 'maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge'
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

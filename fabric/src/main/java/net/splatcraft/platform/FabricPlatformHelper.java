@@ -9,6 +9,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -44,10 +46,12 @@ import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.platform.event.CommandRegistrationEvent;
 import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.platform.services.IPlatformHelper;
+import net.splatcraft.platform.services.ModInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -63,7 +67,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 		{
 			registerClientSideEvents();
 		}
-
+		
 		ServerLifecycleEvents.SERVER_STARTING.register(server1 ->
 		{
 			invokeConsumerEvent(LifecycleEvents.ServerStarting.class, server1);
@@ -126,7 +130,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
 	{
-
+	
 	}
 	@Override
 	public SaveInfo getSaveInfo()
@@ -136,7 +140,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void setSaveInfo(SaveInfo newData)
 	{
-
+	
 	}
 	@Override
 	public InkOverlayInfo getInkOverlayInfo(LivingEntity entity)
@@ -151,7 +155,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData)
 	{
-
+	
 	}
 	@Override
 	public EntityInfo getEntityInfo(LivingEntity entity)
@@ -166,7 +170,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void setEntityInfo(LivingEntity entity, EntityInfo newData)
 	{
-
+	
 	}
 	@Override
 	public <T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests)
@@ -176,12 +180,28 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void postConsumerEvent(String eventClassName, Object... params)
 	{
-
+	
 	}
 	@Override
 	public Object postEvent(String eventClassName, Object... params)
 	{
 		return null;
+	}
+	@Override
+	public Collection<ModInfo> getMods()
+	{
+		return FabricLoader.getInstance().getAllMods().stream()
+			.map(ModContainer::getMetadata)
+			.map(FabricPlatformHelper::getModInfo).toList();
+	}
+	private static ModInfo getModInfo(ModMetadata metadata)
+	{
+		return new ModInfo(
+			metadata.getId(),
+			metadata.getVersion().toString(),
+			metadata.getName(),
+			metadata.getDescription()
+		);
 	}
 	@Override
 	public void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function)
@@ -222,55 +242,46 @@ public class FabricPlatformHelper implements IPlatformHelper
 		ItemGroupEvents.modifyEntriesEvent(creativeTab).register((tab) ->
 			tab.accept(new ItemStack(item)));
 	}
-
 	@Override
 	public void registerReloadListener(PackType packType, PreparableReloadListener reloadListener)
 	{
-
+	
 	}
-
 	@Override
 	public void registerKeyMapping(KeyMapping key)
 	{
-
+	
 	}
-
 	@Override
 	public <T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider)
 	{
-
+	
 	}
-
 	@Override
 	public <T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider)
 	{
-
+	
 	}
-
 	@Override
 	public void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier)
 	{
-
+	
 	}
-
 	@Override
 	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute)
 	{
-
+	
 	}
-
 	@Override
 	public void loadConfig()
 	{
-
+	
 	}
-
 	@Override
 	public void initializeConfigs()
 	{
-
+	
 	}
-
 	@Override
 	public Path getModConfigPath()
 	{
