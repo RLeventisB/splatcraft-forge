@@ -44,7 +44,7 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	{
 		super(type, world);
 	}
-	public InkDropEntity(Level world, Vec3 pos, Entity owner, InkColor color, InkBlockUtils.InkType inkType, float splashSize)
+	public InkDropEntity(Level world, Vec3 pos, Entity owner, InkColor color, InkBlockUtils.InkType inkType, float splashSize, ItemStack sourceWeapon)
 	{
 		super(SplatcraftEntities.INK_DROP.get(), world);
 		setPos(pos);
@@ -52,10 +52,11 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		setColor(color);
 		setImpactCoverage(splashSize);
 		this.inkType = inkType;
+		this.sourceWeapon = sourceWeapon;
 	}
-	public InkDropEntity(Level world, InkProjectileEntity projectile, InkColor color, InkBlockUtils.InkType inkType, float splashSize)
+	public InkDropEntity(Level world, InkProjectileEntity projectile, InkColor color, InkBlockUtils.InkType inkType, float splashSize, ItemStack sourceWeapon)
 	{
-		this(world, projectile.position(), projectile.getOwner(), color, inkType, splashSize);
+		this(world, projectile.position(), projectile.getOwner(), color, inkType, splashSize, sourceWeapon);
 	}
 	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder builder)
@@ -138,10 +139,18 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 		if (!level().isClientSide())
 		{
 			Vec3 pos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this);
-			if (sourceWeapon == null || sourceWeapon.isEmpty() || explosionData == null)
+			if (sourceWeapon == null || sourceWeapon.isEmpty())
+			{
 				InkExplosion.createInkExplosion(getOwner(), pos, getImpactCoverage(), inkType, ItemStack.EMPTY);
+			}
+			else if (explosionData == null)
+			{
+				InkExplosion.createInkExplosion(getOwner(), pos, getImpactCoverage(), inkType, sourceWeapon);
+			}
 			else
+			{
 				InkExplosion.createInkExplosion(getOwner(), pos, getImpactCoverage(), explosionData, inkType, sourceWeapon, attackId);
+			}
 			discard();
 		}
 		else
@@ -273,9 +282,8 @@ public class InkDropEntity extends ThrowableProjectile implements IColoredEntity
 	{
 		entityData.set(IMPACT_SIZE, splashSize);
 	}
-	public void setExplosionData(ItemStack stack, RangedValueCollection damageRanges, AttackId dropletAttackId)
+	public void setExplosionData(RangedValueCollection damageRanges, AttackId dropletAttackId)
 	{
-		sourceWeapon = stack;
 		explosionData = damageRanges;
 		attackId = dropletAttackId;
 	}

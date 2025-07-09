@@ -141,7 +141,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		if (!level().isClientSide())
 		{
 			InkExplosion.createInkExplosion(getOwner(), impactPos, settings.inkExplosionRange().getValue(getCookProgress()), settings.damageRanges().withShift(-getCookProgress() * settings.maxCookRadiusBonus()), inkType, sourceWeapon, AttackId.NONE);
-			InkExplosion.doSplashes(getOwner(), impactPos, settings.inkSplashes(), getColor(), inkType);
+			InkExplosion.doSplashes(getOwner(), impactPos, settings.inkSplashes(), getColor(), inkType, sourceWeapon);
 			level().broadcastEntityEvent(this, (byte) 1);
 			discard();
 		}

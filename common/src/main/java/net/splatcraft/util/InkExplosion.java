@@ -101,7 +101,7 @@ public class InkExplosion
 		inksplosion.doExplosionA();
 		inksplosion.doExplosionCosmetics(false);
 	}
-	public static void doSplashes(@Nullable Entity owner, Vec3 center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType)
+	public static void doSplashes(@Nullable Entity owner, Vec3 center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType, ItemStack weapon)
 	{
 		if (owner == null)
 			return;
@@ -118,13 +118,13 @@ public class InkExplosion
 				world, owner, center,
 				yawGetter.apply(i) * Mth.TWO_PI, -splashData.splashPitchRange().getValue(random.nextFloat()) * Mth.DEG_TO_RAD,
 				splashData.splashVelocityRange().getValue(random.nextFloat()),
-				splashData.splashPaintRadius(), color, inkType
+				splashData.splashPaintRadius(), color, inkType, weapon
 			);
 		}
 	}
-	static void createDrop(Level world, Entity owner, Vec3 center, float yaw, float pitch, float speed, float splashSize, InkColor color, InkBlockUtils.InkType type)
+	static void createDrop(Level world, Entity owner, Vec3 center, float yaw, float pitch, float speed, float splashSize, InkColor color, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		InkDropEntity drop = new InkDropEntity(owner.level(), center, owner, color, type, splashSize);
+		InkDropEntity drop = new InkDropEntity(owner.level(), center, owner, color, type, splashSize, weapon);
 		float f = -Mth.sin(yaw) * Mth.cos(pitch);
 		float g = -Mth.sin(pitch);
 		float h = Mth.cos(yaw) * Mth.cos(pitch);

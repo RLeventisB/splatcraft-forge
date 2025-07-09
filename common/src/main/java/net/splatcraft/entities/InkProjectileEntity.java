@@ -320,7 +320,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	}
 	public void createDrop(double dropX, double dropY, double dropZ, float extraFrame, float dropImpactSize)
 	{
-		InkDropEntity proj = new InkDropEntity(level(), this, getColor(), inkType, dropImpactSize);
+		InkDropEntity proj = new InkDropEntity(level(), this, getColor(), inkType, dropImpactSize, sourceWeapon);
 		proj.moveTo(dropX, dropY, dropZ);
 		level().addFreshEntity(proj);
 		proj.tick(extraFrame);

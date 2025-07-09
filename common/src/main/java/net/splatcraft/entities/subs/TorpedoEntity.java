@@ -234,8 +234,8 @@ public class TorpedoEntity extends AbstractSubWeaponEntity<TorpedoDataRecord> im
 			float yaw = yawGetter.apply(i) * Mth.TWO_PI;
 			float pitch = -splashData.splashPitchRange().getValue(random.nextFloat()) * Mth.DEG_TO_RAD;
 			float speed = splashData.splashVelocityRange().getValue(random.nextFloat());
-			InkDropEntity drop = new InkDropEntity(level(), location, owner, color, inkType, splashData.splashPaintRadius());
-			drop.setExplosionData(sourceWeapon, settings.subDataRecord.dropletDamageRange(), dropletAttackId);
+			InkDropEntity drop = new InkDropEntity(level(), location, owner, color, inkType, splashData.splashPaintRadius(), sourceWeapon);
+			drop.setExplosionData(settings.subDataRecord.dropletDamageRange(), dropletAttackId);
 			float f = -Mth.sin(yaw) * Mth.cos(pitch);
 			float g = -Mth.sin(pitch);
 			float h = Mth.cos(yaw) * Mth.cos(pitch);
