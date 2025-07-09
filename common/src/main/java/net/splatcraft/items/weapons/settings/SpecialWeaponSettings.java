@@ -51,7 +51,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	protected void processResult(DataRecord dataRecord, T subData)
 	{
 		this.dataRecord = dataRecord;
-		specialDataRecord = SplatcraftConvertors.convertDamage(subData);
+		specialDataRecord = SplatcraftConvertors.convert(subData);
 	}
 	@Override
 	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)

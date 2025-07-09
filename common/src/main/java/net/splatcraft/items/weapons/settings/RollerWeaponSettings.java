@@ -75,13 +75,13 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		bypassesMobDamage = data.fullDamageToMobs;
 		isSecret = data.isSecret;
 		
-		rollData = SplatcraftConvertors.convertDamage(data.roll);
-		swingData = SplatcraftConvertors.convertDamage(data.swing);
+		rollData = SplatcraftConvertors.convert(data.roll);
+		swingData = SplatcraftConvertors.convert(data.swing);
 		if (!isBrush)
 		{
 			if (data.fling.isEmpty())
 				throw new AssertionError("Error upon reading roller weapon settings! Fling (or vertical swing) data is not present.");
-			flingData = SplatcraftConvertors.convertDamage(data.fling.get());
+			flingData = SplatcraftConvertors.convert(data.fling.get());
 		}
 		else
 			flingData = null;

@@ -60,9 +60,9 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 	@Override
 	public void processData(DataRecord data)
 	{
-		projectileData = SplatcraftConvertors.convertDamage(data.projectile);
-		shotData = SplatcraftConvertors.convertDamage(data.shot);
-		chargeData = SplatcraftConvertors.convertDamage(data.charge);
+		projectileData = SplatcraftConvertors.convert(data.projectile);
+		shotData = SplatcraftConvertors.convert(data.shot);
+		chargeData = SplatcraftConvertors.convert(data.charge);
 		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);

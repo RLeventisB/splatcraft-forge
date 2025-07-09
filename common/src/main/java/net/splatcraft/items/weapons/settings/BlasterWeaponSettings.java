@@ -54,9 +54,9 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	@Override
 	public void processData(DataRecord data)
 	{
-		projectileData = SplatcraftConvertors.convertDamage(data.projectile);
-		shotData = SplatcraftConvertors.convertDamage(data.shot);
-		blasterData = SplatcraftConvertors.convertDamage(data.blast);
+		projectileData = SplatcraftConvertors.convert(data.projectile);
+		shotData = SplatcraftConvertors.convert(data.shot);
+		blasterData = SplatcraftConvertors.convert(data.blast);
 		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);

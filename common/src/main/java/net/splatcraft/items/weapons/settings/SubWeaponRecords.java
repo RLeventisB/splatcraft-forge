@@ -53,7 +53,7 @@ public class SubWeaponRecords
 		{
 			return new ThrowableExplodingSubDataRecord(
 				convertDamage(damageRanges),
-				convertDamage(inkSplashes),
+				convert(inkSplashes),
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				fuseTime,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
@@ -97,7 +97,7 @@ public class SubWeaponRecords
 		{
 			return new BurstBombDataRecord(
 				convertDamage(damageRanges),
-				convertDamage(inkSplashes),
+				convert(inkSplashes),
 				inkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				directDamage / SplatoonHealthPerMinecraftHealth,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
@@ -156,11 +156,11 @@ public class SubWeaponRecords
 		{
 			return new CurlingBombDataRecord(
 				convertDamage(damageRanges),
-				convertDamage(inkSplashes),
+				convert(inkSplashes),
 				convertLength(inkExplosionRange),
 				convertSpeed(travelSpeedRange),
 				convertLength(trailSizeRange),
-				convertDamage(maxCookInkUsage),
+				convert(maxCookInkUsage),
 				convertTime(fuseTime),
 				contactDamage / SplatoonHealthPerMinecraftHealth,
 				throwAngle,
@@ -209,7 +209,7 @@ public class SubWeaponRecords
 			return new TorpedoDataRecord(
 				convertDamage(mainExplosionDamageRange),
 				convertDamage(dropletDamageRange),
-				convertDamage(dropletData),
+				convert(dropletData),
 				mainInkSplashRadius / DistanceUnitsPerMinecraftSquare,
 				health / SplatoonHealthPerMinecraftHealth,
 				throwVelocity / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,

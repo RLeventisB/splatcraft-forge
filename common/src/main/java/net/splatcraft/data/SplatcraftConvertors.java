@@ -23,7 +23,7 @@ public class SplatcraftConvertors
 	public static final int SplatoonFramesPerMinecraftTick = 3;
 	public static final int SplatoonHealthPerMinecraftHealth = 5;
 	public static boolean SkipConverting = false;
-	public static InkUsageDataRecord convertDamage(InkUsageDataRecord dataRecord)
+	public static InkUsageDataRecord convert(InkUsageDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -33,7 +33,7 @@ public class SplatcraftConvertors
 			dataRecord.recoveryCooldown() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static ProjectileDataRecord convertDamage(ProjectileDataRecord dataRecord)
+	public static ProjectileDataRecord convert(ProjectileDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -55,7 +55,7 @@ public class SplatcraftConvertors
 			dataRecord.damageDecayPerTick() / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static OptionalProjectileDataRecord convertDamage(OptionalProjectileDataRecord dataRecord)
+	public static OptionalProjectileDataRecord convert(OptionalProjectileDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -77,7 +77,7 @@ public class SplatcraftConvertors
 			multiplyIfPresentFloat(dataRecord.damageDecayPerTick(), 1.0 / SplatoonHealthPerMinecraftHealth / SplatoonFramesPerMinecraftTick)
 		);
 	}
-	public static ShotDataRecord convertDamage(ShotDataRecord dataRecord)
+	public static ShotDataRecord convert(ShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -90,13 +90,13 @@ public class SplatcraftConvertors
 			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.speed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 			dataRecord.projectileCount(),
-			convertDamage(dataRecord.accuracyData()),
+			convert(dataRecord.accuracyData()),
 			dataRecord.pitchCompensation(),
 			dataRecord.inkConsumption(),
 			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static OptionalShotDataRecord convertDamage(OptionalShotDataRecord dataRecord)
+	public static OptionalShotDataRecord convert(OptionalShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -109,13 +109,13 @@ public class SplatcraftConvertors
 			dataRecord.miscEndlagTicks().map(v -> v / SplatoonFramesPerMinecraftTick),
 			dataRecord.speed().map(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
 			dataRecord.projectileCount(),
-			dataRecord.accuracyData().map(SplatcraftConvertors::convertDamage),
+			dataRecord.accuracyData().map(SplatcraftConvertors::convert),
 			dataRecord.pitchCompensation(),
 			dataRecord.inkConsumption(),
 			dataRecord.inkRecoveryCooldown().map(v -> v / SplatoonFramesPerMinecraftTick)
 		);
 	}
-	public static ShotDeviationDataRecord convertDamage(ShotDeviationDataRecord dataRecord)
+	public static ShotDeviationDataRecord convert(ShotDeviationDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -132,7 +132,7 @@ public class SplatcraftConvertors
 			dataRecord.airborneContractDelay() / SplatoonFramesPerMinecraftTick,
 			dataRecord.airborneContractTimeToDecrease() / SplatoonFramesPerMinecraftTick);
 	}
-	public static DualieWeaponSettings.RollDataRecord convertDamage(DualieWeaponSettings.RollDataRecord dataRecord)
+	public static DualieWeaponSettings.RollDataRecord convert(DualieWeaponSettings.RollDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -165,7 +165,7 @@ public class SplatcraftConvertors
 			dataRecord.canMove()
 		);
 	}
-	public static BlasterWeaponSettings.DetonationRecord convertDamage(BlasterWeaponSettings.DetonationRecord dataRecord)
+	public static BlasterWeaponSettings.DetonationRecord convert(BlasterWeaponSettings.DetonationRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -187,26 +187,26 @@ public class SplatcraftConvertors
 			1f / SplatoonHealthPerMinecraftHealth
 		);
 	}
-	public static SubWeaponSettings.DataRecord convertDamage(SubWeaponSettings.DataRecord dataRecord)
+	public static SubWeaponSettings.DataRecord convert(SubWeaponSettings.DataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
 		return new SubWeaponSettings.DataRecord(
-			convertDamage(dataRecord.inkUsage()),
+			convert(dataRecord.inkUsage()),
 			dataRecord.holdTime() < WeaponBaseItem.USE_DURATION ? dataRecord.holdTime() / SplatoonFramesPerMinecraftTick : dataRecord.holdTime(),
 			dataRecord.mobility(),
 			dataRecord.isSecret()
 		);
 	}
-	public static <T extends DynamicDataRecord<T>> T convertDamage(T dataRecord)
+	public static <T extends DynamicDataRecord<T>> T convert(T dataRecord)
 	{
 		if (SkipConverting || dataRecord == null)
 			return dataRecord;
 		
 		return dataRecord.convertSelf();
 	}
-	public static SplashAroundDataRecord convertDamage(SplashAroundDataRecord dataRecord)
+	public static SplashAroundDataRecord convert(SplashAroundDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -220,7 +220,7 @@ public class SplatcraftConvertors
 			dataRecord.distributeEvenly()
 		);
 	}
-	public static SlosherShotDataRecord convertDamage(SlosherShotDataRecord dataRecord)
+	public static SlosherShotDataRecord convert(SlosherShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -228,7 +228,7 @@ public class SplatcraftConvertors
 		return new SlosherShotDataRecord(
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
 			Math.round((float) dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick),
-			convertDamage(dataRecord.sloshes()),
+			convert(dataRecord.sloshes()),
 			dataRecord.baseSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 			dataRecord.pitchCompensation(),
 			dataRecord.inkConsumption(),
@@ -236,7 +236,7 @@ public class SplatcraftConvertors
 			dataRecord.allowFlicking()
 		);
 	}
-	private static List<SingularSloshShotData> convertDamage(List<SingularSloshShotData> dataRecords)
+	private static List<SingularSloshShotData> convert(List<SingularSloshShotData> dataRecords)
 	{
 		if (SkipConverting)
 			return dataRecords;
@@ -249,11 +249,11 @@ public class SplatcraftConvertors
 				dataRecord.modifiedSpeed().map(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
 				dataRecord.speedSubstract() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 				dataRecord.offsetAngle(),
-				dataRecord.projectileModifications().map(SplatcraftConvertors::convertDamage),
-				dataRecord.detonationData().map(SplatcraftConvertors::convertDamage)
+				dataRecord.projectileModifications().map(SplatcraftConvertors::convert),
+				dataRecord.detonationData().map(SplatcraftConvertors::convert)
 			)).toList();
 	}
-	public static RollDataRecord convertDamage(RollDataRecord dataRecord)
+	public static RollDataRecord convert(RollDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -270,14 +270,14 @@ public class SplatcraftConvertors
 			dataRecord.dashTime() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static SwingDataRecord convertDamage(SwingDataRecord dataRecord)
+	public static SwingDataRecord convert(SwingDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
 		return new SwingDataRecord(
-			convertDamage(dataRecord.projectileData()),
-			convertDamage(dataRecord.attackData()),
+			convert(dataRecord.projectileData()),
+			convert(dataRecord.attackData()),
 			dataRecord.allowJumpingOnCharge(),
 			dataRecord.mobility(),
 			dataRecord.attackAngle(),
@@ -285,20 +285,20 @@ public class SplatcraftConvertors
 			dataRecord.blobCount()
 		);
 	}
-	public static FlingDataRecord convertDamage(FlingDataRecord dataRecord)
+	public static FlingDataRecord convert(FlingDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
 		
 		return new FlingDataRecord(
-			convertDamage(dataRecord.projectileData()),
-			convertDamage(dataRecord.attackData()),
+			convert(dataRecord.projectileData()),
+			convert(dataRecord.attackData()),
 			dataRecord.startPitchCompensation(),
 			dataRecord.endPitchCompensation(),
 			dataRecord.forcedProjectileCount()
 		);
 	}
-	private static RollerAttackDataRecord convertDamage(RollerAttackDataRecord dataRecord)
+	private static RollerAttackDataRecord convert(RollerAttackDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -311,7 +311,7 @@ public class SplatcraftConvertors
 			dataRecord.speedRange().mapBoth(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick)
 		);
 	}
-	private static RollerProjectileDataRecord convertDamage(RollerProjectileDataRecord dataRecord)
+	private static RollerProjectileDataRecord convert(RollerProjectileDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -333,7 +333,7 @@ public class SplatcraftConvertors
 			dataRecord.weakDamageRanges().map(SplatcraftConvertors::convertDamage)
 		);
 	}
-	public static ChargerProjectileDataRecord convertDamage(ChargerProjectileDataRecord dataRecord)
+	public static ChargerProjectileDataRecord convert(ChargerProjectileDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -349,7 +349,7 @@ public class SplatcraftConvertors
 			dataRecord.piercesAtCharge()
 		);
 	}
-	public static ChargerWeaponSettings.ShotDataRecord convertDamage(ChargerWeaponSettings.ShotDataRecord dataRecord)
+	public static ChargerWeaponSettings.ShotDataRecord convert(ChargerWeaponSettings.ShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -362,7 +362,7 @@ public class SplatcraftConvertors
 			dataRecord.shotsCount()
 		);
 	}
-	public static ChargeDataRecord convertDamage(ChargeDataRecord dataRecord)
+	public static ChargeDataRecord convert(ChargeDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -377,7 +377,7 @@ public class SplatcraftConvertors
 			dataRecord.chargeStorageShootLag() / SplatoonFramesPerMinecraftTick
 		);
 	}
-	public static SplatlingShotDataRecord convertDamage(SplatlingShotDataRecord dataRecord)
+	public static SplatlingShotDataRecord convert(SplatlingShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -389,12 +389,12 @@ public class SplatcraftConvertors
 			dataRecord.projectileCount(),
 			dataRecord.projectileSpeed() / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick,
 			dataRecord.chargeUsePerShot(),
-			convertDamage(dataRecord.accuracyData()),
+			convert(dataRecord.accuracyData()),
 			dataRecord.pitchCompensation(),
 			dataRecord.mobility()
 		);
 	}
-	public static SplatlingWeaponSettings.ChargeDataRecord convertDamage(SplatlingWeaponSettings.ChargeDataRecord dataRecord)
+	public static SplatlingWeaponSettings.ChargeDataRecord convert(SplatlingWeaponSettings.ChargeDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -414,7 +414,7 @@ public class SplatcraftConvertors
 			dataRecord.canRechargeWhileFiring()
 		);
 	}
-	public static SplatlingWeaponSettings.OptionalSplatlingShotDataRecord convertDamage(SplatlingWeaponSettings.OptionalSplatlingShotDataRecord dataRecord)
+	public static SplatlingWeaponSettings.OptionalSplatlingShotDataRecord convert(SplatlingWeaponSettings.OptionalSplatlingShotDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;
@@ -426,12 +426,12 @@ public class SplatcraftConvertors
 			dataRecord.projectileCount(),
 			dataRecord.projectileSpeed().map(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick),
 			dataRecord.chargeUsePerShot(),
-			dataRecord.accuracyData().map(SplatcraftConvertors::convertDamage),
+			dataRecord.accuracyData().map(SplatcraftConvertors::convert),
 			dataRecord.pitchCompensation(),
 			dataRecord.mobility()
 		);
 	}
-	private static OptionalShotDeviationDataRecord convertDamage(OptionalShotDeviationDataRecord dataRecord)
+	private static OptionalShotDeviationDataRecord convert(OptionalShotDeviationDataRecord dataRecord)
 	{
 		if (SkipConverting)
 			return dataRecord;

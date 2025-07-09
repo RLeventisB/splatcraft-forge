@@ -50,8 +50,8 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	@Override
 	public void processData(DataRecord data)
 	{
-		projectileData = SplatcraftConvertors.convertDamage(data.projectile);
-		shotData = SplatcraftConvertors.convertDamage(data.shot);
+		projectileData = SplatcraftConvertors.convert(data.projectile);
+		shotData = SplatcraftConvertors.convert(data.shot);
 		
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);

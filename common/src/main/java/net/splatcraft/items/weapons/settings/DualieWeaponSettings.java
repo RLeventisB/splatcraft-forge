@@ -63,13 +63,13 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	@Override
 	public void processData(DataRecord data)
 	{
-		standardProjectileData = SplatcraftConvertors.convertDamage(data.projectile);
-		turretProjectileData = SplatcraftConvertors.convertDamage(OptionalProjectileDataRecord.mergeWithBase(data.turretProjectile, data.projectile));
-		turretProjectileMods = data.turretProjectile.map(SplatcraftConvertors::convertDamage);
-		standardShotData = SplatcraftConvertors.convertDamage(data.shot);
-		turretShotData = SplatcraftConvertors.convertDamage(OptionalShotDataRecord.mergeWithBase(data.turretShot, data.shot));
-		turretShotMods = data.turretShot.map(SplatcraftConvertors::convertDamage);
-		rollData = SplatcraftConvertors.convertDamage(data.roll);
+		standardProjectileData = SplatcraftConvertors.convert(data.projectile);
+		turretProjectileData = SplatcraftConvertors.convert(OptionalProjectileDataRecord.mergeWithBase(data.turretProjectile, data.projectile));
+		turretProjectileMods = data.turretProjectile.map(SplatcraftConvertors::convert);
+		standardShotData = SplatcraftConvertors.convert(data.shot);
+		turretShotData = SplatcraftConvertors.convert(OptionalShotDataRecord.mergeWithBase(data.turretShot, data.shot));
+		turretShotMods = data.turretShot.map(SplatcraftConvertors::convert);
+		rollData = SplatcraftConvertors.convert(data.roll);
 		
 		setMoveSpeed(data.moveSpeed);
 		setSecret(data.isSecret);

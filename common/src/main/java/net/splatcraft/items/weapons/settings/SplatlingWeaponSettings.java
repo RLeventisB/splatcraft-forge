@@ -126,29 +126,29 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	@Override
 	protected void processResult(DataRecord data, T subData)
 	{
-		secondLevelShotMods = data.secondChargeShot.map(SplatcraftConvertors::convertDamage);
-		fullLevelShotMods = data.fullChargeShot.map(SplatcraftConvertors::convertDamage);
-		secondLevelProjectileMods = data.secondChargeProjectile.map(SplatcraftConvertors::convertDamage);
-		fullLevelProjectileMods = data.fullChargeProjectile.map(SplatcraftConvertors::convertDamage);
+		secondLevelShotMods = data.secondChargeShot.map(SplatcraftConvertors::convert);
+		fullLevelShotMods = data.fullChargeShot.map(SplatcraftConvertors::convert);
+		secondLevelProjectileMods = data.secondChargeProjectile.map(SplatcraftConvertors::convert);
+		fullLevelProjectileMods = data.fullChargeProjectile.map(SplatcraftConvertors::convert);
 		
 		ProjectileDataRecord secondChargeProjectile = OptionalProjectileDataRecord.mergeWithBase(data.secondChargeProjectile, data.baseProjectile);
 		SplatlingShotDataRecord secondChargeShot = OptionalSplatlingShotDataRecord.mergeWithBase(data.secondChargeShot, data.baseShot);
 		
 		projectileDatas = new ProjectileDataRecord[] {
-			SplatcraftConvertors.convertDamage(data.baseProjectile),
-			SplatcraftConvertors.convertDamage(secondChargeProjectile),
-			SplatcraftConvertors.convertDamage(OptionalProjectileDataRecord.mergeWithBase(data.fullChargeProjectile, secondChargeProjectile))
+			SplatcraftConvertors.convert(data.baseProjectile),
+			SplatcraftConvertors.convert(secondChargeProjectile),
+			SplatcraftConvertors.convert(OptionalProjectileDataRecord.mergeWithBase(data.fullChargeProjectile, secondChargeProjectile))
 		};
 		shotDatas = new SplatlingShotDataRecord[] {
-			SplatcraftConvertors.convertDamage(data.baseShot),
-			SplatcraftConvertors.convertDamage(secondChargeShot),
-			SplatcraftConvertors.convertDamage(OptionalSplatlingShotDataRecord.mergeWithBase(data.fullChargeShot, secondChargeShot))
+			SplatcraftConvertors.convert(data.baseShot),
+			SplatcraftConvertors.convert(secondChargeShot),
+			SplatcraftConvertors.convert(OptionalSplatlingShotDataRecord.mergeWithBase(data.fullChargeShot, secondChargeShot))
 		};
 		
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
-		shotSelectionData = SplatcraftConvertors.convertDamage(subData);
-		chargeData = SplatcraftConvertors.convertDamage(data.charge);
+		shotSelectionData = SplatcraftConvertors.convert(subData);
+		chargeData = SplatcraftConvertors.convert(data.charge);
 		setInkConsumption(data.inkConsumption);
 		setInkRecoveryCooldown(SplatcraftConvertors.SkipConverting ? data.inkRecoveryCooldown : (data.inkRecoveryCooldown / SplatcraftConvertors.SplatoonFramesPerMinecraftTick));
 	}

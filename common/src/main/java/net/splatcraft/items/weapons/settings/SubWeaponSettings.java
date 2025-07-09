@@ -54,8 +54,8 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	@Override
 	protected void processResult(DataRecord dataRecord, T subData)
 	{
-		this.dataRecord = SplatcraftConvertors.convertDamage(dataRecord);
-		subDataRecord = SplatcraftConvertors.convertDamage(subData);
+		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
+		subDataRecord = SplatcraftConvertors.convert(subData);
 		
 		setSecret(dataRecord.isSecret);
 		setMoveSpeed(dataRecord.mobility);
