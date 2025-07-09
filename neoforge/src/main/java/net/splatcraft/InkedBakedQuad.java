@@ -23,6 +23,7 @@ public class InkedBakedQuad extends BakedQuad
 		}
 		else
 			sprite = original.getSprite();
+		
 		int[] quadData = original.getVertices();
 		if (replaceSprite)
 		{
@@ -34,8 +35,13 @@ public class InkedBakedQuad extends BakedQuad
 			// index 4, 5: uv data
 			for (int i = 0; i < 4; i++)
 			{
-				newData[i * 8 + 4] = Float.floatToRawIntBits(sprite.getU(ChunkInkHandler.Render.defaultUv.getU(i)));
-				newData[i * 8 + 5] = Float.floatToRawIntBits(sprite.getV(ChunkInkHandler.Render.defaultUv.getV(i)));
+				int uIndex = i * 8 + 4;
+				int vIndex = i * 8 + 5;
+				
+				float originalU = original.getSprite().getUOffset(Float.intBitsToFloat(quadData[uIndex]));
+				float originalV = original.getSprite().getVOffset(Float.intBitsToFloat(quadData[vIndex]));
+				newData[uIndex] = Float.floatToRawIntBits(sprite.getU(originalU));
+				newData[vIndex] = Float.floatToRawIntBits(sprite.getV(originalV));
 			}
 			return new InkedBakedQuad(original, newData, color, sprite, isGlowyQuad);
 		}

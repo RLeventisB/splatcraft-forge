@@ -1,9 +1,7 @@
 package net.splatcraft.handlers;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.block.model.BlockFaceUV;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -43,7 +41,6 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RelativeBlockPos;
 
 import java.util.*;
@@ -312,35 +309,7 @@ public class ChunkInkHandler
 	public static class Render
 	{
 		public static final ResourceLocation INKED_BLOCK_LOCATION = Splatcraft.identifierOf("block/inked_block");
-		public static final BlockFaceUV defaultUv = new BlockFaceUV(new float[] {0, 0, 1, 1}, 0);
-		private static BlockColor splatcraftColorProvider;
 		private static TextureAtlasSprite inkedBlockSprite;
-		public static BlockColor getSplatcraftColorProvider()
-		{
-			if (splatcraftColorProvider == null)
-			{
-				splatcraftColorProvider = (state, view, pos, tint) ->
-				{
-					switch (tint)
-					{
-						case 0: // the actual ink
-							ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock((Level) view, pos);
-							int index = 0;
-							InkColor color = InkColor.INVALID;
-							if (ink != null && ink.isInked(index))
-								color = ColorUtils.getColorLockedIfConfig(ink.color(index));
-							return color.getColorWithAlpha(255);
-//                            Arrays.fill(output, ColorARGB.toABGR(color, 255));
-						case 1: // glitter
-							return (0xFFFFFFFF);
-						case 2: // permanent ink overlay
-							return (0xFFFFFFFF);
-					}
-					return 0;
-				};
-			}
-			return splatcraftColorProvider;
-		}
 		public static TextureAtlasSprite getInkedBlockSprite()
 		{
 			if (inkedBlockSprite == null)

@@ -43,13 +43,15 @@ public class BlockRenderMixinForge
 			ChunkRenderTypeSet renderType = original.call(instance, state, random, modelData);
 			if (!ChunkInkCapability.has(world, blockpos))
 				return renderType;
+			
 			ChunkInk chunkInk = ChunkInkCapability.get(world, blockpos);
 			if (chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(blockpos)))
 				return ChunkRenderTypeSet.union(renderType, ChunkRenderTypeSet.of(RenderType.translucent()));
+			
 			return renderType;
 		}
 		@WrapOperation(method = "compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
-		public BlockState getBlockState(RenderChunkRegion instance, BlockPos pos, Operation<BlockState> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
+		public BlockState splatcraft$renderAsCubeTagOverride(RenderChunkRegion instance, BlockPos pos, Operation<BlockState> original, @Local(ordinal = 2) BlockPos blockpos, @Local(argsOnly = true) RenderChunkRegion arg2)
 		{
 			BlockState originalState = original.call(instance, pos);
 			return originalState.is(SplatcraftTags.Blocks.RENDER_AS_CUBE) && InkBlockUtils.isInkedAny(((ChunkRegionAccessor) arg2).getLevel(), blockpos) ? SplatcraftBlocks.inkedBlock.value().defaultBlockState() : originalState;
@@ -61,7 +63,8 @@ public class BlockRenderMixinForge
 		@WrapOperation(method = "renderBatched(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;Lnet/neoforged/neoforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JILnet/neoforged/neoforge/client/model/data/ModelData;Lnet/minecraft/client/renderer/RenderType;)V"))
 		public void splatcraft$addBakedModel(ModelBlockRenderer instance, BlockAndTintGetter blockRenderView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrixStack, VertexConsumer vertexConsumer, boolean b, RandomSource random, long l, int i, ModelData modelData, RenderType renderLayer, Operation<Void> original)
 		{
-			original.call(instance, blockRenderView, new InkedBakedModel(model, ((ChunkRegionAccessor) blockRenderView).getLevel(), pos), state, pos, matrixStack, vertexConsumer, b, random, l, i, modelData, renderLayer);
+			Level level = ((ChunkRegionAccessor) blockRenderView).getLevel();
+			original.call(instance, blockRenderView, InkedBakedModel.tryCreateFor(model, level, pos), state, pos, matrixStack, vertexConsumer, b, random, l, i, modelData, renderLayer);
 		}
 	}
 }

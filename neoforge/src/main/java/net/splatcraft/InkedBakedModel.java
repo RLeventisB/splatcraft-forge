@@ -20,8 +20,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPos) implements BakedModel
+public record InkedBakedModel(BakedModel original, @NotNull ChunkInk.BlockEntry inkEntry) implements BakedModel
 {
+	public static BakedModel tryCreateFor(BakedModel original, Level level, BlockPos pos)
+	{
+		ChunkInk.BlockEntry inkBlock = InkBlockUtils.getInkBlock(level, pos);
+		if (inkBlock == null)
+			return original;
+		return new InkedBakedModel(original, inkBlock);
+	}
 	@Override
 	public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType)
 	{
@@ -38,30 +45,23 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 	{
 		if (face == null)
 		{
-			if (world != null && blockPos != null)
+			List<BakedQuad> inkedQuads = new ArrayList<>(quads.size());
+			for (BakedQuad quad : quads)
 			{
-				ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(world, blockPos);
-				if (ink != null)
+				if (quad.getDirection() == null)
+					continue;
+				
+				ChunkInk.InkEntry entry = inkEntry.get(quad.getDirection().get3DDataValue());
+				if (entry != null)
 				{
-					List<BakedQuad> inkedQuads = new ArrayList<>(quads.size());
-					for (BakedQuad quad : quads)
-					{
-						if (quad.getDirection() == null)
-							continue;
-
-						ChunkInk.InkEntry entry = ink.get(quad.getDirection().get3DDataValue());
-						if (entry != null)
-						{
-							inkedQuads.addAll(withSetData(quad, entry));
-						}
-						else
-						{
-							inkedQuads.add(quad);
-						}
-					}
-					return inkedQuads;
+					inkedQuads.addAll(withSetData(quad, entry));
+				}
+				else
+				{
+					inkedQuads.add(quad);
 				}
 			}
+			return inkedQuads;
 		}
 		else
 		{
@@ -93,18 +93,18 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 				{
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, false));
 				}
-
+				
 				break;
-
+			
 			case GLOWING:
 				for (BakedQuad quad : quads)
 				{
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, false));
 					inkedQuads.add(InkedBakedQuad.createQuad(quad, data.color(), true, true));
 				}
-
+				
 				break;
-
+			
 			case CLEAR:
 				for (BakedQuad quad : quads)
 				{
@@ -116,15 +116,10 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 	}
 	public ChunkInk.InkEntry getEntry(Direction face)
 	{
-		if (world == null || blockPos == null || face == null)
+		if (face == null)
 			return null;
-
-		ChunkInk.BlockEntry ink = InkBlockUtils.getInkBlock(world, blockPos);
-		if (ink != null)
-		{
-			return ink.get(face.get3DDataValue());
-		}
-		return null;
+		
+		return inkEntry.get(face.get3DDataValue());
 	}
 	@Override
 	public boolean useAmbientOcclusion()
@@ -160,13 +155,5 @@ public record InkedBakedModel(BakedModel original, Level world, BlockPos blockPo
 	public @NotNull ItemOverrides getOverrides()
 	{
 		return original.getOverrides();
-	}
-	@Override
-	public @NotNull String toString()
-	{
-		return "InkedBakedModel[" +
-			"original=" + original + ", " +
-			"world=" + world + ", " +
-			"blockPos=" + blockPos + ']';
 	}
 }
