@@ -1,10 +1,12 @@
 package net.splatcraft.util;
 
 import com.mojang.serialization.Codec;
+import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.StringRepresentable;
@@ -551,6 +553,7 @@ public class InkBlockUtils
 			Splatcraft.identifierOf("clear"), CLEAR
 		);
 		public static final Codec<InkType> CODEC = StringRepresentable.fromEnum(InkType::values);
+		public static final StreamCodec<ByteBuf, InkType> STREAM_CODEC = CodecUtils.createEnumPacketCodec(InkType::values);
 		private final ResourceLocation name;
 		private final Item repItem;
 		private final InkedBlock block;

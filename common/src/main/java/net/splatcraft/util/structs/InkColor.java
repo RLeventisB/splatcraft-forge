@@ -4,10 +4,10 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
@@ -25,7 +25,7 @@ public class InkColor implements Comparable<InkColor>
 {
 	public static final InkColor INVALID;
 	private static final TreeMap<Integer, InkColor> hexToColorMap = new TreeMap<>();
-	public static final StreamCodec<RegistryFriendlyByteBuf, InkColor> PACKET_CODEC =
+	public static final StreamCodec<ByteBuf, InkColor> PACKET_CODEC =
 		StreamCodec.composite(
 			ByteBufCodecs.INT, InkColor::getColor,
 			InkColor::constructOrReuse

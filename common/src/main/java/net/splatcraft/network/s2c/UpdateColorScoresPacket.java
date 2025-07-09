@@ -1,5 +1,6 @@
 package net.splatcraft.network.s2c;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -15,7 +16,7 @@ import java.util.List;
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
-	public static final StreamCodec<RegistryFriendlyByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.PACKET_CODEC.apply(ByteBufCodecs.list());
+	public static final StreamCodec<ByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.PACKET_CODEC.apply(ByteBufCodecs.list());
 	List<InkColor> colors;
 	boolean add;
 	boolean clear;
@@ -42,7 +43,7 @@ public class UpdateColorScoresPacket extends PlayS2CPacket
 			ScoreboardHandler.clearColorCriteria();
 			InkVatColorRecipe.getOmniList().clear();
 		}
-
+		
 		if (add)
 		{
 			for (InkColor color : colors)

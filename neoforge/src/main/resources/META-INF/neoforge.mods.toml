@@ -16,22 +16,22 @@ description = '''${description}''' #mandatory (Supports multiline text)
 config = "splatcraft.mixins.json"
 [[mixins]]
 config = "splatcraft-neoforge.mixins.json"
-[[dependencies.splatcraft]] #optional
+[[dependencies.splatcraft]] #Neoforge dependency
 modId = "neoforge" #mandatory
 type = "required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
 versionRange = "[${neoforge_version},)" #mandatory
 ordering = "NONE" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory
 side = "BOTH" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'
-[[dependencies.splatcraft]]
+[[dependencies.splatcraft]] #Minecraft dependency
 modId = "minecraft"
-type = "required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
+type = "required"
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
-[[dependencies.splatcraft]]
-modId = "minecraft"
-type = "required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
-versionRange = "[1.0.18, )"
+[[dependencies.splatcraft]] #Common Networking dependency
+modId = "commonnetworking"
+type = "required"
+versionRange = "[1.0.16, 1.0.20]"
 ordering = "NONE"
 side = "BOTH"
 

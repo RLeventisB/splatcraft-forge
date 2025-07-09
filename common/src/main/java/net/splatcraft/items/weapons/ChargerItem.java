@@ -60,7 +60,10 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 		}
 		
 		chargingSound = new ChargerChargingTickableSound(ClientUtils.getClientPlayer(), SplatcraftSounds.chargerCharge, 1);
-		Minecraft.getInstance().getSoundManager().play(chargingSound);
+		synchronized (this)
+		{
+			Minecraft.getInstance().getSoundManager().play(chargingSound);
+		}
 	}
 	@OnlyIn(Dist.CLIENT)
 	protected static void playChargeReadySound(LivingEntity entity)

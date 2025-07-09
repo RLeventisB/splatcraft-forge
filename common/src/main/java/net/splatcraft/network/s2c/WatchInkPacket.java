@@ -31,7 +31,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 		HashMap<RelativeBlockPos, ChunkInk.BlockEntry> dirty = new HashMap<>();
 		int size = buffer.readInt();
 		for (int i = 0; i < size; i++)
-			dirty.put(RelativeBlockPos.fromBuf(buffer), ChunkInk.BlockEntry.readFromBuffer(buffer));
+			dirty.put(RelativeBlockPos.fromBuf(buffer), ChunkInk.BlockEntry.STREAM_CODEC.decode(buffer));
 		
 		return new WatchInkPacket(pos, dirty);
 	}
@@ -63,7 +63,7 @@ public class WatchInkPacket extends IncrementalChunkBasedPacket
 			RelativeBlockPos blockPos = pair.getKey();
 			ChunkInk.BlockEntry entry = pair.getValue();
 			blockPos.writeBuf(buffer);
-			entry.writeToBuffer(buffer);
+			ChunkInk.BlockEntry.STREAM_CODEC.encode(buffer, entry);
 		}
 	}
 	@Override

@@ -1,21 +1,21 @@
 package net.splatcraft.data.capabilities.chunkink;
 
+import com.google.common.collect.Iterators;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RelativeBlockPos;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /*  TODO
 	make old inked blocks decay instantly
@@ -220,6 +220,47 @@ public class ChunkInk
 			InkEntry.CODEC.lenientOptionalFieldOf("east_entry").forGetter(v -> Optional.ofNullable(v.entries[5])),
 			Codec.BOOL.fieldOf("immutable").forGetter(v -> v.immutable)
 		).apply(inst, BlockEntry::new));
+		public static final StreamCodec<ByteBuf, BlockEntry> STREAM_CODEC = StreamCodec.of(
+			(buf, entry) ->
+			{
+				// format for the state byte:
+				// if entry is completely empty, state = 0
+				// else:
+				// first - sixth bit: state of the face
+				// seventh bit: whether the block is permanent/static
+				
+				if (!entry.isInkedAny())
+				{
+					buf.writeByte(0);
+					return;
+				}
+				
+				buf.writeByte(entry.getActiveFlag() | (entry.immutable ? 64 : 0));
+				for (byte i = 0; i < 6; i++)
+				{
+					if (entry.isInked(i))
+					{
+						InkEntry.STREAM_CODEC.encode(buf, entry.get(i));
+					}
+				}
+			},
+			(buf) ->
+			{
+				BlockEntry entry = new BlockEntry();
+				byte state = buf.readByte();
+				if (state != 0)
+				{
+					entry.immutable = (state & 64) == 64;
+					state &= 0b00111111;
+					for (byte i : getIndicesFromActiveFlag(state))
+					{
+						entry.entries[i] = InkEntry.STREAM_CODEC.decode(buf);
+					}
+				}
+				
+				return entry;
+			}
+		);
 		public final InkEntry[] entries = new InkEntry[6];
 		public boolean immutable;
 		public BlockEntry()
@@ -245,50 +286,11 @@ public class ChunkInk
 		}
 		public static Byte[] getIndicesFromActiveFlag(byte flag)
 		{
-			ArrayList<Byte> list = new ArrayList<>(6);
-			if ((flag & 1) == 1)
-				list.add((byte) 0);
-			if ((flag & 2) == 2)
-				list.add((byte) 1);
-			if ((flag & 4) == 4)
-				list.add((byte) 2);
-			if ((flag & 8) == 8)
-				list.add((byte) 3);
-			if ((flag & 16) == 16)
-				list.add((byte) 4);
-			if ((flag & 32) == 32)
-				list.add((byte) 5);
-			list.trimToSize();
-			return list.toArray(new Byte[0]);
+			return Iterators.toArray(new IndexIterator(flag), Byte.class);
 		}
 		public static Boolean[] getStateFromActiveFlag(byte flag)
 		{
-			return new Boolean[] {(flag & 1) == 1, (flag & 2) == 2, (flag & 4) == 4, (flag & 8) == 8, (flag & 16) == 16, (flag & 32) == 32};
-		}
-		public static BlockEntry readFromBuffer(FriendlyByteBuf buffer)
-		{
-			BlockEntry entry = new BlockEntry();
-			byte state = buffer.readByte();
-			entry.immutable = (state & 128) == 128;
-			if ((state & 1) == 1)
-			{
-				Boolean[] inked = getStateFromActiveFlag((byte) (state >> 1));
-				for (int i = 0; i < 6; i++)
-				{
-					if (inked[i])
-					{
-						int color = buffer.readInt();
-						InkBlockUtils.InkType type = InkBlockUtils.InkType.fromId(buffer.readByte());
-						entry.paint(i, InkColor.constructOrReuse(color), type);
-					}
-					else
-					{
-						entry.clear(i);
-					}
-				}
-			}
-			
-			return entry;
+			return Iterators.toArray(new StateIterator(flag), Boolean.class);
 		}
 		public InkEntry get(int index)
 		{
@@ -338,33 +340,15 @@ public class ChunkInk
 		}
 		public byte getActiveFlag()
 		{
-			return (byte) ((isInked(0) ? 1 : 0) | (isInked(1) ? 2 : 0) | (isInked(2) ? 4 : 0) | (isInked(3) ? 8 : 0) | (isInked(4) ? 16 : 0) | (isInked(5) ? 32 : 0));
+			byte flag = 0;
+			for (byte i = 0; i < 6; i++)
+				if (isInked(i))
+					flag |= 1 << i;
+			return flag;
 		}
 		public Byte[] getActiveIndices()
 		{
-			ArrayList<Byte> list = new ArrayList<>(6);
-			for (byte i = 0; i < 6; i++)
-			{
-				if (isInked(i))
-					list.add(i);
-			}
-			return list.toArray(Byte[]::new);
-		}
-		public void writeToBuffer(FriendlyByteBuf buffer)
-		{
-			// format:
-			// first bit = whether there's any ink in the block
-			// second - seventh bit: state of the face
-			// eigth bit: whether the block is permanent/static
-			buffer.writeByte((isInkedAny() ? 1 : 0) | (getActiveFlag() << 1) | (immutable ? 128 : 0));
-			for (byte i = 0; i < 6; i++)
-			{
-				if (isInked(i))
-				{
-					buffer.writeInt(color(i).getColor());
-					buffer.writeByte(type(i).getId());
-				}
-			}
+			return Iterators.toArray(new IndexIterator(getActiveFlag()), Byte.class);
 		}
 		public void apply(ChunkInk worldInk, RelativeBlockPos pos)
 		{
@@ -385,6 +369,107 @@ public class ChunkInk
 			if (immutable) worldInk.markInmutable(pos);
 			else worldInk.markMutable(pos);
 		}
+		public static abstract class AbstractEntryIterator<T> implements Iterator<T>
+		{
+			protected final byte activeFlag;
+			protected byte index = 0;
+			public AbstractEntryIterator(byte activeFlag)
+			{
+				this.activeFlag = activeFlag;
+				while (index < 6 && !isActive(index))
+				{
+					index++;
+				}
+			}
+			@Override
+			public boolean hasNext()
+			{
+				return index < 6;
+			}
+			public void advanceUntilValid()
+			{
+				do
+				{
+					index++;
+				}
+				while (index < 6 && !isActive(index));
+			}
+			public boolean isActive(byte bit)
+			{
+				return (activeFlag & (1 << bit)) != 0;
+			}
+			@Override
+			public boolean equals(Object obj)
+			{
+				if (obj.getClass() != getClass())
+					return false;
+				
+				AbstractEntryIterator iterator = (AbstractEntryIterator) obj;
+				return activeFlag == iterator.activeFlag && index == iterator.index;
+			}
+			@Override
+			public int hashCode()
+			{
+				return Objects.hash(activeFlag, index);
+			}
+			@Override
+			public String toString()
+			{
+				return getClass().getTypeName() + "[" +
+					"activeFlag=" + activeFlag + ", " +
+					"index=" + index + ']';
+			}
+		}
+		public static final class DirectionIterator extends AbstractEntryIterator<Direction>
+		{
+			public DirectionIterator(byte activeFlag)
+			{
+				super(activeFlag);
+			}
+			@Override
+			public Direction next()
+			{
+				Direction direction = Direction.from3DDataValue(index);
+				advanceUntilValid();
+				return direction;
+			}
+		}
+		public static final class IndexIterator extends AbstractEntryIterator<Byte>
+		{
+			public IndexIterator(byte activeFlag)
+			{
+				super(activeFlag);
+			}
+			@Override
+			public Byte next()
+			{
+				byte lastIndex = index;
+				advanceUntilValid();
+				return lastIndex;
+			}
+		}
+		public static final class StateIterator extends AbstractEntryIterator<Boolean>
+		{
+			public StateIterator(byte activeFlag)
+			{
+				super(activeFlag);
+			}
+			@Override
+			public Boolean next()
+			{
+				boolean state = isActive(index);
+				index++;
+				return state;
+			}
+		}
+		public record EntryIterable<T>(AbstractEntryIterator<T> iterator) implements Iterable<T>
+		{
+			@Override
+			public @NotNull AbstractEntryIterator<T> iterator()
+			{
+				return iterator;
+			}
+		}
 	}
 	public record InkEntry(InkColor color, InkBlockUtils.InkType type)
 	{
@@ -392,5 +477,10 @@ public class ChunkInk
 			InkColor.RAW_INT_CODEC.fieldOf("color").forGetter(InkEntry::color),
 			InkBlockUtils.InkType.CODEC.fieldOf("type").forGetter(InkEntry::type)
 		).apply(inst, InkEntry::new));
+		public static final StreamCodec<ByteBuf, InkEntry> STREAM_CODEC = StreamCodec.composite(
+			InkColor.PACKET_CODEC, InkEntry::color,
+			InkBlockUtils.InkType.STREAM_CODEC, InkEntry::type,
+			InkEntry::new
+		);
 	}
 }

@@ -42,7 +42,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		for (int i = 0; i < changedBlocks; i++)
 		{
 			BlockPos pos = buffer.readBlockPos();
-			ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.readFromBuffer(buffer);
+			ChunkInk.BlockEntry entry = ChunkInk.BlockEntry.STREAM_CODEC.decode(buffer);
 			dirty.put(pos, entry);
 		}
 		
@@ -75,7 +75,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 			BlockPos blockPos = blockPosTupleEntry.getKey();
 			
 			buffer.writeBlockPos(blockPos);
-			blockPosTupleEntry.getValue().writeToBuffer(buffer);
+			ChunkInk.BlockEntry.STREAM_CODEC.encode(buffer, blockPosTupleEntry.getValue());
 		}
 	}
 	@Override
