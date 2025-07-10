@@ -6,6 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
+import net.splatcraft.util.CodecUtils;
+import net.splatcraft.util.structs.RangedValueCollection;
+import org.joml.Vector2f;
 
 public class SpecialWeaponRecords
 {
@@ -57,6 +60,63 @@ public class SpecialWeaponRecords
 				revealRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
 				paintingRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
 				paintSearchRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare
+			);
+		}
+	}
+	public record InkJetDataRecord(
+		RangedValueCollection thrustData,
+		CommonRecords.ProjectileDataRecord projectile,
+		BlasterWeaponSettings.DetonationRecord blast,
+		float projectileSpeed,
+		float initialStartup,
+		float firingRepeatTicks,
+		float impulseOnJump,
+		int impulseCooldown,
+		int recallTime,
+		float exhaustDamage,
+		float exhaustRange,
+		float exhaustPaint,
+		float maxMobility,
+		Vector2f hitboxScale
+	) implements DynamicDataRecord<InkJetDataRecord>
+	{
+		public static final MapCodec<InkJetDataRecord> CODEC = RecordCodecBuilder.mapCodec(
+			inst -> inst.group(
+				RangedValueCollection.JETPACK_CODEC.fieldOf("thrust_data").forGetter(InkJetDataRecord::thrustData),
+				CommonRecords.ProjectileDataRecord.CODEC.fieldOf("projectile").forGetter(InkJetDataRecord::projectile),
+				BlasterWeaponSettings.DetonationRecord.NO_SPARK_CODEC.fieldOf("blast").forGetter(InkJetDataRecord::blast),
+				Codec.FLOAT.fieldOf("projectile_speed").forGetter(InkJetDataRecord::projectileSpeed),
+				Codec.FLOAT.fieldOf("fire_initial_startup").forGetter(InkJetDataRecord::initialStartup),
+				Codec.FLOAT.fieldOf("fire_repeat_ticks").forGetter(InkJetDataRecord::firingRepeatTicks),
+				Codec.FLOAT.fieldOf("impulse_on_jump").forGetter(InkJetDataRecord::impulseOnJump),
+				Codec.INT.fieldOf("impulse_cooldown").forGetter(InkJetDataRecord::impulseCooldown),
+				Codec.INT.fieldOf("recall_time").forGetter(InkJetDataRecord::recallTime),
+				Codec.FLOAT.fieldOf("exhaust_damage").forGetter(InkJetDataRecord::exhaustDamage),
+				Codec.FLOAT.fieldOf("exhaust_range").forGetter(InkJetDataRecord::exhaustRange),
+				Codec.FLOAT.fieldOf("exhaust_paint").forGetter(InkJetDataRecord::exhaustPaint),
+				Codec.FLOAT.fieldOf("max_mobility").forGetter(InkJetDataRecord::maxMobility),
+				CodecUtils.Codecs.VECTOR2_MULTI_CODEC.optionalFieldOf("hitbox_scale", new Vector2f(1.1f)).forGetter(InkJetDataRecord::hitboxScale)
+			).apply(inst, InkJetDataRecord::new)
+		);
+		public static final ResourceLocation ID = Splatcraft.identifierOf("inkjet");
+		@Override
+		public InkJetDataRecord convertSelf()
+		{
+			return new InkJetDataRecord(
+				thrustData.cloneWithMultiplier(1f / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare, 1f),
+				SplatcraftConvertors.convert(projectile),
+				SplatcraftConvertors.convert(blast),
+				projectileSpeed * SplatcraftConvertors.SplatoonFramesPerMinecraftTick / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				initialStartup / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				firingRepeatTicks / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				impulseOnJump,
+				impulseCooldown / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				recallTime / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				exhaustDamage / SplatcraftConvertors.SplatoonHealthPerMinecraftHealth,
+				exhaustRange / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				exhaustPaint / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				maxMobility,
+				hitboxScale
 			);
 		}
 	}

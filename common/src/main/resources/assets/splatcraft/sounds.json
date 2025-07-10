@@ -343,5 +343,47 @@
         "sounds": [
             "splatcraft:sting_ray_loop2"
         ]
+    },
+    "inkjet_start": {
+        "subtitle": "subtitle.inkjet_start",
+        "sounds": [
+            "splatcraft:inkjet_start"
+        ]
+    },
+    "inkjet_shot": {
+        "subtitle": "subtitle.inkjet_shot",
+        "sounds": [
+            "splatcraft:inkjet_shot"
+        ]
+    },
+    "inkjet_shot_explosion": {
+        "subtitle": "subtitle.inkjet_shot_explosion",
+        "sounds": [
+            "splatcraft:inkjet_shot_explosion"
+        ]
+    },
+    "inkjet_boost": {
+        "subtitle": "subtitle.inkjet_boost",
+        "sounds": [
+            "splatcraft:inkjet_boost"
+        ]
+    },
+    "inkjet_break": {
+        "subtitle": "subtitle.inkjet_break",
+        "sounds": [
+            "splatcraft:inkjet_break"
+        ]
+    },
+    "inkjet_counter": {
+        "subtitle": "subtitle.inkjet_counter",
+        "sounds": [
+            "splatcraft:inkjet_counter"
+        ]
+    },
+    "inkjet_return": {
+        "subtitle": "subtitle.inkjet_return",
+        "sounds": [
+            "splatcraft:inkjet_return"
+        ]
     }
 }

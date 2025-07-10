@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendPlaySessionEndPacket;
 import net.splatcraft.util.CodecUtils;
@@ -59,13 +60,14 @@ public final class PlaySession
 		players.forEach(player ->
 		{
 			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
+			WeaponHandler.resetLastGroundedPos(player);
 			EntityInfoCapability.getOptional(player).ifPresent(info ->
 			{
 				info.setIsSquid(true);
 				info.setPlayingStageId(stage.id);
 			});
 		});
-
+		
 		this.gameMode = gameMode;
 		stageId = stage.id;
 		sessionEndInstant = Instant.now().plus(INTRO_DURATION).plusSeconds(gameMode.DEFAULT_TIME_SECONDS).plus(END_DURATION);
@@ -134,16 +136,16 @@ public final class PlaySession
 			Stage stage = SaveInfoCapability.get().stages().get(stageId);
 			ServerLevel world = stage.getStageWorld(server);
 			gameMode.onEnd.consume(this, world);
-
+			
 			playerUuids.forEach(uuid ->
 			{
 				if (world == null)
 					return;
-
+				
 				Player plr = world.getPlayerByUUID(uuid);
 				if (plr == null)
 					return;
-
+				
 				EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
 			});
 			SaveInfoCapability.get().playSessions().remove(stageId);

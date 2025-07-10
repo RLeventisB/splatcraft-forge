@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class RangedValueCollection
 {
 	public static final Codec<RangedValueCollection> DAMAGE_CODEC = createCodec("max_range", "damage");
+	public static final Codec<RangedValueCollection> JETPACK_CODEC = createCodec("distance", "impulse");
 	private static Codec<RangedValueCollection> createCodec(String keyName, String valueName)
 	{
 		return createCodec(keyName, valueName, "points");
@@ -121,7 +122,7 @@ public class RangedValueCollection
 	}
 	public float getMaxValue()
 	{
-		return rangedValues.isEmpty() ? 0 : rangedValues.firstEntry().getValue();
+		return rangedValues.isEmpty() ? 0 : rangedValues.lastEntry().getValue();
 	}
 	public RangedValueCollection cloneWithMultiplier(float rangeMultiplier, float damageMultiplier)
 	{

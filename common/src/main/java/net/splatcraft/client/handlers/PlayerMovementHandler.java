@@ -95,7 +95,7 @@ public class PlayerMovementHandler
 		if (EntityAction.hasSpecificEntityAction(player, BaseSpecialAction.class))
 		{
 			BaseSpecialAction specialAction = EntityAction.getSpecificEntityAction(player, BaseSpecialAction.class);
-			specialAction.mobility().ifPresent(bonus ->
+			specialAction.mobility(player).ifPresent(bonus ->
 			{
 				speedAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, bonus - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 			});

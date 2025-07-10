@@ -44,7 +44,10 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.CodecUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -356,14 +359,6 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		super.releaseUsing(stack, world, user, remainingUseTicks);
 	}
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
-	{
-	
-	}
-	public void onPlayerCooldownEnd(Level world, Player player, ItemStack stack, EntityAction action)
-	{
-	
-	}
-	public void onPlayerCooldownTick(Level world, Player player, ItemStack stack, EntityAction action)
 	{
 	
 	}

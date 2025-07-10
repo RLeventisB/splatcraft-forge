@@ -9,7 +9,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.structs.NumberRange;
@@ -59,11 +58,6 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 		
 		setSecret(dataRecord.isSecret);
 		setMoveSpeed(dataRecord.mobility);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		return 0;
 	}
 	@Override
 	public List<WeaponTooltip<SubWeaponSettings<T>>> tooltipsToRegister()

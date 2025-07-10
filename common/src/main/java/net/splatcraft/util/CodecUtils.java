@@ -1,6 +1,7 @@
 package net.splatcraft.util;
 
 import com.google.common.base.Suppliers;
+import com.mojang.datafixers.Products;
 import com.mojang.datafixers.Products.P10;
 import com.mojang.datafixers.Products.P2;
 import com.mojang.datafixers.Products.P8;
@@ -102,6 +103,14 @@ public class CodecUtils
 		}
 		
 		return ResourceLocation.fromNamespaceAndPath(defaultNamespace, id);
+	}
+	public static <R> DataResult<R> dataResultOfOptional(final R result, Supplier<String> errorMessage)
+	{
+		return Optional.ofNullable(result).map(DataResult::success).orElseGet(() -> DataResult.error(errorMessage));
+	}
+	public static <R> DataResult<R> dataResultOfOptional(final Optional<R> result, Supplier<String> errorMessage)
+	{
+		return result.map(DataResult::success).orElseGet(() -> DataResult.error(errorMessage));
 	}
 	public static class Codecs
 	{
@@ -357,6 +366,48 @@ public class CodecUtils
 				p8.t6(),
 				p8.t7(),
 				p8.t8());
+		}
+		public static <F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9> Products.P9<F, T1, T2, T3, T4, T5, T6, T7, T8, T9> and(Products.P4<F, T1, T2, T3, T4> p4, Products.P5<F, T5, T6, T7, T8, T9> p5)
+		{
+			return new Products.P9<>(p4.t1(),
+				p4.t2(),
+				p4.t3(),
+				p4.t4(),
+				p5.t1(),
+				p5.t2(),
+				p5.t3(),
+				p5.t4(),
+				p5.t5()
+			);
+		}
+		public static <F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Products.P10<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> and(Products.P4<F, T1, T2, T3, T4> p4, Products.P6<F, T5, T6, T7, T8, T9, T10> p6)
+		{
+			return new Products.P10<>(p4.t1(),
+				p4.t2(),
+				p4.t3(),
+				p4.t4(),
+				p6.t1(),
+				p6.t2(),
+				p6.t3(),
+				p6.t4(),
+				p6.t5(),
+				p6.t6()
+			);
+		}
+		public static <F extends K1, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Products.P11<F, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> and(Products.P4<F, T1, T2, T3, T4> p4, Products.P7<F, T5, T6, T7, T8, T9, T10, T11> p7)
+		{
+			return new Products.P11<>(p4.t1(),
+				p4.t2(),
+				p4.t3(),
+				p4.t4(),
+				p7.t1(),
+				p7.t2(),
+				p7.t3(),
+				p7.t4(),
+				p7.t5(),
+				p7.t6(),
+				p7.t7()
+			);
 		}
 	}
 }

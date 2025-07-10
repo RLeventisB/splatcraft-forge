@@ -42,11 +42,12 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
-import net.splatcraft.util.structs.NumberRange.FloatRange;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.BlockInkedResult;
+import net.splatcraft.util.structs.DamageCalculator;
+import net.splatcraft.util.structs.NumberRange.FloatRange;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 import org.joml.sampling.PoissonSampling;
@@ -465,7 +466,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								// x is the projectile's yaw
 								// y is the distance between the player's yaw and the projectile's yaw
 								// z is the magnitude of the projectile's speed
-								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), settings);
+								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), DamageCalculator.empty());
 								
 								proj.shootFromRotation(entity, entity.getViewXRot(extraTime), data.x, 0, data.z, 0f);
 //								Vec3d offset = new Vec3d((entity.getRandom().nextFloat() * 2f - 1f) * 0.7f, 0.5f, 0.6f);
@@ -473,6 +474,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								offset = offset.yRot(-entity.getViewYRot(extraTime) * Mth.DEG_TO_RAD);
 								proj.moveTo(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
 								
+								proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), data.y > swingData.letalAngle());
 								proj.setRollerSwingStats(settings, false, data.y > swingData.letalAngle());
 								proj.setAttackId(attackId);
 								world.addFreshEntity(proj);
@@ -487,7 +489,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 							
 							for (int i = 0; i < count; i++)
 							{
-								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), flingData.projectileData().size(), settings);
+								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), flingData.projectileData().size(), DamageCalculator.empty());
 								
 								float progress = (float) i / Math.max(1, count - 1);
 								proj.shootFromRotation(
@@ -500,6 +502,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 								proj.setRollerSwingStats(settings, true, false);
 								proj.accumulatedDrops = progress;
 								proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
+								proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), false);
+								
 								proj.setAttackId(attackId);
 								world.addFreshEntity(proj);
 								proj.tick(extraTime);
@@ -515,7 +519,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			RandomSource random = entity.getRandom();
 			for (int i = 0; i < count; i++)
 			{
-				InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), settings);
+				InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), DamageCalculator.empty());
 				
 				Float angle = preparedAngles.remove(random.nextInt(preparedAngles.size()));
 				if (angle == null)
@@ -523,6 +527,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				
 				proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot() + angle, 0, swingData.attackData().speedRange().getRandom(random) * (weak ? 0.6f : 1f), 0f);
 				proj.moveTo(proj.getX(), proj.getY() - entity.getEyeHeight() / 2f, proj.getZ());
+				
+				proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), weak);
 				proj.setAttackId(attackId);
 				proj.setBrushSwingStats(settings, weak);
 				world.addFreshEntity(proj);

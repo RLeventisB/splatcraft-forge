@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -68,18 +69,24 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		{
 			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
 			world.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
-			
-			return;
 		}
 		
 		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
 		optional.ifPresent(info ->
 		{
 			if (entity.level().isClientSide)
-				ClientUtils.setSquid(entity, info, false);
+			{
+				setSquidClient(entity, info);
+			}
 			else
 				SquidFormHandler.setSquid(entity, info, false);
 		});
+	}
+	private static void setSquidClient(LivingEntity entity, EntityInfo info)
+	{
+		ClientUtils.setSquid(entity, info, false);
+		if (entity == ClientUtils.getClientPlayer())
+			SplatcraftKeyHandler.SQUID_KEYBIND.active = false;
 	}
 	@Override
 	public void tick(LivingEntity entity)
@@ -102,7 +109,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		return weaponSlot;
 	}
-	public Optional<Float> mobility()
+	public Optional<Float> mobility(LivingEntity entity)
 	{
 		return Optional.empty();
 	}
@@ -112,5 +119,9 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 			dataArray[0] = -0.5f * time / 3f;
 		else
 			doRender.set(false);
+	}
+	public boolean setSquidKeyToHold()
+	{
+		return false;
 	}
 }

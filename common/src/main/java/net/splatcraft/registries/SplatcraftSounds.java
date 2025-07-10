@@ -42,6 +42,13 @@ public class SplatcraftSounds
 	public static SoundEvent stingRayStart;
 	public static SoundEvent stingRayBeamUse;
 	public static SoundEvent stingRayShockwave;
+	public static SoundEvent inkjetStart;
+	public static SoundEvent inkjetShot;
+	public static SoundEvent inkjetShotExplosion;
+	public static SoundEvent inkjetBoost;
+	public static SoundEvent inkjetBreak;
+	public static SoundEvent inkjetCounter;
+	public static SoundEvent inkjetReturn;
 	public static SoundEvent remoteUse;
 	public static SoundEvent powerEggCanOpen;
 	public static SoundEvent squidBumperPlace;
@@ -117,9 +124,18 @@ public class SplatcraftSounds
 		
 		specialReady = createSoundEvent("special_ready");
 		specialUsage = createSoundEvent("special_use");
+		
 		stingRayStart = createSoundEvent("sting_ray_prepare");
 		stingRayBeamUse = createSoundEvent("sting_ray_loop");
 		stingRayShockwave = createSoundEvent("sting_ray_loop2");
+		
+		inkjetStart = createSoundEvent("inkjet_start");
+		inkjetShot = createSoundEvent("inkjet_shot");
+		inkjetShotExplosion = createSoundEvent("inkjet_shot_explosion");
+		inkjetBoost = createSoundEvent("inkjet_boost");
+		inkjetBreak = createSoundEvent("inkjet_break");
+		inkjetCounter = createSoundEvent("inkjet_counter");
+		inkjetReturn = createSoundEvent("inkjet_return");
 		
 		SOUND_TYPE_INK = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 		SOUND_TYPE_SWIMMING = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);

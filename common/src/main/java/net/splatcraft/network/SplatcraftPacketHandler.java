@@ -55,6 +55,7 @@ public class SplatcraftPacketHandler
 		registerMessage(SendPlaySessionEndPacket.ID, SendPlaySessionEndPacket.class, SendPlaySessionEndPacket::decode);
 		registerMessage(UseJumpLurePacket.ID, UseJumpLurePacket.class, UseJumpLurePacket::decode);
 		registerMessage(RequestSpecialUsageDataPacket.ID, RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
+		registerMessage(UpdateInputPacket.ID, UpdateInputPacket.class, UpdateInputPacket::decode);
 		registerMessage(SendSpecialUsageDataPacket.ID, SendSpecialUsageDataPacket.class, SendSpecialUsageDataPacket::decode);
 		registerMessage(SendSquidLagPacket.ID, SendSquidLagPacket.class, SendSquidLagPacket::decode);
 		

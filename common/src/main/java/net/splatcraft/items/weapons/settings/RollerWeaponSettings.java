@@ -7,8 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.ExtraSaveData;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.structs.NumberRange.FloatRange;
 import net.splatcraft.util.structs.RangedValueCollection;
 import net.splatcraft.util.structs.WeaponTooltip;
@@ -32,21 +30,6 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public RollerWeaponSettings(String name)
 	{
 		super(name);
-	}
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		ExtraSaveData.RollerDistanceExtraData data = list.getFirstExtraData(ExtraSaveData.RollerDistanceExtraData.class);
-		if (data == null)
-		{
-			RollerProjectileDataRecord projectileData = swingData.projectileData;
-			float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
-			return projectileData.damageRanges.getValue(0) * timeDamagePercent;
-		}
-		float distance = data.spawnPos.distance(projectile.position().toVector3f());
-		
-		RollerProjectileDataRecord projectileData = getAttackData(!data.wasAirborneOnShoot || isBrush).projectileData();
-		float timeDamagePercent = projectile.calculateDamageDecay(1, projectileData.damageFalloffStartTick, projectileData.calculatePercentageFallofPerTick(), projectileData.maxDamageFalloffPercent);
-		return projectileData.getDamageRanges(data.weakBullet).getValue(distance) * timeDamagePercent;
 	}
 	@Override
 	public List<WeaponTooltip<RollerWeaponSettings>> tooltipsToRegister()

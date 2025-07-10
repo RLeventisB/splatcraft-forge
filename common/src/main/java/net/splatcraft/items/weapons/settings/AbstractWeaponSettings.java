@@ -12,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 import net.splatcraft.util.structs.WeaponTooltip;
@@ -43,7 +42,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 			return speed * (straightShotTicks + delaySpeedMult * drag / (1 - drag));
 		return speed * (straightShotTicks + delaySpeedMult * dragOnEnd);
 	}
-	public abstract float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list);
 	public void addStatsToTooltip(List<Component> tooltip, TooltipFlag flag)
 	{
 		for (WeaponTooltip<SELF> stat : statTooltips)

@@ -14,14 +14,16 @@ import net.splatcraft.items.weapons.settings.SpecialWeaponRecords;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.InkjetAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 
 public class SpecialHandler
 {
-	public static final Map<ResourceLocation, SpecialExecutorAction> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
+	public static final Map<ResourceLocation, Pair<SpecialExecutorAction, BiPredicate<LivingEntity, ItemStack>>> specialExecutor = new Object2ObjectLinkedOpenHashMap<>();
 	public static final Integer DEFAULT_SPECIAL_COST = 200;
 	private static Supplier<Map<ResourceLocation, SpecialWeaponSettings<?>>> specialMapSupplier;
 	public static void registerSpecials()
@@ -38,10 +40,18 @@ public class SpecialHandler
 		{
 			EntityAction.setEntityAction(entity, new StingRayAction(settings, weaponSlot, providerSlot));
 		});
+		registerSpecialExecutor(SpecialWeaponRecords.InkJetDataRecord.ID, (entity, settings, providerSlot, weaponSlot) ->
+		{
+			EntityAction.setEntityAction(entity, new InkjetAction(settings, weaponSlot, providerSlot, WeaponHandler.getEntityLastGroundedPos(entity).get()));
+		}, (entity, stack) -> WeaponHandler.getEntityLastGroundedPos(entity).isPresent());
 	}
 	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate)
 	{
-		specialExecutor.put(specialId, delegate);
+		specialExecutor.put(specialId, Pair.of(delegate, (a, b) -> true));
+	}
+	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate, BiPredicate<LivingEntity, ItemStack> predicate)
+	{
+		specialExecutor.put(specialId, Pair.of(delegate, predicate));
 	}
 	public static Map<ResourceLocation, SpecialWeaponSettings<?>> getSpecialMap()
 	{
@@ -52,6 +62,14 @@ public class SpecialHandler
 		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
 		
 		return data != null && data.storedCharge() >= 1;
+	}
+	public static boolean passesSpecialConditions(LivingEntity entity, ItemStack providerStack)
+	{
+		SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
+		if (data == null || data.specialId().isEmpty())
+			return false;
+		
+		return specialExecutor.containsKey(data.specialId().get()) && specialExecutor.get(data.specialId().get()).getSecond().test(entity, providerStack);
 	}
 	public static int getSpecialCost(ItemStack weaponStack, ItemStack providerStack)
 	{
@@ -109,7 +127,7 @@ public class SpecialHandler
 		if (settings == null)
 			return;
 		
-		specialExecutor.get(specialId).execute(entity, settings, providerSlot, weaponSlot);
+		specialExecutor.get(specialId).getFirst().execute(entity, settings, providerSlot, weaponSlot);
 	}
 	@FunctionalInterface
 	public interface SpecialExecutorAction

@@ -6,8 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.ExtraSaveData;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.settings.CommonRecords.*;
 import net.splatcraft.util.CommonUtils;
@@ -29,17 +27,6 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	public DualieWeaponSettings(String name)
 	{
 		super(name);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		ExtraSaveData.DualieExtraData dualieData = list.getFirstExtraData(ExtraSaveData.DualieExtraData.class);
-		if (dualieData != null && dualieData.rollBullet)
-		{
-			return projectile.calculateDamageDecay(turretProjectileData.baseDamage(), turretProjectileData.damageDecayStartTick(), turretProjectileData.damageDecayPerTick(), turretProjectileData.minDamage());
-		}
-		
-		return projectile.calculateDamageDecay(standardProjectileData.baseDamage(), standardProjectileData.damageDecayStartTick(), standardProjectileData.damageDecayPerTick(), standardProjectileData.minDamage());
 	}
 	@Override
 	public List<WeaponTooltip<DualieWeaponSettings>> tooltipsToRegister()

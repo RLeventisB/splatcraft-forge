@@ -19,9 +19,10 @@ import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.DamageCalculator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -84,7 +85,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 				float divergence = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, entity));
 				for (int i = 0; i < settings.shotData.projectileCount(); i++)
 				{
-					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), DamageCalculator.basic(settings.projectileData));
 					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), settings.shotData.pitchCompensation(), settings.shotData.speed(), divergence);
 					proj.setBlasterStats(settings);
 					proj.setAttackId(AttackId.registerAttack().countProjectile());

@@ -9,8 +9,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.ExtraSaveData;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.List;
@@ -27,16 +25,6 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 	public ChargerWeaponSettings(String name)
 	{
 		super(name);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		ExtraSaveData.ChargeExtraData chargeData = list.getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-		if (chargeData != null)
-		{
-			return projectileData.damage.getValue(chargeData.charge);
-		}
-		return projectileData.damage.minValue;
 	}
 	@Override
 	public List<WeaponTooltip<ChargerWeaponSettings>> tooltipsToRegister()

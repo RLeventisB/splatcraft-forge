@@ -18,6 +18,7 @@ import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.registries.*;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.structs.DamageCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,13 +35,14 @@ public final class Splatcraft
 		SplatcraftEntities.bindRenderers();
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
-
+		
 		Services.PLATFORM.registerListener(LifecycleEvents.ClientStarted.class, Splatcraft::initClientAfter);
 	}
 	public static void init()
 	{
 		SplatcraftConfig.initialize();
-
+		DamageCalculator.initialize();
+		
 		DataHandler.addReloadListeners();
 		SplatcraftCommands.registerCommands();
 		SplatcraftTags.register();
@@ -62,14 +64,14 @@ public final class Splatcraft
 		EntityAction.registerActions();
 //		SplatcraftOreGen.registerOres();
 		SplatcraftItemGroups.addSplatcraftItemsToVanillaGroups();
-
+		
 		Services.PLATFORM.registerListener(LifecycleEvents.ServerStarted.class, Splatcraft::onServerStart);
 	}
 	public static void onServerStart(MinecraftServer server)
 	{
 		SplatcraftGameRules.booleanRules.replaceAll((k, v) -> server.getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
 		SplatcraftGameRules.intRules.replaceAll((k, v) -> server.getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
-
+		
 		SplatcraftItems.postRegister();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)

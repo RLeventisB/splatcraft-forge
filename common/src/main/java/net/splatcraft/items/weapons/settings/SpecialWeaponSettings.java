@@ -9,7 +9,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.structs.WeaponTooltip;
@@ -34,7 +33,8 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
 		return new Map.Entry[] {
-			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC)
+			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC),
+			Map.entry(SpecialWeaponRecords.InkJetDataRecord.ID, SpecialWeaponRecords.InkJetDataRecord.CODEC)
 		};
 	}
 	@Override
@@ -52,11 +52,6 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	{
 		this.dataRecord = dataRecord;
 		specialDataRecord = SplatcraftConvertors.convert(subData);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		return 0;
 	}
 	@Override
 	public List<WeaponTooltip<SpecialWeaponSettings<T>>> tooltipsToRegister()

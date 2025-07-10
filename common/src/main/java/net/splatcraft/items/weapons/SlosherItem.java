@@ -25,11 +25,12 @@ import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.DamageCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -247,7 +248,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
 			float speed = calculatedSloshData.sloshSpeed();
 			
-			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), sloshData);
+			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), DamageCalculator.empty());
 			proj.setSlosherStats(projectileData);
 			
 			float xRotation = Mth.rotLerp(partialTick, yRotOld, yaw);
@@ -260,6 +261,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				0);
 			proj.setAttackId(attackId);
 			proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
+			proj.damage = DamageCalculator.slosher((float) proj.getY(), projectileData);
 			
 			switch (slosherItem.slosherType)
 			{
@@ -274,7 +276,6 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				case CYCLONE:
 					proj.canPierce = true;
 			}
-			proj.addExtraData(new ExtraSaveData.SloshExtraData(calculatedSloshData.sloshDataIndex, proj.getY()));
 			world.addFreshEntity(proj);
 			
 			proj.tick(extraTime);

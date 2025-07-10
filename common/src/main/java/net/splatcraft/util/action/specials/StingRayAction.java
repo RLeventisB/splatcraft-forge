@@ -24,17 +24,19 @@ public class StingRayAction extends BaseSpecialAction
 			specialCodecStart(inst).and(
 				inst.group(
 					StingRayDataRecord.CODEC.fieldOf("special_data").forGetter(v -> v.specialData),
-					Codec.FLOAT.fieldOf("mobility").forGetter(v -> v.mobility)
+					Codec.FLOAT.fieldOf("mobility").forGetter(v -> v.mobility),
+					Codec.INT.fieldOf("usage_tick").forGetter(v -> v.usageTick)
 				)
 			).apply(inst, StingRayAction::new)
 	);
 	private final StingRayDataRecord specialData;
 	private final float mobility;
 	protected int usageTick;
-	public StingRayAction(float time, float maxTime, EntitySlot weaponSlot, EntitySlot providerSlot, StingRayDataRecord specialData, float mobility)
+	public StingRayAction(float time, float maxTime, EntitySlot weaponSlot, EntitySlot providerSlot, StingRayDataRecord specialData, float mobility, int usageTick)
 	{
 		super(time, maxTime, weaponSlot, providerSlot);
 		this.specialData = specialData;
+		this.usageTick = usageTick;
 		this.mobility = mobility;
 	}
 	public StingRayAction(SpecialWeaponSettings<StingRayDataRecord> settings, EntitySlot weaponSlot, EntitySlot providerSlot)
@@ -83,14 +85,15 @@ public class StingRayAction extends BaseSpecialAction
 	@Override
 	public boolean endWhenOnSquid(LivingEntity entity)
 	{
+		super.tick(entity);
 		return false;
 	}
 	@Override
-	public Optional<Float> mobility()
+	public Optional<Float> mobility(LivingEntity entity)
 	{
 		if (usageTick > 1)
 			return Optional.of(specialData.mobilityOnUse());
-		return super.mobility();
+		return super.mobility(entity);
 	}
 	@Override
 	public boolean canEnd(LivingEntity entity)

@@ -12,7 +12,7 @@ public class EntityCooldown extends EntityActionWithTime
 	public static final Codec<EntityCooldown> CODEC = RecordCodecBuilder.create(
 		inst ->
 			CodecUtils.MissingProducts.and(
-				EntityActionWithTime.codecStart(inst),
+				codecStart(inst),
 				inst.group(
 					ItemStack.OPTIONAL_CODEC.fieldOf("stored_stack").forGetter(v -> v.storedStack),
 					Codec.BOOL.optionalFieldOf("cancellable", false).forGetter(v -> v.cancellable),

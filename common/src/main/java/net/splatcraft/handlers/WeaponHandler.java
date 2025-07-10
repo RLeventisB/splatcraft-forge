@@ -36,6 +36,7 @@ import java.util.function.Predicate;
 public class WeaponHandler
 {
 	private static final Map<LivingEntity, OldEntityTransformData> prevPosMap = new LinkedHashMap<>();
+	private static final Map<LivingEntity, Vec3> lastGroundedPos = new LinkedHashMap<>();
 	private static final Map<LivingEntity, Short> weaponUseTime = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
@@ -43,6 +44,7 @@ public class WeaponHandler
 		{
 			prevPosMap.remove(entity);
 			weaponUseTime.remove(entity);
+			lastGroundedPos.remove(entity);
 			return EventResult.pass();
 		});
 		
@@ -76,6 +78,9 @@ public class WeaponHandler
 				EntityInfo entityInfo = EntityInfoCapability.get(entity);
 				entityInfo.reduceSquidAnimationTick();
 			}
+			if (entity.onGround() && EntityInfoCapability.getOptional(entity).map(v -> !v.isMatchRespawning()).orElse(true))
+				lastGroundedPos.put(entity, entity.position());
+			
 			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
 		if (Services.PLATFORM.isClientSide())
@@ -85,7 +90,7 @@ public class WeaponHandler
 	{
 		Services.PLATFORM.registerListener(TickEvents.ClientLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
-			Optional<InteractionHand> hand = WeaponHandler.getUsingWeaponHand(entity);
+			Optional<InteractionHand> hand = getUsingWeaponHand(entity);
 			if (hand.isPresent())
 			{
 				short useTime = weaponUseTime.computeIfAbsent(entity, v -> (short) 0);
@@ -116,41 +121,32 @@ public class WeaponHandler
 	}
 	private static boolean tickEntityActions(Player player, EntityAction action)
 	{
-		boolean preventedByCooldown = false;
+		boolean preventedByCooldown;
+		if (action.getTime() == action.getMaxTime())
+			action.onStart(player);
 		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
 		{
-			ItemStack stack = action.getStoredStack();
 			if (action.endWhenOnSquid(player))
-				doEndActions(player, action, stack);
+				doEndActions(player, action);
 		}
 		else
 		{
-			if (action.getTime() == action.getMaxTime())
-				action.onStart(player);
 			action.tick(player);
 			player.setSprinting(false);
-			
-			preventedByCooldown = action.preventWeaponUse();
-			ItemStack stack = action.getStoredStack();
-			
-			if (action.getTime() <= 1)
-			{
-				if (doEndActions(player, action, stack))
-					return false;
-			}
-			else if (action.getTime() > 1 && stack.getItem() instanceof WeaponBaseItem<?> weapon)
-			{
-				weapon.onPlayerCooldownTick(player.level(), player, stack, action);
-			}
-			action.setTime(action.getTime() - 1);
 		}
+		preventedByCooldown = action.preventWeaponUse();
+		
+		if (action.getTime() <= 1)
+		{
+			if (doEndActions(player, action))
+				return false;
+		}
+		action.setTime(action.getTime() - 1);
+		
 		return preventedByCooldown;
 	}
-	private static boolean doEndActions(Player player, EntityAction action, ItemStack stack)
+	private static boolean doEndActions(Player player, EntityAction action)
 	{
-		if (stack.getItem() instanceof WeaponBaseItem<?> weapon)
-			weapon.onPlayerCooldownEnd(player.level(), player, stack, action);
-		
 		if (action.canEnd(player))
 		{
 			EntityAction.setEntityAction(player, null);
@@ -170,6 +166,14 @@ public class WeaponHandler
 		}
 		OldEntityTransformData posData = new OldEntityTransformData(entity.getPosition(0), oldOldPos, new Vec2(entity.xRotO, entity.yRotO), oldOldRot);
 		prevPosMap.put(entity, posData);
+	}
+	public static Optional<Vec3> getEntityLastGroundedPos(LivingEntity entity)
+	{
+		return Optional.ofNullable(lastGroundedPos.get(entity));
+	}
+	public static void resetLastGroundedPos(LivingEntity entity)
+	{
+		lastGroundedPos.remove(entity);
 	}
 	public static OldEntityTransformData getEntityPrevPos(LivingEntity entity)
 	{

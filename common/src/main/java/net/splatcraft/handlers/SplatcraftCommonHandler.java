@@ -140,6 +140,10 @@ public class SplatcraftCommonHandler
 			InkTankItem.refill(stack);
 		}
 		
+		EntityAction.setEntityAction(entity, null);
+		WeaponHandler.resetLastGroundedPos(entity);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
+		
 		return keepAliveIfOnMatch(entity, source);
 	}
 	private static EventResult keepAliveIfOnMatch(LivingEntity entity, DamageSource source)

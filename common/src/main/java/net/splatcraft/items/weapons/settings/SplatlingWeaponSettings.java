@@ -11,8 +11,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.entities.InkProjectileEntity.ExtraDataList;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
 import net.splatcraft.items.weapons.settings.SplatlingWeaponSettings.DataRecord;
@@ -26,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import static net.splatcraft.entities.ExtraSaveData.SplatlingExtraData;
 import static net.splatcraft.items.weapons.settings.CommonRecords.OptionalProjectileDataRecord;
 import static net.splatcraft.items.weapons.settings.CommonRecords.OptionalShotDeviationDataRecord;
 
@@ -93,15 +90,6 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	private static float calculateSplatlingAproxRange(ProjectileDataRecord projSettings, float speed)
 	{
 		return calculateAproximateRange(projSettings.straightShotTicks(), projSettings.horizontalDrag(), speed, projSettings.delaySpeedMult(), projSettings.lifeTicks());
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, ExtraDataList list)
-	{
-		SplatlingExtraData data = list.getFirstExtraData(SplatlingExtraData.class);
-		if (data == null) // oh no
-			return 0;
-		ProjectileDataRecord projectileData = interpolateData(data.dataIndex).getFirst();
-		return projectile.calculateDamageDecay(projectileData.baseDamage(), projectileData.damageDecayStartTick(), projectileData.damageDecayPerTick(), projectileData.minDamage());
 	}
 	@Override
 	public List<WeaponTooltip<SplatlingWeaponSettings<T>>> tooltipsToRegister()

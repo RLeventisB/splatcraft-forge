@@ -349,7 +349,7 @@ public class InkBlockUtils
 	{
 		boolean canSwim = false;
 		
-		Optional<BlockPos> down = getBlockStandingOnPos(entity);
+		Optional<BlockPos> down = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1);
 		if (down.isEmpty())
 			return false;
 		Block standingBlock = entity.level().getBlockState(down.get()).getBlock();
@@ -380,6 +380,15 @@ public class InkBlockUtils
 		if (result.getType() == HitResult.Type.MISS)
 			return Optional.empty();
 		return Optional.of(result.getBlockPos());
+	}
+	public static Optional<Float> getDistanceToFloor(Vec3 startPoint, Level level, float maxDepth, Entity clipContextEntity)
+	{
+		Vec3 endPoint = startPoint.subtract(0, maxDepth, 0);
+		BlockHitResult result = level.clip(new ClipContext(startPoint, endPoint, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
+		
+		if (result.getType() == HitResult.Type.MISS)
+			return Optional.empty();
+		return Optional.of((float) startPoint.distanceTo(result.getLocation()));
 	}
 	public static boolean onEnemyInk(LivingEntity entity)
 	{

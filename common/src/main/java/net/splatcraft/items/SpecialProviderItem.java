@@ -201,6 +201,13 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			return;
 		}
 		
+		if (!SpecialHandler.passesSpecialConditions(entity, providerStack))
+		{
+			if (serverPlayer != null)
+				serverPlayer.sendSystemMessage(Component.translatable("status.cant_use").withStyle(ChatFormatting.RED), true);
+			return;
+		}
+		
 		Optional<SpecialHandler.ResetAction> mainResetAction = WeaponBaseItem.getResetAction(entity.getMainHandItem(), entity);
 		Optional<SpecialHandler.ResetAction> offHandResetAction = WeaponBaseItem.getResetAction(entity.getOffhandItem(), entity);
 		

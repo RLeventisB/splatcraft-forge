@@ -11,6 +11,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -21,8 +22,6 @@ import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.handlers.DataHandler;
-import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -31,6 +30,7 @@ import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.structs.AttackId;
+import net.splatcraft.util.structs.DamageCalculator;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
@@ -58,12 +58,12 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	private static final byte PROJECTILE_IMPACT = 2;
 	private static final byte BLAST_PARTICLE = 3;
 	public float lifespan = 600;
-	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false;
+	public boolean explodes = false, bypassMobDamageMultiplier = false, canPierce = false, persistent = false, explodesOnExpire = false;
 	public ItemStack sourceWeapon = ItemStack.EMPTY;
 	public float impactCoverage, dropImpactSize, distanceBetweenDrops;
 	public float damageMultiplier = 1;
 	public boolean causesHurtCooldown;
-	public AbstractWeaponSettings<?, ?> damage = ShooterWeaponSettings.DEFAULT;
+	public DamageCalculator damage = DamageCalculator.empty();
 	public InkBlockUtils.InkType inkType;
 	public float accumulatedDrops;
 	protected float straightShotTime = -1;
@@ -72,7 +72,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		super(type, world);
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, AbstractWeaponSettings<?, ?> damage, ItemStack sourceWeapon)
+	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage, ItemStack sourceWeapon)
 	{
 		super(SplatcraftEntities.INK_PROJECTILE.get(), thrower, world);
 		setColor(color);
@@ -82,11 +82,11 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		this.inkType = inkType;
 		this.sourceWeapon = sourceWeapon;
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, AbstractWeaponSettings<?, ?> damage)
+	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage)
 	{
 		this(world, thrower, color, inkType, projectileSize, damage, ItemStack.EMPTY);
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, ItemStack sourceWeapon, InkBlockUtils.InkType inkType, float projectileSize, AbstractWeaponSettings<?, ?> damage)
+	public InkProjectileEntity(Level world, LivingEntity thrower, ItemStack sourceWeapon, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage)
 	{
 		this(world, thrower, ColorUtils.getInkColor(sourceWeapon), inkType, projectileSize, damage, sourceWeapon);
 	}
@@ -108,6 +108,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		setCommonProjectileStats(settings.projectileData);
 		explodes = true;
+		explodesOnExpire = true;
 		setProjectileType(Types.BLASTER);
 		return this;
 	}
@@ -128,7 +129,6 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		CommonRecords.ProjectileDataRecord projectileData = settings.interpolateData(dataIndex).getFirst();
 		
 		setCommonProjectileStats(projectileData);
-		addExtraData(new ExtraSaveData.SplatlingExtraData(dataIndex));
 		setProjectileType(Types.SHOOTER);
 		return this;
 	}
@@ -142,7 +142,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		setProjectileType(Types.ROLLER);
 		
-		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak, true);
+		return setRollerProjectileStats(settings.swingData.projectileData(), weak, true);
 	}
 	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne, boolean weak)
 	{
@@ -150,9 +150,9 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		
 		if (airborne)
 		{
-			return setRollerProjectileStats(settings.flingData.projectileData(), true, weak, false);
+			return setRollerProjectileStats(settings.flingData.projectileData(), weak, false);
 		}
-		return setRollerProjectileStats(settings.swingData.projectileData(), false, weak, false);
+		return setRollerProjectileStats(settings.swingData.projectileData(), weak, false);
 	}
 	public InkProjectileEntity setCommonProjectileStats(CommonRecords.ProjectileDataRecord settings)
 	{
@@ -172,7 +172,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		
 		return this;
 	}
-	public InkProjectileEntity setRollerProjectileStats(RollerProjectileDataRecord settings, boolean airborne, boolean weak, boolean fromBrush)
+	public InkProjectileEntity setRollerProjectileStats(RollerProjectileDataRecord settings, boolean weak, boolean fromBrush)
 	{
 		dropImpactSize = settings.inkDropCoverage();
 		distanceBetweenDrops = settings.distanceBetweenInkDrops();
@@ -185,8 +185,6 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		lifespan = 600;
 		setHorizontalDrag(settings.horizontalDrag());
 		setGravitySpeedMult(settings.delaySpeedMult());
-		
-		addExtraData(new ExtraSaveData.RollerDistanceExtraData(position().toVector3f(), airborne, weak && !fromBrush));
 		
 		if (fromBrush && weak)
 		{
@@ -252,7 +250,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			if (!persistent && (lifespan -= timeDelta) <= 0)
 			{
 				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null)
+				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null && explodesOnExpire)
 				{
 					InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
 					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
@@ -409,53 +407,52 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (canPierce)
 			setPos(oldPos);
 		
-		if (!level().isClientSide())
+		if (level().isClientSide())
+			return;
+		
+		Entity target = result.getEntity();
+		Vec3 impactPos = result.getLocation();
+		
+		float dmg = calculateDamage(impactPos);
+		
+		if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
-			Entity target = result.getEntity();
-			Vec3 impactPos = result.getLocation();
-			
-			float dmg = calculateDamage(impactPos);
-			
-			if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
+			discard();
+			level().broadcastEntityEvent(this, BARRIER_DENY);
+		}
+		
+		Entity owner = getOwner();
+		
+		if (InkDamageUtils.isSplatted(target)) return;
+		
+		boolean didDamage = InkDamageUtils.doDamage(target, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
+		if (didDamage && owner instanceof Player)
+		{
+			ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
+			if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
+				Objects.equals(getProjectileType(), Types.BLASTER))
 			{
-				discard();
-				level().broadcastEntityEvent(this, BARRIER_DENY);
+				level().playSound(null, owner, SplatcraftSounds.shotDirectHit, SoundSource.PLAYERS, 0.8F, 1);
 			}
-			
-			Entity owner = getOwner();
-			
-			if (InkDamageUtils.isSplatted(target)) return;
-			
-			boolean didDamage = InkDamageUtils.doDamage(target, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
-			if (!level().isClientSide && didDamage)
+			else
 			{
-				ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-				if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
-					Objects.equals(getProjectileType(), Types.BLASTER))
-				{
-					level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.shotDirectHit, SoundSource.PLAYERS, 0.8F, 1);
-				}
-				else
-				{
-					if (owner != null)
-						level().playSound(null, owner.getX(), owner.getY(), owner.getZ(), SplatcraftSounds.shotHit, SoundSource.PLAYERS, 1f, 1f);
-				}
+				level().playSound(null, owner, SplatcraftSounds.shotHit, SoundSource.PLAYERS, 1f, 1f);
 			}
-			
-			if (!canPierce)
+		}
+		
+		if (!canPierce)
+		{
+			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
+			if (explodes && explosionData != null)
 			{
-				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-				if (explodes && explosionData != null)
-				{
-					InkExplosion.createInkExplosion(owner, impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
-					level().broadcastEntityEvent(this, BLAST_PARTICLE);
-					level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
-				}
-				else
-					level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
-				
-				discard();
+				InkExplosion.createInkExplosion(owner, impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+				level().broadcastEntityEvent(this, BLAST_PARTICLE);
+				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 			}
+			else
+				level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
+			
+			discard();
 		}
 	}
 	private float calculateDamage(Vec3 impactPos)
@@ -508,6 +505,13 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		{
 			level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
 			Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this);
+			
+			ExtraSaveData.ImpactSoundExtraData soundData = getExtraDatas().getFirstExtraData(ExtraSaveData.ImpactSoundExtraData.class);
+			if (soundData != null)
+			{
+				level().playSound(null, getX(), getY(), getZ(), soundData.sound, SoundSource.PLAYERS, 1f, 1f);
+			}
+			
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
@@ -631,6 +635,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		bypassMobDamageMultiplier = nbt.getBoolean("BypassMobDamageMultiplier");
 		canPierce = nbt.getBoolean("CanPierce");
 		explodes = nbt.getBoolean("Explodes");
+		explodesOnExpire = nbt.getBoolean("ExplodesOnExpire");
 		persistent = nbt.getBoolean("Persistent");
 		causesHurtCooldown = nbt.getBoolean("CausesHurtCooldown");
 		
@@ -642,11 +647,12 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		
 		sourceWeapon = ItemStack.parseOptional(registryAccess(), nbt.getCompound("SourceWeapon"));
 		
-		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(ResourceLocation.parse(nbt.getString("Settings")));
-		if (settings != null)
-			damage = settings;
-		else if (sourceWeapon.getItem() instanceof WeaponBaseItem<?> weapon)
-			damage = weapon.getSettings(sourceWeapon);
+		if (nbt.contains("DamageCalculator"))
+		{
+			DamageCalculator.parseDamageCalculator(NbtOps.INSTANCE, nbt.get("DamageCalculator")).ifSuccess(
+				damage -> this.damage = damage
+			);
+		}
 		
 		if (nbt.contains("AttackId"))
 			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
@@ -673,6 +679,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
 		nbt.putBoolean("CanPierce", canPierce);
 		nbt.putBoolean("Explodes", explodes);
+		nbt.putBoolean("ExplodesOnExpire", explodesOnExpire);
 		nbt.putBoolean("Persistent", persistent);
 		nbt.putBoolean("CausesHurtCooldown", causesHurtCooldown);
 		
@@ -688,6 +695,11 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 				nbt.put("Settings", tag);
 			});
 		});
+		
+		DamageCalculator.encodeDamageCalculator(NbtOps.INSTANCE, damage).ifSuccess(
+			tag -> nbt.put("DamageCalculator", tag)
+		);
+		
 		if (attackId != AttackId.NONE)
 			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
 		
@@ -774,7 +786,6 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public boolean isNoGravity()
 	{
-//        return straightShotTime > 0 || getGravity() == 0 || super.isNoGravity();
 		return true;
 	}
 	public float getProjectileSize()

@@ -8,12 +8,11 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.SoundEvent;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.structs.RangedValueCollection;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3f;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -22,7 +21,7 @@ public abstract class ExtraSaveData
 	public static MappedRegistry<Class<? extends ExtraSaveData>> REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("extra_save_data")), Lifecycle.stable());
 	public static final EntityDataSerializer<InkProjectileEntity.ExtraDataList> SERIALIZER = new EntityDataSerializer<>()
 	{
-		private static final StreamCodec<? super RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> PACKET_CODEC = new StreamCodec<>()
+		private static final StreamCodec<RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> PACKET_CODEC = new StreamCodec<>()
 		{
 			@Override
 			public InkProjectileEntity.@NotNull ExtraDataList decode(RegistryFriendlyByteBuf buf)
@@ -74,10 +73,8 @@ public abstract class ExtraSaveData
 	static
 	{
 		Registry.register(REGISTRY, Splatcraft.identifierOf("charge_data"), ChargeExtraData.class);
-		Registry.register(REGISTRY, Splatcraft.identifierOf("splatling_data"), SplatlingExtraData.class);
 		Registry.register(REGISTRY, Splatcraft.identifierOf("blaster_explosion_data"), ExplosionExtraData.class);
-		Registry.register(REGISTRY, Splatcraft.identifierOf("slosher_data"), SloshExtraData.class);
-		Registry.register(REGISTRY, Splatcraft.identifierOf("dualie_data"), DualieExtraData.class);
+		Registry.register(REGISTRY, Splatcraft.identifierOf("impact_sound_data"), ImpactSoundExtraData.class);
 	}
 	public abstract void save(@NotNull RegistryFriendlyByteBuf buffer);
 	public abstract ExtraSaveData load(@NotNull RegistryFriendlyByteBuf buffer);
@@ -127,27 +124,27 @@ public abstract class ExtraSaveData
 			return new ChargeExtraData(charge);
 		}
 	}
-	public static final class SplatlingExtraData extends ExtraSaveData
+	public static final class ImpactSoundExtraData extends ExtraSaveData
 	{
-		public final float dataIndex;
-		public SplatlingExtraData(float dataIndex)
+		public final SoundEvent sound;
+		public ImpactSoundExtraData(SoundEvent sound)
 		{
-			this.dataIndex = dataIndex;
+			this.sound = sound;
 		}
 		@Override
 		public void save(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-			buffer.writeFloat(dataIndex);
+			SoundEvent.DIRECT_STREAM_CODEC.encode(buffer, sound);
 		}
 		@Override
-		public SplatlingExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
+		public ImpactSoundExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
 		{
-			return new SplatlingExtraData(buffer.readFloat());
+			return new ImpactSoundExtraData(SoundEvent.DIRECT_STREAM_CODEC.decode(buffer));
 		}
 		@Override
-		public SplatlingExtraData copy()
+		public ImpactSoundExtraData copy()
 		{
-			return new SplatlingExtraData(dataIndex);
+			return new ImpactSoundExtraData(sound);
 		}
 	}
 	public static class ExplosionExtraData extends ExtraSaveData
@@ -191,89 +188,6 @@ public abstract class ExtraSaveData
 				damageCalculator.cloneWithMultiplier(1, 1),
 				sparkDamageCalculator.cloneWithMultiplier(1, 1),
 				explosionPaint, newAttackId);
-		}
-	}
-	public static final class DualieExtraData extends ExtraSaveData
-	{
-		public final boolean rollBullet;
-		public DualieExtraData(boolean rollBullet)
-		{
-			this.rollBullet = rollBullet;
-		}
-		@Override
-		public void save(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			buffer.writeBoolean(rollBullet);
-		}
-		@Override
-		public DualieExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			return new DualieExtraData(buffer.readBoolean());
-		}
-		@Override
-		public DualieExtraData copy()
-		{
-			return new DualieExtraData(rollBullet);
-		}
-	}
-	public static final class RollerDistanceExtraData extends ExtraSaveData
-	{
-		public final Vector3f spawnPos;
-		public final boolean wasAirborneOnShoot;
-		public final boolean weakBullet;
-		public RollerDistanceExtraData(Vector3f position, boolean[] flags)
-		{
-			spawnPos = position;
-			wasAirborneOnShoot = flags[0];
-			weakBullet = flags[1];
-		}
-		public RollerDistanceExtraData(Vector3f position, boolean wasAirborneOnShoot, boolean isWeak)
-		{
-			spawnPos = position;
-			this.wasAirborneOnShoot = wasAirborneOnShoot;
-			weakBullet = isWeak;
-		}
-		@Override
-		public void save(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			buffer.writeVector3f(spawnPos);
-			CommonUtils.writeBooleansCompact(buffer, wasAirborneOnShoot, weakBullet);
-		}
-		@Override
-		public RollerDistanceExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			return new RollerDistanceExtraData(buffer.readVector3f(), CommonUtils.readBooleansCompact(buffer, 2));
-		}
-		@Override
-		public RollerDistanceExtraData copy()
-		{
-			return new RollerDistanceExtraData(spawnPos, wasAirborneOnShoot, weakBullet);
-		}
-	}
-	public static class SloshExtraData extends ExtraSaveData
-	{
-		public final int sloshDataIndex;
-		public final double spawnHeight;
-		public SloshExtraData(int sloshDataIndex, double spawnHeight)
-		{
-			this.sloshDataIndex = sloshDataIndex;
-			this.spawnHeight = spawnHeight;
-		}
-		@Override
-		public void save(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			buffer.writeInt(sloshDataIndex);
-			buffer.writeDouble(spawnHeight);
-		}
-		@Override
-		public SloshExtraData load(@NotNull RegistryFriendlyByteBuf buffer)
-		{
-			return new SloshExtraData(buffer.readInt(), buffer.readDouble());
-		}
-		@Override
-		public SloshExtraData copy()
-		{
-			return new SloshExtraData(sloshDataIndex, spawnHeight);
 		}
 	}
 }

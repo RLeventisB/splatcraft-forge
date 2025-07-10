@@ -19,7 +19,6 @@ import net.minecraft.world.phys.Vec2;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
-import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -40,6 +39,7 @@ import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkExplosion;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
+import net.splatcraft.util.structs.DamageCalculator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -296,14 +296,14 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				ItemStack otherHand = entity.getItemInHand(CommonUtils.otherHand(hand));
 				if (!otherHand.isEmpty() && otherHand.getItem() instanceof DualieItem)
 				{
-					stack.set(SplatcraftComponents.WEAPON_PRECISION_DATA, ShotDeviationHelper.getDeviationData(otherHand));
+					// simulate that the other dualie has shot
+					ShotDeviationHelper.updateShotDeviation(otherHand, level.getRandom(), getSettings(otherHand).getShotData(entity).accuracyData());
 				}
 				for (int i = 0; i < shotData.projectileCount(); i++)
 				{
-					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), settings);
+					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), DamageCalculator.basic(projectileData));
 					
 					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
-					proj.addExtraData(new ExtraSaveData.DualieExtraData(CommonUtils.isRolling(entity)));
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
 					proj.tick(accumulatedTime);

@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.List;
@@ -20,13 +19,6 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	public ShooterWeaponSettings(String name)
 	{
 		super(name);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		if (projectileData == null)
-			return 1f;
-		return projectile.calculateDamageDecay(projectileData.baseDamage(), projectileData.damageDecayStartTick(), projectileData.damageDecayPerTick(), projectileData.minDamage());
 	}
 	@Override
 	public List<WeaponTooltip<ShooterWeaponSettings>> tooltipsToRegister()

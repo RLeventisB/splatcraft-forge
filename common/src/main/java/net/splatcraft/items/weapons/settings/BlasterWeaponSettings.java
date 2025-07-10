@@ -6,7 +6,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationDataRecord;
@@ -26,11 +25,6 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 	public BlasterWeaponSettings(String name)
 	{
 		super(name);
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, InkProjectileEntity.ExtraDataList list)
-	{
-		return projectileData.baseDamage();
 	}
 	@Override
 	public List<WeaponTooltip<BlasterWeaponSettings>> tooltipsToRegister()
@@ -112,6 +106,13 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 				Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
 			).apply(instance, DetonationRecord::create)
 		);
+		public static final Codec<DetonationRecord> NO_SPARK_CODEC = RecordCodecBuilder.create(
+			instance -> instance.group(
+				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_data").forGetter(DetonationRecord::damageRadiuses),
+				Codec.FLOAT.optionalFieldOf("explosion_paint_size").forGetter((DetonationRecord v) -> Optional.of(v.explosionPaint)),
+				Codec.BOOL.optionalFieldOf("new_attack_id", false).forGetter(DetonationRecord::newAttackId)
+			).apply(instance, DetonationRecord::create)
+		);
 		public static final DetonationRecord DEFAULT = new DetonationRecord(RangedValueCollection.EMPTY, RangedValueCollection.EMPTY, 0, false);
 		public static DetonationRecord create(RangedValueCollection damageRadiuses,
 		                                      Optional<RangedValueCollection> sparkDamageRadiuses,
@@ -119,6 +120,12 @@ public class BlasterWeaponSettings extends AbstractWeaponSettings<BlasterWeaponS
 		                                      boolean newAttackId)
 		{
 			return new DetonationRecord(damageRadiuses, sparkDamageRadiuses.orElse(damageRadiuses.cloneWithMultiplier(0.5f, 0.5f)), explosionPaint.orElse(damageRadiuses.getMaxKey()), newAttackId);
+		}
+		public static DetonationRecord create(RangedValueCollection damageRadiuses,
+		                                      Optional<Float> explosionPaint,
+		                                      boolean newAttackId)
+		{
+			return new DetonationRecord(damageRadiuses, damageRadiuses, explosionPaint.orElse(damageRadiuses.getMaxKey()), newAttackId);
 		}
 	}
 }

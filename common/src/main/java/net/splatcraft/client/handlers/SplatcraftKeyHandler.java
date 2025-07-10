@@ -45,6 +45,7 @@ import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -147,7 +148,7 @@ public class SplatcraftKeyHandler
 		if (SUB_WEAPON_KEYBIND.pressed)
 			queuedSubWeapon = true;
 		
-		if (EntityAction.hasActionAnd(player, v -> !v.isCancellable()) ||
+		if (EntityAction.hasActionAnd(player, v -> !v.preventWeaponUse()) ||
 			CommonUtils.anyWeaponOnCooldown(player) ||
 			ShootingHandler.isDoingShootingAction(player) ||
 			EntityStoredCharge.hasCharge(player)) // dont allow sub code to execute if the player has a charge or else everything breaks
@@ -300,7 +301,8 @@ public class SplatcraftKeyHandler
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SHOOT_KEYBIND, squidAndSubDelay, WeaponHandler.getUsingWeaponHand(player).isEmpty());
 		
-		SQUID_KEYBIND.tick(SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
+		boolean forcedHold = EntityAction.hasSpecificActionAnd(player, BaseSpecialAction::setSquidKeyToHold, BaseSpecialAction.class);
+		SQUID_KEYBIND.tick(forcedHold ? KeyMode.HOLD : SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
 		updatePressState(SQUID_KEYBIND, 0);
 		
 		SPECIAL_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);

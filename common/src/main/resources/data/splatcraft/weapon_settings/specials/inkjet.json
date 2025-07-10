@@ -1,0 +1,74 @@
+{
+    "type": "splatcraft:special_weapon",
+    "special_type": "inkjet",
+    "special_duration": 7.5,
+    "mobility": 0.04,
+    "max_mobility": 0.03,
+    "thrust_data": {
+        "points": [
+            {
+                "distance": 10,
+                "impulse": 0.11
+            },
+            {
+                "distance": 15,
+                "impulse": 0.09
+            },
+            {
+                "distance": 55,
+                "impulse": 0.082
+            },
+            {
+                "distance": 70,
+                "impulse": 0.08
+            },
+            {
+                "distance": 80,
+                "impulse": 0.06
+            },
+            {
+                "distance": 110,
+                "impulse": 0.02
+            }
+        ]
+    },
+    "projectile": {
+        "size": 3,
+        "visual_size": 6,
+        "lifespan": 34,
+        "delay_speed_mult": 1,
+        "horizontal_drag": 1,
+        "straight_shot_ticks": 1000,
+        "gravity": 0,
+        "ink_coverage_on_impact": 32,
+        "ink_drop_coverage": 0,
+        "base_damage": 120,
+        "decayed_damage": 120
+    },
+    "blast": {
+        "damage_data": {
+            "points": [
+                {
+                    "max_range": 25.5,
+                    "damage": 50
+                },
+                {
+                    "max_range": 50,
+                    "damage": 30
+                }
+            ],
+            "lerp_between": false
+        },
+        "explosion_paint_size": 32
+    },
+    "projectile_speed": 9,
+    "fire_initial_startup": 50,
+    "fire_repeat_ticks": 60,
+    "impulse_on_jump": 0.3,
+    "impulse_cooldown": 120,
+    "recall_time": 100,
+    "exhaust_damage": 0.5,
+    "exhaust_range": 10,
+    "exhaust_paint": 11,
+    "hitbox_scale": [1.1, 1.1]
+}

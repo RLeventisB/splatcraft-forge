@@ -7,9 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
-import net.splatcraft.entities.ExtraSaveData.SloshExtraData;
-import net.splatcraft.entities.InkProjectileEntity;
-import net.splatcraft.entities.InkProjectileEntity.ExtraDataList;
 import net.splatcraft.items.weapons.settings.BlasterWeaponSettings.DetonationRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.OptionalProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
@@ -45,21 +42,6 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		else if (relativeY < -damageDecayStartHeight)
 			damage = Mth.lerp(Mth.inverseLerp(-relativeY, damageDecayStartHeight, minDamageHeight), projectileData.baseDamage(), projectileData.minDamage());
 		return damage;
-	}
-	@Override
-	public float calculateDamage(InkProjectileEntity projectile, ExtraDataList list)
-	{
-		SloshExtraData sloshData = list.getFirstExtraData(SloshExtraData.class);
-		if (sloshData != null)
-		{
-			ProjectileDataRecord projectileData = getProjectileDataAtIndex(sloshData.sloshDataIndex);
-			if (projectileData.minDamage() == projectileData.baseDamage())
-				return projectileData.baseDamage();
-			
-			double relativeY = projectile.getY() - sloshData.spawnHeight;
-			return getDamage(projectileData, (float) relativeY);
-		}
-		return baseProjectile.baseDamage();
 	}
 	@Override
 	public List<WeaponTooltip<SlosherWeaponSettings>> tooltipsToRegister()

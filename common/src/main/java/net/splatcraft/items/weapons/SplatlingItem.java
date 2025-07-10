@@ -35,6 +35,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.structs.DamageCalculator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -146,7 +147,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 						float divergence = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), settings.getShotDeviationData(stack, living));
 						for (int i = 0; i < shotData.projectileCount(); i++)
 						{
-							InkProjectileEntity proj = new InkProjectileEntity(level, living, stack, InkBlockUtils.getInkType(living), projectileData.size(), settings);
+							InkProjectileEntity proj = new InkProjectileEntity(level, living, stack, InkBlockUtils.getInkType(living), projectileData.size(), DamageCalculator.basic(projectileData));
 							proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.projectileSpeed(), divergence);
 							proj.setSplatlingStats(settings, dataIndex);
 							level.addFreshEntity(proj);

@@ -49,14 +49,14 @@ public class SuperJumpCommand
 	{
 		ServerPlayer player = context.getSource().getPlayerOrException();
 		superJump(player, target, true);
-
+		
 		return 0;
 	}
 	private static int executeSpawn(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
 		ServerPlayer player = context.getSource().getPlayerOrException();
 		superJumpToSpawn(player, true);
-
+		
 		return 0;
 	}
 	public static boolean superJumpToSpawn(ServerPlayer player, boolean global)
@@ -68,11 +68,11 @@ public class SuperJumpCommand
 			{
 				targetPos = player.level().getLevelData().getSpawnPos();
 			}
-
+			
 			superJump(player, new Vec3(targetPos.getX(), targetPos.getY() + blockHeight(targetPos, player.level()), targetPos.getZ()), global);
 			return true;
 		}
-
+		
 		return false;
 	}
 	@Nullable
@@ -81,7 +81,7 @@ public class SuperJumpCommand
 		BlockPos targetPos = player.getRespawnPosition();
 		if (targetPos == null || player.level().getBlockEntity(targetPos) instanceof SpawnPadTileEntity spawnpad && !ColorUtils.colorEquals(player, spawnpad))
 			return null;
-
+		
 		return targetPos;
 	}
 	public static boolean superJump(ServerPlayer player, Vec3 target)
@@ -100,18 +100,18 @@ public class SuperJumpCommand
 	{
 		if (!global && !canSuperJumpTo(player, target))
 			return false;
-
+		
 		EntityAction.setEntityAction(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics, player.getAbilities().invulnerable));
-
+		
 		EntityInfo info = EntityInfoCapability.get(player);
 		if (!info.isSquid())
 		{
 			info.setIsSquid(true);
 			SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), info.isSquid()), player);
 		}
-
+		
 		SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
-
+		
 		return true;
 	}
 	public static boolean canSuperJumpTo(LivingEntity entity, Vec3 target)
@@ -137,8 +137,8 @@ public class SuperJumpCommand
 		public static Codec<SuperJump> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			Vec3.CODEC.fieldOf("start").forGetter(v -> v.start),
 			Vec3.CODEC.fieldOf("end").forGetter(v -> v.end),
-			Codec.INT.fieldOf("travel_time").forGetter(v -> v.travelTime),
 			Codec.INT.fieldOf("windup_time").forGetter(v -> v.windupTime),
+			Codec.INT.fieldOf("travel_time").forGetter(v -> v.travelTime),
 			Codec.DOUBLE.fieldOf("jump_height").forGetter(v -> v.height),
 			Codec.BOOL.fieldOf("had_physics").forGetter(v -> v.hadPhysics),
 			Codec.BOOL.fieldOf("had_invulnerability").forGetter(v -> v.hadInvulnerability),
@@ -151,7 +151,11 @@ public class SuperJumpCommand
 		final double height;
 		Vec3 start;
 		boolean hadPhysics, hadInvulnerability, canStart;
-		public SuperJump(Vec3 start, Vec3 end, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability)
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability)
+		{
+			this(start, end, windupTime, travelTime, height, hadPhysics, hadInvulnerability, false);
+		}
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean skipGroundCheck)
 		{
 			super(travelTime + windupTime);
 			this.end = end;
@@ -161,8 +165,9 @@ public class SuperJumpCommand
 			this.travelTime = travelTime;
 			this.windupTime = windupTime;
 			this.height = height;
+			canStart = skipGroundCheck;
 		}
-		public SuperJump(Vec3 start, Vec3 end, int travelTime, int windupTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart, float time)
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart, float time)
 		{
 			super(time, travelTime + windupTime);
 			this.end = end;
@@ -195,7 +200,7 @@ public class SuperJumpCommand
 			}
 			if (getTime() > getTravelTime()) // windup
 			{
-
+			
 			}
 			else
 			{
@@ -205,7 +210,7 @@ public class SuperJumpCommand
 				}
 				float progress = getSuperJumpProgress(0);
 				float oldProgress = getSuperJumpProgress(1);
-
+				
 				// i put () in every coordinate because java is doing magic bullshit again and somewhere in the code target is being set as source and i question how the fuck does that happen
 				// NEVERMIND SOURCE AND TARGET WERE REVERSED WHAT THE HELL
 				Vec3 nextPos = new Vec3(Mth.lerp(progress, start.x, end.x), getSuperJumpYPos(progress, start.y, end.y, getHeight()), Mth.lerp(progress, start.z, end.z));
@@ -219,7 +224,7 @@ public class SuperJumpCommand
 			if (entity instanceof Player player)
 				player.getAbilities().flying = true;
 			entity.noPhysics = true;
-			entity.fallDistance = 0;
+			entity.fallDistance = -100f;
 		}
 		@Override
 		public boolean canEnd(LivingEntity entity)
@@ -231,6 +236,8 @@ public class SuperJumpCommand
 				player.getAbilities().invulnerable = hadInvulnerability;
 				player.getAbilities().flying = false;
 			}
+			entity.fallDistance = -100f;
+			entity.setDeltaMovement(0, 0, 0);
 			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.superjumpLand, SoundSource.PLAYERS, 0.8F, 1);
 			return true;
 		}

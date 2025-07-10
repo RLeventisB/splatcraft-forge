@@ -29,6 +29,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.structs.DamageCalculator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -85,7 +86,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			return;
 		}
 		
-		InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), settings);
+		InkProjectileEntity proj = new InkProjectileEntity(world, entity, stack, InkBlockUtils.getInkType(entity), settings.projectileData.size(), DamageCalculator.charger(settings.projectileData, charge));
 		proj.setDeltaMovement(entity, entity.getXRot(), entity.getYRot(), 0.0f, settings.projectileData.speed().getValue(charge), 0f, 0f);
 		proj.setChargerStats(charge, settings.projectileData);
 		proj.addExtraData(new ExtraSaveData.ChargeExtraData(charge));
@@ -103,7 +104,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 			ChargerWeaponSettings settings = getSettings(stack);
 			
 			float chargeMult = 0f;
-			if (living.isUsingItem())
+			if (living.isUsingItem() && isSelected)
 			{
 				chargeMult = 1f;
 				if (!entity.onGround())

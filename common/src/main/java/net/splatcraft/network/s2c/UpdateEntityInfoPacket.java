@@ -6,6 +6,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -24,7 +25,7 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 		target = player;
 		this.nbt = nbt;
 	}
-	public UpdateEntityInfoPacket(Player target)
+	public UpdateEntityInfoPacket(LivingEntity target)
 	{
 		this(target.getUUID(), EntityInfo.CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target)).getOrThrow());
 	}
@@ -47,7 +48,7 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
-
+		
 		if (target != null)
 		{
 			DataResult<EntityInfo> result = EntityInfo.CODEC.parse(NbtOps.INSTANCE, nbt);
