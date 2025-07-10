@@ -5,6 +5,7 @@ import com.mojang.datafixers.Products;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -13,6 +14,7 @@ import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler;
+import net.splatcraft.items.InkTankItem;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
@@ -65,6 +67,13 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	public void onStart(LivingEntity entity)
 	{
 		Level world = entity.level();
+		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
+		
+		if (stack.has(SplatcraftComponents.TANK_DATA))
+		{
+			InkTankItem.refill(stack);
+		}
+		
 		if (world.isClientSide)
 		{
 			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
