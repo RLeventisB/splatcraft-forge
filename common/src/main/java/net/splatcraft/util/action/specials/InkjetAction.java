@@ -15,8 +15,6 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
-import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.UpdateInputPacket;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CodecUtils;
@@ -95,11 +93,6 @@ public class InkjetAction extends BaseSpecialAction
 	@Override
 	public void tick(LivingEntity entity)
 	{
-		if (entity.level().isClientSide() && entity instanceof Player player)
-		{
-			SplatcraftPacketHandler.sendToServer(new UpdateInputPacket(player));
-		}
-		
 		if (EntityInfoCapability.getOptional(entity).map(EntityInfo::hasHigherStartup).orElse(false) && shotCooldown <= 0 && shotCooldown > -8)
 		{
 			shotCooldown = -8;
@@ -184,7 +177,7 @@ public class InkjetAction extends BaseSpecialAction
 		boostCooldown = specialData.impulseCooldown();
 		queuedBoostTime = 0;
 		
-		entity.level().playSound(null, entity, SplatcraftSounds.inkjetBoost, SoundSource.PLAYERS, 1f, 1f);
+		entity.level().playLocalSound(entity, SplatcraftSounds.inkjetBoost, SoundSource.PLAYERS, 1f, 1f);
 	}
 	private void doShot(LivingEntity entity, float extraTime)
 	{
@@ -271,12 +264,6 @@ public class InkjetAction extends BaseSpecialAction
 			entity instanceof Player player && player.getAbilities().invulnerable,
 			true));
 		
-		if (entity.level().isClientSide() && entity instanceof Player player)
-		{
-			// set jumping as false since the server doesnt process this variable
-			// this is via a packet since setting it directly may be overwritten by the packet in the tick method
-			SplatcraftPacketHandler.sendToServer(new UpdateInputPacket(player.xxa, player.zza, (byte) 0));
-		}
 		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
 		
 		return false;

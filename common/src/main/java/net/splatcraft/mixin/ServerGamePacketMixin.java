@@ -18,11 +18,11 @@ public class ServerGamePacketMixin
 	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))
 	public boolean isChangingDimOrSuperjumping(ServerPlayer player, Operation<Boolean> original)
 	{
-		return original.call(player) || EntityAction.getEntityAction(player) instanceof SuperJumpCommand.SuperJump;
+		return original.call(player) || EntityAction.hasSpecificEntityAction(player, SuperJumpCommand.SuperJump.class);
 	}
 	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isAutoSpinAttack()Z"))
 	public boolean isSpinninggOrSuperJumping(ServerPlayer player, Operation<Boolean> original)
 	{
-		return original.call(player) || EntityAction.getEntityAction(player) instanceof SuperJumpCommand.SuperJump;
+		return original.call(player) || EntityAction.hasSpecificEntityAction(player, SuperJumpCommand.SuperJump.class);
 	}
 }

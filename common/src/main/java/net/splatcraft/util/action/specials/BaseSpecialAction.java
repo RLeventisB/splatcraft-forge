@@ -7,8 +7,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -66,7 +69,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	@Override
 	public void onStart(LivingEntity entity)
 	{
-		Level world = entity.level();
+		Level level = entity.level();
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
 		
 		if (stack.has(SplatcraftComponents.TANK_DATA))
@@ -74,27 +77,34 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 			InkTankItem.refill(stack);
 		}
 		
-		if (world.isClientSide)
+		if (level.isClientSide())
 		{
-			boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
-			world.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
+			playSpecialUsageSound(entity, level);
 		}
 		
 		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
 		optional.ifPresent(info ->
 		{
-			if (entity.level().isClientSide)
-			{
+			if (!info.isSquid())
+				return;
+			
+			if (entity.level().isClientSide())
 				setSquidClient(entity, info);
-			}
 			else
 				SquidFormHandler.setSquid(entity, info, false);
 		});
 	}
+	@OnlyIn(Dist.CLIENT)
+	private static void playSpecialUsageSound(LivingEntity entity, Level level)
+	{
+		boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
+		level.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
+	}
+	@OnlyIn(Dist.CLIENT)
 	private static void setSquidClient(LivingEntity entity, EntityInfo info)
 	{
 		ClientUtils.setSquid(entity, info, false);
-		if (entity == ClientUtils.getClientPlayer())
+		if (entity instanceof Player player && player.isLocalPlayer())
 			SplatcraftKeyHandler.SQUID_KEYBIND.active = false;
 	}
 	@Override

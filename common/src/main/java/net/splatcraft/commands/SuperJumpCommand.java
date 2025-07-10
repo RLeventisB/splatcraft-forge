@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
@@ -91,8 +92,8 @@ public class SuperJumpCommand
 	public static boolean superJump(ServerPlayer player, Vec3 target, boolean global)
 	{
 		return superJump(player, target,
-			(int) player.getAttributeValue(SplatcraftAttributes.superJumpTravelTime),
 			(int) player.getAttributeValue(SplatcraftAttributes.superJumpWindupTime),
+			(int) player.getAttributeValue(SplatcraftAttributes.superJumpTravelTime),
 			player.getAttributeValue(SplatcraftAttributes.superJumpHeight),
 			global);
 	}
@@ -150,7 +151,8 @@ public class SuperJumpCommand
 		final int windupTime;
 		final double height;
 		Vec3 start;
-		boolean hadPhysics, hadInvulnerability, canStart;
+		final boolean hadPhysics, hadInvulnerability;
+		boolean canStart;
 		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability)
 		{
 			this(start, end, windupTime, travelTime, height, hadPhysics, hadInvulnerability, false);
@@ -270,6 +272,11 @@ public class SuperJumpCommand
 		public double getHeight()
 		{
 			return height;
+		}
+		@Override
+		public EntitySlot getItemSlot()
+		{
+			return super.getItemSlot();
 		}
 	}
 }
