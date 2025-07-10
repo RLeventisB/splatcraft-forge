@@ -140,7 +140,8 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			int index = data.specialId().map(specialIds::indexOf).orElse(-1);
 			index++;
 			index %= specialIds.size();
-			setData(stack, data.withSpecialId(specialIds.get(index)));
+			data = data.withSpecialId(specialIds.get(index));
+			setData(stack, data);
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.literal("Set special to ").withStyle(ChatFormatting.RED).append(data.getSpecialText()), true);
 		}

@@ -375,7 +375,6 @@
         ]
     },
     "inkjet_counter": {
-        "subtitle": "subtitle.inkjet_counter",
         "sounds": [
             "splatcraft:inkjet_counter"
         ]
