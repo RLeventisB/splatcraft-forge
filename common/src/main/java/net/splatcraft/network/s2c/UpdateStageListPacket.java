@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class UpdateStageListPacket extends PlayS2CPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateStageListPacket.class);
-	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, Stage>> STAGE_INFO_PACKET_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, Stage.PACKET_CODEC);
+	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, Stage>> STAGE_INFO_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, Stage.STREAM_CODEC);
 	Object2ObjectOpenHashMap<String, Stage> stages;
 	public UpdateStageListPacket(Object2ObjectOpenHashMap<String, Stage> stages)
 	{
@@ -26,7 +26,7 @@ public class UpdateStageListPacket extends PlayS2CPacket
 	}
 	public static UpdateStageListPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new UpdateStageListPacket(STAGE_INFO_PACKET_CODEC.decode(buffer));
+		return new UpdateStageListPacket(STAGE_INFO_STREAM_CODEC.decode(buffer));
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -36,14 +36,14 @@ public class UpdateStageListPacket extends PlayS2CPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		STAGE_INFO_PACKET_CODEC.encode(buffer, stages);
+		STAGE_INFO_STREAM_CODEC.encode(buffer, stages);
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{
 		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.playSessions(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(stages), SaveInfoCapability.clientSaveInfo.colorScores());
-
+		
 		if (Minecraft.getInstance().screen instanceof AbstractStagePadScreen stagePadScreen)
 			stagePadScreen.onStagesUpdate();
 	}

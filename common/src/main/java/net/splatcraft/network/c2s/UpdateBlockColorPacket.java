@@ -29,18 +29,18 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 	}
 	public static UpdateBlockColorPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new UpdateBlockColorPacket(new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()), InkColor.PACKET_CODEC.decode(buffer), buffer.readInt());
+		return new UpdateBlockColorPacket(new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()), InkColor.STREAM_CODEC.decode(buffer), buffer.readInt());
 	}
 	@Override
 	public void execute(Player player)
 	{
 		BlockEntity te = player.level().getBlockEntity(pos);
-
+		
 		if (te instanceof InkVatTileEntity te1)
 		{
 			te1.pointer = inkVatPointer;
 		}
-
+		
 		ColorUtils.withInkColor(te, color);
 	}
 	@Override
@@ -49,7 +49,7 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		buffer.writeInt(pos.getX());
 		buffer.writeInt(pos.getY());
 		buffer.writeInt(pos.getZ());
-		InkColor.PACKET_CODEC.encode(buffer, color);
+		InkColor.STREAM_CODEC.encode(buffer, color);
 		buffer.writeInt(inkVatPointer);
 	}
 	@Override

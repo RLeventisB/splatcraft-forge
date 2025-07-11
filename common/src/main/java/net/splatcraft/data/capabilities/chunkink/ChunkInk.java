@@ -478,7 +478,7 @@ public class ChunkInk
 			InkBlockUtils.InkType.CODEC.fieldOf("type").forGetter(InkEntry::type)
 		).apply(inst, InkEntry::new));
 		public static final StreamCodec<ByteBuf, InkEntry> STREAM_CODEC = StreamCodec.composite(
-			InkColor.PACKET_CODEC, InkEntry::color,
+			InkColor.STREAM_CODEC, InkEntry::color,
 			InkBlockUtils.InkType.STREAM_CODEC, InkEntry::type,
 			InkEntry::new
 		);

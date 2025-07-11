@@ -31,7 +31,7 @@ public class DodgeRollPacket extends PlayC2SPacket
 		return new DodgeRollPacket(
 			buffer.readUUID(),
 			ItemStack.STREAM_CODEC.decode(buffer),
-			EntitySlot.SERIALIZER_PACKET_CODEC.decode(buffer),
+			EntitySlot.SERIALIZER_STREAM_CODEC.decode(buffer),
 			new Vec2(buffer.readFloat(), buffer.readFloat())
 		);
 	}
@@ -46,7 +46,7 @@ public class DodgeRollPacket extends PlayC2SPacket
 	{
 		buffer.writeUUID(target);
 		ItemStack.STREAM_CODEC.encode(buffer, activeDualie);
-		EntitySlot.SERIALIZER_PACKET_CODEC.encode(buffer, dualieSlot);
+		EntitySlot.SERIALIZER_STREAM_CODEC.encode(buffer, dualieSlot);
 		buffer.writeFloat(rollPotency.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3d uses doubles)
 		buffer.writeFloat(rollPotency.y);
 	}

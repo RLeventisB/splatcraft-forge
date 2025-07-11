@@ -757,7 +757,7 @@ public class SplatcraftComponents
 		public static final StreamCodec<RegistryFriendlyByteBuf, ItemColorData> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL, ItemColorData::colorLocked,
 			ByteBufCodecs.BOOL, ItemColorData::hasInvertedColor,
-			InkColor.PACKET_CODEC, ItemColorData::color,
+			InkColor.STREAM_CODEC, ItemColorData::color,
 			ItemColorData::new
 		);
 		public ItemColorData withColorLocked(boolean colorLocked)

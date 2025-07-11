@@ -111,7 +111,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 				ResourceLocation.CODEC.fieldOf("color").forGetter(v -> v.colorId),
 				Codec.BOOL.optionalFieldOf("not_on_omni_filter", false).forGetter(v -> v.disableOmni)
 			).apply(instance, InkVatColorRecipe::new));
-		public static final StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> STREAM_CODEC = StreamCodec.composite(
 			Ingredient.CONTENTS_STREAM_CODEC, InkVatColorRecipe::getIngredient,
 			ResourceLocation.STREAM_CODEC, InkVatColorRecipe::getOutputColorId,
 			ByteBufCodecs.BOOL, InkVatColorRecipe::isDisableOmni,
@@ -124,7 +124,7 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		@Override
 		public @NotNull StreamCodec<RegistryFriendlyByteBuf, InkVatColorRecipe> streamCodec()
 		{
-			return PACKET_CODEC;
+			return STREAM_CODEC;
 		}
 	}
 }

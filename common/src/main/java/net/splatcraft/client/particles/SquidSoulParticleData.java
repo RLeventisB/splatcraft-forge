@@ -24,7 +24,7 @@ public class SquidSoulParticleData implements ParticleOptions
 			Codec.FLOAT.fieldOf("g").forGetter(SquidSoulParticleData::getGreen),
 			Codec.FLOAT.fieldOf("b").forGetter(SquidSoulParticleData::getBlue)
 		).apply(instance, SquidSoulParticleData::new));
-	public static final StreamCodec<RegistryFriendlyByteBuf, SquidSoulParticleData> PACKET_CODEC = StreamCodec.composite(
+	public static final StreamCodec<RegistryFriendlyByteBuf, SquidSoulParticleData> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.FLOAT, SquidSoulParticleData::getRed,
 		ByteBufCodecs.FLOAT, SquidSoulParticleData::getGreen,
 		ByteBufCodecs.FLOAT, SquidSoulParticleData::getBlue,

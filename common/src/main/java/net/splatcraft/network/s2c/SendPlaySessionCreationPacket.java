@@ -26,7 +26,7 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 	}
 	public static SendPlaySessionCreationPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new SendPlaySessionCreationPacket(PlaySession.PACKET_CODEC.decode(buffer));
+		return new SendPlaySessionCreationPacket(PlaySession.STREAM_CODEC.decode(buffer));
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -36,7 +36,7 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		PlaySession.PACKET_CODEC.encode(buffer, session);
+		PlaySession.STREAM_CODEC.encode(buffer, session);
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override
@@ -51,17 +51,17 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 			SplatcraftKeyHandler.SQUID_KEYBIND.active = true;
 			ClientUtils.killCamData = null;
 		}
-
+		
 		session.playerUuids.forEach(uuid ->
 		{
 			Level world = ClientUtils.getClient().level;
 			if (world == null)
 				return;
-
+			
 			Player plr = world.getPlayerByUUID(uuid);
 			if (plr == null)
 				return;
-
+			
 			EntityInfoCapability.getOptional(plr).ifPresent(info ->
 			{
 				info.setIsSquid(true);

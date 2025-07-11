@@ -32,8 +32,8 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 	{
 		return new SendSpecialUsageDataPacket(ResourceLocation.STREAM_CODEC.decode(buffer),
 			buffer.readUUID(),
-			EntitySlot.SERIALIZER_PACKET_CODEC.decode(buffer),
-			EntitySlot.SERIALIZER_PACKET_CODEC.decode(buffer));
+			EntitySlot.SERIALIZER_STREAM_CODEC.decode(buffer),
+			EntitySlot.SERIALIZER_STREAM_CODEC.decode(buffer));
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -45,8 +45,8 @@ public class SendSpecialUsageDataPacket extends PlayS2CPacket
 	{
 		ResourceLocation.STREAM_CODEC.encode(buffer, specialId);
 		buffer.writeUUID(target);
-		EntitySlot.SERIALIZER_PACKET_CODEC.encode(buffer, providerSlot);
-		EntitySlot.SERIALIZER_PACKET_CODEC.encode(buffer, weaponSlot);
+		EntitySlot.SERIALIZER_STREAM_CODEC.encode(buffer, providerSlot);
+		EntitySlot.SERIALIZER_STREAM_CODEC.encode(buffer, weaponSlot);
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override

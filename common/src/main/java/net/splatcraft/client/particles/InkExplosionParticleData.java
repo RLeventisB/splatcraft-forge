@@ -21,7 +21,7 @@ public class InkExplosionParticleData extends InkSplashParticleData
 			Codec.FLOAT.fieldOf("b").forGetter(InkSplashParticleData::getBlue),
 			ExtraCodecs.POSITIVE_FLOAT.fieldOf("scale").forGetter(InkSplashParticleData::getScale)
 		).apply(instance, InkExplosionParticleData::new));
-	public static final StreamCodec<RegistryFriendlyByteBuf, InkExplosionParticleData> PACKET_CODEC = StreamCodec.composite(
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkExplosionParticleData> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getRed,
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getGreen,
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getBlue,

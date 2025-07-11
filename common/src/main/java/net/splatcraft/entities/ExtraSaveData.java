@@ -21,7 +21,7 @@ public abstract class ExtraSaveData
 	public static MappedRegistry<Class<? extends ExtraSaveData>> REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("extra_save_data")), Lifecycle.stable());
 	public static final EntityDataSerializer<InkProjectileEntity.ExtraDataList> SERIALIZER = new EntityDataSerializer<>()
 	{
-		private static final StreamCodec<RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> PACKET_CODEC = new StreamCodec<>()
+		private static final StreamCodec<RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> STREAM_CODEC = new StreamCodec<>()
 		{
 			@Override
 			public InkProjectileEntity.@NotNull ExtraDataList decode(RegistryFriendlyByteBuf buf)
@@ -57,7 +57,7 @@ public abstract class ExtraSaveData
 		@Override
 		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkProjectileEntity.ExtraDataList> codec()
 		{
-			return PACKET_CODEC;
+			return STREAM_CODEC;
 		}
 		@Override
 		public @NotNull EntityDataAccessor<InkProjectileEntity.ExtraDataList> createAccessor(int id)

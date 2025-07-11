@@ -51,19 +51,19 @@ public interface EntitySlot
 			return Stream.of(ops.createString("id"), ops.createString("data"));
 		}
 	}.codec();
-	StreamCodec<ByteBuf, EntitySlot> SERIALIZER_PACKET_CODEC = new StreamCodec<>()
+	StreamCodec<ByteBuf, EntitySlot> SERIALIZER_STREAM_CODEC = new StreamCodec<>()
 	{
 		@Override
 		public @NotNull EntitySlot decode(@NotNull ByteBuf buf)
 		{
-			SlotId id = SlotId.PACKET_CODEC.decode(buf);
+			SlotId id = SlotId.STREAM_CODEC.decode(buf);
 			return id.packetCodec.decode(buf);
 		}
 		@Override
 		public void encode(@NotNull ByteBuf buf, EntitySlot value)
 		{
 			SlotId id = value.getId();
-			SlotId.PACKET_CODEC.encode(buf, id);
+			SlotId.STREAM_CODEC.encode(buf, id);
 			id.packetCodec.encode(buf, value);
 		}
 	};
@@ -137,7 +137,7 @@ public interface EntitySlot
 		{
 			return createWithHand(InteractionHand.OFF_HAND, comparator);
 		}
-
+		
 		throw new AssertionError("The given stack isn't contained by the given entity");
 	}
 	static EntitySlot createWithSlot(int slot)
@@ -185,7 +185,7 @@ public interface EntitySlot
 		INCLUDE_COMPONENTS(ItemStack::isSameItemSameComponents),
 		INCLUDE_REFERENCE_AND_COMPONENTS(ItemStack::matches),
 		ONLY_REFERENCE((x, y) -> x == y);
-		public static final StreamCodec<ByteBuf, StackComparator> PACKET_CODEC = CodecUtils.createEnumPacketCodec(StackComparator::values);
+		public static final StreamCodec<ByteBuf, StackComparator> STREAM_CODEC = CodecUtils.createEnumPacketCodec(StackComparator::values);
 		public static final Codec<StackComparator> CODEC = StringRepresentable.fromEnum(StackComparator::values);
 		private final BiPredicate<ItemStack, ItemStack> comparer;
 		StackComparator(BiPredicate<ItemStack, ItemStack> comparer)
@@ -204,10 +204,10 @@ public interface EntitySlot
 	}
 	enum SlotId implements StringRepresentable
 	{
-		ENTITY_HAND(EntityHandSlot.CODEC, EntityHandSlot.PACKET_CODEC),
-		PLAYER_SLOT(PlayerInventorySlot.CODEC, PlayerInventorySlot.PACKET_CODEC),
+		ENTITY_HAND(EntityHandSlot.CODEC, EntityHandSlot.STREAM_CODEC),
+		PLAYER_SLOT(PlayerInventorySlot.CODEC, PlayerInventorySlot.STREAM_CODEC),
 		EMPTY(MapCodec.unit(EntitySlot.EMPTY), StreamCodec.unit(EntitySlot.EMPTY));
-		public static final StreamCodec<ByteBuf, SlotId> PACKET_CODEC = CodecUtils.createEnumPacketCodec(SlotId::values);
+		public static final StreamCodec<ByteBuf, SlotId> STREAM_CODEC = CodecUtils.createEnumPacketCodec(SlotId::values);
 		public static final Codec<SlotId> CODEC = StringRepresentable.fromEnum(SlotId::values);
 		public final MapCodec<EntitySlot> codec;
 		public final StreamCodec<ByteBuf, EntitySlot> packetCodec;
@@ -232,9 +232,9 @@ public interface EntitySlot
 			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(v -> v.hand),
 			StackComparator.CODEC.fieldOf("comparator").forGetter(v -> v.comparator)
 		).apply(inst, EntityHandSlot::new));
-		public static final StreamCodec<ByteBuf, EntityHandSlot> PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, EntityHandSlot> STREAM_CODEC = StreamCodec.composite(
 			CodecUtils.Codecs.PACKET_HAND, v -> v.hand,
-			StackComparator.PACKET_CODEC, v -> v.comparator,
+			StackComparator.STREAM_CODEC, v -> v.comparator,
 			EntityHandSlot::new
 		);
 		private final InteractionHand hand;
@@ -277,10 +277,10 @@ public interface EntitySlot
 			CodecUtils.Codecs.HAND_CODEC.fieldOf("hand").forGetter(v -> v.hand),
 			StackComparator.CODEC.fieldOf("comparator").forGetter(v -> v.comparator)
 		).apply(inst, PlayerInventorySlot::new));
-		public static final StreamCodec<ByteBuf, PlayerInventorySlot> PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, PlayerInventorySlot> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.INT, v -> v.selectedSlot,
 			CodecUtils.Codecs.PACKET_HAND, v -> v.hand,
-			StackComparator.PACKET_CODEC, v -> v.comparator,
+			StackComparator.STREAM_CODEC, v -> v.comparator,
 			PlayerInventorySlot::new
 		);
 		private final int selectedSlot;
@@ -301,10 +301,10 @@ public interface EntitySlot
 		{
 			if (hand == InteractionHand.OFF_HAND)
 				return comparator.areEquals(entity.getOffhandItem(), stack);
-
+			
 			if (!(entity instanceof Player player))
 				return false;
-
+			
 			return comparator.areEquals(player.getInventory().getItem(selectedSlot), stack);
 		}
 		@Override
@@ -312,7 +312,7 @@ public interface EntitySlot
 		{
 			if (!(entity instanceof Player player))
 				return false;
-
+			
 			return player.getInventory().selected == selectedSlot && this.hand == hand;
 		}
 		@Override
@@ -320,7 +320,7 @@ public interface EntitySlot
 		{
 			if (entity instanceof Player player)
 				return Optional.of(player.getInventory().getItem(selectedSlot));
-
+			
 			return Optional.empty();
 		}
 		@Override

@@ -25,7 +25,7 @@ public class InkColor implements Comparable<InkColor>
 {
 	public static final InkColor INVALID;
 	private static final TreeMap<Integer, InkColor> hexToColorMap = new TreeMap<>();
-	public static final StreamCodec<ByteBuf, InkColor> PACKET_CODEC =
+	public static final StreamCodec<ByteBuf, InkColor> STREAM_CODEC =
 		StreamCodec.composite(
 			ByteBufCodecs.INT, InkColor::getColor,
 			InkColor::constructOrReuse

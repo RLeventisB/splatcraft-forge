@@ -16,7 +16,7 @@ import java.util.List;
 public class UpdateColorScoresPacket extends PlayS2CPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateColorScoresPacket.class);
-	public static final StreamCodec<ByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.PACKET_CODEC.apply(ByteBufCodecs.list());
+	public static final StreamCodec<ByteBuf, List<InkColor>> COLOR_LIST_CODEC = InkColor.STREAM_CODEC.apply(ByteBufCodecs.list());
 	List<InkColor> colors;
 	boolean add;
 	boolean clear;

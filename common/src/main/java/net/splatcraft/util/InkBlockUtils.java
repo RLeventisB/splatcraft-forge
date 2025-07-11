@@ -1,8 +1,8 @@
 package net.splatcraft.util;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -481,8 +481,8 @@ public class InkBlockUtils
 		while (collisions.hasNext())
 		{
 			Pair<BlockPos, VoxelShape> collidedBlock = collisions.next();
-			BlockPos blockPos = collidedBlock.first();
-			VoxelShape voxelShape = collidedBlock.second();
+			BlockPos blockPos = collidedBlock.getFirst();
+			VoxelShape voxelShape = collidedBlock.getSecond();
 			
 			if (voxelShape.isEmpty())
 				continue;

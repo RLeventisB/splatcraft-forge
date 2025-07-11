@@ -1,6 +1,6 @@
 package net.splatcraft.platform;
 
-import it.unimi.dsi.fastutil.Pair;
+import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.neoforged.bus.api.Event;
@@ -40,13 +40,13 @@ public class EventHelper
 		boolean first = !EVENT_CONSUMERS.containsKey(record);
 		List<V> list = (List<V>) EVENT_CONSUMERS.computeIfAbsent(record, v -> new ObjectArrayList<>());
 		list.add(value);
-
+		
 		if (first)
 			registerEvent(eventClass, v -> record.process(v, list));
 	}
 	public static <E extends Event, K, V> void addToEventSpecificMap(Class<E> eventClass, K key, V value, TriConsumer<E, K, V> action)
 	{
-		addToEventSpecificList(eventClass, Pair.of(key, value), (e, pair) -> action.accept(e, pair.key(), pair.value()));
+		addToEventSpecificList(eventClass, Pair.of(key, value), (e, pair) -> action.accept(e, pair.getFirst(), pair.getSecond()));
 	}
 	record EventRecord<E extends Event, V>(Class<E> evtClass, BiConsumer<E, V> eventFiringConsumer)
 	{

@@ -29,7 +29,7 @@ public class PlayerColorPacket extends PlayS2CPacket
 	}
 	public static PlayerColorPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		InkColor color = InkColor.PACKET_CODEC.decode(buffer);
+		InkColor color = InkColor.STREAM_CODEC.decode(buffer);
 		String name = buffer.readUtf();
 		UUID player = buffer.readUUID();
 		return new PlayerColorPacket(player, name, color);
@@ -37,7 +37,7 @@ public class PlayerColorPacket extends PlayS2CPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		InkColor.PACKET_CODEC.encode(buffer, color);
+		InkColor.STREAM_CODEC.encode(buffer, color);
 		buffer.writeUtf(playerName);
 		buffer.writeUUID(target);
 	}

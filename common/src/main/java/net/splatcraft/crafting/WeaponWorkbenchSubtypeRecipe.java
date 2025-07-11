@@ -36,7 +36,7 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 		{
 			ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.encode(buffer, recipe.name);
 			ItemStack.STREAM_CODEC.encode(buffer, recipe.recipeOutput);
-			StackedIngredient.LIST_PACKET_CODEC.encode(buffer, recipe.recipeItems);
+			StackedIngredient.LIST_STREAM_CODEC.encode(buffer, recipe.recipeItems);
 			ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC).encode(buffer, recipe.advancement);
 			ByteBufCodecs.BOOL.encode(buffer, recipe.requireOther);
 		},
@@ -44,12 +44,12 @@ public class WeaponWorkbenchSubtypeRecipe extends AbstractWeaponWorkbenchRecipe
 			new WeaponWorkbenchSubtypeRecipe(
 				ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buffer),
 				ItemStack.STREAM_CODEC.decode(buffer),
-				StackedIngredient.LIST_PACKET_CODEC.decode(buffer),
+				StackedIngredient.LIST_STREAM_CODEC.decode(buffer),
 				ByteBufCodecs.optional(ResourceLocation.STREAM_CODEC).decode(buffer),
 				ByteBufCodecs.BOOL.decode(buffer)
 			)
 	);
-	public static final StreamCodec<RegistryFriendlyByteBuf, List<WeaponWorkbenchSubtypeRecipe>> LIST_PACKET_CODEC = STREAM_CODEC.apply(ByteBufCodecs.list());
+	public static final StreamCodec<RegistryFriendlyByteBuf, List<WeaponWorkbenchSubtypeRecipe>> LIST_STREAM_CODEC = STREAM_CODEC.apply(ByteBufCodecs.list());
 	public final NonNullList<WeaponWorkbenchSubtypeRecipe> siblings = NonNullList.create();
 	private final Optional<ResourceLocation> advancement;
 	private final boolean requireOther;

@@ -78,12 +78,12 @@ public record WeaponWorkbenchRecipe(ResourceLocation tab, List<WeaponWorkbenchSu
 	}
 	public static class Serializer implements RecipeSerializer<WeaponWorkbenchRecipe>
 	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchRecipe> PACKET_CODEC = StreamCodec.ofMember((recipe, buffer) ->
+		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchRecipe> STREAM_CODEC = StreamCodec.ofMember((recipe, buffer) ->
 		{
 			buffer.writeResourceLocation(recipe.tab);
-			WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.encode(buffer, recipe.subRecipes);
+			WeaponWorkbenchSubtypeRecipe.LIST_STREAM_CODEC.encode(buffer, recipe.subRecipes);
 			buffer.writeInt(recipe.pos);
-		}, (buffer) -> new WeaponWorkbenchRecipe(buffer.readResourceLocation(), WeaponWorkbenchSubtypeRecipe.LIST_PACKET_CODEC.decode(buffer), buffer.readInt()));
+		}, (buffer) -> new WeaponWorkbenchRecipe(buffer.readResourceLocation(), WeaponWorkbenchSubtypeRecipe.LIST_STREAM_CODEC.decode(buffer), buffer.readInt()));
 		public static final MapCodec<WeaponWorkbenchRecipe> CODEC = RecordCodecBuilder.mapCodec(inst ->
 			inst.group(
 				ResourceLocation.CODEC.fieldOf("tab").forGetter(WeaponWorkbenchRecipe::tab),
@@ -99,7 +99,7 @@ public record WeaponWorkbenchRecipe(ResourceLocation tab, List<WeaponWorkbenchSu
 		@Override
 		public @NotNull StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchRecipe> streamCodec()
 		{
-			return PACKET_CODEC;
+			return STREAM_CODEC;
 		}
 	}
 }

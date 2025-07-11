@@ -24,7 +24,7 @@ public class InkTerrainParticleData implements ParticleOptions
 			Codec.FLOAT.fieldOf("g").forGetter(InkTerrainParticleData::getGreen),
 			Codec.FLOAT.fieldOf("b").forGetter(InkTerrainParticleData::getBlue)
 		).apply(instance, InkTerrainParticleData::new));
-	public static final StreamCodec<RegistryFriendlyByteBuf, InkTerrainParticleData> PACKET_CODEC = StreamCodec.composite(
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkTerrainParticleData> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.FLOAT, InkTerrainParticleData::getRed,
 		ByteBufCodecs.FLOAT, InkTerrainParticleData::getGreen,
 		ByteBufCodecs.FLOAT, InkTerrainParticleData::getBlue,

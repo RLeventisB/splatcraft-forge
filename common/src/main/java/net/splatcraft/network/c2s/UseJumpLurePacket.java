@@ -26,7 +26,7 @@ public class UseJumpLurePacket extends PlayC2SPacket
 	}
 	public static UseJumpLurePacket decode(FriendlyByteBuf buf)
 	{
-		return new UseJumpLurePacket(InkColor.PACKET_CODEC.decode(buf), buf.readBoolean() ? null : buf.readUUID());
+		return new UseJumpLurePacket(InkColor.STREAM_CODEC.decode(buf), buf.readBoolean() ? null : buf.readUUID());
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -36,7 +36,7 @@ public class UseJumpLurePacket extends PlayC2SPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		InkColor.PACKET_CODEC.encode(buffer, color);
+		InkColor.STREAM_CODEC.encode(buffer, color);
 		buffer.writeBoolean(targetUUID == null);
 		if (targetUUID != null)
 			buffer.writeUUID(targetUUID);

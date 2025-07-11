@@ -81,9 +81,9 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 				equals(wwRecipe.getTab(world).value()) &&
 				!wwRecipe.getAvailableRecipes(player).isEmpty()).toList();
 		ArrayList<WeaponWorkbenchRecipe> recipes = Lists.newArrayList();
-
+		
 		stream.forEach(recipe -> recipes.add((WeaponWorkbenchRecipe) recipe.value()));
-
+		
 		return recipes;
 	}
 	@Override
@@ -112,7 +112,7 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 			ComponentSerialization.CODEC.optionalFieldOf("name").forGetter(v -> v.name),
 			Codec.BOOL.optionalFieldOf("hidden", false).forGetter(v -> v.hidden)
 		).apply(inst, WeaponWorkbenchTab::new));
-		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchTab> PACKET_CODEC = new StreamCodec<>()
+		public static final StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchTab> STREAM_CODEC = new StreamCodec<>()
 		{
 			@Override
 			public @NotNull WeaponWorkbenchTab decode(RegistryFriendlyByteBuf buffer)
@@ -140,7 +140,7 @@ public class WeaponWorkbenchTab implements Recipe<WeaponWorkbenchRecipeInput>, C
 		@Override
 		public @NotNull StreamCodec<RegistryFriendlyByteBuf, WeaponWorkbenchTab> streamCodec()
 		{
-			return PACKET_CODEC;
+			return STREAM_CODEC;
 		}
 	}
 }

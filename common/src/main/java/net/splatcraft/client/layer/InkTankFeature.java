@@ -2,6 +2,7 @@ package net.splatcraft.client.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -12,7 +13,6 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M>
 {
-	private static final Map<InkTankItem, Tuple<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>>> MAP = new HashMap<>();
+	private static final Map<InkTankItem, Pair<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>>> MAP = new HashMap<>();
 	private static final Map<InkTankItem, AbstractInkTankModel> MODEL_CACHE = new HashMap<>();
 	private final EntityModelSet modelLoader;
 	private String id;
@@ -39,7 +39,7 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 	}
 	public static void register(InkTankItem item, ModelLayerLocation layer, Function<ModelPart, AbstractInkTankModel> constructor)
 	{
-		MAP.put(item, new Tuple<>(layer, constructor));
+		MAP.put(item, Pair.of(layer, constructor));
 	}
 	@Override
 	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource provider, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch)
@@ -72,9 +72,9 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 	}
 	private AbstractInkTankModel createModel(InkTankItem item)
 	{
-		Tuple<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>> data = MAP.get(item);
-		id = data.getA().getModel().getPath();
-		AbstractInkTankModel model = data.getB().apply(modelLoader.bakeLayer(data.getA()));
+		Pair<ModelLayerLocation, Function<ModelPart, AbstractInkTankModel>> data = MAP.get(item);
+		id = data.getFirst().getModel().getPath();
+		AbstractInkTankModel model = data.getSecond().apply(modelLoader.bakeLayer(data.getFirst()));
 		MODEL_CACHE.put(item, model);
 		return model;
 	}

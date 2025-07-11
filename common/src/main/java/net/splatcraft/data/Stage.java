@@ -40,10 +40,10 @@ import java.util.*;
 public class Stage implements Comparable<Stage>
 {
 	public static final TreeMap<String, GameRules.Key<GameRules.BooleanValue>> VALID_SETTINGS = new TreeMap<>();
-	private static final StreamCodec<ByteBuf, ResourceKey<Level>> WORLD_KEY_PACKET_CODEC = ResourceKey.streamCodec(Registries.DIMENSION);
-	private static final StreamCodec<ByteBuf, Object2ObjectOpenHashMap<String, Boolean>> SETTINGS_PACKET_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.BOOL);
-	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, InkColor>> TEAMS_PACKET_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, InkColor.PACKET_CODEC);
-	private static final StreamCodec<ByteBuf, ObjectArrayList<BlockPos>> SPAWN_PAD_POSITIONS_PACKET_CODEC = BlockPos.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectArrayList::new));
+	private static final StreamCodec<ByteBuf, ResourceKey<Level>> WORLD_KEY_STREAM_CODEC = ResourceKey.streamCodec(Registries.DIMENSION);
+	private static final StreamCodec<ByteBuf, Object2ObjectOpenHashMap<String, Boolean>> SETTINGS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.BOOL);
+	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, InkColor>> TEAMS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, InkColor.STREAM_CODEC);
+	private static final StreamCodec<ByteBuf, ObjectArrayList<BlockPos>> SPAWN_PAD_POSITIONS_STREAM_CODEC = BlockPos.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectArrayList::new));
 	public static Codec<Stage> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		BlockPos.CODEC.fieldOf("corner_a").forGetter(v -> v.cornerA),
 		BlockPos.CODEC.fieldOf("corner_b").forGetter(v -> v.cornerB),
@@ -54,17 +54,17 @@ public class Stage implements Comparable<Stage>
 		ComponentSerialization.CODEC.fieldOf("Name").forGetter(v -> v.name),
 		Codec.STRING.fieldOf("Id").forGetter(v -> v.id)
 	).apply(inst, Stage::new));
-	public static StreamCodec<RegistryFriendlyByteBuf, Stage> PACKET_CODEC = new StreamCodec<>()
+	public static StreamCodec<RegistryFriendlyByteBuf, Stage> STREAM_CODEC = new StreamCodec<>()
 	{
 		@Override
 		public @NotNull Stage decode(@NotNull RegistryFriendlyByteBuf buf)
 		{
 			BlockPos cornerA = BlockPos.STREAM_CODEC.decode(buf);
 			BlockPos cornerB = BlockPos.STREAM_CODEC.decode(buf);
-			ResourceKey<Level> worldKey = WORLD_KEY_PACKET_CODEC.decode(buf);
-			Object2ObjectOpenHashMap<String, Boolean> settings = SETTINGS_PACKET_CODEC.decode(buf);
-			Object2ObjectOpenHashMap<String, InkColor> teams = TEAMS_PACKET_CODEC.decode(buf);
-			ObjectArrayList<BlockPos> spawnPadPositions = SPAWN_PAD_POSITIONS_PACKET_CODEC.decode(buf);
+			ResourceKey<Level> worldKey = WORLD_KEY_STREAM_CODEC.decode(buf);
+			Object2ObjectOpenHashMap<String, Boolean> settings = SETTINGS_STREAM_CODEC.decode(buf);
+			Object2ObjectOpenHashMap<String, InkColor> teams = TEAMS_STREAM_CODEC.decode(buf);
+			ObjectArrayList<BlockPos> spawnPadPositions = SPAWN_PAD_POSITIONS_STREAM_CODEC.decode(buf);
 			Component name = ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buf);
 			String id = ByteBufCodecs.STRING_UTF8.decode(buf);
 			return new Stage(cornerA, cornerB, worldKey, settings, teams, spawnPadPositions, name, id);
@@ -74,10 +74,10 @@ public class Stage implements Comparable<Stage>
 		{
 			BlockPos.STREAM_CODEC.encode(buf, value.cornerA);
 			BlockPos.STREAM_CODEC.encode(buf, value.cornerB);
-			WORLD_KEY_PACKET_CODEC.encode(buf, value.worldKey);
-			SETTINGS_PACKET_CODEC.encode(buf, value.settings);
-			TEAMS_PACKET_CODEC.encode(buf, value.teams);
-			SPAWN_PAD_POSITIONS_PACKET_CODEC.encode(buf, value.spawnPadPositions);
+			WORLD_KEY_STREAM_CODEC.encode(buf, value.worldKey);
+			SETTINGS_STREAM_CODEC.encode(buf, value.settings);
+			TEAMS_STREAM_CODEC.encode(buf, value.teams);
+			SPAWN_PAD_POSITIONS_STREAM_CODEC.encode(buf, value.spawnPadPositions);
 			ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.encode(buf, value.name);
 			ByteBufCodecs.STRING_UTF8.encode(buf, value.id);
 		}

@@ -107,7 +107,7 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 			removeWidget(pair.getSecond());
 		}
 		
-		stages.put(stage, new Pair<>(stageButton, jumpButton));
+		stages.put(stage, Pair.of(stageButton, jumpButton));
 		addButton(stageButton);
 		addButton(jumpButton);
 	}

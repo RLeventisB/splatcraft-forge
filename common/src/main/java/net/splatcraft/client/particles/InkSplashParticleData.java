@@ -26,7 +26,7 @@ public class InkSplashParticleData implements ParticleOptions
 			Codec.FLOAT.fieldOf("b").forGetter(InkSplashParticleData::getBlue),
 			ExtraCodecs.POSITIVE_FLOAT.fieldOf("scale").forGetter(InkSplashParticleData::getScale)
 		).apply(instance, InkSplashParticleData::new));
-	public static final StreamCodec<RegistryFriendlyByteBuf, InkSplashParticleData> PACKET_CODEC = StreamCodec.composite(
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkSplashParticleData> STREAM_CODEC = StreamCodec.composite(
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getRed,
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getGreen,
 		ByteBufCodecs.FLOAT, InkSplashParticleData::getBlue,

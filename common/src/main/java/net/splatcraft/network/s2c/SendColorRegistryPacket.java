@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class SendColorRegistryPacket extends PlayS2CPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SendColorRegistryPacket.class);
-	private static final StreamCodec<RegistryFriendlyByteBuf, BiMap<ResourceLocation, InkColor>> PACKET_CODEC = ByteBufCodecs.map(HashBiMap::create, ResourceLocation.STREAM_CODEC, InkColor.PACKET_CODEC);
+	private static final StreamCodec<RegistryFriendlyByteBuf, BiMap<ResourceLocation, InkColor>> STREAM_CODEC = ByteBufCodecs.map(HashBiMap::create, ResourceLocation.STREAM_CODEC, InkColor.STREAM_CODEC);
 	private final BiMap<ResourceLocation, InkColor> colors;
 	public SendColorRegistryPacket(BiMap<ResourceLocation, InkColor> colors)
 	{
@@ -25,7 +25,7 @@ public class SendColorRegistryPacket extends PlayS2CPacket
 	}
 	public static SendColorRegistryPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new SendColorRegistryPacket(PACKET_CODEC.decode(buffer));
+		return new SendColorRegistryPacket(STREAM_CODEC.decode(buffer));
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -35,7 +35,7 @@ public class SendColorRegistryPacket extends PlayS2CPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		PACKET_CODEC.encode(buffer, colors);
+		STREAM_CODEC.encode(buffer, colors);
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override

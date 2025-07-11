@@ -26,7 +26,7 @@ public class SplatcraftParticleTypes
 		@Override
 		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkSplashParticleData> streamCodec()
 		{
-			return InkSplashParticleData.PACKET_CODEC;
+			return InkSplashParticleData.STREAM_CODEC;
 		}
 	};
 	public static final ParticleType<InkExplosionParticleData> INK_EXPLOSION = new ParticleType<>(false)
@@ -39,7 +39,7 @@ public class SplatcraftParticleTypes
 		@Override
 		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkExplosionParticleData> streamCodec()
 		{
-			return InkExplosionParticleData.PACKET_CODEC;
+			return InkExplosionParticleData.STREAM_CODEC;
 		}
 	};
 	public static final ParticleType<SquidSoulParticleData> SQUID_SOUL = new ParticleType<>(false)
@@ -52,7 +52,7 @@ public class SplatcraftParticleTypes
 		@Override
 		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, SquidSoulParticleData> streamCodec()
 		{
-			return SquidSoulParticleData.PACKET_CODEC;
+			return SquidSoulParticleData.STREAM_CODEC;
 		}
 	};
 	public static final ParticleType<InkTerrainParticleData> INK_TERRAIN = new ParticleType<>(false)
@@ -65,7 +65,7 @@ public class SplatcraftParticleTypes
 		@Override
 		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkTerrainParticleData> streamCodec()
 		{
-			return InkTerrainParticleData.PACKET_CODEC;
+			return InkTerrainParticleData.STREAM_CODEC;
 		}
 	};
 	public static void registerParticles()
@@ -74,7 +74,7 @@ public class SplatcraftParticleTypes
 		REGISTRY.register("ink_explosion", () -> INK_EXPLOSION);
 		REGISTRY.register("squid_soul", () -> SQUID_SOUL);
 		REGISTRY.register("ink_terrain", () -> INK_TERRAIN);
-
+		
 		// uhhh architectury commented the code of these, why?????????????
 /*
 		ParticleProviderRegistry.register(INK_SPLASH, InkSplashParticle.Factory::new);

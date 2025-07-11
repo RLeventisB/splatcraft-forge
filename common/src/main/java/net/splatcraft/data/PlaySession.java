@@ -39,11 +39,11 @@ public final class PlaySession
 		Codec.STRING.fieldOf("stage_id").forGetter(v -> v.stageId),
 		ExtraCodecs.INSTANT_ISO8601.fieldOf("session_end_instant").forGetter(v -> v.sessionEndInstant)
 	).apply(inst, PlaySession::new));
-	public static final StreamCodec<ByteBuf, PlaySession> PACKET_CODEC = StreamCodec.composite(
+	public static final StreamCodec<ByteBuf, PlaySession> STREAM_CODEC = StreamCodec.composite(
 		UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), v -> v.playerUuids,
 		CodecUtils.createEnumPacketCodec(StageGameMode::values), v -> v.gameMode,
 		ByteBufCodecs.STRING_UTF8, v -> v.stageId,
-		CodecUtils.Codecs.INSTANT_PACKET_CODEC, v -> v.sessionEndInstant,
+		CodecUtils.Codecs.INSTANT_STREAM_CODEC, v -> v.sessionEndInstant,
 		PlaySession::new);
 	public final List<UUID> playerUuids;
 	public final StageGameMode gameMode;

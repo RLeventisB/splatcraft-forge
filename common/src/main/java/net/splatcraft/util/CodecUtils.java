@@ -114,7 +114,7 @@ public class CodecUtils
 	}
 	public static class Codecs
 	{
-		public static final StreamCodec<ByteBuf, Instant> INSTANT_PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, Instant> INSTANT_STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.VAR_LONG, Instant::getEpochSecond,
 			ByteBufCodecs.VAR_INT, Instant::getNano,
 			Instant::ofEpochSecond
@@ -160,7 +160,7 @@ public class CodecUtils
 		).apply(inst, Vector2f::new));
 		public static final Codec<Vector2f> VECTOR2F_LIST_CODEC = Codec.list(Codec.FLOAT, 2, 2).xmap(v -> new Vector2f(v.get(0), v.get(1)), v -> List.of(v.x(), v.y()));
 		public static final Codec<Vector2f> VECTOR2F_SINGLE_NUMBER_CODEC = Codec.FLOAT.xmap(Vector2f::new, Vector2f::x);
-		public static final StreamCodec<ByteBuf, Vec3> VEC_3_PACKET_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, Vec3> VEC_3_STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.DOUBLE, Vec3::x,
 			ByteBufCodecs.DOUBLE, Vec3::y,
 			ByteBufCodecs.DOUBLE, Vec3::z,
