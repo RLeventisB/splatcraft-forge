@@ -22,6 +22,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
+import net.splatcraft.blocks.SpawnPadBlock;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
@@ -58,8 +59,8 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 			BlockPos spawnPos = SuperJumpCommand.getSpawnPadPos(player);
 			if (spawnPos != null)
 			{
-				target = new Vec3(spawnPos.getCenter().x(), spawnPos.getY() + SuperJumpCommand.blockHeight(spawnPos, player.level()), spawnPos.getCenter().z());
-				if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, target))
+				target = getSpawnPadPosition(spawnPos);
+				if (!checkDistance(player, target))
 				{
 					player.sendSystemMessage(Component.literal("Spawn Pad outside of stage bounds!")); //TODO better feedback
 					return;
@@ -78,10 +79,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 			if (
 				targetPlayer == null ||
 					!hasMatchingLure(targetPlayer, color) ||
-					(
-						!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
-							&& !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())
-					)
+					!checkDistance(player, targetPlayer.position())
 			)
 			{
 				player.sendSystemMessage(Component.literal("A communication error has occurred.")); //TODO better feedback
@@ -116,8 +114,9 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 				players.addAll(player.level().getEntitiesOfClass(Player.class, stage.getBounds(), v -> true));
 		}
 		players.removeIf(target ->
-			player.equals(target) || !hasMatchingLure(target, color)
-				&& !SuperJumpCommand.canSuperJumpTo(player, target.position()));
+			player.equals(target) ||
+				!hasMatchingLure(target, color) ||
+				!checkDistance(player, target.position()));
 		return players;
 	}
 	@Override
@@ -169,8 +168,7 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
 		
 		if (spawnPadPos != null &&
-			!SplatcraftGameRules.getLocalizedRule(world, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) &&
-			!SuperJumpCommand.canSuperJumpTo(player, Vec3.atCenterOf(spawnPadPos)))
+			!checkDistance(player, getSpawnPadPosition(spawnPadPos)))
 			spawnPadPos = null;
 		
 		if (spawnPadPos == null && players.isEmpty())
@@ -224,5 +222,14 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 			ColorUtils.withColorLocked(stack, false);
 		}
 		return false;
+	}
+	public static Vec3 getSpawnPadPosition(BlockPos pos)
+	{
+		return new Vec3(pos.getCenter().x(), pos.getY() + SpawnPadBlock.SHAPE.bounds().getYsize(), pos.getCenter().z());
+	}
+	public static boolean checkDistance(LivingEntity entity, Vec3 target)
+	{
+		return SplatcraftGameRules.getLocalizedRule(entity.level(), entity.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) ||
+			SuperJumpCommand.canSuperJumpTo(entity, target);
 	}
 }

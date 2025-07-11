@@ -48,13 +48,13 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 {
 	public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 	public static final DirectionProperty DIRECTION = BlockStateProperties.HORIZONTAL_FACING;
-	private static final VoxelShape SHAPE = box(0, 0, 0, 16, 6.1, 16);
+	public static final VoxelShape SHAPE = box(0, 0, 0, 16, 6.1, 16);
 	private Aux auxBlock;
 	public SpawnPadBlock()
 	{
 		super(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(2.0f).requiresCorrectToolForDrops());
 		registerDefaultState(getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH));
-
+		
 		SplatcraftBlocks.inkColoredBlocks.add(this);
 	}
 	@Nullable
@@ -72,7 +72,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 	public Optional<Vec3> phGetRespawnPosition(BlockState state, EntityType<?> type, LevelReader WorldView, BlockPos pos, float orientation)
 	{
 		Vec3 vec = DismountHelper.findSafeDismountLocation(type, WorldView, pos, false);
-
+		
 		return vec == null ? Optional.empty() : Optional.of(vec);
 	}
 	@Override
@@ -88,7 +88,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		{
 			if (dir.get2DDataValue() < 0)
 				continue;
-
+			
 			for (int i = 0; i <= 1; i++)
 				if (!context.getLevel().getBlockState(context.getClickedPos().relative(dir).relative(dir.getCounterClockWise(), i)).canBeReplaced(context))
 					return null;
@@ -112,7 +112,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		{
 			levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
 		}
-
+		
 		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 	@Override
@@ -124,10 +124,10 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 	public @NotNull ItemStack getCloneItemStack(@NotNull LevelReader reader, @NotNull BlockPos pos, @NotNull BlockState state)
 	{
 		ItemStack stack = new ItemStack(this);
-
+		
 		if (reader.getBlockEntity(pos) instanceof InkColorTileEntity tileEntity)
 			ColorUtils.withColorLocked(ColorUtils.withInkColor(stack, ColorUtils.getInkColor(tileEntity)), true);
-
+		
 		return stack;
 	}
 	@Override
@@ -146,21 +146,21 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		if (!world.isClientSide() && !stack.getComponents().isEmpty() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
 		{
 			ColorUtils.withInkColor(world.getBlockEntity(pos), ColorUtils.getEffectiveColor(stack, entity));
-
+			
 			SpawnShieldEntity shield = new SpawnShieldEntity(world, pos, ColorUtils.getEffectiveColor(stack));
 			spawnPad.setSpawnShield(shield);
-
+			
 			world.addFreshEntity(shield);
-
+			
 			for (Stage stage : Stage.getStagesForPosition(world, pos.getCenter()))
 				stage.addSpawnPad(spawnPad);
 		}
-
+		
 		for (Direction dir : Direction.values())
 		{
 			if (dir.get2DDataValue() < 0)
 				continue;
-
+			
 			for (int i = 0; i <= 1; i++)
 			{
 				BlockPos auxPos = pos.relative(dir).relative(dir.getCounterClockWise(), i);
@@ -172,7 +172,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		}
 		world.blockUpdated(pos, Blocks.AIR);
 		state.updateNeighbourShapes(world, pos, 3);
-
+		
 		super.setPlacedBy(world, pos, state, entity, stack);
 	}
 	@Override
@@ -181,7 +181,7 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		if (!world.isClientSide() && world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
 			for (Stage stage : Stage.getStagesForPosition(world, pos.getCenter()))
 				stage.removeSpawnPad(spawnPad);
-
+		
 		return super.playerWillDestroy(world, pos, state, player);
 	}
 	@Override
@@ -238,26 +238,26 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		{
 			super(parent.properties);
 			this.parent = parent;
-
+			
 			parent.auxBlock = this;
-
+			
 			registerDefaultState(getStateDefinition().any().setValue(WATERLOGGED, false).setValue(DIRECTION, Direction.NORTH).setValue(IS_CORNER, false));
 		}
 		@Override
 		public @NotNull VoxelShape getShape(BlockState state, @NotNull BlockGetter reader, @NotNull BlockPos pos, @NotNull CollisionContext context)
 		{
 			int i = state.getValue(DIRECTION).get2DDataValue() * 2 + (state.getValue(IS_CORNER) ? 1 : 0);
-
+			
 			if (i < 0)
 				return Shapes.empty();
-
+			
 			if (SHAPES[i] == null)
 				SHAPES[i] = Shapes.or(
 					BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), box(state.getValue(IS_CORNER) ? 8 : 0, 0, 8, 16, 6, 16)),
 					BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION).getOpposite(), box(0, 6, 6, state.getValue(IS_CORNER) ? 7 : 16, 7, 7)),
 					BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), box(state.getValue(IS_CORNER) ? 10 : 0, 0, 10, 16, 6.1, 16)),
 					state.getValue(IS_CORNER) ? BarrierBarBlock.modifyShapeForDirection(state.getValue(DIRECTION), box(9, 6, 10, 10, 7, 16)) : Shapes.empty());
-
+			
 			return SHAPES[i];
 		}
 		public BlockPos getParentPos(BlockState state, BlockPos pos)
@@ -285,12 +285,12 @@ public class SpawnPadBlock extends Block implements IColoredBlock, SimpleWaterlo
 		{
 			if (levelIn.getBlockState(getParentPos(stateIn, currentPos)).getBlock() != parent)
 				return Blocks.AIR.defaultBlockState();
-
+			
 			if (stateIn.getValue(WATERLOGGED))
 			{
 				levelIn.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(levelIn));
 			}
-
+			
 			return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 		}
 		@Override
