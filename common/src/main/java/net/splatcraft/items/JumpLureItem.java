@@ -34,6 +34,7 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,8 +75,14 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		{
 			Player targetPlayer = player.level().getPlayerByUUID(targetUUID);
 			
-			if (targetPlayer == null || !hasMatchingLure(targetPlayer, color) || (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
-				&& !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())))
+			if (
+				targetPlayer == null ||
+					!hasMatchingLure(targetPlayer, color) ||
+					(
+						!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING)
+							&& !SuperJumpCommand.canSuperJumpTo(player, targetPlayer.position())
+					)
+			)
 			{
 				player.sendSystemMessage(Component.literal("A communication error has occurred.")); //TODO better feedback
 				// this error message is funny af
@@ -88,11 +95,12 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 	}
 	public static boolean hasMatchingLure(Player targetPlayer, InkColor color)
 	{
-		for (int i = 0; i < targetPlayer.getInventory().getContainerSize(); i++)
-			if (targetPlayer.getInventory().getItem(i).getItem() instanceof JumpLureItem &&
-				ColorUtils.colorEquals(targetPlayer.level(), targetPlayer.blockPosition(), color, ColorUtils.getEffectiveColor(targetPlayer.getInventory().getItem(i))))
-				return true;
-		return false;
+		return !CommonUtils.getItemInInventory(
+				targetPlayer,
+				stack ->
+					stack.getItem() instanceof JumpLureItem &&
+						ColorUtils.colorEquals(targetPlayer.level(), targetPlayer.blockPosition(), color, ColorUtils.getEffectiveColor(stack)))
+			.isEmpty();
 	}
 	public static List<? extends Player> getAvailableCandidates(Player player, InkColor color)
 	{
@@ -160,7 +168,9 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		
 		BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
 		
-		if (!SplatcraftGameRules.getLocalizedRule(world, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) && !SuperJumpCommand.canSuperJumpTo(player, new Vec3(spawnPadPos.getX(), spawnPadPos.getY(), spawnPadPos.getZ())))
+		if (spawnPadPos != null &&
+			!SplatcraftGameRules.getLocalizedRule(world, player.blockPosition(), SplatcraftGameRules.GLOBAL_SUPERJUMPING) &&
+			!SuperJumpCommand.canSuperJumpTo(player, Vec3.atCenterOf(spawnPadPos)))
 			spawnPadPos = null;
 		
 		if (spawnPadPos == null && players.isEmpty())
