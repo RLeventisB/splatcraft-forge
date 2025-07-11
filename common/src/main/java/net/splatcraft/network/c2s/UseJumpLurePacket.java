@@ -24,27 +24,23 @@ public class UseJumpLurePacket extends PlayC2SPacket
 		this.targetUUID = targetUUID;
 		this.color = color;
 	}
-
 	public static UseJumpLurePacket decode(FriendlyByteBuf buf)
 	{
-		return new UseJumpLurePacket(InkColor.constructOrReuse(buf.readInt()), buf.readBoolean() ? null : buf.readUUID());
+		return new UseJumpLurePacket(InkColor.PACKET_CODEC.decode(buf), buf.readBoolean() ? null : buf.readUUID());
 	}
-
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
-
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeInt(color.getColor());
+		InkColor.PACKET_CODEC.encode(buffer, color);
 		buffer.writeBoolean(targetUUID == null);
 		if (targetUUID != null)
 			buffer.writeUUID(targetUUID);
 	}
-
 	@Override
 	public void execute(Player player)
 	{

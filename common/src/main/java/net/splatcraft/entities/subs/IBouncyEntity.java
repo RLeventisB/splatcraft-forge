@@ -7,6 +7,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.splatcraft.mixin.accessors.AABBAccessor;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -20,7 +21,7 @@ public interface IBouncyEntity
 		double deltaX = to.x - from.x;
 		double deltaY = to.y - from.y;
 		double deltaZ = to.z - from.z;
-		Direction direction = AABB.getDirection(aabb, from, distance, null, deltaX, deltaY, deltaZ);
+		Direction direction = AABBAccessor.invokeGetDirection(aabb, from, distance, null, deltaX, deltaY, deltaZ);
 		if (direction == null)
 		{
 			return Optional.empty();

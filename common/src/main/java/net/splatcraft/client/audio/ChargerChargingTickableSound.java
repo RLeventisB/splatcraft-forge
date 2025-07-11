@@ -14,7 +14,6 @@ public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
 {
 	private final Player player;
 	private final int totalLevels;
-
 	public ChargerChargingTickableSound(Player player, SoundEvent sound, int totalLevels)
 	{
 		super(sound, SoundSource.PLAYERS, player.getRandom());
@@ -23,46 +22,44 @@ public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
 		looping = true;
 		delay = 0;
 		pitch = 0;
-
+		
 		this.player = player;
 	}
-
 	@Override
 	public boolean canStartSilent()
 	{
 		return true;
 	}
-
 	@Override
 	public void tick()
 	{
 		x = player.getX();
 		y = player.getY();
 		z = player.getZ();
-
+		
 		if (!player.isAlive() || !player.getUseItem().has(SplatcraftComponents.CHARGE_DATA) || !EntityInfoCapability.hasCapability(player))
 		{
 			stop();
 			return;
 		}
-
+		
 		EntityInfo info = EntityInfoCapability.get(player);
 		if (info.isSquid())
 		{
 			stop();
 			return;
 		}
-
+		
 		SplatcraftComponents.ChargeData chargeData = player.getUseItem().get(SplatcraftComponents.CHARGE_DATA);
 		float charge = chargeData.charge();
 		float prevCharge = chargeData.previousCharge();
-
+		
 		if (charge == 0 || (charge >= totalLevels && !isStopped()))
 		{
 			stop();
 			return;
 		}
-
+		
 		float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
 		pitch = (Mth.lerp(partialTick, prevCharge, charge) / totalLevels) * 0.5f + 0.5f;
 	}

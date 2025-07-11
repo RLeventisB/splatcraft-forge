@@ -82,7 +82,6 @@ public class Stage implements Comparable<Stage>
 			ByteBufCodecs.STRING_UTF8.encode(buf, value.id);
 		}
 	};
-
 	static
 	{
 		registerGameruleSetting(SplatcraftGameRules.INK_DECAY);
@@ -99,7 +98,6 @@ public class Stage implements Comparable<Stage>
 		registerGameruleSetting(SplatcraftGameRules.GLOBAL_SUPERJUMPING);
 		registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
 	}
-
 	public final String id;
 	private final Object2ObjectOpenHashMap<String, Boolean> settings;
 	private final Object2ObjectOpenHashMap<String, InkColor> teams;
@@ -117,7 +115,7 @@ public class Stage implements Comparable<Stage>
 		settings = new Object2ObjectOpenHashMap<>();
 		teams = new Object2ObjectOpenHashMap<>();
 		spawnPadPositions = new ObjectArrayList<>();
-
+		
 		updateBounds(server.getLevel(worldKey), posA, posB);
 	}
 	public Stage(BlockPos cornerA, BlockPos cornerB, ResourceKey<Level> worldKey, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Component name, String id)
@@ -137,7 +135,9 @@ public class Stage implements Comparable<Stage>
 	}
 	public static boolean targetsOnSameStage(Level world, Vec3 targetA, Vec3 targetB)
 	{
-		return !getStagesForPosition(world, targetA).stream().filter(stage -> stage.getBounds().contains(targetB)).toList().isEmpty();
+		return !getStagesForPosition(world, targetA).stream()
+			.filter(stage -> stage.getBounds().contains(targetB))
+			.toList().isEmpty();
 	}
 	public static ArrayList<Stage> getAllStages()
 	{
@@ -230,10 +230,10 @@ public class Stage implements Comparable<Stage>
 	public void updateSpawnPads(Level world)
 	{
 		spawnPadPositions.clear();
-
+		
 		BlockPos blockpos2 = new BlockPos(Math.min(cornerA.getX(), cornerB.getX()), Math.min(cornerB.getY(), cornerA.getY()), Math.min(cornerA.getZ(), cornerB.getZ()));
 		BlockPos blockpos3 = new BlockPos(Math.max(cornerA.getX(), cornerB.getX()), Math.max(cornerB.getY(), cornerA.getY()), Math.max(cornerA.getZ(), cornerB.getZ()));
-
+		
 		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
 			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
 				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
@@ -242,7 +242,7 @@ public class Stage implements Comparable<Stage>
 					if (world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
 						addSpawnPad(spawnPad);
 				}
-
+		
 		needsSpawnPadUpdate = false;
 	}
 	public void addSpawnPad(SpawnPadTileEntity spawnPad)
@@ -285,18 +285,18 @@ public class Stage implements Comparable<Stage>
 	{
 		if (!player.level().dimensionType().effectsLocation().equals(worldKey) || getSpawnPadPositions().isEmpty())
 			return false;
-
+		
 		InkColor playerColor = ColorUtils.getEntityColor(player);
 		Map<InkColor, List<SpawnPadTileEntity>> spawnPads = getSpawnPads(player.getServer());
-
+		
 		if (!spawnPads.containsKey(playerColor))
 		{
 			playerColor = spawnPads.keySet().toArray(new InkColor[0])[player.getRandom().nextInt(spawnPadPositions.size())];
 			ColorUtils.setPlayerColor(player, playerColor);
 		}
-
+		
 		BlockPos targetPos = spawnPads.get(playerColor).get(player.getRandom().nextInt(spawnPads.get(playerColor).size())).getBlockPos();
-
+		
 		return SuperJumpCommand.superJump(player, new Vec3(targetPos.getX() + 0.5, targetPos.getY() + SuperJumpCommand.blockHeight(targetPos, player.level()), targetPos.getZ() + 0.5));
 	}
 	public boolean play(MinecraftServer server, Collection<ServerPlayer> players, StageGameMode gameMode)
@@ -304,10 +304,10 @@ public class Stage implements Comparable<Stage>
 		SaveInfo saveInfo = SaveInfoCapability.get();
 		if (saveInfo.playSessions().containsKey(id))
 			return false;
-
+		
 		if (!gameMode.canDoOn(this, getStageWorld(server)))
 			return false;
-
+		
 		PlaySession playSession = new PlaySession(players, this, gameMode);
 		saveInfo.playSessions().put(id, playSession);
 		SplatcraftPacketHandler.sendToAll(new SendPlaySessionCreationPacket(playSession));

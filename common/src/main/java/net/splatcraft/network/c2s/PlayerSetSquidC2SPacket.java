@@ -50,11 +50,11 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 		{
 			throw new IllegalStateException(String.format("Squid state did not change for %s (%s)", player.getGameProfile(), squid));
 		}
-
+		
 		SquidFormHandler.setSquid(player, squid);
-
+		
 		player.level().playSound(null, player.getX(), player.getY(), player.getZ(), squid ? SplatcraftSounds.squidTransform : SplatcraftSounds.squidRevert, SoundSource.PLAYERS, 0.75F, CommonUtils.nextTriangular(player.level().getRandom(), 0.95f, 0.095f));
-
+		
 		SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), squid), player);
 	}
 }

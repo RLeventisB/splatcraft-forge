@@ -21,7 +21,6 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 	private final int totalLevels;
 	@Nullable
 	private Boolean playingSecondLevel = null;
-
 	public SplatlingChargingTickableSound(Player player, SoundEvent sound, int totalLevels)
 	{
 		super(sound, SoundSource.PLAYERS, player.getRandom());
@@ -29,24 +28,22 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 		attenuation = Attenuation.NONE;
 		looping = true;
 		delay = 0;
-
+		
 		this.player = player;
 		soundEvent = sound;
 	}
-
 	@Override
 	public boolean canStartSilent()
 	{
 		return true;
 	}
-
 	@Override
 	public void tick()
 	{
 		x = player.getX();
 		y = player.getY();
 		z = player.getZ();
-
+		
 		if (player.isAlive() && player.getUseItem().getItem() instanceof IChargeableWeapon chargeableWeapon && EntityInfoCapability.hasCapability(player))
 		{
 			EntityInfo info = EntityInfoCapability.get(player);
@@ -54,10 +51,10 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 			{
 				float charge = chargeableWeapon.getCharge(player.getUseItem());
 				float prevCharge = chargeableWeapon.getPreviousCharge(player.getUseItem());
-
+				
 				if (playingSecondLevel == null)
 					playingSecondLevel = charge > 1;
-
+				
 				if (!isFadeIn && fadeTime == 0)
 				{
 					stop();
@@ -70,7 +67,7 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 					fadeTime += isFadeIn ? 1 : -1;
 					volume = fadeTime / (float) maxFadeTime;
 				}
-
+				
 				float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
 				pitch = (Mth.lerp(partialTick, prevCharge, charge) / totalLevels) * 0.5f + 0.5f;
 				return;
@@ -78,18 +75,15 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 		}
 		stop();
 	}
-
 	public SoundEvent getSoundEvent()
 	{
 		return soundEvent;
 	}
-
 	public void fadeOut()
 	{
 		fadeTime = maxFadeTime;
 		isFadeIn = false;
 	}
-
 	public void fadeIn()
 	{
 		fadeTime = 0;

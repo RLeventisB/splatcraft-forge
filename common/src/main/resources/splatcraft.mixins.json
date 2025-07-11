@@ -19,6 +19,7 @@
         "SaveDataMixins$LevelStorageMixin",
         "ServerGamePacketMixin",
         "SquidPassthroughMixin",
+        "accessors.AABBAccessor",
         "accessors.EntityAccessor",
         "accessors.GameRuleAccessor"
     ],

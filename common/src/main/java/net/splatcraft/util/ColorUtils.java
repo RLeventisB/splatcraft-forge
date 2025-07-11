@@ -78,7 +78,7 @@ public class ColorUtils
 	}
 	public static void setPlayerColor(Player player, InkColor color, boolean updateClient)
 	{
-		if (EntityInfoCapability.hasCapability(player) && EntityInfoCapability.get(player).getColor() != color)
+		if (EntityInfoCapability.get(player).getColor() != color)
 		{
 			if (player instanceof ServerPlayer serverPlayer)
 				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.value().trigger(serverPlayer);

@@ -55,50 +55,50 @@ public class ClientUtils
 			// retrieve other worlds :(
 			if (world.dimension() != stage.worldKey)
 				return MatchCameraPositions.INVALID;
-
+			
 			// gets the stage's (horizontal) center and find the highest y
 			AABB bounds = stage.getBounds();
 			int stageCenterX = (int) bounds.getCenter().x;
 			int stageCenterZ = (int) bounds.getCenter().z;
 			int minY = (int) bounds.minY;
 			int maxY = (int) bounds.maxY;
-
+			
 			CameraPosition stageFloorCenter = new CameraPosition(new Vec3(
 				stageCenterX,
 				Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stageCenterX, stageCenterZ, world, minY, maxY))
 					.map(v -> (float) v.getY()).orElse((float) minY) + 2,
 				stageCenterZ
 			), 0.0f, 90.0f);
-
+			
 			CameraPosition stageTopCenter = new CameraPosition(
 				stageFloorCenter.position.add(0, 25, 0),
 				0.0f, 90.0f
 			);
-
+			
 			ImmutableList.Builder<CameraPosition> positions = ImmutableList.builder();
 			// spawn pads
 			Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
-
+			
 			// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
 			InkColor clientPlayerColor = ColorUtils.getEntityColor(getClientPlayer());
 			List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
-
+			
 			if (clientSpawnPads != null)
 			{
 				spawnPadPositions.remove(clientPlayerColor);
-
+				
 				SpawnPadTileEntity randomClientPad = Util.getRandom(clientSpawnPads, world.random);
-
+				
 				addPadToList(randomClientPad, stageFloorCenter, positions);
 			}
-
+			
 			for (Map.Entry<InkColor, List<SpawnPadTileEntity>> spawnPadEntrySet : spawnPadPositions.entrySet())
 			{
 				SpawnPadTileEntity randomPad = Util.getRandom(spawnPadEntrySet.getValue(), world.random);
-
+				
 				addPadToList(randomPad, stageFloorCenter, positions);
 			}
-
+			
 			return new MatchCameraPositions(stageFloorCenter, stageTopCenter, positions.build());
 		}
 		);
@@ -111,7 +111,7 @@ public class ClientUtils
 		Vec3 lookPosition = spawnPadCenter.subtract(dirCenterToPad.scale(2)).subtract(0, 2, 0);
 		float pitch = (float) (Mth.atan2(dirCenterToPad.y, dirCenterToPad.horizontalDistance()) * Mth.RAD_TO_DEG);
 		float yaw = (float) (Mth.atan2(dirCenterToPad.x, dirCenterToPad.z) * Mth.RAD_TO_DEG);
-
+		
 		posAndRotations.add(new CameraPosition(lookPosition, -yaw, -pitch));
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -127,12 +127,12 @@ public class ClientUtils
 	public static double getDurabilityForDisplay()
 	{
 		Player player = getClientPlayer();
-
+		
 		if (!SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.REQUIRE_INK_TANK))
 		{
 			return 0;
 		}
-
+		
 		ItemStack chestpiece = player.getItemBySlot(EquipmentSlot.CHEST);
 		if (chestpiece.has(SplatcraftComponents.TANK_DATA))
 		{
@@ -144,12 +144,12 @@ public class ClientUtils
 	{
 		if (te.getLevel() == null)
 			return false;
-
+		
 		BlockPos tePos = te.getBlockPos();
-
+		
 		Vector3f lookVec = Minecraft.getInstance().gameRenderer.getMainCamera().getLookVector();
 		Vec3 blockVec = Vec3.atBottomCenterOf(tePos).add(lookVec.x(), lookVec.y(), lookVec.z());
-
+		
 		Vec3 directionVec3d = blockVec.subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()).normalize();
 		Vector3f directionVec = new Vector3f((float) directionVec3d.x, (float) directionVec3d.y, (float) directionVec3d.z);
 		if (lookVec.dot(directionVec) > 0)
@@ -158,7 +158,7 @@ public class ClientUtils
 			BlockState offset = te.getLevel().getBlockState(tePos.relative(direction));
 			return offset.equals(Blocks.BARRIER.defaultBlockState()) || !offset.isSolid() || !offset.isRedstoneConductor(te.getLevel(), tePos.relative(direction));
 		}
-
+		
 		return false;
 	}
 	public static void setSquid(LivingEntity entity, boolean newSquid)
@@ -176,7 +176,7 @@ public class ClientUtils
 	public static void setSquid(LivingEntity entity, EntityInfo info, boolean newSquid, boolean checkChargeStorage)
 	{
 		SquidFormHandler.setSquid(entity, info, newSquid);
-
+		
 		SplatcraftPacketHandler.sendToServer(new PlayerSetSquidC2SPacket(newSquid, checkChargeStorage));
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -221,7 +221,6 @@ public class ClientUtils
 		{
 			return new CameraPosition(position, yaw, pitch);
 		}
-
 		public void applyTransformations(TriConsumer<Double, Double, Double> positionConsumer, BiConsumer<Float, Float> rotationConsumer)
 		{
 			if (position != null)

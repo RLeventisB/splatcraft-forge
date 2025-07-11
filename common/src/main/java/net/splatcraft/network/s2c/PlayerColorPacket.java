@@ -29,15 +29,15 @@ public class PlayerColorPacket extends PlayS2CPacket
 	}
 	public static PlayerColorPacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		int color = buffer.readInt();
+		InkColor color = InkColor.PACKET_CODEC.decode(buffer);
 		String name = buffer.readUtf();
 		UUID player = buffer.readUUID();
-		return new PlayerColorPacket(player, name, InkColor.constructOrReuse(color));
+		return new PlayerColorPacket(player, name, color);
 	}
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeInt(color.getColor());
+		InkColor.PACKET_CODEC.encode(buffer, color);
 		buffer.writeUtf(playerName);
 		buffer.writeUUID(target);
 	}
@@ -46,7 +46,7 @@ public class PlayerColorPacket extends PlayS2CPacket
 	{
 		Player player = Minecraft.getInstance().level.getPlayerByUUID(target);
 		if (player != null)
-			ColorUtils.setPlayerColor(player, color, false);
+			ColorUtils.setPlayerColor(player, color);
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()

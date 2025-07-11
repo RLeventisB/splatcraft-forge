@@ -114,7 +114,8 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		providerStackOptional.ifPresent(providerStack ->
 		{
 			SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-			providerStack.set(SplatcraftComponents.SPECIAL_PROVIDER_DATA, data.withStoredCharge(getSpecialCharge(providerStack, data.storedCharge())));
+			if (data != null)
+				providerStack.set(SplatcraftComponents.SPECIAL_PROVIDER_DATA, data.withStoredCharge(getSpecialCharge(providerStack, data.storedCharge())));
 		});
 		super.tick(entity);
 	}

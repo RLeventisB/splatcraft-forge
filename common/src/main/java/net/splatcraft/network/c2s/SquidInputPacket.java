@@ -24,24 +24,20 @@ public class SquidInputPacket extends PlayC2SPacket
 	);
 	private final Optional<Direction> climbedDirection;
 	private final float squidSurgeCharge;
-
 	public SquidInputPacket(Optional<Direction> climbedDirection, float squidSurgeCharge)
 	{
 		this.climbedDirection = climbedDirection;
 		this.squidSurgeCharge = squidSurgeCharge;
 	}
-
 	public static SquidInputPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return STREAM_CODEC.decode(buffer);
 	}
-
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
 	{
 		return ID;
 	}
-
 	@Override
 	public void execute(Player target)
 	{
@@ -49,7 +45,6 @@ public class SquidInputPacket extends PlayC2SPacket
 		playerInfo.setClimbedDirection(climbedDirection.orElse(null));
 		playerInfo.setSquidSurgeState(squidSurgeCharge);
 	}
-
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{

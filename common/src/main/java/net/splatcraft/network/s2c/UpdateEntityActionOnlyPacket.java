@@ -48,7 +48,7 @@ public class UpdateEntityActionOnlyPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Player target = Minecraft.getInstance().level.getPlayerByUUID(this.target);
-
+		
 		if (target != null)
 		{
 			DataResult<EntityAction> result = EntityAction.SERIALIZER_CODEC.parse(NbtOps.INSTANCE, nbt);

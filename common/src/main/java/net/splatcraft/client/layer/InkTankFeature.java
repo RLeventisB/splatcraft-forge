@@ -49,20 +49,20 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 		{
 			AbstractInkTankModel model = MODEL_CACHE.getOrDefault(item, createModel(item));
 			matrixStack.pushPose();
-
+			
 			getParentModel().copyPropertiesTo((EntityModel<T>) model);
 			model.setInkLevels(InkTankItem.getInkPercentage(itemStack));
 			model.setupAnim(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
 			model.notifyState(getParentModel());
-
+			
 			VertexConsumer vertexConsumer = ItemRenderer.getArmorFoilBuffer(provider, RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1_overlay.png")
 			), itemStack.hasFoil());
 			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, -1);
-
+			
 			matrixStack.popPose();
 			matrixStack.pushPose();
-
+			
 			vertexConsumer = provider.getBuffer(RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1.png")
 			));

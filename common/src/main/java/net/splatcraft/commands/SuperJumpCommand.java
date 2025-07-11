@@ -119,10 +119,11 @@ public class SuperJumpCommand
 	public static boolean canSuperJumpTo(LivingEntity entity, Vec3 target)
 	{
 		int jumpLimit = SplatcraftGameRules.getIntRuleValue(entity.level(), SplatcraftGameRules.SUPERJUMP_DISTANCE_LIMIT);
-		if (Stage.targetsOnSameStage(entity.level(), entity.position(), target) || jumpLimit < 0 || entity.position().distanceTo(target) <= jumpLimit)
+		if (jumpLimit < 0 ||
+			entity.position().distanceTo(target) <= jumpLimit ||
+			Stage.targetsOnSameStage(entity.level(), entity.position(), target))
 		{
-			EntityAction action = EntityAction.getEntityAction(entity);
-			return !(action instanceof SuperJump);
+			return !EntityAction.hasSpecificEntityAction(entity, SuperJump.class);
 		}
 		return false;
 	}
