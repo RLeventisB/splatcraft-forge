@@ -38,15 +38,10 @@ public class WeaponHandler
 	private static final Map<LivingEntity, OldEntityTransformData> prevPosMap = new LinkedHashMap<>();
 	private static final Map<LivingEntity, Vec3> lastGroundedPos = new LinkedHashMap<>();
 	private static final Map<LivingEntity, Short> weaponUseTime = new LinkedHashMap<>();
+	private static final Map<LivingEntity, Short> movedQuicklyDisable = new LinkedHashMap<>();
 	public static void registerEvents()
 	{
-		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, (entity, dmgSource) ->
-		{
-			prevPosMap.remove(entity);
-			weaponUseTime.remove(entity);
-			lastGroundedPos.remove(entity);
-			return EventResult.pass();
-		});
+		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, WeaponHandler::onDeath);
 		
 		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
@@ -100,6 +95,15 @@ public class WeaponHandler
 			else
 			{
 				weaponUseTime.remove(entity);
+			}
+			Short time = movedQuicklyDisable.get(entity);
+			if (time != null)
+			{
+				time--;
+				if (time > 0)
+					movedQuicklyDisable.put(entity, time);
+				else
+					movedQuicklyDisable.remove(entity);
 			}
 			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
@@ -171,6 +175,14 @@ public class WeaponHandler
 	{
 		return Optional.ofNullable(lastGroundedPos.get(entity));
 	}
+	public static void disableMovedQuickly(LivingEntity entity, float ticks)
+	{
+		movedQuicklyDisable.put(entity, (short) ticks);
+	}
+	public static void disableMovedQuickly(LivingEntity entity, short ticks)
+	{
+		movedQuicklyDisable.put(entity, ticks);
+	}
 	public static void resetLastGroundedPos(LivingEntity entity)
 	{
 		lastGroundedPos.remove(entity);
@@ -224,6 +236,18 @@ public class WeaponHandler
 			return Component.translatable("weaponRecipe." + weaponId);
 		}
 		return Component.translatable(weaponId.toLanguageKey("item"));
+	}
+	public static EventResult onDeath(LivingEntity entity, DamageSource dmgSource)
+	{
+		prevPosMap.remove(entity);
+		weaponUseTime.remove(entity);
+		lastGroundedPos.remove(entity);
+		movedQuicklyDisable.remove(entity);
+		return EventResult.pass();
+	}
+	public static boolean hasMovedQuicklyDisabled(LivingEntity entity)
+	{
+		return movedQuicklyDisable.containsKey(entity);
 	}
 	public static class OldEntityTransformData
 	{

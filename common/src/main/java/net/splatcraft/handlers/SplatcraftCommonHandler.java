@@ -141,7 +141,6 @@ public class SplatcraftCommonHandler
 		}
 		
 		EntityAction.setEntityAction(entity, null);
-		WeaponHandler.resetLastGroundedPos(entity);
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
 		
 		return keepAliveIfOnMatch(entity, source);
@@ -156,6 +155,8 @@ public class SplatcraftCommonHandler
 			{
 				if (!info.isMatchRespawning())
 				{
+					WeaponHandler.onDeath(entity, source);
+					
 					info.setMatchRespawnTimeLeft(100);
 					info.setIsMatchRespawning(true);
 					

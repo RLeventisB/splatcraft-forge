@@ -15,6 +15,8 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CodecUtils;
@@ -255,6 +257,9 @@ public class InkjetAction extends BaseSpecialAction
 	@Override
 	public boolean canEnd(LivingEntity entity)
 	{
+		if (entity.level().isClientSide())
+			return false;
+		
 		EntityAction.setEntityAction(entity, new SuperJumpCommand.SuperJump(entity.position(),
 			startPos,
 			0,
@@ -265,6 +270,7 @@ public class InkjetAction extends BaseSpecialAction
 			true));
 		
 		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
 		
 		return false;
 	}

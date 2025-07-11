@@ -22,6 +22,7 @@ import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
@@ -208,6 +209,7 @@ public class SuperJumpCommand
 			{
 				if (getTime() == getTravelTime())
 				{
+					WeaponHandler.disableMovedQuickly(entity, getTravelTime() + 10);
 					entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.superjumpStart, SoundSource.PLAYERS, 0.8F, 1);
 				}
 				float progress = getSuperJumpProgress(0);

@@ -148,7 +148,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	@Override
 	public void tick()
 	{
-		if (getLifespan() == 0)
+		if (getLifespan() == 0 && level().isClientSide())
 		{
 			playSound(this);
 		}

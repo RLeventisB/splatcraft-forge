@@ -5,8 +5,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -18,11 +20,16 @@ public class ServerGamePacketMixin
 	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isChangingDimension()Z"))
 	public boolean isChangingDimOrSuperjumping(ServerPlayer player, Operation<Boolean> original)
 	{
-		return original.call(player) || EntityAction.hasSpecificEntityAction(player, SuperJumpCommand.SuperJump.class);
+		return splatcraft$disableMovedQuickly(player, original);
+	}
+	@Unique
+	private static boolean splatcraft$disableMovedQuickly(ServerPlayer player, Operation<Boolean> original)
+	{
+		return original.call(player) || EntityAction.hasSpecificEntityAction(player, SuperJumpCommand.SuperJump.class) || WeaponHandler.hasMovedQuicklyDisabled(player);
 	}
 	@WrapOperation(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;isAutoSpinAttack()Z"))
-	public boolean isSpinninggOrSuperJumping(ServerPlayer player, Operation<Boolean> original)
+	public boolean isSpinningOrSuperJumping(ServerPlayer player, Operation<Boolean> original)
 	{
-		return original.call(player) || EntityAction.hasSpecificEntityAction(player, SuperJumpCommand.SuperJump.class);
+		return splatcraft$disableMovedQuickly(player, original);
 	}
 }

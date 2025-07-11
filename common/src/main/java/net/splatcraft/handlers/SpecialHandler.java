@@ -13,7 +13,7 @@ import net.splatcraft.items.weapons.settings.DynamicDataRecord;
 import net.splatcraft.items.weapons.settings.SpecialWeaponRecords;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
+import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.InkjetAction;
@@ -130,7 +130,7 @@ public class SpecialHandler
 			return;
 		
 		specialExecutor.get(specialId).getFirst().execute(entity, settings, providerSlot, weaponSlot);
-		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
 	}
 	@FunctionalInterface
 	public interface SpecialExecutorAction
