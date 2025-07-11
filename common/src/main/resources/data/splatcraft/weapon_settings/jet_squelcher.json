@@ -16,6 +16,7 @@
         "startup_ticks": 3,
         "startup_ticks_from_squid": 11,
         "endlag_ticks": 5,
+        "repeat_ticks": 8,
         "speed": 33.6,
         "accuracy_data": {
             "ground_deviation_degrees": 2.5,

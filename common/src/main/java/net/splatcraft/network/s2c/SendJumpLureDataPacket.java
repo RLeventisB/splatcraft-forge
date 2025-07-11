@@ -31,12 +31,14 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
 	{
 		InkColor color = InkColor.constructOrReuse(buffer.readInt());
 		boolean canJump = buffer.readBoolean();
-		BlockPos spawnPosition = buffer.readBlockPos();
+		BlockPos spawnPosition = null;
+		if (canJump)
+			spawnPosition = buffer.readBlockPos();
 		int uuidCount = buffer.readInt();
 		ArrayList<UUID> uuids = new ArrayList<>();
 		for (int i = 0; i < uuidCount; i++)
 			uuids.add(buffer.readUUID());
-
+		
 		return new SendJumpLureDataPacket(color, canJump, uuids, spawnPosition);
 	}
 	@Override
@@ -49,7 +51,8 @@ public class SendJumpLureDataPacket extends PlayS2CPacket
 	{
 		buffer.writeInt(color.getColor());
 		buffer.writeBoolean(canJumpToSpawn);
-		buffer.writeBlockPos(spawnPosition);
+		if (canJumpToSpawn)
+			buffer.writeBlockPos(spawnPosition);
 		buffer.writeInt(uuids.size());
 		for (UUID uuid : uuids)
 			buffer.writeUUID(uuid);

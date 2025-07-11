@@ -168,6 +168,10 @@ public class PlayerMovementHandler
 		{
 			handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
 		}
+		else if (info.getSquidSurgeState() != 0)
+		{
+			info.setSquidSurgeState(0);
+		}
 		
 		if (player.isUsingItem())
 		{

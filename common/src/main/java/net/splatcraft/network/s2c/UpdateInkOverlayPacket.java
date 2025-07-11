@@ -1,8 +1,8 @@
 package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
@@ -16,12 +16,12 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 {
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateInkOverlayPacket.class);
 	int entityId;
-	CompoundTag nbt;
+	Tag nbt;
 	public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayInfo info)
 	{
-		this(entity.getId(), info.writeNBT(new CompoundTag()));
+		this(entity.getId(), InkOverlayInfo.CODEC.encodeStart(NbtOps.INSTANCE, info).getOrThrow());
 	}
-	public UpdateInkOverlayPacket(int entity, CompoundTag info)
+	public UpdateInkOverlayPacket(int entity, Tag info)
 	{
 		entityId = entity;
 		nbt = info;

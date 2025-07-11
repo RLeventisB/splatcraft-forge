@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -103,7 +104,11 @@ public class SuperJumpSelectorScreen
 			}
 			else if (option instanceof PlayerMenuItem menuItem)
 			{
-				Vec3 playerPos = mc.level.getPlayerByUUID(menuItem.profile.getId()).position();
+				Player player = mc.level.getPlayerByUUID(menuItem.profile.getId());
+				if (player == null)
+					continue;
+				
+				Vec3 playerPos = player.position();
 				Vector4f screenPos = GraphicsUtils.worldToScreenSpace(playerPos, projectionMatrix);
 				if (screenPos.z > 0)
 					continue;
