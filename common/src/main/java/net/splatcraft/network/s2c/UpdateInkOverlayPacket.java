@@ -2,12 +2,13 @@ package net.splatcraft.network.s2c;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,12 +39,12 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 	public void execute()
 	{
 		Entity entity = Minecraft.getInstance().level.getEntity(entityId);
-
-		if (!(entity instanceof LivingEntity living) || !InkOverlayCapability.hasCapability(living))
+		
+		if (!(entity instanceof LivingEntity living))
 		{
 			return;
 		}
-		InkOverlayCapability.get(living).readNBT(nbt);
+		Components.INK_OVERLAY.set(living, InkOverlayInfo.CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow());
 	}
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)

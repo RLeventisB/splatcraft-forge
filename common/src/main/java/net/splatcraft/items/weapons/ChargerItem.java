@@ -14,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.ChargerChargingTickableSound;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -136,7 +135,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 				}
 			}, (charge, extraTime) ->
 			{
-				if (!EntityInfoCapability.isSquid(living))
+				if (!CommonUtils.isSquid(living))
 					shoot(world, living, stack, charge, extraTime);
 			}));
 		}

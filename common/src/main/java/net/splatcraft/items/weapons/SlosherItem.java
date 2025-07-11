@@ -84,7 +84,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	@Override
 	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
 	{
-		if (EntityAction.hasSpecificActionAnd(entity, roll -> !roll.didSound, SloshAction.class))
+		if (EntityAction.hasSpecificEntityActionAnd(entity, roll -> !roll.didSound, SloshAction.class))
 			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
 		
 		return Optional.of(() ->

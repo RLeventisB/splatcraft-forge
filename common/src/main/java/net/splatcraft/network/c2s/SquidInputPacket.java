@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +41,7 @@ public class SquidInputPacket extends PlayC2SPacket
 	@Override
 	public void execute(Player target)
 	{
-		EntityInfo playerInfo = EntityInfoCapability.get(target);
+		EntityInfo playerInfo = Components.ENTITY_INFO.getOrCreate(target);
 		playerInfo.setClimbedDirection(climbedDirection.orElse(null));
 		playerInfo.setSquidSurgeState(squidSurgeCharge);
 	}

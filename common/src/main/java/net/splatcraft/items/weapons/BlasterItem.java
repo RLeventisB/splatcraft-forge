@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
@@ -58,7 +57,7 @@ public class BlasterItem extends WeaponBaseItem<BlasterWeaponSettings>
 					data.tick(
 						(firingData, accumulatedTime) ->
 						{
-							if (!EntityInfoCapability.isSquid(living))
+							if (!CommonUtils.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime);
 							return WeaponHandler.canContinueShooting(living) ? firingData : firingData.withRepeatingFlag(false);
 						},

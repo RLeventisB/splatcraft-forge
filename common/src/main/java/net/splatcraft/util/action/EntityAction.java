@@ -11,10 +11,10 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.action.specials.InkjetAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -59,9 +59,7 @@ public interface EntityAction
 	 */
 	static EntityAction getEntityAction(LivingEntity entity)
 	{
-		EntityInfo entityInfo = EntityInfoCapability.get(entity);
-		if (entityInfo == null)
-			return null;
+		EntityInfo entityInfo = Components.ENTITY_INFO.getOrCreate(entity);
 		return entityInfo.getEntityAction();
 	}
 	/**
@@ -73,8 +71,8 @@ public interface EntityAction
 	 */
 	static <T extends EntityAction> T getSpecificEntityAction(LivingEntity entity, Class<T> clazz)
 	{
-		EntityInfo entityInfo = EntityInfoCapability.get(entity);
-		if (entityInfo == null || !clazz.isInstance(entityInfo.getEntityAction()))
+		EntityInfo entityInfo = Components.ENTITY_INFO.getOrCreate(entity);
+		if (!clazz.isInstance(entityInfo.getEntityAction()))
 			return null;
 		return (T) entityInfo.getEntityAction();
 	}
@@ -86,43 +84,29 @@ public interface EntityAction
 	 */
 	static Optional<EntityAction> getEntityActionOptional(LivingEntity entity)
 	{
-		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getEntityAction);
+		return Components.ENTITY_INFO.getOptional(entity).map(EntityInfo::getEntityAction);
 	}
 	static <T extends EntityAction> Optional<T> getSpecificEntityActionOptional(LivingEntity entity, Class<T> clazz)
 	{
-		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getEntityAction).map(v -> clazz.isInstance(v) ? (T) v : null);
+		return Components.ENTITY_INFO.getOptional(entity).map(EntityInfo::getEntityAction).map(v -> clazz.isInstance(v) ? (T) v : null);
 	}
 	static void setEntityAction(LivingEntity entity, EntityAction action)
 	{
-		EntityInfoCapability.get(entity).setEntityAction(action);
+		Components.ENTITY_INFO.getOrCreate(entity).setEntityAction(action);
 	}
-	static EntityAction setActionTime(LivingEntity entity, int time)
+	static <T extends EntityAction> boolean hasSpecificEntityActionAnd(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
 	{
-		EntityAction action = EntityInfoCapability.get(entity).getEntityAction();
-		if (action == null)
+		return getSpecificEntityActionIf(entity, actionPredicate, clazz).isPresent();
+	}
+	static boolean hasEntityActionAnd(LivingEntity entity, Predicate<EntityAction> actionPredicate)
+	{
+		return getEntityActionIf(entity, actionPredicate).isPresent();
+	}
+	static <T extends EntityAction> Optional<T> getSpecificEntityActionIf(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
+	{
+		if (entity != null && Components.ENTITY_INFO.has(entity))
 		{
-			return null;
-		}
-		else
-		{
-			action.setTime(time);
-		}
-		
-		return action;
-	}
-	static <T extends EntityAction> boolean hasSpecificActionAnd(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
-	{
-		return getSpecificActionIf(entity, actionPredicate, clazz).isPresent();
-	}
-	static boolean hasActionAnd(LivingEntity entity, Predicate<EntityAction> actionPredicate)
-	{
-		return getActionIf(entity, actionPredicate).isPresent();
-	}
-	static <T extends EntityAction> Optional<T> getSpecificActionIf(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
-	{
-		if (entity != null && EntityInfoCapability.hasCapability(entity))
-		{
-			EntityAction action = EntityInfoCapability.get(entity).getEntityAction();
+			EntityAction action = Components.ENTITY_INFO.get(entity).getEntityAction();
 			if (clazz != null && clazz.isInstance(action))
 			{
 				T castedAction = (T) action;
@@ -134,11 +118,11 @@ public interface EntityAction
 		}
 		return Optional.empty();
 	}
-	static Optional<EntityAction> getActionIf(LivingEntity entity, Predicate<EntityAction> actionPredicate)
+	static Optional<EntityAction> getEntityActionIf(LivingEntity entity, Predicate<EntityAction> actionPredicate)
 	{
-		if (entity != null && EntityInfoCapability.hasCapability(entity))
+		if (entity != null && Components.ENTITY_INFO.has(entity))
 		{
-			EntityAction action = EntityInfoCapability.get(entity).getEntityAction();
+			EntityAction action = Components.ENTITY_INFO.get(entity).getEntityAction();
 			if (action != null && actionPredicate.test(action))
 			{
 				return Optional.of(action);
@@ -148,16 +132,18 @@ public interface EntityAction
 	}
 	static boolean hasEntityAction(LivingEntity entity)
 	{
-		if (entity == null || !EntityInfoCapability.hasCapability(entity))
+		if (entity == null || !Components.ENTITY_INFO.has(entity))
 			return false;
-		EntityAction cooldown = EntityInfoCapability.get(entity).getEntityAction();
+		
+		EntityAction cooldown = Components.ENTITY_INFO.get(entity).getEntityAction();
 		return cooldown != null;
 	}
 	static <T extends EntityAction> boolean hasSpecificEntityAction(LivingEntity entity, Class<T> clazz)
 	{
-		if (entity == null || !EntityInfoCapability.hasCapability(entity))
+		if (entity == null || !Components.ENTITY_INFO.has(entity))
 			return false;
-		EntityAction cooldown = EntityInfoCapability.get(entity).getEntityAction();
+		
+		EntityAction cooldown = Components.ENTITY_INFO.get(entity).getEntityAction();
 		return clazz.isInstance(cooldown);
 	}
 	static void registerActions()

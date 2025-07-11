@@ -35,9 +35,9 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.crafting.*;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.CraftWeaponPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.tileentities.container.WeaponWorkbenchContainer;
 import net.splatcraft.util.ColorUtils;
@@ -133,7 +133,7 @@ public class WeaponWorkbenchScreen extends EffectRenderingInventoryScreen<Weapon
 	{
 		WeaponWorkbenchSubtypeRecipe selectedRecipe = recipeList.get(typePos).getRecipeFromIndex(player, subTypePos + i < 0 ? recipeList.get(typePos).getAvailableRecipesTotal(player) - 1 : (subTypePos + i) % recipeList.get(typePos).getAvailableRecipesTotal(player));
 		ItemStack displayStack = selectedRecipe.getOutput().copy();
-		ColorUtils.withInkColor(displayStack, EntityInfoCapability.get(player).getColor());
+		ColorUtils.withInkColor(displayStack, Components.ENTITY_INFO.getOrCreate(player).getColor());
 		
 		guiGraphics.pose().pushPose();
 		float scale = i == 0 ? -28F : -14F;

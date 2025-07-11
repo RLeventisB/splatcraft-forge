@@ -5,10 +5,10 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
@@ -43,7 +43,7 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 	@Override
 	public void execute(Player player)
 	{
-		EntityInfo target = EntityInfoCapability.get(player);
+		EntityInfo target = Components.ENTITY_INFO.getOrCreate(player);
 		boolean squid = (data & 1) == 1;
 		boolean chargeStorage = (data & 2) == 2;
 		if (squid == target.isSquid() && !Services.PLATFORM.getServerInstance().isSingleplayer())

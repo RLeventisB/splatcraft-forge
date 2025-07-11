@@ -22,9 +22,9 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.blocks.InkedBlock;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftItems;
@@ -46,7 +46,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag type)
 	{
 		super.appendHoverText(stack, context, tooltip, type);
-
+		
 		if (ColorUtils.isColorLocked(stack))
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getEffectiveColor(stack), true));
 		else
@@ -62,12 +62,14 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 //		}
 //	}
 	@Override
-	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
-		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-
-		if (entity instanceof LivingEntity livingEntity && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(livingEntity)
-			&& EntityInfoCapability.hasCapability(livingEntity))
+		super.inventoryTick(stack, level, entity, itemSlot, isSelected);
+		
+		if (entity instanceof LivingEntity livingEntity &&
+			!ColorUtils.isColorLocked(stack) &&
+			ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(livingEntity) &&
+			Components.ENTITY_INFO.has(livingEntity))
 		{
 			ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(livingEntity));
 		}
@@ -76,7 +78,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.blockPosition().below();
-
+		
 		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
 			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
@@ -90,7 +92,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 			ColorUtils.withInkColor(stack, InkColor.constructOrReuse(0xFFFFFF));
 			ColorUtils.withColorLocked(stack, false);
 		}
-
+		
 		return false;
 	}
 	@Override
@@ -98,11 +100,11 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 	{
 		if (context.getClickedFace() == Direction.DOWN)
 			return InteractionResult.FAIL;
-
+		
 		Level world = context.getLevel();
 		BlockPos pos = new BlockPlaceContext(context).getClickedPos();
 		ItemStack stack = context.getItemInHand();
-
+		
 		Vec3 vector3d = Vec3.atBottomCenterOf(pos);
 		AABB axisalignedbb = SplatcraftEntities.SQUID_BUMPER.get().getDimensions().makeBoundingBox(vector3d);
 		if (world.noCollision(null, axisalignedbb) && world.getEntities(null, axisalignedbb).isEmpty())
@@ -124,7 +126,7 @@ public class SquidBumperItem extends Item implements IColoredItem, ISplatcraftFo
 			stack.shrink(1);
 			return InteractionResult.sidedSuccess(world.isClientSide());
 		}
-
+		
 		return InteractionResult.FAIL;
 	}
 }

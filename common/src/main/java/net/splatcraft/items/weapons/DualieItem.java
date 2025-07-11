@@ -18,7 +18,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -29,6 +28,7 @@ import net.splatcraft.items.weapons.settings.DualieWeaponSettings;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.DodgeRollPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -83,7 +83,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static int getRollCount(LivingEntity player)
 	{
-		return EntityInfoCapability.getOptional(player).map(EntityInfo::getDodgeCount).orElse(-1);
+		return Components.ENTITY_INFO.getOptional(player).map(EntityInfo::getDodgeCount).orElse(-1);
 	}
 	public static int getMaxRollCount(LivingEntity player)
 	{
@@ -138,7 +138,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), allowFlying));
 			
-			EntityInfoCapability.get(entity).setDodgeCount(rollCount + 1);
+			Components.ENTITY_INFO.get(entity).setDodgeCount(rollCount + 1);
 		}
 	}
 	public ClampedItemPropertyFunction getIsLeft()
@@ -188,7 +188,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					return data.tick(
 						(firingData, accumulatedTime) ->
 						{
-							if (!EntityInfoCapability.isSquid(living))
+							if (!CommonUtils.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime, hand);
 							return WeaponHandler.canContinueShooting(living) ? firingData : firingData.withRepeatingFlag(false);
 						},
@@ -331,7 +331,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)
 	{
-		Optional<DodgeRollAction> optional = EntityAction.getSpecificActionIf(player, DodgeRollAction::forceCrouch, DodgeRollAction.class);
+		Optional<DodgeRollAction> optional = EntityAction.getSpecificEntityActionIf(player, DodgeRollAction::forceCrouch, DodgeRollAction.class);
 		if (optional.isPresent())
 			return PlayerPosingHandler.WeaponPose.TURRET_FIRE;
 		return PlayerPosingHandler.WeaponPose.DUAL_FIRE;
@@ -449,7 +449,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				!entity.isUsingItem() || entity.getDeltaMovement().y > 0.1;
 			if (endedTurretMode)
 			{
-				EntityInfoCapability.get(entity).setDodgeCount(0);
+				Components.ENTITY_INFO.get(entity).setDodgeCount(0);
 				if (entity instanceof Player player)
 				{
 					player.getAbilities().mayfly = didAllowFlying;

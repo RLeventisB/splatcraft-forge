@@ -15,9 +15,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
@@ -82,17 +82,14 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 			playSpecialUsageSound(entity, level);
 		}
 		
-		Optional<EntityInfo> optional = EntityInfoCapability.getOptional(entity);
-		optional.ifPresent(info ->
-		{
-			if (!info.isSquid())
-				return;
-			
-			if (entity.level().isClientSide())
-				setSquidClient(entity, info);
-			else
-				SquidFormHandler.setSquid(entity, info, false);
-		});
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(entity);
+		if (!info.isSquid())
+			return;
+		
+		if (entity.level().isClientSide())
+			setSquidClient(entity, info);
+		else
+			SquidFormHandler.setSquid(entity, info, false);
 	}
 	@OnlyIn(Dist.CLIENT)
 	private static void playSpecialUsageSound(LivingEntity entity, Level level)

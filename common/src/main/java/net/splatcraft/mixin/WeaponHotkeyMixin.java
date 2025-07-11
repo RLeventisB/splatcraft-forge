@@ -21,7 +21,7 @@ public class WeaponHotkeyMixin
 		{
 			if (
 				SplatcraftKeyHandler.isSubWeaponHotkeyDown() && player.getUsedItemHand() == InteractionHand.OFF_HAND ||
-					EntityAction.hasActionAnd(player, EntityAction::preventStopUsing)
+					EntityAction.hasEntityActionAnd(player, EntityAction::preventStopUsing)
 			)
 				callbackInfo.cancel();
 		}

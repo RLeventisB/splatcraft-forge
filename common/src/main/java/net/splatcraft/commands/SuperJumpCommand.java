@@ -21,11 +21,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
 import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -105,7 +105,7 @@ public class SuperJumpCommand
 		
 		EntityAction.setEntityAction(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics, player.getAbilities().invulnerable));
 		
-		EntityInfo info = EntityInfoCapability.get(player);
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		if (!info.isSquid())
 		{
 			info.setIsSquid(true);

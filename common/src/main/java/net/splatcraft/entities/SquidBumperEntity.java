@@ -23,10 +23,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -226,7 +226,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	}
 	private void playHealParticles()
 	{
-		level().addParticle(new InkSplashParticleData(InkOverlayCapability.get(this).getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
+		level().addParticle(new InkSplashParticleData(Components.INK_OVERLAY.getOrCreate(this).getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
 	}
 	private void playBrokenSound()
 	{
@@ -270,7 +270,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 				if (level().isClientSide())
 				{
 					level().playLocalSound(getX(), getY(), getZ(), SplatcraftSounds.squidBumperPop, getSoundSource(), 0.5F, 20.0F, false);
-					InkOverlayCapability.get(this).setAmount(0);
+					Components.INK_OVERLAY.getOrCreate(this).setAmount(0);
 					playPopParticles();
 				}
 				break;
@@ -445,9 +445,10 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 		{
 			setInkHealth(getInkHealth() - damage);
 			if (!level().isClientSide())
-				if (!isUnderWater() && InkOverlayCapability.hasCapability(this))
+			{
+				if (!isUnderWater())
 				{
-					InkOverlayInfo info = InkOverlayCapability.get(this);
+					InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(this);
 					
 					if (getInkHealth() > 0)
 					{
@@ -459,6 +460,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 					info.setColor(color);
 					SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(this, info), this);
 				}
+			}
 		}
 	}
 	public void respawn()
@@ -468,6 +470,6 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 		setInkHealth(maxInkHealth);
 		setRespawnTime(0);
 		
-		InkOverlayCapability.get(this).setAmount(0);
+		Components.INK_OVERLAY.getOrCreate(this).setAmount(0);
 	}
 }

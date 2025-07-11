@@ -21,13 +21,13 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.SquidInputPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftAttributes;
@@ -64,9 +64,7 @@ public class PlayerMovementHandler
 	}
 	public static void playerMovement(Player player)
 	{
-		EntityInfo playerInfo = EntityInfoCapability.get(player);
-		if (playerInfo == null)
-			playerInfo = new EntityInfo();
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		
 		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
 		
@@ -101,7 +99,7 @@ public class PlayerMovementHandler
 			});
 		}
 		
-		if (playerInfo.isSquid())
+		if (info.isSquid())
 		{
 			if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.onGround())
 				speedAttribute.addTransientModifier(INK_SWIM_SPEED);
@@ -147,64 +145,63 @@ public class PlayerMovementHandler
 	@OnlyIn(Dist.CLIENT)
 	public static void onInputUpdate(LocalPlayer player, Input input)
 	{
-		EntityInfoCapability.getOptional(player).ifPresent(info ->
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		
+		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
+		copyTo(input, clonedInput);
+		
+		if (info.getMatchState(player).movementDisabled)
 		{
-			Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
-			copyTo(input, clonedInput);
-			
-			if (info.getMatchState(player).movementDisabled)
+			input.leftImpulse = 0;
+			input.forwardImpulse = 0;
+			input.jumping = false;
+			input.shiftKeyDown = false;
+			return;
+		}
+		
+		float speedMod = !input.shiftKeyDown ? info.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
+		
+		input.forwardImpulse *= speedMod;
+		input.leftImpulse *= speedMod;
+		
+		if (info.isSquid())
+		{
+			handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
+		}
+		
+		if (player.isUsingItem())
+		{
+			ItemStack stack = player.getUseItem();
+			if (!stack.isEmpty())
 			{
-				input.leftImpulse = 0;
-				input.forwardImpulse = 0;
-				input.jumping = false;
-				input.shiftKeyDown = false;
-				return;
-			}
-			
-			float speedMod = !input.shiftKeyDown ? info.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
-			
-			input.forwardImpulse *= speedMod;
-			input.leftImpulse *= speedMod;
-			
-			if (info.isSquid())
-			{
-				handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
-			}
-			
-			if (player.isUsingItem())
-			{
-				ItemStack stack = player.getUseItem();
-				if (!stack.isEmpty())
+				if (stack.getItem() instanceof WeaponBaseItem)
 				{
-					if (stack.getItem() instanceof WeaponBaseItem)
-					{
-						input.leftImpulse *= 5.0F;
-						input.forwardImpulse *= 5.0F;
-					}
+					input.leftImpulse *= 5.0F;
+					input.forwardImpulse *= 5.0F;
 				}
 			}
-			
-			EntityAction.getEntityActionOptional(player).ifPresent(action ->
+		}
+		
+		EntityAction.getEntityActionOptional(player).ifPresent(action ->
+		{
+			if (!action.canMove())
 			{
-				if (!action.canMove())
+				if (!(action instanceof DualieItem.DodgeRollAction))
 				{
-					if (!(action instanceof DualieItem.DodgeRollAction))
-					{
-						input.jumping = false;
-						input.forwardImpulse = 0;
-						input.leftImpulse = 0;
-					}
+					input.jumping = false;
+					input.forwardImpulse = 0;
+					input.leftImpulse = 0;
 				}
-				else if (action.getStoredStack().getItem() instanceof RollerItem rollerItem)
-				{
-					input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
-					input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
-				}
-				if (action.forceCrouch())
-				{
-					input.shiftKeyDown = !player.getAbilities().flying;
-				}
-			});
+			}
+			else if (action.getStoredStack().getItem() instanceof RollerItem rollerItem)
+			{
+				input.forwardImpulse = Math.min(1, Math.abs(input.forwardImpulse)) * Math.signum(input.forwardImpulse) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
+				input.leftImpulse = Math.min(1, Math.abs(input.leftImpulse)) * Math.signum(input.leftImpulse) * rollerItem.getSettings(action.getStoredStack()).swingData.mobility();
+			}
+			if (action.forceCrouch())
+			{
+				input.shiftKeyDown = !player.getAbilities().flying;
+			}
 		});
 	}
 	private static void copyTo(Input from, Input to)

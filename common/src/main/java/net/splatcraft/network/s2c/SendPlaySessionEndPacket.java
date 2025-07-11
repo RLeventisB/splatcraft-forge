@@ -12,9 +12,10 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.PlaySession;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,18 +56,20 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 		Object2ObjectOpenHashMap<String, PlaySession> map = new Object2ObjectOpenHashMap<>(SaveInfoCapability.clientSaveInfo.playSessions());
 		map.remove(stageId);
 		SaveInfoCapability.clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.stages(), SaveInfoCapability.clientSaveInfo.colorScores());
-
+		
 		playerUuids.forEach(uuid ->
 		{
 			Level world = ClientUtils.getClient().level;
 			if (world == null)
 				return;
-
+			
 			Player plr = world.getPlayerByUUID(uuid);
 			if (plr == null)
 				return;
-
-			EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
+			
+			EntityInfo info = Components.ENTITY_INFO.getOrCreate(plr);
+			
+			info.setPlayingStageId(null);
 		});
 	}
 }

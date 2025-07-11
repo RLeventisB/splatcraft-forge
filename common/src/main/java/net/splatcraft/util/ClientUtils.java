@@ -24,13 +24,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.PlayerSetSquidC2SPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
@@ -163,11 +163,11 @@ public class ClientUtils
 	}
 	public static void setSquid(LivingEntity entity, boolean newSquid)
 	{
-		setSquid(entity, EntityInfoCapability.get(entity), newSquid, false);
+		setSquid(entity, Components.ENTITY_INFO.getOrCreate(entity), newSquid, false);
 	}
 	public static void setSquid(LivingEntity entity, boolean newSquid, boolean checkChargeStorage)
 	{
-		setSquid(entity, EntityInfoCapability.get(entity), newSquid, checkChargeStorage);
+		setSquid(entity, Components.ENTITY_INFO.getOrCreate(entity), newSquid, checkChargeStorage);
 	}
 	public static void setSquid(LivingEntity entity, EntityInfo cap, boolean newSquid)
 	{

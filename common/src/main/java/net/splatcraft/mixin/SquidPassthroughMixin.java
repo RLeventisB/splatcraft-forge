@@ -9,7 +9,7 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.util.CommonUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,7 +25,7 @@ public class SquidPassthroughMixin
 		try
 		{
 			if (state.is(SplatcraftTags.Blocks.SQUID_PASSTHROUGH) && context instanceof EntityCollisionContext eContext &&
-				eContext.getEntity() instanceof LivingEntity entity && EntityInfoCapability.isSquid(entity))
+				eContext.getEntity() instanceof LivingEntity entity && CommonUtils.isSquid(entity))
 				callback.setReturnValue(Shapes.empty());
 		}
 		catch (IllegalStateException ignored)

@@ -42,7 +42,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 			{
 				world.setBlock(pos, inkedBlock.savedState, 2);
 				if (inkedBlock.hasPermanentColor())
-					ChunkInkCapability.get(world, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos));
+					ChunkInkCapability.getOrCreate(world, pos).markInmutable(RelativeBlockPos.fromAbsolute(pos));
 				
 				for (int i = 0; i < 6; i++)
 				{

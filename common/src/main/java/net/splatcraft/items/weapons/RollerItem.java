@@ -123,7 +123,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				}
 			}, () ->
 			{
-				boolean notPreventedByAction = !EntityAction.hasActionAnd(user, EntityAction::preventWeaponUse);
+				boolean notPreventedByAction = !EntityAction.hasEntityActionAnd(user, EntityAction::preventWeaponUse);
 				
 				if (notPreventedByAction && ((!(user instanceof Player player) || !CommonUtils.anyWeaponOnCooldown(player))))
 				{
@@ -313,7 +313,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	@Override
 	public Optional<SpecialHandler.ResetAction> getResetShootingAction(ItemStack stack, LivingEntity entity)
 	{
-		if (EntityAction.hasSpecificActionAnd(entity, roll -> !roll.hasAttacked, InitialSwingAction.class))
+		if (EntityAction.hasSpecificEntityActionAnd(entity, roll -> !roll.hasAttacked, InitialSwingAction.class))
 			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
 		
 		return Optional.of(() ->

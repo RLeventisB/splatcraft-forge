@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.client.gui.InkVatScreen;
 import net.splatcraft.client.gui.WeaponWorkbenchScreen;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.services.MenuScreenFactory;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -69,7 +69,7 @@ public class ClientSetupHandler
 			
 			SplatcraftComponents.ItemColorData colorData = stack.get(SplatcraftComponents.ITEM_COLOR_DATA);
 			boolean isDefault = colorData.color().isInvalid() && !colorData.colorLocked();
-			InkColor color = (stack.is(SplatcraftTags.Items.INK_BANDS) || !stack.is(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && EntityInfoCapability.hasCapability(ClientUtils.getClientPlayer())
+			InkColor color = (stack.is(SplatcraftTags.Items.INK_BANDS) || !stack.is(SplatcraftTags.Items.MATCH_ITEMS)) && isDefault && Components.ENTITY_INFO.has(ClientUtils.getClientPlayer())
 				? ColorUtils.getEntityColor(ClientUtils.getClientPlayer()) : colorData.color();
 			color = ColorUtils.getColorLockedIfConfig(color);
 			

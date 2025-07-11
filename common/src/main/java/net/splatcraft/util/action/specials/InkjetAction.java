@@ -10,13 +10,12 @@ import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.ExtraSaveData;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CodecUtils;
@@ -95,13 +94,13 @@ public class InkjetAction extends BaseSpecialAction
 	@Override
 	public void tick(LivingEntity entity)
 	{
-		if (EntityInfoCapability.getOptional(entity).map(EntityInfo::hasHigherStartup).orElse(false) && shotCooldown <= 0 && shotCooldown > -8)
+		if (Components.ENTITY_INFO.get(entity).hasHigherStartup() && shotCooldown <= 0 && shotCooldown > -8)
 		{
 			shotCooldown = -8;
-			EntityInfoCapability.get(entity).resetHigherStartup();
+			Components.ENTITY_INFO.get(entity).resetHigherStartup();
 		}
 		
-		if (entity.isUsingItem() && !EntityInfoCapability.isSquid(entity))
+		if (entity.isUsingItem() && !CommonUtils.isSquid(entity))
 		{
 			queuedShotTime = 3;
 		}
@@ -250,8 +249,9 @@ public class InkjetAction extends BaseSpecialAction
 	@Override
 	public Optional<Float> mobility(LivingEntity entity)
 	{
-		if (EntityInfoCapability.isSquid(entity))
+		if (CommonUtils.isSquid(entity))
 			return Optional.empty();
+		
 		return Optional.of(0f);
 	}
 	@Override

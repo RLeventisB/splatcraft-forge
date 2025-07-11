@@ -16,11 +16,11 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendPlaySessionEndPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.CodecUtils;
 
 import java.time.Duration;
@@ -61,11 +61,10 @@ public final class PlaySession
 		{
 			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
 			WeaponHandler.resetLastGroundedPos(player);
-			EntityInfoCapability.getOptional(player).ifPresent(info ->
-			{
-				info.setIsSquid(true);
-				info.setPlayingStageId(stage.id);
-			});
+			
+			EntityInfo info = Components.ENTITY_INFO.get(player);
+			info.setIsSquid(true);
+			info.setPlayingStageId(stage.id);
 		});
 		
 		this.gameMode = gameMode;
@@ -85,7 +84,7 @@ public final class PlaySession
 	}
 	public static Optional<PlaySession> getPlaySession(LivingEntity entity)
 	{
-		Optional<EntityInfo> infoOptional = EntityInfoCapability.getOptional(entity);
+		Optional<EntityInfo> infoOptional = Components.ENTITY_INFO.getOptional(entity);
 		return infoOptional.flatMap(entityInfo -> getPlaySession(entity, entityInfo));
 	}
 	public static Optional<PlaySession> getPlaySession(LivingEntity entity, EntityInfo info)
@@ -146,7 +145,7 @@ public final class PlaySession
 				if (plr == null)
 					return;
 				
-				EntityInfoCapability.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
+				Components.ENTITY_INFO.getOptional(plr).ifPresent(info -> info.setPlayingStageId(null));
 			});
 			SaveInfoCapability.get().playSessions().remove(stageId);
 			SplatcraftPacketHandler.sendToAll(new SendPlaySessionEndPacket(stageId, playerUuids));

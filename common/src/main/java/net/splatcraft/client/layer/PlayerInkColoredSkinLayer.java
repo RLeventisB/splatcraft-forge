@@ -1,5 +1,7 @@
 package net.splatcraft.client.layer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -8,12 +10,11 @@ import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class PlayerInkColoredSkinLayer extends RenderLayer<AbstractClientPlayer,
 	@Override
 	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
-		if (entity.isSpectator() || entity.isInvisible() || !EntityInfoCapability.hasCapability(entity) || !TEXTURES.containsKey(entity.getUUID()))
+		if (entity.isSpectator() || entity.isInvisible() || !Components.ENTITY_INFO.has(entity) || !TEXTURES.containsKey(entity.getUUID()))
 		{
 			return;
 		}

@@ -7,7 +7,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 
 public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
@@ -37,13 +37,13 @@ public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
 		y = player.getY();
 		z = player.getZ();
 		
-		if (!player.isAlive() || !player.getUseItem().has(SplatcraftComponents.CHARGE_DATA) || !EntityInfoCapability.hasCapability(player))
+		if (!player.isAlive() || !player.getUseItem().has(SplatcraftComponents.CHARGE_DATA) || !Components.ENTITY_INFO.has(player))
 		{
 			stop();
 			return;
 		}
 		
-		EntityInfo info = EntityInfoCapability.get(player);
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		if (info.isSquid())
 		{
 			stop();

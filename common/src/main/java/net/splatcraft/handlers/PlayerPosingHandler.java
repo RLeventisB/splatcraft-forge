@@ -9,13 +9,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.items.weapons.settings.SlosherWeaponSettings;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
 
@@ -27,48 +27,48 @@ public class PlayerPosingHandler
 	@OnlyIn(Dist.CLIENT)
 	public static void setupPlayerAngles(Player player, PlayerModel model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float partialTicks)
 	{
-		if (model == null || player == null || !EntityInfoCapability.hasCapability(player) || EntityInfoCapability.isSquid(player))
+		if (model == null || player == null || !Components.ENTITY_INFO.has(player) || CommonUtils.isSquid(player))
 			return;
-
+		
 		Optional<InteractionHand> activeHandOptional = WeaponHandler.getUsingWeaponHand(player);
 		HumanoidArm handSide = player.getMainArm();
-
+		
 		activeHandOptional.ifPresent(activeHand ->
 		{
 			ModelPart mainHand = activeHand == InteractionHand.MAIN_HAND && handSide == HumanoidArm.LEFT || activeHand == InteractionHand.OFF_HAND && handSide == HumanoidArm.RIGHT ? model.leftArm : model.rightArm;
 			ModelPart offHand = mainHand.equals(model.leftArm) ? model.rightArm : model.leftArm;
-
+			
 			ItemStack mainStack = player.getItemInHand(activeHand);
 			ItemStack offStack = player.getItemInHand(CommonUtils.otherHand(activeHand));
 			int useTime = WeaponHandler.getWeaponUseTime(player);
 			if (useTime == -1)
 				useTime = EntityAction.getEntityActionOptional(player).map(v -> v.getTime()).orElse(0f).intValue();
-
+			
 			if (!(mainStack.getItem() instanceof WeaponBaseItem<?> weaponBaseItem))
 			{
 				return;
 			}
-
-			if (useTime > 0 || player.getCooldowns().isOnCooldown(mainStack.getItem()) || EntityAction.hasActionAnd(player, v -> v.getTime() > 0))
+			
+			if (useTime > 0 || player.getCooldowns().isOnCooldown(mainStack.getItem()) || EntityAction.hasEntityActionAnd(player, v -> v.getTime() > 0))
 			{
 				switch (weaponBaseItem.getPose(player, mainStack))
 				{
 					case TURRET_FIRE:
 						model.body.zRot += 0.1;
-
+						
 						model.leftLeg.x -= 1f;
 						model.leftLeg.xRot -= 0.23f;
 						model.leftLeg.zRot -= 0.07f;
-
+						
 						model.rightLeg.x -= 1f;
 						model.rightLeg.xRot += 0.14f;
 						model.rightLeg.zRot += 0.14f;
-
+						
 						offHand.x -= 1f;
 						offHand.yRot = 0.1F + model.getHead().yRot;
 						offHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot + 0.1f;
 						offHand.zRot -= 0.4f;
-
+						
 						mainHand.yRot = -0.1F + model.getHead().yRot;
 						mainHand.xRot = -(Mth.HALF_PI) + model.getHead().xRot;
 						mainHand.zRot += 0.2f;
@@ -94,7 +94,7 @@ public class PlayerPosingHandler
 					case SPLATLING:
 						mainHand.yRot = -0.1F + model.getHead().yRot;
 						mainHand.xRot = model.getHead().xRot - 0.6F;
-
+						
 						break;
 					case BUCKET_SWING:
 					{
@@ -103,7 +103,7 @@ public class PlayerPosingHandler
 						float animTime = settings.shotData.endlagTicks();
 						mainHand.yRot = 0;
 						mainHand.xRot = -0.36f;
-
+						
 						if (EntityAction.hasEntityAction(player))
 						{
 							EntityAction action = EntityAction.getEntityAction(player);
@@ -117,7 +117,7 @@ public class PlayerPosingHandler
 						{
 							mainHand.yRot = -0.1F + model.getHead().yRot;
 							offHand.yRot = 0.1F + model.getHead().yRot + 0.4F;
-
+							
 							mainHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
 							offHand.xRot = (-Mth.HALF_PI) + model.getHead().xRot;
 						}
@@ -138,7 +138,7 @@ public class PlayerPosingHandler
 						{
 							RollerWeaponSettings rollerSettings = ((RollerItem) finalMainStack.getItem()).getSettings(finalMainStack);
 							RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.getAttackData(action.isGrounded()).attackData();
-
+							
 							float currentFrame = action.getTime() - partialTicks;
 							float timeFromSwing = currentFrame - (action.attackFrame + 1);
 							float startupTime = action.getMaxTime() - action.attackFrame;
@@ -168,7 +168,7 @@ public class PlayerPosingHandler
 							RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.swingData.attackData();
 							float animTime = attackData.attackTime();
 							float angle = (float) -((action.getMaxTime() - action.getTime() - partialTicks) / animTime * Mth.PI / 2f) + ((float) Mth.PI) / 1.8f;
-
+							
 							mainHand.yRot = model.getHead().yRot + Mth.cos(angle);
 						}, () -> mainHand.yRot = model.getHead().yRot);
 					}

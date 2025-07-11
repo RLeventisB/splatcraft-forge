@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +32,12 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 		MODEL = model;
 	}
 	@Override
-	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource iRenderTypeBuffer, int i, @NotNull AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+	public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int light, @NotNull AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
-		if (!EntityInfoCapability.hasCapability(entity))
+		if (!Components.ENTITY_INFO.has(entity))
 			return;
-		EntityInfo info = EntityInfoCapability.get(entity);
+		
+		EntityInfo info = Components.ENTITY_INFO.get(entity);
 		ItemStack inkBand = info.getInkBand();
 		
 		if (!inkBand.isEmpty() && (ItemStack.isSameItem(entity.getMainHandItem(), inkBand) || ItemStack.isSameItem(entity.getOffhandItem(), inkBand)))
@@ -65,14 +66,14 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 		if (Minecraft.getInstance().getResourceManager().getResource(texture).isPresent())
 		{
 			getParentModel().copyPropertiesTo(MODEL);
-			render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, -1, texture);
+			render(poseStack, buffer, light, isFoil, MODEL, -1, texture);
 			if (Minecraft.getInstance().getResourceManager().getResource(coloredTexture).isPresent())
-				render(matrixStack, iRenderTypeBuffer, i, isFoil, MODEL, color.getColorWithAlpha(255), coloredTexture);
+				render(poseStack, buffer, light, isFoil, MODEL, color.getColorWithAlpha(255), coloredTexture);
 		}
 	}
-	private void render(PoseStack p_241738_1_, MultiBufferSource p_241738_2_, int p_241738_3_, boolean isFoil, HumanoidModel<AbstractClientPlayer> p_241738_6_, int color, ResourceLocation armorResource)
+	private void render(PoseStack poseStack, MultiBufferSource buffer, int light, boolean isFoil, HumanoidModel<AbstractClientPlayer> model, int color, ResourceLocation armorResource)
 	{
-		VertexConsumer ivertexbuilder = ItemRenderer.getArmorFoilBuffer(p_241738_2_, RenderType.armorCutoutNoCull(armorResource), isFoil);
-		p_241738_6_.renderToBuffer(p_241738_1_, ivertexbuilder, p_241738_3_, OverlayTexture.NO_OVERLAY, color);
+		VertexConsumer ivertexbuilder = ItemRenderer.getArmorFoilBuffer(buffer, RenderType.armorCutoutNoCull(armorResource), isFoil);
+		model.renderToBuffer(poseStack, ivertexbuilder, light, OverlayTexture.NO_OVERLAY, color);
 	}
 }

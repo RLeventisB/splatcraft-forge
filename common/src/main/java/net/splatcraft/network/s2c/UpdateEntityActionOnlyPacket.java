@@ -8,7 +8,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ public class UpdateEntityActionOnlyPacket extends PlayS2CPacket
 	}
 	public UpdateEntityActionOnlyPacket(LivingEntity target)
 	{
-		this(target.getUUID(), EntityAction.SERIALIZER_CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target).getEntityAction()).getOrThrow());
+		this(target.getUUID(), EntityAction.SERIALIZER_CODEC.encodeStart(NbtOps.INSTANCE, EntityAction.getEntityAction(target)).getOrThrow());
 	}
 	public static UpdateEntityActionOnlyPacket decode(RegistryFriendlyByteBuf buffer)
 	{

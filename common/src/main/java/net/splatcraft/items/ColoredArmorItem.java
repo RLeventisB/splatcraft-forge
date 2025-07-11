@@ -14,8 +14,8 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.Level;
 import net.splatcraft.blocks.InkwellBlock;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 	{
 		super(material, armorType, settings);
 		SplatcraftItems.inkColoredItems.add(this);
-
+		
 		CauldronInteraction.bootStrap();
 		CauldronInteraction.WATER.map().put(this, CauldronInteraction.DYED_ITEM);
 	}
@@ -40,10 +40,10 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 	public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag)
 	{
 		super.appendHoverText(stack, context, tooltip, flag);
-
+		
 		if (I18n.exists(getDescriptionId() + ".tooltip"))
 			tooltip.add(Component.translatable(getDescriptionId() + ".tooltip").withStyle(ChatFormatting.GRAY));
-
+		
 		if (ColorUtils.isColorLocked(stack))
 			tooltip.add(ColorUtils.getFormatedColorName(ColorUtils.getInkColor(stack), true));
 		else
@@ -53,18 +53,19 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-
-		if (entity instanceof LivingEntity player && !ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
-			&& EntityInfoCapability.hasCapability(player))
+		
+		if (entity instanceof LivingEntity living &&
+			!ColorUtils.isColorLocked(stack) &&
+			ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(living) && Components.ENTITY_INFO.has(living))
 		{
-			ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
+			ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(living));
 		}
 	}
 	@Override
 	public boolean phOnEntityItemUpdate(ItemStack stack, ItemEntity entity)
 	{
 		BlockPos pos = entity.blockPosition().below();
-
+		
 		if (entity.level().getBlockState(pos).getBlock() instanceof InkwellBlock)
 		{
 			if (ColorUtils.getInkColor(stack) != ColorUtils.getEffectiveColor(entity.level(), pos))
@@ -73,7 +74,7 @@ public class ColoredArmorItem extends ArmorItem implements IColoredItem, ISplatc
 				ColorUtils.withColorLocked(entity.getItem(), true);
 			}
 		}
-
+		
 		return false;
 	}
 }

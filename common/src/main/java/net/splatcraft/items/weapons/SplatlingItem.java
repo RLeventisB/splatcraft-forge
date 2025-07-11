@@ -17,7 +17,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.SplatlingChargingTickableSound;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -139,7 +138,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 			{
 			}, (projectileData, shotData, extraTime, dataIndex) ->
 			{
-				if (!EntityInfoCapability.isSquid(living))
+				if (!CommonUtils.isSquid(living))
 				{
 					CommonUtils.setSquidDelay(living, shotData.miscEndlagTicks());
 					if (!level.isClientSide)

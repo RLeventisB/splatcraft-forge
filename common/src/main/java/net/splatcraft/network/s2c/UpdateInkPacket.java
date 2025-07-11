@@ -86,7 +86,7 @@ public class UpdateInkPacket extends IncrementalChunkBasedPacket
 		
 		if (world != null)
 		{
-			ChunkInk chunkInk = ChunkInkCapability.get(world, chunkPos);
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, chunkPos);
 			
 			for (Map.Entry<BlockPos, ChunkInk.BlockEntry> entry : dirty.entrySet())
 			{

@@ -33,22 +33,23 @@ public final class SplatcraftNeoForge
 	public SplatcraftNeoForge(IEventBus modBus)
 	{
 		// Run our common setup.
-
+		
 		SplatcraftNeoForge.modBus = modBus;
 		NeoForgeDeferredRegister.registerAllRegistries();
 		Splatcraft.init();
-
+		
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
 		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersBlock);
-
+		
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onMobDrops);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
-
+		
 		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
+		SplatcraftNeoForgeDataAttachments.initializeExecutors();
 	}
 	private static void registerColorHandlersItem(RegisterColorHandlersEvent.Item event)
 	{

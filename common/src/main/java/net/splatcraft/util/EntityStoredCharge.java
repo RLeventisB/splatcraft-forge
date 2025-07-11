@@ -6,8 +6,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.platform.Components;
 
 import java.util.Optional;
 
@@ -29,11 +29,11 @@ public class EntityStoredCharge
 	}
 	public static Optional<EntityStoredCharge> getChargeOptional(LivingEntity entity)
 	{
-		return EntityInfoCapability.getOptional(entity).flatMap(EntityInfo::getStoredCharge);
+		return Components.ENTITY_INFO.getOptional(entity).flatMap(EntityInfo::getStoredCharge);
 	}
 	public static void setCharge(LivingEntity entity, EntityStoredCharge charge)
 	{
-		EntityInfoCapability.get(entity).setStoredCharge(charge);
+		Components.ENTITY_INFO.getOrCreate(entity).setStoredCharge(charge);
 	}
 	public static boolean hasCharge(LivingEntity entity)
 	{
@@ -42,7 +42,7 @@ public class EntityStoredCharge
 			throw new IllegalArgumentException("Attempted to retrieve charge for a null entity");
 		}
 		
-		return EntityInfoCapability.getOptional(entity).map(v -> v.getStoredCharge().isPresent()).orElse(false);
+		return Components.ENTITY_INFO.getOptional(entity).map(v -> v.getStoredCharge().isPresent()).orElse(false);
 	}
 	public static boolean chargeMatches(LivingEntity entity, ItemStack stack)
 	{

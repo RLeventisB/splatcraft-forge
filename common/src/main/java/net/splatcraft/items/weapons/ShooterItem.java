@@ -7,7 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.ShootingHandler;
@@ -61,7 +60,7 @@ public class ShooterItem extends WeaponBaseItem<ShooterWeaponSettings>
 					data.tick(
 						(firingData, accumulatedTime) ->
 						{
-							if (!EntityInfoCapability.isSquid(living))
+							if (!CommonUtils.isSquid(living))
 								fire(settings, world, stack, living, accumulatedTime);
 							return WeaponHandler.canContinueShooting(living) ? firingData : firingData.withRepeatingFlag(false);
 						},

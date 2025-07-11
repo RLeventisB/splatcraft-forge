@@ -13,13 +13,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.commands.SuperJumpCommand;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayCapability;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.action.EntityAction;
@@ -82,8 +82,7 @@ public class InkDamageUtils
 		if (attackIdIsNull || damage <= 0 || (target.isInvulnerableTo(damageSource) && !(target instanceof SquidBumperEntity)))
 			return false;
 		
-		if (isLiving && InkOverlayCapability.get(livingTarget).isInkproof())
-			return false;
+		if (isLiving && Components.INK_OVERLAY.hasAnd(livingTarget, InkOverlayInfo::isInkproof)) return false;
 		
 		float mobDmgPctg = SplatcraftGameRules.getIntRuleValue(targetLevel, SplatcraftGameRules.INK_MOB_DAMAGE_PERCENTAGE) * 0.01f;
 		
@@ -121,7 +120,7 @@ public class InkDamageUtils
 		
 		if (isLiving && (!targetColor.isValid() || canInk) && !target.isUnderWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
 		{
-			InkOverlayInfo info = InkOverlayCapability.get(livingTarget);
+			InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(livingTarget);
 			if (info.getAmount() < livingTarget.getMaxHealth() * 1.5)
 				info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
 			

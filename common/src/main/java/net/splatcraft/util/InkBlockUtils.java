@@ -41,11 +41,11 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.BlockInkedResult;
@@ -76,7 +76,7 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;
-		ChunkInk chunkInk = ChunkInkCapability.get(world, pos);
+		ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, pos);
 		ChunkInk.BlockEntry entry = chunkInk.getInk(RelativeBlockPos.fromAbsolute(pos));
 		if (entry != null && entry.isInkedAny())
 		{
@@ -93,7 +93,7 @@ public class InkBlockUtils
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
 		
-		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		
 		if (worldInk.isInkedAny(offset))
@@ -117,7 +117,7 @@ public class InkBlockUtils
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
 		
-		ChunkInk worldInk = ChunkInkCapability.get(world, pos);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
 		if (entry != null)
@@ -196,7 +196,7 @@ public class InkBlockUtils
 			return BlockInkedResult.FAIL;
 		
 		LevelChunk chunk = world.getChunkAt(pos);
-		ChunkInk worldInk = ChunkInkCapability.get(chunk);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(chunk);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
 		
@@ -233,7 +233,7 @@ public class InkBlockUtils
 				ChunkPos chunkPos = new ChunkPos(x, z);
 				if (!ChunkInkCapability.hasAndNotEmpty(world, chunkPos))
 					continue;
-				Set<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> uhhh = ChunkInkCapability.get(world, chunkPos).getInkInChunk().entrySet();
+				Set<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> uhhh = ChunkInkCapability.getOrCreate(world, chunkPos).getInkInChunk().entrySet();
 				List<Map.Entry<RelativeBlockPos, ChunkInk.BlockEntry>> entries;
 				synchronized (uhhh)
 				{
@@ -262,7 +262,7 @@ public class InkBlockUtils
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;
 		
-		return ChunkInkCapability.get(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
+		return ChunkInkCapability.getOrCreate(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static ChunkInk.InkEntry getInkInFace(Level world, BlockPos pos, Direction direction)
 	{
@@ -274,11 +274,11 @@ public class InkBlockUtils
 	}
 	public static boolean isInked(Level world, BlockPos pos, int index)
 	{
-		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.get(world, pos).isInked(RelativeBlockPos.fromAbsolute(pos), index);
+		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.getOrCreate(world, pos).isInked(RelativeBlockPos.fromAbsolute(pos), index);
 	}
 	public static boolean isInkedAny(Level world, BlockPos pos)
 	{
-		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.get(world, pos).isInkedAny(RelativeBlockPos.fromAbsolute(pos));
+		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.getOrCreate(world, pos).isInkedAny(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static boolean canInkFromFace(Level world, BlockPos pos, Direction face)
 	{
@@ -336,7 +336,8 @@ public class InkBlockUtils
 		{
 			return false;
 		}
-		EntityInfo entityInfo = EntityInfoCapability.get(entity);
+		
+		EntityInfo entityInfo = Components.ENTITY_INFO.get(entity);
 		if (entityInfo == null)
 			return false;
 		
@@ -532,7 +533,7 @@ public class InkBlockUtils
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{
-		return EntityInfoCapability.getOptional(entity).map(EntityInfo::getInkType).orElse(InkType.NORMAL);
+		return Components.ENTITY_INFO.getOptional(entity).map(EntityInfo::getInkType).orElse(InkType.NORMAL);
 	}
 	public static InkType getInkTypeFromStack(ItemStack stack)
 	{

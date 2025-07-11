@@ -18,8 +18,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.models.inktanks.AbstractInkTankModel;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.InkTankItem;
+import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -66,7 +66,7 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 			vertexConsumer = provider.getBuffer(RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1.png")
 			));
-			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, EntityInfoCapability.get(entity).getColor().getColorWithAlpha(255));
+			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, Components.ENTITY_INFO.getOrCreate(entity).getColor().getColorWithAlpha(255));
 			matrixStack.popPose();
 		}
 	}

@@ -44,7 +44,7 @@ public class BlockRenderMixinForge
 			if (!ChunkInkCapability.has(world, blockpos))
 				return renderType;
 			
-			ChunkInk chunkInk = ChunkInkCapability.get(world, blockpos);
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(world, blockpos);
 			if (chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(blockpos)))
 				return ChunkRenderTypeSet.union(renderType, ChunkRenderTypeSet.of(RenderType.translucent()));
 			

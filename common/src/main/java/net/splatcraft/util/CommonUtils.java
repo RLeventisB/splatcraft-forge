@@ -53,10 +53,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.action.EntityAction;
@@ -353,7 +355,7 @@ public class CommonUtils
 	public static <T> T returnValueDependantOnSquidCancel(LivingEntity entity, T withCancel, T withoutCancel)
 	{
 		AtomicBoolean didCancel = new AtomicBoolean(false);
-		EntityInfoCapability.getOptional(entity).ifPresent(info ->
+		Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 		{
 			didCancel.set(info.hasHigherStartup());
 		});
@@ -504,6 +506,13 @@ public class CommonUtils
 			Math.clamp(position.y, box.minY, box.maxY),
 			Math.clamp(position.z, box.minZ, box.maxZ)
 		);
+	}
+	public static boolean isSquid(LivingEntity entity)
+	{
+		if (entity instanceof InkSquidEntity)
+			return true;
+		
+		return Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isSquid);
 	}
 	public record Result(float delay, float value)
 	{

@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 	}
 	public UpdateEntityInfoPacket(LivingEntity target)
 	{
-		this(target.getUUID(), EntityInfo.CODEC.encodeStart(NbtOps.INSTANCE, EntityInfoCapability.get(target)).getOrThrow());
+		this(target.getUUID(), EntityInfo.CODEC.encodeStart(NbtOps.INSTANCE, Components.ENTITY_INFO.getOrCreate(target)).getOrThrow());
 	}
 	public static UpdateEntityInfoPacket decode(RegistryFriendlyByteBuf buffer)
 	{
@@ -55,7 +55,7 @@ public class UpdateEntityInfoPacket extends PlayS2CPacket
 			if (result.isSuccess())
 			{
 				EntityInfo entityInfo = result.getOrThrow();
-				EntityInfoCapability.set(target, entityInfo);
+				Components.ENTITY_INFO.set(target, entityInfo);
 			}
 		}
 	}

@@ -22,7 +22,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.StingRayTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -157,13 +156,13 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		
 		updateRotation();
 		
-		if (!(getOwner() instanceof LivingEntity owner) || !owner.isAlive() || EntityInfoCapability.isSquid(owner))
+		if (!(getOwner() instanceof LivingEntity owner) || !owner.isAlive())
 		{
 			discard();
 			return;
 		}
 		
-		if (!owner.isUsingItem() || !EntityAction.hasSpecificEntityAction(owner, StingRayAction.class))
+		if (!owner.isUsingItem() || !EntityAction.hasSpecificEntityAction(owner, StingRayAction.class) || CommonUtils.isSquid(owner))
 		{
 			markOwnerStopShooting();
 		}

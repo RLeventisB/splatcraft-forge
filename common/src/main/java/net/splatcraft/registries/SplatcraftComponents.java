@@ -24,7 +24,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SpecialHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -308,7 +307,7 @@ public class SplatcraftComponents
 					stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
 				if (settings.getDynamicDataKey() == SplatlingWeaponSettings.ShotDataSelectorType.TIME_USED)
 				{
-					if (EntityInfoCapability.isSquid(entity))
+					if (CommonUtils.isSquid(entity))
 					{
 						return new SplatlingFiringData(counter, Optional.empty(), delay, (short) 0, chargeStart);
 					}

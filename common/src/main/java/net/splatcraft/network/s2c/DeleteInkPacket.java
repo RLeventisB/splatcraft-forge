@@ -73,7 +73,7 @@ public class DeleteInkPacket extends IncrementalChunkBasedPacket
 			LevelChunk chunk = level.getChunk(chunkPos.x, chunkPos.z);
 			if (ChunkInkCapability.hasAndNotEmpty(chunk))
 			{
-				ChunkInk chunkInk = ChunkInkCapability.get(chunk);
+				ChunkInk chunkInk = ChunkInkCapability.getOrCreate(chunk);
 				for (BlockPos blockPos : toDelete)
 				{
 					if (chunkInk.clearBlock(RelativeBlockPos.fromAbsolute(blockPos), true))

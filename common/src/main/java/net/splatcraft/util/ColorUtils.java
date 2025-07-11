@@ -29,11 +29,12 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.client.particles.InkTerrainParticleData;
 import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerColorPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -65,8 +66,8 @@ public class ColorUtils
 	{
 		if (entity instanceof LivingEntity living)
 		{
-			if (EntityInfoCapability.hasCapability(living))
-				return EntityInfoCapability.get(living).getColor();
+			if (Components.ENTITY_INFO.has(living))
+				return Components.ENTITY_INFO.get(living).getColor();
 		}
 		if (entity instanceof IColoredEntity coloredEntity)
 			return coloredEntity.getColor();
@@ -78,12 +79,13 @@ public class ColorUtils
 	}
 	public static void setPlayerColor(Player player, InkColor color, boolean updateClient)
 	{
-		if (EntityInfoCapability.get(player).getColor() != color)
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		if (info.getColor() != color)
 		{
 			if (player instanceof ServerPlayer serverPlayer)
 				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.value().trigger(serverPlayer);
 			
-			EntityInfoCapability.get(player).setColor(color);
+			info.setColor(color);
 			ScoreboardHandler.updatePlayerScore(Stats.CUSTOM.get(ScoreboardHandler.COLOR), player, color);
 		}
 		
@@ -317,19 +319,19 @@ public class ColorUtils
 	public static void addInkSplashParticle(Level world, LivingEntity source, float size)
 	{
 		InkColor color = getDefaultColor();
-		if (EntityInfoCapability.hasCapability(source))
+		if (Components.ENTITY_INFO.has(source))
 		{
-			color = EntityInfoCapability.get(source).getColor();
+			color = Components.ENTITY_INFO.get(source).getColor();
 		}
 		
-		addInkSplashParticle(world, color, source.getX(), source.getY((world.getRandom().nextFloat() * 0.3f)), source.getZ(), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
+		addInkSplashParticle(world, color, source.getX(), source.getY(world.getRandom().nextFloat() * 0.3f), source.getZ(), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
 	}
 	public static void addInkSplashParticle(ServerLevel level, LivingEntity source, float size)
 	{
 		InkColor color = getDefaultColor();
-		if (EntityInfoCapability.hasCapability(source))
+		if (Components.ENTITY_INFO.has(source))
 		{
-			color = EntityInfoCapability.get(source).getColor();
+			color = Components.ENTITY_INFO.get(source).getColor();
 		}
 		addInkSplashParticle(level, color, source.getX(), source.getY(level.getRandom().nextFloat() * 0.3f), source.getZ(), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));
 	}

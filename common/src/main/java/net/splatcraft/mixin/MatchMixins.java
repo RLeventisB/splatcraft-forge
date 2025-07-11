@@ -26,9 +26,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -51,7 +51,7 @@ public class MatchMixins
 		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathTimerOnMatch(CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional((LivingEntity) (Object) this).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional((LivingEntity) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -63,7 +63,7 @@ public class MatchMixins
 		public void splatcraft$preventItemUsageWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.getMatchState(entity).movementDisabled)
 				{
@@ -75,7 +75,7 @@ public class MatchMixins
 		public void splatcraft$preventItemUsageAgainWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.getMatchState(entity).movementDisabled)
 				{
@@ -88,7 +88,7 @@ public class MatchMixins
 		public void splatcraft$preventItemUsageAgainAgainWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.getMatchState(entity).movementDisabled)
 				{
@@ -105,7 +105,7 @@ public class MatchMixins
 		public void splatcraft$mimicSpectatorModeWhenDead(CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.isPlaying() && info.isMatchRespawning())
 				{
@@ -117,7 +117,7 @@ public class MatchMixins
 		public void splatcraft$mimicSpectatorModeWhenDeadTwo(CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.isPlaying() && info.isMatchRespawning())
 				{
@@ -133,7 +133,7 @@ public class MatchMixins
 		public void splatcraft$inhibitMovementWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.isPlaying() && info.isMatchRespawning())
 				{
@@ -145,7 +145,7 @@ public class MatchMixins
 		public void splatcraft$prohibitBlockBreakingWhenDead(Level world, BlockPos pos, GameType gameMode, CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.getMatchState(entity).movementDisabled)
 				{
@@ -160,7 +160,7 @@ public class MatchMixins
 		@Inject(method = "shouldShowDeathScreen", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathScreenOnMatch(CallbackInfoReturnable<Boolean> cir)
 		{
-			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -171,7 +171,7 @@ public class MatchMixins
 		@Inject(method = "respawn", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventRespawnOnMatch(CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -182,7 +182,7 @@ public class MatchMixins
 		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$WHYARETHERETWOIMeanpreventDeathTimerOnMatch(CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
 			{
 				if (info.isPlaying())
 				{
@@ -197,7 +197,7 @@ public class MatchMixins
 		@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$prohibitBlockInteractionWhenOnMatch(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir)
 		{
-			EntityInfoCapability.getOptional(player).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
 			{
 				if (info.getMatchState(player).movementDisabled)
 				{
@@ -212,7 +212,7 @@ public class MatchMixins
 		@Inject(method = "renderItem", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelPlayerRenderIfDead(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional(entity).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
 			{
 				if (info.getMatchState(entity).modifiesCamera)
 				{
@@ -227,7 +227,7 @@ public class MatchMixins
 		@Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelPlayerRenderIfDead(AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i, CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional(player).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
 			{
 				if (info.isPlaying() && info.isMatchRespawning())
 				{
@@ -238,7 +238,7 @@ public class MatchMixins
 		@Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelHeldItemRenderIfDead(PoseStack matrices, MultiBufferSource vertexConsumers, int light, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve, CallbackInfo ci)
 		{
-			EntityInfoCapability.getOptional(player).ifPresent(info ->
+			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
 			{
 				if (info.getMatchState(player).modifiesCamera)
 				{
@@ -271,7 +271,7 @@ public class MatchMixins
 		{
 			if (focusedEntity instanceof Player player)
 			{
-				EntityInfoCapability.getOptional(player).ifPresent(info ->
+				Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
 				{
 					SaveInfo saveInfo = SaveInfoCapability.get();
 					PlaySession session = saveInfo.playSessions().get(info.getPlayingStageId());
@@ -290,9 +290,9 @@ public class MatchMixins
 									cameraPositions.floorStart(), cameraPositions.birdsEye().withYaw(14.0f),
 									1 - 1 / (1 + 3 * secondsAfterInit), Mth.sqrt(secondsAfterInit)
 								);
-
+								
 								finalPos.applyTransformations(this::setPosition, this::setRotation);
-
+								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
 							}
@@ -301,7 +301,7 @@ public class MatchMixins
 								int i = (int) ((secondsAfterInit - 5f) / 7f * cameraPositions.spawnPads().size());
 								ClientUtils.CameraPosition lookData = cameraPositions.spawnPads().get(i);
 								lookData.applyTransformations(this::setPosition, this::setRotation);
-
+								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
 							}
@@ -317,7 +317,7 @@ public class MatchMixins
 									// Mth.catmullrom(delta, -1, 0, 1, 0)
 									(delta + delta * delta - delta * delta * delta));
 								finalPos.applyTransformations(this::setPosition, this::setRotation);
-
+								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
 							}
@@ -333,14 +333,14 @@ public class MatchMixins
 								Vec3 camStartPos = focusedEntity.position();
 								Vec3 camEndPos = killerPlayer.position().subtract(killCamDirection.x, killCamDirection.y, killCamDirection.z);
 								Vec3 camPos = camStartPos.lerp(camEndPos, delta);
-
+								
 								float horizontalLength = killCamDirection.x * killCamDirection.x + killCamDirection.z * killCamDirection.z;
 								float pitch = (float) (Mth.atan2(killCamDirection.y, horizontalLength) * Mth.RAD_TO_DEG);
 								float yaw = (float) (Mth.atan2(killCamDirection.x, killCamDirection.z) * Mth.RAD_TO_DEG);
-
+								
 								setPosition(camPos.x, camPos.y, camPos.z);
 								setRotation(Mth.lerp(delta, focusedEntity.getViewYRot(tickDelta), yaw), Mth.lerp(delta, focusedEntity.getViewXRot(tickDelta), pitch));
-
+								
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 							}
 						}

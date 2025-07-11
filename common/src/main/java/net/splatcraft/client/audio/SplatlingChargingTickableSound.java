@@ -7,8 +7,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.IChargeableWeapon;
+import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.Nullable;
 
 public class SplatlingChargingTickableSound extends AbstractTickableSoundInstance
@@ -44,9 +44,9 @@ public class SplatlingChargingTickableSound extends AbstractTickableSoundInstanc
 		y = player.getY();
 		z = player.getZ();
 		
-		if (player.isAlive() && player.getUseItem().getItem() instanceof IChargeableWeapon chargeableWeapon && EntityInfoCapability.hasCapability(player))
+		if (player.isAlive() && player.getUseItem().getItem() instanceof IChargeableWeapon chargeableWeapon && Components.ENTITY_INFO.has(player))
 		{
-			EntityInfo info = EntityInfoCapability.get(player);
+			EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 			if (!info.isSquid())
 			{
 				float charge = chargeableWeapon.getCharge(player.getUseItem());

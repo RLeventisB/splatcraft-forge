@@ -7,11 +7,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 
 import java.util.Optional;
 
@@ -48,7 +48,7 @@ public class StingRayAction extends BaseSpecialAction
 	@Override
 	public void tick(LivingEntity entity)
 	{
-		if (entity.isUsingItem() && !EntityInfoCapability.isSquid(entity))
+		if (entity.isUsingItem() && !CommonUtils.isSquid(entity))
 		{
 			Level world = entity.level();
 			if (usageTick == 1 && world instanceof ServerLevel serverWorld)

@@ -33,7 +33,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.Event;
@@ -62,16 +61,9 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfigImpl;
-import net.splatcraft.SplatcraftNeoForgeDataAttachments;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.platform.event.*;
 import net.splatcraft.platform.services.IPlatformHelper;
 import net.splatcraft.platform.services.ModInfo;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -278,70 +270,6 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public boolean isClientSide()
 	{
 		return FMLEnvironment.dist == Dist.CLIENT;
-	}
-	@Override
-	public boolean hasChunkInk(ChunkAccess chunk)
-	{
-		return chunk.hasData(SplatcraftNeoForgeDataAttachments.CHUNK_INK);
-	}
-	@Override
-	public boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk)
-	{
-		return hasChunkInk(chunk) && getChunkInk(chunk).isntEmpty();
-	}
-	@Override
-	public ChunkInk getChunkInk(ChunkAccess chunk)
-	{
-		return chunk.getData(SplatcraftNeoForgeDataAttachments.CHUNK_INK);
-	}
-	@Override
-	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
-	{
-		chunk.setData(SplatcraftNeoForgeDataAttachments.CHUNK_INK, newData);
-	}
-	@Override
-	public SaveInfo getSaveInfo()
-	{
-		if (Services.PLATFORM.isClientSide() && !Minecraft.getInstance().isLocalServer())
-			return SaveInfoCapability.clientSaveInfo;
-		return Services.PLATFORM.getServerInstance().overworld().getData(SplatcraftNeoForgeDataAttachments.SAVE_INFO);
-	}
-	@Override
-	public void setSaveInfo(SaveInfo newData)
-	{
-		if (Services.PLATFORM.isClientSide() && !Minecraft.getInstance().isLocalServer())
-			throw new NotImplementedException("SaveInfo cannot be set on the client");
-		Services.PLATFORM.getServerInstance().overworld().setData(SplatcraftNeoForgeDataAttachments.SAVE_INFO, newData);
-	}
-	@Override
-	public InkOverlayInfo getInkOverlayInfo(LivingEntity entity)
-	{
-		return entity.getData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY);
-	}
-	@Override
-	public boolean hasInkOverlayInfo(LivingEntity entity)
-	{
-		return entity.hasData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY);
-	}
-	@Override
-	public void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData)
-	{
-		entity.setData(SplatcraftNeoForgeDataAttachments.INK_OVERLAY, newData);
-	}
-	@Override
-	public EntityInfo getEntityInfo(LivingEntity entity)
-	{
-		return entity.getData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
-	}
-	@Override
-	public boolean hasEntityInfo(LivingEntity entity)
-	{
-		return entity != null && entity.hasData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO);
-	}
-	@Override
-	public void setEntityInfo(LivingEntity entity, EntityInfo newData)
-	{
-		entity.setData(SplatcraftNeoForgeDataAttachments.ENTITY_INFO, newData);
 	}
 	@Override
 	public <T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests)

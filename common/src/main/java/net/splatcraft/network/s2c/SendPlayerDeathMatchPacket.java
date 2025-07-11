@@ -10,7 +10,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +57,9 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 		ClientUtils.killCamData = Pair.of(killerPlayer, killCamDirection);
-		EntityInfoCapability.getOptional(clientPlayer).ifPresent(info ->
-		{
-			info.setMatchRespawnTimeLeft(respawnTime);
-			info.setIsMatchRespawning(true);
-		});
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
+		
+		info.setMatchRespawnTimeLeft(respawnTime);
+		info.setIsMatchRespawning(true);
 	}
 }

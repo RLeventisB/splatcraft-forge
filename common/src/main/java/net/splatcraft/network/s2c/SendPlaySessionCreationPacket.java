@@ -9,9 +9,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.data.PlaySession;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +63,10 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 			if (plr == null)
 				return;
 			
-			EntityInfoCapability.getOptional(plr).ifPresent(info ->
-			{
-				info.setIsSquid(true);
-				info.setPlayingStageId(session.stageId);
-			});
+			EntityInfo info = Components.ENTITY_INFO.getOrCreate(plr);
+			
+			info.setIsSquid(true);
+			info.setPlayingStageId(session.stageId);
 		});
 	}
 }

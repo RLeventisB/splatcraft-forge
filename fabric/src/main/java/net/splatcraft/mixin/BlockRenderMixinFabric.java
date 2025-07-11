@@ -66,7 +66,7 @@ public class BlockRenderMixinFabric
 			RenderType originalLayer = original.call(state);
 			if (!ChunkInkCapability.has(splatcraft$world, splatcraft$blockPos))
 				return originalLayer;
-			ChunkInk chunkInk = ChunkInkCapability.get(splatcraft$world, splatcraft$blockPos);
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(splatcraft$world, splatcraft$blockPos);
 			
 			if (chunkInk != null && chunkInk.isntEmpty() && chunkInk.isInkedAny(RelativeBlockPos.fromAbsolute(splatcraft$blockPos)))
 			{

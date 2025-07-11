@@ -25,11 +25,11 @@ import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendJumpLureDataPacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ClientUtils;
@@ -198,8 +198,9 @@ public class JumpLureItem extends Item implements IColoredItem, ISplatcraftForge
 		
 		if (entity instanceof Player player)
 		{
-			if (!ColorUtils.isColorLocked(stack) && ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player)
-				&& EntityInfoCapability.hasCapability(player))
+			if (!ColorUtils.isColorLocked(stack) &&
+				ColorUtils.getInkColor(stack) != ColorUtils.getEntityColor(player) &&
+				Components.ENTITY_INFO.has(player))
 				ColorUtils.withInkColor(stack, ColorUtils.getEntityColor(player));
 		}
 	}

@@ -1,13 +1,14 @@
 package net.splatcraft.data.capabilities.saveinfo;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.handlers.ScoreboardHandler;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.structs.InkColor;
-import org.jetbrains.annotations.Contract;
 
 public class SaveInfoCapability
 {
@@ -18,15 +19,19 @@ public class SaveInfoCapability
 		if (Services.PLATFORM.isClientSide())
 			clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObjectArrayList<>());
 	}
-	// todo: create an "register" method so get doesn't automatically instantiates a saveinfo
-	@Contract
 	public static SaveInfo get()
 	{
-		return Services.PLATFORM.getSaveInfo();
+		if (Services.PLATFORM.isClientSide() && !Minecraft.getInstance().isLocalServer())
+			return clientSaveInfo;
+		
+		return Components.SAVE_INFO.get(Services.PLATFORM.getServerInstance());
 	}
 	public static void set(SaveInfo newData)
 	{
-		Services.PLATFORM.setSaveInfo(newData);
+		if (Services.PLATFORM.isClientSide() && !Minecraft.getInstance().isLocalServer())
+			throw new UnsupportedOperationException("SaveInfo cannot be set on the client");
+		
+		Components.SAVE_INFO.setOrErase(Services.PLATFORM.getServerInstance(), newData);
 	}
 	public static boolean loadLegacy(CompoundTag nbt)
 	{

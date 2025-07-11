@@ -197,7 +197,7 @@ public class ChunkInkHandler
 		for (int i = 0; i < maxChunkCheck; i++)
 		{
 			LevelChunk chunk = chunks.get(world.random.nextInt(chunks.size()));
-			ChunkInk worldInk = ChunkInkCapability.get(chunk);
+			ChunkInk worldInk = ChunkInkCapability.getOrCreate(chunk);
 			HashMap<RelativeBlockPos, ChunkInk.BlockEntry> decayableInk = new HashMap<>(worldInk.getInkInChunk());
 			
 			int blockCount = 0;
@@ -273,7 +273,7 @@ public class ChunkInkHandler
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(chunk))
 			return;
-		ChunkInk worldInk = ChunkInkCapability.get(chunk);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(chunk);
 		SplatcraftPacketHandler.sendToPlayer(new WatchInkPacket(chunk.getPos(), worldInk.getInkInChunk()), handler.player);
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -282,7 +282,7 @@ public class ChunkInkHandler
 		ChunkPos chunkPos = chunk.getPos();
 		if (INK_CACHE.containsKey(chunkPos))
 		{
-			ChunkInk chunkInk = ChunkInkCapability.get(chunk);
+			ChunkInk chunkInk = ChunkInkCapability.getOrCreate(chunk);
 			
 			INK_CACHE.get(chunkPos).forEach((relativePos, entry) ->
 			{

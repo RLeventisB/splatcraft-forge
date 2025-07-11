@@ -15,8 +15,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EntityEvents;
 import net.splatcraft.platform.event.EventResult;
@@ -68,12 +68,12 @@ public class WeaponHandler
 		}));
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
-			if (EntityInfoCapability.hasCapability(entity))
+			if (Components.ENTITY_INFO.has(entity))
 			{
-				EntityInfo entityInfo = EntityInfoCapability.get(entity);
+				EntityInfo entityInfo = Components.ENTITY_INFO.get(entity);
 				entityInfo.reduceSquidAnimationTick();
 			}
-			if (entity.onGround() && EntityInfoCapability.getOptional(entity).map(v -> !v.isMatchRespawning()).orElse(true))
+			if (entity.onGround() && Components.ENTITY_INFO.getOptional(entity).map(v -> !v.isMatchRespawning()).orElse(true))
 				lastGroundedPos.put(entity, entity.position());
 			
 			return AbortableIterationConsumer.Continuation.CONTINUE;
@@ -128,7 +128,7 @@ public class WeaponHandler
 		boolean preventedByCooldown;
 		if (action.getTime() == action.getMaxTime())
 			action.onStart(player);
-		if (action.isCancellable() && EntityInfoCapability.isSquid(player))
+		if (action.isCancellable() && CommonUtils.isSquid(player))
 		{
 			if (action.endWhenOnSquid(player))
 				doEndActions(player, action);
@@ -195,7 +195,7 @@ public class WeaponHandler
 	}
 	public static boolean canContinueShooting(LivingEntity living)
 	{
-		return living.isUsingItem() && !EntityAction.hasActionAnd(living, EntityAction::preventWeaponUse) && !EntityInfoCapability.isSquid(living);
+		return living.isUsingItem() && !EntityAction.hasEntityActionAnd(living, EntityAction::preventWeaponUse) && !CommonUtils.isSquid(living);
 	}
 	public static Optional<InteractionHand> getUsingWeaponHand(LivingEntity entity)
 	{

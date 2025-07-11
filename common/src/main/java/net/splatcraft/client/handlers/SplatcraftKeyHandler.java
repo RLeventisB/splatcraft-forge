@@ -24,7 +24,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.SpecialProviderItem;
@@ -36,6 +35,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestSpecialUsageDataPacket;
 import net.splatcraft.network.c2s.SwapSlotWithOffhandPacket;
 import net.splatcraft.network.s2c.VoidedChargePacket;
+import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.InteractionEvents;
@@ -88,7 +88,7 @@ public class SplatcraftKeyHandler
 	{
 		Player player = mc.player;
 		
-		if (player == null || player.isSpectator() || !EntityInfoCapability.hasCapability(player))
+		if (player == null || player.isSpectator())
 		{
 			return;
 		}
@@ -97,7 +97,7 @@ public class SplatcraftKeyHandler
 		
 		ToggleableKey lastPressedKey = getLastPressedKey();
 		
-		EntityInfo info = EntityInfoCapability.get(player);
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		
 		tickSquidAndCharge(player, info, lastPressedKey);
 		
@@ -148,7 +148,7 @@ public class SplatcraftKeyHandler
 		if (SUB_WEAPON_KEYBIND.pressed)
 			queuedSubWeapon = true;
 		
-		if (EntityAction.hasActionAnd(player, v -> !v.preventWeaponUse()) ||
+		if (EntityAction.hasEntityActionAnd(player, v -> !v.preventWeaponUse()) ||
 			CommonUtils.anyWeaponOnCooldown(player) ||
 			ShootingHandler.isDoingShootingAction(player) ||
 			EntityStoredCharge.hasCharge(player)) // dont allow sub code to execute if the player has a charge or else everything breaks
@@ -251,7 +251,7 @@ public class SplatcraftKeyHandler
 		}
 		else
 		{
-			if (EntityAction.hasActionAnd(entity, v -> !v.isCancellable()) ||
+			if (EntityAction.hasEntityActionAnd(entity, v -> !v.isCancellable()) ||
 				CommonUtils.anyWeaponOnCooldown(entity))
 				return;
 			
@@ -301,7 +301,7 @@ public class SplatcraftKeyHandler
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SHOOT_KEYBIND, squidAndSubDelay, WeaponHandler.getUsingWeaponHand(player).isEmpty());
 		
-		boolean forcedHold = EntityAction.hasSpecificActionAnd(player, BaseSpecialAction::setSquidKeyToHold, BaseSpecialAction.class);
+		boolean forcedHold = EntityAction.hasSpecificEntityActionAnd(player, BaseSpecialAction::setSquidKeyToHold, BaseSpecialAction.class);
 		SQUID_KEYBIND.tick(forcedHold ? KeyMode.HOLD : SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
 		updatePressState(SQUID_KEYBIND, 0);
 		

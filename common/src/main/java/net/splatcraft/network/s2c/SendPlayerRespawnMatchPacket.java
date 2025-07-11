@@ -5,7 +5,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,9 @@ public class SendPlayerRespawnMatchPacket extends PlayS2CPacket
 	public void execute()
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
-		EntityInfoCapability.getOptional(clientPlayer).ifPresent(info ->
-		{
-			info.setMatchRespawnTimeLeft(0);
-			info.setIsMatchRespawning(false);
-		});
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
+		
+		info.setMatchRespawnTimeLeft(0);
+		info.setIsMatchRespawning(false);
 	}
 }

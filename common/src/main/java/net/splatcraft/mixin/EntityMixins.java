@@ -23,15 +23,16 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfoCapability;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
+import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,19 +55,19 @@ public class EntityMixins
 		public void splatcraft$modifyVisibility(CallbackInfoReturnable<Boolean> cir)
 		{
 			Entity entity = (Entity) (Object) this;
-			if (!(entity instanceof LivingEntity living) || !EntityInfoCapability.hasCapability(living))
+			if (!(entity instanceof LivingEntity living) || !Components.ENTITY_INFO.has(living))
 			{
 				return;
 			}
 			
-			if (InkBlockUtils.canSquidHide(living) && EntityInfoCapability.isSquid(living))
+			if (InkBlockUtils.canSquidHide(living) && CommonUtils.isSquid(living))
 				cir.setReturnValue(true);
 		}
 		@Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
 		public void setSprinting(boolean sprinting, CallbackInfo ci)
 		{
 			Entity entity = (Entity) (Object) this;
-			if (!(entity instanceof Player player) || !EntityInfoCapability.hasCapability(player))
+			if (!(entity instanceof Player player) || !Components.ENTITY_INFO.has(player))
 			{
 				return;
 			}
@@ -103,7 +104,7 @@ public class EntityMixins
 			Level world = entity.level();
 			if (InkBlockUtils.isInked(world, splatcraft$stepBlockPos, Direction.UP))
 			{
-				SoundType soundGroup = entity instanceof LivingEntity living && EntityInfoCapability.isSquid(living) && InkBlockUtils.canSquidSwim(living) ?
+				SoundType soundGroup = entity instanceof LivingEntity living && CommonUtils.isSquid(living) && InkBlockUtils.canSquidSwim(living) ?
 					SplatcraftSounds.SOUND_TYPE_SWIMMING : SplatcraftSounds.SOUND_TYPE_INK;
 				original.call(instance, soundGroup.getFallSound(), volume, pitch);
 				return;
@@ -218,7 +219,7 @@ public class EntityMixins
 		@WrapOperation(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getJumpPower()F"))
 		public float splatcraft$cancelJumpIfRolling(LivingEntity instance, Operation<Float> original)
 		{
-			if (instance.isUsingItem() && instance.getUseItem().getItem() instanceof DualieItem && (instance.xxa != 0 || instance.zza != 0) || EntityAction.getSpecificActionIf(instance, dodgeRollAction -> !dodgeRollAction.canMove(), DualieItem.DodgeRollAction.class).isPresent())
+			if (instance.isUsingItem() && instance.getUseItem().getItem() instanceof DualieItem && (instance.xxa != 0 || instance.zza != 0) || EntityAction.getSpecificEntityActionIf(instance, action -> !action.canMove(), DualieItem.DodgeRollAction.class).isPresent())
 				return 0;
 			return original.call(instance);
 		}

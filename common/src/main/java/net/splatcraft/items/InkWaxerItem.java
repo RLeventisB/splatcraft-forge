@@ -59,7 +59,7 @@ public class InkWaxerItem extends Item
 	{
 		BlockPos clickedPos = context.getClickedPos();
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(clickedPos);
-		ChunkInk worldInk = ChunkInkCapability.get(context.getLevel(), clickedPos);
+		ChunkInk worldInk = ChunkInkCapability.getOrCreate(context.getLevel(), clickedPos);
 		ChunkInk.BlockEntry ink = worldInk.getInk(offset);
 		if (ink != null && ink.immutable)
 			return InteractionResult.FAIL;
