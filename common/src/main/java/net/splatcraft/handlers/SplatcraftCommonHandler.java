@@ -227,6 +227,13 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
 		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, Components.ENTITY_INFO.getOrCreate(player).getColor()));
+		for (Player otherPlayer : player.level().players())
+		{
+			if (otherPlayer == player)
+				continue;
+			
+			SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
+		}
 		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
