@@ -33,15 +33,11 @@ import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.*;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkBlockUtils;
-import net.splatcraft.util.InkExplosion;
+import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RangedValueCollection;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -163,14 +159,13 @@ public class SplatcraftCommonHandler
 					if (entity instanceof ServerPlayer player)
 					{
 						Entity attacker = source.getEntity();
-						Vector3f killCamDirection = new Vector3f();
-						if (attacker instanceof LivingEntity livingAttacker)
+						if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
 						{
-							InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), source.getWeaponItem(), AttackId.NONE);
-							killCamDirection = attacker.position().subtract(entity.position()).toVector3f().sub(0, 3, 0).normalize();
+							InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
 						}
 						
-						SplatcraftPacketHandler.sendToPlayer(new SendPlayerDeathMatchPacket(100, source.getEntity(), killCamDirection), player);
+						SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
+						SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(player), player);
 					}
 					
 					((ServerLevel) entity.level()).sendParticles(new SquidSoulParticleData(color), entity.getX(), entity.getY() + 0.5f, entity.getZ(), 1, 0, 1, 0, 1.5f);
@@ -327,6 +322,7 @@ public class SplatcraftCommonHandler
 									{
 										livingEntity.randomTeleport(spawnPadPos.getX() + 0.5f, spawnPadPos.getY() + 0.5f, spawnPadPos.getZ() + 0.5, false);
 									}
+									SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(serverPlayer), serverPlayer);
 								}
 							}
 							else
@@ -340,7 +336,7 @@ public class SplatcraftCommonHandler
 						info.setPlayingStageId(null);
 						info.setMatchRespawnTimeLeft(0);
 						info.setIsMatchRespawning(false);
-						if (livingEntity instanceof Player player)
+						if (livingEntity instanceof ServerPlayer player)
 							SplatcraftPacketHandler.sendToAll(new UpdateEntityInfoPacket(player));
 					}
 				}

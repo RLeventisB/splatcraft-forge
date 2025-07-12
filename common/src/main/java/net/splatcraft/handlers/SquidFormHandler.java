@@ -153,7 +153,7 @@ public class SquidFormHandler
 		}
 		if (Components.INK_OVERLAY.has(player))
 		{
-			Components.INK_OVERLAY.getOrCreate(player).addAmount(-0.01f);
+			Components.INK_OVERLAY.get(player).addAmount(-0.01f);
 		}
 	}
 	private static void tickSquidState(Player player, EntityInfo info)

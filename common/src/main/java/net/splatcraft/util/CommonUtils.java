@@ -18,10 +18,8 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
@@ -78,23 +76,7 @@ import java.util.function.Predicate;
 
 public class CommonUtils
 {
-	public static final EntityDataSerializer<Vector2f> VEC2_DATA_HANDLER = new EntityDataSerializer<>()
-	{
-		public static final StreamCodec<RegistryFriendlyByteBuf, Vector2f> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.FLOAT, Vector2f::x,
-			ByteBufCodecs.FLOAT, Vector2f::y,
-			Vector2f::new);
-		@Override
-		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, Vector2f> codec()
-		{
-			return STREAM_CODEC;
-		}
-		@Override
-		public @NotNull Vector2f copy(@NotNull Vector2f vec2)
-		{
-			return new Vector2f(vec2.x, vec2.y);
-		}
-	};
+	public static final EntityDataSerializer<Vector2f> VEC2_DATA_HANDLER = EntityDataSerializer.forValueType(CodecUtils.Codecs.VECTOR2F_STREAM_CODEC);
 	public static final EntityDataSerializer<InkColor> INKCOLOR_DATA_HANDLER = EntityDataSerializer.forValueType(InkColor.STREAM_CODEC);
 	public static final EntityDataSerializer<UUID> UUID_DATA_HANDLER = EntityDataSerializer.forValueType(UUIDUtil.STREAM_CODEC);
 	public static final EntityDataSerializer<Vec3> VEC3_DATA_HANDLER = EntityDataSerializer.forValueType(CodecUtils.Codecs.VEC_3_STREAM_CODEC);

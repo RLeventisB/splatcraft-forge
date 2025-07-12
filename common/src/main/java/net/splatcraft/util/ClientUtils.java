@@ -36,6 +36,7 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.structs.InkColor;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -103,7 +104,7 @@ public class ClientUtils
 		}
 		);
 	@OnlyIn(Dist.CLIENT)
-	public static Pair<UUID, Vector3f> killCamData;
+	public static Pair<UUID, Vector2f> killCamData;
 	private static void addPadToList(SpawnPadTileEntity spawnPad, CameraPosition stageFloorCenter, ImmutableList.Builder<CameraPosition> posAndRotations)
 	{
 		Vec3 spawnPadCenter = spawnPad.getSuperJumpPos().add(0, 3, 0);

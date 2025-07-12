@@ -166,6 +166,10 @@ public class CodecUtils
 			ByteBufCodecs.DOUBLE, Vec3::z,
 			Vec3::new);
 		public static final Codec<Vector2f> VECTOR2_MULTI_CODEC = Codec.withAlternative(VECTOR2F_CODEC, Codec.withAlternative(VECTOR2F_LIST_CODEC, VECTOR2F_SINGLE_NUMBER_CODEC));
+		public static final StreamCodec<ByteBuf, Vector2f> VECTOR2F_STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.FLOAT, Vector2f::x,
+			ByteBufCodecs.FLOAT, Vector2f::y,
+			Vector2f::new);
 	}
 	public static final class MapCodecNotToBeConfusedWithAMapCodec<K, V, M extends Map<K, V>> implements Codec<M>
 	{

@@ -23,14 +23,13 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
-import org.joml.Vector3f;
+import org.joml.Vector2f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -266,6 +265,8 @@ public class MatchMixins
 		protected abstract void setRotation(float yaw, float pitch);
 		@Shadow
 		protected abstract float getMaxZoom(float f);
+		@Shadow
+		protected abstract void move(float zoom, float dy, float dx);
 		@Inject(method = "setup", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$doCameraIntroPos(BlockGetter area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci)
 		{
@@ -322,25 +323,26 @@ public class MatchMixins
 								return;
 							}
 						}
-						Pair<UUID, Vector3f> killCamData = ClientUtils.killCamData;
-						if (killCamData != null && info.isMatchRespawning() && info.getMatchRespawnTimeLeft() > 60)
+						Pair<UUID, Vector2f> killCamData = ClientUtils.killCamData;
+						if (killCamData != null && info.isMatchRespawning() && info.getMatchRespawnTimeLeft() <= 60)
 						{
-							Player killerPlayer = focusedEntity.level().getPlayerByUUID(ClientUtils.killCamData.getFirst());
+							Player killerPlayer = focusedEntity.level().getPlayerByUUID(killCamData.getFirst());
 							if (killerPlayer != null)
 							{
-								Vector3f killCamDirection = killCamData.getSecond();
-								float delta = 1f - Math.min(info.getMatchRespawnTimeLeft() - 55, 0) / 5f;
-								Vec3 camStartPos = focusedEntity.position();
-								Vec3 camEndPos = killerPlayer.position().subtract(killCamDirection.x, killCamDirection.y, killCamDirection.z);
-								Vec3 camPos = camStartPos.lerp(camEndPos, delta);
+								float killProgress = 1f - Math.max(info.getMatchRespawnTimeLeft() - 55 - partialTickTime, 0) / 5f;
+								Vector2f killCamRotData = killCamData.getSecond();
 								
-								float horizontalLength = killCamDirection.x * killCamDirection.x + killCamDirection.z * killCamDirection.z;
-								float pitch = (float) (Mth.atan2(killCamDirection.y, horizontalLength) * Mth.RAD_TO_DEG);
-								float yaw = (float) (Mth.atan2(killCamDirection.x, killCamDirection.z) * Mth.RAD_TO_DEG);
+								ClientUtils.CameraPosition killCam = new ClientUtils.CameraPosition(
+									killerPlayer.getEyePosition(),
+									killCamRotData.x,
+									killCamRotData.y);
 								
-								setPosition(camPos.x, camPos.y, camPos.z);
-								setRotation(Mth.lerp(delta, focusedEntity.getViewYRot(tickDelta), yaw), Mth.lerp(delta, focusedEntity.getViewXRot(tickDelta), pitch));
+								ClientUtils.CameraPosition finalPos = ClientUtils.CameraPosition.lerp(
+									ClientUtils.CameraPosition.from(player), killCam,
+									killProgress);
+								finalPos.applyTransformations(this::setPosition, this::setRotation);
 								
+								move(-getMaxZoom(4.0F * killProgress), 0.0F, 0.0F);
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 							}
 						}
@@ -354,8 +356,8 @@ public class MatchMixins
 		private void splatcraft$doCancel(CallbackInfo ci, BlockGetter area, Entity focusedEntity, float tickDelta)
 		{
 			initialized = true;
-			this.level = area;
-			this.entity = focusedEntity;
+			level = area;
+			entity = focusedEntity;
 			detached = true;
 			partialTickTime = tickDelta;
 			ci.cancel();

@@ -149,6 +149,11 @@ public class InkDamageUtils
 			this.weapon = weapon;
 		}
 		@Override
+		public @Nullable ItemStack getWeaponItem()
+		{
+			return weapon;
+		}
+		@Override
 		public @NotNull Component getLocalizedDeathMessage(@NotNull LivingEntity killed)
 		{
 			String base = "death.attack." + type().msgId();
