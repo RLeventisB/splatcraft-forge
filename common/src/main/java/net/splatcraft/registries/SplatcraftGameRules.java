@@ -1,6 +1,7 @@
 package net.splatcraft.registries;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -30,6 +31,7 @@ public class SplatcraftGameRules
 	public static GameRules.Key<GameRules.BooleanValue> INK_FRIENDLY_FIRE;
 	public static GameRules.Key<GameRules.BooleanValue> INK_HEALING;
 	public static GameRules.Key<GameRules.BooleanValue> INK_HEALING_CONSUMES_HUNGER;
+	public static GameRules.Key<GameRules.BooleanValue> ALTERNATIVE_INK_HEALTH;
 	public static GameRules.Key<GameRules.BooleanValue> INK_DAMAGE_COOLDOWN;
 	public static GameRules.Key<GameRules.BooleanValue> INFINITE_INK_IN_CREATIVE;
 	public static GameRules.Key<GameRules.BooleanValue> RECHARGEABLE_INK_TANK;
@@ -48,6 +50,7 @@ public class SplatcraftGameRules
 		INK_FRIENDLY_FIRE = createBooleanRule("inkFriendlyFire", GameRules.Category.PLAYER, false);
 		INK_HEALING = createBooleanRule("inkHealing", GameRules.Category.PLAYER, true);
 		INK_HEALING_CONSUMES_HUNGER = createBooleanRule("inkHealingConsumesHunger", GameRules.Category.PLAYER, true);
+		ALTERNATIVE_INK_HEALTH = createBooleanRule("alternativeInkHealth", GameRules.Category.PLAYER, false);
 		INK_DAMAGE_COOLDOWN = createBooleanRule("inkDamageCooldown", GameRules.Category.PLAYER, false);
 		GLOBAL_SUPERJUMPING = createBooleanRule("globalSuperJumping", GameRules.Category.PLAYER, true);
 		SUPERJUMP_DISTANCE_LIMIT = createIntRule("superJumpDistanceLimit", GameRules.Category.PLAYER, 1000);
@@ -58,27 +61,31 @@ public class SplatcraftGameRules
 		RECHARGEABLE_INK_TANK = createBooleanRule("rechargeableInkTank", GameRules.Category.PLAYER, true);
 		BLOCK_DESTROY_INK = createBooleanRule("blockDestroysInk", GameRules.Category.PLAYER, false);
 	}
+	public static boolean getLocalizedRule(LivingEntity entity, GameRules.Key<GameRules.BooleanValue> rule)
+	{
+		return getLocalizedRule(entity.level(), entity.blockPosition(), rule);
+	}
 	public static boolean getLocalizedRule(Level level, BlockPos pos, GameRules.Key<GameRules.BooleanValue> rule)
 	{
 		ArrayList<Stage> stages = Stage.getStagesForPosition(level, new Vec3(pos.getX(), pos.getY(), pos.getZ()));
-
+		
 		Stage localStage = null;
 		AABB localStageBounds = null;
-
+		
 		for (Stage stage : stages)
 		{
 			AABB stageBounds = stage.getBounds();
-
+			
 			if (localStage == null || stageBounds.getSize() < localStageBounds.getSize())
 			{
 				localStage = stage;
 				localStageBounds = stage.getBounds();
 			}
 		}
-
+		
 		if (localStage != null && localStage.hasSetting(rule))
 			return localStage.getSetting(rule);
-
+		
 		return getBooleanRuleValue(level, rule);
 	}
 	public static GameRules.Key<GameRules.BooleanValue> createBooleanRule(String name, GameRules.Category category, boolean defaultValue)
@@ -93,7 +100,7 @@ public class SplatcraftGameRules
 	{
 		GameRules.Type<GameRules.IntegerValue> intValue = GameRules.IntegerValue.create(defaultValue);
 		GameRules.Key<GameRules.IntegerValue> ruleKey = GameRuleAccessor.invokeRegister(Splatcraft.MODID + "." + name, category, intValue);
-
+		
 		ruleList.add(ruleKey);
 		intRules.put(getRuleIndex(ruleKey), defaultValue);
 		return ruleKey;

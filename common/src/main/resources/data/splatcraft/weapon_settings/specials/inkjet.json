@@ -2,33 +2,33 @@
     "type": "splatcraft:special_weapon",
     "special_type": "inkjet",
     "special_duration": 7.5,
-    "mobility": 0.04,
-    "max_mobility": 0.03,
+    "mobility": 0.1,
+    "max_mobility": 0.3,
     "thrust_data": {
         "points": [
             {
                 "distance": 10,
-                "impulse": 0.11
-            },
-            {
-                "distance": 15,
                 "impulse": 0.09
             },
             {
-                "distance": 55,
-                "impulse": 0.082
-            },
-            {
-                "distance": 70,
+                "distance": 25,
                 "impulse": 0.08
             },
             {
-                "distance": 80,
+                "distance": 55,
                 "impulse": 0.06
             },
             {
+                "distance": 70,
+                "impulse": 0.05
+            },
+            {
+                "distance": 80,
+                "impulse": 0.04
+            },
+            {
                 "distance": 110,
-                "impulse": 0.02
+                "impulse": 0.04
             }
         ]
     },

@@ -16,6 +16,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.InkColorRegistry;
@@ -31,6 +32,7 @@ import net.splatcraft.network.s2c.*;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.*;
+import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.*;
@@ -59,7 +61,10 @@ public class SplatcraftCommonHandler
 	public static void onPlayerJump(LivingEntity entity)
 	{
 		if (InkBlockUtils.onEnemyInk(entity))
-			entity.setDeltaMovement(entity.getDeltaMovement().x, Math.min(entity.getDeltaMovement().y, 0.1f), entity.getDeltaMovement().z);
+		{
+			Vec3 deltaMovement = entity.getDeltaMovement().multiply(1, entity.getAttributeValue(SplatcraftAttributes.enemyInkJumpMultiplier), 1);
+			entity.setDeltaMovement(deltaMovement);
+		}
 	}
 	// todo: uhhh this thing checks for another events
     /*public static void onLivingDestroyBlock(LivingDestroyBlockEvent event)
@@ -91,7 +96,7 @@ public class SplatcraftCommonHandler
 		{
 			tryToInsertItems(newPlayer, matchInv, true);
 			
-			Components.ENTITY_INFO.get(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
+			Components.ENTITY_INFO.getOrCreate(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
 		}
 		EntityAction.setEntityAction(newPlayer, null);
 	}
@@ -222,6 +227,9 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
 		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, Components.ENTITY_INFO.getOrCreate(player).getColor()));
+		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
+		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
+		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
 		for (Player otherPlayer : player.level().players())
 		{
 			if (otherPlayer == player)
@@ -229,9 +237,6 @@ public class SplatcraftCommonHandler
 			
 			SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
 		}
-		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
-		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
-		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
 	}
 	public static void capabilityUpdateEvent(Player player)
 	{

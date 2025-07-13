@@ -129,6 +129,9 @@ public class SplatcraftEntities
 		builder.add(SplatcraftAttributes.superJumpTravelTime, SplatcraftAttributes.superJumpTravelTime.get().getDefaultValue());
 		builder.add(SplatcraftAttributes.superJumpWindupTime, SplatcraftAttributes.superJumpWindupTime.get().getDefaultValue());
 		builder.add(SplatcraftAttributes.superJumpHeight, SplatcraftAttributes.superJumpHeight.get().getDefaultValue());
+		builder.add(SplatcraftAttributes.enemyInkResistanceTime, SplatcraftAttributes.enemyInkResistanceTime.get().getDefaultValue());
+		builder.add(SplatcraftAttributes.maxEnemyInkDamage, SplatcraftAttributes.maxEnemyInkDamage.get().getDefaultValue());
+		builder.add(SplatcraftAttributes.enemyInkJumpMultiplier, SplatcraftAttributes.enemyInkJumpMultiplier.get().getDefaultValue());
 		return builder;
 	}
 	@OnlyIn(Dist.CLIENT)

@@ -138,7 +138,7 @@ public class EntityMixins
 		{
 			SplatcraftCommonHandler.onPlayerAboutToDie((LivingEntity) (Object) this, amount);
 		}
-		@Inject(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeltaMovement()Lnet/minecraft/world/phys/Vec3;"))
+		@Inject(method = "jumpFromGround", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSprinting()Z"))
 		public void onJump(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;

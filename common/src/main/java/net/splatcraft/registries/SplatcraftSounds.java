@@ -13,6 +13,7 @@ public class SplatcraftSounds
 	public static SoundEvent squidRevert;
 	public static SoundEvent inkSubmerge;
 	public static SoundEvent inkSurface;
+	public static SoundEvent enemyInkDamage;
 	public static SoundEvent noInkMain;
 	public static SoundEvent noInkSub;
 	public static SoundEvent shooterShot;
@@ -83,6 +84,7 @@ public class SplatcraftSounds
 		squidRevert = createSoundEvent("squid_revert");
 		inkSubmerge = createSoundEvent("ink_submerge");
 		inkSurface = createSoundEvent("ink_surface");
+		enemyInkDamage = createSoundEvent("enemy_ink_damage");
 		noInkMain = createSoundEvent("no_ink");
 		noInkSub = createSoundEvent("no_ink_sub");
 		shotHit = createSoundEvent("shot_hit");

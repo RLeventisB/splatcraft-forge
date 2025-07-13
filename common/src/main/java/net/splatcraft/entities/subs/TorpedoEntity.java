@@ -150,7 +150,6 @@ public class TorpedoEntity extends AbstractSubWeaponEntity<TorpedoDataRecord> im
 			.stream().min(comparator).get();
 		
 		setDeltaMovement(0, 0, 0);
-		syncPacketPositionCodec(getX(), getY(), getZ());
 		if (level().getChunkSource() instanceof ServerChunkCache serverChunkManager)
 		{
 			serverChunkManager.chunkMap.entityMap.get(getId()).broadcast(new ClientboundTeleportEntityPacket(this));

@@ -14,4 +14,7 @@ public class SplatcraftAttributes
 	public static final RegistrySupplier<Attribute> superJumpTravelTime = REGISTRY.register("super_jump_travel_time", () -> new RangedAttribute("attribute.splatcraft.super_jump_travel_time", 73, 0.0D, 1200.0D).setSyncable(true));
 	public static final RegistrySupplier<Attribute> superJumpWindupTime = REGISTRY.register("super_jump_windup_time", () -> new RangedAttribute("attribute.splatcraft.super_jump_windup_time", 27, 0.0D, 1200.0D).setSyncable(true));
 	public static final RegistrySupplier<Attribute> superJumpHeight = REGISTRY.register("super_jump_height", () -> new RangedAttribute("attribute.splatcraft.super_jump_height", 50, -256.0D, 256.0D).setSyncable(true));
+	public static final RegistrySupplier<Attribute> enemyInkResistanceTime = REGISTRY.register("ink_resistance_time", () -> new RangedAttribute("attribute.splatcraft.ink_resistance_time", 0, 0, 256.0D).setSyncable(true));
+	public static final RegistrySupplier<Attribute> maxEnemyInkDamage = REGISTRY.register("max_enemy_ink_damage", () -> new RangedAttribute("attribute.splatcraft.max_enemy_ink_damage", 8, 0, 256.0D).setSyncable(true));
+	public static final RegistrySupplier<Attribute> enemyInkJumpMultiplier = REGISTRY.register("enemy_ink_jump_multiplier", () -> new RangedAttribute("attribute.splatcraft.enemy_ink_jump_multiplier", 0.6, 0, 1f).setSyncable(true));
 }

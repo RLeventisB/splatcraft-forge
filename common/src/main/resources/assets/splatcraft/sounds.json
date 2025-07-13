@@ -290,6 +290,12 @@
             "splatcraft:ink_surface"
         ]
     },
+    "enemy_ink_damage": {
+        "subtitle": "subtitle.enemy_ink_damage",
+        "sounds": [
+            "splatcraft:enemy_ink_damage"
+        ]
+    },
     "splat_switch_powered_on": {
         "subtitle": "subtitle.splat_switch_powered_on",
         "sounds": [

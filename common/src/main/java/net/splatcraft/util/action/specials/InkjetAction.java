@@ -2,15 +2,20 @@ package net.splatcraft.util.action.specials;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.entities.ExtraSaveData;
+import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -18,13 +23,11 @@ import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.CodecUtils;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.DamageCalculator;
+import net.splatcraft.util.structs.RangedValueCollection;
 import org.joml.Vector2f;
 
 import java.util.Optional;
@@ -110,7 +113,10 @@ public class InkjetAction extends BaseSpecialAction
 		}
 		
 		entity.resetFallDistance();
+		entity.setYBodyRot(entity.getVisualRotationYInDegrees());
 		doJetpackPhysics(entity);
+		if (entity.level().isClientSide())
+			spawnDroplets(entity);
 		
 		float extraTime = tickShotCooldown();
 		
@@ -139,6 +145,20 @@ public class InkjetAction extends BaseSpecialAction
 		}
 		super.tick(entity);
 	}
+	private void spawnDroplets(LivingEntity entity)
+	{
+		if (!(entity.level() instanceof ClientLevel clientLevel))
+			return;
+		Vec3 deltaMovement = entity.getDeltaMovement();
+		for (int i = -1; i < 2; i += 2)
+		{
+			Vector2f jetOffset = PlayerMovementHandler.getRotatedImpulse(0.3f * i, -0.4f, entity.getYRot());
+			Vec3 pos = new Vec3(entity.getX() + jetOffset.x, entity.getY(0.3), entity.getZ() + jetOffset.y);
+			InkDropEntity drop = new InkDropEntity(entity.level(), pos, entity, ColorUtils.getEntityColor(entity), InkBlockUtils.getInkType(entity), 1, ItemStack.EMPTY);
+			drop.shoot(deltaMovement.x / -3f, -1, deltaMovement.z / -3f, 5f, 0);
+			clientLevel.addEntity(drop);
+		}
+	}
 	private void doJetpackPhysics(LivingEntity entity)
 	{
 		double impulseX = entity.getDeltaMovement().x;
@@ -155,12 +175,23 @@ public class InkjetAction extends BaseSpecialAction
 		}
 		
 		float maxDistance = specialData.thrustData().getMaxKey();
-		Optional<Float> distanceToFloor = InkBlockUtils.getDistanceToFloor(entity.position().add(entity.getDeltaMovement().scale(2.5)), entity.level(), maxDistance, entity);
+		Vec3 startPoint = entity.position().add(entity.getDeltaMovement().scale(3f));
+		Optional<Float> distanceToFloor = InkBlockUtils.getDistanceToFloor(startPoint, entity.level(), maxDistance, entity);
+		float yDepth = distanceToFloor.orElse(maxDistance);
 		impulseY += distanceToFloor
 			.map(distance -> specialData.thrustData().getValue(distance))
 			.orElseGet(() -> specialData.thrustData().getMaxValue());
 		
-		double horizontalMagnitudeSquared = Mth.square(impulseX * impulseZ);
+		Vec3 paintPos = startPoint.add(0, -yDepth + 0.01, 0);
+		InkExplosion.createInkExplosion(entity, paintPos, specialData.exhaustPaint(), RangedValueCollection.EMPTY, InkBlockUtils.getInkType(entity), ItemStack.EMPTY);
+		
+		for (Entity collidedEntity : entity.level().getEntities(entity, AABB.ofSize(entity.position().add(0, -yDepth / 2, 0), specialData.exhaustRange(), yDepth, specialData.exhaustRange())))
+		{
+			if (InkDamageUtils.canDamage(collidedEntity, entity))
+				InkDamageUtils.doSplatDamage(collidedEntity, specialData.exhaustDamage(), entity, ItemStack.EMPTY, AttackId.NONE);
+		}
+		
+		double horizontalMagnitudeSquared = impulseX * impulseX + impulseZ * impulseZ;
 		float mobilitySquared = Mth.square(specialData.maxMobility());
 		if (horizontalMagnitudeSquared > mobilitySquared)
 		{

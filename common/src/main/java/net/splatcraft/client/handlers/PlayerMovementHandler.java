@@ -26,7 +26,7 @@ import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.SquidInputPacket;
+import net.splatcraft.network.c2s.SendSquidSurgePacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.TickEvents;
@@ -35,6 +35,7 @@ import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
+import net.splatcraft.util.action.specials.InkjetAction;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 
@@ -69,7 +70,8 @@ public class PlayerMovementHandler
 		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
 		
 		AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
-//            EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
+		AttributeInstance gravityAttribute = player.getAttribute(Attributes.GRAVITY);
+//		EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
 		
 		if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 			speedAttribute.removeModifier(INK_SWIM_SPEED);
@@ -77,10 +79,12 @@ public class PlayerMovementHandler
 			speedAttribute.removeModifier(ENEMY_INK_SPEED);
 		if (speedAttribute.hasModifier(SPECIAL_BONUS_ID))
 			speedAttribute.removeModifier(SPECIAL_BONUS_ID);
+		if (gravityAttribute.hasModifier(SPECIAL_BONUS_ID))
+			gravityAttribute.removeModifier(SPECIAL_BONUS_ID);
 //            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
 //                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
 		
-		if (speedAttribute.getModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER) != null)
+		if (speedAttribute.hasModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER))
 			speedAttribute.removeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER);
 		
 		if (InkBlockUtils.onEnemyInk(player))
@@ -97,6 +101,10 @@ public class PlayerMovementHandler
 			{
 				speedAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, bonus - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 			});
+			if (specialAction instanceof InkjetAction)
+			{
+				gravityAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, -0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+			}
 		}
 		
 		if (info.isSquid())
@@ -171,6 +179,7 @@ public class PlayerMovementHandler
 		else if (info.getSquidSurgeState() != 0)
 		{
 			info.setSquidSurgeState(0);
+			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.getClimbedDirection(), info.getSquidSurgeCharge()));
 		}
 		
 		if (player.isUsingItem())
@@ -267,7 +276,7 @@ public class PlayerMovementHandler
 		);
 		tickSquidSurge(entity, entityInfo, jumping);
 		
-		SplatcraftPacketHandler.sendToServer(new SquidInputPacket(
+		SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(
 			entityInfo.getClimbedDirection(),
 			entityInfo.getSquidSurgeState()));
 	}

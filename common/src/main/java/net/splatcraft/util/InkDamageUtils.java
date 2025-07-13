@@ -114,15 +114,16 @@ public class InkDamageUtils
 		
 		if (!(target instanceof SquidBumperEntity) && doDamage)
 		{
-			doDamage = target.hurt(damageSource, damage * (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg));
+			damage *= (target instanceof Player || target instanceof IColoredEntity ? 1 : mobDmgPctg);
+			doDamage = target.hurt(damageSource, damage);
 			target.hurtMarked = false;
 		}
 		
-		if (isLiving && (!targetColor.isValid() || canInk) && !target.isUnderWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
+		if (isLiving && doDamage && (targetColor.isInvalid() || canInk) && !target.isUnderWater() && !(target instanceof IColoredEntity coloredEntity && !coloredEntity.handleInkOverlay()))
 		{
 			InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(livingTarget);
-			if (info.getAmount() < livingTarget.getMaxHealth() * 1.5)
-				info.addAmount(damage * (target instanceof IColoredEntity ? 1 : Math.max(0.5f, mobDmgPctg)));
+			if (info.getAmount() < livingTarget.getMaxHealth())
+				info.addAmount(damage);
 			
 			info.setColor(color);
 			if (!targetLevel.isClientSide())

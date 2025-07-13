@@ -27,18 +27,19 @@ import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.mixin.accessors.LivingEntityAccesor;
+import net.splatcraft.mixin.accessors.ServerPlayerAccesor;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
+import net.splatcraft.network.s2c.SendEnemyInkDamagePacket;
+import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.platform.event.PlayerEvents;
 import net.splatcraft.platform.event.TickEvents;
-import net.splatcraft.registries.SplatcraftDamageTypes;
-import net.splatcraft.registries.SplatcraftGameRules;
-import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.registries.SplatcraftStats;
+import net.splatcraft.registries.*;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
@@ -48,10 +49,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class SquidFormHandler
 {
+	public static Map<LivingEntity, EnemyInkData> inkTouchTime = new HashMap<>();
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(PlayerEvents.AttackEntity.class, SquidFormHandler::onPlayerAttackEntity);
@@ -70,14 +74,30 @@ public class SquidFormHandler
 	}
 	public static void playerTick(Player player)
 	{
+		LivingEntityAccesor accesor = (LivingEntityAccesor) player;
+		boolean alternativeInkHealth = SplatcraftGameRules.getLocalizedRule(player, SplatcraftGameRules.ALTERNATIVE_INK_HEALTH);
 		if (InkBlockUtils.onEnemyInk(player))
 		{
-			if (player.tickCount % 20 == 0 && player.getHealth() > 4 && player.level().getDifficulty() != Difficulty.PEACEFUL)
-				player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
+			if (player.level().getDifficulty() != Difficulty.PEACEFUL)
+			{
+				if (alternativeInkHealth && !player.level().isClientSide())
+				{
+					doAlternativeEnemyInkDamage(player, accesor);
+				}
+				else
+				{
+					if (player.tickCount % 20 == 0 && player.getHealth() > 4)
+						player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
+				}
+			}
 			if (player.level().getRandom().nextFloat() < 0.5f)
 			{
 				ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
 			}
+		}
+		else
+		{
+			inkTouchTime.remove(player);
 		}
 		
 		if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isUnderWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
@@ -85,6 +105,27 @@ public class SquidFormHandler
 		
 		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		tickSquidState(player, info);
+		
+		boolean canSquidHide = InkBlockUtils.canSquidHide(player);
+		if (alternativeInkHealth && !player.level().isClientSide())
+		{
+			if (player.level().getGameTime() - accesor.getLastDamageStamp() > 20)
+			{
+				if (player.getHealth() < player.getMaxHealth() &&
+					SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
+					!hasDamageOvertime(player))
+				{
+					player.heal(canSquidHide && info.isSquid() ? 1f : 0.125f);
+					if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
+						player.causeFoodExhaustion(0.05f);
+					
+					InkOverlayInfo overlayInfo = Components.INK_OVERLAY.getOrCreate(player);
+					overlayInfo.setAmount((player.getMaxHealth() - player.getHealth()));
+					
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(player, overlayInfo), player);
+				}
+			}
+		}
 		
 		if (info.isSquid())
 		{
@@ -99,17 +140,26 @@ public class SquidFormHandler
 			
 			player.awardStat(SplatcraftStats.SQUID_TIME);
 			
-			if (InkBlockUtils.canSquidHide(player))
+			if (!alternativeInkHealth)
 			{
-				if (player.getHealth() < player.getMaxHealth() && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) && player.tickCount % 5 == 0 && !player.hasEffect(MobEffects.POISON) && !player.hasEffect(MobEffects.WITHER))
+				if (canSquidHide)
 				{
-					player.heal(0.5f);
-					if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
-						player.causeFoodExhaustion(0.25f);
-					
-					Components.INK_OVERLAY.getOrCreate(player).addAmount(-0.49f);
+					if (player.getHealth() < player.getMaxHealth() &&
+						SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
+						player.tickCount % 5 == 0 &&
+						!hasDamageOvertime(player))
+					{
+						player.heal(0.5f);
+						if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
+							player.causeFoodExhaustion(0.25f);
+						
+						Components.INK_OVERLAY.getOrCreate(player).addAmount(-0.49f);
+					}
 				}
-				
+			}
+			
+			if (canSquidHide)
+			{
 				boolean crouch = player.isShiftKeyDown();
 				if (!crouch && player.level().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
 				{
@@ -151,10 +201,71 @@ public class SquidFormHandler
 				}
 			});
 		}
-		if (Components.INK_OVERLAY.has(player))
+		if (Components.INK_OVERLAY.has(player) && !alternativeInkHealth)
 		{
 			Components.INK_OVERLAY.get(player).addAmount(-0.01f);
 		}
+	}
+	private static void doAlternativeEnemyInkDamage(LivingEntity entity, LivingEntityAccesor accesor)
+	{
+		EnemyInkData enemyInkData = inkTouchTime.get(entity);
+		long gameTime = entity.level().getGameTime();
+		if (enemyInkData == null)
+			inkTouchTime.put(entity, new EnemyInkData(gameTime, 0f, 0f));
+		else
+		{
+			long touchTimestamp = enemyInkData.damageTimestamp();
+			float totalDamageDone = enemyInkData.totalDamage();
+			float accumulatedDamage = enemyInkData.accumulatedDamage();
+			float maxDamage = (float) entity.getAttributeValue(SplatcraftAttributes.maxEnemyInkDamage);
+			
+			DamageSource source = SplatcraftDamageTypes.of(entity.level(), SplatcraftDamageTypes.ENEMY_INK);
+			accesor.setLastDamageSource(source);
+			accesor.setLastDamageStamp(gameTime);
+			
+			if (gameTime - touchTimestamp > entity.getAttributeValue(SplatcraftAttributes.enemyInkResistanceTime))
+			{
+				float health = entity.getHealth();
+				if (totalDamageDone < maxDamage)
+				{
+//					if (totalDamageDone == 0)
+//						entity.level().broadcastDamageEvent(entity, source);
+					
+					float damage = 0.18f;
+					if (health - damage <= 1)
+						damage = health - 1;
+					
+					if (totalDamageDone + damage >= maxDamage)
+						damage = maxDamage - totalDamageDone;
+					
+					accumulatedDamage += damage;
+					totalDamageDone += damage;
+				}
+				
+				if (accumulatedDamage >= 0.5 || (totalDamageDone >= maxDamage && accumulatedDamage > 0))
+				{
+					float newHealth = health - accumulatedDamage;
+					entity.setHealth(newHealth);
+					if (entity instanceof ServerPlayer serverPlayer)
+					{
+						((ServerPlayerAccesor) serverPlayer).setLastSentHealth(newHealth);
+						SplatcraftPacketHandler.sendToPlayer(new SendEnemyInkDamagePacket(newHealth), serverPlayer);
+					}
+					
+					InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(entity);
+					info.addAmount(accumulatedDamage);
+					
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(entity, info), entity);
+					
+					accumulatedDamage = 0;
+				}
+				inkTouchTime.put(entity, new EnemyInkData(touchTimestamp, totalDamageDone, accumulatedDamage));
+			}
+		}
+	}
+	private static boolean hasDamageOvertime(LivingEntity entity)
+	{
+		return entity.hasEffect(MobEffects.POISON) || entity.hasEffect(MobEffects.WITHER);
 	}
 	private static void tickSquidState(Player player, EntityInfo info)
 	{
@@ -324,5 +435,8 @@ public class SquidFormHandler
 		{
 			return name();
 		}
+	}
+	public record EnemyInkData(long damageTimestamp, float totalDamage, float accumulatedDamage)
+	{
 	}
 }

@@ -21,7 +21,9 @@
         "SquidPassthroughMixin",
         "accessors.AABBAccessor",
         "accessors.EntityAccessor",
-        "accessors.GameRuleAccessor"
+        "accessors.GameRuleAccessor",
+        "accessors.LivingEntityAccesor",
+        "accessors.ServerPlayerAccesor"
     ],
     "client": [
         "CooldownSlotMixin$MinecraftPart",
