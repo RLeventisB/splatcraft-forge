@@ -60,7 +60,7 @@ public class SplatcraftPacketHandler
 		registerMessage(RequestSpecialUsageDataPacket.ID, RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
 		registerMessage(UpdateInputPacket.ID, UpdateInputPacket.class, UpdateInputPacket::decode);
 		registerMessage(SendSpecialUsageDataPacket.ID, SendSpecialUsageDataPacket.class, SendSpecialUsageDataPacket::decode);
-		registerMessage(SendSquidLagPacket.ID, SendSquidLagPacket.class, SendSquidLagPacket::decode);
+		registerMessage(SendSquidDisablePacket.ID, SendSquidDisablePacket.class, SendSquidDisablePacket::decode);
 		registerMessage(SendEnemyInkDamagePacket.ID, SendEnemyInkDamagePacket.class, SendEnemyInkDamagePacket::decode);
 		
 		//Stage Pad packets

@@ -8,17 +8,16 @@ import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SendSquidLagPacket extends PlayS2CPacket
+public class SendSquidDisablePacket extends PlayS2CPacket
 {
-	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SendSquidLagPacket.class);
-	byte lag;
-	public SendSquidLagPacket(byte lag)
+	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(SendSquidDisablePacket.class);
+	public SendSquidDisablePacket()
 	{
-		this.lag = lag;
+	
 	}
-	public static SendSquidLagPacket decode(RegistryFriendlyByteBuf buffer)
+	public static SendSquidDisablePacket decode(RegistryFriendlyByteBuf buffer)
 	{
-		return new SendSquidLagPacket(buffer.readByte());
+		return new SendSquidDisablePacket();
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()
@@ -28,12 +27,11 @@ public class SendSquidLagPacket extends PlayS2CPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
-		buffer.writeByte(lag);
 	}
 	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{
-		SplatcraftKeyHandler.setSquidDelayInternal(lag);
+		SplatcraftKeyHandler.SQUID_KEYBIND.active = false;
 	}
 }

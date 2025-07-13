@@ -195,7 +195,7 @@ public class InkjetAction extends BaseSpecialAction
 		float mobilitySquared = Mth.square(specialData.maxMobility());
 		if (horizontalMagnitudeSquared > mobilitySquared)
 		{
-			double penalty = Math.max(0.85, Math.sqrt(mobilitySquared / horizontalMagnitudeSquared));
+			double penalty = Math.max(0.75, Math.sqrt(mobilitySquared / horizontalMagnitudeSquared));
 			impulseX *= penalty;
 			impulseZ *= penalty;
 		}
