@@ -107,7 +107,8 @@ public class SplatcraftPacketHandler
 		if (trackedEntity.level().getChunkSource() instanceof ServerChunkCache serverChunkManager)
 		{
 			ChunkMap.TrackedEntity what = serverChunkManager.chunkMap.entityMap.get(trackedEntity.getId());
-			sendToPlayers(message, what.seenBy.stream().map(ServerPlayerConnection::getPlayer).toList());
+			if (what != null)
+				sendToPlayers(message, what.seenBy.stream().map(ServerPlayerConnection::getPlayer).toList());
 		}
 	}
 	public static <MSG extends PlayS2CPacket> void sendToTrackersAndSelf(MSG message, Entity trackedEntity)
