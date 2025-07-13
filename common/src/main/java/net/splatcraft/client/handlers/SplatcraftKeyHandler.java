@@ -148,7 +148,7 @@ public class SplatcraftKeyHandler
 		if (SUB_WEAPON_KEYBIND.pressed)
 			queuedSubWeapon = true;
 		
-		if (EntityAction.hasEntityActionAnd(player, v -> !v.preventWeaponUse()) ||
+		if (EntityAction.hasEntityActionAnd(player, EntityAction::preventWeaponUse) ||
 			CommonUtils.anyWeaponOnCooldown(player) ||
 			ShootingHandler.isDoingShootingAction(player) ||
 			EntityStoredCharge.hasCharge(player)) // dont allow sub code to execute if the player has a charge or else everything breaks
