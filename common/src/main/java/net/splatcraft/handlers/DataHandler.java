@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -18,13 +17,13 @@ import net.splatcraft.data.InkColorGroups;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.platform.Services;
+import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 public class DataHandler
 {
@@ -58,8 +57,8 @@ public class DataHandler
 			}
 		}};
 		public static final BiMap<ResourceLocation, AbstractWeaponSettings<?, ?>> SETTINGS = HashBiMap.create();
-		public static final ReseteableMemoizedPredicate<Class<? extends AbstractWeaponSettings<?, ?>>, List<ResourceLocation>> CLASS_SETTINGS_MAP
-			= new ReseteableMemoizedPredicate<>((Class<? extends AbstractWeaponSettings<?, ?>> clazz) -> SETTINGS.entrySet().stream().filter(v -> clazz.isInstance(v.getValue())).map(Map.Entry::getKey).toList());
+		public static final CommonUtils.ReseteableMemoizedFunction<Class<? extends AbstractWeaponSettings<?, ?>>, List<ResourceLocation>> CLASS_SETTINGS_MAP
+			= CommonUtils.memoizeResetable((Class<? extends AbstractWeaponSettings<?, ?>> clazz) -> SETTINGS.entrySet().stream().filter(v -> clazz.isInstance(v.getValue())).map(Map.Entry::getKey).toList());
 		private static final Gson GSON_INSTANCE = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 		private static final String folder = "weapon_settings";
 		public WeaponStatsListener()
@@ -75,20 +74,20 @@ public class DataHandler
 		{
 			CLASS_SETTINGS_MAP.reset();
 			SETTINGS.clear();
-
+			
 			resourceList.forEach((key, element) ->
 			{
 				JsonObject json = element.getAsJsonObject();
 				try
 				{
 					String type = GsonHelper.getAsString(json, "type");
-
+					
 					if (!SETTING_TYPES.containsKey(type))
 						return;
-
+					
 					AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(String.class).newInstance(key.toString());
 					settings.deserialize(key, json);
-
+					
 					settings.registerStatTooltips();
 					SETTINGS.put(key, settings);
 				}
@@ -98,28 +97,6 @@ public class DataHandler
 					throw new RuntimeException(e);
 				}
 			});
-		}
-		public static class ReseteableMemoizedPredicate<I, O> implements Function<I, O>
-		{
-			private final Function<I, O> function;
-			private final Map<I, O> cache = new Object2ObjectOpenHashMap<>();
-			public ReseteableMemoizedPredicate(Function<I, O> function)
-			{
-				this.function = function;
-			}
-			public O apply(I object)
-			{
-				return cache.computeIfAbsent(object, function);
-			}
-			public void reset()
-			{
-				cache.clear();
-			}
-			@Override
-			public String toString()
-			{
-				return "reseteablememoize/1[function=" + function + ", size=" + cache.size() + "]";
-			}
 		}
 	}
 }

@@ -98,6 +98,10 @@ public final class PlaySession
 		}
 		return Optional.ofNullable(result);
 	}
+	public static ArrayList<PlaySession> getAllPlaySessions()
+	{
+		return new ArrayList<>(SaveInfoCapability.get().playSessions().values());
+	}
 	/**
 	 * Ticks all the play session related actions.
 	 *

@@ -91,6 +91,7 @@ public class Stage implements Comparable<Stage>
 		registerGameruleSetting(SplatcraftGameRules.WATER_DAMAGE);
 		registerGameruleSetting(SplatcraftGameRules.INK_FRIENDLY_FIRE);
 		registerGameruleSetting(SplatcraftGameRules.INK_HEALING);
+		registerGameruleSetting(SplatcraftGameRules.ALTERNATIVE_INK_HEALTH);
 		registerGameruleSetting(SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER);
 		registerGameruleSetting(SplatcraftGameRules.INKABLE_GROUND);
 		registerGameruleSetting(SplatcraftGameRules.INK_DESTROYS_FOLIAGE);
@@ -147,11 +148,21 @@ public class Stage implements Comparable<Stage>
 	{
 		return SaveInfoCapability.get().stages().get(id);
 	}
-	public static ArrayList<Stage> getStagesForPosition(Level world, Vec3 pos)
+	public static ArrayList<Stage> getStagesForPosition(Level level, Vec3 pos)
 	{
 		ArrayList<Stage> stages = getAllStages();
-		stages.removeIf(stage -> stage == null || !stage.worldKey.equals(world.dimension()) || !stage.getBounds().contains(pos));
+		stages.removeIf(stage -> stage == null || !stage.worldKey.equals(level.dimension()) || !stage.getBounds().contains(pos));
 		return stages;
+	}
+	public static ArrayList<Stage> getStagesForPosition(Level level, BlockPos pos)
+	{
+		ArrayList<Stage> stages = getAllStages();
+		stages.removeIf(stage -> stage == null || !stage.worldKey.equals(level.dimension()) || !stage.getBounds().contains(pos.getX(), pos.getY(), pos.getZ()));
+		return stages;
+	}
+	public Optional<PlaySession> tryGetPlaySession()
+	{
+		return Optional.ofNullable(SaveInfoCapability.get().playSessions().get(id));
 	}
 	public boolean hasSetting(String key)
 	{

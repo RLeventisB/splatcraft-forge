@@ -17,6 +17,7 @@ import net.minecraft.ResourceLocationException;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ByIdMap;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -46,7 +47,19 @@ public class CodecUtils
 	}
 	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values)
 	{
-		final IntFunction<T> decoder = index -> values.get()[index];
+		return createEnumPacketCodec(values.get(), ByIdMap.OutOfBoundsStrategy.WRAP);
+	}
+	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final Supplier<T[]> values, final ByIdMap.OutOfBoundsStrategy boundsStrategy)
+	{
+		return createEnumPacketCodec(values.get(), boundsStrategy);
+	}
+	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final T[] values)
+	{
+		return createEnumPacketCodec(values, ByIdMap.OutOfBoundsStrategy.WRAP);
+	}
+	public static <T extends Enum<T>> StreamCodec<ByteBuf, T> createEnumPacketCodec(final T[] values, final ByIdMap.OutOfBoundsStrategy boundsStrategy)
+	{
+		final IntFunction<T> decoder = ByIdMap.continuous(Enum::ordinal, values, boundsStrategy);
 		final ToIntFunction<T> encoder = Enum::ordinal;
 		return ByteBufCodecs.idMapper(decoder, encoder);
 	}

@@ -4,6 +4,7 @@ import com.google.common.base.Supplier;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -67,11 +68,10 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class CommonUtils
@@ -496,6 +496,14 @@ public class CommonUtils
 		
 		return Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isSquid);
 	}
+	public static <I, O> ReseteableMemoizedFunction<I, O> memoizeResetable(Function<I, O> function)
+	{
+		return new ReseteableMemoizedFunction<>(function);
+	}
+	public static <O> ReseteableMemoizedSupplier<O> memoizeResetable(Supplier<O> supplier)
+	{
+		return new ReseteableMemoizedSupplier<>(supplier);
+	}
 	public record Result(float delay, float value)
 	{
 	}
@@ -532,6 +540,48 @@ public class CommonUtils
 			if (lifeSpan == 0)
 				discard();
 			lifeSpan--;
+		}
+	}
+	public static class ReseteableMemoizedFunction<I, O> implements Function<I, O>
+	{
+		private final Function<I, O> function;
+		private final Map<I, O> cache = new Object2ObjectOpenHashMap<>();
+		public ReseteableMemoizedFunction(Function<I, O> function)
+		{
+			this.function = function;
+		}
+		public O apply(I object)
+		{
+			return cache.computeIfAbsent(object, function);
+		}
+		public void reset()
+		{
+			cache.clear();
+		}
+		@Override
+		public String toString()
+		{
+			return "reseteablememoize/1[function=" + function + ", size=" + cache.size() + "]";
+		}
+	}
+	public static class ReseteableMemoizedSupplier<O> implements java.util.function.Supplier<O>
+	{
+		private final java.util.function.Supplier<O> function;
+		private O cachedResult;
+		public ReseteableMemoizedSupplier(java.util.function.Supplier<O> supplier)
+		{
+			function = supplier;
+		}
+		public O get()
+		{
+			if (cachedResult == null)
+				cachedResult = function.get();
+			
+			return cachedResult;
+		}
+		public void reset()
+		{
+			cachedResult = null;
 		}
 	}
 }

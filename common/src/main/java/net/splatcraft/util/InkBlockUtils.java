@@ -212,9 +212,10 @@ public class InkBlockUtils
 		worldInk.ink(offset, index, color, inkType);
 		chunk.setUnsaved(true);
 		
-		if (SplatcraftGameRules.getLocalizedRule(world, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
-			isBlockFoliage(world.getBlockState(pos.above())))
-			world.destroyBlock(pos.above(), true);
+		if (index == 1) // facing up
+			if (SplatcraftGameRules.getLocalizedRule(world, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
+				isBlockFoliage(world.getBlockState(pos.above())))
+				world.destroyBlock(pos.above(), true);
 		
 		if (!world.isClientSide())
 			ChunkInkHandler.addInkToUpdate(world, pos);

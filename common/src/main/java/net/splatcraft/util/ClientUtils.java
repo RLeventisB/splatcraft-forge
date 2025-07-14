@@ -24,7 +24,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.handlers.DataHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
@@ -48,60 +47,60 @@ import java.util.function.BiConsumer;
 public class ClientUtils
 {
 	@OnlyIn(Dist.CLIENT)
-	public static final DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<Stage, MatchCameraPositions> matchStartCameraPosProvider =
-		new DataHandler.WeaponStatsListener.ReseteableMemoizedPredicate<>((stage) ->
-		{
-			ClientLevel world = getClient().level;
-			// if the current world isn't the same as the stage's world, do nothing, we are the client, and thus we cant
-			// retrieve other worlds :(
-			if (world.dimension() != stage.worldKey)
-				return MatchCameraPositions.INVALID;
-			
-			// gets the stage's (horizontal) center and find the highest y
-			AABB bounds = stage.getBounds();
-			int stageCenterX = (int) bounds.getCenter().x;
-			int stageCenterZ = (int) bounds.getCenter().z;
-			int minY = (int) bounds.minY;
-			int maxY = (int) bounds.maxY;
-			
-			CameraPosition stageFloorCenter = new CameraPosition(new Vec3(
-				stageCenterX,
-				Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stageCenterX, stageCenterZ, world, minY, maxY))
-					.map(v -> (float) v.getY()).orElse((float) minY) + 2,
-				stageCenterZ
-			), 0.0f, 90.0f);
-			
-			CameraPosition stageTopCenter = new CameraPosition(
-				stageFloorCenter.position.add(0, 25, 0),
-				0.0f, 90.0f
-			);
-			
-			ImmutableList.Builder<CameraPosition> positions = ImmutableList.builder();
-			// spawn pads
-			Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
-			
-			// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
-			InkColor clientPlayerColor = ColorUtils.getEntityColor(getClientPlayer());
-			List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
-			
-			if (clientSpawnPads != null)
+	public static final CommonUtils.ReseteableMemoizedFunction<Stage, MatchCameraPositions> matchStartCameraPosProvider =
+		CommonUtils.memoizeResetable((stage) ->
 			{
-				spawnPadPositions.remove(clientPlayerColor);
+				ClientLevel world = getClient().level;
+				// if the current world isn't the same as the stage's world, do nothing, we are the client, and thus we cant
+				// retrieve other worlds :(
+				if (world.dimension() != stage.worldKey)
+					return MatchCameraPositions.INVALID;
 				
-				SpawnPadTileEntity randomClientPad = Util.getRandom(clientSpawnPads, world.random);
+				// gets the stage's (horizontal) center and find the highest y
+				AABB bounds = stage.getBounds();
+				int stageCenterX = (int) bounds.getCenter().x;
+				int stageCenterZ = (int) bounds.getCenter().z;
+				int minY = (int) bounds.minY;
+				int maxY = (int) bounds.maxY;
 				
-				addPadToList(randomClientPad, stageFloorCenter, positions);
+				CameraPosition stageFloorCenter = new CameraPosition(new Vec3(
+					stageCenterX,
+					Optional.ofNullable(TurfScannerItem.getTopSolidOrLiquidBlock(stageCenterX, stageCenterZ, world, minY, maxY))
+						.map(v -> (float) v.getY()).orElse((float) minY) + 2,
+					stageCenterZ
+				), 0.0f, 90.0f);
+				
+				CameraPosition stageTopCenter = new CameraPosition(
+					stageFloorCenter.position.add(0, 25, 0),
+					0.0f, 90.0f
+				);
+				
+				ImmutableList.Builder<CameraPosition> positions = ImmutableList.builder();
+				// spawn pads
+				Map<InkColor, List<SpawnPadTileEntity>> spawnPadPositions = stage.getSpawnPads(world);
+				
+				// put the current client's spawn pad as the first!!! this breaks if there are multiple spawn pads of the same color tho
+				InkColor clientPlayerColor = ColorUtils.getEntityColor(getClientPlayer());
+				List<SpawnPadTileEntity> clientSpawnPads = spawnPadPositions.get(clientPlayerColor);
+				
+				if (clientSpawnPads != null)
+				{
+					spawnPadPositions.remove(clientPlayerColor);
+					
+					SpawnPadTileEntity randomClientPad = Util.getRandom(clientSpawnPads, world.random);
+					
+					addPadToList(randomClientPad, stageFloorCenter, positions);
+				}
+				
+				for (Map.Entry<InkColor, List<SpawnPadTileEntity>> spawnPadEntrySet : spawnPadPositions.entrySet())
+				{
+					SpawnPadTileEntity randomPad = Util.getRandom(spawnPadEntrySet.getValue(), world.random);
+					
+					addPadToList(randomPad, stageFloorCenter, positions);
+				}
+				
+				return new MatchCameraPositions(stageFloorCenter, stageTopCenter, positions.build());
 			}
-			
-			for (Map.Entry<InkColor, List<SpawnPadTileEntity>> spawnPadEntrySet : spawnPadPositions.entrySet())
-			{
-				SpawnPadTileEntity randomPad = Util.getRandom(spawnPadEntrySet.getValue(), world.random);
-				
-				addPadToList(randomPad, stageFloorCenter, positions);
-			}
-			
-			return new MatchCameraPositions(stageFloorCenter, stageTopCenter, positions.build());
-		}
 		);
 	@OnlyIn(Dist.CLIENT)
 	public static Pair<UUID, Vector2f> killCamData;
