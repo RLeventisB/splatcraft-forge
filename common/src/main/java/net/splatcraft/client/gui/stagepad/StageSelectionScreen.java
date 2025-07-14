@@ -63,9 +63,9 @@ public class StageSelectionScreen extends AbstractStagePadScreen
 	}
 	public static void updateValidSuperJumpsList(List<String> validStages, List<String> outOfReachStages, List<String> needsUpdateStages)
 	{
+		SuperJumpMenuButton.loading = false;
 		stages.values().stream().map(Pair::getSecond).forEach(jumpButton ->
 		{
-			SuperJumpMenuButton.loading = false;
 			jumpButton.state = validStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.VALID :
 				needsUpdateStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.REQUIRES_UPDATE :
 					outOfReachStages.contains(jumpButton.stage.id) ? SuperJumpMenuButton.ButtonState.OUT_OF_RANGE :

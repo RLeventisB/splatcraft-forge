@@ -44,10 +44,13 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
+import net.splatcraft.util.action.ActionThatSetsSquid;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 public class SplatcraftKeyHandler
 {
@@ -218,6 +221,16 @@ public class SplatcraftKeyHandler
 	}
 	public static void tickSquidAndCharge(LivingEntity entity, EntityInfo info, ToggleableKey oldest)
 	{
+		Optional<Boolean> forcedSquidMode = EntityAction.getSpecificEntityActionOptional(entity, ActionThatSetsSquid.class).flatMap(v -> v.isSquid(entity));
+		if (forcedSquidMode.isPresent())
+		{
+			if (info.isSquid() != forcedSquidMode.get())
+			{
+				ClientUtils.setSquid(entity, info, forcedSquidMode.get(), false);
+			}
+			return;
+		}
+		
 		boolean doingActionThatLeavesSquidMode = SHOOT_KEYBIND.equals(oldest) || SUB_WEAPON_KEYBIND.equals(oldest) || SPECIAL_WEAPON_KEYBIND.equals(oldest);
 		if (info.isSquid())
 		{

@@ -283,7 +283,7 @@ public class Stage implements Comparable<Stage>
 	}
 	public boolean superJumpToStage(ServerPlayer player)
 	{
-		if (!player.level().dimensionType().effectsLocation().equals(worldKey) || getSpawnPadPositions().isEmpty())
+		if (!player.level().dimension().equals(worldKey) || getSpawnPadPositions().isEmpty())
 			return false;
 		
 		InkColor playerColor = ColorUtils.getEntityColor(player);

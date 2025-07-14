@@ -238,7 +238,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 			setValue(rules.get(rule), mouseX);
 		}
 		@Override
-		public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double p_94702_, double p_94703_)
+		public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double dragX, double dragY)
 		{
 			if (equals(heldButton))
 			{
@@ -250,7 +250,7 @@ public class StageRulesScreen extends AbstractStagePadScreen
 				if (!(prevValue == null && ruleEntry.value == null) && (ruleEntry.value == null || !ruleEntry.value.equals(prevValue)))
 					playDownSound(Minecraft.getInstance().getSoundManager());
 			}
-			return super.mouseDragged(mouseX, mouseY, mouseButton, p_94702_, p_94703_);
+			return super.mouseDragged(mouseX, mouseY, mouseButton, dragX, dragY);
 		}
 		void setValue(RuleEntry entry, double mouseX)
 		{

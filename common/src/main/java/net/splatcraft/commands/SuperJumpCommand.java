@@ -31,9 +31,12 @@ import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.action.ActionThatSetsSquid;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class SuperJumpCommand
 {
@@ -135,7 +138,7 @@ public class SuperJumpCommand
 		else
 			return shape.bounds().getYsize();
 	}
-	public static class SuperJump extends EntityActionWithTime
+	public static class SuperJump extends EntityActionWithTime implements ActionThatSetsSquid
 	{
 		public static Codec<SuperJump> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			Vec3.CODEC.fieldOf("start").forGetter(v -> v.start),
@@ -146,6 +149,7 @@ public class SuperJumpCommand
 			Codec.BOOL.fieldOf("had_physics").forGetter(v -> v.hadPhysics),
 			Codec.BOOL.fieldOf("had_invulnerability").forGetter(v -> v.hadInvulnerability),
 			Codec.BOOL.fieldOf("can_start").forGetter(v -> v.canStart),
+			Codec.BOOL.fieldOf("sets_squid").forGetter(v -> v.setsSquid),
 			getTimeCodec()
 		).apply(inst, SuperJump::new));
 		final Vec3 end;
@@ -153,13 +157,17 @@ public class SuperJumpCommand
 		final int windupTime;
 		final double height;
 		Vec3 start;
-		final boolean hadPhysics, hadInvulnerability;
+		final boolean hadPhysics, hadInvulnerability, setsSquid;
 		boolean canStart;
 		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability)
 		{
-			this(start, end, windupTime, travelTime, height, hadPhysics, hadInvulnerability, false);
+			this(start, end, windupTime, travelTime, height, hadPhysics, hadInvulnerability, true, false);
 		}
-		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean skipGroundCheck)
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean setsSquid)
+		{
+			this(start, end, windupTime, travelTime, height, hadPhysics, hadInvulnerability, setsSquid, false);
+		}
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean setsSquid, boolean skipGroundCheck)
 		{
 			super(travelTime + windupTime);
 			this.end = end;
@@ -169,9 +177,10 @@ public class SuperJumpCommand
 			this.travelTime = travelTime;
 			this.windupTime = windupTime;
 			this.height = height;
+			this.setsSquid = setsSquid;
 			canStart = skipGroundCheck;
 		}
-		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart, float time)
+		public SuperJump(Vec3 start, Vec3 end, int windupTime, int travelTime, double height, boolean hadPhysics, boolean hadInvulnerability, boolean canStart, boolean setsSquid, float time)
 		{
 			super(time, travelTime + windupTime);
 			this.end = end;
@@ -182,6 +191,7 @@ public class SuperJumpCommand
 			this.windupTime = windupTime;
 			this.height = height;
 			this.canStart = canStart;
+			this.setsSquid = setsSquid;
 		}
 		public static double getSuperJumpYPos(double progress, double startY, double endY, double arcHeight)
 		{
@@ -264,13 +274,15 @@ public class SuperJumpCommand
 		{
 			return windupTime;
 		}
-		public float getSuperJumpProgress(float add)
+		public float getSuperJumpProgress(float partialTick)
 		{
-			return 1f - Mth.clamp((getTime() + add) / (float) getTravelTime(), 0, 1);
+			return 1f - Mth.clamp((getTime() + partialTick) / (float) getTravelTime(), 0, 1);
 		}
-		public boolean isSquid()
+		public Optional<Boolean> isSquid(LivingEntity entity)
 		{
-			return getSuperJumpProgress(0) > 0.2f;
+			if (setsSquid)
+				return Optional.of(getSuperJumpProgress(0) < 0.8f);
+			return Optional.empty();
 		}
 		public double getHeight()
 		{
