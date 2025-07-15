@@ -298,7 +298,7 @@ public class InkjetAction extends BaseSpecialAction
 			entity.getAttributeValue(SplatcraftAttributes.superJumpHeight),
 			entity.noPhysics,
 			entity instanceof Player player && player.getAbilities().invulnerable,
-			false));
+			false, true));
 		
 		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
