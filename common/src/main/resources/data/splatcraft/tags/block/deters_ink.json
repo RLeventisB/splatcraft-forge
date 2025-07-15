@@ -4,6 +4,8 @@
         "splatcraft:tarp",
         "splatcraft:glass_cover",
         "splatcraft:ink_stained_carpet",
+        "splatcraft:stage_barrier",
+        "splatcraft:stage_void",
         "#minecraft:wool_carpets"
     ]
 }

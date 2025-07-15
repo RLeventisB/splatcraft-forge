@@ -33,6 +33,7 @@ public final class Splatcraft
 		JumpLureHudHandler.registerEvents();
 		RendererHandler.registerEvents();
 		SplatcraftEntities.bindRenderers();
+		SplatcraftTileEntities.bindTESR();
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		
@@ -84,7 +85,6 @@ public final class Splatcraft
 	}
 	public static void initClientAfter(Minecraft client)
 	{
-		SplatcraftTileEntities.bindTESR();
 		SplatcraftItems.registerModelProperties();
 	}
 }

@@ -34,10 +34,10 @@ public class EnemyInkTickableSound extends AbstractTickableSoundInstance
 		
 		boolean onEnemyInk = InkBlockUtils.onEnemyInk(player);
 		if (!onEnemyInk)
-			volume -= 0.03f;
+			volume -= 0.01f;
 		else
-			volume += 0.04f;
-		volume = Mth.clamp(volume, 0, 0.4f);
+			volume += 0.013f;
+		volume = Mth.clamp(volume, 0, 0.14f);
 		if ((!onEnemyInk && (volume == 0)) || !player.isAlive())
 		{
 			stop();

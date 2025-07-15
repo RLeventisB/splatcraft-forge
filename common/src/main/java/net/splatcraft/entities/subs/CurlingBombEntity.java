@@ -178,7 +178,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 				Optional<BlockPos> optionalPos = InkBlockUtils.getBlockStandingOnPos(new Vec3(getX() + sideX * j, getY() + 10e-5, getZ() + sideZ * j), level(), 1, this);
 				optionalPos.ifPresent(blockPos ->
 				{
-					if (InkBlockUtils.canInkFromFace(level(), blockPos, Direction.UP))
+					if (!InkBlockUtils.isUninkable(level(), blockPos, Direction.UP))
 					{
 						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), level(), blockPos, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
 						if (result == BlockInkedResult.SUCCESS)
@@ -190,11 +190,13 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		else
 		{
 			for (int i = 0; i <= 2; i++)
-				if (InkBlockUtils.canInkFromFace(level(), blockPosition().below(i), Direction.UP))
+			{
+				if (!InkBlockUtils.isUninkable(level(), blockPosition().below(i), Direction.UP))
 				{
 					InkBlockUtils.inkBlock(getOwner(), level(), blockPosition().below(i), getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
 					break;
 				}
+			}
 		}
 	}
 	@Override

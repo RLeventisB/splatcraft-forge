@@ -14,6 +14,7 @@ import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ResourceLocationException;
+import net.minecraft.network.VarInt;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -124,6 +125,33 @@ public class CodecUtils
 	public static <R> DataResult<R> dataResultOfOptional(final Optional<R> result, Supplier<String> errorMessage)
 	{
 		return result.map(DataResult::success).orElseGet(() -> DataResult.error(errorMessage));
+	}
+	public static <B extends ByteBuf, I> StreamCodec.CodecOperation<B, I, I[]> arrayOf(IntFunction<I[]> arrayCreator)
+	{
+		return (codec) -> new StreamCodec<>()
+		{
+			@Override
+			public I @NotNull [] decode(@NotNull B buf)
+			{
+				int size = VarInt.read(buf);
+				I[] array = arrayCreator.apply(size);
+				for (int i = 0; i < size; i++)
+				{
+					array[i] = codec.decode(buf);
+				}
+				
+				return array;
+			}
+			@Override
+			public void encode(@NotNull B buf, I @NotNull [] array)
+			{
+				VarInt.write(buf, array.length);
+				for (I value : array)
+				{
+					codec.encode(buf, value);
+				}
+			}
+		};
 	}
 	public static class Codecs
 	{

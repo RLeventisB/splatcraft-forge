@@ -107,6 +107,7 @@ public class InkBlockUtils
 					else
 						ChunkInkHandler.addInkToRemove(world, pos);
 				}
+				
 				return true;
 			}
 		}
@@ -125,7 +126,9 @@ public class InkBlockUtils
 			if (worldInk.clearBlock(offset, removePermanent))
 			{
 				if (!world.isClientSide())
+				{
 					ChunkInkHandler.addInkToRemove(world, pos);
+				}
 				return true;
 			}
 		}
@@ -213,9 +216,11 @@ public class InkBlockUtils
 		chunk.setUnsaved(true);
 		
 		if (index == 1) // facing up
+		{
 			if (SplatcraftGameRules.getLocalizedRule(world, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
 				isBlockFoliage(world.getBlockState(pos.above())))
 				world.destroyBlock(pos.above(), true);
+		}
 		
 		if (!world.isClientSide())
 			ChunkInkHandler.addInkToUpdate(world, pos);
@@ -265,9 +270,16 @@ public class InkBlockUtils
 		
 		return ChunkInkCapability.getOrCreate(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
 	}
-	public static ChunkInk.InkEntry getInkInFace(Level world, BlockPos pos, Direction direction)
+	public static @Nullable ChunkInk.InkEntry getInkInFace(Level world, BlockPos pos, Direction direction)
 	{
-		return getInkBlock(world, pos).get(direction.get3DDataValue());
+		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
+			return null;
+		
+		ChunkInk.BlockEntry inkBlock = getInkBlock(world, pos);
+		if (inkBlock == null)
+			return null;
+		
+		return inkBlock.get(direction.get3DDataValue());
 	}
 	public static boolean isInked(Level world, BlockPos pos, Direction direction)
 	{
@@ -281,18 +293,11 @@ public class InkBlockUtils
 	{
 		return ChunkInkCapability.has(world, pos) && ChunkInkCapability.getOrCreate(world, pos).isInkedAny(RelativeBlockPos.fromAbsolute(pos));
 	}
-	public static boolean canInkFromFace(Level world, BlockPos pos, Direction face)
-	{
-		if (!(world.getBlockState(pos).getBlock() instanceof IColoredBlock) && isUninkable(world, pos, face))
-			return false;
-		
-		return canInkPassthrough(world, pos.relative(face)) || !world.getBlockState(pos.relative(face)).is(SplatcraftTags.Blocks.BLOCKS_INK);
-	}
 	public static boolean isUninkable(Level world, BlockPos pos, Direction direction)
 	{
-		return isUninkable(world, pos, direction, false);
+		return isUninkable(world, pos, direction, SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK));
 	}
-	public static boolean isUninkable(Level world, BlockPos pos, Direction direction, boolean checkGamemode)
+	public static boolean isUninkable(Level world, BlockPos pos, Direction direction, boolean checkObstruction)
 	{
 		if (InkedBlock.isTouchingLiquid(world, pos, direction))
 			return true;
@@ -300,16 +305,24 @@ public class InkBlockUtils
 		if (isBlockUninkable(world, pos))
 			return true;
 		
-		if (!checkGamemode)
+		return blockIsFullyObstructedOnFace(world, pos, direction, checkObstruction);
+	}
+	private static boolean blockIsFullyObstructedOnFace(Level world, BlockPos pos, Direction direction, boolean checkObstruction)
+	{
+		BlockPos occludingPos = pos.relative(direction);
+		if (canInkPassthrough(world, occludingPos))
 			return false;
 		
-		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.BLOCK_DESTROY_INK))
+		if (world.getBlockState(occludingPos).is(SplatcraftTags.Blocks.BLOCKS_INK))
+			return true;
+		
+		if (!checkObstruction)
 			return false;
 		
 		BlockState blockState = world.getBlockState(pos);
-		BlockState occludingBlockState = world.getBlockState(pos.relative(direction));
+		BlockState occludingBlockState = world.getBlockState(occludingPos);
 		VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFaceShape(direction);
-		VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, pos.relative(direction)).getFaceShape(direction.getOpposite());
+		VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, occludingPos).getFaceShape(direction.getOpposite());
 		
 		return Shapes.blockOccudes(blockCollision, occludingCollision, direction);
 	}
@@ -351,7 +364,7 @@ public class InkBlockUtils
 	{
 		boolean canSwim = false;
 		
-		Optional<BlockPos> down = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1);
+		Optional<BlockPos> down = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1, entity);
 		if (down.isEmpty())
 			return false;
 		Block standingBlock = entity.level().getBlockState(down.get()).getBlock();
@@ -397,7 +410,7 @@ public class InkBlockUtils
 		if (!entity.onGround())
 			return false;
 		
-		Optional<BlockPos> pos = getBlockStandingOnPos(entity);
+		Optional<BlockPos> pos = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1, entity);
 		if (pos.isEmpty())
 			return false;
 		

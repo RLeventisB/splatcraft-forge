@@ -176,7 +176,8 @@ public class ChunkInkHandler
 		{
 			for (var chunkPackets : levelPackets.getValue().entrySet())
 			{
-				LevelChunk chunk = levelPackets.getKey().getChunk(chunkPackets.getKey().x, chunkPackets.getKey().z);
+				ChunkPos pos = chunkPackets.getKey();
+				LevelChunk chunk = levelPackets.getKey().getChunk(pos.x, pos.z);
 				chunk.setUnsaved(true);
 				for (var packet : chunkPackets.getValue())
 				{

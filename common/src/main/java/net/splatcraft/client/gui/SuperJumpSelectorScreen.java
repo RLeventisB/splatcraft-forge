@@ -62,8 +62,8 @@ public class SuperJumpSelectorScreen
 		ArrayList<MenuItem> options = new ArrayList<>(playerUuids.stream().map(uuid -> new PlayerMenuItem(mc.getConnection().getPlayerInfo(uuid).getProfile())).toList());
 		
 		if (targets.canTargetSpawn())
-			options.add(0, new ItemStackMenuItem(new ItemStack(SplatcraftItems.spawnPad.get()), Component.literal("Go to Spawn")));
-		options.add(0, new ItemStackMenuItem(new ItemStack(Items.BARRIER), Component.literal("Cancel")));
+			options.addFirst(new ItemStackMenuItem(new ItemStack(SplatcraftItems.spawnPad.get()), Component.literal("Go to Spawn")));
+		options.addFirst(new ItemStackMenuItem(new ItemStack(Items.BARRIER), Component.literal("Cancel")));
 		
 		int screenWidth = mc.getWindow().getGuiScaledWidth();
 		int screenHeight = mc.getWindow().getGuiScaledHeight();

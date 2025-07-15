@@ -47,7 +47,6 @@ public class SplatcraftTileEntities
 	@OnlyIn(Dist.CLIENT)
 	public static void bindTESR()
 	{
-		//BlockEntityRenderers.register(inkedTileEntity.get(), InkedBlockTileEntityRenderer::new);
 		Services.PLATFORM.registerBlockEntityRenderer(stageBarrierTileEntity, StageBarrierTileEntityRenderer::new);
 		Services.PLATFORM.registerBlockEntityRenderer(colorBarrierTileEntity, context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
 		Services.PLATFORM.registerBlockEntityRenderer(remotePedestalTileEntity, context -> new RemotePedestalTileEntityRenderer());
