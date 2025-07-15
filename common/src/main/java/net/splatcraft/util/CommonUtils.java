@@ -13,7 +13,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
@@ -68,8 +67,10 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -78,9 +79,9 @@ public class CommonUtils
 {
 	public static final EntityDataSerializer<Vector2f> VEC2_DATA_HANDLER = EntityDataSerializer.forValueType(CodecUtils.Codecs.VECTOR2F_STREAM_CODEC);
 	public static final EntityDataSerializer<InkColor> INKCOLOR_DATA_HANDLER = EntityDataSerializer.forValueType(InkColor.STREAM_CODEC);
-	public static final EntityDataSerializer<UUID> UUID_DATA_HANDLER = EntityDataSerializer.forValueType(UUIDUtil.STREAM_CODEC);
 	public static final EntityDataSerializer<Vec3> VEC3_DATA_HANDLER = EntityDataSerializer.forValueType(CodecUtils.Codecs.VEC_3_STREAM_CODEC);
 	public static final EntityDataSerializer<Optional<Vec3>> OPTIONAL_VEC3_DATA_HANDLER = EntityDataSerializer.forValueType(ByteBufCodecs.optional(CodecUtils.Codecs.VEC_3_STREAM_CODEC));
+	public static final EntityDataSerializer<Optional<Direction>> OPTIONAL_DIRECTION_DATA_HANDLER = EntityDataSerializer.forValueType(ByteBufCodecs.optional(Direction.STREAM_CODEC));
 	public static CustomPacketPayload.Type<?> createIdFromClass(Class<?> clazz)
 	{
 		return new CustomPacketPayload.Type<>(Splatcraft.identifierOf(makeStringIdentifierValid(clazz.getSimpleName())));

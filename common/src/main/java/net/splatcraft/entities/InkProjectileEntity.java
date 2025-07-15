@@ -28,6 +28,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.tileentities.InkProjectileListener;
 import net.splatcraft.util.*;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.DamageCalculator;
@@ -473,11 +474,6 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	protected void onHitBlock(@NotNull BlockHitResult result)
 	{
-		if (level().isClientSide())
-		{
-			super.onHitBlock(result);
-			return;
-		}
 		
 		if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
 			return;
@@ -492,7 +488,14 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			coloredBlock.inkBlock(level(), result.getBlockPos(), getColor(), calculateDamage(result.getLocation()), inkType);
 			return;
 		}
+		if (level().getBlockEntity(result.getBlockPos()) instanceof InkProjectileListener listener)
+			listener.onCollide(this, result);
+		
 		super.onHitBlock(result);
+		if (level().isClientSide())
+		{
+			return;
+		}
 		
 		Vec3 nextPosition = position().add(getDeltaMovement());
 		double framesAdvanced = CommonUtils.getDeltaBetweenVectors(result.getLocation(), position(), nextPosition, 0);

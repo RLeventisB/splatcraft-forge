@@ -13,19 +13,21 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
+import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.ClientUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftForgeBlockEntityDummy
+public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftForgeBlockEntityDummy, InkProjectileListener
 {
 	public final int maxActiveTime = 20;
 	protected int activeTime = maxActiveTime;
@@ -43,12 +45,12 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		{
 			activeTime--;
 		}
-
+		
 		for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
 		{
 			onEntityCollide(entity);
 		}
-
+		
 		if (level.isClientSide)
 			tickClient();
 	}
@@ -69,7 +71,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			boolean canRender = true;
 			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
-
+			
 			if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
 			else if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
@@ -93,7 +95,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		super.loadAdditional(nbt, wrapperLookup);
-
+		
 		if (nbt.contains("ActiveTime"))
 		{
 			activeTime = nbt.getInt("ActiveTime");
@@ -136,5 +138,10 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	public float getActiveTime()
 	{
 		return activeTime;
+	}
+	@Override
+	public void onCollide(InkProjectileEntity projectile, @NotNull BlockHitResult result)
+	{
+		onEntityCollide(projectile);
 	}
 }

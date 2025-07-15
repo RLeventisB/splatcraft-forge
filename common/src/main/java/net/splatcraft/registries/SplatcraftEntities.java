@@ -115,8 +115,8 @@ public class SplatcraftEntities
 		registerDataTracker("vec2_handler", CommonUtils.VEC2_DATA_HANDLER);
 		registerDataTracker("vec3_handler", CommonUtils.VEC3_DATA_HANDLER);
 		registerDataTracker("optional_vec3", CommonUtils.OPTIONAL_VEC3_DATA_HANDLER);
+		registerDataTracker("optional_direction", CommonUtils.OPTIONAL_DIRECTION_DATA_HANDLER);
 		registerDataTracker("ink_color_handler", CommonUtils.INKCOLOR_DATA_HANDLER);
-		registerDataTracker("uuid", CommonUtils.UUID_DATA_HANDLER);
 		registerDataTracker("extra_data_handler", ExtraSaveData.SERIALIZER);
 	}
 	private static void registerDataTracker(String name, EntityDataSerializer<?> handler)
