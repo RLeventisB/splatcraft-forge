@@ -46,7 +46,7 @@ public class ClearInkCommand
 		if (stage == null)
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
 		
-		return execute(context.getSource(), stage.cornerA, stage.cornerB, removePermanent);
+		return execute(context.getSource(), stage.getMinCorner(), stage.getMaxCorner(), removePermanent);
 	}
 	private static int execute(CommandSourceStack source, BlockPos from, BlockPos to, boolean removePermanent)
 	{

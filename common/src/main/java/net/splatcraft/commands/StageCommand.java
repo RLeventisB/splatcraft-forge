@@ -341,26 +341,19 @@ public class StageCommand
 		Stage stage = stages.get(stageId);
 		Level stageLevel = stage.getStageWorld(source.getServer());
 		
-		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		
 		int affectedBlocks = 0;
 		
-		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
-			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
-				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
+		for (BlockPos pos : BlockPos.betweenClosed(stage.getMinCorner(), stage.getMaxCorner()))
+		{
+			if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
+			{
+				if (colorTile.getInkColor() == teamColor && !colorTile.getTeam().equals(teamId))
 				{
-					BlockPos pos = new BlockPos(x, y, z);
-					
-					if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
-					{
-						if (colorTile.getInkColor() == teamColor && !colorTile.getTeam().equals(teamId))
-						{
-							colorTile.setTeam(teamId);
-							affectedBlocks++;
-						}
-					}
+					colorTile.setTeam(teamId);
+					affectedBlocks++;
 				}
+			}
+		}
 		
 		stage.setTeamColor(teamId, teamColor);
 		int finalAffectedBlocks = affectedBlocks;
@@ -402,26 +395,20 @@ public class StageCommand
 		InkColor teamColor = stage.getTeamColor(teamId);
 		
 		Level stageLevel = stage.getStageWorld(source.getServer());
-		BlockPos blockpos2 = new BlockPos(Math.min(stage.cornerA.getX(), stage.cornerB.getX()), Math.min(stage.cornerB.getY(), stage.cornerA.getY()), Math.min(stage.cornerA.getZ(), stage.cornerB.getZ()));
-		BlockPos blockpos3 = new BlockPos(Math.max(stage.cornerA.getX(), stage.cornerB.getX()), Math.max(stage.cornerB.getY(), stage.cornerA.getY()), Math.max(stage.cornerA.getZ(), stage.cornerB.getZ()));
 		
 		int affectedBlocks = 0;
 		
-		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
-			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
-				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
+		for (BlockPos pos : BlockPos.betweenClosed(stage.getMinCorner(), stage.getMaxCorner()))
+		{
+			if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
+			{
+				if (colorTile.getInkColor() == teamColor && !colorTile.getTeam().equals(teamId))
 				{
-					BlockPos pos = new BlockPos(x, y, z);
-					
-					if (stageLevel.getBlockEntity(pos) instanceof InkColorTileEntity colorTile)
-					{
-						if (colorTile.getInkColor() == teamColor && !colorTile.getTeam().equals(teamId))
-						{
-							colorTile.setTeam("");
-							affectedBlocks++;
-						}
-					}
+					colorTile.setTeam("");
+					affectedBlocks++;
 				}
+			}
+		}
 		
 		stage.removeTeam(teamId);
 		
@@ -573,9 +560,9 @@ public class StageCommand
 		Stage stage = stages.get(stageId);
 		
 		if (isCornerA)
-			stage.updateBounds(source.getLevel(), pos, stage.cornerB);
+			stage.updateBounds(source.getLevel(), pos, stage.getMaxCorner());
 		else
-			stage.updateBounds(source.getLevel(), stage.cornerA, pos);
+			stage.updateBounds(source.getLevel(), stage.getMinCorner(), pos);
 		
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 		source.sendSuccess(() -> Component.translatable("commands.stage.setting.area.success", isCornerA ? "A" : "B", stageId, pos.getX(), pos.getY(), pos.getZ()), true);
@@ -590,7 +577,7 @@ public class StageCommand
 		
 		Stage stage = stages.get(stageId);
 		
-		BlockPos pos = isCornerA ? stage.cornerA : stage.cornerB;
+		BlockPos pos = isCornerA ? stage.getMinCorner() : stage.getMaxCorner();
 		
 		source.sendSuccess(() -> Component.translatable("commands.stage.setting.area.get", isCornerA ? "A" : "B", stageId, pos.getX(), pos.getY(), pos.getZ()), true);
 		

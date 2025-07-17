@@ -45,8 +45,8 @@ public class Stage implements Comparable<Stage>
 	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, InkColor>> TEAMS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, InkColor.STREAM_CODEC);
 	private static final StreamCodec<ByteBuf, ObjectArrayList<BlockPos>> SPAWN_PAD_POSITIONS_STREAM_CODEC = BlockPos.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectArrayList::new));
 	public static Codec<Stage> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		BlockPos.CODEC.fieldOf("corner_a").forGetter(v -> v.cornerA),
-		BlockPos.CODEC.fieldOf("corner_b").forGetter(v -> v.cornerB),
+		BlockPos.CODEC.fieldOf("min_corner").forGetter(v -> v.minCorner),
+		BlockPos.CODEC.fieldOf("max_corner").forGetter(v -> v.maxCorner),
 		ResourceKey.codec(Registries.DIMENSION).fieldOf("world_key").forGetter(v -> v.worldKey),
 		CodecUtils.hashMapCodec(Codec.STRING, Codec.BOOL).fieldOf("settings").forGetter(v -> v.settings),
 		CodecUtils.hashMapCodec(Codec.STRING, InkColor.HEX_CODEC).fieldOf("teams").forGetter(v -> v.teams),
@@ -72,8 +72,8 @@ public class Stage implements Comparable<Stage>
 		@Override
 		public void encode(@NotNull RegistryFriendlyByteBuf buf, Stage value)
 		{
-			BlockPos.STREAM_CODEC.encode(buf, value.cornerA);
-			BlockPos.STREAM_CODEC.encode(buf, value.cornerB);
+			BlockPos.STREAM_CODEC.encode(buf, value.minCorner);
+			BlockPos.STREAM_CODEC.encode(buf, value.maxCorner);
 			WORLD_KEY_STREAM_CODEC.encode(buf, value.worldKey);
 			SETTINGS_STREAM_CODEC.encode(buf, value.settings);
 			TEAMS_STREAM_CODEC.encode(buf, value.teams);
@@ -103,8 +103,8 @@ public class Stage implements Comparable<Stage>
 	private final Object2ObjectOpenHashMap<String, Boolean> settings;
 	private final Object2ObjectOpenHashMap<String, InkColor> teams;
 	private final ObjectArrayList<BlockPos> spawnPadPositions;
-	public BlockPos cornerA;
-	public BlockPos cornerB;
+	public BlockPos minCorner;
+	public BlockPos maxCorner;
 	public ResourceKey<Level> worldKey;
 	private Component name;
 	private boolean needsSpawnPadUpdate = false;
@@ -119,15 +119,15 @@ public class Stage implements Comparable<Stage>
 		
 		updateBounds(server.getLevel(worldKey), posA, posB);
 	}
-	public Stage(BlockPos cornerA, BlockPos cornerB, ResourceKey<Level> worldKey, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Component name, String id)
+	public Stage(BlockPos minCorner, BlockPos maxCorner, ResourceKey<Level> worldKey, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Component name, String id)
 	{
 		this.worldKey = worldKey;
 		this.settings = settings;
 		this.teams = teams;
 		spawnPadPositions = spawnPadPos;
 		this.name = name;
-		this.cornerA = cornerA;
-		this.cornerB = cornerB;
+		this.minCorner = minCorner;
+		this.maxCorner = maxCorner;
 		this.id = id;
 	}
 	public static void registerGameruleSetting(GameRules.Key<GameRules.BooleanValue> rule)
@@ -209,7 +209,7 @@ public class Stage implements Comparable<Stage>
 	}
 	public AABB getBounds()
 	{
-		return AABB.encapsulatingFullBlocks(cornerA, cornerB);
+		return AABB.encapsulatingFullBlocks(minCorner, maxCorner);
 	}
 	public Component getStageName()
 	{
@@ -219,18 +219,19 @@ public class Stage implements Comparable<Stage>
 	{
 		this.name = name;
 	}
-	public BlockPos getCornerA()
+	public BlockPos getMinCorner()
 	{
-		return cornerA;
+		return minCorner;
 	}
-	public BlockPos getCornerB()
+	public BlockPos getMaxCorner()
 	{
-		return cornerB;
+		return maxCorner;
 	}
 	public void updateBounds(@Nullable Level world, BlockPos cornerA, BlockPos cornerB)
 	{
-		this.cornerA = cornerA;
-		this.cornerB = cornerB;
+		minCorner = BlockPos.min(cornerA, cornerB);
+		maxCorner = BlockPos.max(cornerA, cornerB);
+		
 		if (world != null)
 			updateSpawnPads(world);
 	}
@@ -242,17 +243,11 @@ public class Stage implements Comparable<Stage>
 	{
 		spawnPadPositions.clear();
 		
-		BlockPos blockpos2 = new BlockPos(Math.min(cornerA.getX(), cornerB.getX()), Math.min(cornerB.getY(), cornerA.getY()), Math.min(cornerA.getZ(), cornerB.getZ()));
-		BlockPos blockpos3 = new BlockPos(Math.max(cornerA.getX(), cornerB.getX()), Math.max(cornerB.getY(), cornerA.getY()), Math.max(cornerA.getZ(), cornerB.getZ()));
-		
-		for (int x = blockpos2.getX(); x <= blockpos3.getX(); x++)
-			for (int y = blockpos2.getY(); y <= blockpos3.getY(); y++)
-				for (int z = blockpos2.getZ(); z <= blockpos3.getZ(); z++)
-				{
-					BlockPos pos = new BlockPos(x, y, z);
-					if (world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
-						addSpawnPad(spawnPad);
-				}
+		for (BlockPos pos : BlockPos.betweenClosed(minCorner, maxCorner))
+		{
+			if (world.getBlockEntity(pos) instanceof SpawnPadTileEntity spawnPad)
+				addSpawnPad(spawnPad);
+		}
 		
 		needsSpawnPadUpdate = false;
 	}

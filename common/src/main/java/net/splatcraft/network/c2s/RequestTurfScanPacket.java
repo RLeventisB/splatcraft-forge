@@ -44,11 +44,11 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 	{
 		Stage stage = Stage.getStage(stageId);
 		ServerPlayer serverPlayer = (ServerPlayer) player;
-
+		
 		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());
 		ArrayList<ServerPlayer> playerList = new ArrayList<>(stageworld.getEntitiesOfClass(ServerPlayer.class, stage.getBounds(), EntitySelector.NO_SPECTATORS));
 		if (!playerList.contains(serverPlayer))
 			playerList.addFirst(serverPlayer);
-		player.displayClientMessage(TurfScannerItem.scanTurf(stageworld, stageworld, stage.cornerA, stage.cornerB, isTopDown ? 0 : 1, playerList).getOutput(), true);
+		player.displayClientMessage(TurfScannerItem.scanTurf(stageworld, stageworld, stage.getMinCorner(), stage.getMaxCorner(), isTopDown ? 0 : 1, playerList).getOutput(), true);
 	}
 }

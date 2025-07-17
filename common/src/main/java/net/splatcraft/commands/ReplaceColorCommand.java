@@ -48,9 +48,9 @@ public class ReplaceColorCommand
 		
 		if (mode == 0)
 		{
-			return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, stageId, "");
+			return execute(context.getSource(), stage.getMinCorner(), stage.getMaxCorner(), InkColorArgument.getInkColor(context, "color"), InkColor.INVALID, mode, stageId, "");
 		}
-		return execute(context.getSource(), stage.cornerA, stage.cornerB, InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, stageId, "");
+		return execute(context.getSource(), stage.getMinCorner(), stage.getMaxCorner(), InkColorArgument.getInkColor(context, "color"), InkColorArgument.getInkColor(context, "affectedColor"), mode, stageId, "");
 	}
 	public static int executeStageForTeam(CommandContext<CommandSourceStack> context, int mode) throws CommandSyntaxException
 	{
@@ -64,7 +64,7 @@ public class ReplaceColorCommand
 		String team = StringArgumentType.getString(context, "affectedTeam");
 		
 		if (mode == 0)
-			return execute(context.getSource(), stage.cornerA, stage.cornerB, color, InkColor.INVALID, mode, stageId, team);
+			return execute(context.getSource(), stage.getMinCorner(), stage.getMaxCorner(), color, InkColor.INVALID, mode, stageId, team);
 		
 		if (!stage.hasTeam(team))
 			throw StageCommand.TEAM_NOT_FOUND.create(new Object[] {team, stageId});
@@ -72,7 +72,7 @@ public class ReplaceColorCommand
 		InkColor teamColor = stage.getTeamColor(team);
 		stage.setTeamColor(team, color);
 		
-		return execute(context.getSource(), stage.cornerA, stage.cornerB, color, teamColor, mode, stageId, team);
+		return execute(context.getSource(), stage.getMinCorner(), stage.getMaxCorner(), color, teamColor, mode, stageId, team);
 	}
 	public static int execute(CommandContext<CommandSourceStack> context, int mode) throws CommandSyntaxException
 	{

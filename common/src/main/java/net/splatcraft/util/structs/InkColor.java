@@ -14,6 +14,7 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.splatcraft.data.InkColorRegistry;
@@ -256,18 +257,18 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public float[] getRGB()
 	{
-		int currentColorR = (hexCode & 0xFF0000) >> 16;
-		int currentColorG = (hexCode & 0x00FF00) >> 8;
-		int currentColorB = (hexCode & 0x0000FF);
-		
-		return new float[] {currentColorR / 255f, currentColorG / 255f, currentColorB / 255f};
+		return new float[] {
+			FastColor.ARGB32.red(hexCode) / 255f,
+			FastColor.ARGB32.green(hexCode) / 255f,
+			FastColor.ARGB32.blue(hexCode) / 255f
+		};
 	}
-	public byte[] getRGBBytes()
+	public int[] getRGBInts()
 	{
-		byte currentColorR = (byte) ((hexCode & 0xFF0000) >> 16);
-		byte currentColorG = (byte) ((hexCode & 0x00FF00) >> 8);
-		byte currentColorB = (byte) ((hexCode & 0x0000FF));
-		
-		return new byte[] {currentColorR, currentColorG, currentColorB};
+		return new int[] {
+			FastColor.ARGB32.red(hexCode),
+			FastColor.ARGB32.green(hexCode),
+			FastColor.ARGB32.blue(hexCode)
+		};
 	}
 }

@@ -55,7 +55,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			boolean shinier = SplatcraftConfig.get("splatcraft.makeShinier");
 			if (shinier)
 			{
-				byte[] colorValues = color.getRGBBytes();
+				int[] colorValues = color.getRGBInts();
 				float[] hslValues = new float[3];
 				Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
 				hslValues[2] = Mth.lerp(0.9f, hslValues[2], 1);

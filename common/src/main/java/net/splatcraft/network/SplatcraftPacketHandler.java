@@ -97,9 +97,13 @@ public class SplatcraftPacketHandler
 	}
 	public static <MSG extends PlayS2CPacket> void sendToTrackers(MSG message, LevelChunk trackedChunk)
 	{
-		if (trackedChunk.getLevel().getChunkSource() instanceof ServerChunkCache serverChunkManager)
+		sendToTrackers(message, trackedChunk.getLevel(), trackedChunk.getPos());
+	}
+	public static <MSG extends PlayS2CPacket> void sendToTrackers(MSG message, Level level, ChunkPos trackedChunkPos)
+	{
+		if (level.getChunkSource() instanceof ServerChunkCache serverChunkManager)
 		{
-			sendToPlayers(message, serverChunkManager.chunkMap.getPlayersCloseForSpawning(trackedChunk.getPos()));
+			sendToPlayers(message, serverChunkManager.chunkMap.getPlayersCloseForSpawning(trackedChunkPos));
 		}
 	}
 	public static <MSG extends PlayS2CPacket> void sendToTrackers(MSG message, Entity trackedEntity)

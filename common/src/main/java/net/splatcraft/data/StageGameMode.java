@@ -81,12 +81,12 @@ public enum StageGameMode implements StringRepresentable
 		private static void onEnd(PlaySession session, ServerLevel world)
 		{
 			Stage stage = SaveInfoCapability.get().stages().get(session.stageId);
-			TurfScannerItem.scanTurf(world, world, stage.cornerA, stage.cornerB, 0, session.playerUuids.stream().map(uuid -> (ServerPlayer) world.getPlayerByUUID(uuid)).filter(Objects::nonNull).toList());
+			TurfScannerItem.scanTurf(world, world, stage.getMinCorner(), stage.getMaxCorner(), 0, session.playerUuids.stream().map(uuid -> (ServerPlayer) world.getPlayerByUUID(uuid)).filter(Objects::nonNull).toList());
 		}
 		public static boolean canStart(Stage stage, ServerLevel world)
 		{
-			InkDisruptorItem.clearInk(world, stage.cornerA, stage.cornerB, false);
-
+			InkDisruptorItem.clearInk(world, stage.getMinCorner(), stage.getMaxCorner(), false);
+			
 			return true;
 		}
 	}

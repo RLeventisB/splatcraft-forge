@@ -333,7 +333,7 @@ public class MatchMixins
 								Vector2f killCamRotData = killCamData.getSecond();
 								
 								ClientUtils.CameraPosition killCam = new ClientUtils.CameraPosition(
-									killerPlayer.getEyePosition(),
+									killerPlayer.getEyePosition(tickDelta),
 									killCamRotData.x,
 									killCamRotData.y);
 								

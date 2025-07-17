@@ -100,7 +100,7 @@ public abstract class RemoteItem extends Item implements CommandSource
 			if (stage == null)
 				return null;
 			
-			return Pair.of(stage.cornerA, stage.cornerB);
+			return Pair.of(stage.getMinCorner(), stage.getMaxCorner());
 		}
 		
 		return Pair.of(info.pointA().get(), info.pointB().get());

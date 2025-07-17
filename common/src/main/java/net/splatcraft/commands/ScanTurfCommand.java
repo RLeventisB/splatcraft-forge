@@ -62,7 +62,7 @@ public class ScanTurfCommand
 		if (stage == null)
 			throw StageCommand.STAGE_NOT_FOUND.create(stageId);
 		
-		int result = execute(source, stage.cornerA, stage.cornerB, mode, targets);
+		int result = execute(source, stage.getMinCorner(), stage.getMaxCorner(), mode, targets);
 		
 		for (String team : stage.getTeamIds())
 		{

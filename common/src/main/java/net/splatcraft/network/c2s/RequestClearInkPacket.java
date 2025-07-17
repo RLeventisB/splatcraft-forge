@@ -37,6 +37,6 @@ public class RequestClearInkPacket extends PlayC2SPacket
 	{
 		Stage stage = Stage.getStage(stageId);
 		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());
-		player.displayClientMessage(InkDisruptorItem.clearInk(stageworld, stage.getCornerA(), stage.getCornerB(), true).getOutput(), true);
+		player.displayClientMessage(InkDisruptorItem.clearInk(stageworld, stage.getMinCorner(), stage.getMaxCorner(), true).getOutput(), true);
 	}
 }
