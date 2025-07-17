@@ -28,18 +28,19 @@ import net.splatcraft.util.structs.AttackId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord> implements ObjectCollideListenerEntity
 {
 	public static final int FLASH_DURATION = 20;
 	private static final EntityDataAccessor<Boolean> ACTIVATED = SynchedEntityData.defineId(SuctionBombEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Optional<Direction>> STICK_DIRECTION = SynchedEntityData.defineId(SuctionBombEntity.class, CommonUtils.OPTIONAL_DIRECTION_DATA_HANDLER);
 	public int shakeTime;
 	protected int fuseTime = 0;
 	protected int prevFuseTime = 0;
 	protected boolean playedActivationSound = false;
 	@Nullable
 	private BlockState inBlockState;
-	@Nullable
-	private Direction stickFacing;
 	public SuctionBombEntity(EntityType<? extends AbstractSubWeaponEntity<ThrowableExplodingSubDataRecord>> type, Level world)
 	{
 		super(type, world);
@@ -49,6 +50,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 	{
 		super.defineSynchedData(builder);
 		builder.define(ACTIVATED, false);
+		builder.define(STICK_DIRECTION, Optional.empty());
 	}
 	@Override
 	protected Item getDefaultItem()
@@ -68,7 +70,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		if (isActivated())
 		{
 			fuseTime++;
-			if (fuseTime >= settings.subDataRecord.fuseTime() && stickFacing != null)
+			if (fuseTime >= settings.subDataRecord.fuseTime() && getStickFacing().isPresent())
 			{
 				explode(settings);
 				
@@ -83,9 +85,9 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		
 		if (isSticked())
 		{
-			if (level().noCollision(getBoundingBox().expandTowards(Vec3.ZERO.relative(stickFacing, -0.05f))))
+			if (level().noCollision(getBoundingBox().expandTowards(Vec3.ZERO.relative(getStickFacing().get(), -0.05f))))
 			{
-				stickFacing = null;
+				setStickFacing(null);
 				setActivated(false);
 				Vec3 vector3d = getDeltaMovement();
 				setDeltaMovement(vector3d.multiply(random.nextFloat() * 0.2F, random.nextFloat() * 0.2F, random.nextFloat() * 0.2F));
@@ -93,24 +95,30 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			else
 			{
 				setDeltaMovement(0, 0, 0);
-				setStickFacing();
+				updateStickRotation();
 			}
 		}
 		
 		checkInsideBlocks();
 	}
 	@Override
+	public void updateRotation()
+	{
+		if (!isSticked())
+			super.updateRotation();
+	}
+	@Override
 	public @NotNull Vec3 getLightProbePosition(float tickDelta)
 	{
-		if (stickFacing != null)
+		if (getStickFacing().isPresent())
 		{
-			return getBoundingBox().getCenter().relative(stickFacing, 0.3f);
+			return getBoundingBox().getCenter().relative(getStickFacing().get(), 0.3f);
 		}
 		return super.getLightProbePosition(tickDelta);
 	}
 	private void explode(SubWeaponSettings<ThrowableExplodingSubDataRecord> settings)
 	{
-		Vec3 impactPos = stickFacing != null ? getBoundingBox().getCenter().relative(stickFacing, 0.3f) : getPosition(0);
+		Vec3 impactPos = isSticked() ? getBoundingBox().getCenter().relative(getStickFacing().get(), 0.3f) : getPosition(0);
 		InkExplosion.createInkExplosion(getOwner(), impactPos, settings.subDataRecord.inkSplashRadius(), settings.subDataRecord.damageRanges(), inkType, sourceWeapon, AttackId.NONE);
 		level().broadcastEntityEvent(this, (byte) 1);
 		level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonate, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
@@ -124,11 +132,13 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		if (id == 1)
 			level().addAlwaysVisibleParticle(new InkExplosionParticleData(getColor(), getSettings().subDataRecord.damageRanges().getMaxKey() * 2), getX(), getY(), getZ(), 0, 0, 0);
 	}
-	public void setStickFacing()
+	public void updateStickRotation()
 	{
+		Direction stickFacing = getStickFacing().get();
 		if (stickFacing.get2DDataValue() >= 0)
 		{
 			setYRot(180 - stickFacing.toYRot());
+			setXRot(0f);
 			yRotO = getYRot();
 		}
 		else
@@ -158,8 +168,8 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			setPos(result.getLocation());
 			setDeltaMovement(Vec3.ZERO);
 			
-			stickFacing = result.getDirection();
-			if (stickFacing.getAxis() == Direction.Axis.Y)
+			setStickFacing(result.getDirection());
+			if (result.getDirection().getAxis() == Direction.Axis.Y)
 			{
 				setPos(result.getLocation().add(0, -getBbHeight() / 2, 0));
 			}
@@ -167,7 +177,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 			{
 				setPos(result.getLocation());
 			}
-			setStickFacing();
+			updateStickRotation();
 		}
 	}
 	public boolean isActivated()
@@ -180,7 +190,15 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 	}
 	public boolean isSticked()
 	{
-		return stickFacing != null;
+		return getStickFacing().isPresent();
+	}
+	public Optional<Direction> getStickFacing()
+	{
+		return entityData.get(STICK_DIRECTION);
+	}
+	public void setStickFacing(@Nullable Direction direction)
+	{
+		entityData.set(STICK_DIRECTION, Optional.ofNullable(direction));
 	}
 	@Override
 	public void readAdditionalSaveData(CompoundTag nbt)
@@ -188,7 +206,7 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 		super.readAdditionalSaveData(nbt);
 		setActivated(nbt.getBoolean("Activated"));
 		if (nbt.contains("StickFacing"))
-			stickFacing = Direction.byName(nbt.getString("StickFacing"));
+			setStickFacing(Direction.CODEC.parse(NbtOps.INSTANCE, nbt.get("StickFacing")).getOrThrow());
 		shakeTime = nbt.getInt("ShakeTime");
 		if (nbt.contains("InBlockState", Tag.TAG_COMPOUND))
 		{
@@ -203,8 +221,8 @@ public class SuctionBombEntity extends AbstractSubWeaponEntity<ThrowableExplodin
 	{
 		super.addAdditionalSaveData(nbt);
 		nbt.putBoolean("Activated", isActivated());
-		if (stickFacing != null)
-			nbt.putString("StickFacing", stickFacing.name());
+		if (isSticked())
+			nbt.put("StickFacing", Direction.CODEC.encodeStart(NbtOps.INSTANCE, getStickFacing().get()).getOrThrow());
 		nbt.putInt("ShakeTime", shakeTime);
 		if (inBlockState != null)
 			nbt.put("InBlockState", BlockState.CODEC.encode(inBlockState, NbtOps.INSTANCE, nbt).getOrThrow());

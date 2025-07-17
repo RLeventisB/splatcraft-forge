@@ -133,7 +133,10 @@ public class InkDamageUtils
 		}
 		
 		if (isLiving && !applyHurtCooldown && !SplatcraftGameRules.getBooleanRuleValue(target.level(), SplatcraftGameRules.INK_DAMAGE_COOLDOWN))
+		{
 			livingTarget.hurtTime = 0;
+			livingTarget.invulnerableTime = 0;
+		}
 		
 		return doDamage;
 	}

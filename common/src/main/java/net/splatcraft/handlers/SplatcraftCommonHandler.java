@@ -161,6 +161,11 @@ public class SplatcraftCommonHandler
 					info.setMatchRespawnTimeLeft(100);
 					info.setIsMatchRespawning(true);
 					
+					if (!entity.level().isClientSide())
+					{
+						Services.PLATFORM.getServerInstance().getPlayerList().broadcastSystemMessage(source.getLocalizedDeathMessage(entity), false);
+					}
+					
 					if (entity instanceof ServerPlayer player)
 					{
 						Entity attacker = source.getEntity();

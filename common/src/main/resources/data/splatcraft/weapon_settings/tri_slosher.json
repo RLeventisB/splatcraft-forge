@@ -13,6 +13,7 @@
     "shot": {
         "pitch_compensation": -15,
         "endlag_ticks": 23,
+        "other_actions_endlag_ticks": 20,
         "ink_consumption": 6,
         "ink_recovery_cooldown": 35,
         "base_speed": 9,
