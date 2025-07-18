@@ -142,17 +142,18 @@ public class RendererHandler
 					switch (weaponBaseItem.getPose(player, player.getItemInHand(hand)))
 					{
 						case ROLLER_SWING:
+							time = action.getTime() + tickDelta;
 							if (action instanceof RollerItem.InitialSwingAction swingAction)
 							{
-								float distFromSwingFrame = time - (swingAction.attackFrame + 0.4f);
-								float startupTime = maxTime - swingAction.attackFrame;
-								if (distFromSwingFrame >= 0)
+								float timeUntilSwingFrame = (swingAction.attackFrame + 0.4f) - time;
+								float startupTime = swingAction.attackFrame;
+								if (timeUntilSwingFrame >= 0)
 								{
-									yOff = Math.min(1.5f, (1f - Mth.square(distFromSwingFrame / startupTime)) * 3f);
+									yOff = Math.min(1.5f, (1f - Mth.square(timeUntilSwingFrame / startupTime)) * 3f);
 								}
 								else
 								{
-									yOff = Math.max(0f, 1.5f + distFromSwingFrame * 0.7f);
+									yOff = Math.max(0f, 1.5f + timeUntilSwingFrame * 0.7f);
 								}
 								
 								if (!swingAction.isGrounded())
