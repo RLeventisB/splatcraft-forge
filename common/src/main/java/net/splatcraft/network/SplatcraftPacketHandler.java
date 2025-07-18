@@ -38,6 +38,7 @@ public class SplatcraftPacketHandler
 		registerMessage(UpdateColorScoresPacket.ID, UpdateColorScoresPacket.class, UpdateColorScoresPacket::decode);
 		registerMessage(UpdateBlockColorPacket.ID, UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);
 		registerMessage(DodgeRollPacket.ID, DodgeRollPacket.class, DodgeRollPacket::decode);
+		registerMessage(OverwriteJumpingStatePacket.ID, OverwriteJumpingStatePacket.class, OverwriteJumpingStatePacket::decode);
 		
 		registerMessage(SendSquidSurgePacket.ID, SendSquidSurgePacket.class, SendSquidSurgePacket::decode);
 		registerMessage(UpdateSquidSurgePacket.ID, UpdateSquidSurgePacket.class, UpdateSquidSurgePacket::decode);

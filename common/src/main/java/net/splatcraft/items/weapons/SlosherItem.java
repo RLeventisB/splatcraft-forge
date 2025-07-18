@@ -74,7 +74,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		{
 			if (action.get().didSound)
 			{
-				action.get().doAction = true;
+				action.get().queuedReSlosh = true;
 				action.get().loadSetting(settings);
 			}
 			return;
@@ -116,9 +116,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			EntitySlot.SERIALIZER_CODEC.fieldOf("item_slot").forGetter(SloshAction::getItemSlot),
 			ResourceLocation.CODEC.fieldOf("slosh_setting_id").forGetter(v -> DataHandler.WeaponStatsListener.SETTINGS.inverse().get(v.sloshData)),
 			Codec.BOOL.fieldOf("did_sound").forGetter(v -> v.didSound),
-			Codec.BOOL.fieldOf("do_action").forGetter(v -> v.doAction),
+			Codec.BOOL.fieldOf("queued_re_slosh").forGetter(v -> v.queuedReSlosh),
+			Codec.BOOL.fieldOf("ink_check").forGetter(v -> v.inkCheck),
 			Codec.INT.fieldOf("endlag").forGetter(v -> v.endlag),
-			Codec.FLOAT.fieldOf("pitch").forGetter(v -> v.pitch), // i am in the middle of codec-fying player cooldowns i WILL NOT make a codec for AttackId idc its such a niche bug too if it isn't serialized
+			Codec.FLOAT.fieldOf("pitch").forGetter(v -> v.pitch),
 			Codec.FLOAT.fieldOf("x_delta").forGetter(v -> v.xDelta),
 			Codec.FLOAT.fieldOf("yaw").forGetter(v -> v.yaw),
 			Codec.FLOAT.fieldOf("y_delta").forGetter(v -> v.yDelta),
@@ -130,7 +131,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		private int endlag;
 		public SlosherWeaponSettings sloshData;
 		public List<CalculatedSloshData> sloshes = new ArrayList<>();
-		public boolean didSound, doAction = false;
+		public boolean didSound, queuedReSlosh, inkCheck;
 		public AttackId attackId;
 		public float pitch, xDelta, yaw, yDelta, xRotOld, yRotOld;
 		public SloshAction(LivingEntity entity, ItemStack stack, EntitySlot itemSlot, SlosherWeaponSettings settings)
@@ -145,7 +146,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			
 			calculateSloshes();
 		}
-		public SloshAction(ItemStack storedStack, float time, float maxTime, EntitySlot itemSlot, ResourceLocation sloshDataId, boolean didSound, boolean doAction, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
+		public SloshAction(ItemStack storedStack, float time, float maxTime, EntitySlot itemSlot, ResourceLocation sloshDataId, boolean didSound, boolean queuedReSlosh, boolean inkCheck, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
 		{
 			super(time, maxTime);
 			sloshData = (SlosherWeaponSettings) DataHandler.WeaponStatsListener.SETTINGS.get(sloshDataId);
@@ -154,7 +155,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			this.storedStack = storedStack;
 			this.itemSlot = itemSlot;
 			this.didSound = didSound;
-			this.doAction = doAction;
+			this.queuedReSlosh = queuedReSlosh;
+			this.inkCheck = inkCheck;
 			this.endlag = endlag;
 			this.pitch = pitch;
 			this.xDelta = xDelta;
@@ -215,27 +217,27 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				{
 					float extraTime = frame - calculatedSloshData.time;
 					float partialTick = 1 - extraTime;
+					if (!didSound)
+					{
+						inkCheck = reduceInk(entity, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true);
+					}
 					
-					if ((didSound || reduceInk(entity, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true)))
+					if (inkCheck)
 					{
 						SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(calculatedSloshData.sloshDataIndex);
 						if (!world.isClientSide)
 						{
 							shootSlosh(entity, calculatedSloshData, world, partialTick, projectileSetting, shotSetting, slosherItem, extraTime);
 						}
-						
-						if (!didSound)
-						{
-							CommonUtils.setSquidDelay(entity, endlag);
-							
-							world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
-							didSound = true;
-						}
 					}
-					else
+					
+					if (!didSound)
 					{
-						setTime(0);
-						break;
+						CommonUtils.setSquidDelay(entity, endlag);
+						
+						if (inkCheck)
+							world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+						didSound = true;
 					}
 					
 					sloshes.remove(i);
@@ -283,7 +285,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		@Override
 		public boolean canEnd(LivingEntity entity)
 		{
-			if (doAction)
+			if (queuedReSlosh)
 			{
 				setTime(getTime() + getMaxTime());
 				calculateSloshes();
@@ -293,7 +295,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				pitch = entity.getXRot();
 				yaw = entity.getYRot();
 				
-				doAction = false;
+				queuedReSlosh = false;
 				didSound = false;
 				return false;
 			}

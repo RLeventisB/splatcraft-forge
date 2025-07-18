@@ -24,7 +24,7 @@ public class SaveInfoCapability
 		if (Services.PLATFORM.isClientSide() && !Minecraft.getInstance().isLocalServer())
 			return clientSaveInfo;
 		
-		return Components.SAVE_INFO.get(Services.PLATFORM.getServerInstance());
+		return Components.SAVE_INFO.getOrCreate(Services.PLATFORM.getServerInstance());
 	}
 	public static void set(SaveInfo newData)
 	{

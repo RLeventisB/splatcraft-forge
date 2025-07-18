@@ -200,6 +200,10 @@ public interface EntityAction
 	default void onStart(LivingEntity entity)
 	{
 	}
+	default boolean reversedTime()
+	{
+		return false;
+	}
 	default boolean canEnd(LivingEntity entity)
 	{
 		return true;

@@ -9,7 +9,8 @@ public abstract class EntityActionWithTime implements EntityAction
 	protected float time, maxTime;
 	public EntityActionWithTime(float time)
 	{
-		this(time, time);
+		this.time = reversedTime() ? 0 : time;
+		maxTime = time;
 	}
 	public EntityActionWithTime(float time, float maxTime)
 	{

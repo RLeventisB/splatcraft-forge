@@ -297,6 +297,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		float inkRecoveryCooldown,
 		float startupTicks,
 		float endlagTicks,
+		float rollDelayTicks,
+		float miscEndlagTicks,
 		FloatRange speedRange
 	)
 	{
@@ -306,13 +308,19 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(RollerAttackDataRecord::inkRecoveryCooldown),
 				Codec.FLOAT.fieldOf("startup_ticks").forGetter(RollerAttackDataRecord::startupTicks),
 				Codec.FLOAT.optionalFieldOf("endlag_ticks", 10f).forGetter(RollerAttackDataRecord::endlagTicks),
+				Codec.FLOAT.optionalFieldOf("attack_to_roll_ticks", 5f).forGetter(RollerAttackDataRecord::rollDelayTicks),
+				Codec.FLOAT.optionalFieldOf("other_actions_endlag_ticks", 10f).forGetter(RollerAttackDataRecord::miscEndlagTicks),
 				FloatRange.CODEC.fieldOf("speed_range").forGetter(RollerAttackDataRecord::speedRange)
 			).apply(instance, RollerAttackDataRecord::new)
 		);
-		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10, FloatRange.ZERO);
-		public float attackTime()
+		public static final RollerAttackDataRecord DEFAULT = new RollerAttackDataRecord(10f, 20, 10, 10f, 10, 10, FloatRange.ZERO);
+		public float getTotalAttackTime()
 		{
 			return startupTicks + endlagTicks;
+		}
+		public float getRollDelay()
+		{
+			return startupTicks + rollDelayTicks;
 		}
 	}
 }

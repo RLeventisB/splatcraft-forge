@@ -84,7 +84,8 @@
             "ink_consumption": 3.96,
             "ink_recovery_cooldown": 45,
             "startup_ticks": 12,
-            "endlag_ticks": 28,
+            "endlag_ticks": 18,
+            "other_actions_endlag_ticks": 10,
             "speed_range": [8, 12.3]
         }
     }

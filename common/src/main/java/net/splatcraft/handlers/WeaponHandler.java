@@ -139,13 +139,24 @@ public class WeaponHandler
 			player.setSprinting(false);
 		}
 		preventedByCooldown = action.preventWeaponUse();
-		
-		if (action.getTime() <= 1)
+		if (action.reversedTime())
 		{
-			if (doEndActions(player, action))
-				return false;
+			if (action.getTime() >= action.getMaxTime())
+			{
+				if (doEndActions(player, action))
+					return false;
+			}
+			action.setTime(action.getTime() + 1);
 		}
-		action.setTime(action.getTime() - 1);
+		else
+		{
+			if (action.getTime() <= 1)
+			{
+				if (doEndActions(player, action))
+					return false;
+			}
+			action.setTime(action.getTime() - 1);
+		}
 		
 		return preventedByCooldown;
 	}

@@ -35,6 +35,7 @@ import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.OverwriteJumpingStatePacket;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
@@ -101,7 +102,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					Optional<ItemStack> weaponStackOptional = action.getItemSlot().tryGetItemFrom(entity);
 					if (weaponStackOptional.isPresent())
 					{
-						return stack.equals(weaponStackOptional.get()) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() < action.attackFrame - 2) ? 1 : 0;
+						return stack.equals(weaponStackOptional.get()) && (getSettings(stack).isBrush || action.isGrounded() || action.getTime() >= action.attackFrame + 1) ? 1 : 0;
 					}
 				}
 			}
@@ -129,12 +130,9 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				{
 					RollerWeaponSettings settings = getSettings(stack);
 					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(usedOnGround).attackData();
-					if (!world.isClientSide && enoughInk(user, stack.getItem(), attackData.inkConsumption(), attackData.inkRecoveryCooldown(), false))
-					{
-						EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTicks(), attackData.endlagTicks(), user));
-						SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(user), user);
-					}
-					
+					EntityAction.setEntityAction(user, new InitialSwingAction(stack, attackData.startupTicks(), attackData.endlagTicks(), user));
+					if (world.isClientSide() && user instanceof Player player)
+						sendGroundedSynchronizationPacket(player);
 					user.setSprinting(false);
 				}
 			});
@@ -142,12 +140,18 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		
 		super.onUseTick(world, user, stack, remainingUseTicks);
 	}
+	@OnlyIn(Dist.CLIENT)
+	private static void sendGroundedSynchronizationPacket(Player player)
+	{
+		if (player == ClientUtils.getClientPlayer())
+			SplatcraftPacketHandler.sendToServer(new OverwriteJumpingStatePacket(player.onGround()));
+	}
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
 		
-		int rollTime = entity.getTicksUsingItem() - Math.round(settings.getAttackData(usedOnGround).attackData().attackTime());
+		int rollTime = entity.getTicksUsingItem() - Math.round(settings.getAttackData(usedOnGround).attackData().getRollDelay());
 		if (rollTime <= 0)
 			return;
 		
@@ -190,7 +194,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		for (float i = 0; i < settings.rollData.inkSize(); i += step)
 		{
 			float off = i - settings.rollData.inkSize() / 2f;
-			boolean insideDamage = Math.abs(off) < settings.rollData.hitboxSize() / 2f;
+			boolean insideDamage = i == 0 || Math.abs(off) < settings.rollData.hitboxSize() / 2f;
 			double xOff = Math.cos(Math.toRadians(entity.getYRot())) * off;
 			double zOff = Math.sin(Math.toRadians(entity.getYRot())) * off;
 			
@@ -277,7 +281,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	@Override
 	public boolean hasSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
-		if (EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || !entity.getUseItem().equals(stack))
+		RollerWeaponSettings settings = getSettings(stack);
+		
+		float rollTime = settings.getAttackData(usedOnGround).attackData().getRollDelay();
+		
+		if (EntityAction.hasSpecificEntityActionAnd(entity, v -> v.getTime() < rollTime, RollerItem.InitialSwingAction.class) || !entity.getUseItem().equals(stack))
 			return false;
 		return super.hasSpeedModifier(entity, stack);
 	}
@@ -285,17 +293,19 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	public AttributeModifier getSpeedModifier(LivingEntity entity, ItemStack stack)
 	{
 		RollerWeaponSettings settings = getSettings(stack);
+		RollerWeaponSettings.RollerAttackDataRecord data = settings.getAttackData(usedOnGround).attackData();
 		double appliedMobility;
-		float useTime = entity.getTicksUsingItem() - settings.getAttackData(usedOnGround).attackData().attackTime();
+		float rollTime = data.getRollDelay();
+		float useTime = entity.getTicksUsingItem() - data.getTotalAttackTime();
 		float dashProgress = Math.min(1, useTime / settings.rollData.dashTime());
 		
 		if (enoughInk(entity, this, Math.min(settings.rollData.dashConsumption(), settings.rollData.inkConsumption()), 0, false))
 		{
-			if (entity instanceof Player && EntityAction.hasEntityAction(entity))
+			if (EntityAction.hasSpecificEntityActionAnd(entity, v -> v.getTime() < rollTime, RollerItem.InitialSwingAction.class))
 				appliedMobility = settings.swingData.mobility();
 			else
 			{
-				appliedMobility = dashProgress * (settings.rollData.dashMobility() - settings.rollData.mobility()) + settings.rollData.mobility();
+				appliedMobility = Mth.lerp(dashProgress, settings.rollData.mobility(), settings.rollData.dashMobility());
 			}
 		}
 		else
@@ -336,16 +346,18 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			Codec.BOOL.fieldOf("has_attacked").forGetter(v -> v.hasAttacked),
 			Codec.FLOAT.fieldOf("time").forGetter(InitialSwingAction::getTime)
 		).apply(inst, InitialSwingAction::new));
-		public final float attackFrame;
+		public float attackFrame;
 		final ItemStack storedStack;
 		final EntitySlot itemSlot;
-		protected boolean isGrounded, isAttackQueued, hasAttacked;
+		protected boolean isGrounded;
+		protected boolean isAttackQueued;
+		protected boolean hasAttacked;
 		public InitialSwingAction(ItemStack stack, float windupTime, float endlagTime, LivingEntity entity)
 		{
 			super(windupTime + endlagTime);
 			isGrounded = entity.onGround();
 			storedStack = stack;
-			attackFrame = endlagTime;
+			attackFrame = windupTime;
 			itemSlot = EntitySlot.searchAndCreateWithStack(entity, stack);
 		}
 		public InitialSwingAction(ItemStack stack, float totalTime, float attackFrame, EntitySlot itemSlot, boolean isGrounded, boolean isAttackQueued, boolean hasAttacked, float time)
@@ -389,126 +401,147 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		@Override
 		public void tick(LivingEntity entity)
 		{
-			if (!hasAttacked)
+			if (hasAttacked)
+				return;
+			
+			if (getTime() < attackFrame)
 			{
-				if (getTime() <= attackFrame)
+				if (!entity.level().isClientSide() && entity instanceof Player player)
 				{
-					hasAttacked = true;
-					float extraTime = attackFrame - getTime();
-					if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
-					{
-						return;
-					}
-					RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
-					Level world = entity.level();
-					
-					if (world.isClientSide())
-						playRollSound(settings.isBrush);
-					
-					RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
-					RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(isGrounded()).attackData();
-					if (world.isClientSide() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getUseItemRemainingTicks() % 4 == 0))
-						return;
-					
-					if (settings.isBrush)
-					{
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
-						int total = swingData.blobCount().getRandom(entity.getRandom());
-						int countSmall = Math.round(total * 0.4f);
-						int countNormal = total - countSmall;
-						AttackId attackId = AttackId.registerSelectiveAttack(total);
-						attackId.countProjectile(total);
-						
-						RandomSource random = entity.getRandom();
-						
-						List<Float> blobAngles = new ObjectArrayList<>(countNormal);
-						List<Float> weakBlobAngles = new ObjectArrayList<>(countSmall);
-						
-						// how to cope with randomness 101: make a complicated method that is less random
-						// yes this is to populate sectors that are divided into equal parts and then select a random part in that sector
-						if (total == 1)
+					OverwriteJumpingStatePacket.popForcedGroundedState(player).ifPresent(grounded ->
 						{
-							blobAngles.add(0f);
-						}
-						else
-						{
-							for (int i = 0; i < countNormal; i++)
+							isGrounded = grounded;
+							if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
 							{
-								blobAngles.add(((i + random.nextFloat()) / countNormal - 0.5f) * swingData.attackAngle());
+								setTime(getMaxTime());
+								return;
 							}
-							for (int i = 0; i < countSmall; i++)
-							{
-								weakBlobAngles.add(((i + random.nextFloat()) / countNormal - 0.5f) * swingData.attackAngle());
-							}
-						}
-						createBrushBlobs(entity, blobAngles, countNormal, world, settings, attackId, extraTime, false);
-						createBrushBlobs(entity, weakBlobAngles, countSmall, world, settings, attackId, extraTime, true);
-					}
-					else
-					{
-						RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
-						world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
-						if (isGrounded())
-						{
-							List<Vector3f> anglesAndVelocities = calculateAngleAndSpeeds(
-								entity.getRandom(),
-								swingData.attackData().speedRange(),
-								swingData.attackAngle(),
-								swingData.projectileData().size(),
-								swingData.projectileData().straightShotTicks(),
-								entity.getViewYRot(extraTime)
-							);
+							RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
+							RollerWeaponSettings.RollerAttackDataRecord data = settings.getAttackData(isGrounded).attackData();
+							attackFrame = data.startupTicks();
+							setMaxTime(data.getTotalAttackTime());
 							
-							AttackId attackId = AttackId.registerSelectiveAttack(anglesAndVelocities.size());
-							attackId.countProjectile(anglesAndVelocities);
-							for (Vector3f data : anglesAndVelocities)
-							{
-								// x is the projectile's yaw
-								// y is the distance between the player's yaw and the projectile's yaw
-								// z is the magnitude of the projectile's speed
-								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), DamageCalculator.empty());
-								
-								proj.shootFromRotation(entity, entity.getViewXRot(extraTime), data.x, 0, data.z, 0f);
+							SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
+						}
+					);
+				}
+				return;
+			}
+			
+			hasAttacked = true;
+			float extraTime = getTime() - attackFrame;
+			if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
+				return;
+			
+			RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
+			Level world = entity.level();
+			
+			if (world.isClientSide())
+				playRollSound(settings.isBrush);
+			
+			RollerWeaponSettings.SwingDataRecord swingData = settings.swingData;
+			RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(isGrounded()).attackData();
+			CommonUtils.setSquidDelay(entity, attackData.miscEndlagTicks());
+			if (world.isClientSide() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getUseItemRemainingTicks() % 4 == 0))
+				return;
+			
+			if (settings.isBrush)
+			{
+				world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.brushFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+				int total = swingData.blobCount().getRandom(entity.getRandom());
+				int countSmall = Math.round(total * 0.4f);
+				int countNormal = total - countSmall;
+				AttackId attackId = AttackId.registerSelectiveAttack(total);
+				attackId.countProjectile(total);
+				
+				RandomSource random = entity.getRandom();
+				
+				List<Float> blobAngles = new ObjectArrayList<>(countNormal);
+				List<Float> weakBlobAngles = new ObjectArrayList<>(countSmall);
+				
+				// how to cope with randomness 101: make a complicated method that is less random
+				// yes this is to populate sectors that are divided into equal parts and then select a random part in that sector
+				if (total == 1)
+				{
+					blobAngles.add(0f);
+				}
+				else
+				{
+					for (int i = 0; i < countNormal; i++)
+					{
+						blobAngles.add(((i + random.nextFloat()) / countNormal - 0.5f) * swingData.attackAngle());
+					}
+					for (int i = 0; i < countSmall; i++)
+					{
+						weakBlobAngles.add(((i + random.nextFloat()) / countNormal - 0.5f) * swingData.attackAngle());
+					}
+				}
+				createBrushBlobs(entity, blobAngles, countNormal, world, settings, attackId, extraTime, false);
+				createBrushBlobs(entity, weakBlobAngles, countSmall, world, settings, attackId, extraTime, true);
+			}
+			else
+			{
+				RollerWeaponSettings.FlingDataRecord flingData = settings.flingData;
+				world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.rollerFling, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
+				if (isGrounded())
+				{
+					List<Vector3f> anglesAndVelocities = calculateAngleAndSpeeds(
+						entity.getRandom(),
+						swingData.attackData().speedRange(),
+						swingData.attackAngle(),
+						swingData.projectileData().size(),
+						swingData.projectileData().straightShotTicks(),
+						entity.getViewYRot(extraTime)
+					);
+					
+					AttackId attackId = AttackId.registerSelectiveAttack(anglesAndVelocities.size());
+					attackId.countProjectile(anglesAndVelocities);
+					for (Vector3f data : anglesAndVelocities)
+					{
+						// x is the projectile's yaw
+						// y is the distance between the player's yaw and the projectile's yaw
+						// z is the magnitude of the projectile's speed
+						InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), swingData.projectileData().size(), DamageCalculator.empty());
+						
+						proj.shootFromRotation(entity, entity.getViewXRot(extraTime), data.x, 0, data.z, 0f);
 //								Vec3d offset = new Vec3d((entity.getRandom().nextFloat() * 2f - 1f) * 0.7f, 0.5f, 0.6f);
-								Vec3 offset = new Vec3(0f, 0.5f, 0.6f);
-								offset = offset.yRot(-entity.getViewYRot(extraTime) * Mth.DEG_TO_RAD);
-								proj.moveTo(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
-								
-								proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), data.y > swingData.letalAngle());
-								proj.setRollerSwingStats(settings, false, data.y > swingData.letalAngle());
-								proj.setAttackId(attackId);
-								world.addFreshEntity(proj);
-								proj.tick(extraTime);
-							}
-						}
-						else
-						{
-							int count = flingData.calculateProjectileCount();
-							AttackId attackId = AttackId.registerSelectiveAttack(count);
-							attackId.countProjectile(count);
-							
-							for (int i = 0; i < count; i++)
-							{
-								InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), flingData.projectileData().size(), DamageCalculator.empty());
-								
-								float progress = (float) i / Math.max(1, count - 1);
-								proj.shootFromRotation(
-									entity,
-									entity.getXRot() - Mth.lerp(progress, flingData.startPitchCompensation(), flingData.endPitchCompensation()),
-									entity.getYRot(), 0,
-									attackData.speedRange().getValue(progress),
-									0.05f);
-								
-								proj.setRollerSwingStats(settings, true, false);
-								proj.accumulatedDrops = progress;
-								proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
-								proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), false);
-								
-								proj.setAttackId(attackId);
-								world.addFreshEntity(proj);
-								proj.tick(extraTime);
-							}
-						}
+						Vec3 offset = new Vec3(0f, 0.5f, 0.6f);
+						offset = offset.yRot(-entity.getViewYRot(extraTime) * Mth.DEG_TO_RAD);
+						proj.moveTo(proj.getX() + offset.x, proj.getY() + offset.y, proj.getZ() + offset.z);
+						
+						proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), data.y > swingData.letalAngle());
+						proj.setRollerSwingStats(settings, false, data.y > swingData.letalAngle());
+						proj.setAttackId(attackId);
+						world.addFreshEntity(proj);
+						proj.tick(extraTime);
+					}
+				}
+				else
+				{
+					int count = flingData.calculateProjectileCount();
+					AttackId attackId = AttackId.registerSelectiveAttack(count);
+					attackId.countProjectile(count);
+					
+					for (int i = 0; i < count; i++)
+					{
+						InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), flingData.projectileData().size(), DamageCalculator.empty());
+						
+						float progress = (float) i / Math.max(1, count - 1);
+						proj.shootFromRotation(
+							entity,
+							entity.getXRot() - Mth.lerp(progress, flingData.startPitchCompensation(), flingData.endPitchCompensation()),
+							entity.getYRot(), 0,
+							attackData.speedRange().getValue(progress),
+							0.05f);
+						
+						proj.setRollerSwingStats(settings, true, false);
+						proj.accumulatedDrops = progress;
+						proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(0, 1, 0), 1.4f, proj.getYRot())));
+						proj.damage = DamageCalculator.roller(swingData.projectileData(), proj.position(), false);
+						
+						proj.setAttackId(attackId);
+						world.addFreshEntity(proj);
+						proj.tick(extraTime);
 					}
 				}
 			}
@@ -537,7 +570,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		}
 		public boolean canQueueSwing()
 		{
-			return getTime() < attackFrame + 1;
+			return getTime() >= attackFrame - 2;
 		}
 		@Override
 		public boolean canEnd(LivingEntity entity)
@@ -547,10 +580,31 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				isGrounded = entity.onGround();
 				hasAttacked = false;
 				isAttackQueued = false;
-				setTime(getTime() + getMaxTime());
-				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
+				
+				if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
+				{
+					return true;
+				}
+				RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
+				RollerWeaponSettings.RollerAttackDataRecord data = settings.getAttackData(isGrounded).attackData();
+				attackFrame = data.startupTicks();
+				setTime(getTime() - getMaxTime());
+				setMaxTime(data.getTotalAttackTime());
+				
+				if (entity.level().isClientSide())
+				{
+					if (entity instanceof Player player)
+						sendGroundedSynchronizationPacket(player);
+				}
+				else
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
 				return false;
 			}
+			return true;
+		}
+		@Override
+		public boolean reversedTime()
+		{
 			return true;
 		}
 		@Override

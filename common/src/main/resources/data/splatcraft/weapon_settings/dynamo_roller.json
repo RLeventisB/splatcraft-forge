@@ -49,6 +49,7 @@
             "ink_recovery_cooldown": 55,
             "startup_ticks": 45,
             "endlag_ticks": 20,
+            "other_actions_endlag_ticks": 10,
             "speed_range": [7, 14]
         },
         "mobility": 0.24,

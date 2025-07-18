@@ -139,12 +139,12 @@ public class PlayerPosingHandler
 							RollerWeaponSettings rollerSettings = ((RollerItem) finalMainStack.getItem()).getSettings(finalMainStack);
 							RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.getAttackData(action.isGrounded()).attackData();
 							
-							float currentFrame = action.getTime() - partialTicks;
-							float timeFromSwing = currentFrame - (action.attackFrame + 1);
+							float currentFrame = action.getTime() + partialTicks;
+							float timeFromSwing = (action.attackFrame - 1) - currentFrame;
 							float startupTime = action.getMaxTime() - action.attackFrame;
 							if (timeFromSwing > 0) // is on the startup
 							{
-								float swingProgress = (action.getMaxTime() - currentFrame) / startupTime;
+								float swingProgress = currentFrame / startupTime;
 								mainHand.xRot = (-1f + 1f / (float) Math.pow(1.4, 1 + swingProgress * 10f)) * 3;
 							}
 							else
@@ -166,8 +166,8 @@ public class PlayerPosingHandler
 						{
 							RollerWeaponSettings rollerSettings = ((RollerItem) finalMainStack1.getItem()).getSettings(finalMainStack1);
 							RollerWeaponSettings.RollerAttackDataRecord attackData = rollerSettings.swingData.attackData();
-							float animTime = attackData.attackTime();
-							float angle = (float) -((action.getMaxTime() - action.getTime() - partialTicks) / animTime * Mth.PI / 2f) + ((float) Mth.PI) / 1.8f;
+							float animTime = attackData.getTotalAttackTime();
+							float angle = (float) -((action.getTime() + partialTicks) / animTime * Mth.PI / 2f) + ((float) Mth.PI) / 1.8f;
 							
 							mainHand.yRot = model.getHead().yRot + Mth.cos(angle);
 						}, () -> mainHand.yRot = model.getHead().yRot);

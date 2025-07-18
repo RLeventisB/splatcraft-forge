@@ -35,6 +35,8 @@
             "ink_recovery_cooldown": 30,
             "startup_ticks": 1,
             "endlag_ticks": 5,
+            "attack_to_roll_ticks": 12,
+            "other_actions_endlag_ticks": 10,
             "speed_range": [6, 8.4]
         },
         "swing_angle": 80,
