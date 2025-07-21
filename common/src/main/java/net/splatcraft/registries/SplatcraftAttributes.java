@@ -17,4 +17,5 @@ public class SplatcraftAttributes
 	public static final RegistrySupplier<Attribute> enemyInkResistanceTime = REGISTRY.register("ink_resistance_time", () -> new RangedAttribute("attribute.splatcraft.ink_resistance_time", 0, 0, 256.0D).setSyncable(true));
 	public static final RegistrySupplier<Attribute> maxEnemyInkDamage = REGISTRY.register("max_enemy_ink_damage", () -> new RangedAttribute("attribute.splatcraft.max_enemy_ink_damage", 8, 0, 256.0D).setSyncable(true));
 	public static final RegistrySupplier<Attribute> enemyInkJumpMultiplier = REGISTRY.register("enemy_ink_jump_multiplier", () -> new RangedAttribute("attribute.splatcraft.enemy_ink_jump_multiplier", 0.6, 0, 1f).setSyncable(true));
+	public static final RegistrySupplier<Attribute> specialLoss = REGISTRY.register("special_loss", () -> new RangedAttribute("attribute.splatcraft.special_loss", 0.6, 0, 1f).setSyncable(true));
 }

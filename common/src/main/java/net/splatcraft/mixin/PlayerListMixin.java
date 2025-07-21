@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.portal.DimensionTransition;
+import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendColorRegistryPacket;
@@ -54,6 +55,6 @@ public abstract class PlayerListMixin
 	public void splatcraft$onDatapackReload(CallbackInfo ci)
 	{
 		SplatcraftPacketHandler.sendToAll(new UpdateWeaponSettingsPacket());
-		SplatcraftPacketHandler.sendToAll(new SendColorRegistryPacket(InkColorRegistry.REGISTRY));
+		SplatcraftPacketHandler.sendToAll(new SendColorRegistryPacket(InkColorRegistry.REGISTRY, InkColorGroup.getAllGroups()));
 	}
 }

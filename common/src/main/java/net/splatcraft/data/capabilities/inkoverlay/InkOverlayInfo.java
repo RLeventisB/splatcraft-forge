@@ -2,19 +2,20 @@ package net.splatcraft.data.capabilities.inkoverlay;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
+
+import java.util.Optional;
 
 public class InkOverlayInfo
 {
 	public static final Codec<InkOverlayInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		InkColor.HEX_CODEC.fieldOf("color").forGetter(InkOverlayInfo::getColor),
-		Codec.FLOAT.fieldOf("amount").forGetter(InkOverlayInfo::getAmount),
+		InkColor.HEX_CODEC.optionalFieldOf("color").forGetter(InkOverlayInfo::getColor),
+		Codec.FLOAT.optionalFieldOf("amount", 0f).forGetter(InkOverlayInfo::getAmount),
 		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayInfo::isInkproof),
-		Codec.FLOAT.fieldOf("squid_pitch").forGetter(InkOverlayInfo::getSquidPitch),
-		Codec.FLOAT.fieldOf("squid_pitch_0").forGetter(InkOverlayInfo::getPreviousSquidPitch)
+		Codec.FLOAT.optionalFieldOf("squid_pitch", 0f).forGetter(InkOverlayInfo::getSquidPitch),
+		Codec.FLOAT.optionalFieldOf("squid_pitch_0", 0f).forGetter(InkOverlayInfo::getPreviousSquidPitch)
 	).apply(inst, InkOverlayInfo::new));
-	private InkColor color = ColorUtils.getDefaultColor();
+	private Optional<InkColor> color = Optional.empty();
 	private float amount = 0;
 	private boolean inkproof = false;
 	private float squidPitch;
@@ -22,7 +23,7 @@ public class InkOverlayInfo
 	public InkOverlayInfo()
 	{
 	}
-	public InkOverlayInfo(InkColor color,
+	public InkOverlayInfo(Optional<InkColor> color,
 	                      float amount,
 	                      boolean inkproof,
 	                      float squidRot,
@@ -34,13 +35,13 @@ public class InkOverlayInfo
 		this.squidPitch = squidRot;
 		this.squidPitchO = squidRotO;
 	}
-	public InkColor getColor()
+	public Optional<InkColor> getColor()
 	{
 		return color;
 	}
 	public void setColor(InkColor color)
 	{
-		this.color = color;
+		this.color = Optional.ofNullable(color);
 	}
 	public float getAmount()
 	{
@@ -49,6 +50,8 @@ public class InkOverlayInfo
 	public void setAmount(float v)
 	{
 		amount = Math.max(0, v);
+		if (amount == 0)
+			setColor(null);
 	}
 	public void addAmount(float v)
 	{

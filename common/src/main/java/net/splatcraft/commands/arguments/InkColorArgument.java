@@ -40,43 +40,12 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	{
 		final int start = reader.getCursor();
 		
-		ResourceLocation resourceLocation = ResourceLocation.readNonEmpty(reader);
-		if (!InkColorRegistry.containsAlias(resourceLocation))
+		String string = reader.getString();
+		return InkColorRegistry.getColorByAliasOrHex(string).orElseThrow(() ->
 		{
-			try
-			{
-				reader.setCursor(start);
-				int hexCode = parseNum(reader.readString().toLowerCase(), reader);
-				if (hexCode < 0)
-				{
-					reader.setCursor(start);
-					throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooLow().createWithContext(reader, hexCode, 0);
-				}
-				if (hexCode > max)
-				{
-					reader.setCursor(start);
-					throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.integerTooHigh().createWithContext(reader, hexCode, max);
-				}
-				return InkColor.constructOrReuse(hexCode);
-			}
-			catch (CommandSyntaxException e)
-			{
-				throw COLOR_NOT_FOUND.create(resourceLocation.toString());
-			}
-		}
-		
-		return InkColorRegistry.getInkColorByAlias(resourceLocation);
-	}
-	public static int parseNum(String input, StringReader reader) throws CommandSyntaxException
-	{
-		try
-		{
-			return Integer.decode(input);
-		}
-		catch (NumberFormatException var2)
-		{
-			throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerInvalidInt().createWithContext(reader, input);
-		}
+			reader.setCursor(start);
+			return COLOR_NOT_FOUND.create(string);
+		});
 	}
 	@Override
 	public InkColor parse(StringReader reader) throws CommandSyntaxException

@@ -13,7 +13,7 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorGroups;
+import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.platform.Services;
@@ -28,7 +28,7 @@ import java.util.Map;
 public class DataHandler
 {
 	public static final WeaponStatsListener WEAPON_STATS_LISTENER = new WeaponStatsListener();
-	public static final InkColorGroups.Listener INK_COLOR_TAGS_LISTENER = new InkColorGroups.Listener();
+	public static final InkColorGroup.Listener INK_COLOR_TAGS_LISTENER = new InkColorGroup.Listener();
 	public static final InkColorRegistry.Listener INK_COLOR_ALIASES_LISTENER = new InkColorRegistry.Listener();
 	public static void addReloadListeners()
 	{

@@ -37,10 +37,10 @@ public class InkOverlayLayer<E extends LivingEntity, M extends EntityModel<E>> e
 	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull E entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
 		InkOverlayInfo info = Components.INK_OVERLAY.get(entity);
-		if (info == null)
+		if (info == null || info.getColor().isEmpty())
 			return;
 		
-		InkColor color = ColorUtils.getColorLockedIfConfig(info.getColor());
+		InkColor color = ColorUtils.getColorLockedIfConfig(info.getColor().get());
 		int overlay = (int) (Math.min(info.getAmount() / (entity instanceof SquidBumperEntity ? SquidBumperEntity.maxInkHealth : entity.getMaxHealth()) * 4, 4) - 1);
 		
 		if (overlay <= -1)

@@ -19,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.splatcraft.data.InkColorRegistry;
 
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -101,10 +102,11 @@ public class InkColor implements Comparable<InkColor>
 			if (idResult.isSuccess())
 			{
 				ResourceLocation name = idResult.getOrThrow();
-				inkColor = InkColorRegistry.getInkColorByAlias(name);
+				inkColor = InkColorRegistry.getColorByAlias(name).orElse(null);
 			}
 			if (inkColor == null)
 				return DataResult.error(() -> "Invalid InkColor color, didn't find a valid alias");
+			
 			return DataResult.success(Pair.of(inkColor, input));
 		}
 		@Override
@@ -150,6 +152,10 @@ public class InkColor implements Comparable<InkColor>
 		{
 			throw new RuntimeException("what did you do");
 		}
+	}
+	public static Optional<InkColor> reuse(int hexCode)
+	{
+		return Optional.ofNullable(hexToColorMap.get(hexCode));
 	}
 	public static InkColor getFromNbt(Tag nbt)
 	{
@@ -270,5 +276,16 @@ public class InkColor implements Comparable<InkColor>
 			FastColor.ARGB32.green(hexCode),
 			FastColor.ARGB32.blue(hexCode)
 		};
+	}
+	@Override
+	public boolean equals(Object o)
+	{
+		if (!(o instanceof InkColor color)) return false;
+		return hexCode == color.hexCode;
+	}
+	@Override
+	public int hashCode()
+	{
+		return hexCode;
 	}
 }

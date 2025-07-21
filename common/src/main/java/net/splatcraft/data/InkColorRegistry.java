@@ -14,7 +14,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.splatcraft.crafting.InkVatColorRecipe;
-import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +22,9 @@ import java.util.*;
 public class InkColorRegistry
 {
 	public static final BiMap<ResourceLocation, InkColor> REGISTRY = HashBiMap.create();
-	public static InkColor getInkColorByAlias(ResourceLocation location)
+	public static Optional<InkColor> getColorByAlias(ResourceLocation location)
 	{
-		return REGISTRY.get(location);
+		return Optional.ofNullable(REGISTRY.get(location));
 	}
 	public static boolean containsAlias(ResourceLocation location)
 	{
@@ -35,23 +34,23 @@ public class InkColorRegistry
 	 * @param value The identifier of the color, or the hex code
 	 * @return The corresponding {@link InkColor}, or {@code ColorUtils.getDefaultColor()} if the value wasn't a valid {@link ResourceLocation}, or was not registered, or the text wasn't a valid hex color.
 	 */
-	public static InkColor getColorByAliasOrHex(String value)
+	public static Optional<InkColor> getColorByAliasOrHex(String value)
 	{
 		DataResult<ResourceLocation> parsedIdentifier = ResourceLocation.read(value);
 		if (parsedIdentifier.isSuccess())
 		{
 			ResourceLocation location = parsedIdentifier.getOrThrow();
 			if (containsAlias(location))
-				return getInkColorByAlias(location);
+				return getColorByAlias(location);
 		}
 		try
 		{
-			return InkColor.constructOrReuse(Integer.decode(value));
+			return InkColor.reuse(Integer.decode(value));
 		}
 		catch (NumberFormatException ignored)
 		{
 		}
-		return ColorUtils.getDefaultColor();
+		return Optional.empty();
 	}
 	public static List<ResourceLocation> getAliasesForColor(int color)
 	{
@@ -61,7 +60,7 @@ public class InkColorRegistry
 			if (value.getColor() == color)
 				result.add(key);
 		});
-
+		
 		return result;
 	}
 	public static ResourceLocation getColorAlias(InkColor color)
@@ -120,7 +119,6 @@ public class InkColorRegistry
 					}
 				}
 			}
-			InkColorGroups.Listener.doLoadIfNecessary();
 		}
 	}
 }

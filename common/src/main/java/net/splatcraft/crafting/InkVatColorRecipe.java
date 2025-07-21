@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
@@ -38,9 +39,14 @@ public class InkVatColorRecipe implements Recipe<InkVatRecipeInput>
 		this.disableOmni = disableOmni;
 		ingredient = input;
 		this.colorId = colorId;
+		
 		colorSupplier = Suppliers.memoize(() ->
 		{
-			InkColor outputColor = InkColorRegistry.getInkColorByAlias(colorId);
+			Optional<InkColor> optionalColor = InkColorRegistry.getColorByAlias(colorId);
+			if (optionalColor.isEmpty())
+				throw new AssertionError("Unknown color id when deserializing an inkvat recipe: " + colorId);
+			
+			InkColor outputColor = optionalColor.get();
 			if (!disableOmni && !omniColors.contains(outputColor))
 			{
 				omniColors.add(outputColor);

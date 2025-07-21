@@ -132,6 +132,7 @@ public class SplatcraftEntities
 		builder.add(SplatcraftAttributes.enemyInkResistanceTime, SplatcraftAttributes.enemyInkResistanceTime.get().getDefaultValue());
 		builder.add(SplatcraftAttributes.maxEnemyInkDamage, SplatcraftAttributes.maxEnemyInkDamage.get().getDefaultValue());
 		builder.add(SplatcraftAttributes.enemyInkJumpMultiplier, SplatcraftAttributes.enemyInkJumpMultiplier.get().getDefaultValue());
+		builder.add(SplatcraftAttributes.specialLoss, SplatcraftAttributes.specialLoss.get().getDefaultValue());
 		return builder;
 	}
 	@OnlyIn(Dist.CLIENT)

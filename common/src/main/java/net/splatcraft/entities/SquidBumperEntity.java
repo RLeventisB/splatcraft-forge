@@ -226,7 +226,7 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 	}
 	private void playHealParticles()
 	{
-		level().addParticle(new InkSplashParticleData(Components.INK_OVERLAY.getOrCreate(this).getColor(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
+		level().addParticle(new InkSplashParticleData(Components.INK_OVERLAY.get(this).getColor().get(), 2), getX(), getY() + getBbHeight() * 0.5, getZ(), 0, 0, 0);
 	}
 	private void playBrokenSound()
 	{

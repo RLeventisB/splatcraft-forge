@@ -19,6 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.particles.SquidSoulParticleData;
 import net.splatcraft.commands.SuperJumpCommand;
+import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -26,6 +27,7 @@ import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
+import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestEntityInfoPacket;
 import net.splatcraft.network.s2c.*;
@@ -144,7 +146,18 @@ public class SplatcraftCommonHandler
 		EntityAction.setEntityAction(entity, null);
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
 		
-		return keepAliveIfOnMatch(entity, source);
+		EventResult eventResult = keepAliveIfOnMatch(entity, source);
+		if (!eventResult.interruptsOrFalse())
+		{
+			float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
+			for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
+			{
+				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
+					SplatcraftComponents.SpecialProviderData.DEFAULT,
+					v -> v.withStoredCharge(v.storedCharge() * specialLoss));
+			}
+		}
+		return eventResult;
 	}
 	private static EventResult keepAliveIfOnMatch(LivingEntity entity, DamageSource source)
 	{
@@ -169,12 +182,15 @@ public class SplatcraftCommonHandler
 					if (entity instanceof ServerPlayer player)
 					{
 						Entity attacker = source.getEntity();
-						if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
+						if (attacker != null)
 						{
-							InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
+							if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
+							{
+								InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
+							}
+							SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
 						}
 						
-						SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
 						SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(player), player);
 					}
 					
@@ -232,7 +248,7 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
 		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, Components.ENTITY_INFO.getOrCreate(player).getColor()));
-		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY), player);
+		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY, InkColorGroup.getAllGroups()), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
 		for (Player otherPlayer : player.level().players())
@@ -322,6 +338,14 @@ public class SplatcraftCommonHandler
 						{
 							if (info.getMatchRespawnTimeLeft() <= 0)
 							{
+								float specialLoss = (float) livingEntity.getAttributeValue(SplatcraftAttributes.specialLoss);
+								for (ItemStack providerStack : CommonUtils.getItemsInInventory(livingEntity, v -> v.getItem() instanceof SpecialProviderItem))
+								{
+									providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
+										SplatcraftComponents.SpecialProviderData.DEFAULT,
+										v -> v.withStoredCharge(v.storedCharge() * specialLoss));
+								}
+								
 								if (livingEntity instanceof ServerPlayer serverPlayer)// make the server handle the respawning or else a laggy client will teleport after being actionable lol
 								{
 									livingEntity.setHealth(livingEntity.getMaxHealth());

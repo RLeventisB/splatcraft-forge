@@ -7,7 +7,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.InkColorGroups;
+import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.items.ColoredBlockItem;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -133,11 +133,14 @@ public class SplatcraftItemGroups
 		.hideTitle()
 		.displayItems((parameters, output) ->
 		{
-			for (InkColor color : InkColorGroups.CREATIVE_TAB_COLORS.getAll())
+			InkColorGroup.getGroup(InkColorGroup.CREATIVE_TAB_COLORS).ifPresent(creativeTabGroup ->
 			{
-				for (Item item : colorTabItems)
-					output.accept(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
-			}
+				for (InkColor color : creativeTabGroup.getColors())
+				{
+					for (Item item : colorTabItems)
+						output.accept(ColorUtils.withColorLocked(ColorUtils.withInkColor(new ItemStack(item), color), true));
+				}
+			});
 			for (Item item : colorTabItems)
 			{
 				if (!(item instanceof ColoredBlockItem coloredBlockItem) || coloredBlockItem.matchesColor())

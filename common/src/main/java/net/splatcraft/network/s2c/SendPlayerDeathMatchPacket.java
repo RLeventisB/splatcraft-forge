@@ -29,6 +29,8 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 	private final Vector2f pitchYawDir;
 	public static SendPlayerDeathMatchPacket create(int respawnTime, Entity killer, Entity killed)
 	{
+		if (killer == null)
+			return new SendPlayerDeathMatchPacket(respawnTime, (Entity) null, new Vector2f());
 		Vec3 killCamDirection = killer.position().subtract(killed.position()).multiply(1, 0, 1);
 		return new SendPlayerDeathMatchPacket(respawnTime, killer, new Vector2f(
 			-(float) (Mth.atan2(killCamDirection.x, killCamDirection.z) * Mth.RAD_TO_DEG),
@@ -66,7 +68,8 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 	public void execute()
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
-		ClientUtils.killCamData = Pair.of(killerPlayer, pitchYawDir);
+		if (!killerPlayer.equals(new UUID(0, 0)) && pitchYawDir.lengthSquared() != 0)
+			ClientUtils.killCamData = Pair.of(killerPlayer, pitchYawDir);
 		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
 		
 		info.setMatchRespawnTimeLeft(respawnTime);

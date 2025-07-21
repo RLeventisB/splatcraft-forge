@@ -166,10 +166,10 @@
                 "color": "splatcraft:omni_green"
             }
         },
-        "mana": {
+        "mana_purple": {
             "trigger": "splatcraft:change_ink_color",
             "conditions": {
-                "color": "splatcraft:mana"
+                "color": "splatcraft:mana_purple"
             }
         },
         "organic_white": {
@@ -424,7 +424,7 @@
             "omni_green"
         ],
         [
-            "mana"
+            "mana_purple"
         ],
         [
             "organic_white"

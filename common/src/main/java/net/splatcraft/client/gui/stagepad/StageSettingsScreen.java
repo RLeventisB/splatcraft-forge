@@ -33,24 +33,24 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 			{
 				if (setCorner1)
 				{
-					stage.cornerA = pos;
+					stage.minCorner = pos;
 					if (!stage.worldKey.equals(world.dimension()))
 					{
-						stage.cornerB = null;
+						stage.maxCorner = null;
 						stage.worldKey = world.dimension();
 					}
 				}
 				else
 				{
-					stage.cornerB = pos;
+					stage.maxCorner = pos;
 					if (!stage.worldKey.equals(world.dimension()))
 					{
-						stage.cornerA = null;
+						stage.minCorner = null;
 						stage.worldKey = world.dimension();
 					}
 				}
 				
-				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, stage.getStageName(), stage.cornerA, stage.cornerB, stage.worldKey));
+				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stageId, stage.getStageName(), stage.getMinCorner(), stage.getMaxCorner(), stage.worldKey));
 			}
 			
 			Minecraft.getInstance().setScreen(this);
@@ -67,10 +67,10 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 		addButton(new MenuButton(167, 88, 30, 12, (b) -> clickSetCornerButton(b, false),
 			showText(Component.translatable("gui.stage_pad.button.set_from_world"), Component.translatable("gui.stage_pad.button.set_from_clipboard").withStyle(ChatFormatting.YELLOW)), drawText(Component.translatable("gui.stage_pad.button.set_corner"), true), MenuButton.ButtonColor.GREEN));
 		
-		addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.cornerA), showCopyPos(() -> stage.cornerA), (ps, b) ->
+		addButton(new StageSelectionScreen.HiddenButton(62, 69, 102, 14, copyPos(() -> stage.minCorner), showCopyPos(() -> stage.minCorner), (ps, b) ->
 		{
 		}));
-		addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> stage.cornerB), showCopyPos(() -> stage.cornerB), (ps, b) ->
+		addButton(new StageSelectionScreen.HiddenButton(62, 87, 102, 14, copyPos(() -> stage.maxCorner), showCopyPos(() -> stage.maxCorner), (ps, b) ->
 		{
 		}));
 		
@@ -97,10 +97,10 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 			{
 				BlockPos pos = BlockPos.containing(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
 				if (isCorner1)
-					stage.cornerA = pos;
+					stage.minCorner = pos;
 				else
-					stage.cornerB = pos;
-				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, stage.getStageName(), stage.cornerA, stage.cornerB, stage.worldKey));
+					stage.maxCorner = pos;
+				SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, stage.getStageName(), stage.minCorner, stage.maxCorner, stage.worldKey));
 			}
 		}
 		else
@@ -125,7 +125,7 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 	private void saveChanges()
 	{
 		if (!stage.getStageName().toString().equals(stageName.getValue()))
-			SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Component.literal(stageName.getValue()), stage.cornerA, stage.cornerB, stage.worldKey));
+			SplatcraftPacketHandler.sendToServer(new CreateOrEditStagePacket(stage.id, Component.literal(stageName.getValue()), stage.minCorner, stage.maxCorner, stage.worldKey));
 	}
 	@Override
 	public void handleWidgets(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks)
@@ -152,8 +152,8 @@ public class StageSettingsScreen extends AbstractStagePadScreen
 		label = Component.translatable("gui.stage_pad.label.corner_2");
 		guiGraphics.drawString(font, label, x + 60 - font.width(label), y + 90, 0xFFFFFF);
 		
-		BlockPos corner1 = stage.cornerA;
-		BlockPos corner2 = stage.cornerB;
+		BlockPos corner1 = stage.minCorner;
+		BlockPos corner2 = stage.maxCorner;
 		
 		if (corner1 != null)
 		{

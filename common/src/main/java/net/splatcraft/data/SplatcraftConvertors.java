@@ -308,6 +308,8 @@ public class SplatcraftConvertors
 			dataRecord.inkRecoveryCooldown() / SplatoonFramesPerMinecraftTick,
 			dataRecord.startupTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.endlagTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.rollDelayTicks() / SplatoonFramesPerMinecraftTick,
+			dataRecord.miscEndlagTicks() / SplatoonFramesPerMinecraftTick,
 			dataRecord.speedRange().mapBoth(v -> v / DistanceUnitsPerMinecraftSquare * SplatoonFramesPerMinecraftTick)
 		);
 	}

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Stage implements Comparable<Stage>
 {
@@ -318,6 +319,20 @@ public class Stage implements Comparable<Stage>
 		saveInfo.playSessions().put(id, playSession);
 		SplatcraftPacketHandler.sendToAll(new SendPlaySessionCreationPacket(playSession));
 		return true;
+	}
+	public void iterateBlockPos(Consumer<BlockPos> consumer)
+	{
+		for (BlockPos pos : BlockPos.betweenClosed(minCorner.getX(), minCorner.getY(), minCorner.getZ(), maxCorner.getX(), maxCorner.getY(), maxCorner.getZ()))
+		{
+			consumer.accept(pos);
+		}
+	}
+	public void iterateChunkPos(Consumer<ChunkPos> consumer)
+	{
+		for (ChunkPos pos : ChunkPos.rangeClosed(new ChunkPos(minCorner), new ChunkPos(maxCorner)).toList())
+		{
+			consumer.accept(pos);
+		}
 	}
 	public @Nullable ServerLevel getStageWorld(MinecraftServer server)
 	{

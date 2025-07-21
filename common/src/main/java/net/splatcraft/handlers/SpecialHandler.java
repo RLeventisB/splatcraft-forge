@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.DynamicDataRecord;
@@ -44,7 +45,9 @@ public class SpecialHandler
 		});
 		registerSpecialExecutor(SpecialWeaponRecords.InkJetDataRecord.ID, (entity, settings, providerSlot, weaponSlot) ->
 		{
-			EntityAction.setEntityAction(entity, new InkjetAction(settings, weaponSlot, providerSlot, WeaponHandler.getEntityLastGroundedPos(entity).get()));
+			Optional<Vec3> lastGroundedPos = WeaponHandler.getEntityLastGroundedPos(entity);
+			lastGroundedPos.ifPresent(vec3 ->
+				EntityAction.setEntityAction(entity, new InkjetAction(settings, weaponSlot, providerSlot, vec3)));
 		}, (entity, stack) -> WeaponHandler.getEntityLastGroundedPos(entity).isPresent());
 	}
 	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate)

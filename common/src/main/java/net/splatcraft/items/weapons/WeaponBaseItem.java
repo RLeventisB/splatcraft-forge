@@ -350,6 +350,9 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		
 		if (notPreventedByAction && !(user instanceof Player player && CommonUtils.anyWeaponOnCooldown(player)))
 		{
+			if (remainingUseTicks != stack.getUseDuration(user)) // this is to fix
+				CommonUtils.setSquidDelay(user, 1);
+			
 			weaponUseTick(world, user, stack, remainingUseTicks);
 			user.setSprinting(false);
 		}
