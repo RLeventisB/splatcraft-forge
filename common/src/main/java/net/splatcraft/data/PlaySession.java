@@ -354,10 +354,16 @@ public final class PlaySession
 	public List<StageMarkerTileEntity> getMarkers(boolean check)
 	{
 		Level level = getLevelCommon();
-		return getMarkersPositions(check).stream()
-			.map(v -> (StageMarkerTileEntity) level.getBlockEntity(v))
-			.filter(Objects::nonNull)
-			.toList();
+		List<StageMarkerTileEntity> list = new ArrayList<>();
+		for (BlockPos v : getMarkersPositions(check))
+		{
+			StageMarkerTileEntity blockEntity = (StageMarkerTileEntity) level.getBlockEntity(v);
+			if (blockEntity != null)
+			{
+				list.add(blockEntity);
+			}
+		}
+		return list;
 	}
 	public static Optional<PlaySession> getPlaySession(LivingEntity entity)
 	{
