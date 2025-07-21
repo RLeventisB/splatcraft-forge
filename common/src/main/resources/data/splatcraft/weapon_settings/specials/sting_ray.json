@@ -10,7 +10,7 @@
     "damage_shockwave": 1.5,
     "radius_center": 7,
     "radius_shockwave": 14,
-    "turning_value": 0.03,
-    "turning_value_with_shockwave": 0.023,
-    "reveal_radius": 180
+    "turning_value": 0.025,
+    "turning_value_with_shockwave": 0.02,
+    "reveal_radius": 300
 }
