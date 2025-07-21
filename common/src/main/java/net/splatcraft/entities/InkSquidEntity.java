@@ -104,7 +104,7 @@ public class InkSquidEntity extends PathfinderMob implements IColoredEntity
 	{
 		super.readAdditionalSaveData(nbt);
 		if (nbt.contains("Color"))
-			setColor(InkColor.getFromNbt(nbt));
+			setColor(InkColor.getFromNbt(nbt.get("Color")));
 		else
 			setColor(ColorUtils.getRandomStarterColor());
 	}

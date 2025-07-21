@@ -15,6 +15,8 @@ import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.StingRayAction;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +73,11 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 		
 		for (Entity entity : level().getEntities(this, getBoundingBox(), EntitySelector.NO_SPECTATORS))
 		{
-			if (!(entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) || ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor())))
+			if (
+				(!entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) &&
+					!ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor()))
+					|| (entity instanceof LivingEntity living && EntityAction.hasSpecificEntityAction(living, StingRayAction.class))
+			)
 			{
 				setActiveTime(MAX_ACTIVE_TIME);
 				

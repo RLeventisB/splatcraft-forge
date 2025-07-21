@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -255,7 +254,7 @@ public class InkColor implements Comparable<InkColor>
 	}
 	public Tag getNbt()
 	{
-		return IntTag.valueOf(hexCode);
+		return NUMBER_CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
 	}
 	public InkColor getInverted()
 	{

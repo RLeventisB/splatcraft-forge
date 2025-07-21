@@ -77,6 +77,14 @@ public class StingRayAction extends BaseSpecialAction
 		}
 		super.tick(entity);
 	}
+	public int getUsageTick()
+	{
+		return usageTick;
+	}
+	public float getRevealRadius()
+	{
+		return specialData.revealRadius();
+	}
 	@Override
 	public boolean isCancellable()
 	{

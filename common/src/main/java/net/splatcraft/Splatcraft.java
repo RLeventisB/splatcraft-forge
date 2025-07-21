@@ -8,6 +8,7 @@ import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
+import net.splatcraft.client.renderer.SplatcraftRenderTypes;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
@@ -36,6 +37,7 @@ public final class Splatcraft
 		SplatcraftTileEntities.bindTESR();
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
+		SplatcraftRenderTypes.initialize();
 		
 		Services.PLATFORM.registerListener(LifecycleEvents.ClientStarted.class, Splatcraft::initClientAfter);
 	}

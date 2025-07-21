@@ -1,6 +1,7 @@
 package net.splatcraft.platform;
 
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -15,6 +16,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
@@ -28,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -37,12 +40,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.platform.event.CommandRegistrationEvent;
 import net.splatcraft.platform.event.LifecycleEvents;
 import net.splatcraft.platform.services.IPlatformHelper;
@@ -53,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -111,66 +111,6 @@ public class FabricPlatformHelper implements IPlatformHelper
 	public boolean isClientSide()
 	{
 		return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
-	}
-	@Override
-	public boolean hasChunkInk(ChunkAccess chunk)
-	{
-		return false;
-	}
-	@Override
-	public boolean hasAndIsNotEmptyChunkInk(ChunkAccess chunk)
-	{
-		return false;
-	}
-	@Override
-	public ChunkInk getChunkInk(ChunkAccess chunk)
-	{
-		return null;
-	}
-	@Override
-	public void setChunkInk(ChunkAccess chunk, ChunkInk newData)
-	{
-	
-	}
-	@Override
-	public SaveInfo getSaveInfo()
-	{
-		return null;
-	}
-	@Override
-	public void setSaveInfo(SaveInfo newData)
-	{
-	
-	}
-	@Override
-	public InkOverlayInfo getInkOverlayInfo(LivingEntity entity)
-	{
-		return null;
-	}
-	@Override
-	public boolean hasInkOverlayInfo(LivingEntity entity)
-	{
-		return false;
-	}
-	@Override
-	public void setInkOverlayInfo(LivingEntity entity, InkOverlayInfo newData)
-	{
-	
-	}
-	@Override
-	public EntityInfo getEntityInfo(LivingEntity entity)
-	{
-		return null;
-	}
-	@Override
-	public boolean hasEntityInfo(LivingEntity entity)
-	{
-		return false;
-	}
-	@Override
-	public void setEntityInfo(LivingEntity entity, EntityInfo newData)
-	{
-	
 	}
 	@Override
 	public <T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests)
@@ -241,6 +181,10 @@ public class FabricPlatformHelper implements IPlatformHelper
 	{
 		ItemGroupEvents.modifyEntriesEvent(creativeTab).register((tab) ->
 			tab.accept(new ItemStack(item)));
+	}
+	@Override
+	public void registerShader(Function<ResourceProvider, Pair<ShaderInstance, Consumer<ShaderInstance>>> dataProvider)
+	{
 	}
 	@Override
 	public void registerReloadListener(PackType packType, PreparableReloadListener reloadListener)

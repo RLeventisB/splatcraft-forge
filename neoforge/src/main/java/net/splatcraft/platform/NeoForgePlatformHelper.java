@@ -2,11 +2,13 @@ package net.splatcraft.platform;
 
 import com.google.common.base.Suppliers;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
@@ -24,6 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -73,6 +76,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -353,6 +358,17 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 				{
 					buildTab.accept(new ItemStack(itemToAdd));
 				}
+			}
+		);
+	}
+	@Override
+	public void registerShader(Function<ResourceProvider, Pair<ShaderInstance, Consumer<ShaderInstance>>> dataProvider)
+	{
+		EventHelper.addToEventSpecificList(RegisterShadersEvent.class, dataProvider,
+			(registerShader, provider) ->
+			{
+				Pair<ShaderInstance, Consumer<ShaderInstance>> dataPair = provider.apply(registerShader.getResourceProvider());
+				registerShader.registerShader(dataPair.getFirst(), dataPair.getSecond());
 			}
 		);
 	}
