@@ -122,7 +122,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
 		
-		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()))
+		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()) &&
+			(!EntityAction.hasEntityAction(entity) || (EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class))))
 		{
 			entity.getMainHandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
 			entity.getOffhandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
@@ -459,6 +460,18 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			
 			return false;
 		}
+		@Override
+		public void beforeEnd(LivingEntity entity)
+		{
+			if (rollState == RollState.ROLL)
+				entity.setDiscardFriction(false);
+			
+			Components.ENTITY_INFO.get(entity).setDodgeCount(0);
+			if (entity instanceof Player player)
+			{
+				player.getAbilities().mayfly = didAllowFlying;
+			}
+		}
 		public boolean canCancelRoll()
 		{
 			return rollState == RollState.AFTER_ROLL || rollState == RollState.TURRET;
@@ -471,7 +484,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		@Override
 		public boolean forceCrouch()
 		{
-			return rollState == RollState.TURRET;
+			return rollState != RollState.BEFORE_ROLL;
 		}
 		@Override
 		public boolean preventWeaponUse()

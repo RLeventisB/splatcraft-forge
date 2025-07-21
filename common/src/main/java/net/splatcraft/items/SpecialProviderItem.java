@@ -20,6 +20,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.handlers.DataHandler;
@@ -30,6 +31,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendSpecialUsageDataPacket;
 import net.splatcraft.registries.SplatcraftComponents.SpecialProviderData;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,7 +170,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		if (world.isClientSide())
 			return;
 		
-		if (EntityAction.hasEntityAction(entity))
+		if (EntityAction.hasSpecificEntityAction(entity, BaseSpecialAction.class) && EntityAction.hasSpecificEntityAction(entity, SuperJumpCommand.SuperJump.class))
 			return;
 		
 		InteractionHand hand = entity.getUsedItemHand();

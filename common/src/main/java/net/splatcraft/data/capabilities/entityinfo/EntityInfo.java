@@ -165,8 +165,10 @@ public class EntityInfo
 	{
 		return entityAction;
 	}
-	public void setEntityAction(EntityAction action)
+	public void setEntityAction(EntityAction action, LivingEntity entity)
 	{
+		if (entityAction != null)
+			entityAction.beforeEnd(entity);
 		entityAction = action;
 	}
 	public boolean hasActiveAction()

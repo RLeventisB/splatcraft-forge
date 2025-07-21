@@ -257,6 +257,19 @@ public class SuperJumpCommand
 			return true;
 		}
 		@Override
+		public void beforeEnd(LivingEntity entity)
+		{
+			entity.setPos(end);
+			entity.noPhysics = hadPhysics;
+			if (entity instanceof Player player)
+			{
+				player.getAbilities().invulnerable = hadInvulnerability;
+				player.getAbilities().flying = false;
+			}
+			entity.fallDistance = -100f;
+			entity.setDeltaMovement(0, 0, 0);
+		}
+		@Override
 		public boolean canMove()
 		{
 			return false;

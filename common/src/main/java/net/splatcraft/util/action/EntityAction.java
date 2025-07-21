@@ -92,7 +92,7 @@ public interface EntityAction
 	}
 	static void setEntityAction(LivingEntity entity, EntityAction action)
 	{
-		Components.ENTITY_INFO.getOrCreate(entity).setEntityAction(action);
+		Components.ENTITY_INFO.getOrCreate(entity).setEntityAction(action, entity);
 	}
 	static <T extends EntityAction> boolean hasSpecificEntityActionAnd(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
 	{
@@ -211,5 +211,14 @@ public interface EntityAction
 	default boolean endWhenOnSquid(LivingEntity entity)
 	{
 		return true;
+	}
+	/**
+	 * Called whenever another action is about to override the current action.
+	 *
+	 * @param entity The entity that executes this action.
+	 */
+	default void beforeEnd(LivingEntity entity)
+	{
+	
 	}
 }
