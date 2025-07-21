@@ -412,7 +412,7 @@ public class RendererHandler
 		SaveInfo saveInfo = SaveInfoCapability.get();
 		PlaySession session = saveInfo.playSessions().get(stageId);
 		float nowSeconds = (ClientUtils.getClient().level.getGameTime() + tickDelta) / 20f;
-		if (session != null && nowSeconds > session.getMatchStartTime() / 20f)
+		if (session != null && nowSeconds > (session.getMatchStartTime() - 3 * 20) / 20f)
 		{
 			Minecraft mc = Minecraft.getInstance();
 			Font textRenderer = mc.font;
