@@ -2,9 +2,6 @@
     "vertex": "splatcraft:rendertype_entity_silhouette",
     "fragment": "splatcraft:rendertype_entity_silhouette",
     "samplers": [
-        {
-            "name": "Sampler0"
-        }
     ],
     "uniforms": [
         {

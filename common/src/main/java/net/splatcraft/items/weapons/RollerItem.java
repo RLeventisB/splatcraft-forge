@@ -232,14 +232,20 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						}
 					}
 					
-					if (result != BlockInkedResult.FAIL && insideDamage)
+					if (result == BlockInkedResult.SUCCESS)
+						InkBlockUtils.awardTurfPoints(entity, stack, 1);
+					
+					if (result != BlockInkedResult.FAIL)
 					{
-						world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xOff + dxOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zOff + dzOff, 0, 0, 0);
-						if (i > 0)
+						if (insideDamage)
 						{
-							double xhOff = dxOff + Math.cos(Math.toRadians(entity.getYRot())) * (off - 0.5);
-							double zhOff = dzOff + Math.sin(Math.toRadians(entity.getYRot())) * (off - 0.5);
-							world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xhOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zhOff, 0, 0, 0);
+							world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xOff + dxOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zOff + dzOff, 0, 0, 0);
+							if (i > 0)
+							{
+								double xhOff = dxOff + Math.cos(Math.toRadians(entity.getYRot())) * (off - 0.5);
+								double zhOff = dzOff + Math.sin(Math.toRadians(entity.getYRot())) * (off - 0.5);
+								world.addParticle(new InkSplashParticleData(ColorUtils.getInkColor(stack), 1), entity.getX() + xhOff, pos.getY() + blockHeight + 0.1, entity.getZ() + zhOff, 0, 0, 0);
+							}
 						}
 					}
 					break;

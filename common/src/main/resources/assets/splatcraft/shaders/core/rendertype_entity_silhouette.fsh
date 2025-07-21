@@ -1,6 +1,5 @@
 #version 150
 
-uniform sampler2D Sampler0;
 in vec4 vertexColor;
 out vec2 texCoord0;
 

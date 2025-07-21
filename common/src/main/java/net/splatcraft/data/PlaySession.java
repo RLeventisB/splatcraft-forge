@@ -202,7 +202,7 @@ public final class PlaySession
 	public Level getLevelCommon()
 	{
 		MinecraftServer server = Services.PLATFORM.getServerInstance();
-		if (server == null)
+		if (server == null || server.isSingleplayer())
 		{
 			return getClientWorld();
 		}
