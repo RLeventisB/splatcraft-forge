@@ -175,7 +175,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			double sideZ = normalized.x;
 			for (float j = -trailWidth; j <= trailWidth; j += trailStep)
 			{
-				Optional<BlockPos> optionalPos = InkBlockUtils.getBlockStandingOnPos(new Vec3(getX() + sideX * j, getY() + 10e-5, getZ() + sideZ * j), level(), 1, this);
+				Optional<BlockPos> optionalPos = InkBlockUtils.getBlockBelowPos(new Vec3(getX() + sideX * j, getY() + 10e-5, getZ() + sideZ * j), level(), 1, this);
 				optionalPos.ifPresent(blockPos ->
 				{
 					if (!InkBlockUtils.isUninkable(level(), blockPos, Direction.UP))

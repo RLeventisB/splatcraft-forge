@@ -364,7 +364,7 @@ public class InkBlockUtils
 	{
 		boolean canSwim = false;
 		
-		Optional<BlockPos> down = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1, entity);
+		Optional<BlockPos> down = entity.mainSupportingBlockPos;
 		if (down.isEmpty())
 			return false;
 		Block standingBlock = entity.level().getBlockState(down.get()).getBlock();
@@ -377,19 +377,19 @@ public class InkBlockUtils
 		
 		return canSwim && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(down.get()));
 	}
-	public static Optional<BlockPos> getBlockStandingOnPos(Entity entity)
+	public static Optional<BlockPos> getBlockBelowPos(Entity entity)
 	{
-		return getBlockStandingOnPos(entity, 0.1);
+		return getBlockBelowPos(entity, 0.1);
 	}
-	public static Optional<BlockPos> getBlockStandingOnPos(Entity entity, double maxDepth)
+	public static Optional<BlockPos> getBlockBelowPos(Entity entity, double maxDepth)
 	{
-		return getBlockStandingOnPos(entity.position(), entity.level(), maxDepth, entity);
+		return getBlockBelowPos(entity.position(), entity.level(), maxDepth, entity);
 	}
-	public static Optional<BlockPos> getBlockStandingOnPos(Vec3 position, Level level, double maxDepth)
+	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth)
 	{
-		return getBlockStandingOnPos(position, level, maxDepth, null);
+		return getBlockBelowPos(position, level, maxDepth, null);
 	}
-	public static Optional<BlockPos> getBlockStandingOnPos(Vec3 position, Level level, double maxDepth, Entity clipContextEntity)
+	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth, Entity clipContextEntity)
 	{
 		BlockHitResult result = level.clip(new ClipContext(position, position.subtract(0, maxDepth, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
 		if (result.getType() == HitResult.Type.MISS)
@@ -410,7 +410,7 @@ public class InkBlockUtils
 		if (!entity.onGround())
 			return false;
 		
-		Optional<BlockPos> pos = getBlockStandingOnPos(entity.position().add(0, 10e-4, 0), entity.level(), 0.1, entity);
+		Optional<BlockPos> pos = entity.mainSupportingBlockPos;
 		if (pos.isEmpty())
 			return false;
 		
@@ -459,21 +459,17 @@ public class InkBlockUtils
 		}
 		if (collisionData.isPresent())
 		{
-/*
+			
 			// check if the entity can "step up" the collision like with stairs, via a poor way obviously
 			float maxUpStep = entity.maxUpStep();
-			extendedBox = extendedBox.expandTowards(0, maxUpStep, 0);
-			collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
-			Tuple<Optional<Direction>, VoxelShape> upStepCollision = checkSquidCollisions(entity, collisions, extendedBox, entityCenter);
-			if (upStepCollision.getA().isEmpty() || (
-				upStepCollision.getA().get() == originalDirection.getA().get() &&
-					upStepCollision.getB().max(Direction.Axis.Y) - originalDirection.getB().max(Direction.Axis.Y) <= maxUpStep))
+			extendedBox = extendedBox.move(0, maxUpStep, 0);
+			Optional<Triplet<Direction, VoxelShape, BlockPos>> upStepCollision = checkSquidCollisions(entity, extendedBox);
+			if (upStepCollision.isEmpty())
 			{
 				// if there is no collision, we can up step!!! (however this will be handled by the movement code executed after this so
 				// we fake not actually climbing
 				return Optional.empty();
 			}
-*/
 		}
 		return collisionData.map(Triplet::getA);
 	}

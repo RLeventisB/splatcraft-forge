@@ -338,7 +338,7 @@ public class ColorUtils
 	}
 	public static void addStandingInkSplashParticle(Level world, LivingEntity entity, float size)
 	{
-		Optional<BlockPos> posOptional = InkBlockUtils.getBlockStandingOnPos(entity);
+		Optional<BlockPos> posOptional = InkBlockUtils.getBlockBelowPos(entity);
 		posOptional.ifPresent(pos ->
 		{
 			InkColor color = InkColor.INVALID;

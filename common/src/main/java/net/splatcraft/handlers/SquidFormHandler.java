@@ -171,7 +171,7 @@ public class SquidFormHandler
 				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
 			}
 			
-			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockStandingOnPos(player);
+			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
 			posBelowOptional.ifPresent(posBelow ->
 			{
 				Block blockBelow = player.level().getBlockState(posBelow).getBlock();
