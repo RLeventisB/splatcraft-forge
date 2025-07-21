@@ -9,9 +9,13 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
@@ -259,6 +263,18 @@ public class WeaponHandler
 	public static boolean hasMovedQuicklyDisabled(LivingEntity entity)
 	{
 		return movedQuicklyDisable.containsKey(entity);
+	}
+	public static void forceLastGroundedPos(LivingEntity entity)
+	{
+		if (Services.PLATFORM.getServerInstance() == null)
+			return;
+		
+		Vec3 floorPos = entity.position().add(0, 0.1, 0);
+		
+		BlockHitResult result = entity.level().clip(new ClipContext(floorPos, floorPos.subtract(0, -1, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.of(entity)));
+		if (result.getType() != HitResult.Type.MISS)
+			floorPos = result.getLocation();
+		lastGroundedPos.put(entity, floorPos);
 	}
 	public static class OldEntityTransformData
 	{

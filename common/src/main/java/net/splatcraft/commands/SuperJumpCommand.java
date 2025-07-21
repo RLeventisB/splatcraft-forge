@@ -268,6 +268,7 @@ public class SuperJumpCommand
 			}
 			entity.fallDistance = -100f;
 			entity.setDeltaMovement(0, 0, 0);
+			WeaponHandler.forceLastGroundedPos(entity);
 		}
 		@Override
 		public boolean canMove()

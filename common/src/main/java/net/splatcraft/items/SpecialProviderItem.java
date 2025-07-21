@@ -170,7 +170,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		if (world.isClientSide())
 			return;
 		
-		if (EntityAction.hasSpecificEntityAction(entity, BaseSpecialAction.class) && EntityAction.hasSpecificEntityAction(entity, SuperJumpCommand.SuperJump.class))
+		if (EntityAction.hasSpecificEntityAction(entity, BaseSpecialAction.class) || EntityAction.hasSpecificEntityAction(entity, SuperJumpCommand.SuperJump.class))
 			return;
 		
 		InteractionHand hand = entity.getUsedItemHand();
