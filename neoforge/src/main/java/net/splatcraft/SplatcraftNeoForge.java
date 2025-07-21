@@ -1,6 +1,7 @@
 package net.splatcraft;
 
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
@@ -11,7 +12,9 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.ChunkWatchEvent;
+import net.splatcraft.blocks.StageMarkerBlock;
 import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
@@ -25,6 +28,7 @@ import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.platform.NeoForgeDeferredRegister;
 import net.splatcraft.registries.SplatcraftParticleTypes;
+import net.splatcraft.tileentities.StageMarkerTileEntity;
 
 @Mod(Splatcraft.MODID)
 public final class SplatcraftNeoForge
@@ -47,6 +51,8 @@ public final class SplatcraftNeoForge
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onGamemodeChange);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onInputUpdate);
 		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkWatch);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkLoad);
+		NeoForge.EVENT_BUS.addListener(SplatcraftNeoForge::onChunkUnload);
 		
 		SplatcraftNeoForgeDataAttachments.ATTACHMENT_TYPES.register(modBus);
 		SplatcraftNeoForgeDataAttachments.initializeExecutors();
@@ -69,6 +75,29 @@ public final class SplatcraftNeoForge
 	private static void onChunkWatch(ChunkWatchEvent.Sent event)
 	{
 		ChunkInkHandler.sendChunkData(event.getPlayer().connection, event.getLevel(), event.getLevel().getChunk(event.getPos().x, event.getPos().z));
+	}
+	private static void onChunkLoad(ChunkEvent.Load event)
+	{
+		if (event.isNewChunk())
+			return;
+		
+		for (BlockPos pos : event.getChunk().getBlockEntitiesPos())
+		{
+			if (event.getChunk().getBlockEntity(pos) instanceof StageMarkerTileEntity stageMarker && stageMarker.getMarkerType() == StageMarkerTileEntity.MarkerType.SPLAT_ZONE)
+			{
+				StageMarkerBlock.updateSplatZoneMap(stageMarker);
+			}
+		}
+	}
+	private static void onChunkUnload(ChunkEvent.Unload event)
+	{
+		for (BlockPos pos : event.getChunk().getBlockEntitiesPos())
+		{
+			if (event.getChunk().getBlockEntity(pos) instanceof StageMarkerTileEntity stageMarker && stageMarker.getMarkerType() == StageMarkerTileEntity.MarkerType.SPLAT_ZONE)
+			{
+				StageMarkerBlock.removeMarker(stageMarker);
+			}
+		}
 	}
 	private static void onMobDrops(LivingDropsEvent event)
 	{

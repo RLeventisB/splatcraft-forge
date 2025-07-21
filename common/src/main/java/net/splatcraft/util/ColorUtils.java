@@ -27,7 +27,7 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.client.particles.InkTerrainParticleData;
-import net.splatcraft.data.InkColorGroups;
+import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.entities.IColoredEntity;
@@ -79,8 +79,9 @@ public class ColorUtils
 	}
 	public static void setPlayerColor(Player player, InkColor color, boolean updateClient)
 	{
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
-		if (info.getColor() != color)
+		boolean didntHave = !Components.ENTITY_INFO.has(player);
+		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player, () -> new EntityInfo(color));
+		if (info.getColor() != color || didntHave)
 		{
 			if (player instanceof ServerPlayer serverPlayer)
 				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.value().trigger(serverPlayer);
@@ -205,7 +206,7 @@ public class ColorUtils
 			items.add(withInvertedColor(withColorLocked(item.asItem().getDefaultInstance(), false), true));
 		
 		if (starter)
-			for (InkColor color : getGetStarterColors())
+			for (InkColor color : getStarterColors())
 				items.add(withColorLocked(withInkColor(item.asItem().getDefaultInstance(), color), true));
 		
 		return items;
@@ -314,7 +315,7 @@ public class ColorUtils
 	}
 	public static InkColor getRandomStarterColor()
 	{
-		return InkColorGroups.STARTER_COLORS.getRandom(random);
+		return InkColorGroup.getGroup(InkColorGroup.STARTER_COLORS).get().getRandomColor(random);
 	}
 	public static void addInkSplashParticle(Level world, LivingEntity source, float size)
 	{
@@ -401,38 +402,38 @@ public class ColorUtils
 	}
 	public static InkColor getOrange()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("orange"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("orange")).get();
 	}
 	public static InkColor getBlue()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("blue"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("blue")).get();
 	}
 	public static InkColor getGreen()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("green"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("green")).get();
 	}
 	public static InkColor getPink()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("pink"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("pink")).get();
 	}
 	public static InkColor getDefaultColor()
 	{
 		if (InkColorRegistry.REGISTRY.isEmpty())
 			return new InkColor(0x1F1F2D);
 		
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("default"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("default")).get();
 	}
 	public static InkColor getColorLockFriendly()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("color_lock_friendly"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("color_lock_friendly")).get();
 	}
 	public static InkColor getColorLockHostile()
 	{
-		return InkColorRegistry.getInkColorByAlias(Splatcraft.identifierOf("color_lock_hostile"));
+		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("color_lock_hostile")).get();
 	}
-	public static Collection<InkColor> getGetStarterColors()
+	public static Collection<InkColor> getStarterColors()
 	{
-		return InkColorGroups.STARTER_COLORS.getAll();
+		return InkColorGroup.getGroup(InkColorGroup.STARTER_COLORS).get().getColors();
 	}
 	public interface ColoredBlockConsumer
 	{

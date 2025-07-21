@@ -12,6 +12,7 @@ import net.splatcraft.client.gui.stagepad.AbstractStagePadScreen;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,8 @@ public class UpdateStageListPacket extends PlayS2CPacket
 	@Override
 	public void execute()
 	{
-		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.playSessions(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(stages), SaveInfoCapability.clientSaveInfo.colorScores());
+		SaveInfoCapability.clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(stages), SaveInfoCapability.clientSaveInfo.playSessions(), SaveInfoCapability.clientSaveInfo.colorScores());
+		ClientUtils.matchStartCameraPosProvider.reset();
 		
 		if (Minecraft.getInstance().screen instanceof AbstractStagePadScreen stagePadScreen)
 			stagePadScreen.onStagesUpdate();

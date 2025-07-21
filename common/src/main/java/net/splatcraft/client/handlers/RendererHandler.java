@@ -19,8 +19,10 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -37,6 +39,8 @@ import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.renderer.InkSquidRenderer;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.SplatcraftTags;
+import net.splatcraft.data.Stage;
+import net.splatcraft.data.StageGameMode;
 import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
@@ -59,6 +63,7 @@ import net.splatcraft.platform.event.CompoundEventResult;
 import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.registries.SplatcraftComponents;
+import net.splatcraft.tileentities.StageMarkerTileEntity;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
@@ -67,11 +72,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
@@ -293,9 +296,17 @@ public class RendererHandler
 		
 		if (info.isPlaying())
 		{
-			renderMatchGui(graphics, tickDelta, width, height, info, matrixStack);
+			renderMatchGui(graphics, tickDelta, width, height, info.getPlayingStageId(), info, matrixStack);
 		}
-		
+		else
+		{
+			ArrayList<Stage> stagesInPos = Stage.getStagesForPosition(player.level(), player.position());
+			stagesInPos.removeIf(v -> !SaveInfoCapability.get().playSessions().containsKey(v.id));
+			if (!stagesInPos.isEmpty())
+			{
+				renderMatchGui(graphics, tickDelta, width, height, stagesInPos.getFirst().id, info, matrixStack);
+			}
+		}
 		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 		boolean showCrosshairInkIndicator = inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
 		boolean isHoldingMatchItem = player.getMainHandItem().is(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffhandItem().is(SplatcraftTags.Items.MATCH_ITEMS);
@@ -396,17 +407,17 @@ public class RendererHandler
 			squidTime = 0;
 		}
 	}
-	private static void renderMatchGui(GuiGraphics graphics, float tickDelta, int width, int height, EntityInfo info, PoseStack matrixStack)
+	private static void renderMatchGui(GuiGraphics graphics, float tickDelta, int width, int height, String stageId, EntityInfo info, PoseStack matrixStack)
 	{
 		SaveInfo saveInfo = SaveInfoCapability.get();
-		PlaySession session = saveInfo.playSessions().get(info.getPlayingStageId());
-		Instant now = Instant.now();
-		if (session != null && now.isAfter(session.getMatchStartInstant()))
+		PlaySession session = saveInfo.playSessions().get(stageId);
+		float nowSeconds = (ClientUtils.getClient().level.getGameTime() + tickDelta) / 20f;
+		if (session != null && nowSeconds > session.getMatchStartTime() / 20f)
 		{
 			Minecraft mc = Minecraft.getInstance();
 			Font textRenderer = mc.font;
 			matrixStack.pushPose();
-			renderMatchTopLabels(graphics, width, now, session, textRenderer);
+			renderMatchTopLabels(graphics, width, nowSeconds, session, textRenderer);
 			
 			if (info.isMatchRespawning())
 			{
@@ -422,9 +433,9 @@ public class RendererHandler
 			matrixStack.popPose();
 		}
 	}
-	private static void renderMatchTopLabels(GuiGraphics graphics, int width, Instant now, PlaySession session, Font textRenderer)
+	private static void renderMatchTopLabels(GuiGraphics graphics, int width, float now, PlaySession session, Font font)
 	{
-		int seconds = (int) Math.max(0, now.until(session.getMatchEndInstant(), ChronoUnit.SECONDS));
+		int seconds = (int) Math.max(0, session.getMatchEndTime() / 20f - now);
 		int minutes = seconds / 60;
 		
 		String[] topLabels = new String[]
@@ -433,15 +444,99 @@ public class RendererHandler
 				session.gameMode.name(),
 				minutes + ":" + Strings.padStart(Integer.toString(seconds % 60), 2, '0')
 			};
+		
+		float overtimeProgress = session.gameMode.overtimeChecker.test(session, ClientUtils.getClient().level);
+		if (seconds == 0 && overtimeProgress != 0)
+		{
+			int overtimeColor = StageGameMode.getActiveColor(session.getMarkers(true)).map(v -> v.getColorWithAlpha(255))
+				.orElse(0xFFACACAC);
+			int splitX = width / 2 + 26 - (int) (52 * overtimeProgress);
+			graphics.fill(width / 2 - 26, 29, splitX, 39, 0xFF555555);
+			graphics.fill(splitX, 29, width / 2 + 26, 39, overtimeColor);
+			
+			topLabels[2] = "Overtime!";
+		}
 		for (int i = 0; i < 3; i++)
 		{
 			String currentLabel = topLabels[i];
 			if (i == 2 && minutes <= 0)
 			{
-				graphics.drawString(textRenderer, Component.literal(currentLabel).withStyle(seconds < 10 ? ChatFormatting.RED : ChatFormatting.YELLOW), width / 2 - textRenderer.width(currentLabel) / 2, 10 + 10 * i, -1, true);
+				graphics.drawCenteredString(font, Component.literal(currentLabel).withStyle(seconds < 10 ? ChatFormatting.RED : ChatFormatting.YELLOW), width / 2, 10 + 10 * i, -1);
 				continue;
 			}
-			graphics.drawString(textRenderer, currentLabel, width / 2 - textRenderer.width(currentLabel) / 2, 10 + 10 * i, -1, true);
+			graphics.drawCenteredString(font, currentLabel, width / 2, 10 + 10 * i, -1);
+		}
+		
+		switch (session.gameMode)
+		{
+			case SPLAT_ZONES:
+				List<StageMarkerTileEntity> markers = session.getMarkers(true);
+				if (markers.isEmpty())
+					return;
+				
+				final int zonesWidth = 20 + 20 / markers.size();
+				int padding = 10;
+				int y = 45;
+				if (markers.size() == 1)
+				{
+					int color = markers.getFirst().getCurrentColor().map(v -> v.getColorWithAlpha(255)).orElse(0xFFDDDDDD);
+					graphics.fill(width / 2 - zonesWidth / 2, y, width / 2 + zonesWidth / 2, y + padding, color);
+				}
+				else
+				{
+					float halfSize = (markers.size() - 1) / 2f;
+					for (int i = 0; i < markers.size(); i++)
+					{
+						int color = markers.get(i).getCurrentColor().map(v -> v.getColorWithAlpha(255)).orElse(0xFFDDDDDD);
+						int x = width / 2 + (int) ((i - halfSize) * (zonesWidth + padding));
+						graphics.fill(x - zonesWidth / 2, y, x + zonesWidth / 2, y + padding, color);
+					}
+				}
+				
+				Stage stage = Stage.getStage(session.stageId);
+				List<InkColor> teamColors = stage.getTeamIds().stream().map(stage::getTeamColor).toList();
+				
+				final int backgroundWidthHalf = 30 / 2;
+				final int backgroundHeightHalf = 25 / 2;
+				padding = 60;
+				y = 70;
+				if (teamColors.size() == 1) // what are you doing
+				{
+					drawTeamCounter(teamColors.getFirst(), session, graphics, width / 2, y, backgroundWidthHalf, backgroundHeightHalf, font);
+				}
+				else
+				{
+					float halfSize = (teamColors.size() - 1) / 2f;
+					for (int i = 0; i < teamColors.size(); i++)
+					{
+						int x = width / 2 + (int) ((i - halfSize) * (padding));
+						drawTeamCounter(teamColors.get(i), session, graphics, x, y, backgroundWidthHalf, backgroundHeightHalf, font);
+					}
+				}
+				
+				break;
+		}
+	}
+	private static void drawTeamCounter(InkColor teamColor, PlaySession session, GuiGraphics graphics, int x, int y, int backgroundWidthHalf, int backgroundHeightHalf, Font font)
+	{
+		int[] colorValues = teamColor.getRGBInts();
+		float[] hslValues = new float[3];
+		Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
+		hslValues[2] = Mth.lerp(0.7f, hslValues[2], 1);
+		hslValues[1] = Mth.lerp(0.5f, hslValues[1], 0);
+		int color = FastColor.ARGB32.color(128, Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]));
+		
+		PlaySession.TeamScore score = session.scores.get(teamColor);
+		
+		graphics.fill(x - backgroundWidthHalf, y - backgroundHeightHalf, x + backgroundWidthHalf, y + backgroundHeightHalf, color);
+		
+		graphics.drawCenteredString(font, String.valueOf(score.score() / 12), x, y - 8, -1);
+		if (score.penalty() > 0)
+		{
+			graphics.pose().pushPose();
+			graphics.pose().scale(0.8f, 0.8f, 0.8f);
+			graphics.drawCenteredString(font, "+" + score.penalty() / 12, (int) (x / 0.8f), (int) ((y + 4) / 0.8f), 0xFFACACAC);
+			graphics.pose().popPose();
 		}
 	}
 	private static void renderDeviationGui(GuiGraphics graphics, float frameTime, int width, int height, WeaponBaseItem<?> weaponBaseItem, PoseStack matrixStack, LocalPlayer player, float[] playerColor)

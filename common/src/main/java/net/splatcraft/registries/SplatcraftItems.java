@@ -191,6 +191,7 @@ public class SplatcraftItems
 	public static final RegistrySupplier<Item> deniedColorBarrier = REGISTRY.register("denied_color_barrier", () -> new ColoredBlockItem(SplatcraftBlocks.deniedColorBarrier.value()));
 	public static final RegistrySupplier<Item> stageBarrier = REGISTRY.register("stage_barrier", () -> new BlockItem(SplatcraftBlocks.stageBarrier.value()));
 	public static final RegistrySupplier<Item> stageVoid = REGISTRY.register("stage_void", () -> new BlockItem(SplatcraftBlocks.stageVoid.value()));
+	public static final RegistrySupplier<Item> stageMarker = REGISTRY.register("stage_marker", () -> new BlockItem(SplatcraftBlocks.stageMarker.value()));
 	//Gear
 	public static final RegistrySupplier<Item> splatfestBand = REGISTRY.register("splatfest_band", () -> new Item(new Item.Properties().stacksTo(1)));
 	public static final RegistrySupplier<Item> clearBand = REGISTRY.register("clear_ink_band", () -> new Item(new Item.Properties().stacksTo(1)));

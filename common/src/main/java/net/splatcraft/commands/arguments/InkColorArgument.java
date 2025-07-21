@@ -40,10 +40,20 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	{
 		final int start = reader.getCursor();
 		
-		String string = reader.getString();
+		try
+		{
+			ResourceLocation colorAlias = ResourceLocation.read(reader);
+			return InkColorRegistry.getColorByAliasOrHex(colorAlias.toString()).orElseThrow(() ->
+				COLOR_NOT_FOUND.create(colorAlias.toString()));
+		}
+		catch (Exception ignored)
+		{
+		
+		}
+		reader.setCursor(start);
+		String string = reader.readString();
 		return InkColorRegistry.getColorByAliasOrHex(string).orElseThrow(() ->
 		{
-			reader.setCursor(start);
 			return COLOR_NOT_FOUND.create(string);
 		});
 	}

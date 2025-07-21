@@ -25,6 +25,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.blocks.StageMarkerBlock;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
 import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
 import net.splatcraft.items.BlockItem;
@@ -39,6 +40,7 @@ import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.InteractionEvents;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftGameRules;
+import net.splatcraft.tileentities.StageMarkerTileEntity;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.RelativeBlockPos;
@@ -107,6 +109,13 @@ public class ChunkInkHandler
 	public static EventResult onBlockBreak(Player player, LevelAccessor level, BlockPos pos, BlockState state)
 	{
 		InkBlockUtils.clearBlock((Level) level, pos, true);
+		if (!level.isClientSide())
+		{
+			for (StageMarkerTileEntity marker : StageMarkerBlock.getZonesThatContainPos(level, pos))
+			{
+				marker.notifyChange();
+			}
+		}
 		return EventResult.pass();
 	}
 	private static void checkForInkRemoval(Level world, BlockPos pos, Direction[] directionsToCheck)
@@ -179,6 +188,13 @@ public class ChunkInkHandler
 				ChunkPos pos = chunkPackets.getKey();
 				LevelChunk chunk = levelPackets.getKey().getChunk(pos.x, pos.z);
 				chunk.setUnsaved(true);
+				
+				List<StageMarkerTileEntity> splatZonesInPos = StageMarkerBlock.getMarkersInChunkPos(world, pos);
+				for (StageMarkerTileEntity marker : splatZonesInPos)
+				{
+					marker.tickZone();
+				}
+				
 				for (var packet : chunkPackets.getValue())
 				{
 					SplatcraftPacketHandler.sendToTrackers(packet, chunk);

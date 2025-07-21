@@ -45,7 +45,7 @@ public class SendPlaySessionCreationPacket extends PlayS2CPacket
 	{
 		Object2ObjectOpenHashMap<String, PlaySession> map = new Object2ObjectOpenHashMap<>(SaveInfoCapability.clientSaveInfo.playSessions());
 		map.put(session.stageId, session);
-		SaveInfoCapability.clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.stages(), SaveInfoCapability.clientSaveInfo.colorScores());
+		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.stages(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.colorScores());
 		ClientUtils.matchStartCameraPosProvider.reset();
 		if (session.playerUuids.contains(ClientUtils.getClientPlayer().getUUID()))
 		{

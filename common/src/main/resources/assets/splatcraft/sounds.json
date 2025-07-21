@@ -332,6 +332,36 @@
             "splatcraft:special_use"
         ]
     },
+    "ranked_advantage": {
+        "subtitle": "subtitle.ranked_advantage",
+        "sounds": [
+            "splatcraft:ranked_advantage"
+        ]
+    },
+    "ranked_neutral": {
+        "subtitle": "subtitle.ranked_neutral",
+        "sounds": [
+            "splatcraft:ranked_neutral"
+        ]
+    },
+    "ranked_disadvantage": {
+        "subtitle": "subtitle.ranked_disadvantage",
+        "sounds": [
+            "splatcraft:ranked_disadvantage"
+        ]
+    },
+    "ranked_lead": {
+        "subtitle": "subtitle.ranked_lead",
+        "sounds": [
+            "splatcraft:ranked_lead"
+        ]
+    },
+    "ranked_checkpoint_passed": {
+        "subtitle": "subtitle.ranked_checkpoint_passed",
+        "sounds": [
+            "splatcraft:ranked_checkpoint_passed"
+        ]
+    },
     "sting_ray_prepare": {
         "subtitle": "subtitle.sting_ray_prepare",
         "sounds": [

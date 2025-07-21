@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -25,10 +26,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.structs.InkColor;
 import org.joml.Vector2f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,8 +42,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 public class MatchMixins
@@ -234,6 +236,31 @@ public class MatchMixins
 				}
 			});
 		}
+		@Inject(method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IF)V", at = @At("HEAD"), cancellable = true)
+		public void splatcraft$hideEnemyTeamNametag(AbstractClientPlayer entity, Component displayName, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, float partialTick, CallbackInfo ci)
+		{
+			LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
+			// if the client player, for some reason, renders their own name tag, or isnt playing, then do not cancel rendering
+			if (entity == clientPlayer || !Components.ENTITY_INFO.hasAnd(clientPlayer, EntityInfo::isPlaying))
+				return;
+			
+			InkColor clientColor = ColorUtils.getEntityColor(clientPlayer);
+			InkColor entityColor = ColorUtils.getEntityColor(entity);
+			
+			// if the player isnt in a match or has the same color, do not cancel rendering
+			if (!Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isPlaying) || clientColor.equals(entityColor))
+				return;
+			
+			// if the player killed the client player, do not cancel rendering
+			if (ClientUtils.killCamData != null && entity.getUUID().equals(ClientUtils.killCamData.getFirst()))
+				return;
+			
+			// if the player is dead (in a match), do not cancel rendering
+			if (Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isMatchRespawning))
+				return;
+			
+			ci.cancel();
+		}
 		@Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelHeldItemRenderIfDead(PoseStack matrices, MultiBufferSource vertexConsumers, int light, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve, CallbackInfo ci)
 		{
@@ -277,14 +304,14 @@ public class MatchMixins
 					SaveInfo saveInfo = SaveInfoCapability.get();
 					PlaySession session = saveInfo.playSessions().get(info.getPlayingStageId());
 					Stage stage = saveInfo.stages().get(info.getPlayingStageId());
-					Instant now = Instant.now();
+					float nowSeconds = (player.level().getGameTime() + tickDelta) / 20f;
 					if (session != null)
 					{
-						float secondsBeforeStart = now.until(session.getMatchStartInstant(), ChronoUnit.MILLIS) / 1000f;
+						float secondsBeforeStart = session.getMatchStartTime() / 20f - nowSeconds;
 						ClientUtils.MatchCameraPositions cameraPositions = ClientUtils.getMatchIntroData(stage);
 						if (secondsBeforeStart > 0)
 						{
-							float secondsAfterInit = PlaySession.INTRO_DURATION.getSeconds() - secondsBeforeStart;
+							float secondsAfterInit = PlaySession.INTRO_DURATION / 20f - secondsBeforeStart;
 							if (secondsAfterInit < 5)
 							{
 								ClientUtils.CameraPosition finalPos = ClientUtils.CameraPosition.lerp(
@@ -299,20 +326,27 @@ public class MatchMixins
 							}
 							if (secondsAfterInit < 12)
 							{
-								int i = (int) ((secondsAfterInit - 5f) / 7f * cameraPositions.spawnPads().size());
-								ClientUtils.CameraPosition lookData = cameraPositions.spawnPads().get(i);
-								lookData.applyTransformations(this::setPosition, this::setRotation);
-								
-								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
-								return;
+								if (cameraPositions.spawnPads().isEmpty()) // youre not supposed to be empty, why are you empty when rejoining an match.
+								{
+									ClientUtils.matchStartCameraPosProvider.reset();
+								}
+								else
+								{
+									int i = (int) ((secondsAfterInit - 5f) / 7f * cameraPositions.spawnPads().size());
+									ClientUtils.CameraPosition lookData = cameraPositions.spawnPads().get(i);
+									lookData.applyTransformations(this::setPosition, this::setRotation);
+									
+									splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
+									return;
+								}
 							}
 						}
 						else
 						{
-							float secondsAfterEnd = session.getMatchEndInstant().until(now, ChronoUnit.MILLIS) / 1000f;
-							if (secondsAfterEnd > 0)
+							float secondsAfterEnd = nowSeconds - session.getMatchEndTime() / 20f;
+							if (session.hasEnded() && secondsAfterEnd > 0)
 							{
-								float delta = Math.min(1f, secondsAfterEnd / Math.min(PlaySession.END_DURATION.getSeconds(), 2));
+								float delta = Math.min(1f, secondsAfterEnd / Math.min(PlaySession.END_DURATION / 20f, 2));
 								ClientUtils.CameraPosition finalPos = ClientUtils.CameraPosition.lerp(
 									ClientUtils.CameraPosition.from(player), cameraPositions.birdsEye(),
 									// Mth.catmullrom(delta, -1, 0, 1, 0)
@@ -329,7 +363,7 @@ public class MatchMixins
 							Player killerPlayer = focusedEntity.level().getPlayerByUUID(killCamData.getFirst());
 							if (killerPlayer != null)
 							{
-								float killProgress = 1f - Math.max(info.getMatchRespawnTimeLeft() - 55 - partialTickTime, 0) / 5f;
+								float killProgress = 1f - Math.max(info.getMatchRespawnTimeLeft() - 55 - tickDelta, 0) / 5f;
 								Vector2f killCamRotData = killCamData.getSecond();
 								
 								ClientUtils.CameraPosition killCam = new ClientUtils.CameraPosition(

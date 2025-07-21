@@ -10,11 +10,13 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
-import net.splatcraft.util.*;
+import net.splatcraft.util.CodecUtils;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.EntityStoredCharge;
+import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.InkColor;
 
-import java.time.Instant;
 import java.util.Optional;
 
 public class EntityInfo
@@ -291,10 +293,10 @@ public class EntityInfo
 			PlaySession session = SaveInfoCapability.get().playSessions().get(getPlayingStageId());
 			if (session != null && session.playerUuids.contains(entity.getUUID()))
 			{
-				Instant now = Instant.now();
-				if (now.isBefore(session.getMatchStartInstant()))
+				long now = entity.level().getGameTime();
+				if (now < session.getMatchStartTime())
 					return MatchState.INTRO;
-				else if (now.isAfter(session.getMatchEndInstant()))
+				else if (now > session.getMatchEndTime() && session.hasEnded())
 					return MatchState.SEEING_RESULTS;
 				else if (isMatchRespawning())
 					return MatchState.RESPAWNING;

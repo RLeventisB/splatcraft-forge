@@ -1,6 +1,8 @@
 package net.splatcraft.util;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.ByteBuf;
@@ -13,6 +15,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
@@ -46,6 +49,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
@@ -56,6 +60,7 @@ import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
+import net.splatcraft.mixin.accessors.VoxelShapeAccessor;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
@@ -67,13 +72,12 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class CommonUtils
 {
@@ -209,6 +213,32 @@ public class CommonUtils
 		
 		return ItemStack.EMPTY;
 	}
+	public static List<ItemStack> getItemsInInventory(LivingEntity entity, Predicate<ItemStack> predicate)
+	{
+		ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+		if (predicate.test(entity.getItemInHand(InteractionHand.OFF_HAND)))
+		{
+			builder.add(entity.getItemInHand(InteractionHand.OFF_HAND));
+		}
+		if (predicate.test(entity.getItemInHand(InteractionHand.MAIN_HAND)))
+		{
+			builder.add(entity.getItemInHand(InteractionHand.MAIN_HAND));
+		}
+		
+		if (entity instanceof Player player)
+		{
+			Inventory inventory = player.getInventory();
+			for (int i = 0; i < inventory.getContainerSize(); ++i)
+			{
+				ItemStack stack = inventory.getItem(i);
+				if (predicate.test(stack))
+					builder.add(stack);
+			}
+		}
+		
+		return builder.build();
+	}
+	
 	// horrible redaction incoming
 	/**
 	 * Finds and returns an specific {@link ItemStack} and their respective index that are from the entity's inventory.
@@ -504,6 +534,150 @@ public class CommonUtils
 	public static <O> ReseteableMemoizedSupplier<O> memoizeResetable(Supplier<O> supplier)
 	{
 		return new ReseteableMemoizedSupplier<>(supplier);
+	}
+	public static List<VoxelShape> createShapes(BlockGetter getter, Collection<BlockPos> blocks, BlockPos localZero)
+	{
+		if (blocks.isEmpty())
+			return List.of();
+		
+		// ew
+		final Vec3i[] offsets = new Vec3i[] {
+			new Vec3i(0, 1, 0),
+			new Vec3i(-1, 0, 0),
+			new Vec3i(0, 0, 1),
+			new Vec3i(0, 0, -1),
+			new Vec3i(1, 0, 0),
+			new Vec3i(0, -1, 0),
+			new Vec3i(0, 1, 1),
+			new Vec3i(0, 1, -1),
+			new Vec3i(1, 1, 0),
+			new Vec3i(0, -1, 1),
+			new Vec3i(0, -1, -1),
+			new Vec3i(-1, 1, 0),
+			new Vec3i(1, 0, 1),
+			new Vec3i(-1, 0, 1),
+			new Vec3i(-1, 0, -1),
+			new Vec3i(-1, -1, 0),
+			new Vec3i(1, 0, -1),
+			new Vec3i(1, -1, 0),
+			new Vec3i(1, 1, -1),
+			new Vec3i(-1, -1, -1),
+			new Vec3i(1, -1, -1),
+			new Vec3i(-1, 1, 1),
+			new Vec3i(-1, 1, -1),
+			new Vec3i(-1, -1, 1),
+			new Vec3i(1, -1, 1),
+			new Vec3i(1, 1, 1)
+		};
+		
+		HashMap<BlockPos, VoxelShape> shapes = blocks.stream().map(v ->
+		{
+			BlockPos localPos = v.subtract(localZero);
+			VoxelShape shape = getter.getBlockState(v).getVisualShape(getter, v, CollisionContext.empty());
+			if (shape.isEmpty())
+				return null;
+			
+			DiscreteVoxelShape bounds = ((VoxelShapeAccessor) shape).getShape();
+			if (bounds.getXSize() < 1 || bounds.getZSize() < 1)
+			{
+				return null;
+			}
+			return Map.entry(localPos, shape.move(localPos.getX(), localPos.getY(), localPos.getZ()).optimize());
+		}).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x, HashMap::new));
+		
+		ImmutableList.Builder<VoxelShape> builder = ImmutableList.builder();
+		
+		while (!shapes.isEmpty())
+		{
+			Map.Entry<BlockPos, VoxelShape> firstEntry = Iterables.getFirst(shapes.entrySet(), null);
+			final VoxelShape[] currentShape = {firstEntry.getValue()};
+			while (true)
+			{
+				// TODO: optimize this correctly pls i cannot do Breadth-first search without processing the same block twice
+				boolean joined = false;
+				List<Map.Entry<BlockPos, VoxelShape>> shapesToAdd = new ArrayList<>();
+				for (Map.Entry<BlockPos, VoxelShape> entry : shapes.entrySet())
+				{
+					if (shapesCollide(currentShape[0], entry.getValue()))
+					{
+						shapesToAdd.add(entry);
+						joined = true;
+					}
+				}
+				
+				shapesToAdd.forEach(v ->
+				{
+					currentShape[0] = Shapes.joinUnoptimized(currentShape[0], v.getValue(), BooleanOp.OR);
+					shapes.remove(v.getKey());
+				});
+				shapesToAdd.clear();
+				
+				if (!joined)
+					break;
+			}
+			
+/*
+			while (true)
+			{
+				boolean searchingAdjacent = true;
+				
+				for (Vec3i offset : offsets)
+				{
+					BlockPos newPos = cursor.offset(offset);
+					
+					if (!shapes.containsKey(newPos))
+						continue;
+					
+					VoxelShape otherShape = shapes.get(newPos);
+					
+					if (shapesCollide(currentShape, otherShape))
+					{
+						currentShape = Shapes.join(currentShape, otherShape, BooleanOp.OR);
+						
+						cursor = newPos;
+						searchingAdjacent = false;
+					}
+				}
+				if (counter == 10)
+				{
+//					currentShape = currentShape.optimize();
+					counter = -1;
+				}
+				
+				counter++;
+				
+				if (searchingAdjacent)
+					break;
+			}
+*/
+			
+			builder.add(currentShape[0].optimize().optimize());
+		}
+		
+		return builder.build();
+	}
+	private static boolean shapesCollide(VoxelShape shape1, VoxelShape shape2)
+	{
+		AtomicBoolean result = new AtomicBoolean(false);
+		
+		shape1.forAllBoxes((x1, y1, z1, x2, y2, z2) ->
+		{
+			if (result.get())
+				return;
+			
+			shape2.forAllBoxes((x3, y3, z3, x4, y4, z4) ->
+			{
+				if (result.get())
+					return;
+				
+				double tolerance = 10e-5;
+				
+				if (x1 - x4 <= tolerance && x2 - x3 >= -tolerance && y1 - y4 <= tolerance && y2 - y3 >= -tolerance && z1 - z4 <= tolerance && z2 - z3 >= -tolerance)
+					result.set(true);
+			});
+		});
+		
+		return result.get();
 	}
 	public record Result(float delay, float value)
 	{

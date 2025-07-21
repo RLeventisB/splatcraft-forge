@@ -72,8 +72,6 @@ public final class Splatcraft
 	{
 		SplatcraftGameRules.booleanRules.replaceAll((k, v) -> server.getGameRules().getBoolean(SplatcraftGameRules.getRuleFromIndex(k)));
 		SplatcraftGameRules.intRules.replaceAll((k, v) -> server.getGameRules().getInt(SplatcraftGameRules.getRuleFromIndex(k)));
-		
-		SplatcraftItems.postRegister();
 	}
 	public static <T> DeferredRegister<T> deferredRegistryOf(Registry<T> registry)
 	{
@@ -86,5 +84,6 @@ public final class Splatcraft
 	public static void initClientAfter(Minecraft client)
 	{
 		SplatcraftItems.registerModelProperties();
+		SplatcraftItems.postRegister();
 	}
 }

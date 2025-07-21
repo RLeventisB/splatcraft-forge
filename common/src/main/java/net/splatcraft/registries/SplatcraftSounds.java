@@ -71,6 +71,11 @@ public class SplatcraftSounds
 	public static SoundType SOUND_TYPE_SWIMMING;
 	public static SoundEvent superjumpStart;
 	public static SoundEvent superjumpLand;
+	public static SoundEvent rankedAdvantage;
+	public static SoundEvent rankedNeutral;
+	public static SoundEvent rankedDisadvantage;
+	public static SoundEvent rankedLead;
+	public static SoundEvent rankedCheckpointPassed;
 	static
 	{
 		inkedBlockBreak = createSoundEvent("block.inked_block.break");
@@ -126,6 +131,12 @@ public class SplatcraftSounds
 		
 		specialReady = createSoundEvent("special_ready");
 		specialUsage = createSoundEvent("special_use");
+		
+		rankedAdvantage = createSoundEvent("ranked_advantage");
+		rankedNeutral = createSoundEvent("ranked_neutral");
+		rankedDisadvantage = createSoundEvent("ranked_disadvantage");
+		rankedLead = createSoundEvent("ranked_lead");
+		rankedCheckpointPassed = createSoundEvent("ranked_checkpoint_passed");
 		
 		stingRayStart = createSoundEvent("sting_ray_prepare");
 		stingRayBeamUse = createSoundEvent("sting_ray_loop");

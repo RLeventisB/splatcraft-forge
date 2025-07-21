@@ -36,6 +36,7 @@ public class SendPlayerRespawnMatchPacket extends PlayS2CPacket
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
+		ClientUtils.killCamData = null;
 		
 		info.setMatchRespawnTimeLeft(0);
 		info.setIsMatchRespawning(false);

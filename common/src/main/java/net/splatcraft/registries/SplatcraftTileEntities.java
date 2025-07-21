@@ -14,6 +14,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.renderer.tileentity.RemotePedestalTileEntityRenderer;
 import net.splatcraft.client.renderer.tileentity.StageBarrierTileEntityRenderer;
+import net.splatcraft.client.renderer.tileentity.StageMarkerTileEntityRenderer;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
@@ -48,12 +49,14 @@ public class SplatcraftTileEntities
 	public static void bindTESR()
 	{
 		Services.PLATFORM.registerBlockEntityRenderer(stageBarrierTileEntity, StageBarrierTileEntityRenderer::new);
+		Services.PLATFORM.registerBlockEntityRenderer(stageMarketTileEntity, StageMarkerTileEntityRenderer::new);
 		Services.PLATFORM.registerBlockEntityRenderer(colorBarrierTileEntity, context -> (BlockEntityRenderer<ColoredBarrierTileEntity>) (Object) new StageBarrierTileEntityRenderer(context));
 		Services.PLATFORM.registerBlockEntityRenderer(remotePedestalTileEntity, context -> new RemotePedestalTileEntityRenderer());
 	}
 	public static final RegistrySupplier<MenuType<InkVatContainer>> inkVatContainer = registerContainer("ink_vat", InkVatContainer::new);
 	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);
 	public static final RegistrySupplier<BlockEntityType<StageBarrierTileEntity>> stageBarrierTileEntity = registerTileEntity("stage_barrier", StageBarrierTileEntity::new, stageBarrier, stageVoid);
+	public static final RegistrySupplier<BlockEntityType<StageMarkerTileEntity>> stageMarketTileEntity = registerTileEntity("stage_marker", StageMarkerTileEntity::new, stageMarker);
 	public static final RegistrySupplier<BlockEntityType<InkColorTileEntity>> colorTileEntity = registerTileEntity("color", InkColorTileEntity::new, inkedWool, inkedGlass, inkedGlassPane, inkedCarpet, canvas, splatSwitch, inkwell);
 	public static final RegistrySupplier<BlockEntityType<InkVatTileEntity>> inkVatTileEntity = registerTileEntity("ink_vat", InkVatTileEntity::new, inkVat);
 	public static final RegistrySupplier<BlockEntityType<RemotePedestalTileEntity>> remotePedestalTileEntity = registerTileEntity("remote_pedestal", RemotePedestalTileEntity::new, remotePedestal);

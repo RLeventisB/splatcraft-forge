@@ -56,6 +56,7 @@ public class SplatcraftBlocks
 	public static final RegistrySupplier<Block> glassCover = REGISTRY.register("glass_cover", TarpBlock.Seethrough::new);
 	public static final RegistrySupplier<Block> stageBarrier = REGISTRY.register("stage_barrier", () -> new StageBarrierBlock(false));
 	public static final RegistrySupplier<Block> stageVoid = REGISTRY.register("stage_void", () -> new StageBarrierBlock(true));
+	public static final RegistrySupplier<Block> stageMarker = REGISTRY.register("stage_marker", StageMarkerBlock::new);
 	public static final RegistrySupplier<Block> allowedColorBarrier = REGISTRY.register("allowed_color_barrier", () -> new ColoredBarrierBlock(false));
 	public static final RegistrySupplier<Block> deniedColorBarrier = REGISTRY.register("denied_color_barrier", () -> new ColoredBarrierBlock(true));
 	public static boolean noRedstoneConduct(BlockState state, BlockGetter getter, BlockPos pos)

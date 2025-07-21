@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -316,6 +317,7 @@ public class Stage implements Comparable<Stage>
 			return false;
 		
 		PlaySession playSession = new PlaySession(players, this, gameMode);
+		playSession.gameMode.onStart.consume(playSession, getStageWorld(server));
 		saveInfo.playSessions().put(id, playSession);
 		SplatcraftPacketHandler.sendToAll(new SendPlaySessionCreationPacket(playSession));
 		return true;

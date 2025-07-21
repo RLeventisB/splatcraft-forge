@@ -23,7 +23,8 @@
         "accessors.EntityAccessor",
         "accessors.GameRuleAccessor",
         "accessors.LivingEntityAccesor",
-        "accessors.ServerPlayerAccesor"
+        "accessors.ServerPlayerAccesor",
+        "accessors.VoxelShapeAccessor"
     ],
     "client": [
         "CooldownSlotMixin$MinecraftPart",
