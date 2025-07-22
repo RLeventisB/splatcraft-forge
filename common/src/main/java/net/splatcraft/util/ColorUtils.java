@@ -8,6 +8,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,8 +46,11 @@ import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.InkColorTranslatableContents;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 public class ColorUtils
 {
@@ -300,6 +304,43 @@ public class ColorUtils
 	public static boolean isColorLocked(ItemStack stack)
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::colorLocked, false);
+	}
+	public static int makeBrighter(InkColor color)
+	{
+		return makeBrighter(color, 0.5f, 0.9f);
+	}
+	public static int makeBrighter(InkColor color, float desaturationDelta, float brightnessDelta)
+	{
+		return makeBrighter(color.getColorWithAlpha(255), desaturationDelta, brightnessDelta);
+	}
+	public static int makeBrighter(int color, float desaturationDelta, float brightnessDelta)
+	{
+		return applyHSBOperators(color,
+			v -> v,
+			v -> Mth.clamp(Mth.lerp(desaturationDelta, v, 0), 0, 1),
+			v -> Mth.clamp(Mth.lerp(brightnessDelta, v, 1), 0, 1)
+		);
+	}
+	public static int applyHSBOperators(InkColor color,
+	                                    UnaryOperator<Float> hueOperator,
+	                                    UnaryOperator<Float> saturationOperator,
+	                                    UnaryOperator<Float> brightnessOperator
+	)
+	{
+		return applyHSBOperators(color.getColor(), hueOperator, saturationOperator, brightnessOperator);
+	}
+	public static int applyHSBOperators(int color,
+	                                    UnaryOperator<Float> hueOperator,
+	                                    UnaryOperator<Float> saturationOperator,
+	                                    UnaryOperator<Float> brightnessOperator
+	)
+	{
+		float[] hslValues = new float[3];
+		Color.RGBtoHSB(FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), hslValues);
+		hslValues[0] = hueOperator.apply(hslValues[0]);
+		hslValues[1] = saturationOperator.apply(hslValues[1]);
+		hslValues[2] = brightnessOperator.apply(hslValues[2]);
+		return FastColor.ARGB32.color(FastColor.ARGB32.alpha(color), Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]));
 	}
 	public static float[] hexToRGB(int color)
 	{

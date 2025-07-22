@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.projectiles.BlasterInkProjectileModel;
@@ -21,7 +20,6 @@ import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.TreeMap;
 
 public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> implements RenderLayerParent<InkProjectileEntity, InkProjectileModel>
@@ -55,13 +53,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			boolean shinier = SplatcraftConfig.get("splatcraft.makeShinier");
 			if (shinier)
 			{
-				int[] colorValues = color.getRGBInts();
-				float[] hslValues = new float[3];
-				Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
-				hslValues[2] = Mth.lerp(0.9f, hslValues[2], 1);
-				hslValues[1] = Mth.lerp(0.5f, hslValues[1], 0);
-				
-				color = InkColor.constructOrReuse(Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]) | 0xFF000000);
+				color = InkColor.constructOrReuse(ColorUtils.makeBrighter(color));
 				packedLightIn = 0x00F00000;
 			}
 			

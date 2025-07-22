@@ -19,7 +19,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.*;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
@@ -72,9 +71,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
@@ -415,26 +412,66 @@ public class RendererHandler
 		if (session != null && nowSeconds > (session.getMatchStartTime() - 3 * 20) / 20f)
 		{
 			Minecraft mc = Minecraft.getInstance();
-			Font textRenderer = mc.font;
+			Font font = mc.font;
 			matrixStack.pushPose();
-			renderMatchTopLabels(graphics, width, nowSeconds, session, textRenderer);
+			renderMatchTopLabels(graphics, width, nowSeconds, session, font);
+			renderMatchPlayers(graphics, width, session, font);
 			
 			if (info.isMatchRespawning())
 			{
 				if (info.getMatchRespawnTimeLeft() < 60)
 				{
 					String label = "Uh oh moriste";
-					graphics.drawString(textRenderer, label, width / 2 - textRenderer.width(label) / 2, height - 100, -1, true);
+					graphics.drawString(font, label, width / 2 - font.width(label) / 2, height - 100, -1, true);
 					label = "Respawn in " + (info.getMatchRespawnTimeLeft() / 20);
-					graphics.drawString(textRenderer, label, width / 2 - textRenderer.width(label) / 2, height - 80, -1, true);
+					graphics.drawString(font, label, width / 2 - font.width(label) / 2, height - 80, -1, true);
 				}
 			}
 			
 			matrixStack.popPose();
 		}
 	}
+	private static void renderMatchPlayers(GuiGraphics graphics, int width, PlaySession session, Font font)
+	{
+		final int y = 10;
+		final int iconWidth = 14, playerPadding = 4, teamPadding = 20;
+		int totalWidth = 0;
+		Stage stage = session.getStage();
+		Map<InkColor, List<Player>> colorsWidth = new HashMap<>();
+		ClientLevel level = ClientUtils.getClient().level;
+		for (int i = 0; i < session.playerUuids.size(); i++)
+		{
+			Player player = level.getPlayerByUUID(session.playerUuids.get(i));
+			InkColor playerColor = ColorUtils.getEntityColor(player);
+			colorsWidth.computeIfAbsent(playerColor, (col) -> new ArrayList<>()).add(player);
+		}
+		
+		for (List<Player> list : colorsWidth.values())
+		{
+			totalWidth += list.size() * (iconWidth + playerPadding) - playerPadding + teamPadding;
+		}
+		if (totalWidth == 0)
+			return;
+		
+		totalWidth -= teamPadding + iconWidth;
+		int x = (width - totalWidth) / 2;
+		for (Map.Entry<InkColor, List<Player>> entry : colorsWidth.entrySet())
+		{
+			int backgroundColor = FastColor.ARGB32.opaque(ColorUtils.makeBrighter(entry.getKey(), 0.3f, 0.5f));
+			for (Player player : entry.getValue())
+			{
+				int playerColor = backgroundColor;
+				if (Components.ENTITY_INFO.hasAnd(player, EntityInfo::isMatchRespawning))
+					playerColor = ColorUtils.makeBrighter(playerColor, 0f, -8f);
+				graphics.fill(x - iconWidth / 2, y, x + iconWidth / 2, y + iconWidth, playerColor);
+				x += iconWidth + playerPadding;
+			}
+			x += teamPadding - playerPadding;
+		}
+	}
 	private static void renderMatchTopLabels(GuiGraphics graphics, int width, float now, PlaySession session, Font font)
 	{
+		int y = 26;
 		int seconds = (int) Math.max(0, session.getMatchEndTime() / 20f - now);
 		int minutes = seconds / 60;
 		
@@ -451,8 +488,8 @@ public class RendererHandler
 			int overtimeColor = StageGameMode.getActiveColor(session.getMarkers(true)).map(v -> v.getColorWithAlpha(255))
 				.orElse(0xFFACACAC);
 			int splitX = width / 2 + 26 - (int) (52 * overtimeProgress);
-			graphics.fill(width / 2 - 26, 29, splitX, 39, 0xFF555555);
-			graphics.fill(splitX, 29, width / 2 + 26, 39, overtimeColor);
+			graphics.fill(width / 2 - 26, y + 19, splitX, y + 29, 0xFF555555);
+			graphics.fill(splitX, y + 19, width / 2 + 26, y + 29, overtimeColor);
 			
 			topLabels[2] = "Overtime!";
 		}
@@ -461,10 +498,10 @@ public class RendererHandler
 			String currentLabel = topLabels[i];
 			if (i == 2 && minutes <= 0)
 			{
-				graphics.drawCenteredString(font, Component.literal(currentLabel).withStyle(seconds < 10 ? ChatFormatting.RED : ChatFormatting.YELLOW), width / 2, 10 + 10 * i, -1);
+				graphics.drawCenteredString(font, Component.literal(currentLabel).withStyle(seconds < 10 ? ChatFormatting.RED : ChatFormatting.YELLOW), width / 2, y + 10 * i, -1);
 				continue;
 			}
-			graphics.drawCenteredString(font, currentLabel, width / 2, 10 + 10 * i, -1);
+			graphics.drawCenteredString(font, currentLabel, width / 2, y + 10 * i, -1);
 		}
 		
 		switch (session.gameMode)
@@ -476,11 +513,11 @@ public class RendererHandler
 				
 				final int zonesWidth = 20 + 20 / markers.size();
 				int padding = 10;
-				int y = 45;
+				int scoreY = y + 35;
 				if (markers.size() == 1)
 				{
 					int color = markers.getFirst().getCurrentColor().map(v -> v.getColorWithAlpha(255)).orElse(0xFFDDDDDD);
-					graphics.fill(width / 2 - zonesWidth / 2, y, width / 2 + zonesWidth / 2, y + padding, color);
+					graphics.fill(width / 2 - zonesWidth / 2, scoreY, width / 2 + zonesWidth / 2, scoreY + padding, color);
 				}
 				else
 				{
@@ -489,7 +526,7 @@ public class RendererHandler
 					{
 						int color = markers.get(i).getCurrentColor().map(v -> v.getColorWithAlpha(255)).orElse(0xFFDDDDDD);
 						int x = width / 2 + (int) ((i - halfSize) * (zonesWidth + padding));
-						graphics.fill(x - zonesWidth / 2, y, x + zonesWidth / 2, y + padding, color);
+						graphics.fill(x - zonesWidth / 2, scoreY, x + zonesWidth / 2, scoreY + padding, color);
 					}
 				}
 				
@@ -499,10 +536,10 @@ public class RendererHandler
 				final int backgroundWidthHalf = 30 / 2;
 				final int backgroundHeightHalf = 25 / 2;
 				padding = 60;
-				y = 70;
+				scoreY = 60 + y;
 				if (teamColors.size() == 1) // what are you doing
 				{
-					drawTeamCounter(teamColors.getFirst(), session, graphics, width / 2, y, backgroundWidthHalf, backgroundHeightHalf, font);
+					drawTeamCounter(teamColors.getFirst(), session, graphics, width / 2, scoreY, backgroundWidthHalf, backgroundHeightHalf, font);
 				}
 				else
 				{
@@ -510,7 +547,7 @@ public class RendererHandler
 					for (int i = 0; i < teamColors.size(); i++)
 					{
 						int x = width / 2 + (int) ((i - halfSize) * (padding));
-						drawTeamCounter(teamColors.get(i), session, graphics, x, y, backgroundWidthHalf, backgroundHeightHalf, font);
+						drawTeamCounter(teamColors.get(i), session, graphics, x, scoreY, backgroundWidthHalf, backgroundHeightHalf, font);
 					}
 				}
 				
@@ -519,12 +556,7 @@ public class RendererHandler
 	}
 	private static void drawTeamCounter(InkColor teamColor, PlaySession session, GuiGraphics graphics, int x, int y, int backgroundWidthHalf, int backgroundHeightHalf, Font font)
 	{
-		int[] colorValues = teamColor.getRGBInts();
-		float[] hslValues = new float[3];
-		Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
-		hslValues[2] = Mth.lerp(0.7f, hslValues[2], 1);
-		hslValues[1] = Mth.lerp(0.5f, hslValues[1], 0);
-		int color = FastColor.ARGB32.color(128, Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]));
+		int color = FastColor.ARGB32.color(128, ColorUtils.makeBrighter(teamColor, 0.4f, 0.7f));
 		
 		PlaySession.TeamScore score = session.scores.get(teamColor);
 		

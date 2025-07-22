@@ -27,10 +27,10 @@ import net.splatcraft.client.gui.StageMarkerEditorScreen;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.tileentities.StageMarkerTileEntity;
 import net.splatcraft.util.ClientUtils;
+import net.splatcraft.util.ColorUtils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
-import java.awt.*;
 import java.util.List;
 
 public class StageMarkerTileEntityRenderer implements BlockEntityRenderer<StageMarkerTileEntity>
@@ -80,16 +80,7 @@ public class StageMarkerTileEntityRenderer implements BlockEntityRenderer<StageM
 					VertexConsumer outlineBuffer = buffer.getBuffer(RenderType.lines());
 					poseStack.pushPose();
 					poseStack.translate(marker.getOffset().getX(), marker.getOffset().getY(), marker.getOffset().getZ());
-					int color = marker.getCurrentColor().map(col ->
-					{
-						int[] colorValues = col.getRGBInts();
-						float[] hslValues = new float[3];
-						Color.RGBtoHSB(colorValues[0], colorValues[1], colorValues[2], hslValues);
-						hslValues[2] = Mth.lerp(0.9f, hslValues[2], 1);
-						hslValues[1] = Mth.lerp(0.5f, hslValues[1], 0);
-						int packedColor = Color.HSBtoRGB(hslValues[0], hslValues[1], hslValues[2]);
-						return FastColor.ARGB32.opaque(packedColor);
-					}).orElse(0xFFDDDDDD);
+					int color = marker.getCurrentColor().map(ColorUtils::makeBrighter).orElse(0xFFDDDDDD);
 					
 					for (List<Vector3f> list : renderingCorners)
 					{
