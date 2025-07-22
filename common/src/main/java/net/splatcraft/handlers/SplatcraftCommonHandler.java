@@ -182,14 +182,11 @@ public class SplatcraftCommonHandler
 					if (entity instanceof ServerPlayer player)
 					{
 						Entity attacker = source.getEntity();
-						if (attacker != null)
+						if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
 						{
-							if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
-							{
-								InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
-							}
-							SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
+							InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
 						}
+						SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
 						
 						SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(player), player);
 					}

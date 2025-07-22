@@ -192,7 +192,7 @@ public final class PlaySession
 	}
 	public void resetTeamPoints()
 	{
-		Stage stage = Stage.getStage(stageId);
+		Stage stage = getStage();
 		scores.clear();
 		for (InkColor color : stage.getTeamIds().stream().map(stage::getTeamColor).toList())
 		{
@@ -204,10 +204,12 @@ public final class PlaySession
 		MinecraftServer server = Services.PLATFORM.getServerInstance();
 		if (server == null || server.isSingleplayer())
 		{
-			return getClientWorld();
+			Level clientWorld = getClientWorld();
+			if (clientWorld != null)
+				return clientWorld;
 		}
 		
-		return Stage.getStage(stageId).getStageWorld(server);
+		return getStage().getStageWorld(server);
 	}
 	@OnlyIn(Dist.CLIENT)
 	private Level getClientWorld()
@@ -296,7 +298,7 @@ public final class PlaySession
 		markerCachedPositions.clear();
 		
 		List<BlockPos> builder = new ArrayList<>();
-		Stage stage = Stage.getStage(stageId);
+		Stage stage = getStage();
 		stage.iterateChunkPos(pos ->
 		{
 			List<StageMarkerTileEntity> markers = StageMarkerBlock.getMarkersInChunkPos(stage.getStageWorld(Services.PLATFORM.getServerInstance()), pos);
@@ -410,6 +412,10 @@ public final class PlaySession
 	public int hashCode()
 	{
 		return Objects.hash(playerUuids, markerCachedPositions, scores, gameMode, stageId, customData, sessionEndTime, matchStartTime, matchEndTime);
+	}
+	public Stage getStage()
+	{
+		return Stage.getStage(stageId);
 	}
 	public record TeamScore(
 		int score,

@@ -70,6 +70,9 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 		if (!killerPlayer.equals(new UUID(0, 0)) && pitchYawDir.lengthSquared() != 0)
 			ClientUtils.killCamData = Pair.of(killerPlayer, pitchYawDir);
+		else
+			ClientUtils.killCamData = null;
+		
 		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
 		
 		info.setMatchRespawnTimeLeft(respawnTime);

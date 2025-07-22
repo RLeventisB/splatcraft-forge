@@ -164,7 +164,7 @@ public enum StageGameMode implements StringRepresentable
 	}
 	private static void splatZonesOnStart(PlaySession session, ServerLevel level)
 	{
-		Stage stage = Stage.getStage(session.stageId);
+		Stage stage = session.getStage();
 		session.resetTeamPoints();
 		session.getMarkers(true).forEach(marker -> marker.setActive(marker.getMarkerType() == StageMarkerTileEntity.MarkerType.SPLAT_ZONE));
 		InkDisruptorItem.clearInk(level, stage.getMinCorner(), stage.getMaxCorner(), false);
@@ -224,7 +224,7 @@ public enum StageGameMode implements StringRepresentable
 	}
 	private static void splatZonesOnEnd(PlaySession session, ServerLevel world)
 	{
-		Stage stage = Stage.getStage(session.stageId);
+		Stage stage = session.getStage();
 		for (InkColor color : stage.getTeamIds().stream().map(teamId -> stage.getTeamColor(teamId)).toList())
 		{
 			//todo: NOT broadcast these messages to everyone
