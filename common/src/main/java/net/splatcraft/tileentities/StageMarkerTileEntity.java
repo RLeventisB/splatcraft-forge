@@ -411,8 +411,8 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 	@Override
 	public void loadAdditional(@NotNull CompoundTag nbt, @NotNull Provider wrapperLookup)
 	{
-		BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt).ifSuccess(pos -> offset = pos);
-		MarkerType.CODEC.parse(NbtOps.INSTANCE, nbt).ifSuccess(type -> this.type = type);
+		BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("RelativePos")).ifSuccess(pos -> offset = pos);
+		MarkerType.CODEC.parse(NbtOps.INSTANCE, nbt.get("MarketType")).ifSuccess(type -> this.type = type);
 		
 		intDatas = nbt.getIntArray("IntData");
 		ListTag list = nbt.getList("FloatData", FloatTag.TAG_FLOAT);
