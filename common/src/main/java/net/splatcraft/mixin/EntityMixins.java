@@ -232,5 +232,13 @@ public class EntityMixins
 		{
 			original.call(instance, entity, RendererHandler.modifyNameplate(entity, text), matrixStack, consumerProvider, light, tickDelta);
 		}
+		@Inject(method = "shouldShowName", at = @At("HEAD"), cancellable = true)
+		public <T extends Entity> void splatcraft$hideEnemyTeamNametag(T entity, CallbackInfoReturnable<Boolean> cir)
+		{
+			if (!(entity instanceof LivingEntity living))
+				return;
+			
+			RendererHandler.processHidingEntity(cir, living);
+		}
 	}
 }

@@ -70,6 +70,7 @@ import net.splatcraft.util.structs.InkColor;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -442,6 +443,9 @@ public class RendererHandler
 		for (int i = 0; i < session.playerUuids.size(); i++)
 		{
 			Player player = level.getPlayerByUUID(session.playerUuids.get(i));
+			if (player == null)
+				continue;
+			
 			InkColor playerColor = ColorUtils.getEntityColor(player);
 			colorsWidth.computeIfAbsent(playerColor, (col) -> new ArrayList<>()).add(player);
 		}
@@ -673,5 +677,29 @@ public class RendererHandler
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		
 		matrixStack.popPose();
+	}
+	public static void processHidingEntity(CallbackInfoReturnable<Boolean> cir, LivingEntity living)
+	{
+		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
+		// if the client player, for some reason, renders their own name tag, or isnt playing, then do not cancel rendering
+		if (living == clientPlayer || !Components.ENTITY_INFO.hasAnd(clientPlayer, EntityInfo::isPlaying))
+			return;
+		
+		InkColor clientColor = ColorUtils.getEntityColor(clientPlayer);
+		InkColor entityColor = ColorUtils.getEntityColor(living);
+		
+		// if the player isnt in a match or has the same color, do not cancel rendering
+		if (!Components.ENTITY_INFO.hasAnd(living, EntityInfo::isPlaying) || clientColor.equals(entityColor))
+			return;
+		
+		// if the player killed the client player, do not cancel rendering
+		if (ClientUtils.killCamData != null && living.getUUID().equals(ClientUtils.killCamData.getFirst()))
+			return;
+		
+		// if the player is dead (in a match), do not cancel rendering
+		if (Components.ENTITY_INFO.hasAnd(living, EntityInfo::isMatchRespawning))
+			return;
+		
+		cir.setReturnValue(false);
 	}
 }

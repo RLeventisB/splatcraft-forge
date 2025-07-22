@@ -57,7 +57,7 @@ public class SplatcraftTileEntities
 	public static final RegistrySupplier<MenuType<WeaponWorkbenchContainer>> weaponWorkbenchContainer = registerContainer("weapon_workbench", WeaponWorkbenchContainer::new);
 	public static final RegistrySupplier<BlockEntityType<StageBarrierTileEntity>> stageBarrierTileEntity = registerTileEntity("stage_barrier", StageBarrierTileEntity::new, stageBarrier, stageVoid);
 	public static final RegistrySupplier<BlockEntityType<StageMarkerTileEntity>> stageMarketTileEntity = registerTileEntity("stage_marker", StageMarkerTileEntity::new, stageMarker);
-	public static final RegistrySupplier<BlockEntityType<InkColorTileEntity>> colorTileEntity = registerTileEntity("color", InkColorTileEntity::new, inkedWool, inkedGlass, inkedGlassPane, inkedCarpet, canvas, splatSwitch, inkwell);
+	public static final RegistrySupplier<BlockEntityType<InkColorTileEntity>> colorTileEntity = registerTileEntity("color", InkColorTileEntity::new, inkedWool, inkedGlass, inkedGlassPane, inkedCarpet, coralite, canvas, splatSwitch, inkwell);
 	public static final RegistrySupplier<BlockEntityType<InkVatTileEntity>> inkVatTileEntity = registerTileEntity("ink_vat", InkVatTileEntity::new, inkVat);
 	public static final RegistrySupplier<BlockEntityType<RemotePedestalTileEntity>> remotePedestalTileEntity = registerTileEntity("remote_pedestal", RemotePedestalTileEntity::new, remotePedestal);
 	public static final RegistrySupplier<BlockEntityType<SpawnPadTileEntity>> spawnPadTileEntity = registerTileEntity("spawn_pad", SpawnPadTileEntity::new, spawnPad);

@@ -457,9 +457,8 @@ public class InkBlockUtils
 				collisionData = checkSquidCollisions(entity, extendedBox);
 			}
 		}
-		if (collisionData.isPresent())
+		if (collisionData.isPresent() && entity.onGround())
 		{
-			
 			// check if the entity can "step up" the collision like with stairs, via a poor way obviously
 			float maxUpStep = entity.maxUpStep();
 			extendedBox = extendedBox.move(0, maxUpStep, 0);

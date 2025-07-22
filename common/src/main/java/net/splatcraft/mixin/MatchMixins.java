@@ -32,6 +32,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.client.renderer.SplatcraftRenderTypes;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
@@ -296,6 +297,14 @@ public class MatchMixins
 		public float splatcraft$silhouetteStrength;
 		@Unique
 		public SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource splatcraft$silhouetteRenderer;
+		@Inject(method = "shouldShowName*", at = @At("HEAD"), cancellable = true)
+		public <T extends Entity> void splatcraft$hideEnemyTeamNametag(T entity, CallbackInfoReturnable<Boolean> cir)
+		{
+			if (!(entity instanceof LivingEntity living))
+				return;
+			
+			RendererHandler.processHidingEntity(cir, living);
+		}
 		@WrapOperation(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 			at = @At(value = "INVOKE",
 				target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"))

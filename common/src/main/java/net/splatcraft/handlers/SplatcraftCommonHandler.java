@@ -147,7 +147,7 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
 		
 		EventResult eventResult = keepAliveIfOnMatch(entity, source);
-		if (!eventResult.interruptsOrFalse())
+		if (!eventResult.interruptsOrFalse() && entity instanceof Player)
 		{
 			float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
 			for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
