@@ -151,7 +151,9 @@ public class BarrierBarBlock extends Block implements SimpleWaterloggedBlock
 		Direction direction = context.getClickedFace();
 		BlockPos blockpos = context.getClickedPos();
 		FluidState fluidstate = context.getLevel().getFluidState(blockpos);
-		BlockState blockstate = defaultBlockState().setValue(FACING, context.getHorizontalDirection()).setValue(HALF, direction != Direction.DOWN && (direction == Direction.UP || !(context.getClickedPos().getY() - (double) blockpos.getY() > 0.5D)) ? Half.BOTTOM : Half.TOP).setValue(WATERLOGGED, fluidstate.holder() == Fluids.WATER);
+		BlockState blockstate = defaultBlockState().setValue(FACING, context.getHorizontalDirection()).setValue(HALF,
+			direction != Direction.DOWN &&
+				(direction == Direction.UP || !(context.getClickLocation().y - (double) blockpos.getY() > 0.5D)) ? Half.BOTTOM : Half.TOP).setValue(WATERLOGGED, fluidstate.holder() == Fluids.WATER);
 		return blockstate.setValue(SHAPE, getShapeProperty(blockstate, context.getLevel(), blockpos));
 	}
 	@Override
