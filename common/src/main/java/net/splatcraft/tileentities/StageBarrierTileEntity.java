@@ -72,7 +72,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
 			
-			if (SplatcraftConfig.get("splatcraft.holdBarrierToRender"))
+			if ((Boolean) SplatcraftConfig.get("splatcraft.holdBarrierToRender") && (player.distanceToSqr(getBlockPos().getCenter()) < 1024))
 			{
 				canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
 					player.getOffhandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);

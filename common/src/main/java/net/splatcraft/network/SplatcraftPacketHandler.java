@@ -85,7 +85,10 @@ public class SplatcraftPacketHandler
 	}
 	private static <MSG extends SplatcraftPacket> void registerMessage(CustomPacketPayload.Type<? extends CustomPacketPayload> id, Class<MSG> messageType, BiConsumer<MSG, RegistryFriendlyByteBuf> encoder, Function<RegistryFriendlyByteBuf, MSG> decoder, BiConsumer<MSG, PacketContext<MSG>> messageConsumer)
 	{
-		StreamCodec<RegistryFriendlyByteBuf, MSG> codec = StreamCodec.of((a, b) -> encoder.accept(b, a), decoder::apply);
+		StreamCodec<RegistryFriendlyByteBuf, MSG> codec = StreamCodec.of(
+			(a, b) -> encoder.accept(b, a),
+			decoder::apply
+		);
 		Network.registerPacket(id, messageType, codec, (v) -> messageConsumer.accept(v.message(), v));
 	}
 	public static <MSG extends PlayS2CPacket> void sendToPlayer(MSG message, ServerPlayer player)

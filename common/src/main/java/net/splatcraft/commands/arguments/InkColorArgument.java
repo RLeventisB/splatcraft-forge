@@ -65,7 +65,6 @@ public class InkColorArgument implements ArgumentType<InkColor>
 	@Override
 	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
 	{
-//        CommandSource.suggestMatching() what
 		return SharedSuggestionProvider.suggest(InkColorRegistry.getAllAliases().stream().map(ResourceLocation::toString).collect(Collectors.toSet()), builder);
 	}
 	@Override
