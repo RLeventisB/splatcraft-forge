@@ -9,6 +9,7 @@ import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +30,8 @@ public class AxeWaxMixin
 			if (entry != null && entry.immutable)
 			{
 				entry.immutable = false;
+				
+				ChunkInkHandler.addInkToUpdate(world, blockPos);
 				world.getChunk(blockPos).setUnsaved(true);
 				world.playSound(context.getPlayer(), blockPos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
 				world.levelEvent(context.getPlayer(), 3004, blockPos, 0);

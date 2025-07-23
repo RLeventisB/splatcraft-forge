@@ -231,7 +231,7 @@ public class ChunkInk
 				
 				if (!entry.isInkedAny())
 				{
-					buf.writeByte(0);
+					buf.writeByte(entry.immutable ? 64 : 0);
 					return;
 				}
 				
@@ -352,19 +352,17 @@ public class ChunkInk
 		}
 		public void apply(ChunkInk worldInk, RelativeBlockPos pos)
 		{
-			if (!isInkedAny())
+			if (isInkedAny())
 			{
-				worldInk.clearBlock(pos);
-				return;
-			}
-			for (byte i = 0; i < 6; i++)
-			{
-				if (isInked(i))
+				for (byte i = 0; i < 6; i++)
 				{
-					worldInk.ink(pos, i, color(i), type(i));
+					if (isInked(i))
+					{
+						worldInk.ink(pos, i, color(i), type(i));
+					}
+					else
+						worldInk.clearInk(pos, i);
 				}
-				else
-					worldInk.clearInk(pos, i);
 			}
 			if (immutable) worldInk.markInmutable(pos);
 			else worldInk.markMutable(pos);
