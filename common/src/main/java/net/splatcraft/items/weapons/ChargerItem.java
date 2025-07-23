@@ -79,7 +79,7 @@ public class ChargerItem extends WeaponBaseItem<ChargerWeaponSettings> implement
 	public void shoot(Level world, LivingEntity entity, ItemStack stack, float charge, float extraTime)
 	{
 		ChargerWeaponSettings settings = getSettings(stack);
-		CommonUtils.setSquidDelay(entity, settings.shotData.endlagTicks());
+		CommonUtils.setSquidDelay(entity, settings.shotData.miscEndlagTicks());
 		if (world.isClientSide)
 		{
 			return;

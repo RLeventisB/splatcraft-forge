@@ -169,7 +169,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		}
 	}
 	public record ShotDataRecord(
-		int endlagTicks,
+		float endlagTicks,
 		int miscEndlagTicks,
 		ChargeValueRecord inkConsumption,
 		float inkRecoveryCooldown,
@@ -179,7 +179,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 	{
 		public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.INT.fieldOf("endlag_ticks").forGetter(ShotDataRecord::endlagTicks),
+				Codec.FLOAT.fieldOf("endlag_ticks").forGetter(ShotDataRecord::endlagTicks),
 				Codec.INT.optionalFieldOf("other_actions_endlag_ticks", 10).forGetter(ShotDataRecord::miscEndlagTicks),
 				ChargeValueRecord.CODEC.fieldOf("ink_consumption").forGetter(ShotDataRecord::inkConsumption),
 				Codec.FLOAT.fieldOf("ink_recovery_cooldown").forGetter(ShotDataRecord::inkRecoveryCooldown),

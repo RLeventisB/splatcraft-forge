@@ -10,7 +10,7 @@
         "damage": [30, 85]
     },
     "shot": {
-        "endlag_ticks": 15,
+        "endlag_ticks": 1,
         "ink_consumption": [2.8, 7],
         "ink_recovery_cooldown": 20
     },

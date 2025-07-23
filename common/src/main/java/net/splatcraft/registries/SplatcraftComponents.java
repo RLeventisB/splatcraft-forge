@@ -249,7 +249,14 @@ public class SplatcraftComponents
 		{
 			onRelease.run(charge, extraTime);
 			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(chargeDeltaTime));
-			return new ChargerFiringData(-settings.shotData.endlagTicks() + extraTime, false, queuedShot);
+			float nextCounter = -settings.shotData.endlagTicks() + extraTime;
+			if (nextCounter >= 0)
+				if (queuedShot)
+					return new ChargerFiringData(nextCounter + settings.chargeData.chargeStartup(), false, false);
+				else
+					return new ChargerFiringData(Float.NaN, false, false);
+			
+			return new ChargerFiringData(nextCounter, false, queuedShot);
 		}
 		public ChargerFiringData notifyUsage(LivingEntity entity, ChargerWeaponSettings settings)
 		{
@@ -414,13 +421,27 @@ public class SplatcraftComponents
 				}
 			}
 			
-			CommonRecords.ProjectileDataRecord projectileData;
-			SplatlingWeaponSettings.SplatlingShotDataRecord shotData;
+			float index = settings.getShotTypeIndex(chargeData.charge, nextShotTypeData);
+			Pair<CommonRecords.ProjectileDataRecord, SplatlingWeaponSettings.SplatlingShotDataRecord> dataPair = settings.interpolateData(index);
+			CommonRecords.ProjectileDataRecord projectileData = dataPair.getFirst();
+			SplatlingWeaponSettings.SplatlingShotDataRecord shotData = dataPair.getSecond();
+			
 			chargeData = chargeData.withPreviousCharge(chargeData.charge);
-			while (nextDelay <= 0 && chargeData.charge > 0)
+			while (nextDelay <= 0)
 			{
-				float index = settings.getShotTypeIndex(chargeData.charge, nextShotTypeData);
-				Pair<CommonRecords.ProjectileDataRecord, SplatlingWeaponSettings.SplatlingShotDataRecord> dataPair = settings.interpolateData(index);
+				boolean enoughCharge = chargeData.charge > shotData.chargeUsePerShot();
+				if (!enoughCharge)
+				{
+					float cutoffTime = Mth.inverseLerp(0, chargeData.charge, chargeData.charge - shotData.chargeUsePerShot());
+					nextCounter = shotData.endlagTicks() - timeDelta * cutoffTime;
+					
+					chargeData = chargeData.withCharge(0).registerChargeDeltaTime(cutoffTime);
+					nextDelay += shotData.repeatTicks();
+					continue;
+				}
+				
+				index = settings.getShotTypeIndex(chargeData.charge, nextShotTypeData);
+				dataPair = settings.interpolateData(index);
 				projectileData = dataPair.getFirst();
 				shotData = dataPair.getSecond();
 				
