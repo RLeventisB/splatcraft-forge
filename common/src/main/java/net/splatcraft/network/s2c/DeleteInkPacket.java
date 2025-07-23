@@ -10,8 +10,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
-import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.ChunkInkCapability;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
 import net.splatcraft.util.structs.RelativeBlockPos;
 import org.jetbrains.annotations.NotNull;
 

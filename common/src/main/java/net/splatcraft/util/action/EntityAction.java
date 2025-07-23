@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;

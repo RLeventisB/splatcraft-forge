@@ -11,7 +11,7 @@ import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.client.renderer.SplatcraftRenderTypes;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
 import net.splatcraft.data.SplatcraftTags;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
+import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.handlers.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.platform.DeferredRegister;

@@ -18,7 +18,7 @@ import net.minecraft.world.phys.AABB;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.commands.InkColorCommand;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
 import net.splatcraft.items.IColoredItem;
 import net.splatcraft.network.SplatcraftPacketHandler;

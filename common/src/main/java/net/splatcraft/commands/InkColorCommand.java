@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 

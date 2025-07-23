@@ -4,7 +4,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;

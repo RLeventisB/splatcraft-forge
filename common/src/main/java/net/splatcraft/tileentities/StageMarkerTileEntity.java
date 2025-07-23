@@ -27,7 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.StageMarkerBlock;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk.InkEntry;
+import net.splatcraft.data.capabilities.structs.ChunkInk.InkEntry;
 import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.registries.SplatcraftTileEntities;

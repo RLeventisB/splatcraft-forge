@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;

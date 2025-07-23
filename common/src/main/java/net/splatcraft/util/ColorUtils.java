@@ -30,7 +30,7 @@ import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.client.particles.InkTerrainParticleData;
 import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;

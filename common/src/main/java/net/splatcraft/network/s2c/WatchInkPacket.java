@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;

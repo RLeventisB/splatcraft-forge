@@ -23,7 +23,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.platform.Components;

@@ -23,7 +23,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.remotes.TurfScannerItem;

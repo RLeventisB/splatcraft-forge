@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.scores.ScoreHolder;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.registries.SplatcraftStats;

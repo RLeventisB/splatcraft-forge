@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ColorUtils;

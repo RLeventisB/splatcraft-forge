@@ -29,7 +29,7 @@ import net.splatcraft.commands.arguments.StageGameModeArgument;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.StageGameMode;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.platform.Components;

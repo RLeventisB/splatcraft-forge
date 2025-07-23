@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;

@@ -1,9 +1,10 @@
-package net.splatcraft.data.capabilities.chunkink;
+package net.splatcraft.data.capabilities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
 import net.splatcraft.platform.Components;
 
 public class ChunkInkCapability

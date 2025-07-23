@@ -1,4 +1,4 @@
-package net.splatcraft.data.capabilities.chunkink;
+package net.splatcraft.data.capabilities.structs;
 
 import com.google.common.collect.Iterators;
 import com.mojang.serialization.Codec;

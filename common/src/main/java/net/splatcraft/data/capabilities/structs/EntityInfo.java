@@ -1,4 +1,4 @@
-package net.splatcraft.data.capabilities.entityinfo;
+package net.splatcraft.data.capabilities.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -8,7 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.PlaySession;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.handlers.SquidFormHandler.SquidState;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.ColorUtils;

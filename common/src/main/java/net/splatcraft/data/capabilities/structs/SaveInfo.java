@@ -1,4 +1,4 @@
-package net.splatcraft.data.capabilities.saveinfo;
+package net.splatcraft.data.capabilities.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,6 +18,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.platform.Services;

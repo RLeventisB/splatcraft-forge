@@ -9,7 +9,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.splatcraft.commands.arguments.ColorCriterionArgument;
 import net.splatcraft.commands.arguments.InkColorArgument;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateColorScoresPacket;

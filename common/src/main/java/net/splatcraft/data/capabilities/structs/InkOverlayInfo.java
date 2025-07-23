@@ -1,4 +1,4 @@
-package net.splatcraft.data.capabilities.inkoverlay;
+package net.splatcraft.data.capabilities.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

@@ -20,7 +20,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;

@@ -4,10 +4,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.SaveInfo;
 
 public class Components
 {

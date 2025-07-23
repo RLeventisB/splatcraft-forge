@@ -3,10 +3,10 @@ package net.splatcraft;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.platform.ComponentData;
 import net.splatcraft.platform.Components;
 

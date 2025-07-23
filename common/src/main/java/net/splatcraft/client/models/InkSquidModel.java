@@ -13,8 +13,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
-import net.splatcraft.data.capabilities.inkoverlay.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
 import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.NotNull;
 

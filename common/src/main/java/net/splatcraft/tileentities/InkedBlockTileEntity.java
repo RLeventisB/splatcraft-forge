@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.splatcraft.blocks.IColoredBlock;
-import net.splatcraft.data.capabilities.chunkink.ChunkInkCapability;
+import net.splatcraft.data.capabilities.ChunkInkCapability;
 import net.splatcraft.registries.SplatcraftBlocks;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.InkBlockUtils;

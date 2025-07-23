@@ -13,7 +13,7 @@ import net.minecraft.commands.arguments.selector.EntitySelectorParser;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.registries.SplatcraftGameRules;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,10 +1,11 @@
-package net.splatcraft.data.capabilities.saveinfo;
+package net.splatcraft.data.capabilities;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.handlers.ScoreboardHandler;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;

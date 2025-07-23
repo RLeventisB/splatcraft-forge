@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkSquidColorLayer;
 import net.splatcraft.client.models.InkSquidModel;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.NotNull;

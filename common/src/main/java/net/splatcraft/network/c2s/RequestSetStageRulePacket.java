@@ -6,7 +6,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateStageListPacket;
 import net.splatcraft.util.CommonUtils;
@@ -45,10 +45,10 @@ public class RequestSetStageRulePacket extends PlayC2SPacket
 	public void execute(Player player)
 	{
 		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
-
+		
 		Stage stage = stages.get(stageId);
 		stage.applySetting(ruleId.replace(Splatcraft.MODID + ".", ""), value);
-
+		
 		SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));
 	}
 }

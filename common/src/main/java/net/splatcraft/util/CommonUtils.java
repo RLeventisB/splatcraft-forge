@@ -55,7 +55,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;

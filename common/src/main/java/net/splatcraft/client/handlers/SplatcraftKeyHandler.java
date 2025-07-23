@@ -23,7 +23,7 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.capabilities.entityinfo.EntityInfo;
+import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.SpecialProviderItem;

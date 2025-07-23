@@ -8,7 +8,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
-import net.splatcraft.data.capabilities.chunkink.ChunkInk;
+import net.splatcraft.data.capabilities.structs.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.util.InkBlockUtils;
 import org.spongepowered.asm.mixin.Mixin;

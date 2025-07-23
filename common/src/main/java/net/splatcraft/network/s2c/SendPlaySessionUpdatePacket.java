@@ -10,8 +10,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.PlaySession;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfo;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
+import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
 

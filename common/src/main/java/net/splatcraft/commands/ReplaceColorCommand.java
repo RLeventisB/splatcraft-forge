@@ -10,7 +10,7 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.splatcraft.commands.arguments.InkColorArgument;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.items.remotes.ColorChangerItem;
 import net.splatcraft.items.remotes.RemoteItem;
 import net.splatcraft.util.structs.InkColor;

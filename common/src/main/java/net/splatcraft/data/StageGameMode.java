@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.Level;
 import net.splatcraft.blocks.StageMarkerBlock;
-import net.splatcraft.data.capabilities.saveinfo.SaveInfoCapability;
+import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.platform.Services;
