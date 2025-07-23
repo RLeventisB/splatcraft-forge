@@ -111,8 +111,8 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 				Codec.FLOAT.fieldOf("size").forGetter(ChargerProjectileDataRecord::size),
 				ChargeValueRecord.CODEC.fieldOf("speed").forGetter(ChargerProjectileDataRecord::speed),
 				ChargeValueRecord.CODEC.fieldOf("range").forGetter(ChargerProjectileDataRecord::range),
-				ChargeValueRecord.CODEC.optionalFieldOf("ink_drop_coverage").forGetter(v -> Optional.of(v.inkDropCoverage)),
 				ChargeValueRecord.CODEC.optionalFieldOf("ink_coverage_on_impact").forGetter(v -> Optional.of(v.inkCoverageImpact)),
+				ChargeValueRecord.CODEC.optionalFieldOf("ink_drop_coverage").forGetter(v -> Optional.of(v.inkDropCoverage)),
 				ChargeValueRecord.CODEC.optionalFieldOf("distance_between_drops", ChargeValueRecord.create(4)).forGetter(ChargerProjectileDataRecord::distanceBetweenInkDrops),
 				ChargeValueRecord.CODEC.fieldOf("damage").forGetter(ChargerProjectileDataRecord::damage),
 				Codec.FLOAT.optionalFieldOf("pierces_at_charge", 1f).forGetter(ChargerProjectileDataRecord::piercesAtCharge)

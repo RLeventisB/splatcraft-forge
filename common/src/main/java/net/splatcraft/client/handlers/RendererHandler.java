@@ -268,9 +268,9 @@ public class RendererHandler
 	public static void renderGuiInternal(GuiGraphics graphics, float tickDelta, int width, int height)
 	{
 		LocalPlayer player = ClientUtils.getClientPlayer();
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		EntityInfo info = Components.ENTITY_INFO.get(player);
 		
-		if (player.isSpectator() && !info.isMatchRespawning())
+		if ((player.isSpectator() && !info.isMatchRespawning()) || info == null)
 		{
 			return;
 		}

@@ -92,15 +92,16 @@ public class SplatcraftKeyHandler
 		Player player = mc.player;
 		
 		if (player == null || player.isSpectator())
-		{
 			return;
-		}
+		
+		EntityInfo info = Components.ENTITY_INFO.get(player);
+		
+		if (info == null)
+			return;
 		
 		tickKeys(player, mc);
 		
 		ToggleableKey lastPressedKey = getLastPressedKey();
-		
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
 		
 		tickSquidAndCharge(player, info, lastPressedKey);
 		
