@@ -162,7 +162,8 @@ public class SplatcraftConvertors
 			roundedEndlag,
 			dataRecord.turretDuration(),
 			dataRecord.lastRollTurretDuration(),
-			dataRecord.canMove()
+			dataRecord.canMove(),
+			dataRecord.canShoot()
 		);
 	}
 	public static BlasterWeaponSettings.DetonationRecord convert(BlasterWeaponSettings.DetonationRecord dataRecord)
