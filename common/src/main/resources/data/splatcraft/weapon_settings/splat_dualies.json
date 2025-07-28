@@ -29,13 +29,13 @@
             "time_inactive_to_decrease": 5,
             "chance_decrease_when_inactive": 0.05
         },
-        "ink_consumption": 0.72,
+        "ink_consumption": 0.8,
         "ink_recovery_cooldown": 20
     },
     "dodge_roll": {
         "count": 1,
         "distance_covered_by_roll": 50,
-        "ink_consumption": 7,
+        "ink_consumption": 3,
         "ink_recovery_cooldown": 70,
         "roll_startup": 4,
         "roll_endlag": 4,
@@ -43,8 +43,7 @@
         "final_roll_turret_duration": 30
     },
     "turret_shot": {
-        "startup_ticks": 3,
-        "endlag_ticks": 5,
+        "repeat_ticks": 8,
         "accuracy_data": {
             "ground_deviation_degrees": 0,
             "airborne_deviation_degrees": 0

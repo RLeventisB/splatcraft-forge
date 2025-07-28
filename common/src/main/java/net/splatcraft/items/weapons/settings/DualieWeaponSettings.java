@@ -127,7 +127,8 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		byte rollEndlag,
 		int turretDuration,
 		int lastRollTurretDuration,
-		boolean canMove
+		boolean canMove,
+		boolean canShoot
 	)
 	{
 		public static final Codec<RollDataRecord> CODEC = RecordCodecBuilder.create(
@@ -141,17 +142,18 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 				Codec.BYTE.optionalFieldOf("roll_endlag", (byte) 6).forGetter(RollDataRecord::rollEndlag),
 				Codec.INT.fieldOf("turret_duration").forGetter(RollDataRecord::turretDuration),
 				Codec.INT.fieldOf("final_roll_turret_duration").forGetter(RollDataRecord::lastRollTurretDuration),
-				Codec.BOOL.optionalFieldOf("allows_movement", false).forGetter(RollDataRecord::canMove)
+				Codec.BOOL.optionalFieldOf("allows_movement", false).forGetter(RollDataRecord::canMove),
+				Codec.BOOL.optionalFieldOf("allows_shooting", false).forGetter(RollDataRecord::canShoot)
 			).apply(instance, RollDataRecord::new)
 		);
-		public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false);
+		public static final RollDataRecord DEFAULT = new RollDataRecord(0, 0, 0, 0, (byte) 2, (byte) 4, (byte) 2, 0, 0, false, false);
 		public float getRollImpulse()
 		{
 			// x is speed, this should be the value that should be found (i forgot blocks have 0.6 of friction, and also minecraft applies even more, so random number go (its 0.91 bc living entity references it or something))
 			// rollDistance = x * roll_duration + x / (1 - 0.6)
 			// rollDistance = x * (roll_duration + (1 / 0.4))
 			// rollDistance / (roll_duration + 2.5) = x
-			return rollDistance / (rollDuration + (2.5f));
+			return rollDistance / (rollDuration + 2.5f);
 		}
 	}
 }

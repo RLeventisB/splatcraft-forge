@@ -123,7 +123,8 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
 		
-		if (reduceInk(entity, this, getInkForRoll(activeDualie), activeSettings.rollData.inkRecoveryCooldown(), !entity.level().isClientSide()) &&
+		DualieWeaponSettings.RollDataRecord rollData = activeSettings.rollData;
+		if (reduceInk(entity, this, getInkForRoll(activeDualie), rollData.inkRecoveryCooldown(), !entity.level().isClientSide()) &&
 			(!EntityAction.hasEntityAction(entity) || (EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class))))
 		{
 			entity.getMainHandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
@@ -138,7 +139,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			{
 				allowFlying = previousDodgeRoll.get().didAllowFlying;
 			}
-			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), allowFlying));
+			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, rollData.rollStartup(), rollData.rollDuration(), rollData.rollEndlag(), (byte) turretDuration, rollData.canMove(), rollData.canShoot(), allowFlying));
 			
 			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(rollCount + 1));
 		}
@@ -350,6 +351,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			Codec.BYTE.fieldOf("turret_mode_frame").forGetter(v -> v.turretModeFrame),
 			CodecUtils.Codecs.VEC_2_CODEC.fieldOf("roll_direction").forGetter(v -> v.rollDirection),
 			Codec.BOOL.fieldOf("can_slide").forGetter(v -> v.canSlide),
+			Codec.BOOL.fieldOf("can_shoot_on_roll").forGetter(v -> v.canShootOnRoll),
 			RollState.CODEC.fieldOf("roll_state").forGetter(v -> v.rollState),
 			Codec.BOOL.fieldOf("did_allow_flying").forGetter(v -> v.didAllowFlying)
 		).apply(inst, DodgeRollAction::new));
@@ -357,9 +359,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		final ItemStack storedStack;
 		final EntitySlot itemSlot;
 		final Vec2 rollDirection;
-		final boolean canSlide, didAllowFlying;
+		final boolean canSlide, canShootOnRoll, didAllowFlying;
 		RollState rollState = RollState.BEFORE_ROLL;
-		public DodgeRollAction(ItemStack stack, EntitySlot itemSlot, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, EntitySlot itemSlot, Vec2 rollDirection, byte startupFrames, byte rollDuration, byte endlagFrames, byte turretModeFrames, boolean canSlide, boolean canShootOnRoll, boolean didAllowFlying)
 		{
 			super(startupFrames + rollDuration + endlagFrames + turretModeFrames);
 			storedStack = stack;
@@ -369,9 +371,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			rollEndFrame = (byte) (turretModeFrames + endlagFrames);
 			turretModeFrame = turretModeFrames;
 			this.canSlide = canSlide;
+			this.canShootOnRoll = canShootOnRoll;
 			this.didAllowFlying = didAllowFlying;
 		}
-		public DodgeRollAction(ItemStack stack, float time, float maxTime, EntitySlot itemSlot, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2 rollDirection, boolean canSlide, RollState rollState, boolean didAllowFlying)
+		public DodgeRollAction(ItemStack stack, float time, float maxTime, EntitySlot itemSlot, byte rollFrame, byte rollEndFrame, byte turretModeFrame, Vec2 rollDirection, boolean canSlide, boolean canShootOnRoll, RollState rollState, boolean didAllowFlying)
 		{
 			super(time, maxTime);
 			storedStack = stack;
@@ -381,6 +384,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			this.rollEndFrame = rollEndFrame;
 			this.turretModeFrame = turretModeFrame;
 			this.canSlide = canSlide;
+			this.canShootOnRoll = canShootOnRoll;
 			this.rollState = rollState;
 			this.didAllowFlying = didAllowFlying;
 		}
@@ -491,7 +495,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		@Override
 		public boolean preventWeaponUse()
 		{
-			return rollState != RollState.TURRET;
+			return rollState != RollState.TURRET && !canShootOnRoll;
 		}
 		@Override
 		public ItemStack getStoredStack()

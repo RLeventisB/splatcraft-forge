@@ -1,0 +1,57 @@
+{
+    "type": "splatcraft:dualie",
+    "full_damage_to_mobs": false,
+    "mobility": 0.72,
+    "projectile": {
+        "size": 2,
+        "delay_speed_mult": 1,
+        "ink_coverage_on_impact": 15.5,
+        "ink_drop_coverage": 13.4,
+        "distance_between_drops": 135,
+        "straight_shot_ticks": 4,
+        "base_damage": 28,
+        "decayed_damage": 14,
+        "damage_decay_start_tick": 8,
+        "damage_decay_per_tick": 1.75
+    },
+    "shot": {
+        "startup_ticks": 3,
+        "startup_ticks_from_squid": 12,
+        "repeat_ticks": 12,
+        "endlag_ticks": 4,
+        "other_actions_endlag_ticks": 4,
+        "speed": 22.1,
+        "accuracy_data": {
+            "ground_deviation_degrees": 7.4,
+            "airborne_deviation_degrees": 12.8,
+            "chance_min": 0.04,
+            "chance_increase_per_shot": 0.04,
+            "time_inactive_to_decrease": 6,
+            "chance_decrease_when_inactive": 0.05
+        },
+        "ink_consumption": 0.72,
+        "ink_recovery_cooldown": 20
+    },
+    "dodge_roll": {
+        "count": 2,
+        "distance_covered_by_roll": 50,
+        "ink_consumption": 7,
+        "ink_recovery_cooldown": 70,
+        "roll_startup": 5,
+        "roll_duration": 16,
+        "roll_endlag": 8,
+        "turret_duration": 35,
+        "final_roll_turret_duration": 37,
+        "allows_shooting": true
+    },
+    "turret_shot": {
+        "repeat_ticks": 10,
+        "accuracy_data": {
+            "ground_deviation_degrees": 2.7,
+            "airborne_deviation_degrees": 2.7
+        }
+    },
+    "turret_projectile": {
+        "size": 2.5
+    }
+}
