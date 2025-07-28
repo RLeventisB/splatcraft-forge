@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.splatcraft.items.JumpLureItem;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.structs.InkColor;
@@ -42,8 +41,8 @@ public class UseJumpLurePacket extends PlayC2SPacket
 			buffer.writeUUID(targetUUID);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
-		JumpLureItem.activate((ServerPlayer) player, targetUUID, color);
+		JumpLureItem.activate(player, targetUUID, color);
 	}
 }

@@ -66,7 +66,7 @@ public class InkTankFeature<T extends LivingEntity, M extends EntityModel<T>> ex
 			vertexConsumer = provider.getBuffer(RenderType.entityTranslucent(
 				Splatcraft.identifierOf("textures/item/tanks/" + id + "_layer_1.png")
 			));
-			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, Components.ENTITY_INFO.getOrCreate(entity).getColor().getColorWithAlpha(255));
+			model.renderToBuffer(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY, Components.SQUID_INFO.getOrCreate(entity).color().getColorWithAlpha(255));
 			matrixStack.popPose();
 		}
 	}

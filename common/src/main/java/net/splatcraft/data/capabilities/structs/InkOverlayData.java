@@ -6,24 +6,24 @@ import net.splatcraft.util.structs.InkColor;
 
 import java.util.Optional;
 
-public class InkOverlayInfo
+public class InkOverlayData
 {
-	public static final Codec<InkOverlayInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-		InkColor.HEX_CODEC.optionalFieldOf("color").forGetter(InkOverlayInfo::getColor),
-		Codec.FLOAT.optionalFieldOf("amount", 0f).forGetter(InkOverlayInfo::getAmount),
-		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayInfo::isInkproof),
-		Codec.FLOAT.optionalFieldOf("squid_pitch", 0f).forGetter(InkOverlayInfo::getSquidPitch),
-		Codec.FLOAT.optionalFieldOf("squid_pitch_0", 0f).forGetter(InkOverlayInfo::getPreviousSquidPitch)
-	).apply(inst, InkOverlayInfo::new));
+	public static final Codec<InkOverlayData> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+		InkColor.HEX_CODEC.optionalFieldOf("color").forGetter(InkOverlayData::getColor),
+		Codec.FLOAT.optionalFieldOf("amount", 0f).forGetter(InkOverlayData::getAmount),
+		Codec.BOOL.optionalFieldOf("ink_proof", false).forGetter(InkOverlayData::isInkproof),
+		Codec.FLOAT.optionalFieldOf("squid_pitch", 0f).forGetter(InkOverlayData::getSquidPitch),
+		Codec.FLOAT.optionalFieldOf("squid_pitch_0", 0f).forGetter(InkOverlayData::getPreviousSquidPitch)
+	).apply(inst, InkOverlayData::new));
 	private Optional<InkColor> color = Optional.empty();
 	private float amount = 0;
 	private boolean inkproof = false;
 	private float squidPitch;
 	private float squidPitchO;
-	public InkOverlayInfo()
+	public InkOverlayData()
 	{
 	}
-	public InkOverlayInfo(Optional<InkColor> color,
+	public InkOverlayData(Optional<InkColor> color,
 	                      float amount,
 	                      boolean inkproof,
 	                      float squidRot,

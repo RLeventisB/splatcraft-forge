@@ -2,6 +2,7 @@ package net.splatcraft.network.c2s;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
@@ -36,7 +37,7 @@ public class DodgeRollPacket extends PlayC2SPacket
 		);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Player target = player.level().getPlayerByUUID(this.target);
 		((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, dualieSlot, rollPotency);

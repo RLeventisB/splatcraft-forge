@@ -11,7 +11,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -41,8 +40,9 @@ import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.StageGameMode;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.data.capabilities.structs.SaveInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
@@ -215,7 +215,7 @@ public class RendererHandler
 			ClientPacketListener connection = Minecraft.getInstance().getConnection();
 			if (connection != null)
 			{
-				for (PlayerInfo info : connection.getOnlinePlayers())
+				for (net.minecraft.client.multiplayer.PlayerInfo info : connection.getOnlinePlayers())
 				{
 					players.put(getDisplayName(info).getString(), info.getProfile().getId());
 				}
@@ -254,7 +254,7 @@ public class RendererHandler
 		}
 		return label;
 	}
-	public static Component getDisplayName(PlayerInfo info)
+	public static Component getDisplayName(net.minecraft.client.multiplayer.PlayerInfo info)
 	{
 		return info.getTabListDisplayName() != null ? info.getTabListDisplayName().copy() : PlayerTeam.formatNameForTeam(info.getTeam(), Component.literal(info.getProfile().getName()));
 	}
@@ -268,9 +268,10 @@ public class RendererHandler
 	public static void renderGuiInternal(GuiGraphics graphics, float tickDelta, int width, int height)
 	{
 		LocalPlayer player = ClientUtils.getClientPlayer();
-		EntityInfo info = Components.ENTITY_INFO.get(player);
+		PlayerInfo playerInfo = Components.PLAYER_INFO.get(player);
+		SquidInfo squidInfo = Components.SQUID_INFO.get(player);
 		
-		if ((player.isSpectator() && !info.isMatchRespawning()) || info == null)
+		if ((player.isSpectator() && !playerInfo.isMatchRespawning()) || playerInfo == null || squidInfo == null)
 		{
 			return;
 		}
@@ -278,23 +279,23 @@ public class RendererHandler
 		PoseStack matrixStack = graphics.pose();
 		if (player.getMainHandItem().getItem() instanceof IChargeableWeapon)
 		{
-			renderChargerGui(graphics, tickDelta, width, height, info, matrixStack, player.getMainHandItem());
+			renderChargerGui(graphics, tickDelta, width, height, matrixStack, player.getMainHandItem());
 		}
 		else if (player.getOffhandItem().getItem() instanceof IChargeableWeapon)
 		{
-			renderChargerGui(graphics, tickDelta, width, height, info, matrixStack, player.getOffhandItem());
+			renderChargerGui(graphics, tickDelta, width, height, matrixStack, player.getOffhandItem());
 		}
 		
-		InkColor color = ColorUtils.getColorLockedIfConfig(info.getColor());
+		InkColor color = ColorUtils.getColorLockedIfConfig(squidInfo.color());
 		float[] playerColor = color.getRGB();
 		if (player.getMainHandItem().getItem() instanceof WeaponBaseItem<?> weaponBaseItem)
 		{
 			renderDeviationGui(graphics, tickDelta, width, height, weaponBaseItem, matrixStack, player, playerColor);
 		}
 		
-		if (info.isPlaying())
+		if (playerInfo.isPlaying())
 		{
-			renderMatchGui(graphics, tickDelta, width, height, info.getPlayingStageId(), info, matrixStack);
+			renderMatchGui(graphics, tickDelta, width, height, playerInfo.getPlayingStageId(), playerInfo, matrixStack);
 		}
 		else
 		{
@@ -302,13 +303,13 @@ public class RendererHandler
 			stagesInPos.removeIf(v -> !SaveInfoCapability.get().playSessions().containsKey(v.id));
 			if (!stagesInPos.isEmpty())
 			{
-				renderMatchGui(graphics, tickDelta, width, height, stagesInPos.getFirst().id, info, matrixStack);
+				renderMatchGui(graphics, tickDelta, width, height, stagesInPos.getFirst().id, playerInfo, matrixStack);
 			}
 		}
 		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 		boolean showCrosshairInkIndicator = inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
 		boolean isHoldingMatchItem = player.getMainHandItem().is(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffhandItem().is(SplatcraftTags.Items.MATCH_ITEMS);
-		boolean showLowInkWarning = showCrosshairInkIndicator && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.lowInkWarning")) && (isHoldingMatchItem || info.isSquid()) && !enoughInk(player, null, 10f, 0, false);
+		boolean showLowInkWarning = showCrosshairInkIndicator && Boolean.TRUE.equals(SplatcraftConfig.get("splatcraft.lowInkWarning")) && (isHoldingMatchItem || squidInfo.isSquid()) && !enoughInk(player, null, 10f, 0, false);
 		
 		boolean canUse = true;
 		float inkPctg = 0;
@@ -321,7 +322,7 @@ public class RendererHandler
 			if (isHoldingMatchItem)
 				canUse = InkTankItem.canUse(player.getMainHandItem(), stack) || InkTankItem.canUse(player.getOffhandItem(), stack);
 		}
-		if (info.isSquid() || showLowInkWarning || !canUse)
+		if (squidInfo.isSquid() || showLowInkWarning || !canUse)
 		{
 			squidTime += 0.15f * tickDelta;
 			
@@ -405,7 +406,7 @@ public class RendererHandler
 			squidTime = 0;
 		}
 	}
-	private static void renderMatchGui(GuiGraphics graphics, float tickDelta, int width, int height, String stageId, EntityInfo info, PoseStack matrixStack)
+	private static void renderMatchGui(GuiGraphics graphics, float tickDelta, int width, int height, String stageId, PlayerInfo info, PoseStack matrixStack)
 	{
 		SaveInfo saveInfo = SaveInfoCapability.get();
 		PlaySession session = saveInfo.playSessions().get(stageId);
@@ -465,7 +466,7 @@ public class RendererHandler
 			for (Player player : entry.getValue())
 			{
 				int playerColor = backgroundColor;
-				if (Components.ENTITY_INFO.hasAnd(player, EntityInfo::isMatchRespawning))
+				if (Components.PLAYER_INFO.hasAnd(player, PlayerInfo::isMatchRespawning))
 					playerColor = ColorUtils.makeBrighter(playerColor, 0f, -8f);
 				graphics.fill(x - iconWidth / 2, y, x + iconWidth / 2, y + iconWidth, playerColor);
 				x += iconWidth + playerPadding;
@@ -575,7 +576,7 @@ public class RendererHandler
 			graphics.pose().popPose();
 		}
 	}
-	private static void renderDeviationGui(GuiGraphics graphics, float frameTime, int width, int height, WeaponBaseItem<?> weaponBaseItem, PoseStack matrixStack, LocalPlayer player, float[] playerColor)
+	private static void renderDeviationGui(GuiGraphics graphics, float partialTicks, int width, int height, WeaponBaseItem<?> weaponBaseItem, PoseStack matrixStack, LocalPlayer player, float[] playerColor)
 	{
 		float scale = width * height / 518400.0f;
 		matrixStack.pushPose();
@@ -590,14 +591,14 @@ public class RendererHandler
 		CommonRecords.ShotDeviationDataRecord data = settings.getShotDeviationData(player.getMainHandItem(), player);
 		SplatcraftComponents.WeaponPrecisionData deviationData = ShotDeviationHelper.getDeviationData(player.getMainHandItem());
 		
-		CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), frameTime);
-		CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, frameTime);
+		CommonUtils.Result actualChanceResult = CommonUtils.tickValue(deviationData.chanceDecreaseDelay(), deviationData.chance(), data.chanceDecreasePerTick(), data.minDeviateChance(), partialTicks);
+		CommonUtils.Result airInfluenceResult = CommonUtils.tickValue(deviationData.airborneDecreaseDelay(), deviationData.airborneInfluence(), data.airborneContractTimeToDecrease() == 0 ? Float.NaN : 1f / data.airborneContractTimeToDecrease(), 0, partialTicks);
 		
 		Minecraft mc = Minecraft.getInstance();
 		
 		double fov = ((GameRendererFovAccessor) mc.gameRenderer).invokeGetFov(
 			mc.gameRenderer.getMainCamera(),
-			frameTime,
+			partialTicks,
 			true);
 		Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(
 			fov);
@@ -618,9 +619,9 @@ public class RendererHandler
 			};
 		RenderSystem.setShaderColor(rgb[0], rgb[1], rgb[2], 0.4f);
 		
-		Vec3 deltaMovementLerped = player.getKnownMovement();
+		Vec3 deltaMovementLerped = player.getDeltaMovementLerped(partialTicks);
 		
-		deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(frameTime));
+		deltaMovementLerped = EntityAccessor.invokeGetInputVector(deltaMovementLerped, (float) deltaMovementLerped.length(), -player.getViewYRot(partialTicks));
 		// TODO: do this correctly please this aproximation works half the time
 		Vec3 relativePos = new Vec3(0, 0, speedForRender).add(deltaMovementLerped.x, deltaMovementLerped.y, deltaMovementLerped.z);
 		double horizontalScale = Math.PI / relativePos.z;
@@ -652,7 +653,7 @@ public class RendererHandler
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		matrixStack.popPose();
 	}
-	private static void renderChargerGui(GuiGraphics graphics, float frameTime, int width, int height, EntityInfo info, PoseStack matrixStack, ItemStack itemStack)
+	private static void renderChargerGui(GuiGraphics graphics, float frameTime, int width, int height, PoseStack matrixStack, ItemStack itemStack)
 	{
 		matrixStack.pushPose();
 		RenderSystem.enableBlend();
@@ -660,7 +661,7 @@ public class RendererHandler
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		
 		graphics.blit(WIDGETS, width / 2 - 15, height / 2 + 14, 30, 9, 88, 0, 30, 9, 256, 256);
-		float charge = info.getStoredCharge().map(v -> v.charge).orElse(itemStack.get(SplatcraftComponents.CHARGE_DATA).getCharge(frameTime));
+		float charge = Components.WEAPON_INFO.getOrCreate(ClientUtils.getClientPlayer()).storedCharge().map(v -> v.charge).orElse(itemStack.get(SplatcraftComponents.CHARGE_DATA).getCharge(frameTime));
 		
 		if (charge > 1)
 		{
@@ -682,14 +683,14 @@ public class RendererHandler
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 		// if the client player, for some reason, renders their own name tag, or isnt playing, then do not cancel rendering
-		if (living == clientPlayer || !Components.ENTITY_INFO.hasAnd(clientPlayer, EntityInfo::isPlaying))
+		if (living == clientPlayer || !Components.PLAYER_INFO.hasAnd(clientPlayer, PlayerInfo::isPlaying))
 			return;
 		
 		InkColor clientColor = ColorUtils.getEntityColor(clientPlayer);
 		InkColor entityColor = ColorUtils.getEntityColor(living);
 		
 		// if the player isnt in a match or has the same color, do not cancel rendering
-		if (!Components.ENTITY_INFO.hasAnd(living, EntityInfo::isPlaying) || clientColor.equals(entityColor))
+		if (!(living instanceof Player player) || !Components.PLAYER_INFO.hasAnd(player, PlayerInfo::isPlaying) || clientColor.equals(entityColor))
 			return;
 		
 		// if the player killed the client player, do not cancel rendering
@@ -697,7 +698,7 @@ public class RendererHandler
 			return;
 		
 		// if the player is dead (in a match), do not cancel rendering
-		if (Components.ENTITY_INFO.hasAnd(living, EntityInfo::isMatchRespawning))
+		if (Components.PLAYER_INFO.hasAnd(player, PlayerInfo::isMatchRespawning))
 			return;
 		
 		cir.setReturnValue(false);

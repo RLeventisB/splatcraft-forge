@@ -23,7 +23,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.platform.Components;
@@ -448,17 +448,17 @@ public class SquidBumperEntity extends LivingEntity implements IColoredEntity
 			{
 				if (!isUnderWater())
 				{
-					InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(this);
+					InkOverlayData data = Components.INK_OVERLAY.getOrCreate(this);
 					
 					if (getInkHealth() > 0)
 					{
-						if (info.getAmount() < maxInkHealth * 1.5)
-							info.addAmount(damage);
+						if (data.getAmount() < maxInkHealth * 1.5)
+							data.addAmount(damage);
 					}
-					else info.setAmount(0);
+					else data.setAmount(0);
 					
-					info.setColor(color);
-					SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(this, info), this);
+					data.setColor(color);
+					SplatcraftPacketHandler.sendToTrackers(new UpdateInkOverlayPacket(this, data), this);
 				}
 			}
 		}

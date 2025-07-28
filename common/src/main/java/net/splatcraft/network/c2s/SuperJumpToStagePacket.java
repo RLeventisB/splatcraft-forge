@@ -4,7 +4,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,8 @@ public class SuperJumpToStagePacket extends PlayC2SPacket
 		buffer.writeUtf(stageId);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
-		Stage.getStage(stageId).superJumpToStage((ServerPlayer) player);
+		Stage.getStage(stageId).superJumpToStage(player);
 	}
 }

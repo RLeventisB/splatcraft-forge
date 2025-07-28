@@ -43,7 +43,7 @@ public class PlayerSetSquidS2CPacket extends PlayS2CPacket
 		{
 			return;
 		}
-
+		
 		SquidFormHandler.setSquid(player, squid);
 	}
 }

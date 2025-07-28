@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.WeaponInfo;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.platform.Components;
 
@@ -29,11 +29,11 @@ public class EntityStoredCharge
 	}
 	public static Optional<EntityStoredCharge> getChargeOptional(LivingEntity entity)
 	{
-		return Components.ENTITY_INFO.getOptional(entity).flatMap(EntityInfo::getStoredCharge);
+		return Components.WEAPON_INFO.getOptional(entity).flatMap(WeaponInfo::storedCharge);
 	}
 	public static void setCharge(LivingEntity entity, EntityStoredCharge charge)
 	{
-		Components.ENTITY_INFO.getOrCreate(entity).setStoredCharge(charge);
+		Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withStoredCharge(charge));
 	}
 	public static boolean hasCharge(LivingEntity entity)
 	{
@@ -42,7 +42,7 @@ public class EntityStoredCharge
 			throw new IllegalArgumentException("Attempted to retrieve charge for a null entity");
 		}
 		
-		return Components.ENTITY_INFO.getOptional(entity).map(v -> v.getStoredCharge().isPresent()).orElse(false);
+		return Components.WEAPON_INFO.getOptional(entity).map(v -> v.storedCharge().isPresent()).orElse(false);
 	}
 	public static boolean chargeMatches(LivingEntity entity, ItemStack stack)
 	{

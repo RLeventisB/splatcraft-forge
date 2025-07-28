@@ -336,7 +336,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	{
 		public static final Codec<ChargeDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				ExtraCodecs.POSITIVE_FLOAT.optionalFieldOf("min_charge_time_ticks", 2f).forGetter(ChargeDataRecord::minChargeTime),
+				ExtraCodecs.POSITIVE_FLOAT.optionalFieldOf("min_charge_time_ticks", 8f).forGetter(ChargeDataRecord::minChargeTime),
 				ExtraCodecs.POSITIVE_FLOAT.fieldOf("first_charge_time_ticks").forGetter(ChargeDataRecord::firstChargeTime),
 				ExtraCodecs.POSITIVE_FLOAT.fieldOf("second_charge_time_ticks").forGetter(ChargeDataRecord::secondChargeTime),
 				Codec.floatRange(0, 1).optionalFieldOf("empty_tank_first_charge_rate", 1 / 3f).forGetter(ChargeDataRecord::emptyTankFirstChargeRate),

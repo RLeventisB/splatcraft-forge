@@ -55,7 +55,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.SplatcraftKeyHandler;
 import net.splatcraft.client.renderer.InkSquidRenderer;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
+import net.splatcraft.data.capabilities.structs.WeaponInfo;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -367,12 +368,7 @@ public class CommonUtils
 	}
 	public static <T> T returnValueDependantOnSquidCancel(LivingEntity entity, T withCancel, T withoutCancel)
 	{
-		AtomicBoolean didCancel = new AtomicBoolean(false);
-		Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-		{
-			didCancel.set(info.hasHigherStartup());
-		});
-		return didCancel.get() ? withCancel : withoutCancel;
+		return Components.WEAPON_INFO.hasAnd(entity, WeaponInfo::hasHigherStartup) ? withCancel : withoutCancel;
 	}
 	public static float startupSquidSwitch(LivingEntity entity, CommonRecords.ShotDataRecord shotData)
 	{
@@ -525,7 +521,7 @@ public class CommonUtils
 		if (entity instanceof InkSquidEntity)
 			return true;
 		
-		return Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isSquid);
+		return Components.SQUID_INFO.hasAnd(entity, SquidInfo::isSquid);
 	}
 	public static <I, O> ReseteableMemoizedFunction<I, O> memoizeResetable(Function<I, O> function)
 	{

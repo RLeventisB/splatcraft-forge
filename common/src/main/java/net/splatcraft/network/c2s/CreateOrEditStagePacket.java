@@ -10,7 +10,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -55,9 +54,9 @@ public class CreateOrEditStagePacket extends PlayC2SPacket
 		WORLD_KEY_CODEC.encode(buffer, worldKey);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		SaveInfoCapability.get().createOrEditStage(Services.PLATFORM.getServerInstance(), worldKey, stageId, corner1, corner2, stageName);
-		SplatcraftPacketHandler.sendToPlayer(new NotifyStageCreatePacket(stageId), (ServerPlayer) player);
+		SplatcraftPacketHandler.sendToPlayer(new NotifyStageCreatePacket(stageId), player);
 	}
 }

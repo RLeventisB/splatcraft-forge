@@ -2,8 +2,8 @@ package net.splatcraft.network.s2c;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.network.c2s.PlayC2SPacket;
@@ -31,7 +31,7 @@ public class VoidedChargePacket extends PlayC2SPacket
 	{
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		EntityStoredCharge.emptyStoredCharge(player);
 		for (InteractionHand hand : InteractionHand.values())

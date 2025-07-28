@@ -239,6 +239,8 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 		
 		if (entity instanceof LivingEntity livingEntity)
 		{
+			if (!Components.WEAPON_INFO.has(livingEntity))
+				Components.WEAPON_INFO.getOrCreate(livingEntity);
 			CommonRecords.ShotDeviationDataRecord deviationData = getSettings(stack).getShotDeviationData(stack, livingEntity);
 			if (deviationData != CommonRecords.ShotDeviationDataRecord.PERFECT_DEFAULT)
 			{
@@ -256,7 +258,7 @@ public abstract class WeaponBaseItem<S extends AbstractWeaponSettings<S, ?>> ext
 			{
 				if (CommonUtils.isSquid(player))
 				{
-					Components.ENTITY_INFO.get(player).setIsSquid(false);
+					Components.SQUID_INFO.update(player, info -> info.setSquid(false));
 					if (!world.isClientSide())
 					{
 						SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), false), player);

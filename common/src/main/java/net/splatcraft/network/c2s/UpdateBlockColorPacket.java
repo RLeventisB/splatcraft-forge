@@ -3,7 +3,7 @@ package net.splatcraft.network.c2s;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.tileentities.InkVatTileEntity;
@@ -32,7 +32,7 @@ public class UpdateBlockColorPacket extends PlayC2SPacket
 		return new UpdateBlockColorPacket(new BlockPos(buffer.readInt(), buffer.readInt(), buffer.readInt()), InkColor.STREAM_CODEC.decode(buffer), buffer.readInt());
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		BlockEntity te = player.level().getBlockEntity(pos);
 		

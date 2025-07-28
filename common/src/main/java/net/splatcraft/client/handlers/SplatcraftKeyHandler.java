@@ -23,7 +23,7 @@ import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.handlers.ShootingHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.SpecialProviderItem;
@@ -94,7 +94,7 @@ public class SplatcraftKeyHandler
 		if (player == null || player.isSpectator())
 			return;
 		
-		EntityInfo info = Components.ENTITY_INFO.get(player);
+		SquidInfo info = Components.SQUID_INFO.get(player);
 		
 		if (info == null)
 			return;
@@ -147,7 +147,7 @@ public class SplatcraftKeyHandler
 			}
 		}
 	}
-	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey oldest, EntityInfo info)
+	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey oldest, SquidInfo info)
 	{
 		if (SUB_WEAPON_KEYBIND.pressed)
 			queuedSubWeapon = true;
@@ -220,14 +220,14 @@ public class SplatcraftKeyHandler
 		return entity.level().noBlockCollision(entity,
 			new AABB(entity.getX() + -0.3, entity.getY(), entity.getZ() + -0.3, entity.getX() + 0.3, entity.getY() + 0.6, entity.getZ() + 0.3));
 	}
-	public static void tickSquidAndCharge(LivingEntity entity, EntityInfo info, ToggleableKey oldest)
+	public static void tickSquidAndCharge(LivingEntity entity, SquidInfo info, ToggleableKey oldest)
 	{
 		Optional<Boolean> forcedSquidMode = EntityAction.getSpecificEntityActionOptional(entity, ActionThatSetsSquid.class).flatMap(v -> v.isSquid(entity));
 		if (forcedSquidMode.isPresent())
 		{
 			if (info.isSquid() != forcedSquidMode.get())
 			{
-				ClientUtils.setSquid(entity, info, forcedSquidMode.get(), false);
+				ClientUtils.setSquid(entity, forcedSquidMode.get(), false);
 			}
 			return;
 		}
@@ -255,17 +255,17 @@ public class SplatcraftKeyHandler
 			if (EntityStoredCharge.hasCharge(entity))
 			{
 				if (SQUID_KEYBIND.pressed)
-					ClientUtils.setSquid(entity, info, false, true);
+					ClientUtils.setSquid(entity, false, true);
 			}
 			else
 			{
 				if (!SQUID_KEYBIND.active || doingActionThatLeavesSquidMode)
-					ClientUtils.setSquid(entity, info, false, false);
+					ClientUtils.setSquid(entity, false, false);
 			}
 		}
 		else
 		{
-			if (EntityAction.hasEntityActionAnd(entity, v -> !v.isCancellable()) ||
+			if (EntityAction.hasEntityActionAnd(entity, v -> !v.isCancellable(entity)) ||
 				CommonUtils.anyWeaponOnCooldown(entity))
 				return;
 			
@@ -273,7 +273,7 @@ public class SplatcraftKeyHandler
 			{
 				SQUID_KEYBIND.active = true;
 				
-				ClientUtils.setSquid(entity, info, true, true);
+				ClientUtils.setSquid(entity, true, true);
 			}
 			else
 			{
@@ -281,7 +281,7 @@ public class SplatcraftKeyHandler
 					WeaponHandler.getWeaponHand(entity, (x, y) -> y.preventsSquidForm(x, entity)).isEmpty() &&
 					!doingActionThatLeavesSquidMode)
 				{
-					ClientUtils.setSquid(entity, info, true, false);
+					ClientUtils.setSquid(entity, true, false);
 				}
 			}
 		}

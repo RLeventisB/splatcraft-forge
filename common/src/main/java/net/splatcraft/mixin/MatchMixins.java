@@ -37,7 +37,7 @@ import net.splatcraft.client.renderer.SplatcraftRenderTypes;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
@@ -66,51 +66,56 @@ public class MatchMixins
 		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathTimerOnMatch(CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional((LivingEntity) (Object) this).ifPresent(info ->
-			{
-				if (info.isPlaying())
+			LivingEntity entity = (LivingEntity) (Object) this;
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.isPlaying())
+					{
+						ci.cancel();
+					}
+				});
 		}
 		@Inject(method = "startUsingItem", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventItemUsageWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.getMatchState(entity).movementDisabled)
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.calculateMatchState(entity).movementDisabled)
+					{
+						ci.cancel();
+					}
+				});
 		}
 		@Inject(method = "updatingUsingItem", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventItemUsageAgainWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.getMatchState(entity).movementDisabled)
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					entity.stopUsingItem();
-					ci.cancel();
-				}
-			});
+					if (info.calculateMatchState(entity).movementDisabled)
+					{
+						entity.stopUsingItem();
+						ci.cancel();
+					}
+				});
 		}
 		@Inject(method = "updateUsingItem", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventItemUsageAgainAgainWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.getMatchState(entity).movementDisabled)
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					entity.stopUsingItem();
-					ci.cancel();
-				}
-			});
+					if (info.calculateMatchState(entity).movementDisabled)
+					{
+						entity.stopUsingItem();
+						ci.cancel();
+					}
+				});
 		}
 	}
 	@Mixin(AbstractClientPlayer.class)
@@ -120,25 +125,27 @@ public class MatchMixins
 		public void splatcraft$mimicSpectatorModeWhenDead(CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.isPlaying() && info.isMatchRespawning())
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					cir.setReturnValue(true);
-				}
-			});
+					if (info.isPlaying() && info.isMatchRespawning())
+					{
+						cir.setReturnValue(true);
+					}
+				});
 		}
 		@Inject(method = "isCreative", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$mimicSpectatorModeWhenDeadTwo(CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.isPlaying() && info.isMatchRespawning())
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					cir.setReturnValue(false);
-				}
-			});
+					if (info.isPlaying() && info.isMatchRespawning())
+					{
+						cir.setReturnValue(false);
+					}
+				});
 		}
 	}
 	@Mixin(Player.class)
@@ -148,25 +155,27 @@ public class MatchMixins
 		public void splatcraft$inhibitMovementWhenDead(CallbackInfo ci)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.isPlaying() && info.isMatchRespawning())
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.isPlaying() && info.isMatchRespawning())
+					{
+						ci.cancel();
+					}
+				});
 		}
 		@Inject(method = "blockActionRestricted", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$prohibitBlockBreakingWhenDead(Level world, BlockPos pos, GameType gameMode, CallbackInfoReturnable<Boolean> cir)
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.getMatchState(entity).movementDisabled)
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					cir.setReturnValue(true);
-				}
-			});
+					if (info.calculateMatchState(entity).movementDisabled)
+					{
+						cir.setReturnValue(true);
+					}
+				});
 		}
 	}
 	@Mixin(LocalPlayer.class)
@@ -175,35 +184,41 @@ public class MatchMixins
 		@Inject(method = "shouldShowDeathScreen", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventDeathScreenOnMatch(CallbackInfoReturnable<Boolean> cir)
 		{
-			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
-			{
-				if (info.isPlaying())
+			LivingEntity entity = (LivingEntity) (Object) this;
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					cir.setReturnValue(false);
-				}
-			});
+					if (info.isPlaying())
+					{
+						cir.setReturnValue(false);
+					}
+				});
 		}
 		@Inject(method = "respawn", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$preventRespawnOnMatch(CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
-			{
-				if (info.isPlaying())
+			LivingEntity entity = (LivingEntity) (Object) this;
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.isPlaying())
+					{
+						ci.cancel();
+					}
+				});
 		}
 		@Inject(method = "tickDeath", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$WHYARETHERETWOIMeanpreventDeathTimerOnMatch(CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional((LocalPlayer) (Object) this).ifPresent(info ->
-			{
-				if (info.isPlaying())
+			LivingEntity entity = (LivingEntity) (Object) this;
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.isPlaying())
+					{
+						ci.cancel();
+					}
+				});
 		}
 	}
 	@Mixin(MultiPlayerGameMode.class)
@@ -212,9 +227,9 @@ public class MatchMixins
 		@Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$prohibitBlockInteractionWhenOnMatch(LocalPlayer player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir)
 		{
-			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
+			Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 			{
-				if (info.getMatchState(player).movementDisabled)
+				if (info.calculateMatchState(player).movementDisabled)
 				{
 					cir.setReturnValue(InteractionResult.FAIL);
 				}
@@ -227,13 +242,14 @@ public class MatchMixins
 		@Inject(method = "renderItem", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelPlayerRenderIfDead(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-			{
-				if (info.getMatchState(entity).modifiesCamera)
+			if (entity instanceof Player player)
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
-					ci.cancel();
-				}
-			});
+					if (info.calculateMatchState(entity).modifiesCamera)
+					{
+						ci.cancel();
+					}
+				});
 		}
 	}
 	@Mixin(PlayerRenderer.class)
@@ -242,7 +258,7 @@ public class MatchMixins
 		@Inject(method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelPlayerRenderIfDead(AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i, CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
+			Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 			{
 				if (info.isPlaying() && info.isMatchRespawning())
 				{
@@ -255,14 +271,14 @@ public class MatchMixins
 		{
 			LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 			// if the client player, for some reason, renders their own name tag, or isnt playing, then do not cancel rendering
-			if (entity == clientPlayer || !Components.ENTITY_INFO.hasAnd(clientPlayer, EntityInfo::isPlaying))
+			if (entity == clientPlayer || !Components.PLAYER_INFO.hasAnd(clientPlayer, PlayerInfo::isPlaying))
 				return;
 			
 			InkColor clientColor = ColorUtils.getEntityColor(clientPlayer);
 			InkColor entityColor = ColorUtils.getEntityColor(entity);
 			
 			// if the player isnt in a match or has the same color, do not cancel rendering
-			if (!Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isPlaying) || clientColor.equals(entityColor))
+			if (!Components.PLAYER_INFO.hasAnd(entity, PlayerInfo::isPlaying) || clientColor.equals(entityColor))
 				return;
 			
 			// if the player killed the client player, do not cancel rendering
@@ -270,7 +286,7 @@ public class MatchMixins
 				return;
 			
 			// if the player is dead (in a match), do not cancel rendering
-			if (Components.ENTITY_INFO.hasAnd(entity, EntityInfo::isMatchRespawning))
+			if (Components.PLAYER_INFO.hasAnd(entity, PlayerInfo::isMatchRespawning))
 				return;
 			
 			ci.cancel();
@@ -278,9 +294,9 @@ public class MatchMixins
 		@Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
 		public void splatcraft$cancelHeldItemRenderIfDead(PoseStack matrices, MultiBufferSource vertexConsumers, int light, AbstractClientPlayer player, ModelPart arm, ModelPart sleeve, CallbackInfo ci)
 		{
-			Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
+			Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 			{
-				if (info.getMatchState(player).modifiesCamera)
+				if (info.calculateMatchState(player).modifiesCamera)
 				{
 					ci.cancel();
 				}
@@ -390,7 +406,7 @@ public class MatchMixins
 		{
 			if (focusedEntity instanceof Player player)
 			{
-				Components.ENTITY_INFO.getOptional(player).ifPresent(info ->
+				Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
 				{
 					SaveInfo saveInfo = SaveInfoCapability.get();
 					PlaySession session = saveInfo.playSessions().get(info.getPlayingStageId());

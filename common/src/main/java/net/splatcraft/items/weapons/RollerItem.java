@@ -43,6 +43,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import net.splatcraft.util.structs.AttackId;
@@ -405,10 +406,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			return isGrounded;
 		}
 		@Override
-		public void tick(LivingEntity entity)
+		public ActionEndResult tick(LivingEntity entity)
 		{
 			if (hasAttacked)
-				return;
+				return ActionEndResult.dontEnd(this);
 			
 			if (getTime() < attackFrame)
 			{
@@ -427,17 +428,17 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 							attackFrame = data.startupTicks();
 							setMaxTime(data.getTotalAttackTime());
 							
-							SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
+							SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(entity), entity);
 						}
 					);
 				}
-				return;
+				return null;
 			}
 			
 			hasAttacked = true;
 			float extraTime = getTime() - attackFrame;
 			if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
-				return;
+				return ActionEndResult.END_ACTION;
 			
 			RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
 			Level world = entity.level();
@@ -449,7 +450,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			RollerWeaponSettings.RollerAttackDataRecord attackData = settings.getAttackData(isGrounded()).attackData();
 			CommonUtils.setSquidDelay(entity, attackData.miscEndlagTicks());
 			if (world.isClientSide() || !reduceInk(entity, rollerItem, attackData.inkConsumption(), attackData.inkRecoveryCooldown(), !settings.isBrush || entity.getUseItemRemainingTicks() % 4 == 0))
-				return;
+				return ActionEndResult.dontEnd(this);
 			
 			if (settings.isBrush)
 			{
@@ -551,6 +552,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 					}
 				}
 			}
+			return ActionEndResult.dontEnd(this);
 		}
 		private void createBrushBlobs(LivingEntity entity, List<Float> preparedAngles, int count, Level world, RollerWeaponSettings settings, AttackId attackId, float extraTime, boolean weak)
 		{
@@ -579,7 +581,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			return getTime() >= attackFrame - 2;
 		}
 		@Override
-		public boolean canEnd(LivingEntity entity)
+		public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 		{
 			if (isAttackQueued)
 			{
@@ -589,7 +591,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				
 				if (!(getStoredStack().getItem() instanceof RollerItem rollerItem))
 				{
-					return true;
+					return null;
 				}
 				RollerWeaponSettings settings = rollerItem.getSettings(getStoredStack());
 				RollerWeaponSettings.RollerAttackDataRecord data = settings.getAttackData(isGrounded).attackData();
@@ -603,10 +605,10 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						sendGroundedSynchronizationPacket(player);
 				}
 				else
-					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
-				return false;
+					SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(entity), entity);
+				return ActionEndResult.dontEnd(this);
 			}
-			return true;
+			return ActionEndResult.END_ACTION;
 		}
 		@Override
 		public boolean reversedTime()

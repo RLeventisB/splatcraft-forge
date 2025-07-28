@@ -17,7 +17,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
@@ -32,15 +32,15 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 		MODEL = model;
 	}
 	@Override
-	public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int light, @NotNull AbstractClientPlayer entity, float v, float v1, float v2, float v3, float v4, float v5)
+	public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int light, @NotNull AbstractClientPlayer player, float v, float v1, float v2, float v3, float v4, float v5)
 	{
-		if (!Components.ENTITY_INFO.has(entity))
+		if (!Components.PLAYER_INFO.has(player))
 			return;
 		
-		EntityInfo info = Components.ENTITY_INFO.get(entity);
-		ItemStack inkBand = info.getInkBand();
+		PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
+		ItemStack inkBand = info.inkBand();
 		
-		if (!inkBand.isEmpty() && (ItemStack.isSameItem(entity.getMainHandItem(), inkBand) || ItemStack.isSameItem(entity.getOffhandItem(), inkBand)))
+		if (!inkBand.isEmpty() && (ItemStack.isSameItem(player.getMainHandItem(), inkBand) || ItemStack.isSameItem(player.getOffhandItem(), inkBand)))
 			return;
 		
 		boolean isFoil = inkBand.hasFoil();
@@ -56,12 +56,12 @@ public class InkAccessoryLayer extends RenderLayer<AbstractClientPlayer, PlayerM
 		ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + ".png");
 		ResourceLocation coloredTexture = ResourceLocation.fromNamespaceAndPath(stackLoc.getNamespace(), "textures/models/" + stackLoc.getPath() + customModelData + "_colored.png");
 		
-		MODEL.leftArm.visible = entity.getMainArm() == HumanoidArm.LEFT;
-		MODEL.leftLeg.visible = entity.getMainArm() == HumanoidArm.LEFT;
-		MODEL.rightArm.visible = entity.getMainArm() == HumanoidArm.RIGHT;
-		MODEL.rightLeg.visible = entity.getMainArm() == HumanoidArm.RIGHT;
+		MODEL.leftArm.visible = player.getMainArm() == HumanoidArm.LEFT;
+		MODEL.leftLeg.visible = player.getMainArm() == HumanoidArm.LEFT;
+		MODEL.rightArm.visible = player.getMainArm() == HumanoidArm.RIGHT;
+		MODEL.rightLeg.visible = player.getMainArm() == HumanoidArm.RIGHT;
 		
-		InkColor color = ColorUtils.getColorLockedIfConfig(ColorUtils.getEntityColor(entity));
+		InkColor color = ColorUtils.getColorLockedIfConfig(ColorUtils.getEntityColor(player));
 		
 		if (Minecraft.getInstance().getResourceManager().getResource(texture).isPresent())
 		{

@@ -20,6 +20,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 		level.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
 	}
 	@Override
-	public void tick(LivingEntity entity)
+	public ActionEndResult tick(LivingEntity entity)
 	{
 		Optional<ItemStack> providerStackOptional = providerSlot.tryGetItemFrom(entity);
 		providerStackOptional.ifPresent(providerStack ->
@@ -99,7 +100,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 			if (data != null)
 				providerStack.set(SplatcraftComponents.SPECIAL_PROVIDER_DATA, data.withStoredCharge(getSpecialCharge(providerStack, data.storedCharge())));
 		});
-		super.tick(entity);
+		return ActionEndResult.dontEnd(this);
 	}
 	@Override
 	public boolean preventWeaponUse()

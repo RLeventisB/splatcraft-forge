@@ -133,7 +133,7 @@ public class WeaponWorkbenchScreen extends EffectRenderingInventoryScreen<Weapon
 	{
 		WeaponWorkbenchSubtypeRecipe selectedRecipe = recipeList.get(typePos).getRecipeFromIndex(player, subTypePos + i < 0 ? recipeList.get(typePos).getAvailableRecipesTotal(player) - 1 : (subTypePos + i) % recipeList.get(typePos).getAvailableRecipesTotal(player));
 		ItemStack displayStack = selectedRecipe.getOutput().copy();
-		ColorUtils.withInkColor(displayStack, Components.ENTITY_INFO.getOrCreate(player).getColor());
+		ColorUtils.withInkColor(displayStack, Components.SQUID_INFO.getOrCreate(player).color());
 		
 		guiGraphics.pose().pushPose();
 		float scale = i == 0 ? -28F : -14F;

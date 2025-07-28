@@ -133,7 +133,7 @@ public class SpecialHandler
 			return;
 		
 		specialExecutor.get(specialId).getFirst().execute(entity, settings, providerSlot, weaponSlot);
-		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(entity), entity);
 	}
 	@FunctionalInterface
 	public interface SpecialExecutorAction

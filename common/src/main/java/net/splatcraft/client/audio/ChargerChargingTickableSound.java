@@ -6,7 +6,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftComponents;
 
@@ -43,8 +42,7 @@ public class ChargerChargingTickableSound extends AbstractTickableSoundInstance
 			return;
 		}
 		
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
-		if (info.isSquid())
+		if (Components.SQUID_INFO.getOrCreate(player).isSquid())
 		{
 			stop();
 			return;

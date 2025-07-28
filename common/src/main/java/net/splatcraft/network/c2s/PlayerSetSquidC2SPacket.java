@@ -2,9 +2,9 @@ package net.splatcraft.network.c2s;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
@@ -41,9 +41,9 @@ public class PlayerSetSquidC2SPacket extends PlayC2SPacket
 		buffer.writeByte(data);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
-		EntityInfo target = Components.ENTITY_INFO.getOrCreate(player);
+		@NotNull SquidInfo target = Components.SQUID_INFO.getOrCreate(player);
 		boolean squid = (data & 1) == 1;
 		boolean chargeStorage = (data & 2) == 2;
 		if (squid == target.isSquid() && !Services.PLATFORM.getServerInstance().isSingleplayer())

@@ -1,6 +1,7 @@
 package net.splatcraft.network.s2c;
 
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.Util;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -11,7 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CodecUtils;
@@ -39,7 +39,7 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 	}
 	public SendPlayerDeathMatchPacket(int respawnTime, Entity killer, Vector2f pitchYawDir)
 	{
-		this(respawnTime, killer instanceof Player ? killer.getUUID() : new UUID(0, 0), pitchYawDir);
+		this(respawnTime, killer instanceof Player ? killer.getUUID() : Util.NIL_UUID, pitchYawDir);
 	}
 	public SendPlayerDeathMatchPacket(int respawnTime, UUID killerPlayer, Vector2f pitchYawDir)
 	{
@@ -68,14 +68,11 @@ public class SendPlayerDeathMatchPacket extends PlayS2CPacket
 	public void execute()
 	{
 		LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
-		if (!killerPlayer.equals(new UUID(0, 0)) && pitchYawDir.lengthSquared() != 0)
+		if (!killerPlayer.equals(Util.NIL_UUID) && pitchYawDir.lengthSquared() != 0)
 			ClientUtils.killCamData = Pair.of(killerPlayer, pitchYawDir);
 		else
 			ClientUtils.killCamData = null;
 		
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(clientPlayer);
-		
-		info.setMatchRespawnTimeLeft(respawnTime);
-		info.setIsMatchRespawning(true);
+		Components.PLAYER_INFO.updateOrCreate(clientPlayer, info -> info.setMatchRespawnTimeLeft(respawnTime).setIsMatchRespawning(true));
 	}
 }

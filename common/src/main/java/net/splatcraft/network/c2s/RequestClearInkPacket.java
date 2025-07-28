@@ -3,7 +3,7 @@ package net.splatcraft.network.c2s;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.InkDisruptorItem;
 import net.splatcraft.platform.Services;
@@ -33,7 +33,7 @@ public class RequestClearInkPacket extends PlayC2SPacket
 		buffer.writeUtf(stageId);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Stage stage = Stage.getStage(stageId);
 		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());

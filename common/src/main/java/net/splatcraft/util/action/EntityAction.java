@@ -15,6 +15,7 @@ import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;
 import net.splatcraft.platform.Components;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.specials.InkjetAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public interface EntityAction
+public interface EntityAction extends Cloneable
 {
 	Registry<Class<? extends EntityAction>> CLASS_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("entity_action_classes")), Lifecycle.stable());
 	Registry<Supplier<Codec<EntityAction>>> CODEC_REGISTRY = new MappedRegistry<>(ResourceKey.createRegistryKey(Splatcraft.identifierOf("entity_action_codecs")), Lifecycle.stable());
@@ -92,7 +93,11 @@ public interface EntityAction
 	}
 	static void setEntityAction(LivingEntity entity, EntityAction action)
 	{
-		Components.ENTITY_INFO.getOrCreate(entity).setEntityAction(action, entity);
+		setEntityAction(entity, action, false, false);
+	}
+	static void setEntityAction(LivingEntity entity, EntityAction action, boolean forced, boolean notifyOldAction)
+	{
+		Components.ENTITY_INFO.updateOrCreate(entity, info -> info.setEntityAction(action, entity, forced, notifyOldAction));
 	}
 	static <T extends EntityAction> boolean hasSpecificEntityActionAnd(LivingEntity entity, Predicate<T> actionPredicate, Class<T> clazz)
 	{
@@ -186,7 +191,7 @@ public interface EntityAction
 	{
 		return ItemStack.EMPTY;
 	}
-	default boolean isCancellable()
+	default boolean isCancellable(LivingEntity entity)
 	{
 		return false;
 	}
@@ -194,8 +199,49 @@ public interface EntityAction
 	{
 		return EntitySlot.EMPTY;
 	}
-	default void tick(LivingEntity entity)
+	default ActionEndResult updateAction(LivingEntity entity)
 	{
+		ActionEndResult endResult = ActionEndResult.dontEnd(this);
+		
+		if (getTime() == getMaxTime())
+			onStart(entity);
+		if (isCancellable(entity) && CommonUtils.isSquid(entity))
+		{
+			endResult = canEnd(entity, EntityAction.EndType.CANCELLED);
+			if (!endResult.tickAfter())
+				return endResult;
+		}
+		else
+		{
+			tick(entity);
+			entity.setSprinting(false);
+		}
+		if (reversedTime())
+		{
+			if (getTime() >= getMaxTime())
+			{
+				endResult = canEnd(entity, EntityAction.EndType.TIME);
+				if (!endResult.tickAfter())
+					return endResult;
+			}
+			setTime(getTime() + 1);
+		}
+		else
+		{
+			if (getTime() <= 1)
+			{
+				endResult = canEnd(entity, EntityAction.EndType.TIME);
+				if (!endResult.tickAfter())
+					return endResult;
+			}
+			setTime(getTime() - 1);
+		}
+		
+		return endResult;
+	}
+	default ActionEndResult tick(LivingEntity entity)
+	{
+		return ActionEndResult.dontEnd(this);
 	}
 	default void onStart(LivingEntity entity)
 	{
@@ -204,21 +250,22 @@ public interface EntityAction
 	{
 		return false;
 	}
-	default boolean canEnd(LivingEntity entity)
+	default ActionEndResult canEnd(LivingEntity entity, EndType endType)
 	{
-		return true;
-	}
-	default boolean endWhenOnSquid(LivingEntity entity)
-	{
-		return true;
+		return ActionEndResult.END_ACTION;
 	}
 	/**
 	 * Called whenever another action is about to override the current action.
 	 *
 	 * @param entity The entity that executes this action.
 	 */
-	default void beforeEnd(LivingEntity entity)
+	default void beforeForcedEnd(LivingEntity entity)
 	{
 	
+	}
+	public enum EndType
+	{
+		TIME,
+		CANCELLED
 	}
 }

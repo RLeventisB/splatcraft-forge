@@ -19,12 +19,12 @@ import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
+import net.splatcraft.network.c2s.UpdateJumpInputPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
-import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.DamageCalculator;
 import net.splatcraft.util.structs.RangedValueCollection;
@@ -95,19 +95,19 @@ public class InkjetAction extends BaseSpecialAction
 		super.onStart(entity);
 	}
 	@Override
-	public void tick(LivingEntity entity)
+	public ActionEndResult tick(LivingEntity entity)
 	{
-		if (Components.ENTITY_INFO.get(entity).hasHigherStartup() && shotCooldown <= 0 && shotCooldown > -8)
+		if (Components.WEAPON_INFO.getOrCreate(entity).hasHigherStartup() && shotCooldown <= 0 && shotCooldown > -8)
 		{
 			shotCooldown = -8;
-			Components.ENTITY_INFO.get(entity).resetHigherStartup();
+			Components.WEAPON_INFO.get(entity).resetHigherStartup();
 		}
 		
 		if (entity.isUsingItem() && !CommonUtils.isSquid(entity))
 		{
 			queuedShotTime = 3;
 		}
-		if (entity.jumping)
+		if (entity.jumping) // jumping is only updated on clients
 		{
 			queuedBoostTime = 3;
 		}
@@ -116,25 +116,23 @@ public class InkjetAction extends BaseSpecialAction
 		entity.setYBodyRot(entity.getVisualRotationYInDegrees());
 		doJetpackPhysics(entity);
 		if (entity.level().isClientSide())
-			spawnDroplets(entity);
-		
-		float extraTime = tickShotCooldown();
-		
-		if (queuedShotTime > 0)
 		{
-			if (shotCooldown == 0)
-				doShot(entity, extraTime);
-			else
-				queuedShotTime--;
+			spawnDroplets(entity);
+			SplatcraftPacketHandler.sendToServer(new UpdateJumpInputPacket(entity));
 		}
 		
-		tickBoostCooldown();
-		if (queuedBoostTime > 0)
 		{
-			if (boostCooldown <= 0)
-				doBoost(entity);
-			else
-				queuedBoostTime--;
+			float extraTime = tickShotCooldown();
+			
+			if (queuedShotTime > 0)
+			{
+				if (shotCooldown == 0)
+					doShot(entity, extraTime);
+				else
+					queuedShotTime--;
+			}
+			
+			tickBoost(entity);
 		}
 		
 		if (getTime() <= 40 && !didBreakSound)
@@ -144,6 +142,7 @@ public class InkjetAction extends BaseSpecialAction
 			didBreakSound = true;
 		}
 		super.tick(entity);
+		return ActionEndResult.dontEnd(this);
 	}
 	private void spawnDroplets(LivingEntity entity)
 	{
@@ -204,12 +203,13 @@ public class InkjetAction extends BaseSpecialAction
 	}
 	private void doBoost(LivingEntity entity)
 	{
-		entity.addDeltaMovement(new Vec3(0, specialData.impulseOnJump(), 0));
+		if (entity.level().isClientSide())
+			entity.addDeltaMovement(new Vec3(0, specialData.impulseOnJump(), 0));
 		CommonUtils.setSquidDelay(entity, 5f);
 		boostCooldown = specialData.impulseCooldown();
 		queuedBoostTime = 0;
 		
-		entity.level().playLocalSound(entity, SplatcraftSounds.inkjetBoost, SoundSource.PLAYERS, 1f, 1f);
+		entity.level().playSound(null, entity, SplatcraftSounds.inkjetBoost, SoundSource.PLAYERS, 1f, 1f);
 	}
 	private void doShot(LivingEntity entity, float extraTime)
 	{
@@ -236,11 +236,18 @@ public class InkjetAction extends BaseSpecialAction
 		queuedShotTime = 0;
 		shotCooldown = specialData.firingRepeatTicks();
 	}
-	private void tickBoostCooldown()
+	private void tickBoost(LivingEntity entity)
 	{
 		if (boostCooldown > 0)
 		{
 			boostCooldown--;
+		}
+		if (queuedBoostTime > 0)
+		{
+			if (boostCooldown <= 0)
+				doBoost(entity);
+			else
+				queuedBoostTime--;
 		}
 	}
 	private float tickShotCooldown()
@@ -267,15 +274,9 @@ public class InkjetAction extends BaseSpecialAction
 		return extraTime;
 	}
 	@Override
-	public boolean isCancellable()
+	public boolean isCancellable(LivingEntity entity)
 	{
 		return true;
-	}
-	@Override
-	public boolean endWhenOnSquid(LivingEntity entity)
-	{
-		super.tick(entity);
-		return false;
 	}
 	@Override
 	public Optional<Float> mobility(LivingEntity entity)
@@ -286,12 +287,20 @@ public class InkjetAction extends BaseSpecialAction
 		return Optional.of(0f);
 	}
 	@Override
-	public boolean canEnd(LivingEntity entity)
+	public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 	{
 		if (entity.level().isClientSide())
-			return false;
+		{
+			SplatcraftPacketHandler.sendToServer(new UpdateJumpInputPacket());
+			return ActionEndResult.dontEnd(this);
+		}
 		
-		EntityAction.setEntityAction(entity, new SuperJumpCommand.SuperJump(entity.position(),
+		if (endType == EndType.CANCELLED)
+			return ActionEndResult.dontEnd(this);
+		
+		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
+		
+		return ActionEndResult.dontEndWithSync(new SuperJumpCommand.SuperJump(entity.position(),
 			startPos,
 			0,
 			specialData.recallTime(),
@@ -299,10 +308,5 @@ public class InkjetAction extends BaseSpecialAction
 			entity.noPhysics,
 			entity instanceof Player player && player.getAbilities().invulnerable,
 			false, true));
-		
-		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
-		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityActionOnlyPacket(entity), entity);
-		
-		return false;
 	}
 }

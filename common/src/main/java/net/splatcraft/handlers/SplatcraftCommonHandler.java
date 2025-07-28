@@ -23,13 +23,13 @@ import net.splatcraft.data.InkColorGroup;
 import net.splatcraft.data.InkColorRegistry;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
-import net.splatcraft.network.c2s.RequestEntityInfoPacket;
+import net.splatcraft.network.c2s.RequestPlayerComponentsPacket;
 import net.splatcraft.network.s2c.*;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
@@ -42,11 +42,11 @@ import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RangedValueCollection;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SplatcraftCommonHandler
 {
@@ -92,15 +92,15 @@ public class SplatcraftCommonHandler
 			return;
 		}
 		
-		Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = Components.ENTITY_INFO.getOrCreate(oldPlayer).getMatchInventory();
+		Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = Components.PLAYER_INFO.getOrCreate(oldPlayer).matchInventory();
 		
 		if (!matchInv.isEmpty())
 		{
 			tryToInsertItems(newPlayer, matchInv, true);
 			
-			Components.ENTITY_INFO.getOrCreate(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
+			Components.PLAYER_INFO.getOrCreate(newPlayer).setMatchInventory(new Object2ObjectOpenHashMap<>());
 		}
-		EntityAction.setEntityAction(newPlayer, null);
+		EntityAction.setEntityAction(newPlayer, null, true, true);
 	}
 	private static void tryToInsertItems(Player player, Object2ObjectOpenHashMap<Integer, ItemStack> matchInv, boolean dropItemIfFail)
 	{
@@ -143,71 +143,75 @@ public class SplatcraftCommonHandler
 			InkTankItem.refill(stack);
 		}
 		
-		EntityAction.setEntityAction(entity, null);
-		SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(entity), entity);
+		EntityAction.setEntityAction(entity, null, true, true);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(entity), entity);
 		
-		EventResult eventResult = keepAliveIfOnMatch(entity, source);
-		if (!eventResult.interruptsOrFalse() && entity instanceof Player)
+		if (entity instanceof Player player)
 		{
-			float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
-			for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
+			EventResult eventResult = keepAliveIfOnMatch(player, source);
+			if (!eventResult.interruptsOrFalse())
 			{
-				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
-					SplatcraftComponents.SpecialProviderData.DEFAULT,
-					v -> v.withStoredCharge(v.storedCharge() * specialLoss));
-			}
-		}
-		return eventResult;
-	}
-	private static EventResult keepAliveIfOnMatch(LivingEntity entity, DamageSource source)
-	{
-		AtomicBoolean keepAlive = new AtomicBoolean(false);
-		Components.ENTITY_INFO.getOptional(entity).ifPresent(info ->
-		{
-			InkColor color = ColorUtils.getEntityColor(entity);
-			if (info.isPlaying())
-			{
-				if (!info.isMatchRespawning())
+				float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
+				for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
 				{
-					WeaponHandler.onDeath(entity, source);
-					
-					info.setMatchRespawnTimeLeft(100);
-					info.setIsMatchRespawning(true);
-					
-					if (!entity.level().isClientSide())
-					{
-						Services.PLATFORM.getServerInstance().getPlayerList().broadcastSystemMessage(source.getLocalizedDeathMessage(entity), false);
-					}
-					
-					if (entity instanceof ServerPlayer player)
-					{
-						Entity attacker = source.getEntity();
-						if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
-						{
-							InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
-						}
-						SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, entity), player);
-						
-						SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(player), player);
-					}
-					
-					((ServerLevel) entity.level()).sendParticles(new SquidSoulParticleData(color), entity.getX(), entity.getY() + 0.5f, entity.getZ(), 1, 0, 1, 0, 1.5f);
+					providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
+						SplatcraftComponents.SpecialProviderData.DEFAULT,
+						v -> v.withStoredCharge(v.storedCharge() * specialLoss));
+				}
+			}
+			return eventResult;
+		}
+		return EventResult.pass();
+	}
+	private static EventResult keepAliveIfOnMatch(Player player, DamageSource source)
+	{
+		boolean keepAlive = false;
+		PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
+		InkColor color = ColorUtils.getEntityColor(player);
+		
+		if (info.isPlaying())
+		{
+			if (!info.isMatchRespawning())
+			{
+				WeaponHandler.onDeath(player, source);
+				
+				info.setMatchRespawnTimeLeft(100);
+				info.setIsMatchRespawning(true);
+				
+				if (!player.level().isClientSide())
+				{
+					Services.PLATFORM.getServerInstance().getPlayerList().broadcastSystemMessage(source.getLocalizedDeathMessage(player), false);
 				}
 				
-				keepAlive.set(true);
+				if (player instanceof ServerPlayer serverPlayer)
+				{
+					Entity attacker = source.getEntity();
+					if (attacker instanceof LivingEntity livingAttacker && source instanceof InkDamageUtils.InkDamageSource inkDamageSource)
+					{
+						InkExplosion.createInkExplosion(attacker, player.position(), 2f, RangedValueCollection.EMPTY, InkBlockUtils.getInkType(livingAttacker), inkDamageSource.getWeaponItem(), AttackId.NONE);
+					}
+					SplatcraftPacketHandler.sendToPlayer(SendPlayerDeathMatchPacket.create(100, attacker, player), serverPlayer);
+					
+					SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerComponentsPacket(player, Components.Bits.PLAYER_INFO), player);
+				}
 				
-				WeaponHandler.doScoreboardLogicOnDeath(source, entity, color);
+				((ServerLevel) player.level()).sendParticles(new SquidSoulParticleData(color), player.getX(), player.getY() + 0.5f, player.getZ(), 1, 0, 1, 0, 1.5f);
 			}
-		});
-		return keepAlive.get() ? EventResult.interruptFalse() : EventResult.pass();
+			
+			keepAlive = true;
+			
+			WeaponHandler.doScoreboardLogicOnDeath(source, player, color);
+		}
+		
+		return keepAlive ? EventResult.interruptFalse() : EventResult.pass();
 	}
 	public static void onLivingDeathDrops(LivingEntity entity, Collection<ItemEntity> drops)
 	{
 		//Handle keepMatchItems
 		if (entity instanceof Player player)
 		{
-			EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
-			Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = info.getMatchInventory();
+			PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
+			Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = info.matchInventory();
 			
 			drops.removeIf(o -> matchInv.containsValue(o.getItem()));
 			
@@ -223,7 +227,7 @@ public class SplatcraftCommonHandler
 		
 		if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) && SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.KEEP_MATCH_ITEMS))
 		{
-			EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+			@NotNull PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
 			
 			Inventory inventory = player.getInventory();
 			Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = new Object2ObjectOpenHashMap<>(inventory.getContainerSize());
@@ -244,7 +248,7 @@ public class SplatcraftCommonHandler
 		SplatcraftPacketHandler.sendToPlayer(new UpdateBooleanGamerulesPacket(SplatcraftGameRules.booleanRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateIntGamerulesPacket(SplatcraftGameRules.intRules), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateWeaponSettingsPacket(), player);
-		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, Components.ENTITY_INFO.getOrCreate(player).getColor()));
+		SplatcraftPacketHandler.sendToAll(new PlayerColorPacket(player, Components.SQUID_INFO.getOrCreate(player).color()));
 		SplatcraftPacketHandler.sendToPlayer(new SendColorRegistryPacket(InkColorRegistry.REGISTRY, InkColorGroup.getAllGroups()), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateColorScoresPacket(true, true, new ArrayList<>(ScoreboardHandler.getCriteriaKeySet())), player);
 		SplatcraftPacketHandler.sendToPlayer(new UpdateStageListPacket(SaveInfoCapability.get().stages()), player);
@@ -253,33 +257,35 @@ public class SplatcraftCommonHandler
 			if (otherPlayer == player)
 				continue;
 			
-			SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
+			SplatcraftPacketHandler.sendToPlayer(new UpdatePlayerComponentsPacket(player, Components.Bits.ALL_PLAYER), player);
 		}
 	}
 	public static void capabilityUpdateEvent(Player player)
 	{
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
-		
-		if (player.deathTime <= 0 && !info.isInitialized())
+		Components.PLAYER_INFO.updateOrCreate(player, info ->
 		{
-			info.setInitialized(true);
-			
-			if (player.isLocalPlayer())
+			if (player.deathTime <= 0 && !info.isInitialized())
 			{
-				SplatcraftPacketHandler.sendToServer(new RequestEntityInfoPacket(player));
+				info = info.setInitialized(true);
+				
+				if (player.isLocalPlayer())
+				{
+					SplatcraftPacketHandler.sendToServer(new RequestPlayerComponentsPacket(player, Components.Bits.PLAYER_INFOS));
+				}
 			}
-		}
-		
-		if (!player.isLocalPlayer())
-		{
-			ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
 			
-			if (!ItemStack.isSameItem(info.getInkBand(), inkBand))
+			if (!player.isLocalPlayer())
 			{
-				info.setInkBand(inkBand);
-				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateEntityInfoPacket(player), player);
+				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
+				
+				if (!ItemStack.isSameItem(info.inkBand(), inkBand))
+				{
+					info = info.setInkBand(inkBand);
+					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdatePlayerComponentsPacket(player, Components.Bits.PLAYER_INFO), player);
+				}
 			}
-		}
+			return info;
+		});
 	}
 	public static void onWorldTick(ServerLevel world)
 	{
@@ -304,72 +310,75 @@ public class SplatcraftCommonHandler
 	}
 	public static void onLivingTick(Entity entity)
 	{
-		if (entity instanceof LivingEntity livingEntity)
+		if (!(entity instanceof LivingEntity livingEntity))
+			return;
+		
+		if (Components.INK_OVERLAY.has(livingEntity))
 		{
-			if (Components.INK_OVERLAY.has(livingEntity))
+			InkOverlayData overlayInfo = Components.INK_OVERLAY.getOrCreate(livingEntity);
+			if (entity.isUnderWater())
 			{
-				InkOverlayInfo overlayInfo = Components.INK_OVERLAY.getOrCreate(livingEntity);
-				if (entity.isUnderWater())
-				{
-					overlayInfo.setAmount(0);
-				}
-				else if (entity.isInWaterRainOrBubble())
-				{
-					overlayInfo.addAmount(-0.5f);
-				}
-				else
-				{
-					overlayInfo.addAmount(-0.01f);
-				}
-				Components.INK_OVERLAY.set(livingEntity, overlayInfo);
+				overlayInfo.setAmount(0);
 			}
-			
-			Components.ENTITY_INFO.getOptional(livingEntity).ifPresent(info ->
+			else if (entity.isInWaterRainOrBubble())
 			{
-				if (info.isPlaying())
+				overlayInfo.addAmount(-0.5f);
+			}
+			else
+			{
+				overlayInfo.addAmount(-0.01f);
+			}
+			Components.INK_OVERLAY.set(livingEntity, overlayInfo);
+		}
+		
+		if (livingEntity instanceof Player player)
+		{
+			Components.PLAYER_INFO.getOptional(player).ifPresent(info ->
+			{
+				if (!info.isPlaying())
+					return;
+				
+				boolean sessionExists = SaveInfoCapability.get().playSessions().containsKey(info.getPlayingStageId());
+				if (sessionExists)
 				{
-					boolean sessionExists = SaveInfoCapability.get().playSessions().containsKey(info.getPlayingStageId());
-					if (sessionExists)
+					if (!player.isDeadOrDying() || !info.isMatchRespawning())
+						return;
+					
+					if (info.getMatchRespawnTimeLeft() <= 0)
 					{
-						if (livingEntity.isDeadOrDying() && info.isMatchRespawning())
+						float specialLoss = (float) player.getAttributeValue(SplatcraftAttributes.specialLoss);
+						for (ItemStack providerStack : CommonUtils.getItemsInInventory(player, v -> v.getItem() instanceof SpecialProviderItem))
 						{
-							if (info.getMatchRespawnTimeLeft() <= 0)
-							{
-								float specialLoss = (float) livingEntity.getAttributeValue(SplatcraftAttributes.specialLoss);
-								for (ItemStack providerStack : CommonUtils.getItemsInInventory(livingEntity, v -> v.getItem() instanceof SpecialProviderItem))
-								{
-									providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
-										SplatcraftComponents.SpecialProviderData.DEFAULT,
-										v -> v.withStoredCharge(v.storedCharge() * specialLoss));
-								}
-								
-								if (livingEntity instanceof ServerPlayer serverPlayer)// make the server handle the respawning or else a laggy client will teleport after being actionable lol
-								{
-									livingEntity.setHealth(livingEntity.getMaxHealth());
-									info.setIsMatchRespawning(false);
-									SplatcraftPacketHandler.sendToPlayer(new SendPlayerRespawnMatchPacket(), serverPlayer);
-									BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
-									if (spawnPadPos != null)
-									{
-										livingEntity.randomTeleport(spawnPadPos.getX() + 0.5f, spawnPadPos.getY() + 0.5f, spawnPadPos.getZ() + 0.5, false);
-									}
-									SplatcraftPacketHandler.sendToTrackers(new UpdateEntityInfoPacket(serverPlayer), serverPlayer);
-								}
-							}
-							else
-							{
-								info.setMatchRespawnTimeLeft(info.getMatchRespawnTimeLeft() - 1);
-							}
+							providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
+								SplatcraftComponents.SpecialProviderData.DEFAULT,
+								v -> v.withStoredCharge(v.storedCharge() * specialLoss));
 						}
+						
+						if (!(player instanceof ServerPlayer serverPlayer))// make the server handle the respawning or else a laggy client will teleport after being actionable lol
+							return;
+						
+						player.setHealth(player.getMaxHealth());
+						info.setIsMatchRespawning(false);
+						SplatcraftPacketHandler.sendToPlayer(new SendPlayerRespawnMatchPacket(), serverPlayer);
+						BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
+						if (spawnPadPos != null)
+						{
+							player.moveTo(spawnPadPos.getX() + 0.5f, spawnPadPos.getY() + 0.5f, spawnPadPos.getZ() + 0.5);
+						}
+						SplatcraftPacketHandler.sendToTrackers(new UpdatePlayerComponentsPacket(serverPlayer, Components.Bits.PLAYER_INFO), serverPlayer);
 					}
 					else
 					{
-						info.setPlayingStageId(null);
-						info.setMatchRespawnTimeLeft(0);
-						info.setIsMatchRespawning(false);
-						if (livingEntity instanceof ServerPlayer player)
-							SplatcraftPacketHandler.sendToAll(new UpdateEntityInfoPacket(player));
+						info.setMatchRespawnTimeLeft(info.getMatchRespawnTimeLeft() - 1);
 					}
+				}
+				else
+				{
+					info.setPlayingStageId(null);
+					info.setMatchRespawnTimeLeft(0);
+					info.setIsMatchRespawning(false);
+					if (player instanceof ServerPlayer serverPlayer)
+						SplatcraftPacketHandler.sendToAll(new UpdatePlayerComponentsPacket(serverPlayer, Components.Bits.PLAYER_INFO));
 				}
 			});
 		}

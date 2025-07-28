@@ -23,8 +23,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.blocks.SpawnPadBlock;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
+import net.splatcraft.data.capabilities.structs.WeaponInfo;
 import net.splatcraft.items.weapons.IChargeableWeapon;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.mixin.accessors.LivingEntityAccesor;
@@ -103,7 +104,7 @@ public class SquidFormHandler
 		if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isUnderWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
 			player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.WATER), 8f);
 		
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		@NotNull SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
 		tickSquidState(player, info);
 		
 		boolean canSquidHide = InkBlockUtils.canSquidHide(player);
@@ -119,7 +120,7 @@ public class SquidFormHandler
 					if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
 						player.causeFoodExhaustion(0.05f);
 					
-					InkOverlayInfo overlayInfo = Components.INK_OVERLAY.getOrCreate(player);
+					InkOverlayData overlayInfo = Components.INK_OVERLAY.getOrCreate(player);
 					overlayInfo.setAmount((player.getMaxHealth() - player.getHealth()));
 					
 					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(player, overlayInfo), player);
@@ -166,7 +167,7 @@ public class SquidFormHandler
 					ColorUtils.addInkSplashParticle(player.level(), player, 1.1f);
 				}
 			}
-			if (!info.isDoingSquidSurge() && player.level().getRandom().nextFloat() <= info.getSquidSurgeState() / EntityInfo.MAX_SQUID_SURGE_CHARGE)
+			if (!info.isDoingSquidSurge() && player.level().getRandom().nextFloat() <= info.squidSurgeState() / SquidInfo.MAX_SQUID_SURGE_CHARGE)
 			{
 				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
 			}
@@ -252,7 +253,7 @@ public class SquidFormHandler
 						SplatcraftPacketHandler.sendToPlayer(new SendEnemyInkDamagePacket(newHealth), serverPlayer);
 					}
 					
-					InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(entity);
+					InkOverlayData info = Components.INK_OVERLAY.getOrCreate(entity);
 					info.addAmount(accumulatedDamage);
 					
 					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(entity, info), entity);
@@ -267,11 +268,11 @@ public class SquidFormHandler
 	{
 		return entity.hasEffect(MobEffects.POISON) || entity.hasEffect(MobEffects.WITHER);
 	}
-	private static void tickSquidState(Player player, EntityInfo info)
+	private static void tickSquidState(LivingEntity entity, SquidInfo info)
 	{
-		SquidState state = info.getSquidState(); // this is more readable with enums though :(
+		SquidState state = info.squidState(); // this is more readable with enums though :(
 		
-		if (InkBlockUtils.canSquidHide(player) && info.isSquid())
+		if (InkBlockUtils.canSquidHide(entity) && info.isSquid())
 		{
 			if (state == SquidState.SUBMERGING)
 				state = SquidState.SUBMERGED;
@@ -288,20 +289,21 @@ public class SquidFormHandler
 		
 		if (state == SquidState.SUBMERGING)
 		{
-			player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 			
-			if (player.level() instanceof ServerLevel serverLevel)
+			if (entity.level() instanceof ServerLevel serverLevel)
 			{
 				for (int i = 0; i < 2; i++)
-					ColorUtils.addInkSplashParticle(serverLevel, player, 1.4f);
+					ColorUtils.addInkSplashParticle(serverLevel, entity, 1.4f);
 			}
 		}
 		else if (state == SquidState.SURFACING)
 		{
-			player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((player.level().getRandom().nextFloat() - player.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
+			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 		}
 		
-		info.setSquidState(state);
+		SquidState finalState = state;
+		Components.SQUID_INFO.update(entity, v -> v.withSquidState(finalState));
 	}
 	public static void cancelDamageIfSquid(LivingEntity entity, float fallDistance, CallbackInfoReturnable<Boolean> cir)
 	{
@@ -327,7 +329,7 @@ public class SquidFormHandler
 	{
 		if (newGameMode != GameType.SPECTATOR) return;
 		player.releaseUsingItem();
-		Components.ENTITY_INFO.getOrCreate(player).setIsSquid(false);
+		Components.SQUID_INFO.updateOrCreate(player, info -> info.setSquid(false));
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerSetSquidS2CPacket(player.getUUID(), false), player);
 	}
 	public static EventResult onPlayerAttackEntity(Player player, Level level, Entity target, InteractionHand hand, @Nullable EntityHitResult result)
@@ -355,7 +357,7 @@ public class SquidFormHandler
 		
 		if (Components.INK_OVERLAY.has(living))
 		{
-			InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(living);
+			InkOverlayData info = Components.INK_OVERLAY.getOrCreate(living);
 			Vec3 prev = WeaponHandler.getEntityPrevPos(living).oldOldPosition;
 			
 			info.setSquidPitch((float) (Math.abs(living.getY() - prev.y) * living.position().subtract(prev).normalize().y));
@@ -370,16 +372,11 @@ public class SquidFormHandler
 	}
 	public static void setSquid(LivingEntity entity, boolean newSquid)
 	{
-		setSquid(entity, Components.ENTITY_INFO.getOrCreate(entity), newSquid);
-	}
-	public static void setSquid(LivingEntity entity, EntityInfo info, boolean newSquid)
-	{
-		if (info.isSquid() == newSquid)
+		if (!Components.SQUID_INFO.hasChangedAfterUpdateOrCreate(entity, info -> info.setSquid(newSquid)))
 			return;
 		
-		info.setIsSquid(newSquid);
 		if (!newSquid)
-			info.flagSquidCancel();
+			Components.WEAPON_INFO.updateOrCreate(entity, WeaponInfo::flagSquidCancel);
 		
 		if (newSquid)
 		{

@@ -527,7 +527,7 @@ public class StageCommand
 		if (teamIds.size() < 2)
 			throw NOT_ENOUGH_TEAMS.create(stageId);
 		
-		players = players.stream().filter(v -> !Components.ENTITY_INFO.getOrCreate(v).isPlaying()).toList();
+		players = players.stream().filter(v -> !Components.PLAYER_INFO.getOrCreate(v).isPlaying()).toList();
 		
 		if (assignTeams)
 		{

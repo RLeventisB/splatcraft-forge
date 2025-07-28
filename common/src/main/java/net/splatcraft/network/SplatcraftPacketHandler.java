@@ -26,7 +26,7 @@ public class SplatcraftPacketHandler
 {
 	public static void registerMessages()
 	{
-		registerMessage(UpdateEntityInfoPacket.ID, UpdateEntityInfoPacket.class, UpdateEntityInfoPacket::decode);
+		registerMessage(UpdatePlayerComponentsPacket.ID, UpdatePlayerComponentsPacket.class, UpdatePlayerComponentsPacket::decode);
 		registerMessage(VoidedChargePacket.ID, VoidedChargePacket.class, VoidedChargePacket::decode);
 		registerMessage(UpdateEntityActionOnlyPacket.ID, UpdateEntityActionOnlyPacket.class, UpdateEntityActionOnlyPacket::decode);
 		registerMessage(PlayerColorPacket.ID, PlayerColorPacket.class, PlayerColorPacket::decode);
@@ -34,7 +34,7 @@ public class SplatcraftPacketHandler
 		registerMessage(PlayerSetSquidS2CPacket.ID, PlayerSetSquidS2CPacket.class, PlayerSetSquidS2CPacket::decode);
 		registerMessage(UpdateBooleanGamerulesPacket.ID, UpdateBooleanGamerulesPacket.class, UpdateBooleanGamerulesPacket::decode);
 		registerMessage(UpdateIntGamerulesPacket.ID, UpdateIntGamerulesPacket.class, UpdateIntGamerulesPacket::decode);
-		registerMessage(RequestEntityInfoPacket.ID, RequestEntityInfoPacket.class, RequestEntityInfoPacket::decode);
+		registerMessage(RequestPlayerComponentsPacket.ID, RequestPlayerComponentsPacket.class, RequestPlayerComponentsPacket::decode);
 		registerMessage(SendScanTurfResultsPacket.ID, SendScanTurfResultsPacket.class, SendScanTurfResultsPacket::decode);
 		registerMessage(UpdateColorScoresPacket.ID, UpdateColorScoresPacket.class, UpdateColorScoresPacket::decode);
 		registerMessage(UpdateBlockColorPacket.ID, UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);
@@ -61,6 +61,7 @@ public class SplatcraftPacketHandler
 		registerMessage(SendPlaySessionEndPacket.ID, SendPlaySessionEndPacket.class, SendPlaySessionEndPacket::decode);
 		registerMessage(UseJumpLurePacket.ID, UseJumpLurePacket.class, UseJumpLurePacket::decode);
 		registerMessage(RequestSpecialUsageDataPacket.ID, RequestSpecialUsageDataPacket.class, RequestSpecialUsageDataPacket::decode);
+		registerMessage(UpdateJumpInputPacket.ID, UpdateJumpInputPacket.class, UpdateJumpInputPacket::decode);
 		registerMessage(UpdateInputPacket.ID, UpdateInputPacket.class, UpdateInputPacket::decode);
 		registerMessage(UpdateStageMarkerPacket.ID, UpdateStageMarkerPacket.class, UpdateStageMarkerPacket::decode);
 		registerMessage(SendStageMarkerUpdatePacket.ID, SendStageMarkerUpdatePacket.class, SendStageMarkerUpdatePacket::decode);

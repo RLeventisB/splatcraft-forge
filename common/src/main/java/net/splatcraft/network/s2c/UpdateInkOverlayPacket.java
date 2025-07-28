@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +17,9 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 	public static final Type<? extends CustomPacketPayload> ID = CommonUtils.createIdFromClass(UpdateInkOverlayPacket.class);
 	int entityId;
 	Tag nbt;
-	public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayInfo info)
+	public UpdateInkOverlayPacket(LivingEntity entity, InkOverlayData info)
 	{
-		this(entity.getId(), InkOverlayInfo.CODEC.encodeStart(NbtOps.INSTANCE, info).getOrThrow());
+		this(entity.getId(), InkOverlayData.CODEC.encodeStart(NbtOps.INSTANCE, info).getOrThrow());
 	}
 	public UpdateInkOverlayPacket(int entity, Tag info)
 	{
@@ -44,7 +44,7 @@ public class UpdateInkOverlayPacket extends PlayS2CPacket
 		{
 			return;
 		}
-		Components.INK_OVERLAY.set(living, InkOverlayInfo.CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow());
+		Components.INK_OVERLAY.set(living, InkOverlayData.CODEC.parse(NbtOps.INSTANCE, nbt).getOrThrow());
 	}
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)

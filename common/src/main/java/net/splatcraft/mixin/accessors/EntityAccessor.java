@@ -11,7 +11,11 @@ public interface EntityAccessor
 	@Invoker
 	static Vec3 invokeGetInputVector(Vec3 movementInput, float speed, float yaw)
 	{
-		throw new AssertionError();
+		// this is here only because when hot swapping, sometimes the mixin stops working and
+		// uses the code that is inside this method (previously an AssertionError)
+		// however! the access transformer doesnt work on prod!!! because god knows why!!!!
+		// so on release, the invoker is used but in debug, when hot reloading, the access transformer is used
+		return Entity.getInputVector(movementInput, speed, yaw);
 	}
 	@Invoker
 	Vec3 invokeCollide(Vec3 vec);

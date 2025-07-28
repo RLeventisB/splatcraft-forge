@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkSquidColorLayer;
 import net.splatcraft.client.models.InkSquidModel;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	@Override
 	protected void setupRotations(@NotNull LivingEntity entity, @NotNull PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale)
 	{
-		Optional<Direction> directionOptional = Components.ENTITY_INFO.getOptional(entity).flatMap(EntityInfo::getClimbedDirection);
+		Optional<Direction> directionOptional = Components.SQUID_INFO.getOptional(entity).flatMap(SquidInfo::climbedDirection);
 		if (directionOptional.isPresent())
 		{
 			yBodyRot = 0;

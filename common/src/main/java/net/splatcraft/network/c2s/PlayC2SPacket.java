@@ -2,7 +2,7 @@ package net.splatcraft.network.c2s;
 
 import commonnetwork.networking.data.PacketContext;
 import commonnetwork.networking.data.Side;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.network.SplatcraftPacket;
 
 public abstract class PlayC2SPacket extends SplatcraftPacket
@@ -16,5 +16,5 @@ public abstract class PlayC2SPacket extends SplatcraftPacket
 		}
 //        ctx.get().setPacketHandled(true);
 	}
-	public abstract void execute(Player player);
+	public abstract void execute(ServerPlayer player);
 }

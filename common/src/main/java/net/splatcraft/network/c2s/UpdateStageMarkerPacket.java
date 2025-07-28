@@ -8,7 +8,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendStageMarkerUpdatePacket;
@@ -70,7 +70,7 @@ public class UpdateStageMarkerPacket extends PlayC2SPacket
 		STREAM_CODEC.encode(buffer, this);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		if (player.canUseGameMasterBlocks())
 		{

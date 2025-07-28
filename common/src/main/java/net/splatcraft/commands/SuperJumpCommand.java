@@ -20,17 +20,17 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.data.Stage;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.PlayerSetSquidS2CPacket;
-import net.splatcraft.network.s2c.UpdateEntityInfoPacket;
+import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.tileentities.SpawnPadTileEntity;
 import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.ActionThatSetsSquid;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
@@ -108,14 +108,12 @@ public class SuperJumpCommand
 		
 		EntityAction.setEntityAction(player, new SuperJump(player.position(), target, windupTime, travelTime, jumpHeight, player.noPhysics, player.getAbilities().invulnerable));
 		
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
-		if (!info.isSquid())
+		if (Components.SQUID_INFO.hasChangedAfterUpdateOrCreate(player, info -> info.setSquid(true)))
 		{
-			info.setIsSquid(true);
-			SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), info.isSquid()), player);
+			SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), true), player);
 		}
 		
-		SplatcraftPacketHandler.sendToPlayer(new UpdateEntityInfoPacket(player), player);
+		SplatcraftPacketHandler.sendToPlayer(UpdateEntityActionOnlyPacket.create(player), player);
 		
 		return true;
 	}
@@ -198,7 +196,7 @@ public class SuperJumpCommand
 			return arcHeight * Math.sin(progress * Math.PI) + ((endY - startY) * (progress) + startY);
 		}
 		@Override
-		public void tick(LivingEntity entity)
+		public ActionEndResult tick(LivingEntity entity)
 		{
 			if (!canStart)
 			{
@@ -207,7 +205,7 @@ public class SuperJumpCommand
 					if (entity instanceof Player player)
 						player.getAbilities().flying = false;
 					setTime(getTime() + 1);
-					return;
+					return null;
 				}
 				start = entity.position();
 				canStart = true;
@@ -240,9 +238,10 @@ public class SuperJumpCommand
 				player.getAbilities().flying = true;
 			entity.noPhysics = true;
 			entity.fallDistance = -100f;
+			return ActionEndResult.dontEnd(this);
 		}
 		@Override
-		public boolean canEnd(LivingEntity entity)
+		public void beforeForcedEnd(LivingEntity entity)
 		{
 			entity.setPos(end);
 			entity.noPhysics = hadPhysics;
@@ -254,20 +253,6 @@ public class SuperJumpCommand
 			entity.fallDistance = -100f;
 			entity.setDeltaMovement(0, 0, 0);
 			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.superjumpLand, SoundSource.PLAYERS, 0.8F, 1);
-			return true;
-		}
-		@Override
-		public void beforeEnd(LivingEntity entity)
-		{
-			entity.setPos(end);
-			entity.noPhysics = hadPhysics;
-			if (entity instanceof Player player)
-			{
-				player.getAbilities().invulnerable = hadInvulnerability;
-				player.getAbilities().flying = false;
-			}
-			entity.fallDistance = -100f;
-			entity.setDeltaMovement(0, 0, 0);
 			WeaponHandler.forceLastGroundedPos(entity);
 		}
 		@Override

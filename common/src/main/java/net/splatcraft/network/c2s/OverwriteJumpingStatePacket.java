@@ -2,6 +2,7 @@ package net.splatcraft.network.c2s;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.splatcraft.util.CommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class OverwriteJumpingStatePacket extends PlayC2SPacket
 		return Optional.ofNullable(overwrittenGroundedStates.remove(player));
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		overwrittenGroundedStates.put(player, forcedOnGround);
 	}

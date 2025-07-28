@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -23,7 +22,8 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.StageMarkerBlock;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
+import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.handlers.WeaponHandler;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -143,9 +143,10 @@ public final class PlaySession
 			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
 			WeaponHandler.resetLastGroundedPos(player);
 			
-			EntityInfo info = Components.ENTITY_INFO.get(player);
-			info.setIsSquid(true);
+			PlayerInfo info = Components.PLAYER_INFO.get(player);
 			info.setPlayingStageId(stage.id);
+			SquidFormHandler.setSquid(player, true);
+			
 			for (ItemStack providerStack : CommonUtils.getItemsInInventory(player, v -> v.getItem() instanceof SpecialProviderItem))
 			{
 				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
@@ -279,7 +280,7 @@ public final class PlaySession
 				if (plr == null)
 					return;
 				
-				Components.ENTITY_INFO.getOrCreate(plr).setPlayingStageId(null);
+				Components.PLAYER_INFO.getOrCreate(plr).setPlayingStageId(null);
 			});
 			SaveInfoCapability.get().playSessions().remove(stageId);
 			SplatcraftPacketHandler.sendToAll(new SendPlaySessionEndPacket(stageId, playerUuids));
@@ -367,18 +368,18 @@ public final class PlaySession
 		}
 		return list;
 	}
-	public static Optional<PlaySession> getPlaySession(LivingEntity entity)
+	public static Optional<PlaySession> getPlaySession(Player player)
 	{
-		Optional<EntityInfo> infoOptional = Components.ENTITY_INFO.getOptional(entity);
-		return infoOptional.flatMap(entityInfo -> getPlaySession(entity, entityInfo));
+		Optional<PlayerInfo> infoOptional = Components.PLAYER_INFO.getOptional(player);
+		return infoOptional.flatMap(info -> getPlaySession(player, info));
 	}
-	public static Optional<PlaySession> getPlaySession(LivingEntity entity, EntityInfo info)
+	public static Optional<PlaySession> getPlaySession(Player player, PlayerInfo info)
 	{
 		PlaySession result = null;
 		if (info.isPlaying())
 		{
 			PlaySession session = SaveInfoCapability.get().playSessions().get(info.getPlayingStageId());
-			if (session != null && session.playerUuids.contains(entity.getUUID()))
+			if (session != null && session.playerUuids.contains(player.getUUID()))
 				result = session;
 		}
 		return Optional.ofNullable(result);

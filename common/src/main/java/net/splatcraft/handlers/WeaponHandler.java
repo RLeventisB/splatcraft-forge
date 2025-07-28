@@ -18,8 +18,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.WeaponInfo;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EntityEvents;
@@ -28,6 +30,7 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.InkColor;
 
@@ -50,15 +53,26 @@ public class WeaponHandler
 		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, (player) ->
 		{
 			Optional<EntityAction> cooldown = EntityAction.getEntityActionOptional(player);
-			boolean usagePreventedByCooldown = false;
 			
+			boolean usagePreventedByCooldown = false;
 			if (cooldown.isPresent())
 			{
 				if (cooldown.get().getItemSlot() instanceof EntitySlot.PlayerInventorySlot playerSlot)
 					player.getInventory().selected = playerSlot.getSlotIndex();
 				
-				usagePreventedByCooldown = tickEntityActions(player, cooldown.get());
+				usagePreventedByCooldown = cooldown.get().preventWeaponUse();
+				
+				EntityAction previousAction = EntityAction.getEntityAction(player);
+				if (previousAction == null)
+					return;
+				
+				ActionEndResult endResult = tickEntityActions(player, previousAction);
+				if (endResult.doSet())
+					EntityAction.setEntityAction(player, endResult.resultingAction().orElse(null), true, endResult.resultingAction().isEmpty());
+				if (endResult.doSync() && !player.level().isClientSide())
+					SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(player), player);
 			}
+			
 			if (usagePreventedByCooldown || !player.isUsingItem() || player.getUseItemRemainingTicks() <= 0 || CommonUtils.anyWeaponOnCooldown(player))
 			{
 				EntityStoredCharge.dischargeWeapon(player);
@@ -72,12 +86,16 @@ public class WeaponHandler
 		}));
 		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 		{
-			if (Components.ENTITY_INFO.has(entity))
+			if (Components.WEAPON_INFO.has(entity))
 			{
-				EntityInfo entityInfo = Components.ENTITY_INFO.get(entity);
-				entityInfo.reduceSquidAnimationTick();
+				Components.WEAPON_INFO.update(entity, WeaponInfo::reduceSquidAnimationTick);
 			}
-			if (entity.onGround() && Components.ENTITY_INFO.getOptional(entity).map(v -> !v.isMatchRespawning()).orElse(true))
+			if (!Components.ENTITY_INFO.has(entity))
+			{
+				return AbortableIterationConsumer.Continuation.CONTINUE;
+			}
+			
+			if (entity.onGround() && (!(entity instanceof Player player) || Components.PLAYER_INFO.hasAnd(player, info -> !info.isMatchRespawning())))
 				lastGroundedPos.put(entity, entity.position());
 			
 			return AbortableIterationConsumer.Continuation.CONTINUE;
@@ -127,28 +145,33 @@ public class WeaponHandler
 				scoreboard.forAllObjectives(ScoreboardHandler.getKillsAsColor(ColorUtils.getEntityColor(source)), target, score -> score.add(1));
 		}
 	}
-	private static boolean tickEntityActions(Player player, EntityAction action)
+	private static ActionEndResult tickEntityActions(Player player, EntityAction action)
 	{
-		boolean preventedByCooldown;
+		if (action == null)
+			return null;
+		
+		ActionEndResult endResult = ActionEndResult.dontEnd(action);
+		
 		if (action.getTime() == action.getMaxTime())
 			action.onStart(player);
-		if (action.isCancellable() && CommonUtils.isSquid(player))
+		if (action.isCancellable(player) && CommonUtils.isSquid(player))
 		{
-			if (action.endWhenOnSquid(player))
-				doEndActions(player, action);
+			endResult = action.canEnd(player, EntityAction.EndType.CANCELLED);
+			if (!endResult.tickAfter())
+				return endResult;
 		}
 		else
 		{
 			action.tick(player);
 			player.setSprinting(false);
 		}
-		preventedByCooldown = action.preventWeaponUse();
 		if (action.reversedTime())
 		{
 			if (action.getTime() >= action.getMaxTime())
 			{
-				if (doEndActions(player, action))
-					return false;
+				endResult = action.canEnd(player, EntityAction.EndType.TIME);
+				if (!endResult.tickAfter())
+					return endResult;
 			}
 			action.setTime(action.getTime() + 1);
 		}
@@ -156,22 +179,14 @@ public class WeaponHandler
 		{
 			if (action.getTime() <= 1)
 			{
-				if (doEndActions(player, action))
-					return false;
+				endResult = action.canEnd(player, EntityAction.EndType.TIME);
+				if (!endResult.tickAfter())
+					return endResult;
 			}
 			action.setTime(action.getTime() - 1);
 		}
 		
-		return preventedByCooldown;
-	}
-	private static boolean doEndActions(Player player, EntityAction action)
-	{
-		if (action.canEnd(player))
-		{
-			EntityAction.setEntityAction(player, null);
-			return true;
-		}
-		return false;
+		return endResult;
 	}
 	public static void tickPreviousPosMap(LivingEntity entity)
 	{

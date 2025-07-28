@@ -12,6 +12,7 @@ import net.splatcraft.items.weapons.settings.SpecialWeaponSettings;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.action.ActionEndResult;
 
 import java.util.Optional;
 
@@ -46,7 +47,7 @@ public class StingRayAction extends BaseSpecialAction
 		mobility = settings.dataRecord.mobility();
 	}
 	@Override
-	public void tick(LivingEntity entity)
+	public ActionEndResult tick(LivingEntity entity)
 	{
 		if (entity.isUsingItem() && !CommonUtils.isSquid(entity))
 		{
@@ -76,6 +77,7 @@ public class StingRayAction extends BaseSpecialAction
 			usageTick = 0;
 		}
 		super.tick(entity);
+		return null;
 	}
 	public int getUsageTick()
 	{
@@ -86,15 +88,9 @@ public class StingRayAction extends BaseSpecialAction
 		return specialData.revealRadius();
 	}
 	@Override
-	public boolean isCancellable()
+	public boolean isCancellable(LivingEntity entity)
 	{
 		return true;
-	}
-	@Override
-	public boolean endWhenOnSquid(LivingEntity entity)
-	{
-		super.tick(entity);
-		return false;
 	}
 	@Override
 	public Optional<Float> mobility(LivingEntity entity)
@@ -104,13 +100,17 @@ public class StingRayAction extends BaseSpecialAction
 		return super.mobility(entity);
 	}
 	@Override
-	public boolean canEnd(LivingEntity entity)
+	public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 	{
 		Level world = entity.level();
-		if (world.isClientSide && entity.equals(ClientUtils.getClientPlayer()))
+		if (endType == EndType.CANCELLED)
 		{
-			SplatcraftKeyHandler.squidAndSubDelay = 5;
+			if (world.isClientSide && entity.equals(ClientUtils.getClientPlayer()))
+			{
+				SplatcraftKeyHandler.squidAndSubDelay = 5;
+			}
+			return ActionEndResult.dontEnd(this);
 		}
-		return true;
+		return ActionEndResult.END_ACTION;
 	}
 }

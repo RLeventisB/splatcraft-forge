@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec2;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.WeaponInfo;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -37,6 +37,7 @@ import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkExplosion;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import net.splatcraft.util.structs.DamageCalculator;
@@ -83,7 +84,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	}
 	public static int getRollCount(LivingEntity player)
 	{
-		return Components.ENTITY_INFO.getOptional(player).map(EntityInfo::getDodgeCount).orElse(-1);
+		return Components.WEAPON_INFO.getOptional(player).map(WeaponInfo::dodgeCount).orElse(-1);
 	}
 	public static int getMaxRollCount(LivingEntity player)
 	{
@@ -139,7 +140,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, activeSettings.rollData.rollStartup(), activeSettings.rollData.rollDuration(), activeSettings.rollData.rollEndlag(), (byte) turretDuration, activeSettings.rollData.canMove(), allowFlying));
 			
-			Components.ENTITY_INFO.get(entity).setDodgeCount(rollCount + 1);
+			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(rollCount + 1));
 		}
 	}
 	public ClampedItemPropertyFunction getIsLeft()
@@ -393,7 +394,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 		}
 		@Override
-		public void tick(LivingEntity entity)
+		public ActionEndResult tick(LivingEntity entity)
 		{
 			boolean local = entity.level().isClientSide;
 			boolean doLogic = true;
@@ -440,9 +441,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						break;
 				}
 			}
+			return ActionEndResult.dontEnd(this);
 		}
 		@Override
-		public boolean canEnd(LivingEntity entity)
+		public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 		{
 			boolean endedTurretMode = entity.jumping ||
 				entity.zza != 0 || entity.xxa != 0 || // these work in the client side
@@ -450,23 +452,23 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				!entity.isUsingItem() || entity.getDeltaMovement().y > 0.1;
 			if (endedTurretMode)
 			{
-				Components.ENTITY_INFO.get(entity).setDodgeCount(0);
+				Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(0));
 				if (entity instanceof Player player)
 				{
 					player.getAbilities().mayfly = didAllowFlying;
 				}
-				return true;
+				return ActionEndResult.END_ACTION;
 			}
 			
-			return false;
+			return ActionEndResult.dontEnd(this);
 		}
 		@Override
-		public void beforeEnd(LivingEntity entity)
+		public void beforeForcedEnd(LivingEntity entity)
 		{
 			if (rollState == RollState.ROLL)
 				entity.setDiscardFriction(false);
 			
-			Components.ENTITY_INFO.get(entity).setDodgeCount(0);
+			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(0));
 			if (entity instanceof Player player)
 			{
 				player.getAbilities().mayfly = didAllowFlying;

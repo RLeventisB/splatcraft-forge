@@ -5,7 +5,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.player.Player;
 import net.splatcraft.data.Stage;
 import net.splatcraft.items.remotes.TurfScannerItem;
 import net.splatcraft.platform.Services;
@@ -40,15 +39,14 @@ public class RequestTurfScanPacket extends PlayC2SPacket
 		buffer.writeBoolean(isTopDown);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Stage stage = Stage.getStage(stageId);
-		ServerPlayer serverPlayer = (ServerPlayer) player;
 		
 		ServerLevel stageworld = stage.getStageWorld(Services.PLATFORM.getServerInstance());
 		ArrayList<ServerPlayer> playerList = new ArrayList<>(stageworld.getEntitiesOfClass(ServerPlayer.class, stage.getBounds(), EntitySelector.NO_SPECTATORS));
-		if (!playerList.contains(serverPlayer))
-			playerList.addFirst(serverPlayer);
+		if (!playerList.contains(player))
+			playerList.addFirst(player);
 		player.displayClientMessage(TurfScannerItem.scanTurf(stageworld, stageworld, stage.getMinCorner(), stage.getMaxCorner(), isTopDown ? 0 : 1, playerList).getOutput(), true);
 	}
 }

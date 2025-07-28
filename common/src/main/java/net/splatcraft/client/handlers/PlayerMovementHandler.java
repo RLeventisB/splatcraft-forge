@@ -20,7 +20,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.data.EntitySlot;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
@@ -65,7 +65,7 @@ public class PlayerMovementHandler
 	}
 	public static void playerMovement(Player player)
 	{
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
 		
 		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
 		
@@ -153,12 +153,12 @@ public class PlayerMovementHandler
 	@OnlyIn(Dist.CLIENT)
 	public static void onInputUpdate(LocalPlayer player, Input input)
 	{
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+		SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
 		
 		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
 		copyTo(input, clonedInput);
 		
-		if (info.getMatchState(player).movementDisabled)
+		if (Components.PLAYER_INFO.hasAnd(player, v -> v.calculateMatchState(player).movementDisabled))
 		{
 			input.leftImpulse = 0;
 			input.forwardImpulse = 0;
@@ -176,10 +176,10 @@ public class PlayerMovementHandler
 		{
 			handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
 		}
-		else if (info.getSquidSurgeState() != 0)
+		else if (info.squidSurgeState() != 0)
 		{
 			info.setSquidSurgeState(0);
-			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.getClimbedDirection(), info.getSquidSurgeCharge()));
+			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.climbedDirection(), info.getSquidSurgeCharge()));
 		}
 		
 		if (player.isUsingItem())
@@ -228,14 +228,14 @@ public class PlayerMovementHandler
 		to.jumping = from.jumping;
 		to.shiftKeyDown = from.shiftKeyDown;
 	}
-	private static void handleSquidMovement(EntityInfo entityInfo, LivingEntity entity, float movementSideways, float movementForward, boolean jumping, boolean sneaking)
+	private static void handleSquidMovement(SquidInfo info, LivingEntity entity, float movementSideways, float movementForward, boolean jumping, boolean sneaking)
 	{
-		Optional<Direction> climbDirectionOptional = InkBlockUtils.getSquidClimbDirection(entity, movementSideways, movementForward, entityInfo.getClimbedDirection());
+		Optional<Direction> climbDirectionOptional = InkBlockUtils.getSquidClimbDirection(entity, movementSideways, movementForward, info.climbedDirection());
 		
 		if (climbDirectionOptional.map(v -> v.getAxis() == Direction.Axis.Y).orElse(false))
 			climbDirectionOptional = Optional.empty();
 		
-		entityInfo.setClimbedDirection(climbDirectionOptional);
+		info = info.setClimbedDirection(climbDirectionOptional);
 		climbDirectionOptional.ifPresent(climbDirection ->
 			{
 				AttributeInstance gravity = entity.getAttribute(Attributes.GRAVITY);
@@ -274,11 +274,12 @@ public class PlayerMovementHandler
 					entity.setDeltaMovement(entity.getDeltaMovement().x, Math.max(0, entity.getDeltaMovement().y()), entity.getDeltaMovement().z);
 			}
 		);
-		tickSquidSurge(entity, entityInfo, jumping);
+		info = tickSquidSurge(entity, info, jumping);
+		Components.SQUID_INFO.set(entity, info);
 		
 		SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(
-			entityInfo.getClimbedDirection(),
-			entityInfo.getSquidSurgeState()));
+			info.climbedDirection(),
+			info.squidSurgeState()));
 	}
 	public static @NotNull Vec3 getWallImpulse(Direction climbDirection, float movementSideways, float movementForward, float yaw)
 	{
@@ -308,66 +309,68 @@ public class PlayerMovementHandler
 		}
 		return finalImpulse;
 	}
-	private static void tickSquidSurge(LivingEntity entity, EntityInfo entityInfo, boolean jumping)
+	private static SquidInfo tickSquidSurge(LivingEntity entity, SquidInfo info, boolean jumping)
 	{
 		AtomicReference<Vec3> deltaMovement = new AtomicReference<>(entity.getDeltaMovement());
-		if (entityInfo.isDoingSquidSurge()) // swimming upwards
+		if (info.isDoingSquidSurge()) // swimming upwards
 		{
-			float squidSurgePower = entityInfo.getSquidSurgePower();
-			if (entityInfo.getClimbedDirection().isPresent())
+			float squidSurgePower = info.getSquidSurgePower();
+			if (info.climbedDirection().isPresent())
 			{
 				deltaMovement.set(new Vec3(0, 0.25 + squidSurgePower / 60f, 0));
 				
 				AABB extendedBox = entity.getBoundingBox().expandTowards(0, deltaMovement.get().y, 0);
 				if (!entity.level().noCollision(entity, extendedBox))
-					entityInfo.flagSquidSurgeEnd();
+					info = info.flagSquidSurgeEnd();
 			}
 			else
 			{
 				deltaMovement.set(new Vec3(0, 0.32 + squidSurgePower / 75f, 0));
-				entityInfo.flagSquidSurgeEnd();
+				info = info.flagSquidSurgeEnd();
 			}
 		}
 		else
 		{
-			if (entityInfo.canChargeSquidSurge())
+			if (info.canChargeSquidSurge())
 			{
-				entityInfo.getClimbedDirection().ifPresentOrElse(climbDirection ->
-					{
-						if (jumping && (deltaMovement.get().y < 0.3)) // charge squid surge
-						{
-							deltaMovement.set(deltaMovement.get().scale(1f / (1f + entityInfo.getSquidSurgeState() / 2f)));
-							
-							entityInfo.chargeSquidSurge();
-						}
-						else // release squid surge
-						{
-							if (entityInfo.flagSquidSurgeUsage()) // do squid surge logic
-							{
-								deltaMovement.set(new Vec3(0, 0.3, 0));
-							}
-							else
-							{
-								entityInfo.setSquidSurgeState(0);
-							}
-						}
-					},
-					() ->
-					{
-						entityInfo.setSquidSurgeState(0);
-					});
-			}
-			else if (entityInfo.getSquidSurgeState() < 0) // is on cooldown
-			{
-				if (entityInfo.getSquidSurgeState() < -5)
+				if (info.climbedDirection().isPresent())
 				{
-					float horizontalRestriction = 0.4f * (1f / (-entityInfo.getSquidSurgeState() + 5));
+					if (jumping && (deltaMovement.get().y < 0.3)) // charge squid surge
+					{
+						deltaMovement.set(deltaMovement.get().scale(1f / (1f + info.squidSurgeState() / 2f)));
+						
+						info = info.chargeSquidSurge();
+					}
+					else // release squid surge
+					{
+						info = info.flagSquidSurgeUsage();
+						if (info.isDoingSquidSurge()) // do squid surge logic
+						{
+							deltaMovement.set(new Vec3(0, 0.3, 0));
+						}
+						else
+						{
+							info = info.setSquidSurgeState(0);
+						}
+					}
+				}
+				else
+				{
+					info = info.setSquidSurgeState(0);
+				}
+			}
+			else if (info.squidSurgeState() < 0) // is on cooldown
+			{
+				if (info.squidSurgeState() < -5)
+				{
+					float horizontalRestriction = 0.4f * (1f / (-info.squidSurgeState() + 5));
 					deltaMovement.set(deltaMovement.get().multiply(horizontalRestriction, 1f, horizontalRestriction));
 				}
-				entityInfo.setSquidSurgeState(entityInfo.getSquidSurgeState() + 1);
+				info = info.setSquidSurgeState(info.squidSurgeState() + 1);
 			}
 		}
 		entity.setDeltaMovement(deltaMovement.get());
+		return info;
 	}
 	public static Vec3 getHorizontalImpulse(float movementSideways, float movementForward, float yaw)
 	{

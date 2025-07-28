@@ -2,6 +2,7 @@ package net.splatcraft.util.action;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.util.CodecUtils;
@@ -60,7 +61,7 @@ public class EntityCooldown extends EntityActionWithTime
 		this.isGrounded = isGrounded;
 		this.preventStopUsing = preventStopUsing;
 	}
-	public boolean isCancellable()
+	public boolean isCancellable(LivingEntity entity)
 	{
 		return cancellable;
 	}

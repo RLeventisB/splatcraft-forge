@@ -5,6 +5,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
@@ -19,13 +21,23 @@ import net.minecraft.world.item.DyeColor;
 import net.splatcraft.data.InkColorRegistry;
 
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.Function;
 
-public class InkColor implements Comparable<InkColor>
+public record InkColor(int hexCode) implements Comparable<InkColor>
 {
 	public static final InkColor INVALID;
-	private static final TreeMap<Integer, InkColor> hexToColorMap = new TreeMap<>();
+	static
+	{
+		try
+		{
+			INVALID = new InkColor(-1);
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	private static final Int2ReferenceMap<InkColor> hexToColorMap = new Int2ReferenceAVLTreeMap<>();
 	public static final StreamCodec<ByteBuf, InkColor> STREAM_CODEC =
 		StreamCodec.composite(
 			ByteBufCodecs.INT, InkColor::getColor,
@@ -125,22 +137,6 @@ public class InkColor implements Comparable<InkColor>
 	};
 	public static final Codec<InkColor> NUMBER_CODEC = Codec.withAlternative(RAW_INT_CODEC, HEX_CODEC);
 	public static final Codec<InkColor> CODEC = Codec.withAlternative(NAME_CODEC, NUMBER_CODEC);
-	static
-	{
-		try
-		{
-			INVALID = new InkColor(-1);
-		}
-		catch (Exception e)
-		{
-			throw new RuntimeException(e);
-		}
-	}
-	private final int hexCode;
-	public InkColor(int color)
-	{
-		hexCode = color;
-	}
 	public static InkColor constructOrReuse(int hexCode)
 	{
 		try

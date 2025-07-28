@@ -5,8 +5,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateSquidSurgePacket;
 import net.splatcraft.platform.Components;
@@ -40,11 +39,9 @@ public class SendSquidSurgePacket extends PlayC2SPacket
 		return ID;
 	}
 	@Override
-	public void execute(Player target)
+	public void execute(ServerPlayer target)
 	{
-		EntityInfo info = Components.ENTITY_INFO.getOrCreate(target);
-		info.setClimbedDirection(climbedDirection);
-		info.setSquidSurgeState(squidSurgeCharge);
+		Components.SQUID_INFO.updateOrCreate(target, info -> info.setClimbedDirection(climbedDirection).setSquidSurgeState(squidSurgeCharge));
 		
 		SplatcraftPacketHandler.sendToTrackers(new UpdateSquidSurgePacket(target, squidSurgeCharge, climbedDirection), target);
 	}

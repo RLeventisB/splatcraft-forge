@@ -13,7 +13,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
 import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
@@ -67,9 +66,7 @@ public class SendPlaySessionEndPacket extends PlayS2CPacket
 			if (plr == null)
 				return;
 			
-			EntityInfo info = Components.ENTITY_INFO.getOrCreate(plr);
-			
-			info.setPlayingStageId(null);
+			Components.PLAYER_INFO.updateOrCreate(plr, v -> v.setPlayingStageId(null));
 		});
 	}
 }

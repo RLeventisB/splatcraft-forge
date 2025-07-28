@@ -27,6 +27,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import net.splatcraft.util.structs.AttackId;
@@ -181,12 +182,12 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			attackId = AttackId.registerAttack().countProjectile(sloshes.size());
 		}
 		@Override
-		public void tick(LivingEntity entity)
+		public ActionEndResult tick(LivingEntity entity)
 		{
 			Level world = entity.level();
 			
 			if (sloshData == null)
-				return;
+				return null;
 			
 			float frame = getMaxTime() - getTime();
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
@@ -244,6 +245,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 					i--;
 				}
 			}
+			return ActionEndResult.dontEnd(this);
 		}
 		private void shootSlosh(LivingEntity entity, CalculatedSloshData calculatedSloshData, Level world, float partialTick, SlosherWeaponSettings.SingularSloshShotData projectileSetting, SlosherWeaponSettings.SlosherShotDataRecord shotSetting, SlosherItem slosherItem, float extraTime)
 		{
@@ -283,7 +285,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			proj.tick(extraTime);
 		}
 		@Override
-		public boolean canEnd(LivingEntity entity)
+		public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 		{
 			if (queuedReSlosh)
 			{
@@ -297,9 +299,9 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				
 				queuedReSlosh = false;
 				didSound = false;
-				return false;
+				return ActionEndResult.dontEnd(this);
 			}
-			return true;
+			return ActionEndResult.END_ACTION;
 		}
 		@Override
 		public boolean preventWeaponUse()

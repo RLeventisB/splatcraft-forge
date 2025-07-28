@@ -3,9 +3,9 @@ package net.splatcraft.network.c2s;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.splatcraft.crafting.SplatcraftRecipeTypes;
@@ -44,10 +44,10 @@ public class CraftWeaponPacket extends PlayC2SPacket
 		buffer.writeInt(subtype);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Optional<? extends RecipeHolder<?>> recipeOptional = player.level().getRecipeManager().byKey(recipeID);
-
+		
 		if (recipeOptional.isPresent() && recipeOptional.get().value() instanceof WeaponWorkbenchRecipe workbenchRecipe)
 		{
 			WeaponWorkbenchSubtypeRecipe recipe = workbenchRecipe.getRecipeFromIndex(player, subtype);
@@ -58,19 +58,19 @@ public class CraftWeaponPacket extends PlayC2SPacket
 					return;
 				}
 			}
-
+			
 			for (StackedIngredient ing : recipe.getInput())
 			{
 				SplatcraftRecipeTypes.getItem(player, ing.getIngredient(), ing.getCount(), true);
 			}
 			ItemStack output = recipe.getOutput().copy();
-
+			
 			if (!output.isEmpty())
 			{
-				SplatcraftStats.CRAFT_WEAPON_TRIGGER.get().trigger((net.minecraft.server.level.ServerPlayer) player, output.copy());
+				SplatcraftStats.CRAFT_WEAPON_TRIGGER.get().trigger(player, output.copy());
 				player.awardStat(Stats.ITEM_CRAFTED.get(output.copy().getItem()));
 				player.awardStat(SplatcraftStats.WEAPONS_CRAFTED);
-
+				
 				if (!player.addItem(output))
 				{
 					ItemEntity item = player.drop(output, false);

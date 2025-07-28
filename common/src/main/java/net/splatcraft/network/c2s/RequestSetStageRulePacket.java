@@ -3,7 +3,7 @@ package net.splatcraft.network.c2s;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.data.Stage;
 import net.splatcraft.data.capabilities.SaveInfoCapability;
@@ -42,7 +42,7 @@ public class RequestSetStageRulePacket extends PlayC2SPacket
 		buffer.writeUtf(ruleId);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		

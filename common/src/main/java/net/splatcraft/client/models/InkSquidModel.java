@@ -13,8 +13,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.platform.Components;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,29 +89,29 @@ public class InkSquidModel extends EntityModel<LivingEntity>
 		
 		if (!entity.isPassenger())
 		{
-			InkOverlayInfo info = Components.INK_OVERLAY.getOrCreate(entity);
-			Optional<EntityInfo> entityInfoOptional = Components.ENTITY_INFO.getOptional(entity);
+			InkOverlayData overlayInfo = Components.INK_OVERLAY.getOrCreate(entity);
+			Optional<SquidInfo> infoOptional = Components.SQUID_INFO.getOptional(entity);
 			float angle = Float.NaN;
 			
-			if (entityInfoOptional.isPresent())
+			if (infoOptional.isPresent())
 			{
-				EntityInfo entityInfo = entityInfoOptional.get();
-				if (entityInfo.getClimbedDirection().isPresent())
+				SquidInfo info = infoOptional.get();
+				if (info.climbedDirection().isPresent())
 				{
-					Direction climbDirection = entityInfo.getClimbedDirection().get();
+					Direction climbDirection = info.climbedDirection().get();
 					float horizontalMovement = (float) climbDirection.getAxis().choose(entity.getDeltaMovement().z, 0, entity.getDeltaMovement().x) / 10f;
 					squid.yRot = climbDirection.toYRot() * Mth.DEG_TO_RAD + horizontalMovement + Mth.PI;
 					angle = -Mth.HALF_PI;
 				}
-				else if (entityInfo.getSquidSurgeState() < 0)
+				else if (info.squidSurgeState() < 0)
 				{
-					final float x = EntityInfo.SQUID_SURGE_ENDLAG + entityInfo.getSquidSurgeState() + partialTickTime;
+					final float x = SquidInfo.SQUID_SURGE_ENDLAG + info.squidSurgeState() + partialTickTime;
 					// i wanted the squid to rotate linearly and then smoothly do one last rotation so thanks google for providing me with https://www.integral-calculator.com/ made by david scherfgen ig
 					// yes this only works if linearTime is half of totalTime and finalLinearValue is one third of startValue, dont ask why
 					final float startValue = Mth.PI * 3;
 					final float finalLinearValue = Mth.PI;
-					final float linearTime = EntityInfo.SQUID_SURGE_ENDLAG / 2;
-					final float totalTime = EntityInfo.SQUID_SURGE_ENDLAG;
+					final float linearTime = SquidInfo.SQUID_SURGE_ENDLAG / 2;
+					final float totalTime = SquidInfo.SQUID_SURGE_ENDLAG;
 					final float m = (finalLinearValue - startValue) / linearTime;
 					if (x < linearTime)
 					{
@@ -121,13 +121,13 @@ public class InkSquidModel extends EntityModel<LivingEntity>
 					{
 						squid.yRot = finalLinearValue + (m * (x - linearTime) * (x - 2 * totalTime + linearTime)) / (2 * (totalTime - linearTime));
 					}
-					angle = -Mth.HALF_PI * (Mth.sqrt(1 - x / EntityInfo.SQUID_SURGE_ENDLAG));
+					angle = -Mth.HALF_PI * (Mth.sqrt(1 - x / SquidInfo.SQUID_SURGE_ENDLAG));
 				}
 			}
 			
 			if (Float.isNaN(angle))
 			{
-				angle = isSwimming ? -(entity.getXRot() * Mth.DEG_TO_RAD) : -Mth.lerp(partialTickTime, info.getPreviousSquidPitch(), info.getSquidPitch()) * 1.1f;
+				angle = isSwimming ? -(entity.getXRot() * Mth.DEG_TO_RAD) : -Mth.lerp(partialTickTime, overlayInfo.getPreviousSquidPitch(), overlayInfo.getSquidPitch()) * 1.1f;
 				squid.yRot = 0;
 			}
 			squid.xRot = Mth.clamp(angle, -Mth.HALF_PI, Mth.HALF_PI);

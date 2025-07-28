@@ -40,7 +40,8 @@ import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.capabilities.ChunkInkCapability;
 import net.splatcraft.data.capabilities.structs.ChunkInk;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.PlayerInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.items.SpecialProviderItem;
@@ -58,6 +59,7 @@ import oshi.util.tuples.Triplet;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class InkBlockUtils
 {
@@ -261,7 +263,7 @@ public class InkBlockUtils
 	}
 	public static BlockState getInkState(InkType inkType)
 	{
-		return (inkType == null ? InkType.NORMAL : inkType).block.defaultBlockState();
+		return (inkType == null ? InkType.NORMAL : inkType).block.get().defaultBlockState();
 	}
 	public static @Nullable ChunkInk.BlockEntry getInkBlock(Level world, BlockPos pos)
 	{
@@ -351,14 +353,14 @@ public class InkBlockUtils
 			return false;
 		}
 		
-		EntityInfo entityInfo = Components.ENTITY_INFO.get(entity);
-		if (entityInfo == null)
+		SquidInfo info = Components.SQUID_INFO.get(entity);
+		if (info == null)
 			return false;
 		
-		if (entityInfo.getSquidSurgeState() >= EntityInfo.MIN_SQUID_SURGE_CHARGE)
+		if (info.squidSurgeState() >= SquidInfo.MIN_SQUID_SURGE_CHARGE)
 			return false;
 		
-		return !entity.isSpectator() && (canSquidSwim(entity) || entityInfo.getClimbedDirection().isPresent());
+		return !entity.isSpectator() && (canSquidSwim(entity) || info.climbedDirection().isPresent());
 	}
 	public static boolean canSquidSwim(LivingEntity entity)
 	{
@@ -542,7 +544,9 @@ public class InkBlockUtils
 	}
 	public static InkBlockUtils.InkType getInkType(LivingEntity entity)
 	{
-		return Components.ENTITY_INFO.getOptional(entity).map(EntityInfo::getInkType).orElse(InkType.NORMAL);
+		if (entity instanceof Player player)
+			return Components.PLAYER_INFO.getOptional(player).map(PlayerInfo::getInkType).orElse(InkType.NORMAL);
+		return InkType.NORMAL;
 	}
 	public static InkType getInkTypeFromStack(ItemStack stack)
 	{
@@ -563,9 +567,9 @@ public class InkBlockUtils
 	}
 	public enum InkType implements Comparable<InkType>, StringRepresentable
 	{
-		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock.value()),
-		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand.value(), SplatcraftBlocks.glowingInkedBlock.value()),
-		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand.value(), SplatcraftBlocks.clearInkedBlock.value());
+		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock),
+		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand, SplatcraftBlocks.glowingInkedBlock),
+		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand, SplatcraftBlocks.clearInkedBlock);
 		public static final Map<ResourceLocation, InkType> IDENTIFIER_MAP = Map.of(
 			Splatcraft.identifierOf("normal"), NORMAL,
 			Splatcraft.identifierOf("glowing"), GLOWING,
@@ -574,19 +578,19 @@ public class InkBlockUtils
 		public static final Codec<InkType> CODEC = StringRepresentable.fromEnum(InkType::values);
 		public static final StreamCodec<ByteBuf, InkType> STREAM_CODEC = CodecUtils.createEnumPacketCodec(InkType::values);
 		private final ResourceLocation name;
-		private final Item repItem;
-		private final InkedBlock block;
+		private final Supplier<Item> repItemSupplier;
+		private final Supplier<InkedBlock> block;
 		private final byte id;
-		InkType(int id, ResourceLocation name, Item repItem, InkedBlock inkedBlock)
+		InkType(int id, ResourceLocation name, Supplier<Item> repItemSupplier, Supplier<InkedBlock> inkedBlock)
 		{
 			this.id = (byte) id;
 			this.name = name;
-			this.repItem = repItem;
+			this.repItemSupplier = repItemSupplier;
 			block = inkedBlock;
 		}
-		InkType(int id, ResourceLocation name, InkedBlock inkedBlock)
+		InkType(int id, ResourceLocation name, Supplier<InkedBlock> inkedBlock)
 		{
-			this(id, name, Items.AIR, inkedBlock);
+			this(id, name, () -> Items.AIR, inkedBlock);
 		}
 		public static InkType fromId(int id)
 		{
@@ -598,7 +602,7 @@ public class InkBlockUtils
 		}
 		public Item getRepItem()
 		{
-			return repItem;
+			return repItemSupplier.get();
 		}
 		@Override
 		public String toString()

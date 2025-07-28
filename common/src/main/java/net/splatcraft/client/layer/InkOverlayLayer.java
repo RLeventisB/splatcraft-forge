@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.LivingEntity;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.data.capabilities.structs.InkOverlayInfo;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ColorUtils;
@@ -36,7 +36,7 @@ public class InkOverlayLayer<E extends LivingEntity, M extends EntityModel<E>> e
 	@Override
 	public void render(@NotNull PoseStack matrixStack, @NotNull MultiBufferSource bufferIn, int packedLightIn, @NotNull E entity, float v, float v1, float v2, float v3, float v4, float v5)
 	{
-		InkOverlayInfo info = Components.INK_OVERLAY.get(entity);
+		InkOverlayData info = Components.INK_OVERLAY.get(entity);
 		if (info == null || info.getColor().isEmpty())
 			return;
 		

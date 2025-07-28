@@ -2,8 +2,8 @@ package net.splatcraft.network.c2s;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.items.SpecialProviderItem;
 import net.splatcraft.util.CommonUtils;
@@ -34,7 +34,7 @@ public class RequestSpecialUsageDataPacket extends PlayC2SPacket
 		buffer.writeInt(providerIndex);
 	}
 	@Override
-	public void execute(Player player)
+	public void execute(ServerPlayer player)
 	{
 		Inventory inventory = player.getInventory();
 		ItemStack weaponStack = inventory.getItem(weaponIndex);

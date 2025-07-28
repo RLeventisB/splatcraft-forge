@@ -6,7 +6,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.data.capabilities.structs.EntityInfo;
+import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.platform.Components;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -55,7 +55,7 @@ public class UpdateSquidSurgePacket extends PlayS2CPacket
 		Player player = ClientUtils.getClientPlayer().level().getPlayerByUUID(uuid);
 		if (player != null)
 		{
-			EntityInfo info = Components.ENTITY_INFO.getOrCreate(player);
+			SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
 			info.setSquidSurgeState(squidSurgeState);
 			info.setClimbedDirection(climbedDirection);
 		}
