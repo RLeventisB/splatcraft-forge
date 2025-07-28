@@ -1,6 +1,6 @@
 package net.splatcraft.items.remotes;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
@@ -65,7 +65,7 @@ public class ColorChangerItem extends RemoteItem implements IColoredItem, ISplat
 		
 		if (mode <= 1 && !affectedTeam.isEmpty() && !stage.isEmpty())
 		{
-			Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+			Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 			stages.get(stage).setTeamColor(affectedTeam, color);
 			if (!world.isClientSide())
 				SplatcraftPacketHandler.sendToAll(new UpdateStageListPacket(stages));

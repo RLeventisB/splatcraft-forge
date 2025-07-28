@@ -1,5 +1,7 @@
 package net.splatcraft.data.capabilities;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -18,7 +20,7 @@ public class SaveInfoCapability
 	static
 	{
 		if (Services.PLATFORM.isClientSide())
-			clientSaveInfo = new SaveInfo(new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(), new SaveInfo.ImmutableObjectArrayList<>());
+			clientSaveInfo = new SaveInfo(Object2ObjectMaps.emptyMap(), Object2ObjectMaps.emptyMap(), ObjectLists.emptyList());
 	}
 	public static SaveInfo get()
 	{

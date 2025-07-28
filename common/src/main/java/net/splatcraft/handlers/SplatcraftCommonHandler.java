@@ -92,7 +92,7 @@ public class SplatcraftCommonHandler
 			return;
 		}
 		
-		Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = Components.PLAYER_INFO.getOrCreate(oldPlayer).matchInventory();
+		Map<Integer, ItemStack> matchInv = Components.PLAYER_INFO.getOrCreate(oldPlayer).matchInventory();
 		
 		if (!matchInv.isEmpty())
 		{
@@ -102,7 +102,7 @@ public class SplatcraftCommonHandler
 		}
 		EntityAction.setEntityAction(newPlayer, null, true, true);
 	}
-	private static void tryToInsertItems(Player player, Object2ObjectOpenHashMap<Integer, ItemStack> matchInv, boolean dropItemIfFail)
+	private static void tryToInsertItems(Player player, Map<Integer, ItemStack> matchInv, boolean dropItemIfFail)
 	{
 		Inventory inventory = player.getInventory();
 		for (int i = 0; i < inventory.getContainerSize(); i++)
@@ -211,7 +211,7 @@ public class SplatcraftCommonHandler
 		if (entity instanceof Player player)
 		{
 			PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
-			Object2ObjectOpenHashMap<Integer, ItemStack> matchInv = info.matchInventory();
+			Map<Integer, ItemStack> matchInv = info.matchInventory();
 			
 			drops.removeIf(o -> matchInv.containsValue(o.getItem()));
 			

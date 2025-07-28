@@ -3,9 +3,7 @@ package net.splatcraft.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -43,9 +41,9 @@ public class Stage implements Comparable<Stage>
 {
 	public static final TreeMap<String, GameRules.Key<GameRules.BooleanValue>> VALID_SETTINGS = new TreeMap<>();
 	private static final StreamCodec<ByteBuf, ResourceKey<Level>> WORLD_KEY_STREAM_CODEC = ResourceKey.streamCodec(Registries.DIMENSION);
-	private static final StreamCodec<ByteBuf, Object2ObjectOpenHashMap<String, Boolean>> SETTINGS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.BOOL);
-	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectOpenHashMap<String, InkColor>> TEAMS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, InkColor.STREAM_CODEC);
-	private static final StreamCodec<ByteBuf, ObjectArrayList<BlockPos>> SPAWN_PAD_POSITIONS_STREAM_CODEC = BlockPos.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectArrayList::new));
+	private static final StreamCodec<ByteBuf, Object2ObjectMap<String, Boolean>> SETTINGS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.BOOL);
+	private static final StreamCodec<RegistryFriendlyByteBuf, Object2ObjectMap<String, InkColor>> TEAMS_STREAM_CODEC = ByteBufCodecs.map(Object2ObjectOpenHashMap::new, ByteBufCodecs.STRING_UTF8, InkColor.STREAM_CODEC);
+	private static final StreamCodec<ByteBuf, ObjectList<BlockPos>> SPAWN_PAD_POSITIONS_STREAM_CODEC = BlockPos.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectArrayList::new));
 	public static Codec<Stage> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 		BlockPos.CODEC.fieldOf("min_corner").forGetter(v -> v.minCorner),
 		BlockPos.CODEC.fieldOf("max_corner").forGetter(v -> v.maxCorner),
@@ -64,9 +62,9 @@ public class Stage implements Comparable<Stage>
 			BlockPos cornerA = BlockPos.STREAM_CODEC.decode(buf);
 			BlockPos cornerB = BlockPos.STREAM_CODEC.decode(buf);
 			ResourceKey<Level> worldKey = WORLD_KEY_STREAM_CODEC.decode(buf);
-			Object2ObjectOpenHashMap<String, Boolean> settings = SETTINGS_STREAM_CODEC.decode(buf);
-			Object2ObjectOpenHashMap<String, InkColor> teams = TEAMS_STREAM_CODEC.decode(buf);
-			ObjectArrayList<BlockPos> spawnPadPositions = SPAWN_PAD_POSITIONS_STREAM_CODEC.decode(buf);
+			Object2ObjectMap<String, Boolean> settings = SETTINGS_STREAM_CODEC.decode(buf);
+			Object2ObjectMap<String, InkColor> teams = TEAMS_STREAM_CODEC.decode(buf);
+			ObjectList<BlockPos> spawnPadPositions = SPAWN_PAD_POSITIONS_STREAM_CODEC.decode(buf);
 			Component name = ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buf);
 			String id = ByteBufCodecs.STRING_UTF8.decode(buf);
 			return new Stage(cornerA, cornerB, worldKey, settings, teams, spawnPadPositions, name, id);
@@ -102,9 +100,9 @@ public class Stage implements Comparable<Stage>
 		registerGameruleSetting(SplatcraftGameRules.BLOCK_DESTROY_INK);
 	}
 	public final String id;
-	private final Object2ObjectOpenHashMap<String, Boolean> settings;
-	private final Object2ObjectOpenHashMap<String, InkColor> teams;
-	private final ObjectArrayList<BlockPos> spawnPadPositions;
+	private final Object2ObjectMap<String, Boolean> settings;
+	private final Object2ObjectMap<String, InkColor> teams;
+	private final ObjectList<BlockPos> spawnPadPositions;
 	public BlockPos minCorner;
 	public BlockPos maxCorner;
 	public ResourceKey<Level> worldKey;
@@ -121,7 +119,7 @@ public class Stage implements Comparable<Stage>
 		
 		updateBounds(server.getLevel(worldKey), posA, posB);
 	}
-	public Stage(BlockPos minCorner, BlockPos maxCorner, ResourceKey<Level> worldKey, Object2ObjectOpenHashMap<String, Boolean> settings, Object2ObjectOpenHashMap<String, InkColor> teams, ObjectArrayList<BlockPos> spawnPadPos, Component name, String id)
+	public Stage(BlockPos minCorner, BlockPos maxCorner, ResourceKey<Level> worldKey, Object2ObjectMap<String, Boolean> settings, Object2ObjectMap<String, InkColor> teams, ObjectList<BlockPos> spawnPadPos, Component name, String id)
 	{
 		this.worldKey = worldKey;
 		this.settings = settings;

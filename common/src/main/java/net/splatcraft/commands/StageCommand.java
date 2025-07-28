@@ -8,7 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -239,8 +239,8 @@ public class StageCommand
 	}
 	private static int stopSession(CommandContext<CommandSourceStack> context) throws CommandSyntaxException
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
-		Object2ObjectOpenHashMap<String, PlaySession> playSessions = SaveInfoCapability.get().playSessions();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, PlaySession> playSessions = SaveInfoCapability.get().playSessions();
 		String stageId = StringArgumentType.getString(context, "stage");
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -264,7 +264,7 @@ public class StageCommand
 	}
 	private static int remove(CommandSourceStack source, String stageId) throws CommandSyntaxException
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
 		
@@ -291,7 +291,7 @@ public class StageCommand
 	}
 	private static int setSetting(CommandSourceStack source, String stageId, String setting, @Nullable Boolean value) throws CommandSyntaxException
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -333,7 +333,7 @@ public class StageCommand
 	}
 	private static int setTeam(CommandSourceStack source, String stageId, String teamId, InkColor teamColor) throws CommandSyntaxException
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);
@@ -552,7 +552,7 @@ public class StageCommand
 	}
 	private static int setStageCoords(CommandSourceStack source, String stageId, BlockPos pos, boolean isCornerA) throws CommandSyntaxException
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		if (!stages.containsKey(stageId))
 			throw STAGE_NOT_FOUND.create(stageId);

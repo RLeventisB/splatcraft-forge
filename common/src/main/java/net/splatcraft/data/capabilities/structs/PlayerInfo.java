@@ -3,6 +3,7 @@ package net.splatcraft.data.capabilities.structs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +18,7 @@ import java.util.function.UnaryOperator;
 
 public record PlayerInfo(
 	boolean isInitialized,
-	Object2ObjectOpenHashMap<Integer, ItemStack> matchInventory,
+	Object2ObjectMap<Integer, ItemStack> matchInventory,
 	Optional<PlayingData> playingData,
 	ItemStack inkBand
 )

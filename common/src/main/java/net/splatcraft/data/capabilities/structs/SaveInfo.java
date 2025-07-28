@@ -2,7 +2,7 @@ package net.splatcraft.data.capabilities.structs;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import it.unimi.dsi.fastutil.objects.Object2ObjectFunction;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -27,14 +27,9 @@ import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.structs.InkColor;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.function.BiFunction;
-
-public record SaveInfo(Object2ObjectOpenHashMap<String, Stage> stages,
-                       Object2ObjectOpenHashMap<String, PlaySession> playSessions,
-                       ObjectArrayList<InkColor> colorScores)
+public record SaveInfo(Object2ObjectMap<String, Stage> stages,
+                       Object2ObjectMap<String, PlaySession> playSessions,
+                       ObjectList<InkColor> colorScores)
 {
 	// todo: make playsessions load after the stages, not at the same time
 	public static final Codec<SaveInfo> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -73,10 +68,6 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, Stage> stages,
 		{
 			session.tick(server);
 		}
-	}
-	private static AssertionError throwException()
-	{
-		return new AssertionError("This map is not meant to be modified in the client since it won't save! Modify it in the server-side instead.");
 	}
 	public void addInitializedColorScores(InkColor... colors)
 	{
@@ -122,167 +113,5 @@ public record SaveInfo(Object2ObjectOpenHashMap<String, Stage> stages,
 	public boolean createStage(ServerLevel world, String stageId, BlockPos corner1, BlockPos corner2)
 	{
 		return createStage(world, stageId, corner1, corner2, Component.literal(stageId));
-	}
-	// this is mostly so if i do something funny
-	public static class ImmutableObjectArrayList<A> extends ObjectArrayList<A>
-	{
-		@Override
-		public void add(int index, A a)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean add(A a)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean addAll(int index, Collection<? extends A> c)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean addAll(int index, ObjectList<? extends A> l)
-		{
-			throw throwException();
-		}
-		@Override
-		public void addElements(int index, A[] a, int offset, int length)
-		{
-			throw throwException();
-		}
-		@Override
-		public A set(int index, A a)
-		{
-			throw throwException();
-		}
-		@Override
-		public A remove(int index)
-		{
-			throw throwException();
-		}
-		@Override
-		public void sort(Comparator<? super A> comp)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean remove(Object k)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean removeAll(Collection<?> c)
-		{
-			throw throwException();
-		}
-		@Override
-		public void removeElements(int from, int to)
-		{
-			throw throwException();
-		}
-		@Override
-		public void unstableSort(Comparator<? super A> comp)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean addAll(Collection<? extends A> c)
-		{
-			throw throwException();
-		}
-		@Override
-		public void addElements(int index, A[] a)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean addAll(ObjectList<? extends A> l)
-		{
-			throw throwException();
-		}
-		@Override
-		public void setElements(A[] a)
-		{
-			throw throwException();
-		}
-		@Override
-		public void setElements(int index, A[] a, int offset, int length)
-		{
-			throw throwException();
-		}
-	}
-	public static class ImmutableObject2ObjectOpenHashMap<A, E> extends Object2ObjectOpenHashMap<A, E>
-	{
-		private final boolean lockPutAll;
-		public ImmutableObject2ObjectOpenHashMap()
-		{
-			super();
-			lockPutAll = true;
-		}
-		public ImmutableObject2ObjectOpenHashMap(Object2ObjectOpenHashMap<A, E> stages)
-		{
-			super(stages);
-			lockPutAll = true;
-		}
-		@Override
-		public void putAll(Map<? extends A, ? extends E> m)
-		{
-			if (lockPutAll)
-				throw throwException();
-			super.putAll(m);
-		}
-		@Override
-		public E putIfAbsent(A a, E e)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean remove(Object k, Object v)
-		{
-			throw throwException();
-		}
-		@Override
-		public boolean replace(A a, E oldValue, E e)
-		{
-			throw throwException();
-		}
-		@Override
-		public E replace(A a, E e)
-		{
-			throw throwException();
-		}
-		@Override
-		public E merge(A a, E e, BiFunction<? super E, ? super E, ? extends E> remappingFunction)
-		{
-			throw throwException();
-		}
-		@Override
-		public E put(A a, E e)
-		{
-			if (lockPutAll)
-				throw throwException();
-			return super.put(a, e);
-		}
-		@Override
-		public E remove(Object k)
-		{
-			throw throwException();
-		}
-		@Override
-		public E computeIfAbsent(A key, Object2ObjectFunction<? super A, ? extends E> mappingFunction)
-		{
-			throw throwException();
-		}
-		@Override
-		public E computeIfPresent(A a, BiFunction<? super A, ? super E, ? extends E> remappingFunction)
-		{
-			throw throwException();
-		}
-		@Override
-		public E compute(A a, BiFunction<? super A, ? super E, ? extends E> remappingFunction)
-		{
-			throw throwException();
-		}
 	}
 }

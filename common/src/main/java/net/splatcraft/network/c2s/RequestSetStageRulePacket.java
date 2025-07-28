@@ -1,6 +1,6 @@
 package net.splatcraft.network.c2s;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,7 +44,7 @@ public class RequestSetStageRulePacket extends PlayC2SPacket
 	@Override
 	public void execute(ServerPlayer player)
 	{
-		Object2ObjectOpenHashMap<String, Stage> stages = SaveInfoCapability.get().stages();
+		Object2ObjectMap<String, Stage> stages = SaveInfoCapability.get().stages();
 		
 		Stage stage = stages.get(stageId);
 		stage.applySetting(ruleId.replace(Splatcraft.MODID + ".", ""), value);

@@ -3,6 +3,7 @@ package net.splatcraft.data;
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -125,7 +126,7 @@ public final class PlaySession
 	};
 	public final List<UUID> playerUuids;
 	public final List<BlockPos> markerCachedPositions = new ArrayList<>();
-	public final Object2ObjectOpenHashMap<InkColor, TeamScore> scores = new Object2ObjectOpenHashMap<>();
+	public final Object2ObjectMap<InkColor, TeamScore> scores = new Object2ObjectOpenHashMap<>();
 	public final StageGameMode gameMode;
 	public final String stageId;
 	public Object customData;
@@ -162,11 +163,11 @@ public final class PlaySession
 		calculateTimes(gameMode.DEFAULT_TIME_SECONDS, stage.getStageWorld(Services.PLATFORM.getServerInstance()).getGameTime());
 		initializeMarkers(false);
 	}
-	public PlaySession(List<UUID> playerUuids, List<BlockPos> cachedMarkerPos, StageGameMode gameMode, Object2ObjectOpenHashMap<InkColor, TeamScore> scores, boolean ended, String stageId, long matchStartTime, long matchEndTime, long sessionEndTime)
+	public PlaySession(List<UUID> playerUuids, List<BlockPos> cachedMarkerPos, StageGameMode gameMode, Object2ObjectMap<InkColor, TeamScore> scores, boolean ended, String stageId, long matchStartTime, long matchEndTime, long sessionEndTime)
 	{
 		this(playerUuids, cachedMarkerPos, gameMode, scores, ended, stageId, matchStartTime, matchEndTime, sessionEndTime, null);
 	}
-	public PlaySession(List<UUID> playerUuids, List<BlockPos> cachedMarkerPos, StageGameMode gameMode, Object2ObjectOpenHashMap<InkColor, TeamScore> scores, boolean ended, String stageId, long matchStartTime, long matchEndTime, long sessionEndTime, Object customData)
+	public PlaySession(List<UUID> playerUuids, List<BlockPos> cachedMarkerPos, StageGameMode gameMode, Object2ObjectMap<InkColor, TeamScore> scores, boolean ended, String stageId, long matchStartTime, long matchEndTime, long sessionEndTime, Object customData)
 	{
 		this.playerUuids = playerUuids;
 		this.gameMode = gameMode;

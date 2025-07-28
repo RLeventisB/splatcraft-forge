@@ -1,6 +1,7 @@
 package net.splatcraft.network.s2c;
 
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -47,6 +48,6 @@ public class SendPlaySessionUpdatePacket extends PlayS2CPacket
 	{
 		Object2ObjectOpenHashMap<String, PlaySession> map = new Object2ObjectOpenHashMap<>(SaveInfoCapability.clientSaveInfo.playSessions());
 		map.put(session.stageId, session);
-		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.stages(), new SaveInfo.ImmutableObject2ObjectOpenHashMap<>(map), SaveInfoCapability.clientSaveInfo.colorScores());
+		SaveInfoCapability.clientSaveInfo = new SaveInfo(SaveInfoCapability.clientSaveInfo.stages(), Object2ObjectMaps.unmodifiable(map), SaveInfoCapability.clientSaveInfo.colorScores());
 	}
 }

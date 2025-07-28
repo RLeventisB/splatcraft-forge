@@ -10,8 +10,10 @@ import com.mojang.datafixers.util.*;
 import com.mojang.serialization.*;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.network.VarInt;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -64,7 +66,7 @@ public class CodecUtils
 		final ToIntFunction<T> encoder = Enum::ordinal;
 		return ByteBufCodecs.idMapper(decoder, encoder);
 	}
-	public static <K, V> Codec<Object2ObjectOpenHashMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
+	public static <K, V> Codec<Object2ObjectMap<K, V>> hashMapCodec(Codec<K> keyCodec, Codec<V> valueCodec)
 	{
 		return mapCodec(keyCodec, valueCodec, Object2ObjectOpenHashMap::new);
 	}
@@ -72,7 +74,7 @@ public class CodecUtils
 	{
 		return new MapCodecNotToBeConfusedWithAMapCodec<>(keyCodec, valueCodec, mapCreator);
 	}
-	public static <E> Codec<ObjectArrayList<E>> arrayList(Codec<E> codec)
+	public static <E> Codec<ObjectList<E>> arrayList(Codec<E> codec)
 	{
 		return collection(codec, ObjectArrayList::new);
 	}

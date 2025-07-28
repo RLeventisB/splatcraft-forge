@@ -3,11 +3,13 @@ package net.splatcraft.util.structs;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.Entity;
 import net.splatcraft.util.CodecUtils;
+
+import java.util.UUID;
 
 public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttackId
 {
@@ -16,7 +18,7 @@ public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttack
 		Codec.BYTE.fieldOf("projectile_count").forGetter(DamageSelectiveAttackId::getRemainingHits),
 		CodecUtils.hashMapCodec(UUIDUtil.AUTHLIB_CODEC, Codec.FLOAT).fieldOf("hit_enemies").forGetter(v -> v.enemyToDamageDoneData)
 	).apply(inst, DamageSelectiveAttackId::new));
-	public final Object2ObjectOpenHashMap<UUID, Float> enemyToDamageDoneData;
+	public final Object2ObjectMap<UUID, Float> enemyToDamageDoneData;
 	public DamageSelectiveAttackId(Short id)
 	{
 		super(id);
@@ -29,7 +31,7 @@ public class DamageSelectiveAttackId extends AttackId.PrimitiveImplementedAttack
 		
 		enemyToDamageDoneData = new Object2ObjectOpenHashMap<>(expected);
 	}
-	public DamageSelectiveAttackId(short id, byte projectileCount, Object2ObjectOpenHashMap<UUID, Float> enemyToDamageDoneData)
+	public DamageSelectiveAttackId(short id, byte projectileCount, Object2ObjectMap<UUID, Float> enemyToDamageDoneData)
 	{
 		super(id);
 		this.projectileCount = projectileCount;

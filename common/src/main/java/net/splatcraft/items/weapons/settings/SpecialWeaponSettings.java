@@ -3,6 +3,7 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -105,7 +106,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	}
 	public record SpecialCostData(
 		int defaultPoints,
-		Object2ObjectOpenHashMap<ResourceLocation, Integer> pointOverride
+		Object2ObjectMap<ResourceLocation, Integer> pointOverride
 	)
 	{
 		public static final Codec<SpecialCostData> CODEC = RecordCodecBuilder.create(
