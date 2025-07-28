@@ -125,11 +125,19 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		
 		DualieWeaponSettings.RollDataRecord rollData = activeSettings.rollData;
 		if (reduceInk(entity, this, getInkForRoll(activeDualie), rollData.inkRecoveryCooldown(), !entity.level().isClientSide()) &&
-			(!EntityAction.hasEntityAction(entity) || (EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class))))
+			(!EntityAction.hasEntityAction(entity) || EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class)))
 		{
-			entity.getMainHandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
-			entity.getOffhandItem().update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT, v -> v.withCounter(Float.NaN));
-			entity.stopUsingItem();
+			if (rollData.canShoot())
+			{
+				resetDualieShotData(entity.getMainHandItem());
+				resetDualieShotData(entity.getOffhandItem());
+			}
+			else
+			{
+				entity.getMainHandItem().set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT);
+				entity.getOffhandItem().set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT);
+				entity.stopUsingItem();
+			}
 			
 			int turretDuration = getRollTurretDuration(activeDualie);
 			
@@ -143,6 +151,16 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			
 			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(rollCount + 1));
 		}
+	}
+	private void resetDualieShotData(ItemStack stack)
+	{
+		if (!(stack.getItem() instanceof DualieItem dualieItem))
+			return;
+		
+		ShotDataRecord shotData = dualieItem.getSettings(stack).standardShotData;
+		
+		stack.update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
+			v -> v.updateShootingData(shotData.startupTicks(), shotData.repeatTicks(), shotData.endlagTicks()));
 	}
 	public ClampedItemPropertyFunction getIsLeft()
 	{
@@ -435,6 +453,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 					case AFTER_ROLL:
 						if (getTime() <= turretModeFrame)
 						{
+							if (canShootOnRoll)
+							{
+								updateDualieShotData(entity.getMainHandItem());
+								updateDualieShotData(entity.getOffhandItem());
+							}
+							
 							rollState = RollState.TURRET;
 							break;
 						}
@@ -447,9 +471,27 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			return ActionEndResult.dontEnd(this);
 		}
+		private void updateDualieShotData(ItemStack stack)
+		{
+			if (!(stack.getItem() instanceof DualieItem dualieItem))
+				return;
+			
+			ShotDataRecord shotData = dualieItem.getSettings(stack).turretShotData;
+			
+			stack.update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
+				v -> v.updateShootingData(shotData.startupTicks(), shotData.repeatTicks(), shotData.endlagTicks()));
+		}
+		@Override
+		public boolean isCancellable(LivingEntity entity)
+		{
+			return getTime() <= turretModeFrame - 3;
+		}
 		@Override
 		public ActionEndResult canEnd(LivingEntity entity, EndType endType)
 		{
+			if (endType == EndType.CANCELLED)
+				return ActionEndResult.END_ACTION;
+			
 			boolean endedTurretMode = entity.jumping ||
 				entity.zza != 0 || entity.xxa != 0 || // these work in the client side
 				WeaponHandler.getEntityPrevPos(entity).oldOldPosition.distanceToSqr(entity.position()) > 0.01 || // this works in the server side
@@ -506,6 +548,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		public EntitySlot getItemSlot()
 		{
 			return itemSlot;
+		}
+		public RollState getRollState()
+		{
+			return rollState;
 		}
 		public enum RollState implements StringRepresentable
 		{

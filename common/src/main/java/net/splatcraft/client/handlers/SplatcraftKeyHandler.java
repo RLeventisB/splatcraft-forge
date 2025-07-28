@@ -295,7 +295,7 @@ public class SplatcraftKeyHandler
 			{
 				// this is to fix whenever a player shoots again just in time the sub delay reaches 0, allowing them to literally cancel all endlag and enter squid form lol
 				// in that case the shot is done server-side, were isUsingItem is true because of delay
-				boolean isDoingAction = WeaponHandler.getUsingWeaponHand(player).isPresent() || EntityAction.hasEntityAction(player);
+				boolean isDoingAction = WeaponHandler.getUsingWeaponHand(player).isPresent() || EntityAction.hasEntityActionAnd(player, action -> !action.isCancellable(player));
 				if (isDoingAction && squidAndSubDelay == 1 && !pressedSquidKeyWhileHoldingChargeable(player))
 					return;
 				

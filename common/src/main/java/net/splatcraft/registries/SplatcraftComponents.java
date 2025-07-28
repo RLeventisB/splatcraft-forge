@@ -542,6 +542,23 @@ public class SplatcraftComponents
 		{
 			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
+		public ShooterFiringData updateShootingData(float startupTime, float repeatTime, float endlagTime)
+		{
+			float convertedCounter = counter;
+			if (counter > 0)
+			{
+				convertedCounter *= startupTime / this.startupTime;
+			}
+			else if (counter < 0)
+			{
+				if (counter < this.repeatTime)
+					convertedCounter *= (repeatTime + endlagTime) / (this.repeatTime + this.endlagTime);
+				else
+					convertedCounter *= repeatTime / this.repeatTime;
+			}
+			
+			return new ShooterFiringData(convertedCounter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
+		}
 		public ShooterFiringData withRepeatPunishTime(float repeatPunishTime)
 		{
 			return new ShooterFiringData(counter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);

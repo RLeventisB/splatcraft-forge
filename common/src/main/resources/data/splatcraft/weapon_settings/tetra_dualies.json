@@ -34,7 +34,7 @@
     },
     "dodge_roll": {
         "count": 2,
-        "distance_covered_by_roll": 50,
+        "distance_covered_by_roll": 45,
         "ink_consumption": 7,
         "ink_recovery_cooldown": 70,
         "roll_startup": 5,

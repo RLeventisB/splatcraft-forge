@@ -378,9 +378,9 @@ public class CommonUtils
 	{
 		return mode + deviation * (random.nextFloat() - random.nextFloat());
 	}
-	public static boolean isRolling(LivingEntity entity)
+	public static boolean isOnTurretState(LivingEntity entity)
 	{
-		return EntityAction.hasSpecificEntityAction(entity, DualieItem.DodgeRollAction.class);
+		return EntityAction.hasSpecificEntityActionAnd(entity, action -> action.getRollState() == DualieItem.DodgeRollAction.RollState.TURRET, DualieItem.DodgeRollAction.class);
 	}
 	public static InteractionHand otherHand(InteractionHand hand)
 	{
