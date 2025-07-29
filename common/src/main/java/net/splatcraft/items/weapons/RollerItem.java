@@ -264,8 +264,8 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 				continue;
 			}
 			
-			BlockPos attackPos = BlockPos.containing(entity.getX() + xOff + dxOff, entity.getY() - 1, entity.getZ() + zOff + dzOff);
-			for (LivingEntity target : world.getEntitiesOfClass(LivingEntity.class, AABB.encapsulatingFullBlocks(attackPos, attackPos.offset(1, 2, 1)), EntitySelector.NO_SPECTATORS.and(e ->
+			Vec3 hitCenter = new Vec3(entity.getX() + xOff + dxOff, entity.getY(), entity.getZ() + zOff + dzOff);
+			for (LivingEntity target : world.getEntitiesOfClass(LivingEntity.class, AABB.ofSize(hitCenter, 0.6, 0.8, 0.6), EntitySelector.NO_SPECTATORS.and(e ->
 			{
 				if (e instanceof LivingEntity target)
 				{

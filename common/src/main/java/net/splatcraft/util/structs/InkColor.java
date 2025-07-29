@@ -19,6 +19,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.splatcraft.data.InkColorRegistry;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -199,7 +200,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 		return hexCode | (alpha << 24);
 	}
 	@Override
-	public String toString()
+	public @NotNull String toString()
 	{
 		ResourceLocation alias = InkColorRegistry.getColorAlias(this);
 		if (alias != null)

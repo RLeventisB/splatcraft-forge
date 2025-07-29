@@ -39,7 +39,7 @@ public class InkSplashParticle extends TextureSheetParticle
 	public void tick()
 	{
 		super.tick();
-		if (level.getBlockState(new BlockPos((int) x, (int) y, (int) z)).liquid())
+		if (level.getBlockState(BlockPos.containing(x, y, z)).liquid())
 		{
 			remove();
 		}
@@ -51,7 +51,7 @@ public class InkSplashParticle extends TextureSheetParticle
 	@Override
 	public @NotNull ParticleRenderType getRenderType()
 	{
-		return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+		return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
 	}
 	@Override
 	public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks)
@@ -60,11 +60,11 @@ public class InkSplashParticle extends TextureSheetParticle
 		if (firstPerson)
 		{
 			double dist = squaredDistanceTo(camera.getPosition(), partialTicks);
-			if (dist < 4)
+			if (dist < 3)
 			{
-				if (dist < 1)
+				if (dist < 0.5f)
 					return;
-				setAlpha((float) (Math.sqrt(dist) - 1));
+				setAlpha(((float) dist - 0.5f) / 2.5f);
 				super.render(buffer, camera, partialTicks);
 			}
 			else

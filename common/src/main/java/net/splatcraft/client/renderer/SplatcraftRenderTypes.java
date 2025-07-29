@@ -64,8 +64,8 @@ public class SplatcraftRenderTypes
 				.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
 				.setLightmapState(NO_LIGHTMAP)
 				.setOverlayState(NO_OVERLAY)
-				.setCullState(NO_CULL)
-				.setDepthTestState(RenderStateShard.GREATER_DEPTH_TEST)
+				.setDepthTestState(GREATER_DEPTH_TEST)
+				.setWriteMaskState(COLOR_WRITE)
 				.createCompositeState(true);
 			return create("splatcraft_entity_silhouette", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, false, rendertype$state);
 		}

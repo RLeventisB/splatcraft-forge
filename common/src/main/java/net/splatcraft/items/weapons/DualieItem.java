@@ -430,7 +430,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 							if (!local)
 							{
 								entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieDodge, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(entity.level().random, 0.95f, 0.095f));
-								InkExplosion.createInkExplosion(entity, entity.position(), 0.9f, InkBlockUtils.getInkType(entity), storedStack);
+								InkExplosion.createInkExplosion(entity, entity.position().add(0, 10e-5, 0), 1.2f, InkBlockUtils.getInkType(entity), storedStack);
 							}
 							entity.setDiscardFriction(true);
 							

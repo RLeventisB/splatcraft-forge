@@ -1,10 +1,7 @@
 package net.splatcraft.mixin;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Camera;
 import net.minecraft.client.model.EntityModel;
@@ -14,6 +11,8 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -309,10 +308,15 @@ public class MatchMixins
 		@Shadow
 		@Final
 		protected List<RenderLayer<LivingEntity, EntityModel<LivingEntity>>> layers;
-		@Unique
-		public float splatcraft$silhouetteStrength;
-		@Unique
-		public SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource splatcraft$silhouetteRenderer;
+		@Shadow
+		protected EntityModel<LivingEntity> model;
+		@Shadow
+		public static int getOverlayCoords(LivingEntity livingEntity, float u)
+		{
+			return 0;
+		}
+		@Shadow
+		protected abstract float getWhiteOverlayProgress(LivingEntity livingEntity, float partialTicks);
 		@Inject(method = "shouldShowName*", at = @At("HEAD"), cancellable = true)
 		public <T extends Entity> void splatcraft$hideEnemyTeamNametag(T entity, CallbackInfoReturnable<Boolean> cir)
 		{
@@ -321,20 +325,10 @@ public class MatchMixins
 			
 			RendererHandler.processHidingEntity(cir, living);
 		}
-		@WrapOperation(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-			at = @At(value = "INVOKE",
-				target = "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"))
-		public <T extends LivingEntity> void splatcraft$injectSilhouetteDataOnModel(EntityModel instance, PoseStack poseStack, VertexConsumer vertexConsumer, int light, int overlay, int color, Operation<Void> original, @Local(argsOnly = true) T entity)
-		{
-			original.call(instance, poseStack, vertexConsumer, light, overlay, color);
-			if (splatcraft$silhouetteRenderer != null)
-				original.call(instance, poseStack, vertexConsumer, light, overlay,
-					FastColor.ARGB32.color((int) (255 * splatcraft$silhouetteStrength), color));
-		}
 		@SuppressWarnings("UnresolvedLocalCapture")
 		@Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
 			at = @At(value = "INVOKE",
-				target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V"))
+				target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;getRenderType(Lnet/minecraft/world/entity/LivingEntity;ZZZ)Lnet/minecraft/client/renderer/RenderType;"))
 		public <T extends LivingEntity> void splatcraft$renderLayersAsSilhouette(
 			T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci,
 			@Local(index = 15, ordinal = 9) float f5,
@@ -344,40 +338,41 @@ public class MatchMixins
 			@Local(index = 11, ordinal = 5) float f6
 		)
 		{
-			if (splatcraft$silhouetteRenderer != null && !entity.isSpectator())
+			LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
+			StingRayAction stingRayAction = EntityAction.getSpecificEntityAction(clientPlayer, StingRayAction.class);
+			
+			if (stingRayAction == null || stingRayAction.getUsageTick() == 0)
+				return;
+			
+			if (ColorUtils.getEntityColor(clientPlayer).equals(ColorUtils.getEntityColor(entity)))
+				return;
+			
+			float distanceProgress = entity.distanceTo(clientPlayer) / stingRayAction.getRevealRadius();
+			float silhouetteStrength = Math.max(0, Math.max(0, 1f - (stingRayAction.getUsageTick() + partialTicks) / 20f) - (Math.max(0, distanceProgress - 1f) * 30f));
+			
+			if (silhouetteStrength == 0)
+				return;
+			
+			EntityRenderer<T> renderer = (EntityRenderer<T>) (Object) this;
+			int i = getOverlayCoords(entity, getWhiteOverlayProgress(entity, partialTicks));
+			
+			RenderType silhouetteRenderType = SplatcraftRenderTypes.entitySilhouette(renderer.getTextureLocation(entity));
+			MultiBufferSource.BufferSource bufferSource = ClientUtils.getClient().renderBuffers().bufferSource();
+			
+			SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource silhouetteBufferSource = new SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource(bufferSource, silhouetteStrength);
+			
+			model.renderToBuffer(poseStack, bufferSource.getBuffer(silhouetteRenderType), packedLight, i,
+				FastColor.ARGB32.color((int) (255 * silhouetteStrength), -1));
+			
+			if (!entity.isSpectator())
 			{
 				for (RenderLayer<LivingEntity, EntityModel<LivingEntity>> renderlayer : layers)
 				{
-					renderlayer.render(poseStack, splatcraft$silhouetteRenderer, packedLight, entity, f5, f4, partialTicks, f9, f2, f6);
+					renderlayer.render(poseStack, silhouetteBufferSource, packedLight, entity, f5, f4, partialTicks, f9, f2, f6);
 				}
 			}
-		}
-		@Inject(method = "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-			at = @At(value = "HEAD",
-				target = "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;getRenderType(Lnet/minecraft/world/entity/LivingEntity;ZZZ)Lnet/minecraft/client/renderer/RenderType;"))
-		public <T extends LivingEntity> void splatcraft$injectSilhouetteBuffer(
-			T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci)
-		{
-			LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
-			splatcraft$silhouetteRenderer = null;
-			splatcraft$silhouetteStrength = 0f;
-			EntityAction.getSpecificEntityActionOptional(clientPlayer, StingRayAction.class).ifPresent(stingRayAction ->
-			{
-				if (stingRayAction.getUsageTick() == 0)
-					return;
-				
-				if (ColorUtils.getEntityColor(clientPlayer).equals(ColorUtils.getEntityColor(entity)))
-					return;
-				
-				float distanceProgress = entity.distanceTo(clientPlayer) / stingRayAction.getRevealRadius();
-				
-				splatcraft$silhouetteStrength = Math.max(0, Math.max(0, 1f - (stingRayAction.getUsageTick() + partialTicks) / 20f) - (Math.max(0, distanceProgress - 1f) * 30f));
-			});
 			
-			if (splatcraft$silhouetteStrength != 0)
-			{
-				splatcraft$silhouetteRenderer = new SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource(buffer, splatcraft$silhouetteStrength);
-			}
+			bufferSource.endBatch(silhouetteRenderType);
 		}
 	}
 	@Mixin(Camera.class)

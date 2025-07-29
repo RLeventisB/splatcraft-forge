@@ -305,14 +305,36 @@ public class ColorUtils
 	{
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::colorLocked, false);
 	}
+	/**
+	 * Makes the color brighter, and paler.
+	 *
+	 * @param color The InkColor that will be converted into a color in ARGB format, whose alpha value will be set as completely opaque.
+	 * @return An color, in ARGB format, that has been applied the parameters given.
+	 */
 	public static int makeBrighter(InkColor color)
 	{
 		return makeBrighter(color, 0.5f, 0.9f);
 	}
+	/**
+	 * Makes the color brighter, and paler, depending of the given parameters.
+	 *
+	 * @param color             The InkColor that will be converted into a color in ARGB format, whose alpha value will be set as completely opaque.
+	 * @param desaturationDelta How desaturated the new color will be, 0 being having the same desaturation, 1 being completely desaturated, -1 basically "duplicates" the saturation.
+	 * @param brightnessDelta   How bright the new color will be, 0 being having the same brightness, 1 being completely white, and -1 "halves" the brightness, making a darker color.
+	 * @return An color, in ARGB format, that has been applied the parameters given.
+	 */
 	public static int makeBrighter(InkColor color, float desaturationDelta, float brightnessDelta)
 	{
 		return makeBrighter(color.getColorWithAlpha(255), desaturationDelta, brightnessDelta);
 	}
+	/**
+	 * Makes the color brighter, and paler, depending of the given parameters.
+	 *
+	 * @param color             The color in ARGB format
+	 * @param desaturationDelta How desaturated the new color will be, 0 being having the same desaturation, 1 being completely desaturated, -1 basically "duplicates" the saturation.
+	 * @param brightnessDelta   How bright the new color will be, 0 being having the same brightness, 1 being completely white, and -1 "halves" the brightness, making a darker color.
+	 * @return An color, in ARGB format, that has been applied the parameters given.
+	 */
 	public static int makeBrighter(int color, float desaturationDelta, float brightnessDelta)
 	{
 		return applyHSBOperators(color,
