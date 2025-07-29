@@ -163,7 +163,7 @@ public class EntityMixins
 				splatcraft$processItemForJumpRng(entity.getOffhandItem(), entity);
 			}
 			
-			SplatcraftCommonHandler.onPlayerJump(entity);
+			SplatcraftCommonHandler.onEntityJump(entity);
 			SquidFormHandler.modifyJumpSpeed(entity);
 		}
 		@Inject(method = "hurt", at = @At("HEAD"))

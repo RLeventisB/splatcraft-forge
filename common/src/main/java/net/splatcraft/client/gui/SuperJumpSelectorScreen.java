@@ -26,7 +26,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
-import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.GraphicsUtils;
@@ -77,11 +76,7 @@ public class SuperJumpSelectorScreen
 			graphics.drawCenteredString(mc.font, Integer.toString(finalIndex), (int) x + 8, 30, finalIndex == index ? targets.color().getColorWithAlpha(255) : 0xFFFFFF);
 		}
 		
-		double fov = ((GameRendererFovAccessor) mc.gameRenderer).invokeGetFov(
-			mc.gameRenderer.getMainCamera(),
-			tickCounter.getGameTimeDeltaPartialTick(true),
-			true);
-		Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
+		Matrix4f projectionMatrix = GraphicsUtils.getProjectionMatrix(tickCounter.getGameTimeDeltaTicks());
 		
 		graphics.pose().pushPose();
 		boolean selected = false;

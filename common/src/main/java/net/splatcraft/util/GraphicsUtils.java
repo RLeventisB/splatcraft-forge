@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -73,5 +74,14 @@ public class GraphicsUtils
 		float w = projectiveCamSpace.w();
 		
 		return new Vector4f(projectiveCamSpace.x() / w / 2f, projectiveCamSpace.y() / w / 2f, w, (float) Math.sqrt(relativePos.dot(relativePos)));
+	}
+	public static @NotNull Matrix4f getProjectionMatrix(float partialTicks)
+	{
+		GameRenderer gameRenderer = ClientUtils.getClient().gameRenderer;
+		double fov = ((GameRendererFovAccessor) gameRenderer).invokeGetFov(
+			gameRenderer.getMainCamera(),
+			partialTicks,
+			true);
+		return gameRenderer.getProjectionMatrix(fov);
 	}
 }

@@ -60,9 +60,9 @@ public class SplatcraftCommonHandler
 		
 		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SplatcraftCommonHandler::onBlockLeftClick);
 	}
-	public static void onPlayerJump(LivingEntity entity)
+	public static void onEntityJump(LivingEntity entity)
 	{
-		if (InkBlockUtils.onEnemyInk(entity))
+		if (InkBlockUtils.onEnemyInk(entity) && entity.getAttributes().hasAttribute(SplatcraftAttributes.enemyInkJumpMultiplier))
 		{
 			Vec3 deltaMovement = entity.getDeltaMovement().multiply(1, entity.getAttributeValue(SplatcraftAttributes.enemyInkJumpMultiplier), 1);
 			entity.setDeltaMovement(deltaMovement);
