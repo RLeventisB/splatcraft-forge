@@ -1,5 +1,6 @@
 package net.splatcraft.entities;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -106,27 +107,28 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who had access
 	// to better search engines than now i suppose because i cant find this code anywhere else) comes to save
 	// me from eternal torment
-	public static double getDistance(Vec3 rayDirection, AABB relativeBox)
+	public static Pair<Double, Vec3> getDistance(Vec3 rayDirection, AABB relativeBox)
 	{
 		double tx1 = relativeBox.minX / rayDirection.x;
 		double tx2 = relativeBox.maxX / rayDirection.x;
 		double ty1 = relativeBox.minY / rayDirection.y;
 		double ty2 = relativeBox.maxY / rayDirection.y;
-		double tz1 = relativeBox.minZ / rayDirection.y;
-		double tz2 = relativeBox.maxZ / rayDirection.y;
+		double tz1 = relativeBox.minZ / rayDirection.z;
+		double tz2 = relativeBox.maxZ / rayDirection.z;
 		
 		double p1 = Math.max(0.0, Math.max(tx1, Math.min(ty1, tz1)));
 		double p2 = Math.max(0.0, Math.min(tx2, Math.max(ty2, tz2)));
 		
-		double x = Mth.clamp((rayDirection.x * p1 + rayDirection.x * p2) / 2, relativeBox.minX, relativeBox.maxX);
-		double y = Mth.clamp((rayDirection.y * p1 + rayDirection.y * p2) / 2, relativeBox.minY, relativeBox.maxY);
-		double z = Mth.clamp((rayDirection.z * p1 + rayDirection.z * p2) / 2, relativeBox.minZ, relativeBox.maxZ);
+		double x = Mth.clamp((rayDirection.x * (p1 + p2)) / 2, relativeBox.minX, relativeBox.maxX);
+		double y = Mth.clamp((rayDirection.y * (p1 + p2)) / 2, relativeBox.minY, relativeBox.maxY);
+		double z = Mth.clamp((rayDirection.z * (p1 + p2)) / 2, relativeBox.minZ, relativeBox.maxZ);
 		
-		double t = Math.max(0.0, rayDirection.dot(new Vec3(x, y, z)) / rayDirection.lengthSqr());
+		Vec3 impactPos = new Vec3(x, y, z);
+		double t = Math.max(0.0, rayDirection.dot(impactPos) / rayDirection.lengthSqr());
 		x = rayDirection.x * t - x;
 		y = rayDirection.y * t - y;
 		z = rayDirection.z * t - z;
-		return Math.sqrt(x * x + y * y + z * z);
+		return Pair.of(Math.sqrt(x * x + y * y + z * z), impactPos);
 	}
 	public static Vec3 getClosestPoint(Vec3 rayDirection, Vec3 relativePoint)
 	{
@@ -258,20 +260,20 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			
 			if (isOnForwardPlane)
 			{
-				double distance = getDistance(forward, relativeBox);
+				Pair<Double, Vec3> impactData = getDistance(forward, relativeBox);
 				
-				if (distance < getRayWidth())
+				if (impactData.getFirst() < getRayWidth())
 				{
-					hit(entity, rayDamage, canDoSound);
+					hit(entity, rayDamage, canDoSound, impactData.getSecond());
 				}
-				else if (hasStartedToShowTheHellspawn() && distance < getShockwaveWidth())
+				else if (hasStartedToShowTheHellspawn() && impactData.getFirst() < getShockwaveWidth())
 				{
-					hit(entity, shockwaveDamage, canDoSound);
+					hit(entity, shockwaveDamage, canDoSound, impactData.getSecond());
 				}
 			}
 		}
 	}
-	private void hit(Entity target, float dmg, AtomicBoolean playSound)
+	private void hit(Entity target, float dmg, AtomicBoolean playSound, Vec3 impactPos)
 	{
 		if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
@@ -286,7 +288,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			if (!level().isClientSide && didDamage)
 			{
 				if (getOwner() instanceof ServerPlayer playerOwner)
-					SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(target.position(), playSound.get() ? SplatcraftSounds.shotHit : null, 1f), playerOwner);
+					SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(position().add(impactPos), playSound.get() ? SplatcraftSounds.shotHit : null, 1f), playerOwner);
 				playSound.set(false);
 			}
 		}
