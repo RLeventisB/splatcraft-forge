@@ -6,10 +6,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.splatcraft.Splatcraft;
-import net.splatcraft.client.particles.InkExplosionParticleData;
-import net.splatcraft.client.particles.InkSplashParticleData;
-import net.splatcraft.client.particles.InkTerrainParticleData;
-import net.splatcraft.client.particles.SquidSoulParticleData;
+import net.splatcraft.client.particles.*;
 import net.splatcraft.platform.DeferredRegister;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,19 +65,25 @@ public class SplatcraftParticleTypes
 			return InkTerrainParticleData.STREAM_CODEC;
 		}
 	};
+	public static final ParticleType<InkHitParticleData> INK_HIT = new ParticleType<>(false)
+	{
+		@Override
+		public @NotNull MapCodec<InkHitParticleData> codec()
+		{
+			return InkHitParticleData.CODEC;
+		}
+		@Override
+		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkHitParticleData> streamCodec()
+		{
+			return InkHitParticleData.STREAM_CODEC;
+		}
+	};
 	public static void registerParticles()
 	{
 		REGISTRY.register("ink_splash", () -> INK_SPLASH);
 		REGISTRY.register("ink_explosion", () -> INK_EXPLOSION);
 		REGISTRY.register("squid_soul", () -> SQUID_SOUL);
 		REGISTRY.register("ink_terrain", () -> INK_TERRAIN);
-		
-		// uhhh architectury commented the code of these, why?????????????
-/*
-		ParticleProviderRegistry.register(INK_SPLASH, InkSplashParticle.Factory::new);
-		ParticleProviderRegistry.register(INK_EXPLOSION, InkExplosionParticle.Factory::new);
-		ParticleProviderRegistry.register(SQUID_SOUL, SquidSoulParticle.Factory::new);
-		ParticleProviderRegistry.register(INK_TERRAIN, InkTerrainParticle.Factory::new);
-*/
+		REGISTRY.register("ink_hit", () -> INK_HIT);
 	}
 }

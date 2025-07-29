@@ -7,7 +7,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -22,6 +22,8 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.StingRayTickableSound;
 import net.splatcraft.client.particles.InkSplashParticleData;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendPlayerHitPacket;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
 import net.splatcraft.registries.SplatcraftSounds;
@@ -200,6 +202,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			}
 			else
 			{
+				// todo: make damage after the collision distance lower ig
 				float collisionDistance = paint(forward);
 				doCollisions(forward);
 			}
@@ -280,10 +283,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
 			
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
-			if (!level().isClientSide && didDamage && playSound.get())
+			if (!level().isClientSide && didDamage)
 			{
+				if (getOwner() instanceof ServerPlayer playerOwner)
+					SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(target.position(), playSound.get() ? SplatcraftSounds.shotHit : null, 1f), playerOwner);
 				playSound.set(false);
-				level().playSound(null, getOwner().getX(), getOwner().getY(), getOwner().getZ(), SplatcraftSounds.shotHit, SoundSource.PLAYERS, 0.7f, 1f);
 			}
 		}
 	}

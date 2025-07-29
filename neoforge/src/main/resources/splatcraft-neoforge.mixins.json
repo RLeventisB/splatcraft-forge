@@ -10,6 +10,7 @@
         "ForgeDummyInjections$ItemMixin"
     ],
     "client": [
+        "AddParticleRenderTypeMixin",
         "BlockModelRendererMixin",
         "BlockRenderMixinForge$BlockRenderManagerMixin",
         "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",

@@ -178,7 +178,7 @@ public class PlayerMovementHandler
 		}
 		else if (info.squidSurgeState() != 0)
 		{
-			info.setSquidSurgeState(0);
+			Components.SQUID_INFO.update(player, v -> v.setSquidSurgeState(0));
 			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.climbedDirection(), info.getSquidSurgeCharge()));
 		}
 		

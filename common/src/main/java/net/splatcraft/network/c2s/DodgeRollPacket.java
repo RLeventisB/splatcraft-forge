@@ -37,12 +37,6 @@ public class DodgeRollPacket extends PlayC2SPacket
 		);
 	}
 	@Override
-	public void execute(ServerPlayer player)
-	{
-		Player target = player.level().getPlayerByUUID(this.target);
-		((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, dualieSlot, rollPotency);
-	}
-	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeUUID(target);
@@ -50,6 +44,12 @@ public class DodgeRollPacket extends PlayC2SPacket
 		EntitySlot.SERIALIZER_STREAM_CODEC.encode(buffer, dualieSlot);
 		buffer.writeFloat(rollPotency.x); // important note dont use writeDouble so your rollDirection.x isnt't 3.16345E19 (god damn it minecraft why did you make it so Vec2 uses floats but Vec3d uses doubles)
 		buffer.writeFloat(rollPotency.y);
+	}
+	@Override
+	public void execute(ServerPlayer player)
+	{
+		Player target = player.level().getPlayerByUUID(this.target);
+		((DualieItem) activeDualie.getItem()).performRoll(target, activeDualie, dualieSlot, rollPotency);
 	}
 	@Override
 	public @NotNull Type<? extends CustomPacketPayload> type()

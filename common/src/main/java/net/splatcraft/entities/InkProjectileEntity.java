@@ -6,12 +6,12 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -24,6 +24,8 @@ import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendPlayerHitPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftEntities;
@@ -427,17 +429,17 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (InkDamageUtils.isSplatted(target)) return;
 		
 		boolean didDamage = InkDamageUtils.doDamage(target, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
-		if (didDamage && owner instanceof Player)
+		if (didDamage && owner instanceof ServerPlayer playerOwner)
 		{
 			ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
 			if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
 				Objects.equals(getProjectileType(), Types.BLASTER))
 			{
-				level().playSound(null, owner, SplatcraftSounds.shotDirectHit, SoundSource.PLAYERS, 0.8F, 1);
+				SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(impactPos.add(0, getBbHeight() / 2, 0), SplatcraftSounds.shotDirectHit, 1.2f), playerOwner);
 			}
 			else
 			{
-				level().playSound(null, owner, SplatcraftSounds.shotHit, SoundSource.PLAYERS, 1f, 1f);
+				SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(impactPos.add(0, getBbHeight() / 2, 0), SplatcraftSounds.shotHit, 1f), playerOwner);
 			}
 		}
 		

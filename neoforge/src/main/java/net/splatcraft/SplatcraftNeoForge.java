@@ -19,10 +19,7 @@ import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.client.particles.InkExplosionParticle;
-import net.splatcraft.client.particles.InkSplashParticle;
-import net.splatcraft.client.particles.InkTerrainParticle;
-import net.splatcraft.client.particles.SquidSoulParticle;
+import net.splatcraft.client.particles.*;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
@@ -71,6 +68,7 @@ public final class SplatcraftNeoForge
 		event.registerSpriteSet(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
 		event.registerSpriteSet(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
 		event.registerSpriteSet(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
+		event.registerSpriteSet(SplatcraftParticleTypes.INK_HIT, InkHitParticle.Factory::new);
 	}
 	private static void onChunkWatch(ChunkWatchEvent.Sent event)
 	{
