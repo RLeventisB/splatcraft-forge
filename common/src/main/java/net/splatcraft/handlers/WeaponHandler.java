@@ -160,11 +160,9 @@ public class WeaponHandler
 			if (!endResult.tickAfter())
 				return endResult;
 		}
-		else
-		{
-			action.tick(player);
-			player.setSprinting(false);
-		}
+		action.tick(player);
+		player.setSprinting(false);
+		
 		if (action.reversedTime())
 		{
 			if (action.getTime() >= action.getMaxTime())

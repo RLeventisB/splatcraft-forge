@@ -39,6 +39,7 @@ public class DodgeRollPacket extends PlayC2SPacket
 	@Override
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
+		// todo: sometimes this packet leaves 25 bytes unread but idk what might be the cause of it (mostly when the server is laggy)
 		buffer.writeUUID(target);
 		ItemStack.STREAM_CODEC.encode(buffer, activeDualie);
 		EntitySlot.SERIALIZER_STREAM_CODEC.encode(buffer, dualieSlot);

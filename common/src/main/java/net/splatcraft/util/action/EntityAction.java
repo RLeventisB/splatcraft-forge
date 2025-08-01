@@ -15,7 +15,6 @@ import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.SlosherItem;
 import net.splatcraft.platform.Components;
-import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.specials.InkjetAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -198,46 +197,6 @@ public interface EntityAction extends Cloneable
 	default EntitySlot getItemSlot()
 	{
 		return EntitySlot.EMPTY;
-	}
-	default ActionEndResult updateAction(LivingEntity entity)
-	{
-		ActionEndResult endResult = ActionEndResult.dontEnd(this);
-		
-		if (getTime() == getMaxTime())
-			onStart(entity);
-		if (isCancellable(entity) && CommonUtils.isSquid(entity))
-		{
-			endResult = canEnd(entity, EntityAction.EndType.CANCELLED);
-			if (!endResult.tickAfter())
-				return endResult;
-		}
-		else
-		{
-			tick(entity);
-			entity.setSprinting(false);
-		}
-		if (reversedTime())
-		{
-			if (getTime() >= getMaxTime())
-			{
-				endResult = canEnd(entity, EntityAction.EndType.TIME);
-				if (!endResult.tickAfter())
-					return endResult;
-			}
-			setTime(getTime() + 1);
-		}
-		else
-		{
-			if (getTime() <= 1)
-			{
-				endResult = canEnd(entity, EntityAction.EndType.TIME);
-				if (!endResult.tickAfter())
-					return endResult;
-			}
-			setTime(getTime() - 1);
-		}
-		
-		return endResult;
 	}
 	default ActionEndResult tick(LivingEntity entity)
 	{

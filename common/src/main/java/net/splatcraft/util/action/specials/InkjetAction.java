@@ -1,8 +1,16 @@
 package net.splatcraft.util.action.specials;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -11,6 +19,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.splatcraft.Splatcraft;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.EntitySlot;
@@ -25,17 +36,23 @@ import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.ActionEndResult;
+import net.splatcraft.util.action.RenderableEntityAction;
 import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.DamageCalculator;
+import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RangedValueCollection;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.Optional;
 
 import static net.splatcraft.items.weapons.settings.SpecialWeaponRecords.InkJetDataRecord;
 
-public class InkjetAction extends BaseSpecialAction
+public class InkjetAction extends BaseSpecialAction implements RenderableEntityAction
 {
+	private static final ResourceLocation RECALL_ICON_TEXTURE = Splatcraft.identifierOf("textures/entity/special/inkjet_start_icon.png");
 	public static final Codec<InkjetAction> CODEC = RecordCodecBuilder.create(
 		inst ->
 			CodecUtils.MissingProducts.and(specialCodecStart(inst),
@@ -97,6 +114,9 @@ public class InkjetAction extends BaseSpecialAction
 	@Override
 	public ActionEndResult tick(LivingEntity entity)
 	{
+		if (CommonUtils.isSquid(entity))
+			return ActionEndResult.dontEnd(this);
+		
 		if (Components.WEAPON_INFO.getOrCreate(entity).hasHigherStartup() && shotCooldown <= 0 && shotCooldown > -8)
 		{
 			shotCooldown = -8;
@@ -307,6 +327,28 @@ public class InkjetAction extends BaseSpecialAction
 			entity.getAttributeValue(SplatcraftAttributes.superJumpHeight),
 			entity.noPhysics,
 			entity instanceof Player player && player.getAbilities().invulnerable,
-			false, true));
+			false, true, SuperJumpCommand.SuperJump.JETPACK_ICON));
+	}
+	@OnlyIn(Dist.CLIENT)
+	@Override
+	public void renderExtra(@NotNull PoseStack poseStack, @NotNull MultiBufferSource provider, LivingEntity entity, float partialTicks)
+	{
+		Quaternionf quaternion = new Quaternionf();
+		Camera camera = ClientUtils.getClient().gameRenderer.getMainCamera();
+		SingleQuadParticle.FacingCameraMode.LOOKAT_XYZ.setRotation(quaternion, camera, partialTicks);
+		InkColor entityColor = ColorUtils.getEntityColor(entity);
+		if (entityColor.isInvalid())
+			return;
+		
+		int color = ColorUtils.makeBrighter(entityColor);
+		final float size = 0.4f;
+		
+		VertexConsumer consumer = provider.getBuffer(RenderType.armorCutoutNoCull(RECALL_ICON_TEXTURE));
+		Vector3f quadCenter = startPos.toVector3f().add(0, 0.5f, 0).sub(camera.getPosition().toVector3f());
+		
+		consumer.addVertex((new Vector3f(size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 0).setUv1(0, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 1).setUv1(0, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(-size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 1).setUv1(16, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(-size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 0).setUv1(16, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
 	}
 }

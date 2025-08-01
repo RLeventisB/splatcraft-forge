@@ -67,6 +67,7 @@ import net.splatcraft.SplatcraftConfigImpl;
 import net.splatcraft.platform.event.*;
 import net.splatcraft.platform.services.IPlatformHelper;
 import net.splatcraft.platform.services.ModInfo;
+import net.splatcraft.util.ClientUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -370,6 +371,44 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 				Pair<ShaderInstance, Consumer<ShaderInstance>> dataPair = provider.apply(registerShader.getResourceProvider());
 				registerShader.registerShader(dataPair.getFirst(), dataPair.getSecond());
 			}
+		);
+	}
+	@Override
+	public void registerRenderingCallback(RenderingCallback.RenderingStage stage, RenderingCallback callback)
+	{
+		EventHelper.addToEventSpecificMap(RenderLevelStageEvent.class, convertToNeoforge(stage), callback,
+			(currentStage, stage1, callback1) ->
+			{
+				if (currentStage.getStage() != stage1)
+					return;
+				
+				callback1.render(convertToNeoforge(currentStage));
+			}
+		);
+	}
+	private RenderLevelStageEvent.Stage convertToNeoforge(RenderingCallback.RenderingStage stage)
+	{
+		return switch (stage)
+		{
+			case AFTER_SKY -> RenderLevelStageEvent.Stage.AFTER_SKY;
+			case AFTER_BLOCKS -> RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES;
+			case AFTER_ENTITIES -> RenderLevelStageEvent.Stage.AFTER_ENTITIES;
+			case AFTER_PARTICLES -> RenderLevelStageEvent.Stage.AFTER_PARTICLES;
+			case AFTER_DEBUG -> RenderLevelStageEvent.Stage.AFTER_LEVEL;
+		};
+	}
+	private RenderingCallback.CallbackData convertToNeoforge(RenderLevelStageEvent evt)
+	{
+		return new RenderingCallback.CallbackData(
+			evt.getLevelRenderer(),
+			evt.getPoseStack(),
+			evt.getPartialTick(),
+			evt.getCamera(),
+			ClientUtils.getClient().gameRenderer,
+			evt.getProjectionMatrix(),
+			evt.getModelViewMatrix(),
+			evt.getFrustum(),
+			ClientUtils.getClient().renderBuffers().bufferSource()
 		);
 	}
 	@Override

@@ -31,6 +31,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.RegistrySupplier;
+import net.splatcraft.platform.RenderingCallback;
 import net.splatcraft.platform.event.IEventMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,17 +85,19 @@ public interface IPlatformHelper extends IEventMap
 	{
 		return isClientSide() ? ModSide.CLIENT : ModSide.SERVER;
 	}
+	MinecraftServer getServerInstance();
 	// yes this could've used architectury api because these are literally the same functions from https://github.com/architectury/architectury-api
 	// however, that is one more jar and i am FRIGHTENED that the mod doesnt let me hotswap
+	<T> DeferredRegister<T> createRegistry(Registry<T> registry);
 	@OnlyIn(Dist.CLIENT)
 	void registerItemProperty(Item item, ResourceLocation id, ClampedItemPropertyFunction function);
 	<A extends ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>, I extends ArgumentTypeInfo<A, T>> void registerCommandArgument(String argumentName, Class<A> infoClass, I argumentTypeInfo);
 	void registerDataTracker(String name, EntityDataSerializer<?> handler);
-	MinecraftServer getServerInstance();
-	<T> DeferredRegister<T> createRegistry(Registry<T> registry);
 	void addItemToVanillaCreativeTab(ResourceKey<CreativeModeTab> creativeTab, RegistrySupplier<Item> item);
 	@OnlyIn(Dist.CLIENT)
 	void registerShader(Function<ResourceProvider, Pair<ShaderInstance, Consumer<ShaderInstance>>> dataProvider);
+	@OnlyIn(Dist.CLIENT)
+	void registerRenderingCallback(RenderingCallback.RenderingStage stage, RenderingCallback callback);
 	void registerReloadListener(PackType packType, PreparableReloadListener reloadListener);
 	void registerKeyMapping(KeyMapping key);
 	<T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider);
@@ -104,7 +107,6 @@ public interface IPlatformHelper extends IEventMap
 	void loadConfig();
 	void initializeConfigs();
 	Path getModConfigPath();
-	// todo: do a neoforge-like abstract capability id thingy that is resolved when serializing and deserializing by the modloader or something
 	<T> int @Nullable [] findItemMatches(List<T> inputs, List<? extends Predicate<T>> tests);
 	void postConsumerEvent(String eventClassName, Object... params);
 	Object postEvent(String eventClassName, Object... params);

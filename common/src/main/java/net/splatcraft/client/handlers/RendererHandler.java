@@ -57,6 +57,7 @@ import net.splatcraft.items.weapons.subs.SubWeaponItem;
 import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.mixin.accessors.GameRendererFovAccessor;
 import net.splatcraft.platform.Components;
+import net.splatcraft.platform.RenderingCallback;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.CompoundEventResult;
 import net.splatcraft.platform.event.EventResult;
@@ -65,6 +66,7 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.tileentities.StageMarkerTileEntity;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.RenderableEntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
 import net.splatcraft.util.structs.InkColor;
 import org.joml.Matrix4f;
@@ -88,6 +90,26 @@ public class RendererHandler
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(InteractionEvents.ClientChatReceive.class, RendererHandler::onChatMessage);
+		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_PARTICLES, RendererHandler::doActionRendering);
+	}
+	private static void doActionRendering(RenderingCallback.CallbackData data)
+	{
+		for (Entity entity : ClientUtils.getClient().level.entitiesForRendering())
+		{
+			if (!(entity instanceof LivingEntity living) || !Components.ENTITY_INFO.has(living))
+				continue;
+			
+			RenderableEntityAction action = EntityAction.getSpecificEntityAction(living, RenderableEntityAction.class);
+			if (action == null)
+				return;
+			
+			PoseStack poseStack = data.poseStack();
+			poseStack.pushPose();
+			action.renderExtra(poseStack, data.consumers(), living, data.tickCounter().getGameTimeDeltaTicks());
+			if (data.consumers() instanceof MultiBufferSource.BufferSource source)
+				source.endLastBatch();
+			poseStack.popPose();
+		}
 	}
 	public static boolean playerRender(AbstractClientPlayer player, float f, float g, PoseStack matrixStack, MultiBufferSource consumerProvider, int color)
 	{
