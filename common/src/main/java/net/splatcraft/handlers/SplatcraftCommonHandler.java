@@ -265,13 +265,13 @@ public class SplatcraftCommonHandler
 			info = info.setInitialized(true);
 			Components.PLAYER_INFO.set(player, info);
 			
-			if (player.isLocalPlayer())
+			if (player.level().isClientSide())
 			{
 				SplatcraftPacketHandler.sendToServer(new RequestPlayerComponentsPacket(player, Components.Bits.PLAYER_INFOS));
 			}
 		}
 		
-		if (!player.isLocalPlayer())
+		if (!player.level().isClientSide())
 		{
 			ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
 			

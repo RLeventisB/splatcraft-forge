@@ -3,6 +3,7 @@ package net.splatcraft.mixin;
 import com.google.common.base.Suppliers;
 import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.splatcraft.platform.Services;
+import net.splatcraft.platform.services.ModInfo;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -12,12 +13,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class MixinInitializer implements IMixinConfigPlugin
+public abstract class BaseMixinInitializer implements IMixinConfigPlugin
 {
+	private final Supplier<List<ModInfo>> installedModsSupplier = Suppliers.memoize(this::collectMods);
 	public boolean isOnFabric, isOnNeoForge, isOnClient;
 	public Supplier<Boolean> sodiumInstalled, createInstalled;
+	public abstract List<ModInfo> collectMods();
 	@Override
-	public void onLoad(String mixinPackage)
+	public final void onLoad(String mixinPackage)
 	{
 		MixinExtrasBootstrap.init();
 		isOnFabric = Objects.equals(Services.PLATFORM.getPlatformName(), "Fabric");
@@ -25,8 +28,8 @@ public class MixinInitializer implements IMixinConfigPlugin
 		isOnClient = Services.PLATFORM.isClientSide();
 		try
 		{
-			sodiumInstalled = Suppliers.memoize(() -> Services.PLATFORM.anyModThat(v -> v.modId().contains("sodium") || v.modId().contains("rubidium") || v.modId().contains("embeddium")));
-			createInstalled = Suppliers.memoize(() -> Services.PLATFORM.anyModThat(v -> v.modId().contains("create")));
+			sodiumInstalled = Suppliers.memoize(() -> installedModsSupplier.get().stream().anyMatch(v -> v.modId().contains("sodium") || v.modId().contains("rubidium") || v.modId().contains("embeddium")));
+			createInstalled = Suppliers.memoize(() -> installedModsSupplier.get().stream().anyMatch(v -> v.modId().contains("create")));
 		}
 		catch (Exception ignored)
 		{

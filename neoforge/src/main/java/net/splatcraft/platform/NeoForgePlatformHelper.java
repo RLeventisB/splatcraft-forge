@@ -362,6 +362,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void registerShader(Function<ResourceProvider, Pair<ShaderInstance, Consumer<ShaderInstance>>> dataProvider)
 	{
@@ -373,6 +374,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void registerRenderingCallback(RenderingCallback.RenderingStage stage, RenderingCallback callback)
 	{
@@ -386,6 +388,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			}
 		);
 	}
+	@OnlyIn(Dist.CLIENT)
 	private RenderLevelStageEvent.Stage convertToNeoforge(RenderingCallback.RenderingStage stage)
 	{
 		return switch (stage)
@@ -397,6 +400,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			case AFTER_DEBUG -> RenderLevelStageEvent.Stage.AFTER_LEVEL;
 		};
 	}
+	@OnlyIn(Dist.CLIENT)
 	private RenderingCallback.CallbackData convertToNeoforge(RenderLevelStageEvent evt)
 	{
 		return new RenderingCallback.CallbackData(

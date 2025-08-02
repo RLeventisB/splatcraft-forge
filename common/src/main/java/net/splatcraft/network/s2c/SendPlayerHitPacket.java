@@ -10,6 +10,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.particles.InkHitParticleData;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
@@ -53,6 +55,7 @@ public class SendPlayerHitPacket extends PlayS2CPacket
 		SOUND_STREAM_CODEC.encode(buf, soundOptional);
 		buf.writeFloat(scale);
 	}
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void execute()
 	{

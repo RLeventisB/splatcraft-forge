@@ -32,7 +32,7 @@ public class UpdatePlayerComponentsPacket extends PlayS2CPacket
 	{
 		this(target.getUUID(), componentFlag,
 			Components.Bits.getComponents(componentFlag, LivingEntity.class)
-				.stream().map(v -> v.get(target)).toList());
+				.stream().map(v -> v.getOrCreate(target)).toList());
 	}
 	public static UpdatePlayerComponentsPacket decode(RegistryFriendlyByteBuf buffer)
 	{

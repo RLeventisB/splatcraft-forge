@@ -7,9 +7,12 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 
 @FunctionalInterface
+@OnlyIn(Dist.CLIENT)
 public interface RenderingCallback
 {
 	void render(CallbackData data);

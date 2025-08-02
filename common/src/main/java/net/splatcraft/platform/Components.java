@@ -128,25 +128,53 @@ public class Components
 			}
 		}
 	}
-	public static final ComponentData<LivingEntity, EntityInfo> ENTITY_INFO = new ComponentData<>(
-		Splatcraft.identifierOf("entity_info"), LivingEntity.class, EntityInfo.class, EntityInfo.CODEC
-	);
-	public static final ComponentData<LivingEntity, WeaponInfo> WEAPON_INFO = new ComponentData<>(
-		Splatcraft.identifierOf("weapon_info"), LivingEntity.class, WeaponInfo.class, WeaponInfo.CODEC
-	);
-	public static final ComponentData<LivingEntity, SquidInfo> SQUID_INFO = new ComponentData<>(
-		Splatcraft.identifierOf("squid_info"), LivingEntity.class, SquidInfo.class, SquidInfo.CODEC
-	);
-	public static final ComponentData<Player, PlayerInfo> PLAYER_INFO = new ComponentData<>(
-		Splatcraft.identifierOf("player_info"), Player.class, PlayerInfo.class, PlayerInfo.CODEC
-	);
-	public static final ComponentData<LivingEntity, InkOverlayData> INK_OVERLAY = new ComponentData<>(
-		Splatcraft.identifierOf("ink_overlay_data"), LivingEntity.class, InkOverlayData.class, InkOverlayData.CODEC
-	);
-	public static final ComponentData<ChunkAccess, ChunkInk> CHUNK_INK = new ComponentData<>(
-		Splatcraft.identifierOf("chunk_ink"), ChunkAccess.class, ChunkInk.class, ChunkInk.CODEC
-	);
-	public static final ComponentData<MinecraftServer, SaveInfo> SAVE_INFO = new ComponentData<>(
-		Splatcraft.identifierOf("save_info"), MinecraftServer.class, SaveInfo.class, SaveInfo.CODEC
-	);
+	public static final ComponentData<LivingEntity, EntityInfo> ENTITY_INFO;
+	public static final ComponentData<LivingEntity, WeaponInfo> WEAPON_INFO;
+	public static final ComponentData<LivingEntity, SquidInfo> SQUID_INFO;
+	public static final ComponentData<Player, PlayerInfo> PLAYER_INFO;
+	public static final ComponentData<LivingEntity, InkOverlayData> INK_OVERLAY;
+	public static final ComponentData<ChunkAccess, ChunkInk> CHUNK_INK;
+	public static final ComponentData<MinecraftServer, SaveInfo> SAVE_INFO;
+	static
+	{
+		ENTITY_INFO = new ComponentData<>(
+			Splatcraft.identifierOf("entity_info"), LivingEntity.class, EntityInfo.class, EntityInfo.CODEC
+		);
+	}
+	static
+	{
+		WEAPON_INFO = new ComponentData<>(
+			Splatcraft.identifierOf("weapon_info"), LivingEntity.class, WeaponInfo.class, WeaponInfo.CODEC
+		);
+	}
+	static
+	{
+		SQUID_INFO = new ComponentData<>(
+			Splatcraft.identifierOf("squid_info"), LivingEntity.class, SquidInfo.class, SquidInfo.CODEC
+		);
+	}
+	static
+	{
+		PLAYER_INFO = new ComponentData<>(
+			Splatcraft.identifierOf("player_info"), Player.class, PlayerInfo.class, PlayerInfo.CODEC
+		);
+	}
+	static
+	{
+		INK_OVERLAY = new ComponentData<>(
+			Splatcraft.identifierOf("ink_overlay_data"), LivingEntity.class, InkOverlayData.class, InkOverlayData.CODEC
+		);
+	}
+	static
+	{
+		CHUNK_INK = new ComponentData<>(
+			Splatcraft.identifierOf("chunk_ink"), ChunkAccess.class, ChunkInk.class, ChunkInk.CODEC
+		);
+	}
+	static
+	{
+		SAVE_INFO = new ComponentData<>(
+			Splatcraft.identifierOf("save_info"), MinecraftServer.class, SaveInfo.class, SaveInfo.CODEC
+		);
+	}
 }

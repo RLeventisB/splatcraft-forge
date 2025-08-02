@@ -3,7 +3,7 @@
     "minVersion": "0.8",
     "package": "net.splatcraft.mixin",
     "compatibilityLevel": "JAVA_21",
-    "plugin": "net.splatcraft.mixin.MixinInitializer",
+    "plugin": "net.splatcraft.mixin.NeoForgeMixinInitializer",
     "mixins": [
         "ForgeDummyInjections$BlockEntityMixin",
         "ForgeDummyInjections$BlockMixin",
