@@ -384,18 +384,18 @@ public class SquidFormHandler
 			for (InteractionHand hand : InteractionHand.values())
 			{
 				ItemStack stack = entity.getItemInHand(hand);
-				if (stack.getItem() instanceof IChargeableWeapon chargeable)
+				if (!(stack.getItem() instanceof IChargeableWeapon chargeable))
+					continue;
+				
+				if (!didStoreCharge && chargeable.canStore(stack))
 				{
-					if (!didStoreCharge && chargeable.canStore(stack))
-					{
-						EntityStoredCharge.storeCharge(entity, stack);
-						didStoreCharge = true;
-					}
-					
-					chargeable.setCharge(stack, 0f);
-					WeaponBaseItem<?> weaponItem = (WeaponBaseItem<?>) stack.getItem();
-					weaponItem.getResetShootingAction(stack, entity).ifPresent(SpecialHandler.ResetAction::run);
+					EntityStoredCharge.storeCharge(entity, stack);
+					didStoreCharge = true;
 				}
+				
+				chargeable.setCharge(stack, 0f);
+				WeaponBaseItem<?> weaponItem = (WeaponBaseItem<?>) stack.getItem();
+				weaponItem.getResetShootingAction(stack, entity).ifPresent(SpecialHandler.ResetAction::run);
 			}
 		}
 		else
@@ -405,12 +405,12 @@ public class SquidFormHandler
 				for (InteractionHand hand : InteractionHand.values())
 				{
 					ItemStack stack = entity.getItemInHand(hand);
-					if (EntityStoredCharge.chargeMatches(entity, stack))
-					{
-						EntityStoredCharge.retrieveCharge(entity, stack);
-						entity.startUsingItem(hand);
-						break;
-					}
+					if (!EntityStoredCharge.chargeMatches(entity, stack))
+						continue;
+					
+					EntityStoredCharge.retrieveCharge(entity, stack);
+					entity.startUsingItem(hand);
+					break;
 				}
 			}
 		}
