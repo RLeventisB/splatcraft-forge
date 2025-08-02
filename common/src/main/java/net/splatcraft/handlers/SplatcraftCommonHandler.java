@@ -259,30 +259,29 @@ public class SplatcraftCommonHandler
 	}
 	public static void capabilityUpdateEvent(Player player)
 	{
-		Components.PLAYER_INFO.updateOrCreate(player, info ->
+		PlayerInfo info = Components.PLAYER_INFO.getOrCreate(player);
+		if (player.deathTime <= 0 && !info.isInitialized())
 		{
-			if (player.deathTime <= 0 && !info.isInitialized())
-			{
-				info = info.setInitialized(true);
-				
-				if (player.isLocalPlayer())
-				{
-					SplatcraftPacketHandler.sendToServer(new RequestPlayerComponentsPacket(player, Components.Bits.PLAYER_INFOS));
-				}
-			}
+			info = info.setInitialized(true);
+			Components.PLAYER_INFO.set(player, info);
 			
-			if (!player.isLocalPlayer())
+			if (player.isLocalPlayer())
 			{
-				ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
-				
-				if (!ItemStack.isSameItem(info.inkBand(), inkBand))
-				{
-					info = info.setInkBand(inkBand);
-					SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdatePlayerComponentsPacket(player, Components.Bits.PLAYER_INFO), player);
-				}
+				SplatcraftPacketHandler.sendToServer(new RequestPlayerComponentsPacket(player, Components.Bits.PLAYER_INFOS));
 			}
-			return info;
-		});
+		}
+		
+		if (!player.isLocalPlayer())
+		{
+			ItemStack inkBand = CommonUtils.getItemInInventory(player, itemStack -> itemStack.is(SplatcraftTags.Items.INK_BANDS) && InkBlockUtils.hasInkType(itemStack));
+			
+			if (!ItemStack.isSameItem(info.inkBand(), inkBand))
+			{
+				info = info.setInkBand(inkBand);
+				Components.PLAYER_INFO.set(player, info);
+				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdatePlayerComponentsPacket(player, Components.Bits.PLAYER_INFO), player);
+			}
+		}
 	}
 	public static void onWorldTick(ServerLevel world)
 	{
