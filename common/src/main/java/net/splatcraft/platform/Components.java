@@ -84,7 +84,7 @@ public class Components
 		}
 		public static final class ComponentIterator<HOLDER> implements Iterator<ComponentData<HOLDER, Object>>
 		{
-			private byte cursor = 0;
+			private byte cursor;
 			private final byte componentsFlag;
 			private final Class<HOLDER> holderClass;
 			public ComponentIterator(byte flag, Class<HOLDER> holderClass)
@@ -92,6 +92,12 @@ public class Components
 				this.componentsFlag = flag;
 				this.holderClass = holderClass;
 				cursor = 0;
+				
+				while ((flag & 1) != 1)
+				{
+					flag >>= 1;
+					cursor++;
+				}
 			}
 			@Override
 			public boolean hasNext()
