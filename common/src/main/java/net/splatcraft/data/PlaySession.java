@@ -144,8 +144,7 @@ public final class PlaySession
 			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
 			WeaponHandler.resetLastGroundedPos(player);
 			
-			PlayerInfo info = Components.PLAYER_INFO.get(player);
-			info.setPlayingStageId(stage.id);
+			Components.PLAYER_INFO.updateOrCreate(player, info -> info.setPlayingStageId(stage.id));
 			SquidFormHandler.setSquid(player, true);
 			
 			for (ItemStack providerStack : CommonUtils.getItemsInInventory(player, v -> v.getItem() instanceof SpecialProviderItem))

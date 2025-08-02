@@ -1,8 +1,10 @@
 package net.splatcraft.client.handlers;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -122,30 +124,34 @@ public class SplatcraftKeyHandler
 		Pair<ItemStack, Integer> providerPair = CommonUtils.getStackAndIndexInInventory(player, stack -> stack.getItem() instanceof SpecialProviderItem);
 		if (providerPair.getFirst().isEmpty())
 		{
-			player.displayClientMessage(Component.translatable("status.cant_use"), true);
+			player.displayClientMessage(Component.translatable("status.no_special_provider").withStyle(ChatFormatting.RED), true);
+			return;
 		}
-		else
+		
+		if (WeaponHandler.getWeaponHand(player, Predicates.alwaysTrue()).isEmpty())
 		{
-			SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
-			SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
-			Pair<ItemStack, Integer> weaponPair = null;
-			if (providerData.testWeapon(inventory.getSelected()))
-			{
-				weaponPair = Pair.of(inventory.getSelected(), inventory.selected);
-			}
-			else if (providerData.testWeapon(inventory.getItem(Inventory.SLOT_OFFHAND)))
-			{
-				weaponPair = Pair.of(inventory.getItem(Inventory.SLOT_OFFHAND), Inventory.SLOT_OFFHAND);
-			}
-			if (weaponPair == null)
-			{
-				// todo: error message
-			}
-			else
-			{
-				SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
-			}
+			player.displayClientMessage(Component.translatable("status.need_weapon").withStyle(ChatFormatting.RED), true);
+			return;
 		}
+		
+		SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
+		SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
+		Pair<ItemStack, Integer> weaponPair = null;
+		if (providerData.testWeapon(inventory.getSelected()))
+		{
+			weaponPair = Pair.of(inventory.getSelected(), inventory.selected);
+		}
+		else if (providerData.testWeapon(inventory.getItem(Inventory.SLOT_OFFHAND)))
+		{
+			weaponPair = Pair.of(inventory.getItem(Inventory.SLOT_OFFHAND), Inventory.SLOT_OFFHAND);
+		}
+		if (weaponPair == null)
+		{
+			player.displayClientMessage(Component.translatable("status.provider_wrong_weapon").withStyle(ChatFormatting.RED), true);
+			return;
+		}
+		
+		SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
 	}
 	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey oldest, SquidInfo info)
 	{
@@ -206,6 +212,7 @@ public class SplatcraftKeyHandler
 				
 				SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 				usingSubWeaponHotkey = false;
+				squidAndSubDelay = 5;
 				slot = -1;
 			}
 		}

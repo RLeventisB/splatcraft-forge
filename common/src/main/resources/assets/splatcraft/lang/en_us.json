@@ -590,6 +590,8 @@
     "status.stage_pad.set_corner.a": "Click on a block with the Stage Pad to set Corner 1",
     "status.stage_pad.set_corner.b": "Click on a block with the Stage Pad to set Corner 2",
     "status.no_superjump_targets": "No valid targets to superjump!",
+    "status.no_special_provider": "Cannot find a special provider!",
+    "status.need_weapon": "You need a weapon to use this item!",
     "status.provider_inactive": "This provider is inactive!",
     "status.provider_unassigned_special": "This provider has no linked special weapon!",
     "status.provider_unassigned_weapon": "This provider has no linked main weapon!",
