@@ -328,6 +328,10 @@ public class RendererHandler
 				renderMatchGui(graphics, tickDelta, width, height, stagesInPos.getFirst().id, playerInfo, matrixStack);
 			}
 		}
+		renderInkIndicator(graphics, tickDelta, width, height, player, squidInfo, matrixStack, playerColor);
+	}
+	private static void renderInkIndicator(GuiGraphics graphics, float tickDelta, int width, int height, LocalPlayer player, SquidInfo squidInfo, PoseStack poseStack, float[] playerColor)
+	{
 		SplatcraftConfig.InkIndicator inkIndicator = SplatcraftConfig.get("splatcraft.inkIndicator");
 		boolean showCrosshairInkIndicator = inkIndicator.equals(SplatcraftConfig.InkIndicator.BOTH) || inkIndicator.equals(SplatcraftConfig.InkIndicator.CROSSHAIR);
 		boolean isHoldingMatchItem = player.getMainHandItem().is(SplatcraftTags.Items.MATCH_ITEMS) || player.getOffhandItem().is(SplatcraftTags.Items.MATCH_ITEMS);
@@ -346,19 +350,19 @@ public class RendererHandler
 		}
 		if (squidInfo.isSquid() || showLowInkWarning || !canUse)
 		{
-			squidTime += 0.15f * tickDelta;
+			squidTime += tickDelta;
 			
 			if (showCrosshairInkIndicator)
 			{
 				int heightAnim = Math.min(14, (int) squidTime);
-				int glowAnim = Math.max(0, Math.min(18, (int) squidTime - 16));
+				int glowAnim = Math.clamp((int) squidTime - 16, 0, 18);
 				
-				matrixStack.pushPose();
+				poseStack.pushPose();
 				RenderSystem.enableBlend();
 				RenderSystem.setShaderTexture(0, WIDGETS);
 				
-				if (enoughInk(player, null, 220, 0, false))
-				{ // checks if you have unlimited ink
+				if (enoughInk(player, null, 220, 0, false)) // checks if you have unlimited ink
+				{
 					graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 2, 0, 131, 18, 2, 256, 256);
 					graphics.blit(WIDGETS, width / 2 + 9, height / 2 - 9 + 14 - heightAnim, 18, 4 + heightAnim, 0, 131, 18, 4 + heightAnim, 256, 256);
 					
@@ -386,12 +390,16 @@ public class RendererHandler
 						inkFlash = CommonUtils.tickValueToMax(0, inkFlash, 0.004f, 0, 1).value();
 					
 					float inkPctgLerp = Mth.lerp(0.05f, prevInkPctg, inkPctg);
-					float inkSize = (1 - inkPctg) * 18;
+					float inkSize = (1 - inkPctg) * 18f;
 					
 					RenderSystem.setShaderColor(playerColor[0] + inkFlash, playerColor[1] + inkFlash, playerColor[2] + inkFlash, 1);
-					matrixStack.translate(0, inkSize - Math.floor(inkSize), 0);
+					
+					float inkDisplacement = inkSize - Mth.floor(inkSize);
+					poseStack.translate(0, inkDisplacement, 0);
+					
 					graphics.blit(WIDGETS, width / 2 + 9, (int) (height / 2 - 9 + (14 - heightAnim) + (1 - inkPctgLerp) * 18), 18, (int) ((4 + heightAnim) * inkPctgLerp), 18, 95 + inkSize, 18, (int) ((4 + heightAnim) * inkPctg), 256, 256);
-					matrixStack.translate(0, -(inkSize - Math.floor(inkSize)), 0);
+					
+					poseStack.translate(0, -(inkDisplacement), 0);
 					
 					if (SplatcraftConfig.get("splatcraft.vanillaInkDurability"))
 					{
@@ -419,7 +427,7 @@ public class RendererHandler
 					}
 				}
 				RenderSystem.setShaderColor(1, 1, 1, 1);
-				matrixStack.popPose();
+				poseStack.popPose();
 			}
 			prevInkPctg = inkPctg;
 		}
