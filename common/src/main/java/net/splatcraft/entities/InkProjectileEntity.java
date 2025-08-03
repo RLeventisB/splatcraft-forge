@@ -561,7 +561,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD;
 		return new Vec3(x, y, z)
 			.yRot(xRand * usedInaccuracy)
-			.xRot(yRand * usedInaccuracy * 0.5625f).normalize();
+			.xRot(yRand * usedInaccuracy * VERTICAL_RATIO).normalize();
 	}
 	@Override
 	public void onShotDirectionCalculated(Vec3 shotDirection)

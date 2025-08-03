@@ -63,6 +63,11 @@ public class BurstBombEntity extends AbstractSubWeaponEntity<BurstBombDataRecord
 		}
 	}
 	@Override
+	protected boolean canHitEntity(@NotNull Entity target)
+	{
+		return super.canHitEntity(target) && InkDamageUtils.canDamage(target, getColor());
+	}
+	@Override
 	public void updateRotation()
 	{
 		Vec3 vec3 = getDeltaMovement();

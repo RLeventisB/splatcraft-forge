@@ -7,6 +7,7 @@ import net.minecraft.world.phys.Vec3;
 
 public interface ISetVelocityExtension
 {
+	float VERTICAL_RATIO = 9f / 16f;
 	default void setDeltaMovement(Entity thrower, float pitch, float yaw, float pitchOffset, float speed, float inaccuracy)
 	{
 		setDeltaMovement(thrower, pitch, yaw, pitchOffset, speed, inaccuracy, 0.8f);
@@ -28,7 +29,7 @@ public interface ISetVelocityExtension
 		
 		if (thrower != null)
 		{
-			posDiff = thrower.getKnownMovement();
+			posDiff = thrower.getDeltaMovement();
 			if (thrower.onGround())
 				posDiff.multiply(1, 0, 1);
 			posDiff = posDiff.scale(throwerImpulse);
@@ -56,7 +57,7 @@ public interface ISetVelocityExtension
 		float usedInaccuracy = inaccuracy * Mth.DEG_TO_RAD;
 		return new Vec3(x, y, z)
 			.yRot((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy)
-			.xRot((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy * 0.5625f).normalize();
+			.xRot((getRandom().nextFloat() * 2f - 1f) * usedInaccuracy * VERTICAL_RATIO).normalize();
 	}
 	void setDeltaMovement(double x, double y, double z);
 	void setDeltaMovement(Vec3 vec3);

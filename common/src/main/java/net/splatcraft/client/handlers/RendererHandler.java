@@ -638,7 +638,7 @@ public class RendererHandler
 		
 		float currentDeviation = Math.max(0.017453292f, Mth.lerp(ShotDeviationHelper.getModifiedAirInfluence(currentAirInfluence), data.airborneShotDeviation(), data.groundShotDeviation()) * Mth.DEG_TO_RAD / 2f);
 		
-		float aspectRatio = Mth.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, 0.5625f);
+		float aspectRatio = Mth.lerp(Math.min(1, (float) Math.pow(30f * currentDeviation, 2f)), 1, ISetVelocityExtension.VERTICAL_RATIO);
 		
 		float value = Math.min(0.71428573f, currentDeviationChance / data.maxDeviateChance() / 1.4f);
 		float[] rgb = new float[]
