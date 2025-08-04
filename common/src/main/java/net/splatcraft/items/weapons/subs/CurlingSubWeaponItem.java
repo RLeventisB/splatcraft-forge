@@ -11,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.entities.subs.CurlingBombEntity;
-import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords.InkUsageDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponRecords.CurlingBombDataRecord;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
@@ -70,12 +69,13 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		{
 			stack.consume(1, entity);
 		}
+		applyCooldown(entity);
 	}
 	@Override
 	public void weaponUseTick(@NotNull Level level, @NotNull LivingEntity entity, @NotNull ItemStack stack, int remainingUseTicks)
 	{
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings(stack);
-		int holdTime = settings.dataRecord.holdTime() - 1;
+		int holdTime = settings.dataRecord.holdTime();
 		cookProgress = (float) (entity.getTicksUsingItem()) / holdTime;
 
 		if (entity.getTicksUsingItem() == holdTime)

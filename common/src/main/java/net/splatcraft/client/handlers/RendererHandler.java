@@ -81,6 +81,7 @@ import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
 
 public class RendererHandler
 {
+	public static final ResourceLocation MAGIC_PIXEL = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 	private static final ResourceLocation WIDGETS = Splatcraft.identifierOf("textures/gui/widgets.png");
 	private static InkSquidRenderer squidRenderer;
 	//Render PlayerEntity HUD elements

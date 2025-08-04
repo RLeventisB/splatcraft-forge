@@ -117,8 +117,13 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	public void releaseUsing(@NotNull ItemStack stack, @NotNull Level world, @NotNull LivingEntity entity, int remainingUseTicks)
 	{
 		useSub(stack, world, entity, remainingUseTicks);
-		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 		super.releaseUsing(stack, world, entity, remainingUseTicks);
+	}
+	public void applyCooldown(@NotNull LivingEntity entity)
+	{
+		if (entity instanceof Player player)
+			player.getCooldowns().addCooldown(this, SUB_WEAPON_ENDLAG);
+		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 	}
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)

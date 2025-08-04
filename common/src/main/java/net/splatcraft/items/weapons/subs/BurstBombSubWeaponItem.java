@@ -44,5 +44,6 @@ public class BurstBombSubWeaponItem extends SubWeaponItem<BurstBombDataRecord>
 		}
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);
+		applyCooldown(entity);
 	}
 }

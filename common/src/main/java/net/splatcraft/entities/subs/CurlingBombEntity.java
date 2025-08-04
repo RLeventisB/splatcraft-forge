@@ -134,7 +134,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	@Override
 	public boolean canHitEntity(@NotNull Entity target)
 	{
-		return super.canHitEntity(target) && getOwner() != target;
+		return super.canHitEntity(target) && getOwner() != target && InkDamageUtils.canDamage(target, getColor());
 	}
 	public void explode(CurlingBombDataRecord settings, Vec3 impactPos)
 	{

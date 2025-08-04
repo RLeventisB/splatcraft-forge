@@ -44,5 +44,6 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 		}
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);
+		applyCooldown(entity);
 	}
 }

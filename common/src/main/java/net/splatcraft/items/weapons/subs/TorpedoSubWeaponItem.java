@@ -46,5 +46,6 @@ public class TorpedoSubWeaponItem extends SubWeaponItem<TorpedoDataRecord>
 		}
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);
+		applyCooldown(entity);
 	}
 }

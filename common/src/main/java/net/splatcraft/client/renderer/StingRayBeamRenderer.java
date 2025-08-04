@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
+import net.splatcraft.client.handlers.RendererHandler;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,6 @@ import java.util.Arrays;
 
 public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 {
-	private static final ResourceLocation MAGIC_PIXEL = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 	private static final ResourceLocation SHOCKWAVE_TEXTURE = Splatcraft.identifierOf("textures/entity/special/sting_ray_beam_shockwave.png");
 	private static final float RAY_LENGTH = 1024f;
 	public StingRayBeamRenderer(EntityRendererProvider.Context context)
