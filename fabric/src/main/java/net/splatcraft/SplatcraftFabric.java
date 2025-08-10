@@ -1,11 +1,8 @@
 package net.splatcraft;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.splatcraft.client.handlers.ClientSetupHandler;
-import net.splatcraft.client.particles.*;
-import net.splatcraft.registries.SplatcraftParticleTypes;
 
 public final class SplatcraftFabric implements ModInitializer
 {
@@ -20,11 +17,5 @@ public final class SplatcraftFabric implements ModInitializer
 		Splatcraft.init();
 		
 		ClientSetupHandler.bindScreenContainers((type, provider) -> MenuScreens.register(type, provider::create));
-		
-		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);
-		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
-		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
-		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
-		ParticleFactoryRegistry.getInstance().register(SplatcraftParticleTypes.INK_HIT, InkHitParticle.Factory::new);
 	}
 }

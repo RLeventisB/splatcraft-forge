@@ -90,18 +90,18 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	{
 		this(SplatcraftEntities.STING_RAY_PROJECTILE.get(), world, turningValue, turningValueWithShockwave, rayWidth, shockwaveWidth, rayDamage, shockwaveDamage, paintingRadius, paintSearchRadius);
 		setColor(color);
+		inkType = InkBlockUtils.getInkType(owner);
 		setOwner(owner);
-		refreshDimensions();
-		reapplyPosition();
 		setStartup(startup);
+		setShockwaveDelay(shockwaveDelay);
+		
 		setXRot(owner.getXRot());
 		setYRot(owner.getYHeadRot());
-		setShockwaveDelay(shockwaveDelay);
-		updatePosForward(owner);
 		updateRotation();
-		inkType = InkBlockUtils.getInkType(owner);
-		xRotO = getXRot();
-		yRotO = getYRot();
+		
+		updatePosForward(owner);
+		refreshDimensions();
+		reapplyPosition();
 	}
 	// this comes from https://stackoverflow.com/questions/34952680/distance-between-a-ray-and-a-bound-box
 	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who had access

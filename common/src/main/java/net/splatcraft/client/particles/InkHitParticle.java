@@ -100,7 +100,7 @@ public class InkHitParticle extends TextureSheetParticle
 		public Particle createParticle(InkHitParticleData data, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
 		{
 			// todo: add a config for this
-			return new InkHitParticle(levelIn, x, y, z, data.color, data.scale, provider);
+			return new InkHitParticle(levelIn, x, y, z, data.getColor(), data.getScale(), provider);
 		}
 	}
 }

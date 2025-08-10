@@ -89,9 +89,9 @@ public class InkSplashParticle extends TextureSheetParticle
 		}
 		@Nullable
 		@Override
-		public Particle createParticle(@NotNull InkSplashParticleData typeIn, @NotNull ClientLevel levelIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
+		public Particle createParticle(@NotNull InkSplashParticleData typeIn, @NotNull ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed)
 		{
-			return new InkSplashParticle(levelIn, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, spriteSet);
+			return new InkSplashParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, typeIn, spriteSet);
 		}
 	}
 }

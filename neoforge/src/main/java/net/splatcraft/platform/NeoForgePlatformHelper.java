@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -16,6 +18,8 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataSerializer;
@@ -428,6 +432,14 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	{
 		EventHelper.addToEventSpecificList(RegisterKeyMappingsEvent.class, key,
 			RegisterKeyMappingsEvent::register
+		);
+	}
+	@Override
+	public <T extends ParticleOptions> void registerParticleFactories(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator)
+	{
+		EventHelper.addToEventSpecificMap(RegisterParticleProvidersEvent.class, type, providerCreator,
+			(registerProviders, blockEntityType, provider) ->
+				registerProviders.registerSpriteSet(type, provider::apply)
 		);
 	}
 	@Override

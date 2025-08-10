@@ -8,11 +8,25 @@ import net.minecraft.network.codec.StreamCodec;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.particles.*;
 import net.splatcraft.platform.DeferredRegister;
+import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.NotNull;
 
 public class SplatcraftParticleTypes
 {
 	public static final DeferredRegister<ParticleType<?>> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.PARTICLE_TYPE);
+	public static final ParticleType<InkCloudParticleData> INK_CLOUD = new ParticleType<>(false)
+	{
+		@Override
+		public @NotNull MapCodec<InkCloudParticleData> codec()
+		{
+			return InkCloudParticleData.CODEC;
+		}
+		@Override
+		public @NotNull StreamCodec<? super RegistryFriendlyByteBuf, InkCloudParticleData> streamCodec()
+		{
+			return InkCloudParticleData.STREAM_CODEC;
+		}
+	};
 	public static final ParticleType<InkSplashParticleData> INK_SPLASH = new ParticleType<>(false)
 	{
 		@Override
@@ -80,10 +94,18 @@ public class SplatcraftParticleTypes
 	};
 	public static void registerParticles()
 	{
+		REGISTRY.register("ink_cloud", () -> INK_CLOUD);
 		REGISTRY.register("ink_splash", () -> INK_SPLASH);
 		REGISTRY.register("ink_explosion", () -> INK_EXPLOSION);
 		REGISTRY.register("squid_soul", () -> SQUID_SOUL);
 		REGISTRY.register("ink_terrain", () -> INK_TERRAIN);
 		REGISTRY.register("ink_hit", () -> INK_HIT);
+		
+		Services.PLATFORM.registerParticleFactories(INK_CLOUD, InkCloudParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactories(INK_SPLASH, InkSplashParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactories(INK_EXPLOSION, InkExplosionParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactories(SQUID_SOUL, SquidSoulParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactories(INK_TERRAIN, InkTerrainParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactories(INK_HIT, InkHitParticle.Factory::new);
 	}
 }

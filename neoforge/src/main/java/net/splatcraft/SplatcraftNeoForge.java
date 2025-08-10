@@ -7,7 +7,6 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.MovementInputUpdateEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
@@ -19,12 +18,10 @@ import net.splatcraft.client.handlers.ClientSetupHandler;
 import net.splatcraft.client.handlers.JumpLureHudHandler;
 import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.handlers.RendererHandler;
-import net.splatcraft.client.particles.*;
 import net.splatcraft.handlers.ChunkInkHandler;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.platform.NeoForgeDeferredRegister;
-import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.tileentities.StageMarkerTileEntity;
 
 @Mod(Splatcraft.MODID)
@@ -40,7 +37,6 @@ public final class SplatcraftNeoForge
 		Splatcraft.init();
 		
 		modBus.addListener(SplatcraftNeoForge::registerGuiOverlays);
-		modBus.addListener(SplatcraftNeoForge::registerParticleProviders);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersItem);
 		modBus.addListener(SplatcraftNeoForge::registerColorHandlersBlock);
 		
@@ -61,14 +57,6 @@ public final class SplatcraftNeoForge
 	private static void registerColorHandlersBlock(RegisterColorHandlersEvent.Block event)
 	{
 		ClientSetupHandler.initBlockColors(event.getBlockColors());
-	}
-	private static void registerParticleProviders(RegisterParticleProvidersEvent event)
-	{
-		event.registerSpriteSet(SplatcraftParticleTypes.INK_SPLASH, InkSplashParticle.Factory::new);
-		event.registerSpriteSet(SplatcraftParticleTypes.INK_EXPLOSION, InkExplosionParticle.Factory::new);
-		event.registerSpriteSet(SplatcraftParticleTypes.SQUID_SOUL, SquidSoulParticle.Factory::new);
-		event.registerSpriteSet(SplatcraftParticleTypes.INK_TERRAIN, InkTerrainParticle.Factory::new);
-		event.registerSpriteSet(SplatcraftParticleTypes.INK_HIT, InkHitParticle.Factory::new);
 	}
 	private static void onChunkWatch(ChunkWatchEvent.Sent event)
 	{

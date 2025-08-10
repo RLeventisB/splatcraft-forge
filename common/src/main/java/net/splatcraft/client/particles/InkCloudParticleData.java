@@ -8,30 +8,30 @@ import net.splatcraft.registries.SplatcraftParticleTypes;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public class InkHitParticleData extends ScalableColoredParticleData
+public class InkCloudParticleData extends ScalableColoredParticleData
 {
-	public static final MapCodec<InkHitParticleData> CODEC = createCodec(InkHitParticleData::new);
-	public static final StreamCodec<RegistryFriendlyByteBuf, InkHitParticleData> STREAM_CODEC = createStreamCodec(InkHitParticleData::new);
-	public InkHitParticleData(InkColor color, float scale)
+	public static final MapCodec<InkCloudParticleData> CODEC = createCodec(InkCloudParticleData::new);
+	public static final StreamCodec<RegistryFriendlyByteBuf, InkCloudParticleData> STREAM_CODEC = createStreamCodec(InkCloudParticleData::new);
+	public InkCloudParticleData(InkColor color, float scale)
 	{
 		super(color, scale);
 	}
-	public InkHitParticleData(int color, float scale)
+	public InkCloudParticleData(int color, float scale)
 	{
 		super(color, scale);
 	}
-	public InkHitParticleData(float red, float green, float blue, float scale)
+	public InkCloudParticleData(float red, float green, float blue, float scale)
 	{
 		super(red, green, blue, scale);
 	}
-	public InkHitParticleData(float[] rgb, float scale)
+	public InkCloudParticleData(float[] rgb, float scale)
 	{
 		super(rgb, scale);
 	}
 	@Override
 	public @NotNull ParticleType<?> getType()
 	{
-		return SplatcraftParticleTypes.INK_HIT;
+		return SplatcraftParticleTypes.INK_CLOUD;
 	}
 	@Override
 	public @NotNull String toString()
