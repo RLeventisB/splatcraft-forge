@@ -28,6 +28,7 @@ import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.InkWaxerItem;
 import net.splatcraft.items.SpecialProviderItem;
+import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.c2s.RequestPlayerComponentsPacket;
 import net.splatcraft.network.s2c.*;
@@ -151,17 +152,29 @@ public class SplatcraftCommonHandler
 			EventResult eventResult = keepAliveIfOnMatch(player, source);
 			if (!eventResult.interruptsOrFalse())
 			{
-				float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
-				for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
-				{
-					providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
-						SplatcraftComponents.SpecialProviderData.DEFAULT,
-						v -> v.withStoredCharge(v.storedCharge() * specialLoss));
-				}
+				doOnDeathActions(entity);
 			}
 			return eventResult;
 		}
 		return EventResult.pass();
+	}
+	private static void doOnDeathActions(LivingEntity entity)
+	{
+		if (entity.getAttributes().hasAttribute(SplatcraftAttributes.specialLoss))
+		{
+			float specialLoss = (float) entity.getAttributeValue(SplatcraftAttributes.specialLoss);
+			for (ItemStack providerStack : CommonUtils.getItemsInInventory(entity, v -> v.getItem() instanceof SpecialProviderItem))
+			{
+				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
+					SplatcraftComponents.SpecialProviderData.DEFAULT,
+					v -> v.withDelay(0).withStoredCharge(v.storedCharge() * specialLoss));
+			}
+		}
+		for (ItemStack weaponStack : CommonUtils.getItemsInInventory(entity, stack -> stack.getItem() instanceof WeaponBaseItem<?>))
+		{
+			WeaponBaseItem<?> weapon = (WeaponBaseItem<?>) weaponStack.getItem();
+			weapon.getResetShootingAction(weaponStack, entity).ifPresent(SpecialHandler.ResetAction::run);
+		}
 	}
 	private static EventResult keepAliveIfOnMatch(Player player, DamageSource source)
 	{
@@ -344,13 +357,7 @@ public class SplatcraftCommonHandler
 				
 				if (info.getMatchRespawnTimeLeft() <= 0)
 				{
-					float specialLoss = (float) player.getAttributeValue(SplatcraftAttributes.specialLoss);
-					for (ItemStack providerStack : CommonUtils.getItemsInInventory(player, v -> v.getItem() instanceof SpecialProviderItem))
-					{
-						providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
-							SplatcraftComponents.SpecialProviderData.DEFAULT,
-							v -> v.withStoredCharge(v.storedCharge() * specialLoss));
-					}
+					doOnDeathActions(player);
 					
 					if (!(player instanceof ServerPlayer serverPlayer))// make the server handle the respawning or else a laggy client will teleport after being actionable lol
 						return info;

@@ -146,7 +146,12 @@ public class InkBlockUtils
 	}
 	public static void awardTurfPoints(LivingEntity entity, ItemStack weaponStack, int points)
 	{
-		applyFunctionToProviderIfAny(entity, weaponStack, v -> v.incrementStoredPoints(points, WeaponBaseItem.getWeaponId(weaponStack)));
+		applyFunctionToProviderIfAny(entity, weaponStack, v ->
+		{
+			if (v.hasDelay())
+				return v;
+			return v.incrementStoredPoints(points, WeaponBaseItem.getWeaponId(weaponStack));
+		});
 	}
 	public static void setTurfPoints(LivingEntity entity, ItemStack weaponStack, int points)
 	{

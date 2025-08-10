@@ -151,7 +151,7 @@ public final class PlaySession
 			{
 				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
 					SplatcraftComponents.SpecialProviderData.DEFAULT,
-					v -> v.withStoredCharge(0f));
+					v -> v.withDelay(0).withStoredCharge(0f));
 			}
 		});
 		

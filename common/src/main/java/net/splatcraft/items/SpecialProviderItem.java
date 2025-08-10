@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
@@ -94,7 +95,10 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		
 		if (data != null)
 		{
-			progress = data.storedCharge();
+			if (data.delay() > 0 && data.maxDelay() > 0)
+				progress = (float) data.delay() / data.maxDelay();
+			else
+				progress = data.storedCharge();
 		}
 		return (int) (progress * 13f);
 	}
@@ -164,6 +168,17 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		
 		setData(stack, data.withSpecialId(null).withWeaponIdFilter(null));
 		return true;
+	}
+	@Override
+	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level level, @NotNull Entity entity, int slotId, boolean isSelected)
+	{
+		stack.update(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT, v ->
+		{
+			if (v.delay() > 0)
+				return v.withDelay(v.delay() - 1);
+			return v;
+		});
+		super.inventoryTick(stack, level, entity, slotId, isSelected);
 	}
 	public void tryUsingSpecial(Level world, LivingEntity entity, ItemStack providerStack, ItemStack weaponStack)
 	{

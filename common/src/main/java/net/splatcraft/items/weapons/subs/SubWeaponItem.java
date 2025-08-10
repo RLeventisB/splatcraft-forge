@@ -128,7 +128,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
-		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
+		CommonUtils.setSquidDelay(entity, 2);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)

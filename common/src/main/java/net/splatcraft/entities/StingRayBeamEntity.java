@@ -348,7 +348,6 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		super.recreateFromPacket(packet);
 		updateRotation();
 		updatePosForward((LivingEntity) getOwner());
-		updateRotation();
 		xRotO = getXRot();
 		yRotO = getYRot();
 	}

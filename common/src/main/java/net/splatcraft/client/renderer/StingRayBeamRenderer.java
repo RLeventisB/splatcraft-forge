@@ -45,16 +45,16 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 		float worldTimeMod10 = Mth.positiveModulo(lifespan / 100f, 10);
 		InkColor color = entity.getColor();
 		byte state = entity.getState();
-
+		
 		switch (state)
 		{
 			case 0:
 			{
 				float progress = lifespan / entity.getStartup();
-
+				
 				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
 				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(64)), partialTicks, 0, 1f);
-
+				
 				builder = buffer.getBuffer(RenderType.entityTranslucent(SHOCKWAVE_TEXTURE));
 				renderBeam(builder, matrixStack, entity, 8, 0f, 1f, Mth.lerp((float) Math.pow(progress, 1.3f), 3f, entity.getRayWidth()), FastColor.ARGB32.lerp(0.8f, 0, color.getColorWithAlpha(32)), partialTicks, worldTimeMod10 * 12.8f, 1f);
 			}
@@ -64,15 +64,15 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
 				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0, 1f);
 			}
-
+			
 			break;
 			case 2:
 			{
 				float progress = Math.min(1f, (lifespan - entity.getShockwaveDelay()) / 10f);
-
+				
 				VertexConsumer builder = buffer.getBuffer(RenderType.entitySolid(getTextureLocation(entity)));
 				renderBeam(builder, matrixStack, entity, 4, 0f, 10f, entity.getRayWidth(), color.getColorWithAlpha(255), partialTicks, 0, 1f);
-
+				
 				builder = buffer.getBuffer(RenderType.entityTranslucent(SHOCKWAVE_TEXTURE));
 				int colorRGB = color.getColorWithAlpha((int) (progress * progress * 72));
 				colorRGB = FastColor.ARGB32.lerp(progress * 0.7f, -1, colorRGB);
@@ -90,24 +90,24 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 	public void renderBeam(VertexConsumer builder, PoseStack stack, StingRayBeamEntity entity, final byte sides, final float roll, final float firstRingDistance, final float beamWidth, final int color, final float partialTicks, float vOffset, float vScale)
 	{
 		final Vector3f ZERO = new Vector3f();
-
+		
 		float pitch = entity.getViewXRot(partialTicks);
 		float yaw = entity.getViewYRot(partialTicks);
-
+		
 		Vector3f forward = getRotationVector(pitch, yaw);
-
+		
 		Vector3f ringForward = forward.mul(firstRingDistance, new Vector3f());
 		Vector3f endForward = forward.mul(RAY_LENGTH, new Vector3f());
-
+		
 		Vector3f[] directions = new Vector3f[sides];
 		for (int i = 0; i < sides; i++)
 		{
 			directions[i] = getRotationVector(pitch + roll + ((float) i / sides) * 360f, yaw - 90).mul(beamWidth);
 		}
-
+		
 		Vector3f[] firstRingPoints = Arrays.stream(directions).map(v -> ringForward.add(v, new Vector3f())).toArray(Vector3f[]::new);
 		Vector3f[] endPoints = Arrays.stream(directions).map(v -> endForward.add(v, new Vector3f())).toArray(Vector3f[]::new);
-
+		
 		for (byte i = 0; i < sides; i++)
 		{
 			byte nextI = (byte) ((i + 1) % sides);
@@ -156,6 +156,6 @@ public class StingRayBeamRenderer extends EntityRenderer<StingRayBeamEntity>
 	@Override
 	public @NotNull ResourceLocation getTextureLocation(@NotNull StingRayBeamEntity entity)
 	{
-		return MAGIC_PIXEL;
+		return RendererHandler.MAGIC_PIXEL;
 	}
 }

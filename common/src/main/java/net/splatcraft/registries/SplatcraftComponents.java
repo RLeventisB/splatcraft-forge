@@ -826,6 +826,8 @@ public class SplatcraftComponents
 		Optional<ResourceLocation> specialId,
 		Optional<ResourceLocation> weaponIdFilter,
 		Optional<Integer> pointsPerSpecialOverride,
+		int delay,
+		int maxDelay,
 		boolean allowSubs,
 		float storedCharge
 	)
@@ -835,19 +837,23 @@ public class SplatcraftComponents
 				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("special_id").forGetter(SpecialProviderData::specialId),
 				CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_CODEC.optionalFieldOf("weapon_id_filter").forGetter(SpecialProviderData::weaponIdFilter),
 				Codec.INT.optionalFieldOf("points_per_special_override").forGetter(SpecialProviderData::pointsPerSpecialOverride),
+				Codec.INT.optionalFieldOf("charge_delay", 0).forGetter(SpecialProviderData::delay),
+				Codec.INT.optionalFieldOf("max_delay", 0).forGetter(SpecialProviderData::maxDelay),
 				Codec.BOOL.optionalFieldOf("allow_subs", true).forGetter(SpecialProviderData::allowSubs),
 				Codec.FLOAT.optionalFieldOf("stored_charge", 0f).forGetter(SpecialProviderData::storedCharge)
 			).apply(inst, SpecialProviderData::new)
 		);
-		public static final StreamCodec<ByteBuf, SpecialProviderData> STREAM_CODEC = StreamCodec.composite(
+		public static final StreamCodec<ByteBuf, SpecialProviderData> STREAM_CODEC = CodecUtils.streamCodecComposite(
 			ByteBufCodecs.optional(CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_STREAM_CODEC), SpecialProviderData::specialId,
 			ByteBufCodecs.optional(CodecUtils.Codecs.SPLATCRAFT_IDENTIFIER_STREAM_CODEC), SpecialProviderData::weaponIdFilter,
 			ByteBufCodecs.optional(ByteBufCodecs.INT), SpecialProviderData::pointsPerSpecialOverride,
+			ByteBufCodecs.INT, SpecialProviderData::delay,
+			ByteBufCodecs.INT, SpecialProviderData::maxDelay,
 			ByteBufCodecs.BOOL, SpecialProviderData::allowSubs,
 			ByteBufCodecs.FLOAT, SpecialProviderData::storedCharge,
 			SpecialProviderData::new
 		);
-		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), true, 0);
+		public static final SpecialProviderData DEFAULT = new SpecialProviderData(Optional.empty(), Optional.empty(), Optional.empty(), 0, 1, true, 0);
 		public boolean testWeapon(ItemStack stack)
 		{
 			if (stack.isEmpty())
@@ -878,27 +884,39 @@ public class SplatcraftComponents
 		}
 		public SpecialProviderData withSpecialId(ResourceLocation id)
 		{
-			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, allowSubs, storedCharge);
+			return new SpecialProviderData(Optional.ofNullable(id), weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withWeaponIdFilter(ResourceLocation id)
 		{
-			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, allowSubs, storedCharge);
+			return new SpecialProviderData(specialId, Optional.ofNullable(id), pointsPerSpecialOverride, delay, maxDelay, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withOverridenSpecialCost(int cost)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, Optional.of(cost), allowSubs, storedCharge);
+			return new SpecialProviderData(specialId, weaponIdFilter, Optional.of(cost), delay, maxDelay, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withOverridenSpecialCost(Optional<Integer> cost)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, cost, allowSubs, storedCharge);
+			return new SpecialProviderData(specialId, weaponIdFilter, cost, delay, maxDelay, allowSubs, storedCharge);
+		}
+		public SpecialProviderData withDelay(int delay)
+		{
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowSubs, storedCharge);
+		}
+		public SpecialProviderData withDelay(int delay, int maxDelay)
+		{
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowSubs, storedCharge);
+		}
+		public SpecialProviderData withMaxDelay(int maxDelay)
+		{
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowSubs, storedCharge);
 		}
 		public SpecialProviderData withAllowedSubs(boolean allowedSubs)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowedSubs, storedCharge);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowedSubs, storedCharge);
 		}
 		public SpecialProviderData withStoredCharge(float charge)
 		{
-			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, allowSubs, charge);
+			return new SpecialProviderData(specialId, weaponIdFilter, pointsPerSpecialOverride, delay, maxDelay, allowSubs, charge);
 		}
 		public SpecialProviderData withStoredPoints(int points, Optional<ResourceLocation> weaponId)
 		{
@@ -920,6 +938,10 @@ public class SplatcraftComponents
 					return SpecialHandler.getSpecialCost(weaponId.get(), specialId.get());
 				return SpecialHandler.DEFAULT_SPECIAL_COST;
 			});
+		}
+		public boolean hasDelay()
+		{
+			return delay > 0 && maxDelay > 0;
 		}
 	}
 	public record ChargeData(float charge, float previousCharge, float chargeDeltaTime)
