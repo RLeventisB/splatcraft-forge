@@ -31,6 +31,7 @@ import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendSpecialUsageDataPacket;
 import net.splatcraft.registries.SplatcraftComponents.SpecialProviderData;
+import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,10 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 	{
 		SpecialProviderData data = getData(stack);
 		float progress = 0;
+		
+		Optional<BaseSpecialAction> specialOptional = EntityAction.getSpecificEntityActionOptional(ClientUtils.getClientPlayer(), BaseSpecialAction.class);
+		if (specialOptional.isPresent())
+			progress = specialOptional.get().getSpecialCharge(stack, data != null ? data.storedCharge() : -1);
 		
 		if (data != null)
 		{
@@ -219,7 +224,7 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 			return;
 		}
 		
-		if (!SpecialHandler.passesSpecialConditions(entity, providerStack))
+		if (!SpecialHandler.passesSpecialConditions(entity, providerStack) || data.delay() > 0)
 		{
 			if (serverPlayer != null)
 				serverPlayer.sendSystemMessage(Component.translatable("status.cant_use").withStyle(ChatFormatting.RED), true);
@@ -233,14 +238,13 @@ public class SpecialProviderItem extends Item implements ISplatcraftForgeItemDum
 		
 		if (mainResetAction.equals(resetFailed) || offHandResetAction.equals(resetFailed))
 			return;
-		
 		mainResetAction.ifPresent(SpecialHandler.ResetAction::run);
 		offHandResetAction.ifPresent(SpecialHandler.ResetAction::run);
 		
+		providerStack.update(SPECIAL_PROVIDER_DATA, SpecialProviderData.DEFAULT, v -> v.withStoredCharge(0));
+		
 		Pair<EntitySlot, EntitySlot> providerAndWeaponSlot = SpecialHandler.startUsingSpecial(entity, data.specialId().get(), providerStack, weaponStack);
 		SplatcraftPacketHandler.sendToPlayer(new SendSpecialUsageDataPacket(data.specialId().get(), entity.getUUID(), providerAndWeaponSlot.getFirst(), providerAndWeaponSlot.getSecond()), serverPlayer);
-		
-		entity.startUsingItem(hand);
 	}
 	@Override
 	public boolean phShouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)

@@ -74,20 +74,20 @@ public class DataHandler
 		{
 			CLASS_SETTINGS_MAP.reset();
 			SETTINGS.clear();
-			
+
 			resourceList.forEach((key, element) ->
 			{
 				JsonObject json = element.getAsJsonObject();
 				try
 				{
 					String type = GsonHelper.getAsString(json, "type");
-					
+
 					if (!SETTING_TYPES.containsKey(type))
 						return;
-					
-					AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(String.class).newInstance(key.toString());
+
+					AbstractWeaponSettings<?, ?> settings = SETTING_TYPES.get(type).getConstructor(ResourceLocation.class).newInstance(key);
 					settings.deserialize(key, json);
-					
+
 					settings.registerStatTooltips();
 					SETTINGS.put(key, settings);
 				}

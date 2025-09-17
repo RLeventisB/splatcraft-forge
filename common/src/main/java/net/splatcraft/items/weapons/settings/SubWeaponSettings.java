@@ -23,17 +23,17 @@ import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationD
 
 public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SubWeaponSettings<T>, SubWeaponSettings.DataRecord, T, ResourceLocation>
 {
-	public static final SubWeaponSettings<?> DEFAULT = new SubWeaponSettings<>("default");
+	public static final SubWeaponSettings<?> DEFAULT = new SubWeaponSettings<>(DEFAULT_NAME);
 	public T subDataRecord;
 	public DataRecord dataRecord = DataRecord.DEFAULT;
-	public SubWeaponSettings(String name)
+	public SubWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
 	@Override
 	public Map.Entry<ResourceLocation, MapCodec<? extends T>>[] getDynamicCodecs()
 	{
-		return new Map.Entry[] {
+		return new Map.Entry[]{
 			Map.entry(Splatcraft.identifierOf("throwable_exploding"), SubWeaponRecords.ThrowableExplodingSubDataRecord.CODEC),
 			Map.entry(Splatcraft.identifierOf("burst_bomb"), SubWeaponRecords.BurstBombDataRecord.CODEC),
 			Map.entry(Splatcraft.identifierOf("curling_bomb"), SubWeaponRecords.CurlingBombDataRecord.CODEC),
@@ -55,7 +55,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	{
 		this.dataRecord = SplatcraftConvertors.convert(dataRecord);
 		subDataRecord = SplatcraftConvertors.convert(subData);
-		
+
 		setSecret(dataRecord.isSecret);
 		setMoveSpeed(dataRecord.mobility);
 	}
@@ -63,7 +63,7 @@ public class SubWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWe
 	public List<WeaponTooltip<SubWeaponSettings<T>>> tooltipsToRegister()
 	{
 		List<WeaponTooltip<SubWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
-		
+
 		weaponTooltips.add(new WeaponTooltip<>("ink_consumption", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().consumption(), WeaponTooltip.RANKER_DESCENDING));
 		weaponTooltips.add(new WeaponTooltip<>("ink_recovery", WeaponTooltip.Metrics.UNITS, settings -> settings.dataRecord.inkUsage().recoveryCooldown(), WeaponTooltip.RANKER_DESCENDING));
 		if (subDataRecord != null)

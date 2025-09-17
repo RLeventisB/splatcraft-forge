@@ -7,7 +7,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
@@ -183,7 +182,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 	{
 		nbt.put("Color", getColor().getNbt());
 		nbt.putBoolean("BypassMobDamageMultiplier", bypassMobDamageMultiplier);
-		nbt.putString("InkType", inkType.getIdString());
+		nbt.putString("InkType", inkType.name());
 		nbt.put("SourceWeapon", sourceWeapon.save(registryAccess()));
 		
 		ItemStack itemstack = getItemRaw();
@@ -197,7 +196,7 @@ public abstract class AbstractSubWeaponEntity<Data extends DynamicDataRecord<Dat
 		if (nbt.contains("Color"))
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
 		bypassMobDamageMultiplier = nbt.getBoolean("DypassMobDamageMultiplier");
-		inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
+		inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, nbt.get("PermanentInkType")).result().orElse(InkBlockUtils.InkType.NORMAL);
 		sourceWeapon = ItemStack.CODEC.decode(NbtOps.INSTANCE, nbt.getCompound("SourceWeapon")).getOrThrow().getFirst();
 		
 		ItemStack itemstack = ItemStack.parseOptional(registryAccess(), nbt.getCompound("Item"));

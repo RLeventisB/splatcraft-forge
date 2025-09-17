@@ -14,6 +14,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileDataRecord;
 import net.splatcraft.items.weapons.settings.CommonRecords.ShotDataRecord;
+import net.splatcraft.util.CodecUtils;
 import net.splatcraft.util.structs.WeaponTooltip;
 
 import java.util.ArrayList;
@@ -21,15 +22,20 @@ import java.util.List;
 
 public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings<SELF, DATA>, DATA>
 {
+	public static final ResourceLocation DEFAULT_NAME = Splatcraft.identifierOf("default");
 	public static final ResourceLocation WEAPON_MOBILITY_ATTIBUTE_ID = Splatcraft.identifierOf("weapon_mobility");
 	private final ArrayList<WeaponTooltip<SELF>> statTooltips = new ArrayList<>();
-	public String name;
+	public ResourceLocation name;
 	public float moveSpeed = 1;
 	public boolean isSecret = false;
 	private AttributeModifier SPEED_MODIFIER;
-	public AbstractWeaponSettings(String name)
+	public AbstractWeaponSettings(ResourceLocation name)
 	{
 		this.name = name;
+	}
+	public AbstractWeaponSettings(String name)
+	{
+		this.name = CodecUtils.tryParseResourceLocationWithCustomDefaultNamespace(name, Splatcraft.MODID);
 	}
 	public static float calculateAproximateRange(ProjectileDataRecord projSettings, ShotDataRecord shotSettings)
 	{
@@ -53,7 +59,7 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 		{
 			SPEED_MODIFIER = new AttributeModifier(WEAPON_MOBILITY_ATTIBUTE_ID, moveSpeed - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		}
-		
+
 		return SPEED_MODIFIER;
 	}
 	public SELF setMoveSpeed(float value)
@@ -99,6 +105,6 @@ public abstract class AbstractWeaponSettings<SELF extends AbstractWeaponSettings
 	@Override
 	public String toString()
 	{
-		return name;
+		return name.toString();
 	}
 }

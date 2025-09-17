@@ -3,6 +3,7 @@ package net.splatcraft.items.weapons.settings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,12 +18,12 @@ import java.util.function.Function;
 
 public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponSettings, ChargerWeaponSettings.DataRecord>
 {
-	public static final ChargerWeaponSettings DEFAULT = new ChargerWeaponSettings("default");
+	public static final ChargerWeaponSettings DEFAULT = new ChargerWeaponSettings(DEFAULT_NAME);
 	public ChargerProjectileDataRecord projectileData = ChargerProjectileDataRecord.DEFAULT;
 	public ShotDataRecord shotData = ShotDataRecord.DEFAULT;
 	public ChargeDataRecord chargeData = ChargeDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
-	public ChargerWeaponSettings(String name)
+	public ChargerWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -51,7 +52,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
 		chargeData = SplatcraftConvertors.convert(data.charge);
-		
+
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.fullDamageToMobs);
@@ -174,7 +175,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		ChargeValueRecord inkConsumption,
 		float inkRecoveryCooldown,
 		int shotsCount
-	
+
 	)
 	{
 		public static final Codec<ShotDataRecord> CODEC = RecordCodecBuilder.create(
@@ -210,13 +211,13 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		{
 			if (values.isEmpty())
 				return DataResult.error(() -> "Not enough values was providen by the list.");
-			
+
 			if (values.size() == 1)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(0), values.get(0)));
-			
+
 			if (values.size() == 2)
 				return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(1)));
-			
+
 			return DataResult.success(new ChargeValueRecord(values.get(0), values.get(1), values.get(2)));
 		}
 		public static ChargeValueRecord create(float... values)

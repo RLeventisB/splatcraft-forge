@@ -572,9 +572,9 @@ public class InkBlockUtils
 	}
 	public enum InkType implements Comparable<InkType>, StringRepresentable
 	{
-		NORMAL(0, Splatcraft.identifierOf("normal"), SplatcraftBlocks.inkedBlock),
-		GLOWING(1, Splatcraft.identifierOf("glowing"), SplatcraftItems.splatfestBand, SplatcraftBlocks.glowingInkedBlock),
-		CLEAR(2, Splatcraft.identifierOf("clear"), SplatcraftItems.clearBand, SplatcraftBlocks.clearInkedBlock);
+		NORMAL(SplatcraftBlocks.inkedBlock),
+		GLOWING(SplatcraftItems.splatfestBand, SplatcraftBlocks.glowingInkedBlock),
+		CLEAR(SplatcraftItems.clearBand, SplatcraftBlocks.clearInkedBlock);
 		public static final Map<ResourceLocation, InkType> IDENTIFIER_MAP = Map.of(
 			Splatcraft.identifierOf("normal"), NORMAL,
 			Splatcraft.identifierOf("glowing"), GLOWING,
@@ -582,28 +582,16 @@ public class InkBlockUtils
 		);
 		public static final Codec<InkType> CODEC = StringRepresentable.fromEnum(InkType::values);
 		public static final StreamCodec<ByteBuf, InkType> STREAM_CODEC = CodecUtils.createEnumPacketCodec(InkType::values);
-		private final ResourceLocation name;
 		private final Supplier<Item> repItemSupplier;
 		private final Supplier<InkedBlock> block;
-		private final byte id;
-		InkType(int id, ResourceLocation name, Supplier<Item> repItemSupplier, Supplier<InkedBlock> inkedBlock)
+		InkType(Supplier<Item> repItemSupplier, Supplier<InkedBlock> inkedBlock)
 		{
-			this.id = (byte) id;
-			this.name = name;
 			this.repItemSupplier = repItemSupplier;
 			block = inkedBlock;
 		}
-		InkType(int id, ResourceLocation name, Supplier<InkedBlock> inkedBlock)
+		InkType(Supplier<InkedBlock> inkedBlock)
 		{
-			this(id, name, () -> Items.AIR, inkedBlock);
-		}
-		public static InkType fromId(int id)
-		{
-			return values()[id];
-		}
-		public ResourceLocation getName()
-		{
-			return name;
+			this(() -> Items.AIR, inkedBlock);
 		}
 		public Item getRepItem()
 		{
@@ -612,15 +600,7 @@ public class InkBlockUtils
 		@Override
 		public String toString()
 		{
-			return name.toString();
-		}
-		public String getIdString()
-		{
-			return getName().toString();
-		}
-		public byte getId()
-		{
-			return id;
+			return name();
 		}
 		@Override
 		public @NotNull String getSerializedName()

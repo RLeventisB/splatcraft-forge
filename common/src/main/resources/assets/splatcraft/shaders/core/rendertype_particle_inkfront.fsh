@@ -13,6 +13,6 @@ void main() {
         discard;
     }
     float brightness = texelColor.r;
-    vec3 rgb = mix(vertexColor.rgb, vec3(1f, 1f, 1f), brightness * brightness);
+    vec3 rgb = mix(vertexColor.rgb, vec3(1.0, 1.0, 1.0), brightness * brightness);
     fragColor = vec4(rgb, texelColor.a * vertexColor.a);
 }

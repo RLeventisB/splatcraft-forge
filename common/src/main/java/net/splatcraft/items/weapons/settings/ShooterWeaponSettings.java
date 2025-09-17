@@ -2,6 +2,7 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -12,11 +13,11 @@ import java.util.List;
 
 public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponSettings, ShooterWeaponSettings.DataRecord>
 {
-	public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings("default");
+	public static final ShooterWeaponSettings DEFAULT = new ShooterWeaponSettings(DEFAULT_NAME);
 	public CommonRecords.ProjectileDataRecord projectileData;
 	public CommonRecords.ShotDataRecord shotData;
 	public boolean bypassesMobDamage = false;
-	public ShooterWeaponSettings(String name)
+	public ShooterWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -44,7 +45,7 @@ public class ShooterWeaponSettings extends AbstractWeaponSettings<ShooterWeaponS
 	{
 		projectileData = SplatcraftConvertors.convert(data.projectile);
 		shotData = SplatcraftConvertors.convert(data.shot);
-		
+
 		setMoveSpeed(data.mobility);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

@@ -20,7 +20,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 		return dynamicDataKey;
 	}
 	private KEY dynamicDataKey;
-	public DynamicWeaponSettings(String name)
+	public DynamicWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 		Class<? extends DynamicWeaponSettings<?, ?, ?, ?>> clazz = (Class<? extends DynamicWeaponSettings<?, ?, ?, ?>>) getClass();
@@ -56,7 +56,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 			deserializeWithoutDynamicPart(key, json);
 			return;
 		}
-		
+
 		DataResult<COMMONDATA> common = getCodec().parse(JsonOps.INSTANCE, json);
 		DataResult<DATA> dynamic = dynamicCodec.codec().parse(JsonOps.INSTANCE, json);
 		common.ifError((msg) -> Splatcraft.LOGGER.error("Failed to load common part of the weapon settings for %s: %s".formatted(key, msg)));
@@ -84,7 +84,7 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 	@Override
 	public final void processData(COMMONDATA o)
 	{
-	
+
 	}
 	@Override
 	public final void processResult(Object o)
@@ -96,14 +96,14 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 	{
 		// lazily stitch the json elements because i dont know how mapcodecs do encoding :(
 		RecordBuilder<JsonElement> builder = JsonOps.INSTANCE.mapBuilder();
-		
+
 		if (dynamicDataKey != null)
 			getFieldOfDynamicKey().encode(dynamicDataKey, JsonOps.INSTANCE, builder);
 		getMapCodec().encode(getDataToSerialize(), JsonOps.INSTANCE, builder);
 		DATA dynamicData = getDynamicDataToSerialize();
 		if (dynamicData != null)
 			dynamicCodec.encode(dynamicData, JsonOps.INSTANCE, builder);
-		
+
 		DataResult<JsonElement> result = builder.build(new JsonObject());
 		buffer.writeUtf(result.getOrThrow().toString());
 	}

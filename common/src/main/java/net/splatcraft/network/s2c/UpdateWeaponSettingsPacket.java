@@ -46,10 +46,10 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 			{
 				String className = buffer.readUtf();
 				jsonString = buffer.readUtf();
-				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(className).getConstructor(String.class).newInstance(key.toString());
+				AbstractWeaponSettings<?, ?> setting = DataHandler.WeaponStatsListener.SETTING_TYPES.get(className).getConstructor(ResourceLocation.class).newInstance(key);
 				JsonObject json = GsonHelper.parse(jsonString);
 				setting.deserialize(key, json);
-				
+
 				setting.registerStatTooltips();
 				settings.add(Map.entry(key, setting));
 			}
@@ -61,7 +61,7 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 					Splatcraft.LOGGER.error("Error upon reading data for {}, inner exception: \n{}", key, e);
 			}
 		}
-		
+
 		SplatcraftConvertors.SkipConverting = false;
 		return new UpdateWeaponSettingsPacket(settings);
 	}
@@ -74,7 +74,7 @@ public class UpdateWeaponSettingsPacket extends PlayS2CPacket
 	public void encode(RegistryFriendlyByteBuf buffer)
 	{
 		buffer.writeInt(settings.size());
-		
+
 		for (Map.Entry<ResourceLocation, AbstractWeaponSettings<?, ?>> entry : settings)
 		{
 			buffer.writeResourceLocation(entry.getKey());

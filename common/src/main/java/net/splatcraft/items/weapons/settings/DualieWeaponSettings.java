@@ -2,6 +2,7 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -17,14 +18,14 @@ import java.util.Optional;
 
 public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSettings, DualieWeaponSettings.DataRecord>
 {
-	public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings("default");
+	public static final DualieWeaponSettings DEFAULT = new DualieWeaponSettings(DEFAULT_NAME);
 	public ProjectileDataRecord standardProjectileData = ProjectileDataRecord.DEFAULT, turretProjectileData = ProjectileDataRecord.DEFAULT;
 	public ShotDataRecord standardShotData = ShotDataRecord.DEFAULT, turretShotData = ShotDataRecord.DEFAULT;
 	public Optional<OptionalProjectileDataRecord> turretProjectileMods = Optional.empty();
 	public Optional<OptionalShotDataRecord> turretShotMods = Optional.empty();
 	public RollDataRecord rollData = RollDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
-	public DualieWeaponSettings(String name)
+	public DualieWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -57,7 +58,7 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 		turretShotData = SplatcraftConvertors.convert(OptionalShotDataRecord.mergeWithBase(data.turretShot, data.shot));
 		turretShotMods = data.turretShot.map(SplatcraftConvertors::convert);
 		rollData = SplatcraftConvertors.convert(data.roll);
-		
+
 		setMoveSpeed(data.moveSpeed);
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);

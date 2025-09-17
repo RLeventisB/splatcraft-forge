@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
@@ -41,7 +42,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			return null;
 		}
 	}
-	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings("default");
+	public static final SplatlingWeaponSettings DEFAULT = new SplatlingWeaponSettings(DEFAULT_NAME);
 	public ProjectileDataRecord[] projectileDatas = new ProjectileDataRecord[] {ProjectileDataRecord.DEFAULT};
 	public SplatlingShotDataRecord[] shotDatas = new SplatlingShotDataRecord[] {SplatlingShotDataRecord.DEFAULT};
 	public Optional<OptionalProjectileDataRecord> secondLevelProjectileMods = Optional.empty(), fullLevelProjectileMods = Optional.empty();
@@ -51,7 +52,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	public float inkConsumption;
 	public float inkRecoveryCooldown;
 	public T shotSelectionData;
-	public SplatlingWeaponSettings(String name)
+	public SplatlingWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -118,10 +119,10 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 		fullLevelShotMods = data.fullChargeShot.map(SplatcraftConvertors::convert);
 		secondLevelProjectileMods = data.secondChargeProjectile.map(SplatcraftConvertors::convert);
 		fullLevelProjectileMods = data.fullChargeProjectile.map(SplatcraftConvertors::convert);
-		
+
 		ProjectileDataRecord secondChargeProjectile = OptionalProjectileDataRecord.mergeWithBase(data.secondChargeProjectile, data.baseProjectile);
 		SplatlingShotDataRecord secondChargeShot = OptionalSplatlingShotDataRecord.mergeWithBase(data.secondChargeShot, data.baseShot);
-		
+
 		projectileDatas = new ProjectileDataRecord[] {
 			SplatcraftConvertors.convert(data.baseProjectile),
 			SplatcraftConvertors.convert(secondChargeProjectile),
@@ -132,7 +133,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			SplatcraftConvertors.convert(secondChargeShot),
 			SplatcraftConvertors.convert(OptionalSplatlingShotDataRecord.mergeWithBase(data.fullChargeShot, secondChargeShot))
 		};
-		
+
 		setSecret(data.isSecret);
 		setBypassesMobDamage(data.bypassesMobDamage);
 		shotSelectionData = SplatcraftConvertors.convert(subData);
@@ -239,7 +240,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 			progress -= intProgress;
 			shotMoveSpeed = lerpShotData(progress, shotDatas[intProgress], shotDatas[intProgress + 1]).mobility;
 		}
-		
+
 		return charging ? chargeData.moveSpeed.orElse(moveSpeed) : shotMoveSpeed;
 	}
 	public ProjectileDataRecord lerpProjectileData(float progress, ProjectileDataRecord dataStart, ProjectileDataRecord dataEnd)
@@ -460,7 +461,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 		{
 			if (modified.isEmpty())
 				return base;
-			
+
 			OptionalSplatlingShotDataRecord modifiedGet = modified.get();
 			return new SplatlingShotDataRecord(
 				modifiedGet.repeatTicks.orElse(base.repeatTicks),

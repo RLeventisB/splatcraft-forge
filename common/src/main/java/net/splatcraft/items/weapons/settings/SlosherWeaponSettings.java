@@ -2,6 +2,7 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -21,13 +22,13 @@ import java.util.Optional;
 
 public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponSettings, DataRecord>
 {
-	public static final SlosherWeaponSettings DEFAULT = new SlosherWeaponSettings("default");
+	public static final SlosherWeaponSettings DEFAULT = new SlosherWeaponSettings(DEFAULT_NAME);
 	public boolean bypassesMobDamage;
 	public SlosherShotDataRecord shotData = SlosherShotDataRecord.DEFAULT;
 	public ProjectileDataRecord baseProjectile = SingularSloshShotData.SLOSHER_PROJECTILE_DEFAULT;
 	public float lowestStartup;
 	public ProjectileDataRecord[] mergedProjectileData = new ProjectileDataRecord[0];
-	public SlosherWeaponSettings(String name)
+	public SlosherWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -35,7 +36,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 	{
 		float minDamageHeight = projectileData.damageDecayPerTick();
 		float damageDecayStartHeight = projectileData.damageDecayStartTick();
-		
+
 		float damage = projectileData.baseDamage();
 		if (relativeY < -minDamageHeight)
 			damage = projectileData.minDamage();
@@ -72,7 +73,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		{
 			mergedProjectileData[i] = OptionalProjectileDataRecord.mergeWithBase(shotData.sloshes.get(i).projectileModifications, baseProjectile);
 		}
-		
+
 		for (var slosh : shotData.sloshes)
 		{
 			if (slosh.startupTicks < lowestStartup)

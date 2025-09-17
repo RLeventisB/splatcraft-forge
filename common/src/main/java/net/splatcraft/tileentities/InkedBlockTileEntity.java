@@ -4,8 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -82,7 +82,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 		if (nbt.contains("PermanentColor"))
 		{
 			setPermanentColor(nbt.getInt("PermanentColor"));
-			setPermanentInkType(InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(nbt.getString("PermanentInkType")), InkBlockUtils.InkType.NORMAL));
+			setPermanentInkType(InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, nbt.get("PermanentInkType")).result().orElse(InkBlockUtils.InkType.NORMAL));
 		}
 	}
 	@Override
@@ -94,7 +94,7 @@ public class InkedBlockTileEntity extends InkColorTileEntity
 		if (hasPermanentColor())
 		{
 			nbt.putInt("PermanentColor", permanentColor);
-			nbt.putString("PermanentInkType", permanentInkType.getIdString());
+			nbt.putString("PermanentInkType", permanentInkType.name());
 		}
 		super.saveAdditional(nbt, wrapperLookup);
 	}

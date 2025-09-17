@@ -90,6 +90,11 @@ public class CodecUtils
 	{
 		return ByteBufCodecs.STRING_UTF8.map(id -> parse(id, defaultNamespace), ResourceLocation::toString);
 	}
+	// this is one of the names
+	public static ResourceLocation tryParseResourceLocationWithCustomDefaultNamespace(String input, String defaultNamespace)
+	{
+		return validateId(input, defaultNamespace).resultOrPartial().orElse(null);
+	}
 	private static DataResult<ResourceLocation> validateId(String id, String defaultNamespace)
 	{
 		try
@@ -117,7 +122,7 @@ public class CodecUtils
 				return ResourceLocation.fromNamespaceAndPath(defaultNamespace, path);
 			}
 		}
-		
+
 		return ResourceLocation.fromNamespaceAndPath(defaultNamespace, id);
 	}
 	public static <R> DataResult<R> dataResultOfOptional(final R result, Supplier<String> errorMessage)
@@ -276,7 +281,7 @@ public class CodecUtils
 				{
 					array[i] = codec.decode(buf);
 				}
-				
+
 				return array;
 			}
 			@Override
@@ -381,14 +386,14 @@ public class CodecUtils
 		{
 			final M read = mapCreator.get();
 			final Stream.Builder<Pair<T, T>> failed = Stream.builder();
-			
+
 			final DataResult<Unit> result = input.entries().reduce(
 				DataResult.success(Unit.INSTANCE, Lifecycle.stable()),
 				(r, pair) ->
 				{
 					final DataResult<K> key = keyCodec().parse(ops, pair.getFirst());
 					final DataResult<V> value = elementCodec().parse(ops, pair.getSecond());
-					
+
 					final DataResult<Pair<K, V>> entryResult = key.apply2stable(Pair::of, value);
 					final Optional<Pair<K, V>> entry = entryResult.resultOrPartial();
 					if (entry.isPresent())
@@ -404,14 +409,14 @@ public class CodecUtils
 					{
 						failed.add(pair);
 					}
-					
+
 					return r.apply2stable((u, p) -> u, entryResult);
 				},
 				(r1, r2) -> r1.apply2stable((u1, u2) -> u1, r2)
 			);
-			
+
 			final T errors = ops.createMap(failed.build());
-			
+
 			return result.map(unit -> read).setPartial(read).mapError(e -> e + " missed input: " + errors);
 		}
 		<T> RecordBuilder<T> encode(final M input, final DynamicOps<T> ops, final RecordBuilder<T> prefix)

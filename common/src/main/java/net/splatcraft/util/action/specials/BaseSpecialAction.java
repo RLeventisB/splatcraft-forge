@@ -20,7 +20,6 @@ import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.EntityActionWithTime;
 import org.jetbrains.annotations.NotNull;
@@ -89,18 +88,6 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		boolean sameTeam = ClientUtils.getClientPlayer() != null && ColorUtils.getEntityColor(entity).equals(ColorUtils.getEntityColor(ClientUtils.getClientPlayer()));
 		level.playLocalSound(entity, SplatcraftSounds.specialUsage, SoundSource.PLAYERS, sameTeam ? 0.5f : 1f, 1f);
-	}
-	@Override
-	public ActionEndResult tick(LivingEntity entity)
-	{
-		Optional<ItemStack> providerStackOptional = providerSlot.tryGetItemFrom(entity);
-		providerStackOptional.ifPresent(providerStack ->
-		{
-			SplatcraftComponents.SpecialProviderData data = providerStack.get(SplatcraftComponents.SPECIAL_PROVIDER_DATA);
-			if (data != null)
-				providerStack.set(SplatcraftComponents.SPECIAL_PROVIDER_DATA, data.withStoredCharge(getSpecialCharge(providerStack, data.storedCharge())));
-		});
-		return ActionEndResult.dontEnd(this);
 	}
 	@Override
 	public boolean preventWeaponUse()

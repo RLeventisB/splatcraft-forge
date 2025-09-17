@@ -23,10 +23,10 @@ import static net.splatcraft.items.weapons.settings.CommonRecords.ShotDeviationD
 
 public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends DynamicWeaponSettings<SpecialWeaponSettings<T>, SpecialWeaponSettings.DataRecord, T, ResourceLocation>
 {
-	public static final SpecialWeaponSettings<?> DEFAULT = new SpecialWeaponSettings<>("default");
+	public static final SpecialWeaponSettings<?> DEFAULT = new SpecialWeaponSettings<>(DEFAULT_NAME);
 	public T specialDataRecord;
 	public DataRecord dataRecord = DataRecord.DEFAULT;
-	public SpecialWeaponSettings(String name)
+	public SpecialWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -58,7 +58,7 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	public List<WeaponTooltip<SpecialWeaponSettings<T>>> tooltipsToRegister()
 	{
 		List<WeaponTooltip<SpecialWeaponSettings<T>>> weaponTooltips = new ArrayList<>();
-		
+
 		specialDataRecord.addTooltips(weaponTooltips);
 		return weaponTooltips;
 	}

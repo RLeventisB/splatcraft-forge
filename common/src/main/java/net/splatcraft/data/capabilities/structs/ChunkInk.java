@@ -6,9 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.InkColor;
 import net.splatcraft.util.structs.RelativeBlockPos;
@@ -123,70 +123,44 @@ public class ChunkInk
 		INK_MAP.clear();
 		boolean oldFormat = nbt.contains("PermanentInk"); // old format is referred to before this fork btw
 		
-		if (oldFormat)
+		if (!oldFormat)
+			return;
+		
+		for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
 		{
-			INK_MAP.clear();
-			for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
-			{
-				CompoundTag element = (CompoundTag) tag;
-				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
-				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type")));
-				
-				for (byte i = 0; i < 6; i++)
-				{
-					ink(
-						pos,
-						i,
-						color,
-						inkType
-					);
-				}
-			}
+			CompoundTag element = (CompoundTag) tag;
+			RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
+			InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
+			InkBlockUtils.InkType inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, element.get("Type")).result().orElse(InkBlockUtils.InkType.NORMAL);
 			
-			for (Tag tag : nbt.getList("PermanentInk", CompoundTag.TAG_COMPOUND))
+			for (byte i = 0; i < 6; i++)
 			{
-				CompoundTag element = (CompoundTag) tag;
-				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
-				InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
-				InkBlockUtils.InkType inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type")));
-				
-				BlockEntry entry = getInk(pos);
-				
-				if (entry != null)
-				{
-					entry.immutable = true;
-					if (entry.color(0) != color)// in the case where the permanent ink doesnt have the same color as the actual ink
-					{
-						for (byte i = 0; i < 6; i++)
-						{
-							entry.paint(i, color, inkType);
-						}
-					}
-				}
+				ink(
+					pos,
+					i,
+					color,
+					inkType
+				);
 			}
 		}
-		else
+		
+		for (Tag tag : nbt.getList("PermanentInk", CompoundTag.TAG_COMPOUND))
 		{
-			for (Tag tag : nbt.getList("Ink", CompoundTag.TAG_COMPOUND))
+			CompoundTag element = (CompoundTag) tag;
+			RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
+			InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
+			InkBlockUtils.InkType inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, element.get("Type")).result().orElse(InkBlockUtils.InkType.NORMAL);
+			
+			BlockEntry entry = getInk(pos);
+			
+			if (entry != null)
 			{
-				CompoundTag element = (CompoundTag) tag;
-				boolean isPermanent = element.getBoolean("IsPermanent");
-				RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
-				if (element.contains("Faces"))
+				entry.immutable = true;
+				if (entry.color(0) != color)// in the case where the permanent ink doesnt have the same color as the actual ink
 				{
-					Byte[] activeIndices = BlockEntry.getIndicesFromActiveFlag(element.getByte("Faces"));
-					for (Byte activeIndex : activeIndices)
+					for (byte i = 0; i < 6; i++)
 					{
-						Direction direction = Direction.from3DDataValue(activeIndex);
-						
-						ink(pos,
-							activeIndex,
-							InkColor.constructOrReuse(element.getInt("Color" + direction.name())),
-							InkBlockUtils.InkType.IDENTIFIER_MAP.get(ResourceLocation.parse(element.getString("Type" + direction.name())))
-						);
-						if (isPermanent)
-							markInmutable(pos);
+						entry.paint(i, color, inkType);
 					}
 				}
 			}

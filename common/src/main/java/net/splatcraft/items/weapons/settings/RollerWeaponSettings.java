@@ -2,6 +2,7 @@ package net.splatcraft.items.weapons.settings;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -20,14 +21,14 @@ import static net.splatcraft.util.structs.NumberRange.IntRange;
 
 public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSettings, RollerWeaponSettings.DataRecord>
 {
-	public static final RollerWeaponSettings DEFAULT = new RollerWeaponSettings("default");
+	public static final RollerWeaponSettings DEFAULT = new RollerWeaponSettings(DEFAULT_NAME);
 	public String name;
 	public boolean isBrush;
 	public RollDataRecord rollData = RollDataRecord.DEFAULT;
 	public boolean bypassesMobDamage = false;
 	public SwingDataRecord swingData = SwingDataRecord.DEFAULT;
 	public FlingDataRecord flingData = FlingDataRecord.DEFAULT;
-	public RollerWeaponSettings(String name)
+	public RollerWeaponSettings(ResourceLocation name)
 	{
 		super(name);
 	}
@@ -54,10 +55,10 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	public void processData(DataRecord data)
 	{
 		isBrush = data.isBrush;
-		
+
 		bypassesMobDamage = data.fullDamageToMobs;
 		isSecret = data.isSecret;
-		
+
 		rollData = SplatcraftConvertors.convert(data.roll);
 		swingData = SplatcraftConvertors.convert(data.swing);
 		if (!isBrush)
@@ -153,7 +154,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 				Codec.FLOAT.optionalFieldOf("max_falloff_damage_percentage", 0.5f).forGetter(RollerProjectileDataRecord::maxDamageFalloffPercent),
 				RangedValueCollection.DAMAGE_CODEC.fieldOf("damage_ranges").forGetter(RollerProjectileDataRecord::damageRanges),
 				RangedValueCollection.DAMAGE_CODEC.optionalFieldOf("weak_damage_ranges").forGetter(RollerProjectileDataRecord::weakDamageRanges)
-			
+
 			).apply(instance, RollerProjectileDataRecord::create)
 		);
 		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, RangedValueCollection.EMPTY, Optional.empty());

@@ -3,11 +3,11 @@ package net.splatcraft.entities;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
@@ -369,7 +369,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			shockwaveDamage = valuesNbt.getFloat("ShockwaveDmg");
 			paintingRadius = valuesNbt.getFloat("RayPaintSize");
 			paintingClipSize = valuesNbt.getFloat("RayPaintSearch");
-			inkType = InkBlockUtils.InkType.IDENTIFIER_MAP.getOrDefault(ResourceLocation.parse(valuesNbt.getString("InkType")), InkBlockUtils.InkType.NORMAL);
+			inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, nbt.get("InkType")).result().orElse(InkBlockUtils.InkType.NORMAL);
 		}
 		super.readAdditionalSaveData(nbt);
 	}
@@ -387,7 +387,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		valuesNbt.putFloat("ShockwaveDmg", shockwaveDamage);
 		valuesNbt.putFloat("RayPaintSize", paintingRadius);
 		valuesNbt.putFloat("RayPaintSearch", paintingClipSize);
-		valuesNbt.putString("InkType", inkType.getIdString());
+		valuesNbt.putString("InkType", inkType.name());
 		nbt.put("RayValues", valuesNbt);
 		super.addAdditionalSaveData(nbt);
 	}
