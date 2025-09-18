@@ -13,7 +13,12 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.DataRecord;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.InkDamageUtils;
+import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.trajectory.TrajectoryProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 public class BurstBombSubWeaponItem extends SubWeaponItem<BurstBombDataRecord>
 {
@@ -45,5 +50,21 @@ public class BurstBombSubWeaponItem extends SubWeaponItem<BurstBombDataRecord>
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);
 		applyCooldown(entity);
+	}
+	@Override
+	public TrajectoryProcessor getTrajectory(ItemStack stack, LivingEntity entity, float partialTicks)
+	{
+		SubWeaponSettings<BurstBombDataRecord> settings = getSettings(stack);
+		BurstBombDataRecord subData = settings.subDataRecord;
+		InkColor ownerColor = ColorUtils.getEntityColor(entity);
+
+		return TrajectoryProcessor.ofFragile(entity.level(),
+			subData.throwVelocity(),
+			subData.pitchOffset(),
+			0.09f,
+			0.5f,
+			subData.throwerImpulse(),
+			new Vector3f(0.94f),
+			v -> v.canBeHitByProjectile() && v != entity && InkDamageUtils.canDamage(v, ownerColor));
 	}
 }

@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,9 +26,11 @@ import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
 import net.neoforged.neoforge.common.extensions.IBlockEntityExtension;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import net.neoforged.neoforge.common.extensions.IItemExtension;
+import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.splatcraft.dummys.ISplatcraftForgeBlockDummy;
 import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.dummys.ISplatcraftForgeItemDummy;
+import net.splatcraft.platform.IExtraDataOnAddEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -60,6 +63,20 @@ public class ForgeDummyInjections
 		default boolean shouldCauseReequipAnimation(@NotNull ItemStack oldStack, @NotNull ItemStack newStack, boolean slotChanged)
 		{
 			return ((ISplatcraftForgeItemDummy) this).phShouldCauseReequipAnimation(oldStack, newStack, slotChanged);
+		}
+	}
+	@Mixin(IExtraDataOnAddEntity.class)
+	public interface EntityExtraDataMixin extends IEntityWithComplexSpawn
+	{
+		@Override
+		default void readSpawnData(@NotNull RegistryFriendlyByteBuf buf)
+		{
+			((IExtraDataOnAddEntity) this).readExtraData(buf);
+		}
+		@Override
+		default void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf)
+		{
+			((IExtraDataOnAddEntity) this).writeExtraData(buf);
 		}
 	}
 	@Mixin(ISplatcraftForgeBlockDummy.class)

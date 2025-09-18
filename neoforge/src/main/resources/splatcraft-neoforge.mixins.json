@@ -16,6 +16,7 @@
         "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
         "FabricEventPlacementMixins$ClientMixins",
         "ForgeDummyInjections$ClientBlockMixin",
+        "ForgeDummyInjections$EntityExtraDataMixin",
         "compat.SodiumMixin$AbstractBlockThingMixin",
         "compat.SodiumMixin$BlockRendererMixin",
         "compat.SodiumMixin$ChunkMeshBuilderMixin",

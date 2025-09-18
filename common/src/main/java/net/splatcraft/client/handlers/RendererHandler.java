@@ -1,10 +1,15 @@
 package net.splatcraft.client.handlers;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.datafixers.util.Function3;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -14,8 +19,10 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -43,6 +50,7 @@ import net.splatcraft.data.capabilities.SaveInfoCapability;
 import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.data.capabilities.structs.SquidInfo;
+import net.splatcraft.entities.ISetVelocityExtension;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
@@ -67,8 +75,10 @@ import net.splatcraft.tileentities.StageMarkerTileEntity;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.RenderableEntityAction;
+import net.splatcraft.util.action.specials.ActionWithThrowable;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
 import net.splatcraft.util.structs.InkColor;
+import net.splatcraft.util.structs.trajectory.TrajectoryProcessor;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -76,6 +86,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
 import static net.splatcraft.items.weapons.WeaponBaseItem.enoughInk;
 
@@ -84,6 +97,7 @@ public class RendererHandler
 	public static final ResourceLocation MAGIC_PIXEL = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
 	private static final ResourceLocation WIDGETS = Splatcraft.identifierOf("textures/gui/widgets.png");
 	private static InkSquidRenderer squidRenderer;
+	private static Pair<TrajectoryProcessor, TrajectoryData> cachedTrajectoryData;
 	//Render PlayerEntity HUD elements
 	private static float squidTime = 0;
 	private static float prevInkPctg = 0;
@@ -92,6 +106,176 @@ public class RendererHandler
 	{
 		Services.PLATFORM.registerListener(InteractionEvents.ClientChatReceive.class, RendererHandler::onChatMessage);
 		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_PARTICLES, RendererHandler::doActionRendering);
+		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_PARTICLES, RendererHandler::doSubGuideLine);
+	}
+	private static void doSubGuideLine(RenderingCallback.CallbackData data)
+	{
+		LocalPlayer player = ClientUtils.getClientPlayer();
+		processTrajectoryData(player, data.tickCounter().getGameTimeDeltaTicks());
+		if (cachedTrajectoryData == null)
+			return;
+		
+		Camera camera = data.camera();
+		Vector3f cameraPos = camera.getPosition().toVector3f();
+		
+		VertexConsumer consumer = data.consumers().getBuffer(RenderType.lineStrip());
+		TrajectoryData trajectoryData = cachedTrajectoryData.getSecond();
+		
+		InkColor playerColor = ColorUtils.getEntityColor(player);
+		int color = FastColor.ARGB32.color(128, ColorUtils.makeBrighter(playerColor, 0.5f, 0.7f));
+		for (int i = 0; i < trajectoryData.trajectoryPoints().size(); i++)
+		{
+			Vector3f point = trajectoryData.trajectoryPoints().get(i).sub(cameraPos, new Vector3f());
+			consumer.addVertex(point).setColor(color).setNormal(0, 1, 0);
+		}
+		
+		RenderType renderType = RenderType.entityTranslucent(MAGIC_PIXEL);
+		consumer = data.consumers().getBuffer(renderType);
+		color = FastColor.ARGB32.color(128, ColorUtils.makeBrighter(playerColor, 0f, 0.5f));
+		
+		Vector3f upperCorner = trajectoryData.impactPos().add(new Vector3f(trajectoryData.halfMarginUsed()), new Vector3f()).sub(cameraPos);
+		Vector3f lowerCorner = trajectoryData.impactPos().sub(new Vector3f(trajectoryData.halfMarginUsed()), new Vector3f()).sub(cameraPos);
+		
+		for (Direction dir : Direction.values())
+		{
+			renderFace(consumer, dir, upperCorner.x, upperCorner.y, upperCorner.z, lowerCorner.x, lowerCorner.y, lowerCorner.z, color, true);
+		}
+		
+		consumer = data.consumers().getBuffer(RenderType.lines());
+		color = FastColor.ARGB32.color(192, ColorUtils.makeBrighter(playerColor, 0.7f, 0.8f));
+		
+		upperCorner.add(10e-5f, 10e-5f, 10e-5f);
+		lowerCorner.sub(10e-5f, 10e-5f, 10e-5f);
+		for (Direction dir : Direction.values())
+		{
+			renderFace(consumer, dir, upperCorner.x, upperCorner.y, upperCorner.z, lowerCorner.x, lowerCorner.y, lowerCorner.z, color, false);
+		}
+		
+		if (data.consumers() instanceof MultiBufferSource.BufferSource source)
+			source.endBatch();
+	}
+	private static void renderFace(VertexConsumer consumer, Direction dir, float x1, float y1, float z1, float x2, float y2, float z2, int color, boolean blockFormat)
+	{
+		// LevelRenderer#renderFace jumpscare
+		AtomicInteger i = new AtomicInteger();
+		final float[] firstCoords = {Float.NaN, Float.NaN, Float.NaN};
+		final float[] previousCoords = new float[3];
+		UnaryOperator<VertexConsumer> addVertexData = (consumer1) -> consumer1.setColor(color).setNormal(dir.getStepX(), dir.getStepY(), dir.getStepZ());
+		Function3<Float, Float, Float, VertexConsumer> addVertex =
+			blockFormat ?
+				(x, y, z) ->
+				{
+					return addVertexData.apply(consumer.addVertex(x, y, z).setUv(0, 0).setUv1(0, 0).setUv2(0, 0));
+				} :
+				(x, y, z) ->
+				{
+					addVertexData.apply(consumer.addVertex(x, y, z));
+					if (i.get() > 0)
+					{
+						addVertexData.apply(consumer.addVertex(x, y, z));
+						if (i.get() == 3)
+							addVertexData.apply(consumer.addVertex(firstCoords[0], firstCoords[1], firstCoords[2]));
+					}
+					
+					if (i.get() == 0)
+					{
+						firstCoords[0] = x;
+						firstCoords[1] = y;
+						firstCoords[2] = z;
+					}
+					
+					i.getAndIncrement();
+					
+					return consumer;
+				};
+		switch (dir)
+		{
+			case DOWN:
+				addVertex.apply(x1, y1, z1);
+				addVertex.apply(x2, y1, z1);
+				addVertex.apply(x2, y1, z2);
+				addVertex.apply(x1, y1, z2);
+				break;
+			case UP:
+				addVertex.apply(x1, y2, z1);
+				addVertex.apply(x1, y2, z2);
+				addVertex.apply(x2, y2, z2);
+				addVertex.apply(x2, y2, z1);
+				break;
+			case NORTH:
+				addVertex.apply(x1, y1, z1);
+				addVertex.apply(x1, y2, z1);
+				addVertex.apply(x2, y2, z1);
+				addVertex.apply(x2, y1, z1);
+				break;
+			case SOUTH:
+				addVertex.apply(x1, y1, z2);
+				addVertex.apply(x2, y1, z2);
+				addVertex.apply(x2, y2, z2);
+				addVertex.apply(x1, y2, z2);
+				break;
+			case WEST:
+				addVertex.apply(x1, y1, z1);
+				addVertex.apply(x1, y1, z2);
+				addVertex.apply(x1, y2, z2);
+				addVertex.apply(x1, y2, z1);
+				break;
+			case EAST:
+				addVertex.apply(x2, y1, z1);
+				addVertex.apply(x2, y2, z1);
+				addVertex.apply(x2, y2, z2);
+				addVertex.apply(x2, y1, z2);
+		}
+	}
+	private static void processTrajectoryData(LivingEntity entity, float partialTicks)
+	{
+		TrajectoryProcessor trajectoryProcessor;
+		if (entity.isUsingItem() && entity.getUseItem().getItem() instanceof SubWeaponItem<?> subWeaponItem)
+		{
+			trajectoryProcessor = subWeaponItem.getTrajectory(entity.getUseItem(), entity, partialTicks);
+		}
+		else
+		{
+			ActionWithThrowable throwableAction = EntityAction.getSpecificEntityAction(entity, ActionWithThrowable.class);
+			if (throwableAction != null)
+			{
+				trajectoryProcessor = throwableAction.getTrajectory(entity, partialTicks);
+			}
+			else
+			{
+				trajectoryProcessor = null;
+			}
+		}
+		
+		// trajectories are expensive (ig) to calculate, since it does a collision check in the world a lot of times
+		// paired with this being executed at leas 60 fps, its time to cache some things!!!
+		if (trajectoryProcessor == null)
+		{
+			cachedTrajectoryData = null;
+			return;
+		}
+		
+		if (cachedTrajectoryData == null || !cachedTrajectoryData.getFirst().equals(trajectoryProcessor))
+		{
+			cachedTrajectoryData = Pair.of(trajectoryProcessor, TrajectoryData.create(entity, trajectoryProcessor, partialTicks));
+			return;
+		}
+		
+		TrajectoryData previousData = cachedTrajectoryData.getSecond();
+		Vec3 currentEyePos = entity.getEyePosition(partialTicks).subtract(0, 0.1, 0);
+		Vec3 currentVelocity = trajectoryProcessor.getInitialVelocity(entity, partialTicks);
+		
+		// if the new trajectory has a close starting point or the
+		// velocities are similar (via cosine similarity), do not recalculate the trajectory
+		if (previousData.creationPos().distanceToSqr(currentEyePos) <= 10e-16f &&
+			cosineSimilarity(previousData.creationVelocity(), currentVelocity) > 1f - 10e-7f)
+			return;
+		
+		cachedTrajectoryData = Pair.of(trajectoryProcessor, TrajectoryData.create(currentEyePos, currentVelocity, trajectoryProcessor));
+	}
+	private static double cosineSimilarity(Vec3 vec1, Vec3 vec2)
+	{
+		return vec1.dot(vec2) / Math.sqrt(vec1.dot(vec1) * vec2.dot(vec2));
 	}
 	private static void doActionRendering(RenderingCallback.CallbackData data)
 	{
@@ -733,5 +917,39 @@ public class RendererHandler
 			return;
 		
 		cir.setReturnValue(false);
+	}
+	public record TrajectoryData(List<Vector3f> trajectoryPoints, Vector3f impactPos, float halfMarginUsed,
+	                             Vec3 creationPos,
+	                             Vec3 creationVelocity)
+	{
+		public static TrajectoryData create(LivingEntity entity, TrajectoryProcessor processor, float partialTicks)
+		{
+			return create(entity.getEyePosition(partialTicks).subtract(0, 0.1, 0), processor.getInitialVelocity(entity, partialTicks), processor);
+		}
+		public static TrajectoryData create(Vec3 initialPos, Vec3 initialVelocity, TrajectoryProcessor processor)
+		{
+			float halfMarginUsed = 0.25f;
+			if (processor instanceof TrajectoryProcessor.FragileTrajectoryProcessor processorWithMargin)
+				halfMarginUsed = processorWithMargin.margin() / 2f;
+			
+			ImmutableList.Builder<Vector3f> builder = ImmutableList.builder();
+			int steps = 0;
+			
+			AtomicReference<Vec3> mutablePos = new AtomicReference<>(initialPos);
+			AtomicReference<Vec3> mutableVelocity = new AtomicReference<>(initialVelocity);
+			while (steps < 30)
+			{
+				builder.add(mutablePos.get().toVector3f());
+				boolean ended = processor.process(mutablePos, mutableVelocity);
+				if (ended)
+				{
+					builder.add(mutablePos.get().toVector3f());
+					break;
+				}
+				steps++;
+			}
+			
+			return new TrajectoryData(builder.build(), mutablePos.get().toVector3f(), halfMarginUsed, initialPos, initialVelocity);
+		}
 	}
 }

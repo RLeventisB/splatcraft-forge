@@ -17,7 +17,9 @@ import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings.DataRecord;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.structs.trajectory.TrajectoryProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 {
@@ -40,13 +42,13 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		{
 			return;
 		}
-
+		
 		shootCurlingBomb(stack, level, entity, settings);
 	}
 	private void shootCurlingBomb(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity entity, SubWeaponSettings<CurlingBombDataRecord> settings)
 	{
 		entity.swing(entity.getOffhandItem().equals(stack) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND, false);
-
+		
 		DataRecord data = settings.dataRecord;
 		CurlingBombDataRecord curlingData = settings.subDataRecord;
 		cookProgress = (float) entity.getTicksUsingItem() / (data.holdTime() - 1);
@@ -57,7 +59,7 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		if (!level.isClientSide() && reduceInk(entity, this, inkUsage.consumption(), inkUsage.recoveryCooldown(), false))
 		{
 			CurlingBombEntity proj = AbstractSubWeaponEntity.create(getEntityType(stack), level, entity, stack.copy());
-
+			
 			proj.setCookScale(cookProgress);
 			proj.setInitialFuseTime(curlingData.fuseTime().getValue(cookProgress));
 			proj.setItem(stack);
@@ -77,7 +79,7 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings(stack);
 		int holdTime = settings.dataRecord.holdTime();
 		cookProgress = (float) (entity.getTicksUsingItem()) / holdTime;
-
+		
 		if (entity.getTicksUsingItem() == holdTime)
 		{
 			shootCurlingBomb(stack, level, entity, settings);
@@ -92,6 +94,14 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 	@Override
 	public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity)
 	{
-		return WeaponBaseItem.USE_DURATION;
+		return USE_DURATION;
+	}
+	@Override
+	public TrajectoryProcessor getTrajectory(ItemStack stack, LivingEntity entity, float partialTicks)
+	{
+		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings(stack);
+		CurlingBombDataRecord subData = settings.subDataRecord;
+		
+		return TrajectoryProcessor.ofFragileForcedPitch(entity.level(), subData.travelSpeedRange().getValue(Math.min(cookProgress + partialTicks / settings.dataRecord.holdTime(), 1)), subData.throwAngle(), 0.09f, 0, new Vector3f(1f));
 	}
 }

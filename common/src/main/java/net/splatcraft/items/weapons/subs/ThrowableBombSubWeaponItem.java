@@ -12,7 +12,9 @@ import net.splatcraft.items.weapons.settings.SubWeaponRecords;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.structs.trajectory.TrajectoryProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.ThrowableExplodingSubDataRecord>
 {
@@ -45,5 +47,13 @@ public class ThrowableBombSubWeaponItem extends SubWeaponItem<SubWeaponRecords.T
 		else
 			reduceInk(entity, this, data.inkUsage().consumption(), data.inkUsage().recoveryCooldown(), false);
 		applyCooldown(entity);
+	}
+	@Override
+	public TrajectoryProcessor getTrajectory(ItemStack stack, LivingEntity entity, float partialTicks)
+	{
+		SubWeaponSettings<SubWeaponRecords.ThrowableExplodingSubDataRecord> settings = getSettings(stack);
+		SubWeaponRecords.ThrowableExplodingSubDataRecord subData = settings.subDataRecord;
+
+		return TrajectoryProcessor.ofFragileIgnoreEntities(entity.level(), subData.throwVelocity(), subData.pitchOffset(), 0.09f, subData.throwerImpulse(), new Vector3f(0.94f));
 	}
 }

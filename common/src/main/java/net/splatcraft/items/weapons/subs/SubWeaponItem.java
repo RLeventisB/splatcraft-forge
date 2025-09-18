@@ -32,6 +32,7 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.structs.trajectory.TrajectoryProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,6 +126,7 @@ public abstract class SubWeaponItem<Data extends DynamicDataRecord<Data>> extend
 			player.getCooldowns().addCooldown(this, SUB_WEAPON_ENDLAG);
 		CommonUtils.setSquidDelay(entity, SUB_WEAPON_ENDLAG);
 	}
+	public abstract TrajectoryProcessor getTrajectory(ItemStack stack, LivingEntity entity, float partialTicks);
 	@Override
 	public void weaponUseTick(Level world, LivingEntity entity, ItemStack stack, int remainingUseTicks)
 	{
