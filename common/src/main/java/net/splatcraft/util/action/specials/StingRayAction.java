@@ -76,8 +76,7 @@ public class StingRayAction extends BaseSpecialAction
 		{
 			usageTick = 0;
 		}
-		super.tick(entity);
-		return null;
+		return super.tick(entity);
 	}
 	public int getUsageTick()
 	{

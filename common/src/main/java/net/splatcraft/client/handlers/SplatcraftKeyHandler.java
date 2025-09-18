@@ -92,26 +92,26 @@ public class SplatcraftKeyHandler
 	public static void onClientTick(Minecraft mc)
 	{
 		Player player = mc.player;
-		
+
 		if (player == null || player.isSpectator())
 			return;
-		
+
 		SquidInfo info = Components.SQUID_INFO.get(player);
-		
+
 		if (info == null)
 			return;
-		
+
 		tickKeys(player, mc);
-		
+
 		ToggleableKey lastPressedKey = getLastPressedKey();
-		
+
 		tickSquidAndCharge(player, info, lastPressedKey);
-		
+
 		tickSubWeapon(mc, player, lastPressedKey, info);
-		
+
 		if (SPECIAL_WEAPON_KEYBIND.pressed && !EntityStoredCharge.hasCharge(player))
 			tickSpecialWeapon(player);
-		
+
 		tickAutoSquidDelay(player);
 	}
 	private static @Nullable ToggleableKey getLastPressedKey()
@@ -127,15 +127,22 @@ public class SplatcraftKeyHandler
 			player.displayClientMessage(Component.translatable("status.no_special_provider").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		if (WeaponHandler.getWeaponHand(player, Predicates.alwaysTrue()).isEmpty())
 		{
 			player.displayClientMessage(Component.translatable("status.need_weapon").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		SpecialProviderItem providerItem = (SpecialProviderItem) providerPair.getFirst().getItem();
 		SplatcraftComponents.SpecialProviderData providerData = providerItem.getData(providerPair.getFirst());
+
+		if (providerData.hasDelay())
+		{
+			player.displayClientMessage(Component.translatable("status.cant_use").withStyle(ChatFormatting.RED), true);
+			return;
+		}
+
 		Pair<ItemStack, Integer> weaponPair = null;
 		if (providerData.testWeapon(inventory.getSelected()))
 		{
@@ -150,26 +157,26 @@ public class SplatcraftKeyHandler
 			player.displayClientMessage(Component.translatable("status.provider_wrong_weapon").withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		
+
 		SplatcraftPacketHandler.sendToServer(new RequestSpecialUsageDataPacket(weaponPair.getSecond(), providerPair.getSecond()));
 	}
 	private static void tickSubWeapon(Minecraft mc, Player player, ToggleableKey oldest, SquidInfo info)
 	{
 		if (SUB_WEAPON_KEYBIND.pressed)
 			queuedSubWeapon = true;
-		
+
 		if (EntityAction.hasEntityActionAnd(player, EntityAction::preventWeaponUse) ||
 			CommonUtils.anyWeaponOnCooldown(player) ||
 			ShootingHandler.isDoingShootingAction(player) ||
 			EntityStoredCharge.hasCharge(player)) // dont allow sub code to execute if the player has a charge or else everything breaks
 			return;
-		
+
 		Inventory inventory = player.getInventory();
-		
+
 		if (SUB_WEAPON_KEYBIND.equals(oldest))
 		{
 			Pair<ItemStack, Integer> sub = CommonUtils.getStackAndIndexInInventory(player, itemStack -> itemStack.getItem() instanceof SubWeaponItem);
-			
+
 			if (sub.getSecond() == -1 || (info.isSquid() && !hasEnoughSpaceToTransformBack(player)))
 			{
 				player.displayClientMessage(Component.translatable("status.cant_use"), true);
@@ -182,14 +189,14 @@ public class SplatcraftKeyHandler
 					{
 						slot = sub.getSecond();
 						SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
-						
+
 						ItemStack stack = player.getOffhandItem();
 						player.setItemInHand(InteractionHand.OFF_HAND, inventory.getItem(slot));
 						inventory.setItem(slot, stack);
 						player.releaseUsingItem();
 					}
 					else if (!usingSubWeaponHotkey) slot = -1;
-					
+
 					usingSubWeaponHotkey = true;
 					queuedSubWeapon = false;
 					startUsingItemInHand(InteractionHand.OFF_HAND);
@@ -202,14 +209,14 @@ public class SplatcraftKeyHandler
 			{
 				mc.gameMode.releaseUsingItem(player);
 			}
-			
+
 			if (slot != -1)
 			{
 				ItemStack stack = player.getOffhandItem();
 				player.setItemInHand(InteractionHand.OFF_HAND, inventory.getItem(slot));
 				inventory.setItem(slot, stack);
 				player.releaseUsingItem();
-				
+
 				SplatcraftPacketHandler.sendToServer(new SwapSlotWithOffhandPacket(slot, false));
 				usingSubWeaponHotkey = false;
 				squidAndSubDelay = 5;
@@ -238,7 +245,7 @@ public class SplatcraftKeyHandler
 			}
 			return;
 		}
-		
+
 		boolean doingActionThatLeavesSquidMode = SHOOT_KEYBIND.equals(oldest) || SUB_WEAPON_KEYBIND.equals(oldest) || SPECIAL_WEAPON_KEYBIND.equals(oldest);
 		if (info.isSquid())
 		{
@@ -252,13 +259,13 @@ public class SplatcraftKeyHandler
 					if (stack.getItem() instanceof IChargeableWeapon chargeableWeapon)
 						chargeableWeapon.setCharge(stack, 0f);
 				}
-				
+
 				SplatcraftPacketHandler.sendToServer(new VoidedChargePacket());
 			}
-			
+
 			if (!hasEnoughSpaceToTransformBack(entity))
 				return;
-			
+
 			if (EntityStoredCharge.hasCharge(entity))
 			{
 				if (SQUID_KEYBIND.pressed)
@@ -275,11 +282,11 @@ public class SplatcraftKeyHandler
 			if (EntityAction.hasEntityActionAnd(entity, v -> !v.isCancellable(entity)) ||
 				CommonUtils.anyWeaponOnCooldown(entity))
 				return;
-			
+
 			if (pressedSquidKeyWhileHoldingChargeable(entity))
 			{
 				SQUID_KEYBIND.active = true;
-				
+
 				ClientUtils.setSquid(entity, true, true);
 			}
 			else
@@ -305,7 +312,7 @@ public class SplatcraftKeyHandler
 				boolean isDoingAction = WeaponHandler.getUsingWeaponHand(player).isPresent() || EntityAction.hasEntityActionAnd(player, action -> !action.isCancellable(player));
 				if (isDoingAction && squidAndSubDelay == 1 && !pressedSquidKeyWhileHoldingChargeable(player))
 					return;
-				
+
 				squidAndSubDelay--;
 			}
 		}
@@ -314,18 +321,18 @@ public class SplatcraftKeyHandler
 	private static void tickKeys(Player player, Minecraft mc)
 	{
 		boolean canHold = canHoldKeys(mc);
-		
+
 		SUB_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SUB_WEAPON_KEYBIND, squidAndSubDelay, !pressState.contains(SHOOT_KEYBIND) &&
 			!player.isUsingItem());
-		
+
 		SHOOT_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SHOOT_KEYBIND, squidAndSubDelay, WeaponHandler.getUsingWeaponHand(player).isEmpty());
-		
+
 		boolean forcedHold = EntityAction.hasSpecificEntityActionAnd(player, BaseSpecialAction::setSquidKeyToHold, BaseSpecialAction.class);
 		SQUID_KEYBIND.tick(forcedHold ? KeyMode.HOLD : SplatcraftConfig.get("splatcraft.squidKeyMode"), canHold);
 		updatePressState(SQUID_KEYBIND, 0);
-		
+
 		SPECIAL_WEAPON_KEYBIND.tick(KeyMode.HOLD, canHold);
 		updatePressState(SPECIAL_WEAPON_KEYBIND, 0);
 	}
@@ -384,7 +391,7 @@ public class SplatcraftKeyHandler
 							{
 								actionresulttype = mc.gameMode.interact(mc.player, entity, hand);
 							}
-							
+
 							if (actionresulttype.consumesAction())
 							{
 								if (actionresulttype.shouldSwing())
@@ -394,7 +401,7 @@ public class SplatcraftKeyHandler
 										mc.player.swing(hand);
 									}
 								}
-								
+
 								return;
 							}
 							break;
@@ -415,22 +422,22 @@ public class SplatcraftKeyHandler
 										mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 									}
 								}
-								
+
 								return;
 							}
-							
+
 							if (actionresulttype1 == InteractionResult.FAIL)
 							{
 								return;
 							}
 					}
 				}
-				
+
 				if (itemstack.isEmpty() && (mc.hitResult == null || mc.hitResult.getType() == HitResult.Type.MISS))
 				{
 					CommonUtils.doForgeEmptyClickEvent(mc.player, hand);
 				}
-				
+
 				if (!itemstack.isEmpty())
 				{
 					InteractionResult actionresulttype2 = mc.gameMode.useItem(mc.player, hand);
@@ -440,7 +447,7 @@ public class SplatcraftKeyHandler
 						{
 							mc.player.swing(hand);
 						}
-						
+
 						mc.gameRenderer.itemInHandRenderer.itemUsed(hand);
 					}
 				}
@@ -478,10 +485,10 @@ public class SplatcraftKeyHandler
 			boolean isKeyDown = key.isDown() && canHold;
 			pressed = isKeyDown && !previousKeyDown;
 			released = !isKeyDown && previousKeyDown;
-			
+
 			if (!tickMode)
 				return;
-			
+
 			switch (mode)
 			{
 				case HOLD -> active = isKeyDown;

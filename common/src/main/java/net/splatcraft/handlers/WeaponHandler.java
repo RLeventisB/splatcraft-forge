@@ -150,7 +150,7 @@ public class WeaponHandler
 		if (action == null)
 			return null;
 		
-		ActionEndResult endResult = ActionEndResult.dontEnd(action);
+		ActionEndResult endResult = null;
 		
 		if (action.getTime() == action.getMaxTime())
 			action.onStart(player);
@@ -160,28 +160,31 @@ public class WeaponHandler
 			if (!endResult.tickAfter())
 				return endResult;
 		}
-		action.tick(player);
+		endResult = ActionEndResult.merge(action.tick(player), endResult);
 		player.setSprinting(false);
 		
-		if (action.reversedTime())
+		if (endResult.tickAfter())
 		{
-			if (action.getTime() >= action.getMaxTime())
+			if (action.reversedTime())
 			{
-				endResult = action.canEnd(player, EntityAction.EndType.TIME);
-				if (!endResult.tickAfter())
-					return endResult;
+				if (action.getTime() >= action.getMaxTime())
+				{
+					endResult = ActionEndResult.merge(action.canEnd(player, EntityAction.EndType.TIME), endResult);
+					if (!endResult.tickAfter())
+						return endResult;
+				}
+				action.setTime(action.getTime() + 1);
 			}
-			action.setTime(action.getTime() + 1);
-		}
-		else
-		{
-			if (action.getTime() <= 1)
+			else
 			{
-				endResult = action.canEnd(player, EntityAction.EndType.TIME);
-				if (!endResult.tickAfter())
-					return endResult;
+				if (action.getTime() <= 1)
+				{
+					endResult = ActionEndResult.merge(action.canEnd(player, EntityAction.EndType.TIME), endResult);
+					if (!endResult.tickAfter())
+						return endResult;
+				}
+				action.setTime(action.getTime() - 1);
 			}
-			action.setTime(action.getTime() - 1);
 		}
 		
 		return endResult;

@@ -272,22 +272,22 @@ public class MatchMixins
 			// if the client player, for some reason, renders their own name tag, or isnt playing, then do not cancel rendering
 			if (entity == clientPlayer || !Components.PLAYER_INFO.hasAnd(clientPlayer, PlayerInfo::isPlaying))
 				return;
-			
+
 			InkColor clientColor = ColorUtils.getEntityColor(clientPlayer);
 			InkColor entityColor = ColorUtils.getEntityColor(entity);
-			
+
 			// if the player isnt in a match or has the same color, do not cancel rendering
 			if (!Components.PLAYER_INFO.hasAnd(entity, PlayerInfo::isPlaying) || clientColor.equals(entityColor))
 				return;
-			
+
 			// if the player killed the client player, do not cancel rendering
 			if (ClientUtils.killCamData != null && entity.getUUID().equals(ClientUtils.killCamData.getFirst()))
 				return;
-			
+
 			// if the player is dead (in a match), do not cancel rendering
 			if (Components.PLAYER_INFO.hasAnd(entity, PlayerInfo::isMatchRespawning))
 				return;
-			
+
 			ci.cancel();
 		}
 		@Inject(method = "renderHand", at = @At(value = "HEAD"), cancellable = true)
@@ -322,7 +322,7 @@ public class MatchMixins
 		{
 			if (!(entity instanceof LivingEntity living))
 				return;
-			
+
 			RendererHandler.processHidingEntity(cir, living);
 		}
 		@SuppressWarnings("UnresolvedLocalCapture")
@@ -340,30 +340,30 @@ public class MatchMixins
 		{
 			LocalPlayer clientPlayer = ClientUtils.getClientPlayer();
 			StingRayAction stingRayAction = EntityAction.getSpecificEntityAction(clientPlayer, StingRayAction.class);
-			
-			if (stingRayAction == null || stingRayAction.getUsageTick() == 0)
+
+			if (stingRayAction == null)
 				return;
-			
+
 			if (ColorUtils.getEntityColor(clientPlayer).equals(ColorUtils.getEntityColor(entity)))
 				return;
-			
+
 			float distanceProgress = entity.distanceTo(clientPlayer) / stingRayAction.getRevealRadius();
 			float silhouetteStrength = Math.max(0, Math.max(0, 1f - (stingRayAction.getUsageTick() + partialTicks) / 20f) - (Math.max(0, distanceProgress - 1f) * 30f));
-			
+
 			if (silhouetteStrength == 0)
 				return;
-			
+
 			EntityRenderer<T> renderer = (EntityRenderer<T>) (Object) this;
 			int i = getOverlayCoords(entity, getWhiteOverlayProgress(entity, partialTicks));
-			
+
 			RenderType silhouetteRenderType = SplatcraftRenderTypes.entitySilhouette(renderer.getTextureLocation(entity));
 			MultiBufferSource.BufferSource bufferSource = ClientUtils.getClient().renderBuffers().bufferSource();
-			
+
 			SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource silhouetteBufferSource = new SplatcraftRenderTypes.WrappedSilhouetteMultiBufferSource(bufferSource, silhouetteStrength);
-			
+
 			model.renderToBuffer(poseStack, bufferSource.getBuffer(silhouetteRenderType), packedLight, i,
 				FastColor.ARGB32.color((int) (255 * silhouetteStrength), -1));
-			
+
 			if (!entity.isSpectator())
 			{
 				for (RenderLayer<LivingEntity, EntityModel<LivingEntity>> renderlayer : layers)
@@ -371,7 +371,7 @@ public class MatchMixins
 					renderlayer.render(poseStack, silhouetteBufferSource, packedLight, entity, f5, f4, partialTicks, f9, f2, f6);
 				}
 			}
-			
+
 			bufferSource.endBatch(silhouetteRenderType);
 		}
 	}
@@ -420,9 +420,9 @@ public class MatchMixins
 									cameraPositions.floorStart(), cameraPositions.birdsEye().withYaw(14.0f),
 									1 - 1 / (1 + 3 * secondsAfterInit), Mth.sqrt(secondsAfterInit)
 								);
-								
+
 								finalPos.applyTransformations(this::setPosition, this::setRotation);
-								
+
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
 							}
@@ -437,7 +437,7 @@ public class MatchMixins
 									int i = (int) ((secondsAfterInit - 5f) / 7f * cameraPositions.spawnPads().size());
 									ClientUtils.CameraPosition lookData = cameraPositions.spawnPads().get(i);
 									lookData.applyTransformations(this::setPosition, this::setRotation);
-									
+
 									splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 									return;
 								}
@@ -454,7 +454,7 @@ public class MatchMixins
 									// Mth.catmullrom(delta, -1, 0, 1, 0)
 									(delta + delta * delta - delta * delta * delta));
 								finalPos.applyTransformations(this::setPosition, this::setRotation);
-								
+
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 								return;
 							}
@@ -467,17 +467,17 @@ public class MatchMixins
 							{
 								float killProgress = 1f - Math.max(info.getMatchRespawnTimeLeft() - 55 - tickDelta, 0) / 5f;
 								Vector2f killCamRotData = killCamData.getSecond();
-								
+
 								ClientUtils.CameraPosition killCam = new ClientUtils.CameraPosition(
 									killerPlayer.getEyePosition(tickDelta),
 									killCamRotData.x,
 									killCamRotData.y);
-								
+
 								ClientUtils.CameraPosition finalPos = ClientUtils.CameraPosition.lerp(
 									ClientUtils.CameraPosition.from(player), killCam,
 									killProgress);
 								finalPos.applyTransformations(this::setPosition, this::setRotation);
-								
+
 								move(-getMaxZoom(4.0F * killProgress), 0.0F, 0.0F);
 								splatcraft$doCancel(ci, area, focusedEntity, tickDelta);
 							}

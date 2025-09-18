@@ -108,7 +108,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 	public void onStart(LivingEntity entity)
 	{
 		entity.level().playSound(null, entity, SplatcraftSounds.inkjetStart, SoundSource.PLAYERS, 1f, 1f);
-		
+
 		super.onStart(entity);
 	}
 	@Override
@@ -116,13 +116,13 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 	{
 		if (CommonUtils.isSquid(entity))
 			return ActionEndResult.dontEnd(this);
-		
+
 		if (Components.WEAPON_INFO.getOrCreate(entity).hasHigherStartup() && shotCooldown <= 0 && shotCooldown > -8)
 		{
 			shotCooldown = -8;
 			Components.WEAPON_INFO.get(entity).resetHigherStartup();
 		}
-		
+
 		if (entity.isUsingItem() && !CommonUtils.isSquid(entity))
 		{
 			queuedShotTime = 3;
@@ -131,7 +131,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		{
 			queuedBoostTime = 3;
 		}
-		
+
 		entity.resetFallDistance();
 		entity.setYBodyRot(entity.getVisualRotationYInDegrees());
 		doJetpackPhysics(entity);
@@ -140,10 +140,10 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 			spawnDroplets(entity);
 			SplatcraftPacketHandler.sendToServer(new UpdateJumpInputPacket(entity));
 		}
-		
+
 		{
 			float extraTime = tickShotCooldown();
-			
+
 			if (queuedShotTime > 0)
 			{
 				if (shotCooldown == 0)
@@ -151,18 +151,17 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 				else
 					queuedShotTime--;
 			}
-			
+
 			tickBoost(entity);
 		}
-		
+
 		if (getTime() <= 40 && !didBreakSound)
 		{
 			entity.level().playSound(null, entity, SplatcraftSounds.inkjetBreak, SoundSource.PLAYERS, 1f, 1f);
 			entity.level().playSound(null, entity, SplatcraftSounds.inkjetCounter, SoundSource.PLAYERS, 0.7f, 1f);
 			didBreakSound = true;
 		}
-		super.tick(entity);
-		return ActionEndResult.dontEnd(this);
+		return super.tick(entity);
 	}
 	private void spawnDroplets(LivingEntity entity)
 	{
@@ -183,7 +182,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		double impulseX = entity.getDeltaMovement().x;
 		double impulseY = entity.getDeltaMovement().y;
 		double impulseZ = entity.getDeltaMovement().z;
-		
+
 		if (entity.xxa != 0 || entity.zza != 0)
 		{
 			float sidewaysSpeed = Math.signum(entity.xxa) * mobility;
@@ -192,7 +191,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 			impulseX += rotatedImpulse.x;
 			impulseZ += rotatedImpulse.y;
 		}
-		
+
 		float maxDistance = specialData.thrustData().getMaxKey();
 		Vec3 startPoint = entity.position().add(entity.getDeltaMovement().scale(3f));
 		Optional<Float> distanceToFloor = InkBlockUtils.getDistanceToFloor(startPoint, entity.level(), maxDistance, entity);
@@ -200,16 +199,16 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		impulseY += distanceToFloor
 			.map(distance -> specialData.thrustData().getValue(distance))
 			.orElseGet(() -> specialData.thrustData().getMaxValue());
-		
+
 		Vec3 paintPos = startPoint.add(0, -yDepth + 0.01, 0);
 		InkExplosion.createInkExplosion(entity, paintPos, specialData.exhaustPaint(), RangedValueCollection.EMPTY, InkBlockUtils.getInkType(entity), ItemStack.EMPTY);
-		
+
 		for (Entity collidedEntity : entity.level().getEntities(entity, AABB.ofSize(entity.position().add(0, -yDepth / 2, 0), specialData.exhaustRange(), yDepth, specialData.exhaustRange())))
 		{
 			if (InkDamageUtils.canDamage(collidedEntity, entity))
 				InkDamageUtils.doSplatDamage(collidedEntity, specialData.exhaustDamage(), entity, ItemStack.EMPTY, AttackId.NONE);
 		}
-		
+
 		double horizontalMagnitudeSquared = impulseX * impulseX + impulseZ * impulseZ;
 		float mobilitySquared = Mth.square(specialData.maxMobility());
 		if (horizontalMagnitudeSquared > mobilitySquared)
@@ -218,7 +217,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 			impulseX *= penalty;
 			impulseZ *= penalty;
 		}
-		
+
 		entity.setDeltaMovement(impulseX, impulseY, impulseZ);
 	}
 	private void doBoost(LivingEntity entity)
@@ -228,7 +227,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		CommonUtils.setSquidDelay(entity, 5f);
 		boostCooldown = specialData.impulseCooldown();
 		queuedBoostTime = 0;
-		
+
 		entity.level().playSound(null, entity, SplatcraftSounds.inkjetBoost, SoundSource.PLAYERS, 1f, 1f);
 	}
 	private void doShot(LivingEntity entity, float extraTime)
@@ -240,16 +239,16 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 			specialData.projectile().size(),
 			DamageCalculator.basic(specialData.projectile()));
 		proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), 0f, specialData.projectileSpeed(), 0f);
-		
+
 		proj.setCommonProjectileStats(specialData.projectile());
 		proj.explodes = true;
 		proj.explodesOnExpire = false;
 		proj.setProjectileType(InkProjectileEntity.Types.BLASTER);
-		
+
 		proj.setAttackId(AttackId.registerAttack().countProjectile());
 		proj.addExtraData(new ExtraSaveData.ExplosionExtraData(specialData.blast()));
 		proj.addExtraData(new ExtraSaveData.ImpactSoundExtraData(SplatcraftSounds.inkjetShotExplosion));
-		
+
 		entity.level().playSound(null, entity, SplatcraftSounds.inkjetShot, SoundSource.PLAYERS, 1f, 1f);
 		entity.level().addFreshEntity(proj);
 		proj.tick(extraTime);
@@ -303,7 +302,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 	{
 		if (CommonUtils.isSquid(entity))
 			return Optional.empty();
-		
+
 		return Optional.of(0f);
 	}
 	@Override
@@ -314,12 +313,12 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 			SplatcraftPacketHandler.sendToServer(new UpdateJumpInputPacket());
 			return ActionEndResult.dontEnd(this);
 		}
-		
+
 		if (endType == EndType.CANCELLED)
 			return ActionEndResult.dontEnd(this);
-		
+
 		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkjetReturn, SoundSource.PLAYERS, 1f, 1f);
-		
+
 		return ActionEndResult.dontEndWithSync(new SuperJumpCommand.SuperJump(entity.position(),
 			startPos,
 			0,
@@ -339,13 +338,13 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		InkColor entityColor = ColorUtils.getEntityColor(entity);
 		if (entityColor.isInvalid())
 			return;
-		
+
 		int color = ColorUtils.makeBrighter(entityColor);
 		final float size = 0.4f;
-		
+
 		VertexConsumer consumer = provider.getBuffer(RenderType.armorCutoutNoCull(RECALL_ICON_TEXTURE));
 		Vector3f quadCenter = startPos.toVector3f().add(0, 0.5f, 0).sub(camera.getPosition().toVector3f());
-		
+
 		consumer.addVertex((new Vector3f(size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 0).setUv1(0, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
 		consumer.addVertex((new Vector3f(size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 1).setUv1(0, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
 		consumer.addVertex((new Vector3f(-size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 1).setUv1(16, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);

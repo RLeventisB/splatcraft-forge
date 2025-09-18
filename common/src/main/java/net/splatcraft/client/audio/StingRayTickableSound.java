@@ -12,6 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.registries.SplatcraftSounds;
+import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -26,7 +27,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 		super(SplatcraftSounds.stingRayStart.getLocation(), SoundSource.PLAYERS, beam.getRandom());
 		repeat = true;
 		repeatDelay = 0;
-		
+
 		volume = 0.4f;
 		x = beam.getX();
 		y = beam.getY();
@@ -44,11 +45,11 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 		if (beam != null && beam.isAlive())
 		{
 			updateSound();
-			
+
 			try
 			{
 				Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition();
-				Vec3 closestRelativePoint = StingRayBeamEntity.getClosestPoint(beam.getLookAngle(), cameraPos.subtract(beam.position()));
+				Vec3 closestRelativePoint = CommonUtils.getClosestPoint(beam.getLookAngle(), cameraPos.subtract(beam.position()));
 				x = closestRelativePoint.x + cameraPos.x;
 				y = closestRelativePoint.y + cameraPos.y;
 				z = closestRelativePoint.z + cameraPos.z;
@@ -66,7 +67,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 	private void updateSound()
 	{
 		int state = beam.getState();
-		
+
 		if (beam.getOwner() instanceof LivingEntity entity)
 		{
 			EntityAction.getSpecificEntityActionOptional(entity, StingRayAction.class).ifPresent(action ->
@@ -78,7 +79,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 				}
 			});
 		}
-		
+
 		if (state != oldState)
 		{
 			try
@@ -86,7 +87,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 				SoundManager soundManager = Minecraft.getInstance().getSoundManager();
 				if (soundManager == null)
 					return;
-				
+
 				id = switch (state)
 				{
 					case 0 -> SplatcraftSounds.stingRayStart.getLocation();
@@ -97,9 +98,9 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 				WeighedSoundEvents weightedSoundSet = soundManager.getSoundEvent(id);
 				if (weightedSoundSet == null)
 					return;
-				
+
 				sound = weightedSoundSet.getSound(random);
-				
+
 				// todo: uhh maybe we could've played 3 sounds at the same time and activate them accordingly
 				// because i think this leaks memory since its my second time doing openal things (and i hated them
 				// back im nonogame)
@@ -107,10 +108,10 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 			}
 			catch (Exception ignored)
 			{
-			
+
 			}
 		}
-		
+
 		oldState = state;
 	}
 	private void reassignSound(SoundManager soundManager)
@@ -121,7 +122,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 		ChannelAccess.ChannelHandle old = soundSystem.instanceToChannel.put(this, sourceManager);
 		if (old != null)
 			old.execute(Channel::stop);
-		
+
 		if (sound.shouldStream())
 		{
 			soundSystem.soundBuffers.getCompleteBuffer(sound.getPath()).thenAccept((soundx) ->

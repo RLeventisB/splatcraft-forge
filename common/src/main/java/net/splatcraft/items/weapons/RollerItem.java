@@ -432,7 +432,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 						}
 					);
 				}
-				return null;
+				return ActionEndResult.dontEnd(this);
 			}
 			
 			hasAttacked = true;

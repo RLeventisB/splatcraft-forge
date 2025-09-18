@@ -94,54 +94,14 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		setOwner(owner);
 		setStartup(startup);
 		setShockwaveDelay(shockwaveDelay);
-		
+
 		setXRot(owner.getXRot());
 		setYRot(owner.getYHeadRot());
 		updateRotation();
-		
+
 		updatePosForward(owner);
 		refreshDimensions();
 		reapplyPosition();
-	}
-	// this comes from https://stackoverflow.com/questions/34952680/distance-between-a-ray-and-a-bound-box
-	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who had access
-	// to better search engines than now i suppose because i cant find this code anywhere else) comes to save
-	// me from eternal torment
-	public static Pair<Double, Vec3> getDistance(Vec3 rayDirection, AABB relativeBox)
-	{
-		double tx1 = relativeBox.minX / rayDirection.x;
-		double tx2 = relativeBox.maxX / rayDirection.x;
-		double ty1 = relativeBox.minY / rayDirection.y;
-		double ty2 = relativeBox.maxY / rayDirection.y;
-		double tz1 = relativeBox.minZ / rayDirection.z;
-		double tz2 = relativeBox.maxZ / rayDirection.z;
-		
-		double p1 = Math.max(0.0, Math.max(tx1, Math.min(ty1, tz1)));
-		double p2 = Math.max(0.0, Math.min(tx2, Math.max(ty2, tz2)));
-		
-		double x = Mth.clamp((rayDirection.x * (p1 + p2)) / 2, relativeBox.minX, relativeBox.maxX);
-		double y = Mth.clamp((rayDirection.y * (p1 + p2)) / 2, relativeBox.minY, relativeBox.maxY);
-		double z = Mth.clamp((rayDirection.z * (p1 + p2)) / 2, relativeBox.minZ, relativeBox.maxZ);
-		
-		Vec3 impactPos = new Vec3(x, y, z);
-		double t = Math.max(0.0, rayDirection.dot(impactPos) / rayDirection.lengthSqr());
-		x = rayDirection.x * t - x;
-		y = rayDirection.y * t - y;
-		z = rayDirection.z * t - z;
-		return Pair.of(Math.sqrt(x * x + y * y + z * z), impactPos);
-	}
-	public static Vec3 getClosestPoint(Vec3 rayDirection, Vec3 relativePoint)
-	{
-		double x = relativePoint.x;
-		double y = relativePoint.y;
-		double z = relativePoint.z;
-		
-		double t = Math.max(0.0, rayDirection.dot(relativePoint) / rayDirection.lengthSqr());
-		
-		x = rayDirection.x * t - x;
-		y = rayDirection.y * t - y;
-		z = rayDirection.z * t - z;
-		return new Vec3(x, y, z);
 	}
 	@OnlyIn(Dist.CLIENT)
 	public static void playSound(StingRayBeamEntity beam)
@@ -155,22 +115,22 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			playSound(this);
 		}
-		
+
 		super.tick();
-		
+
 		updateRotation();
-		
+
 		if (!(getOwner() instanceof LivingEntity owner) || !owner.isAlive())
 		{
 			discard();
 			return;
 		}
-		
+
 		if (!owner.isUsingItem() || !EntityAction.hasSpecificEntityAction(owner, StingRayAction.class) || CommonUtils.isSquid(owner))
 		{
 			markOwnerStopShooting();
 		}
-		
+
 		int lifespan = getLifespan();
 		if (hasOwnerStopShooting())
 		{
@@ -182,13 +142,13 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			setLifespan(lifespan + 1);
 			return;
 		}
-		
+
 		tickRay(owner, lifespan);
 	}
 	public void tickRay(LivingEntity owner, int lifespan)
 	{
 		Vec3 forward = updatePosForward(owner);
-		
+
 		if (isBeamActive())
 		{
 			if (level().isClientSide)
@@ -209,7 +169,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				doCollisions(forward);
 			}
 		}
-		
+
 		setLifespan(lifespan + 1);
 	}
 	public float paint(Vec3 forward)
@@ -218,7 +178,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		BlockHitResult result = level().clip(context);
 		if (result.getType() == HitResult.Type.MISS)
 			return Float.POSITIVE_INFINITY;
-		
+
 		InkExplosion.createInkExplosion(this, InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), null), paintingRadius, inkType, ItemStack.EMPTY);
 		return (float) position().distanceToSqr(result.getLocation());
 	}
@@ -231,45 +191,26 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	public void doCollisions(Vec3 forward)
 	{
 		AtomicBoolean canDoSound = new AtomicBoolean(getLifespan() % 4 == 0);
+		AABB stingRayHitArea = CommonUtils.createInfiniteAABBFor(position(), forward, getRayWidth());
+		// todo: maybe put a limit to this so we dont scan every single chunk
 		for (Entity entity : level().getEntities().getAll())
 		{
 			if (!canHitEntity(entity))
 				continue;
-			
+
+			if (!stingRayHitArea.intersects(entity.getBoundingBox()))
+				continue;
+
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Vec3[] boxPoints = new Vec3[] {
-				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.minZ),
-				new Vec3(relativeBox.minX, relativeBox.minY, relativeBox.maxZ),
-				new Vec3(relativeBox.minX, relativeBox.maxY, relativeBox.minZ),
-				new Vec3(relativeBox.minX, relativeBox.maxY, relativeBox.maxZ),
-				new Vec3(relativeBox.maxX, relativeBox.minY, relativeBox.minZ),
-				new Vec3(relativeBox.maxX, relativeBox.minY, relativeBox.maxZ),
-				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.minZ),
-				new Vec3(relativeBox.maxX, relativeBox.maxY, relativeBox.maxZ),
-			};
-			
-			boolean isOnForwardPlane = false;
-			for (Vec3 point : boxPoints)
+			Pair<Double, Vec3> impactData = CommonUtils.getDistance(forward, relativeBox);
+
+			if (impactData.getFirst() < getRayWidth())
 			{
-				if (forward.dot(point) >= 0)
-				{
-					isOnForwardPlane = true;
-					break;
-				}
+				hit(entity, rayDamage, canDoSound, impactData.getSecond());
 			}
-			
-			if (isOnForwardPlane)
+			else if (hasStartedToShowTheHellspawn() && impactData.getFirst() < getShockwaveWidth())
 			{
-				Pair<Double, Vec3> impactData = getDistance(forward, relativeBox);
-				
-				if (impactData.getFirst() < getRayWidth())
-				{
-					hit(entity, rayDamage, canDoSound, impactData.getSecond());
-				}
-				else if (hasStartedToShowTheHellspawn() && impactData.getFirst() < getShockwaveWidth())
-				{
-					hit(entity, shockwaveDamage, canDoSound, impactData.getSecond());
-				}
+				hit(entity, shockwaveDamage, canDoSound, impactData.getSecond());
 			}
 		}
 	}
@@ -279,11 +220,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-		
+
 		if (target instanceof LivingEntity livingTarget)
 		{
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
-			
+
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
 			if (!level().isClientSide && didDamage)
 			{
@@ -326,10 +267,10 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-		
+
 		xRotO = getXRot();
 		yRotO = getYRot();
-		
+
 		float finalTurningValue = hasStartedToShowTheHellspawn() ? getTurningValueWithShockwave() : getTurningValue();
 		setXRot(Mth.rotLerp(finalTurningValue, getXRot(), owner.getXRot()));
 		setYRot(Mth.rotLerp(finalTurningValue, getYRot(), owner.getYRot()));

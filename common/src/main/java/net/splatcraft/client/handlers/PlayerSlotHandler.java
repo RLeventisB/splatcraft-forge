@@ -39,7 +39,7 @@ public class PlayerSlotHandler
 			queuedSlot = Optional.empty();
 		}
 
-		if (slot != -1)
+		if (slot != -1 && player != null)
 		{
 			player.getInventory().selected = slot;
 		}
