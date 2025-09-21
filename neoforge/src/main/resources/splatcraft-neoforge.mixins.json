@@ -7,6 +7,7 @@
     "mixins": [
         "ForgeDummyInjections$BlockEntityMixin",
         "ForgeDummyInjections$BlockMixin",
+        "ForgeDummyInjections$EntityExtraDataMixin",
         "ForgeDummyInjections$ItemMixin"
     ],
     "client": [
@@ -16,7 +17,6 @@
         "BlockRenderMixinForge$ChunkRenderDispatcherMixinForge",
         "FabricEventPlacementMixins$ClientMixins",
         "ForgeDummyInjections$ClientBlockMixin",
-        "ForgeDummyInjections$EntityExtraDataMixin",
         "compat.SodiumMixin$AbstractBlockThingMixin",
         "compat.SodiumMixin$BlockRendererMixin",
         "compat.SodiumMixin$ChunkMeshBuilderMixin",

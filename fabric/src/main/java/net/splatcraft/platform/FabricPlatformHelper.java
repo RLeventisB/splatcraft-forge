@@ -274,7 +274,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 		KeyBindingHelper.registerKeyBinding(key);
 	}
 	@Override
-	public <T extends ParticleOptions> void registerParticleFactories(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator)
+	public <T extends ParticleOptions> void registerParticleFactory(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator)
 	{
 		ParticleFactoryRegistry.getInstance().register(type, providerCreator::apply);
 	}

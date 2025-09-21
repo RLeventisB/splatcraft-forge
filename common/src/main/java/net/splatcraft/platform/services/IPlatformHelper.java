@@ -104,7 +104,7 @@ public interface IPlatformHelper extends IEventMap
 	void registerRenderingCallback(RenderingCallback.RenderingStage stage, RenderingCallback callback);
 	void registerReloadListener(PackType packType, PreparableReloadListener reloadListener);
 	void registerKeyMapping(KeyMapping key);
-	<T extends ParticleOptions> void registerParticleFactories(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator);
+	<T extends ParticleOptions> void registerParticleFactory(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator);
 	<T extends BlockEntity> void registerBlockEntityRenderer(@NotNull Supplier<BlockEntityType<T>> type, BlockEntityRendererProvider<T> provider);
 	<T extends Entity> void registerEntityRenderer(@NotNull Supplier<? extends EntityType<? extends T>> type, EntityRendererProvider<T> provider);
 	void registerEntityLayerRenderer(@NotNull ModelLayerLocation location, Supplier<LayerDefinition> layerDefinitionSupplier);

@@ -435,10 +435,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 		);
 	}
 	@Override
-	public <T extends ParticleOptions> void registerParticleFactories(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator)
+	public <T extends ParticleOptions> void registerParticleFactory(ParticleType<T> type, Function<SpriteSet, ParticleProvider<T>> providerCreator)
 	{
 		EventHelper.addToEventSpecificMap(RegisterParticleProvidersEvent.class, type, providerCreator,
-			(registerProviders, blockEntityType, provider) ->
+			(registerProviders, particleType, provider) ->
 				registerProviders.registerSpriteSet(type, provider::apply)
 		);
 	}
@@ -467,7 +467,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attributeBuilder)
 	{
 		EventHelper.addToEventSpecificMap(EntityAttributeCreationEvent.class, type, attributeBuilder,
-			(registerAttributes, entityType, attributeSupplier) -> registerAttributes.put(entityType.get(), attributeSupplier.get().build())
+			(registerAttributes, attributeType, attributeSupplier) -> registerAttributes.put(attributeType.get(), attributeSupplier.get().build())
 		);
 	}
 	@Override

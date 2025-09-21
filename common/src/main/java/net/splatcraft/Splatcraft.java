@@ -38,6 +38,7 @@ public final class Splatcraft
 		SplatcraftEntities.defineModelLayers();
 		SplatcraftKeyHandler.registerBindingsAndEvents();
 		SplatcraftRenderTypes.initialize();
+		SplatcraftParticleTypes.registerParticleFactories();
 		
 		Services.PLATFORM.registerListener(LifecycleEvents.ClientStarted.class, Splatcraft::initClientAfter);
 	}

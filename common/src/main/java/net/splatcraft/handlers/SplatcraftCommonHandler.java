@@ -368,7 +368,7 @@ public class SplatcraftCommonHandler
 					BlockPos spawnPadPos = SuperJumpCommand.getSpawnPadPos(serverPlayer);
 					if (spawnPadPos != null)
 					{
-						player.moveTo(spawnPadPos.getX() + 0.5f, spawnPadPos.getY() + 0.5f, spawnPadPos.getZ() + 0.5);
+						serverPlayer.teleportTo(spawnPadPos.getX() + 0.5f, spawnPadPos.getY() + 0.5f, spawnPadPos.getZ() + 0.5);
 					}
 					sendPacket.set(true);
 				}

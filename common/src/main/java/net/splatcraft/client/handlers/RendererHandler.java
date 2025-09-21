@@ -478,7 +478,7 @@ public class RendererHandler
 		PlayerInfo playerInfo = Components.PLAYER_INFO.get(player);
 		SquidInfo squidInfo = Components.SQUID_INFO.get(player);
 		
-		if ((player.isSpectator() && !playerInfo.isMatchRespawning()) || playerInfo == null || squidInfo == null)
+		if (playerInfo == null || (player.isSpectator() && !playerInfo.isMatchRespawning()) || squidInfo == null)
 		{
 			return;
 		}

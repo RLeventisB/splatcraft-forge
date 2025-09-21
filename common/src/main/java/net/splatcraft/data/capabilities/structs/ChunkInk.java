@@ -198,9 +198,9 @@ public class ChunkInk
 			(buf, entry) ->
 			{
 				// format for the state byte:
-				// if entry is completely empty, state = 0
+				// if entry is completely empty, state = 64 if the block is permanent/static, 0 otherwise
 				// else:
-				// first - sixth bit: state of the face
+				// first - sixth bit: whether the face is painted, with the same order as the Direction enum
 				// seventh bit: whether the block is permanent/static
 				
 				if (!entry.isInkedAny())

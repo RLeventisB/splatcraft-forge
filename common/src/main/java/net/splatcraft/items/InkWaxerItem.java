@@ -35,7 +35,7 @@ public class InkWaxerItem extends Item
 	}
 	public void onBlockStartBreak(BlockPos pos, Level world, Direction face)
 	{
-		if (InkBlockUtils.isInkedAny(world, pos))
+		if (InkBlockUtils.isInked(world, pos, face))
 		{
 			ColorUtils.addInkDestroyParticle(world, pos, InkBlockUtils.getInkInFace(world, pos, face).color());
 			

@@ -100,12 +100,14 @@ public class SplatcraftParticleTypes
 		REGISTRY.register("squid_soul", () -> SQUID_SOUL);
 		REGISTRY.register("ink_terrain", () -> INK_TERRAIN);
 		REGISTRY.register("ink_hit", () -> INK_HIT);
-		
-		Services.PLATFORM.registerParticleFactories(INK_CLOUD, InkCloudParticle.Factory::new);
-		Services.PLATFORM.registerParticleFactories(INK_SPLASH, InkSplashParticle.Factory::new);
-		Services.PLATFORM.registerParticleFactories(INK_EXPLOSION, InkExplosionParticle.Factory::new);
-		Services.PLATFORM.registerParticleFactories(SQUID_SOUL, SquidSoulParticle.Factory::new);
-		Services.PLATFORM.registerParticleFactories(INK_TERRAIN, InkTerrainParticle.Factory::new);
-		Services.PLATFORM.registerParticleFactories(INK_HIT, InkHitParticle.Factory::new);
+	}
+	public static void registerParticleFactories()
+	{
+		Services.PLATFORM.registerParticleFactory(INK_CLOUD, InkCloudParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactory(INK_SPLASH, InkSplashParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactory(INK_EXPLOSION, InkExplosionParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactory(SQUID_SOUL, SquidSoulParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactory(INK_TERRAIN, InkTerrainParticle.Factory::new);
+		Services.PLATFORM.registerParticleFactory(INK_HIT, InkHitParticle.Factory::new);
 	}
 }
