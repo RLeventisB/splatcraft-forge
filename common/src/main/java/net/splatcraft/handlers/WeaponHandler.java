@@ -2,10 +2,14 @@ package net.splatcraft.handlers;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.AbortableIterationConsumer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -18,22 +22,33 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.scores.Scoreboard;
 import net.splatcraft.data.EntitySlot;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.data.capabilities.structs.WeaponInfo;
+import net.splatcraft.entities.IColoredEntity;
+import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.items.weapons.WeaponBaseItem;
+import net.splatcraft.mixin.accessors.LivingEntityAccesor;
+import net.splatcraft.mixin.accessors.ServerPlayerAccesor;
 import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendEnemyInkDamagePacket;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
+import net.splatcraft.network.s2c.UpdateInkOverlayPacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.EntityEvents;
 import net.splatcraft.platform.event.EventResult;
 import net.splatcraft.platform.event.TickEvents;
+import net.splatcraft.registries.SplatcraftDamageTypes;
+import net.splatcraft.registries.SplatcraftGameRules;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.EntityStoredCharge;
+import net.splatcraft.util.InkDamageUtils;
 import net.splatcraft.util.action.ActionEndResult;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.InkColor;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +61,7 @@ public class WeaponHandler
 	private static final Map<LivingEntity, Vec3> lastGroundedPos = new LinkedHashMap<>();
 	private static final Map<LivingEntity, Short> weaponUseTime = new LinkedHashMap<>();
 	private static final Map<LivingEntity, Short> movedQuicklyDisable = new LinkedHashMap<>();
+	public static Map<Entity, AccumulatedDamageData> accumulatedDamageData = new HashMap<>();
 	public static void registerEvents()
 	{
 		Services.PLATFORM.registerListener(EntityEvents.LivingDeath.class, WeaponHandler::onDeath);
@@ -84,22 +100,39 @@ public class WeaponHandler
 			tickPreviousPosMap(entity);
 			return AbortableIterationConsumer.Continuation.CONTINUE;
 		}));
-		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, (level) -> level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
+		Services.PLATFORM.registerListener(TickEvents.ServerLevelAfter.class, (level) ->
 		{
-			if (Components.WEAPON_INFO.has(entity))
+			level.getEntities().getAll().forEach(entity ->
 			{
-				Components.WEAPON_INFO.update(entity, WeaponInfo::reduceSquidAnimationTick);
-			}
-			if (!Components.ENTITY_INFO.has(entity))
+				boolean alternativeInkHealth = SplatcraftGameRules.getLocalizedRule(entity, SplatcraftGameRules.ALTERNATIVE_INK_HEALTH);
+				if (alternativeInkHealth)
+				{
+					processAlternativeDamage(entity);
+				}
+			});
+			level.getEntities().get(EntityTypeTest.forClass(LivingEntity.class), entity ->
 			{
+				if (Components.WEAPON_INFO.has(entity))
+				{
+					Components.WEAPON_INFO.update(entity, WeaponInfo::reduceSquidAnimationTick);
+				}
+				if (!Components.ENTITY_INFO.has(entity))
+				{
+					return AbortableIterationConsumer.Continuation.CONTINUE;
+				}
+				
+				boolean alternativeInkHealth = SplatcraftGameRules.getLocalizedRule(entity, SplatcraftGameRules.ALTERNATIVE_INK_HEALTH);
+				if (alternativeInkHealth)
+				{
+					processAlternativeDamage(entity);
+				}
+				
+				if (entity.onGround() && (!(entity instanceof Player player) || Components.PLAYER_INFO.hasAnd(player, info -> !info.isMatchRespawning())))
+					lastGroundedPos.put(entity, entity.position());
+				
 				return AbortableIterationConsumer.Continuation.CONTINUE;
-			}
-			
-			if (entity.onGround() && (!(entity instanceof Player player) || Components.PLAYER_INFO.hasAnd(player, info -> !info.isMatchRespawning())))
-				lastGroundedPos.put(entity, entity.position());
-			
-			return AbortableIterationConsumer.Continuation.CONTINUE;
-		}));
+			});
+		});
 		if (Services.PLATFORM.isClientSide())
 			registerClientEvents();
 	}
@@ -292,6 +325,90 @@ public class WeaponHandler
 			floorPos = result.getLocation();
 		lastGroundedPos.put(entity, floorPos);
 	}
+	public static void processAlternativeDamage(Entity entity)
+	{
+		long gameTime = entity.level().getGameTime();
+		AccumulatedDamageData damageData = accumulatedDamageData.get(entity);
+		
+		if (damageData == null)
+			return;
+		
+		float accumulatedDamage = damageData.accumulatedDamage();
+		
+		if (accumulatedDamage < 0.5 && !damageData.forceDamage)
+		{
+			return;
+		}
+		
+		DamageSource source = SplatcraftDamageTypes.of(entity.level(), damageData.damageKey() == null ? SplatcraftDamageTypes.ENEMY_INK : damageData.damageKey());
+		boolean damage = true;
+		if (entity instanceof IColoredEntity coloredEntity)
+		{
+			damage = coloredEntity.onEntityInked(source, accumulatedDamage, damageData.damagingColor);
+		}
+		if (damage && entity instanceof LivingEntity livingEntity && !(entity instanceof SquidBumperEntity))
+		{
+			float newHealth = livingEntity.getHealth() - accumulatedDamage;
+			if (!livingEntity.isDeadOrDying() && newHealth <= 0)
+			{
+				InkDamageUtils.InkDamageSource damageSource = new InkDamageUtils.InkDamageSource(SplatcraftDamageTypes.get(entity.level(), damageData.damageKey()), entity, null, ItemStack.EMPTY, true);
+				
+				livingEntity.die(damageSource);
+			}
+			livingEntity.setHealth(newHealth);
+			
+			LivingEntityAccesor accesor = (LivingEntityAccesor) livingEntity;
+			
+			accesor.setLastDamageSource(source);
+			accesor.setLastDamageStamp(gameTime);
+			
+			if (entity instanceof ServerPlayer serverPlayer)
+			{
+				((ServerPlayerAccesor) serverPlayer).setLastSentHealth(newHealth);
+				SplatcraftPacketHandler.sendToPlayer(new SendEnemyInkDamagePacket(newHealth), serverPlayer);
+			}
+			
+			InkOverlayData info = Components.INK_OVERLAY.getOrCreate(livingEntity);
+			info.addAmount(accumulatedDamage);
+			
+			SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(livingEntity, info), entity);
+		}
+		
+		accumulatedDamageData.put(entity, new AccumulatedDamageData(0, false, null, null));
+	}
+	public static void accumulateAltEnemyInkDamage(LivingEntity entity, InkColor color, float damage, boolean forceProcessing)
+	{
+		accumulateAltEnemyInkDamage(entity, color, damage, forceProcessing, SplatcraftDamageTypes.ENEMY_INK);
+	}
+	public static void accumulateAltEnemyInkDamage(LivingEntity entity, InkColor color, float damage, boolean forceProcessing, ResourceKey<DamageType> damageType)
+	{
+		accumulatedDamageData.compute(entity, (ent, data) ->
+		{
+			if (data == null)
+			{
+				return new AccumulatedDamageData(damage, forceProcessing, damageType, color);
+			}
+			return data.withAccumulatedDamage(data.accumulatedDamage() + damage).withForceDamage(forceProcessing).withDamageKey(damageType).withDamagingColor(color);
+		});
+	}
+	public static void accumulateAltEnemyInkDamageWithLimit(LivingEntity entity, InkColor color, float damage, float totalDamageDone, float maxDamage)
+	{
+		accumulateAltEnemyInkDamageWithLimit(entity, color, damage, totalDamageDone, maxDamage, SplatcraftDamageTypes.ENEMY_INK);
+	}
+	public static void accumulateAltEnemyInkDamageWithLimit(LivingEntity entity, InkColor color, float damage, float totalDamageDone, float maxDamage, ResourceKey<DamageType> damageType)
+	{
+		AccumulatedDamageData enemyInkData = accumulatedDamageData.getOrDefault(entity, new AccumulatedDamageData(0f, false, damageType, color));
+		
+		boolean forceDamage = enemyInkData.forceDamage();
+		
+		if (totalDamageDone + damage >= maxDamage)
+		{
+			damage = maxDamage - totalDamageDone;
+			forceDamage = true;
+		}
+		
+		accumulateAltEnemyInkDamage(entity, color, damage, forceDamage, damageType);
+	}
 	public static class OldEntityTransformData
 	{
 		public Vec3 oldPosition, oldOldPosition;
@@ -310,6 +427,26 @@ public class WeaponHandler
 		public Vec3 getOldLerpedPosition(double partialTick)
 		{
 			return oldOldPosition.lerp(oldPosition, partialTick);
+		}
+	}
+	public record AccumulatedDamageData(float accumulatedDamage, boolean forceDamage, ResourceKey<DamageType> damageKey,
+	                                    InkColor damagingColor)
+	{
+		public AccumulatedDamageData withDamagingColor(InkColor damagingColor)
+		{
+			return new AccumulatedDamageData(accumulatedDamage, forceDamage, damageKey, damagingColor);
+		}
+		public AccumulatedDamageData withAccumulatedDamage(float accumulatedDamage)
+		{
+			return new AccumulatedDamageData(accumulatedDamage, forceDamage, damageKey, damagingColor);
+		}
+		public AccumulatedDamageData withForceDamage(boolean forceDamage)
+		{
+			return new AccumulatedDamageData(accumulatedDamage, forceDamage, damageKey, damagingColor);
+		}
+		public AccumulatedDamageData withDamageKey(ResourceKey<DamageType> damageKey)
+		{
+			return new AccumulatedDamageData(accumulatedDamage, forceDamage, damageKey, damagingColor);
 		}
 	}
 }

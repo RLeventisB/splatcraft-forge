@@ -19,10 +19,6 @@ public class UpdateJumpInputPacket extends PlayC2SPacket
 	{
 		this.jumping = jumping;
 	}
-	public UpdateJumpInputPacket()
-	{
-		jumping = false;
-	}
 	public static UpdateJumpInputPacket decode(RegistryFriendlyByteBuf buffer)
 	{
 		return new UpdateJumpInputPacket(buffer.readBoolean());

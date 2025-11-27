@@ -77,15 +77,15 @@ public class SplatcraftEntities
 		Services.PLATFORM.registerEntityRenderer(INK_PROJECTILE, InkProjectileRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(INK_SQUID, InkSquidRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(SQUID_BUMPER, SquidBumperRenderer::new);
-
+		
 		Services.PLATFORM.registerEntityRenderer(SPLAT_BOMB, SplatBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(BURST_BOMB, BurstBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(SUCTION_BOMB, SuctionBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(CURLING_BOMB, CurlingBombRenderer::new);
 		Services.PLATFORM.registerEntityRenderer(TORPEDO, TorpedoRenderer::new);
-
+		
 		Services.PLATFORM.registerEntityRenderer(SPAWN_SHIELD, SpawnShieldRenderer::new);
-
+		
 		Services.PLATFORM.registerEntityRenderer(STING_RAY_PROJECTILE, StingRayBeamRenderer::new);
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -93,18 +93,18 @@ public class SplatcraftEntities
 	{
 		Services.PLATFORM.registerEntityLayerRenderer(InkSquidModel.LAYER_LOCATION, InkSquidModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(SquidBumperModel.LAYER_LOCATION, SquidBumperModel::createBodyLayer);
-
+		
 		Services.PLATFORM.registerEntityLayerRenderer(SplatBombModel.LAYER_LOCATION, SplatBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(BurstBombModel.LAYER_LOCATION, BurstBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(SuctionBombModel.LAYER_LOCATION, SuctionBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(CurlingBombModel.LAYER_LOCATION, CurlingBombModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(TorpedoModel.LAYER_LOCATION, TorpedoModel::createBodyLayer);
-
+		
 		Services.PLATFORM.registerEntityLayerRenderer(InkProjectileModel.LAYER_LOCATION, InkProjectileModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(ShooterInkProjectileModel.LAYER_LOCATION, ShooterInkProjectileModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(BlasterInkProjectileModel.LAYER_LOCATION, BlasterInkProjectileModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(RollerInkProjectileModel.LAYER_LOCATION, RollerInkProjectileModel::createBodyLayer);
-
+		
 		Services.PLATFORM.registerEntityLayerRenderer(InkTankModel.LAYER_LOCATION, InkTankModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::createBodyLayer);
 		Services.PLATFORM.registerEntityLayerRenderer(InkTankJrModel.LAYER_LOCATION, InkTankJrModel::createBodyLayer);

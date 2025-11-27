@@ -5,11 +5,11 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.splatcraft.util.InkBlockUtils;
 
 public class EnemyInkTickableSound extends AbstractTickableSoundInstance
 {
 	private final Player player;
+	private boolean louderThisFrame;
 	public EnemyInkTickableSound(Player player, SoundEvent sound)
 	{
 		super(sound, SoundSource.PLAYERS, player.getRandom());
@@ -32,15 +32,19 @@ public class EnemyInkTickableSound extends AbstractTickableSoundInstance
 		y = player.getY();
 		z = player.getZ();
 		
-		boolean onEnemyInk = InkBlockUtils.onEnemyInk(player);
-		if (!onEnemyInk)
+		if (!louderThisFrame)
 			volume -= 0.01f;
 		else
 			volume += 0.013f;
 		volume = Mth.clamp(volume, 0, 0.14f);
-		if ((!onEnemyInk && (volume == 0)) || !player.isAlive())
+		if ((!louderThisFrame && (volume == 0)) || !player.isAlive())
 		{
 			stop();
 		}
+		louderThisFrame = false;
+	}
+	public void makeLouder()
+	{
+		louderThisFrame = true;
 	}
 }

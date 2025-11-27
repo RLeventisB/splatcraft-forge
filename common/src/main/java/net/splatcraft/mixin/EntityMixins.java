@@ -30,10 +30,12 @@ import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
 import net.splatcraft.items.weapons.settings.ShotDeviationHelper;
 import net.splatcraft.platform.Components;
+import net.splatcraft.registries.SplatcraftDamageTypes;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.InkDamageUtils;
 import net.splatcraft.util.action.EntityAction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -170,6 +172,14 @@ public class EntityMixins
 		public void splatcraft$failsafeDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir)
 		{
 			SquidFormHandler.onLivingHurt((LivingEntity) (Object) this, source, cir);
+		}
+		// shhhhh you play like 20 times per second
+		@WrapOperation(method = "handleDamageEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;"))
+		public SoundEvent splatcraft$silenceHurtDamage(LivingEntity instance, DamageSource damageSource, Operation<SoundEvent> original)
+		{
+			if (damageSource.is(SplatcraftDamageTypes.ENEMY_INK) || damageSource instanceof InkDamageUtils.InkDamageSource inkSource && inkSource.doSound)
+				return null;
+			return original.call(instance, damageSource);
 		}
 		@Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
 		public void splatcraft$handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir)

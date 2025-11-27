@@ -1,7 +1,7 @@
 package net.splatcraft.registries;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -61,7 +61,7 @@ public class SplatcraftGameRules
 		RECHARGEABLE_INK_TANK = createBooleanRule("rechargeableInkTank", GameRules.Category.PLAYER, true);
 		BLOCK_DESTROY_INK = createBooleanRule("blockDestroysInk", GameRules.Category.PLAYER, false);
 	}
-	public static boolean getLocalizedRule(LivingEntity entity, GameRules.Key<GameRules.BooleanValue> rule)
+	public static boolean getLocalizedRule(Entity entity, GameRules.Key<GameRules.BooleanValue> rule)
 	{
 		return getLocalizedRule(entity.level(), entity.blockPosition(), rule);
 	}

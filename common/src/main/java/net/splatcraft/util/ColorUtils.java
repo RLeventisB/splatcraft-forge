@@ -89,11 +89,11 @@ public class ColorUtils
 		{
 			if (player instanceof ServerPlayer serverPlayer)
 				SplatcraftStats.CHANGE_INK_COLOR_TRIGGER.value().trigger(serverPlayer);
-
+			
 			Components.SQUID_INFO.set(player, info.withColor(color));
 			ScoreboardHandler.updatePlayerScore(Stats.CUSTOM.get(ScoreboardHandler.COLOR), player, color);
 		}
-
+		
 		Level world = player.level();
 		if (!world.isClientSide() && updateClient)
 		{
@@ -170,7 +170,7 @@ public class ColorUtils
 	{
 		if (world.getBlockState(pos).getBlock() instanceof IColoredBlock coloredBlock)
 			return coloredBlock.getColor(world, pos);
-
+		
 		return getDefaultColor();
 	}
 	public static InkColor getEffectiveColor(Level world, BlockPos pos)
@@ -203,16 +203,16 @@ public class ColorUtils
 	public static List<ItemStack> getColorVariantsForItem(ItemLike item, boolean matching, boolean inverted, boolean starter)
 	{
 		List<ItemStack> items = new ArrayList<>();
-
+		
 		if (matching)
 			items.add(withInkColor(item.asItem().getDefaultInstance(), null));
 		if (inverted)
 			items.add(withInvertedColor(withColorLocked(item.asItem().getDefaultInstance(), false), true));
-
+		
 		if (starter)
 			for (InkColor color : getStarterColors())
 				items.add(withColorLocked(withInkColor(item.asItem().getDefaultInstance(), color), true));
-
+		
 		return items;
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -259,9 +259,13 @@ public class ColorUtils
 			return Component.literal((colorless ? ChatFormatting.GRAY : "") + colorName.getString());
 		return colorName.withColor(color.getColor());
 	}
+	public static boolean colorEquals(InkColor colorA, InkColor colorB)
+	{
+		return colorA.getColor() == colorB.getColor();
+	}
 	public static boolean colorEquals(Level world, BlockPos pos, InkColor colorA, InkColor colorB)
 	{
-		return SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.UNIVERSAL_INK) || colorA.getColor() == colorB.getColor();
+		return SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.UNIVERSAL_INK) || colorEquals(colorA, colorB);
 	}
 	public static boolean colorValueEquals(Level world, BlockPos pos, int colorA, int colorB)
 	{
@@ -275,10 +279,10 @@ public class ColorUtils
 	{
 		if (entity == null || te == null)
 			return false;
-
+		
 		InkColor entityColor = getEntityColor(entity);
 		InkColor inkColor = getEffectiveColor(te.getLevel(), te.getBlockPos());
-
+		
 		if (!entityColor.isValid() || !inkColor.isValid())
 			return false;
 		return colorEquals(entity.level(), te.getBlockPos(), entityColor, inkColor);
@@ -287,7 +291,7 @@ public class ColorUtils
 	{
 		InkColor entityColor = getEntityColor(entity);
 		InkColor inkColor = getInkColor(stack);
-
+		
 		if (!entityColor.isValid() || !inkColor.isValid())
 			return false;
 		return colorEquals(entity.level(), entity.blockPosition(), entityColor, inkColor);
@@ -369,7 +373,7 @@ public class ColorUtils
 		float r = ((color & 0x00FF0000) >> 16) / 255.0f;
 		float g = ((color & 0x0000FF00) >> 8) / 255.0f;
 		float b = (color & 0x000000FF) / 255.0f;
-
+		
 		return new float[] {r, g, b};
 	}
 	public static int RGBtoHex(float[] color)
@@ -387,7 +391,7 @@ public class ColorUtils
 		{
 			color = Components.SQUID_INFO.get(source).color();
 		}
-
+		
 		addInkSplashParticle(world, color, source.getX(), source.getY(world.getRandom().nextFloat() * 0.3f), source.getZ(), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
 	}
 	public static void addInkSplashParticle(ServerLevel level, LivingEntity source, float size)
@@ -431,10 +435,10 @@ public class ColorUtils
 	{
 		BlockState state = world.getBlockState(pos);
 		VoxelShape voxelshape = state.getOcclusionShape(world, pos);
-
+		
 		if (voxelshape.isEmpty())
 			voxelshape = Shapes.block();
-
+		
 		voxelshape.forAllBoxes((p_172273_, p_172274_, p_172275_, p_172276_, p_172277_, p_172278_) ->
 		{
 			double d1 = Math.min(1.0D, p_172276_ - p_172273_);
@@ -443,7 +447,7 @@ public class ColorUtils
 			int i = Math.max(2, Mth.ceil(d1 / 0.25D));
 			int j = Math.max(2, Mth.ceil(d2 / 0.25D));
 			int k = Math.max(2, Mth.ceil(d3 / 0.25D));
-
+			
 			for (int x = 0; x < i; ++x)
 			{
 				for (int y = 0; y < j; ++y)
@@ -456,7 +460,7 @@ public class ColorUtils
 						double d7 = d4 * d1 + p_172273_;
 						double d8 = d5 * d2 + p_172274_;
 						double d9 = d6 * d3 + p_172275_;
-
+						
 						addInkTerrainParticle(world, color, (double) pos.getX() + d7, (double) pos.getY() + d8, (double) pos.getZ() + d9, d4 - 0.5D, d5 - 0.5D, d6 - 0.5D, 1);
 					}
 				}
@@ -483,7 +487,7 @@ public class ColorUtils
 	{
 		if (InkColorRegistry.REGISTRY.isEmpty())
 			return new InkColor(0x1F1F2D);
-
+		
 		return InkColorRegistry.getColorByAlias(Splatcraft.identifierOf("default")).orElse(new InkColor(0x1F1F2D));
 	}
 	public static InkColor getColorLockFriendly()

@@ -51,6 +51,7 @@ public class SendEnemyInkDamagePacket extends PlayS2CPacket
 					Minecraft.getInstance().getSoundManager().play(sound);
 				}
 			}
+			sound.makeLouder();
 		}
 	}
 }

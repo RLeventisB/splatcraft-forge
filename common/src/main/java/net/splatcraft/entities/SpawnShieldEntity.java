@@ -9,6 +9,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.registries.SplatcraftEntities;
@@ -174,5 +175,12 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 	public void setSpawnPadPos(BlockPos spawnPadPos)
 	{
 		this.spawnPadPos = spawnPadPos;
+	}
+	public static boolean isSpawnShieldPresent(Level level, BlockPos pos, AABB aabb, InkColor spawnShieldColor)
+	{
+		return !level.
+			getEntitiesOfClass(SpawnShieldEntity.class, aabb,
+				(shield) -> ColorUtils.colorEquals(level, pos, ColorUtils.getEntityColor(shield), spawnShieldColor)
+			).isEmpty();
 	}
 }

@@ -221,16 +221,16 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 		int id = -1;
 		int colorDifference = Integer.MAX_VALUE;
 		
-		int currentColorR = (hexCode & 0xFF0000) >> 16;
-		int currentColorG = (hexCode & 0x00FF00) >> 8;
-		int currentColorB = (hexCode & 0x0000FF);
+		int currentColorR = FastColor.ARGB32.red(hexCode);
+		int currentColorG = FastColor.ARGB32.green(hexCode);
+		int currentColorB = FastColor.ARGB32.blue(hexCode);
 		
 		for (DyeColor color : DyeColor.values())
 		{
 			int colorValue = propertySelector.apply(color);
-			int r = (colorValue & 0xFF0000) >> 16;
-			int g = (colorValue & 0x00FF00) >> 8;
-			int b = (colorValue & 0x0000FF);
+			int r = FastColor.ARGB32.red(colorValue);
+			int g = FastColor.ARGB32.green(colorValue);
+			int b = FastColor.ARGB32.blue(colorValue);
 			
 			int difference = Mth.square(r - currentColorR) + Mth.square(g - currentColorG) + Mth.square(b - currentColorB);
 			if (colorDifference > difference)

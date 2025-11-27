@@ -86,7 +86,7 @@ public class ChunkInk
 			return false;
 		if (!entry.clear(index) && !entry.immutable)
 			INK_MAP.remove(pos);
-		
+
 		return true;
 	}
 	/**
@@ -122,17 +122,17 @@ public class ChunkInk
 	{
 		INK_MAP.clear();
 		boolean oldFormat = nbt.contains("PermanentInk"); // old format is referred to before this fork btw
-		
+
 		if (!oldFormat)
 			return;
-		
+
 		for (Tag tag : nbt.getList("Ink", Tag.TAG_COMPOUND))
 		{
 			CompoundTag element = (CompoundTag) tag;
 			RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 			InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
 			InkBlockUtils.InkType inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, element.get("Type")).result().orElse(InkBlockUtils.InkType.NORMAL);
-			
+
 			for (byte i = 0; i < 6; i++)
 			{
 				ink(
@@ -143,16 +143,16 @@ public class ChunkInk
 				);
 			}
 		}
-		
+
 		for (Tag tag : nbt.getList("PermanentInk", CompoundTag.TAG_COMPOUND))
 		{
 			CompoundTag element = (CompoundTag) tag;
 			RelativeBlockPos pos = RelativeBlockPos.readNBT(element.getCompound("Pos"));
 			InkColor color = InkColor.constructOrReuse(element.getInt("Color"));
 			InkBlockUtils.InkType inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, element.get("Type")).result().orElse(InkBlockUtils.InkType.NORMAL);
-			
+
 			BlockEntry entry = getInk(pos);
-			
+
 			if (entry != null)
 			{
 				entry.immutable = true;
@@ -202,13 +202,13 @@ public class ChunkInk
 				// else:
 				// first - sixth bit: whether the face is painted, with the same order as the Direction enum
 				// seventh bit: whether the block is permanent/static
-				
+
 				if (!entry.isInkedAny())
 				{
 					buf.writeByte(entry.immutable ? 64 : 0);
 					return;
 				}
-				
+
 				buf.writeByte(entry.getActiveFlag() | (entry.immutable ? 64 : 0));
 				for (byte i = 0; i < 6; i++)
 				{
@@ -231,7 +231,7 @@ public class ChunkInk
 						entry.entries[i] = InkEntry.STREAM_CODEC.decode(buf);
 					}
 				}
-				
+
 				return entry;
 			}
 		);
@@ -280,6 +280,11 @@ public class ChunkInk
 		}
 		public BlockEntry paint(int index, InkColor color, InkBlockUtils.InkType type)
 		{
+			if (color == null)
+				return this;
+			if (type == null)
+				type = InkBlockUtils.InkType.NORMAL;
+			
 			entries[index] = new InkEntry(color, type);
 			return this;
 		}
@@ -317,7 +322,7 @@ public class ChunkInk
 			byte flag = 0;
 			for (byte i = 0; i < 6; i++)
 				if (isInked(i))
-					flag |= 1 << i;
+					flag |= (byte) (1 << i);
 			return flag;
 		}
 		public Byte[] getActiveIndices()
@@ -375,7 +380,7 @@ public class ChunkInk
 			{
 				if (obj.getClass() != getClass())
 					return false;
-				
+
 				AbstractEntryIterator iterator = (AbstractEntryIterator) obj;
 				return activeFlag == iterator.activeFlag && index == iterator.index;
 			}
@@ -447,7 +452,7 @@ public class ChunkInk
 	{
 		public static final Codec<InkEntry> CODEC = RecordCodecBuilder.create(inst -> inst.group(
 			InkColor.RAW_INT_CODEC.fieldOf("color").forGetter(InkEntry::color),
-			InkBlockUtils.InkType.CODEC.fieldOf("type").forGetter(InkEntry::type)
+			InkBlockUtils.InkType.CODEC.optionalFieldOf("type", InkBlockUtils.InkType.NORMAL).forGetter(InkEntry::type)
 		).apply(inst, InkEntry::new));
 		public static final StreamCodec<ByteBuf, InkEntry> STREAM_CODEC = StreamCodec.composite(
 			InkColor.STREAM_CODEC, InkEntry::color,
