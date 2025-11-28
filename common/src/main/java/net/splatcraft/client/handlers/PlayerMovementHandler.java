@@ -113,6 +113,7 @@ public class PlayerMovementHandler
 				speedAttribute.addTransientModifier(INK_SWIM_SPEED);
 //                if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
 //                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
+//			handleSquidMovement(info, player, 0, 0, false, false);
 		}
 		
 		action.ifPresent(v ->
@@ -123,7 +124,7 @@ public class PlayerMovementHandler
 		
 		tickWeaponMobilityAttribute(player, speedAttribute);
 		
-		if (!player.getAbilities().flying)
+		if (!player.getAbilities().flying && info.climbedDirection().isEmpty())
 			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 				player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
 	}
@@ -239,7 +240,7 @@ public class PlayerMovementHandler
 		climbDirectionOptional.ifPresent(climbDirection ->
 			{
 				AttributeInstance gravity = entity.getAttribute(Attributes.GRAVITY);
-				boolean falling = entity.getDeltaMovement().y <= 0.0D;
+				boolean falling = entity.getDeltaMovement().y < 0.0D;
 				if (falling && entity.hasEffect(MobEffects.SLOW_FALLING))
 				{
 					if (!gravity.hasModifier(SLOW_FALLING.id()))
@@ -249,9 +250,10 @@ public class PlayerMovementHandler
 				else if (gravity.hasModifier(SLOW_FALLING.id()))
 					gravity.removeModifier(SLOW_FALLING);
 				
+				Vec3 finalImpulse = Vec3.ZERO;
 				if (movementSideways != 0 || movementForward != 0)
 				{
-					Vec3 finalImpulse = getWallImpulse(climbDirection, movementSideways, movementForward, entity.getYRot());
+					finalImpulse = getWallImpulse(climbDirection, movementSideways, movementForward, entity.getYRot());
 					
 					Vec3 deltaMovement = entity.getDeltaMovement();
 					if (deltaMovement.y() < 0.4f)
@@ -266,7 +268,7 @@ public class PlayerMovementHandler
 					
 					entity.setDeltaMovement(deltaMovement);
 				}
-				if (entity.getDeltaMovement().y() <= 0 && !sneaking)
+				if ((falling || (entity.getDeltaMovement().y < 0.035f && finalImpulse.y > 0)) && !sneaking) // make squid "floatier"
 					entity.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
 				
 				entity.addDeltaMovement(Vec3.atLowerCornerOf(climbDirection.getNormal()).scale(-0.03));
