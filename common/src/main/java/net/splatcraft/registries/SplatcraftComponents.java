@@ -164,11 +164,11 @@ public class SplatcraftComponents
 		{
 			if (Float.isNaN(counter()))
 				return this;
-
+			
 			// if the counter is higher than 0, it acts as a "delay" to charging, otherwise if the counter is less than 0 its because the weapon is on endlag, otherwise, the weapon is charging
 			if (counter < 0)
 			{
-				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(1));
+				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.registerChargeDeltaTime(1));
 				float nextCounter = counter + timeDelta;
 				if (nextCounter >= 0)
 				{
@@ -178,9 +178,9 @@ public class SplatcraftComponents
 				}
 				return new ChargerFiringData(nextCounter, true, false);
 			}
-
+			
 			boolean newCharging = charging && WeaponHandler.canContinueShooting(entity);
-
+			
 			if (counter > 0)
 			{
 				float nextCounter = counter - timeDelta;
@@ -193,14 +193,14 @@ public class SplatcraftComponents
 					return new ChargerFiringData(nextCounter, newCharging, queuedShot);
 				}
 			}
-
+			
 			float charge = stack.get(CHARGE_DATA).charge;
 			if (charge < 1)
 			{
 				if (charge == 0 && !newCharging) // tap shot
 				{
 					onCharge.accept(0f, 0f);
-
+					
 					return fireShotAndGoToEndlag(settings, onRelease, stack, 0, -(counter - timeDelta), 0);
 				}
 				float chargeTime = settings.chargeData.chargeTime();
@@ -216,12 +216,12 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				float finalNextCharge = nextCharge;
 				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(finalNextCharge).registerChargeDeltaTime(cutoffTime));
-
+				
 				onCharge.accept(charge, nextCharge);
-
+				
 				if (!newCharging)
 				{
 					return fireShotAndGoToEndlag(settings, onRelease, stack, nextCharge, timeDelta, cutoffTime);
@@ -230,15 +230,15 @@ public class SplatcraftComponents
 			else
 			{
 				onCharge.accept(1f, 1f);
-
+				
 				stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(1).registerChargeDeltaTime(1));
-
+				
 				if (!newCharging)
 				{
 					return fireShotAndGoToEndlag(settings, onRelease, stack, 1, 0, 1f);
 				}
 			}
-
+			
 			return new ChargerFiringData(0, true, queuedShot);
 		}
 		public ChargerFiringData retrieveCharge(ChargerWeaponSettings settings)
@@ -248,27 +248,27 @@ public class SplatcraftComponents
 		public @NotNull ChargerFiringData fireShotAndGoToEndlag(ChargerWeaponSettings settings, TimeAwareAction onRelease, ItemStack stack, float charge, float extraTime, float chargeDeltaTime)
 		{
 			onRelease.run(charge, extraTime);
-			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.updateCharge(0).registerChargeDeltaTime(chargeDeltaTime));
+			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v -> v.withCharge(0, 0).registerChargeDeltaTime(chargeDeltaTime));
 			float nextCounter = -settings.shotData.endlagTicks() + extraTime;
 			if (nextCounter >= 0)
 				if (queuedShot)
 					return new ChargerFiringData(nextCounter + settings.chargeData.chargeStartup(), false, false);
 				else
 					return new ChargerFiringData(Float.NaN, false, false);
-
+			
 			return new ChargerFiringData(nextCounter, false, queuedShot);
 		}
 		public ChargerFiringData notifyUsage(LivingEntity entity, ChargerWeaponSettings settings)
 		{
 			if (!WeaponHandler.canContinueShooting(entity))
 				return this;
-
+			
 			if (Float.isNaN(counter))
 				return new ChargerFiringData(settings.chargeData.chargeStartup(), true, true);
-
+			
 			if (counter < 0)
 				return new ChargerFiringData(counter, false, true);
-
+			
 			if (!charging)
 				return new ChargerFiringData(counter, false, true);
 			return new ChargerFiringData(counter, true, false);
@@ -329,7 +329,7 @@ public class SplatcraftComponents
 			boolean previousCharging = charging.get();
 			boolean using = WeaponHandler.canContinueShooting(entity) || counter < 0f;
 			boolean nextCharging = previousCharging && using;
-
+			
 			if (nextCharging)
 			{
 				return chargeSplatling(stack, settings, chargeMult, onCharge, timeDelta, entity.getUseItemRemainingTicks() % 2 == 0);
@@ -345,7 +345,7 @@ public class SplatcraftComponents
 					}
 					onChargeRelease.accept(charge, chargeStart, nextShotTypeData);
 				}
-
+				
 				return fireSplatling(stack, settings, onShoot, timeDelta, nextShotTypeData, onFiringEnd);
 			}
 		}
@@ -363,7 +363,7 @@ public class SplatcraftComponents
 			{
 				nextShotTypeData = 0;
 			}
-
+			
 			AtomicReference<Float> nextDelay = new AtomicReference<>(0f);
 			stack.update(CHARGE_DATA, ChargeData.DEFAULT, v ->
 			{
@@ -373,7 +373,7 @@ public class SplatcraftComponents
 					onCharge.accept(2f, 2f);
 					return v.updateCharge(2).registerChargeDeltaTime(1);
 				}
-
+				
 				float nextCharge = charge + settings.chargeData.getChargeStep(charge) * chargeMult;
 				float cutoffTime;
 				if (nextCharge > 2)
@@ -386,21 +386,21 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				onCharge.accept(charge, nextCharge);
 				return v.updateCharge(nextCharge).registerChargeDeltaTime(cutoffTime);
 			});
-
+			
 			float nextCounter = counter;
 			if (nextCounter < 0)
 				nextCounter = Math.min(0, nextCounter + timeDelta);
-
+			
 			return new SplatlingFiringData(nextCounter, Optional.of(true), nextDelay.get(), nextShotTypeData, chargeStart);
 		}
 		private @NotNull SplatlingFiringData fireSplatling(ItemStack stack, SplatlingWeaponSettings settings, SplatlingShootAction onShoot, float timeDelta, short nextShotTypeData, Consumer<Float> onFiringEnd)
 		{
 			ChargeData chargeData = stack.get(CHARGE_DATA);
-
+			
 			float nextCounter = counter;
 			float nextDelay = delay;
 			if (nextCounter > 0)
@@ -420,12 +420,12 @@ public class SplatcraftComponents
 					nextDelay += nextCounter;
 				}
 			}
-
+			
 			float index = settings.getShotTypeIndex(chargeData.charge, nextShotTypeData);
 			Pair<CommonRecords.ProjectileDataRecord, SplatlingWeaponSettings.SplatlingShotDataRecord> dataPair = settings.interpolateData(index);
 			CommonRecords.ProjectileDataRecord projectileData = dataPair.getFirst();
 			SplatlingWeaponSettings.SplatlingShotDataRecord shotData = dataPair.getSecond();
-
+			
 			chargeData = chargeData.withPreviousCharge(chargeData.charge);
 			while (nextDelay <= 0)
 			{
@@ -434,17 +434,17 @@ public class SplatcraftComponents
 				{
 					float cutoffTime = Mth.inverseLerp(0, chargeData.charge, chargeData.charge - shotData.chargeUsePerShot());
 					nextCounter = shotData.endlagTicks() - timeDelta * cutoffTime;
-
+					
 					chargeData = chargeData.withCharge(0).registerChargeDeltaTime(cutoffTime);
 					nextDelay += shotData.repeatTicks();
 					continue;
 				}
-
+				
 				index = settings.getShotTypeIndex(chargeData.charge, nextShotTypeData);
 				dataPair = settings.interpolateData(index);
 				projectileData = dataPair.getFirst();
 				shotData = dataPair.getSecond();
-
+				
 				float nextCharge = chargeData.charge - shotData.chargeUsePerShot();
 				float cutoffTime;
 				if (nextCharge < 0)
@@ -457,10 +457,10 @@ public class SplatcraftComponents
 				{
 					cutoffTime = 1f;
 				}
-
+				
 				chargeData = chargeData.withCharge(nextCharge).registerChargeDeltaTime(cutoffTime);
 				onShoot.run(projectileData, shotData, -nextDelay, index);
-
+				
 				nextDelay += shotData.repeatTicks();
 			}
 			nextDelay -= timeDelta;
@@ -473,7 +473,7 @@ public class SplatcraftComponents
 					nextShotTypeData++;
 				}
 			}
-
+			
 			return new SplatlingFiringData(nextCounter, Optional.of(false), nextDelay, nextShotTypeData, chargeStart);
 		}
 		public SplatlingFiringData retrieveCharge(SplatlingWeaponSettings<?> settings)
@@ -484,13 +484,13 @@ public class SplatcraftComponents
 		{
 			if (!WeaponHandler.canContinueShooting(entity))
 				return this;
-
+			
 			if (charging.isEmpty()) // first use
 				return new SplatlingFiringData(-settings.chargeData.minChargeTime(), Optional.of(true), 0f, (short) 0, 0);
-
+			
 			if (!charging.get() && settings.chargeData.canRechargeWhileFiring()) // firing, if the weapon is allowed to recharge, then do that
 				return new SplatlingFiringData(0f, Optional.of(true), 0f, shotTypeData, stack.get(CHARGE_DATA).charge);
-
+			
 			return this;
 		}
 		public boolean preventsChanging()
@@ -556,7 +556,7 @@ public class SplatcraftComponents
 				else
 					convertedCounter *= repeatTime / this.repeatTime;
 			}
-
+			
 			return new ShooterFiringData(convertedCounter, startupTime, repeatTime, endlagTime, repeatPunishTime, isRepeating);
 		}
 		public ShooterFiringData withRepeatPunishTime(float repeatPunishTime)
@@ -580,7 +580,7 @@ public class SplatcraftComponents
 		public ShooterFiringData notifyUsing(LivingEntity entity, CommonRecords.ShotDataRecord settings, float startup, float initialStartup)
 		{
 			if (!WeaponHandler.canContinueShooting(entity) || !Float.isNaN(counter)) return this;
-
+			
 			return new ShooterFiringData(startup, initialStartup, settings.repeatTicks(), settings.endlagTicks(), 0f, true);
 		}
 		public ShooterFiringData tick(TimeAwareAction onAction)
@@ -599,17 +599,17 @@ public class SplatcraftComponents
 		{
 			if (Float.isNaN(counter()))
 				return repeatPunishTime > 0 ? withRepeatPunishTime(Math.max(0, repeatPunishTime - timeDelta)) : this;
-
+			
 			ShooterFiringData self = this;
-
+			
 			// behavior: if time > 0, its the first iteration, after that its kept in the interval [0, -repeatTime[ if the is repeating flag is on
 			// if the is repeating flag is off, when the counter reaches -repeatTime - endlagTime the action is done!!
-
+			
 			float nextTime = counter() - timeDelta;
 			float repeatCheckInstant = -self.endlagTime();
 			if (repeatPunishTime > 0)
 				self = self.withRepeatPunishTime(Math.max(0, repeatPunishTime - timeDelta));
-
+			
 			// fix for slow weapons (like blasters) that cancels the repeating flag if they're not shooting after the endlag is done
 			// or if the counter is before the startup and the entity isn't shooting (like for dualies)
 			if (self.isRepeating() && counter() > repeatCheckInstant && nextTime <= repeatCheckInstant)
@@ -641,7 +641,7 @@ public class SplatcraftComponents
 				if (!self.isRepeating())
 					return self.withCounter(Float.NaN);
 			}
-
+			
 			return self.withCounter(nextTime);
 		}
 		@FunctionalInterface
@@ -858,20 +858,20 @@ public class SplatcraftComponents
 		{
 			if (stack.isEmpty())
 				return false;
-
+			
 			if (weaponIdFilter.isEmpty())
 				return true;
-
+			
 			if (!(stack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 				return false;
-
+			
 			if (allowSubs && weaponItem instanceof SubWeaponItem<?>)
 				return true;
-
+			
 			ResourceLocation weaponId = weaponItem.getSettingsAndValidId(stack).getFirst();
 			if (weaponId == null)
 				return false;
-
+			
 			return Objects.equals(weaponIdFilter.get(), weaponId);
 		}
 		public Component getSpecialText()
@@ -962,15 +962,15 @@ public class SplatcraftComponents
 		);
 		public ChargeData updateCharge(float charge)
 		{
-			return new ChargeData(charge, this.charge, chargeDeltaTime);
+			return withCharge(charge, this.charge);
 		}
 		public ChargeData withCharge(float charge)
 		{
-			return new ChargeData(charge, previousCharge, chargeDeltaTime);
+			return withCharge(charge, previousCharge);
 		}
 		public ChargeData withPreviousCharge(float charge)
 		{
-			return new ChargeData(this.charge, charge, chargeDeltaTime);
+			return withCharge(this.charge, charge);
 		}
 		public ChargeData withCharge(float charge, float previousCharge)
 		{

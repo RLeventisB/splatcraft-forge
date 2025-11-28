@@ -602,9 +602,9 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (canPierce)
 		{
 			HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-			if (hitresult.getType() != HitResult.Type.MISS)
+			if (hitresult.getType() == HitResult.Type.ENTITY)
 			{
-				this.hitTargetOrDeflectSelf(hitresult);
+				hitTargetOrDeflectSelf(hitresult);
 			}
 		}
 	}
