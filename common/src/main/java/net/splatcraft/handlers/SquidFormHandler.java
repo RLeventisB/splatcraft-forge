@@ -146,13 +146,13 @@ public class SquidFormHandler
 				boolean crouch = player.isShiftKeyDown();
 				if (!crouch && player.level().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
 				{
-					ColorUtils.addInkSplashParticle(player.level(), player, 1.1f);
+					ColorUtils.addInkSplashParticle(player.level(), player, 1.1f, true);
 				}
 			}
 			
 			if (!info.isDoingSquidSurge() && player.level().getRandom().nextFloat() <= info.squidSurgeState() / SquidInfo.MAX_SQUID_SURGE_CHARGE)
 			{
-				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f);
+				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f, true);
 			}
 			
 			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
@@ -269,10 +269,10 @@ public class SquidFormHandler
 		{
 			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 			
-			if (entity.level() instanceof ServerLevel serverLevel)
+			if (entity.level() instanceof ServerLevel)
 			{
 				for (int i = 0; i < 2; i++)
-					ColorUtils.addInkSplashParticle(serverLevel, entity, 1.4f);
+					ColorUtils.addInkSplashParticle(entity.level(), entity, 1.4f, true);
 			}
 		}
 		else if (state == SquidState.SURFACING)

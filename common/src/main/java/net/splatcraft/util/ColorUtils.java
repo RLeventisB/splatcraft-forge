@@ -310,7 +310,7 @@ public class ColorUtils
 		return applyColorDataPredicate(stack, SplatcraftComponents.ItemColorData::colorLocked, false);
 	}
 	/**
-	 * Makes the color brighter, and paler.
+	 * Makes the color brighter, and paler, with a desaturationDelta of 0.5 and a brightnessDelta of 0.9.
 	 *
 	 * @param color The InkColor that will be converted into a color in ARGB format, whose alpha value will be set as completely opaque.
 	 * @return An color, in ARGB format, that has been applied the parameters given.
@@ -386,22 +386,17 @@ public class ColorUtils
 	}
 	public static void addInkSplashParticle(Level world, LivingEntity source, float size)
 	{
-		InkColor color = getDefaultColor();
-		if (Components.SQUID_INFO.has(source))
-		{
-			color = Components.SQUID_INFO.get(source).color();
-		}
-		
-		addInkSplashParticle(world, color, source.getX(), source.getY(world.getRandom().nextFloat() * 0.3f), source.getZ(), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
+		addInkSplashParticle(world, source, size, false);
 	}
-	public static void addInkSplashParticle(ServerLevel level, LivingEntity source, float size)
+	public static void addInkSplashParticle(Level world, LivingEntity source, float size, boolean makeBrighter)
 	{
 		InkColor color = getDefaultColor();
 		if (Components.SQUID_INFO.has(source))
 		{
 			color = Components.SQUID_INFO.get(source).color();
 		}
-		addInkSplashParticle(level, color, source.getX(), source.getY(level.getRandom().nextFloat() * 0.3f), source.getZ(), size + (level.getRandom().nextFloat() * 0.2f - 0.1f));
+		
+		addInkSplashParticle(world, makeBrighter ? makeBrighter(color, 0.2f, 0.4f) : color.getColor(), source.getX(), source.getY(world.getRandom().nextFloat() * 0.3f), source.getZ(), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
 	}
 	public static void addStandingInkSplashParticle(Level world, LivingEntity entity, float size)
 	{
@@ -415,6 +410,13 @@ public class ColorUtils
 				color = block.getColor(world, pos);
 			addInkSplashParticle(world, color, entity.getX() + (world.getRandom().nextFloat() * 0.8 - 0.4), entity.getY(world.getRandom().nextFloat() * 0.3f), entity.getZ() + (world.getRandom().nextFloat() * 0.8 - 0.4), size + (world.getRandom().nextFloat() * 0.2f - 0.1f));
 		});
+	}
+	public static void addInkSplashParticle(Level world, int color, double x, double y, double z, float size)
+	{
+		if (world instanceof ServerLevel serverLevel)
+			serverLevel.sendParticles(new InkSplashParticleData(color, size), x, y, z, 1, 0.0D, 0.0D, 0.0D, 0.0F);
+		else
+			world.addParticle(new InkSplashParticleData(color, size), x, y, z, 0.0D, 0.0D, 0.0D);
 	}
 	public static void addInkSplashParticle(Level world, InkColor color, double x, double y, double z, float size)
 	{

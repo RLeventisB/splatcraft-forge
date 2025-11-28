@@ -87,7 +87,7 @@ public class EntityMixins
 			BlockPos pos = entity.getOnPosLegacy();
 			if (InkBlockUtils.isInked(world, pos, Direction.UP))
 			{
-				ColorUtils.addInkSplashParticle(world, InkBlockUtils.getInkBlock(world, pos).color(Direction.UP.get3DDataValue()), entity.getX() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5,
+				ColorUtils.addInkSplashParticle(world, ColorUtils.makeBrighter(InkBlockUtils.getInkBlock(world, pos).color(Direction.UP.get3DDataValue())), entity.getX() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5,
 					entity.getY(world.getRandom().nextFloat() * 0.3f), entity.getZ() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5, 0.3f + world.random.nextFloat() * 0.4f);
 				return RenderShape.MODEL;
 			}
