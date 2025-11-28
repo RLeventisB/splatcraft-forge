@@ -120,4 +120,52 @@ public class SpecialWeaponRecords
 			);
 		}
 	}
+	public record InkStormDataRecord(
+		float throwVelocity,
+		float specialCooldown,
+		int riseTime,
+		int formationTime,
+		float cloudRiseHeight,
+		float cloudRadius,
+		float cloudSpeed,
+		float cloudDuration,
+		float damagePerSecond,
+		float dropletsPerSecond,
+		float dropletPaint
+	) implements DynamicDataRecord<InkStormDataRecord>
+	{
+		public static final MapCodec<InkStormDataRecord> CODEC = RecordCodecBuilder.mapCodec(
+			inst -> inst.group(
+				Codec.FLOAT.fieldOf("throw_velocity").forGetter(InkStormDataRecord::throwVelocity),
+				Codec.FLOAT.fieldOf("special_cooldown").forGetter(InkStormDataRecord::specialCooldown),
+				Codec.INT.fieldOf("rise_time").forGetter(InkStormDataRecord::riseTime),
+				Codec.INT.fieldOf("formation_time").forGetter(InkStormDataRecord::formationTime),
+				Codec.FLOAT.fieldOf("cloud_rise_height").forGetter(InkStormDataRecord::cloudRiseHeight),
+				Codec.FLOAT.fieldOf("cloud_radius").forGetter(InkStormDataRecord::cloudRadius),
+				Codec.FLOAT.fieldOf("cloud_speed").forGetter(InkStormDataRecord::cloudSpeed),
+				Codec.FLOAT.fieldOf("cloud_duration").forGetter(InkStormDataRecord::cloudDuration),
+				Codec.FLOAT.fieldOf("dps").forGetter(InkStormDataRecord::damagePerSecond),
+				Codec.FLOAT.fieldOf("droplets_per_second").forGetter(InkStormDataRecord::dropletsPerSecond),
+				Codec.FLOAT.fieldOf("droplet_paint_radius").forGetter(InkStormDataRecord::dropletPaint)
+			).apply(inst, InkStormDataRecord::new)
+		);
+		public static final ResourceLocation ID = Splatcraft.identifierOf("ink_storm");
+		@Override
+		public InkStormDataRecord convertSelf()
+		{
+			return new InkStormDataRecord(
+				throwVelocity * SplatcraftConvertors.SplatoonFramesPerMinecraftTick / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				specialCooldown,
+				riseTime / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				formationTime / SplatcraftConvertors.SplatoonFramesPerMinecraftTick,
+				cloudRiseHeight / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				cloudRadius / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				cloudSpeed * SplatcraftConvertors.SplatoonFramesPerMinecraftTick / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare,
+				cloudDuration,
+				damagePerSecond / SplatcraftConvertors.SplatoonHealthPerMinecraftHealth,
+				dropletsPerSecond,
+				dropletPaint / SplatcraftConvertors.DistanceUnitsPerMinecraftSquare
+			);
+		}
+	}
 }

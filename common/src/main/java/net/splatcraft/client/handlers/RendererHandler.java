@@ -41,7 +41,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
+import net.splatcraft.client.renderer.InkCloudRenderer;
 import net.splatcraft.client.renderer.InkSquidRenderer;
+import net.splatcraft.client.renderer.SplatcraftRenderTypes;
 import net.splatcraft.data.PlaySession;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.data.Stage;
@@ -51,6 +53,7 @@ import net.splatcraft.data.capabilities.structs.PlayerInfo;
 import net.splatcraft.data.capabilities.structs.SaveInfo;
 import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.entities.ISetVelocityExtension;
+import net.splatcraft.entities.InkCloudEntity;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.items.InkTankItem;
 import net.splatcraft.items.weapons.DualieItem;
@@ -107,6 +110,62 @@ public class RendererHandler
 		Services.PLATFORM.registerListener(InteractionEvents.ClientChatReceive.class, RendererHandler::onChatMessage);
 		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_PARTICLES, RendererHandler::doActionRendering);
 		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_PARTICLES, RendererHandler::doSubGuideLine);
+		Services.PLATFORM.registerRenderingCallback(RenderingCallback.RenderingStage.AFTER_BLOCKS, RendererHandler::drawCloudBorders);
+	}
+	private static void drawCloudBorders(RenderingCallback.CallbackData data)
+	{
+		List<InkCloudEntity> cloudsToRenderBorder = InkCloudRenderer.cloudsToRenderBorder;
+		while (!cloudsToRenderBorder.isEmpty())
+		{
+			InkCloudEntity entity = cloudsToRenderBorder.getFirst();
+			InkColor cloudColor = entity.getColor();
+			int colorHex = ColorUtils.makeBrighter(cloudColor);
+			
+			float partialTick = data.tickCounter().getGameTimeDeltaPartialTick(!entity.level().tickRateManager().isEntityFrozen(entity));
+			float cloudAlpha = Mth.square(((entity.tickCount + partialTick) / (entity.duration + entity.formationTime)) * 2 - 1);
+			cloudAlpha *= Mth.square(cloudAlpha * Mth.square(cloudAlpha));
+			cloudAlpha = Mth.clamp(1 - cloudAlpha, 0, 1);
+			colorHex = FastColor.ARGB32.color((int) (255 * cloudAlpha), colorHex);
+			
+			if (data.consumers() instanceof MultiBufferSource.BufferSource multiBufferSource)
+			{
+				VertexConsumer solidConsumer = data.consumers().getBuffer(SplatcraftRenderTypes.solidSameDepth());
+				
+				final int sides = 12 + 10 * ClientUtils.getClient().options.graphicsMode().get().getId();
+				final Vector3f[] circleOffset = new Vector3f[sides];
+				final Vector3f downOffset = entity.getDeltaMovement().toVector3f().negate().add(0, -1, 0).mul(100);
+				float radius = entity.getRadius();
+				
+				for (int i = 0; i < sides; i++)
+				{
+					float angle = ((float) i / sides) * Mth.TWO_PI;
+					circleOffset[i] = new Vector3f(Mth.cos(angle) * radius, 0, Mth.sin(angle) * radius);
+				}
+				
+				Matrix4f translationMatrix = new Matrix4f().translation(
+					new Vector3f(
+						(float) Mth.lerp(partialTick, entity.xOld, entity.getX()),
+						(float) Mth.lerp(partialTick, entity.yOld, entity.getY()),
+						(float) Mth.lerp(partialTick, entity.zOld, entity.getZ())
+					).sub(data.camera().getPosition().toVector3f())
+				);
+				
+				for (int i = 0; i < sides; i++)
+				{
+					int nextIndex = (i + 1) % (sides);
+					Vector3f currentPos = circleOffset[i];
+					Vector3f nextPos = circleOffset[nextIndex];
+					
+					solidConsumer.addVertex(translationMatrix.transformPosition(currentPos, new Vector3f())).setColor(colorHex).setUv(0, 0).setUv2(0, 0).setNormal(1, 0, 0);
+					solidConsumer.addVertex(translationMatrix.transformPosition(currentPos.add(downOffset, new Vector3f()), new Vector3f())).setColor(colorHex).setUv(0, 0).setUv2(0, 0).setNormal(1, 0, 0);
+					solidConsumer.addVertex(translationMatrix.transformPosition(nextPos.add(downOffset, new Vector3f()), new Vector3f())).setColor(colorHex).setUv(0, 0).setUv2(0, 0).setNormal(1, 0, 0);
+					solidConsumer.addVertex(translationMatrix.transformPosition(nextPos, new Vector3f())).setColor(colorHex).setUv(0, 0).setUv2(0, 0).setNormal(1, 0, 0);
+				}
+				
+				multiBufferSource.endLastBatch();
+			}
+			cloudsToRenderBorder.removeFirst();
+		}
 	}
 	private static void doSubGuideLine(RenderingCallback.CallbackData data)
 	{
@@ -267,7 +326,7 @@ public class RendererHandler
 		
 		// if the new trajectory has a close starting point or the
 		// velocities are similar (via cosine similarity), do not recalculate the trajectory
-		if (previousData.creationPos().distanceToSqr(currentEyePos) <= 10e-16f &&
+		if (previousData.creationPos().distanceToSqr(currentEyePos) <= 10e-36f &&
 			cosineSimilarity(previousData.creationVelocity(), currentVelocity) > 1f - 10e-7f)
 			return;
 		

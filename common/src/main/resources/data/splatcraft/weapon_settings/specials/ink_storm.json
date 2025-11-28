@@ -1,0 +1,16 @@
+{
+    "type": "splatcraft:special_weapon",
+    "special_type": "ink_storm",
+    "special_duration": 8,
+    "throw_velocity": 8,
+    "special_cooldown": 8,
+    "rise_time": 60,
+    "formation_time": 20,
+    "cloud_rise_height": 200,
+    "cloud_radius": 100,
+    "cloud_speed": 0.73,
+    "cloud_duration": 8,
+    "dps": 24,
+    "droplets_per_second": 30,
+    "droplet_paint_radius": 10
+}

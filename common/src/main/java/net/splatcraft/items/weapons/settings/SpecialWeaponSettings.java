@@ -35,7 +35,8 @@ public class SpecialWeaponSettings<T extends DynamicDataRecord<T>> extends Dynam
 	{
 		return new Map.Entry[] {
 			Map.entry(SpecialWeaponRecords.StingRayDataRecord.ID, SpecialWeaponRecords.StingRayDataRecord.CODEC),
-			Map.entry(SpecialWeaponRecords.InkJetDataRecord.ID, SpecialWeaponRecords.InkJetDataRecord.CODEC)
+			Map.entry(SpecialWeaponRecords.InkJetDataRecord.ID, SpecialWeaponRecords.InkJetDataRecord.CODEC),
+			Map.entry(SpecialWeaponRecords.InkStormDataRecord.ID, SpecialWeaponRecords.InkStormDataRecord.CODEC)
 		};
 	}
 	@Override

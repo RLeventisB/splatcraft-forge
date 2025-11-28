@@ -62,6 +62,8 @@ public class SplatcraftEntities
 	public static final RegistrySupplier<EntityType<TorpedoEntity>> TORPEDO = create("torpedo", TorpedoEntity::new, MobCategory.MISC, 0.7f, 0.7f);
 	// Special Weapons
 	public static final RegistrySupplier<EntityType<StingRayBeamEntity>> STING_RAY_PROJECTILE = create("sting_ray_beam", StingRayBeamEntity::new, MobCategory.MISC, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
+	public static final RegistrySupplier<EntityType<InkStormDeployerEntity>> INK_STORM_DEPLOYER = create("ink_storm_deployer", InkStormDeployerEntity::new, MobCategory.MISC, 0.5f, 0.5f);
+	public static final RegistrySupplier<EntityType<InkCloudEntity>> INK_CLOUD = create("ink_cloud", InkCloudEntity::new, MobCategory.MISC, 4f, 1f);
 	private static <T extends Entity> RegistrySupplier<EntityType<T>> create(String name, EntityType.EntityFactory<T> supplier, MobCategory classification, float width, float height)
 	{
 		return REGISTRY.register(name, () -> EntityType.Builder.of(supplier, classification).sized(width, height).build(Splatcraft.identifierOf(name).toString()));
@@ -87,6 +89,8 @@ public class SplatcraftEntities
 		Services.PLATFORM.registerEntityRenderer(SPAWN_SHIELD, SpawnShieldRenderer::new);
 		
 		Services.PLATFORM.registerEntityRenderer(STING_RAY_PROJECTILE, StingRayBeamRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(INK_STORM_DEPLOYER, InkStormDeployerRenderer::new);
+		Services.PLATFORM.registerEntityRenderer(INK_CLOUD, InkCloudRenderer::new);
 	}
 	@OnlyIn(Dist.CLIENT)
 	public static void defineModelLayers()

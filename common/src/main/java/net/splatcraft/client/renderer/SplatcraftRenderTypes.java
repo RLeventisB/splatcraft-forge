@@ -1,10 +1,13 @@
 package net.splatcraft.client.renderer;
 
 import com.google.common.base.Suppliers;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -13,11 +16,13 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.platform.Services;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 
 import java.io.IOException;
 import java.util.function.Function;
@@ -76,10 +81,28 @@ public class SplatcraftRenderTypes
 				}
 			}
 		);
+		Services.PLATFORM.registerShader((provider)
+				->
+			{
+				try
+				{
+					return Pair.of(new ShaderInstanceWithInverse(provider, "splatcraft:same_depth_quad", DefaultVertexFormat.POSITION_COLOR),
+						inst -> CustomRenderTypes.sameDepthShader = inst);
+				}
+				catch (IOException e)
+				{
+					throw new RuntimeException(e);
+				}
+			}
+		);
 	}
 	public static RenderType entitySilhouette(ResourceLocation texture)
 	{
 		return CustomRenderTypes.ENTITY_SILHOUETTE.apply(texture);
+	}
+	public static RenderType solidSameDepth()
+	{
+		return CustomRenderTypes.SOLID_SAME_DEPTH;
 	}
 	public static ParticleRenderType getInkFrontRendertype()
 	{
@@ -89,7 +112,9 @@ public class SplatcraftRenderTypes
 	{
 		private static ShaderInstance entitySilhouetteShader;
 		private static ShaderInstance particleInkFrontShader;
+		private static ShaderInstance sameDepthShader;
 		private static final ShaderStateShard RENDERTYPE_ENTITY_SILHOUETTE_SHADER = new ShaderStateShard(() -> entitySilhouetteShader);
+		private static final ShaderStateShard SAME_DEPTH_SHADER = new ShaderStateShard(() -> sameDepthShader);
 		// Dummy constructor needed to make java happy
 		private CustomRenderTypes(String s, VertexFormat v, VertexFormat.Mode m, int i, boolean b, boolean b2, Runnable r, Runnable r2)
 		{
@@ -97,6 +122,25 @@ public class SplatcraftRenderTypes
 			throw new IllegalStateException("This class is not meant to be constructed!");
 		}
 		public static Function<ResourceLocation, RenderType> ENTITY_SILHOUETTE = Util.memoize(CustomRenderTypes::entitySilhouette);
+		public static RenderType SOLID_SAME_DEPTH = solidSameDepth();
+		private static RenderType solidSameDepth()
+		{
+			return create("splatcraft_solid_same_depth",
+				DefaultVertexFormat.POSITION_COLOR,
+				VertexFormat.Mode.QUADS,
+				1536,
+				false,
+				true,
+				RenderType.CompositeState.builder()
+					.setShaderState(SAME_DEPTH_SHADER)
+					.setDepthTestState(NO_DEPTH_TEST)
+					.setTextureState(new DepthTextureStateShard())
+					.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+					.setCullState(NO_CULL)
+					.setWriteMaskState(COLOR_WRITE)
+					.createCompositeState(false)
+			);
+		}
 		private static RenderType entitySilhouette(ResourceLocation location)
 		{
 			RenderType.CompositeState rendertype$state = RenderType.CompositeState.builder()
@@ -113,6 +157,37 @@ public class SplatcraftRenderTypes
 		public static ShaderInstance getParticleInkFrontShader()
 		{
 			return particleInkFrontShader;
+		}
+	}
+	public static class DepthTextureStateShard extends RenderStateShard.EmptyTextureStateShard
+	{
+		public DepthTextureStateShard()
+		{
+			super(() ->
+			{
+				RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getDepthTextureId());
+/*
+				// code for dumping the depth buffer for testing purposes
+				
+				NativeImage what = new NativeImage(NativeImage.Format.LUMINANCE, ClientUtils.getClient().getMainRenderTarget().width, ClientUtils.getClient().getMainRenderTarget().height, false);
+				RenderSystem.bindTexture(Minecraft.getInstance().getMainRenderTarget().getDepthTextureId());
+				what.downloadDepthBuffer(0);
+				what.flipY();
+//				GL11.nglGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL20.GL_BYTE, (Long) DebugUtils.getField("pixels", what).get());
+				
+				try
+				{
+					what.writeToFile(Path.of("C:\\Users\\Felipito\\Desktop\\Otros\\abominaciones\\Len\\no.png"));
+				}
+				catch (IOException e)
+				{
+				
+				}
+				what.close();
+*/
+			}, () ->
+			{
+			});
 		}
 	}
 	public record WrappedSilhouetteMultiBufferSource(MultiBufferSource orginalBufferSource,
@@ -166,6 +241,24 @@ public class SplatcraftRenderTypes
 		public @NotNull VertexConsumer setNormal(float v, float v1, float v2)
 		{
 			return original.setNormal(v, v1, v2);
+		}
+	}
+	private static class ShaderInstanceWithInverse extends ShaderInstance
+	{
+		public Uniform INVERSE_PROJECTION;
+		public ShaderInstanceWithInverse(ResourceProvider resourceProvider, String name, VertexFormat vertexFormat) throws IOException
+		{
+			super(resourceProvider, name, vertexFormat);
+			INVERSE_PROJECTION = getUniform("InverseProjMat");
+		}
+		@Override
+		public void setDefaultUniforms(VertexFormat.@NotNull Mode mode, @NotNull Matrix4f frustumMatrix, @NotNull Matrix4f projectionMatrix, @NotNull Window window)
+		{
+			super.setDefaultUniforms(mode, frustumMatrix, projectionMatrix, window);
+			
+			// precalculate the inverse of the projection since you do not want to do that in a gpu (even if theyre designed for that)
+			if (INVERSE_PROJECTION != null)
+				INVERSE_PROJECTION.set(projectionMatrix.invert(new Matrix4f()));
 		}
 	}
 }

@@ -17,6 +17,7 @@ import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.specials.InkStormAction;
 import net.splatcraft.util.action.specials.InkjetAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -49,6 +50,10 @@ public class SpecialHandler
 			lastGroundedPos.ifPresent(vec3 ->
 				EntityAction.setEntityAction(entity, new InkjetAction(settings, weaponSlot, providerSlot, vec3)));
 		}, (entity, stack) -> WeaponHandler.getEntityLastGroundedPos(entity).isPresent());
+		registerSpecialExecutor(SpecialWeaponRecords.InkStormDataRecord.ID, (entity, settings, providerSlot, weaponSlot) ->
+		{
+			EntityAction.setEntityAction(entity, new InkStormAction(settings, weaponSlot, providerSlot));
+		});
 	}
 	public static void registerSpecialExecutor(ResourceLocation specialId, SpecialExecutorAction delegate)
 	{
