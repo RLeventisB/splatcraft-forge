@@ -36,7 +36,7 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 	{
 		float minDamageHeight = projectileData.damageDecayPerTick();
 		float damageDecayStartHeight = projectileData.damageDecayStartTick();
-
+		
 		float damage = projectileData.baseDamage();
 		if (relativeY < -minDamageHeight)
 			damage = projectileData.minDamage();
@@ -73,7 +73,8 @@ public class SlosherWeaponSettings extends AbstractWeaponSettings<SlosherWeaponS
 		{
 			mergedProjectileData[i] = OptionalProjectileDataRecord.mergeWithBase(shotData.sloshes.get(i).projectileModifications, baseProjectile);
 		}
-
+		
+		lowestStartup = Float.POSITIVE_INFINITY;
 		for (var slosh : shotData.sloshes)
 		{
 			if (slosh.startupTicks < lowestStartup)

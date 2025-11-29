@@ -98,18 +98,25 @@ public class PlayerPosingHandler
 						break;
 					case BUCKET_SWING:
 					{
-						// todo: fix this lol, maybe with a taylor series that makes a slope when the player attacks
 						SlosherWeaponSettings settings = ((SlosherItem) mainStack.getItem()).getSettings(mainStack);
 						float animTime = settings.shotData.endlagTicks();
 						mainHand.yRot = 0;
 						mainHand.xRot = -0.36f;
 						
-						if (EntityAction.hasEntityAction(player))
+						EntityAction.getSpecificEntityActionOptional(player, SlosherItem.SloshAction.class).ifPresent(slosh ->
 						{
-							EntityAction action = EntityAction.getEntityAction(player);
-							float angle = (action.getTime() - partialTicks) / action.getMaxTime();
-							mainHand.xRot = -0.36f + 0.5f + Mth.cos(angle) * 0.5f;
-						}
+							// what
+							float sloshTime = settings.lowestStartup;
+							float endTime = slosh.getMaxTime() - sloshTime - 1;
+							float time = slosh.getMaxTime() - slosh.getTime() + partialTicks - 1;
+							
+							// some weird value that goes from 0 to 1 linearly
+							// until it reaches the slosh time then it changes their slope
+							float value = time < sloshTime ? time / (2 * sloshTime) : 1f / 2 + (time - sloshTime) / (2 * endTime);
+							float scaling = 1f - Mth.square(Mth.square(value * 2f - 1));
+							
+							mainHand.xRot = -0.36f + Mth.cos(Mth.PI * value) * 0.5f * scaling;
+						});
 					}
 					break;
 					case BOW_CHARGE: // bro i aint done with the rollers and theres already a bow charge 😭😭😭😭 sorry
