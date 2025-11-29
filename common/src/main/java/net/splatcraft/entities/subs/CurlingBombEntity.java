@@ -110,6 +110,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		super.tick();
 	}
 	@Override
+	public void onVelocityCalculated(Vec3 direction, float speed)
+	{
+		double yVelocity = direction.y();
+		Vec3 velocityWithSetHorizontalSpeed = direction.multiply(1, 0, 1).normalize().scale(speed).add(0, yVelocity, 0);
+		
+		super.onVelocityCalculated(velocityWithSetHorizontalSpeed, speed);
+	}
+	@Override
 	public void handleMovement()
 	{
 		Pair<Vec3, Vec3> collidedAndNewVelocity = doBounceLogic(this, getDeltaMovement(), this::canHitEntity, getSettings().subDataRecord.bounceOnEntityHit());
@@ -121,8 +129,18 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public Vec3 reflectVelocity(Direction.Axis axis, Vec3 newVelocity, Vec3 oldVelocity)
 	{
 		if (axis == Direction.Axis.Y)
-			if (oldVelocity.y < newVelocity.y && newVelocity.y <= 0 && oldVelocity.y >= -0.9)
-				return oldVelocity.with(Direction.Axis.Y, 0);
+			if (oldVelocity.y < newVelocity.y)
+			{
+				if (newVelocity.y < 0 && oldVelocity.y >= -0.9)
+				{
+					return oldVelocity.with(Direction.Axis.Y, 0);
+				}
+				setOnGround(true);
+			}
+			else
+			{
+				setOnGround(false);
+			}
 		
 		return IBouncyEntity.super.reflectVelocity(axis, newVelocity, oldVelocity);
 	}

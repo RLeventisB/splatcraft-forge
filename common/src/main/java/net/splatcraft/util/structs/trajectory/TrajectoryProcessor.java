@@ -16,7 +16,7 @@ import org.joml.Vector3f;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
-public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
+public interface TrajectoryProcessor extends TrajectoryLauncher, TrajectoryUpdater
 {
 	static TrajectoryProcessor ofFragile(Level level, float initialVelocity, float pitchOffset, float gravity, float margin, double throwerImpulse, Vector3f friction, Predicate<Entity> filter)
 	{
@@ -26,15 +26,15 @@ public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
 	{
 		return new FragileNoEntityTrajectoryProcessor(pitchOffset, initialVelocity, gravity, throwerImpulse, friction, level);
 	}
-	static TrajectoryProcessor ofFragileForcedPitch(BlockGetter level, float initialVelocity, float forcedPitch, float gravity, double throwerImpulse, Vector3f friction)
+	static TrajectoryProcessor ofFragileHorizontalMod(BlockGetter level, float initialVelocity, float forcedPitch, float gravity, double throwerImpulse, Vector3f friction)
 	{
-		return new FragileForcedPitchTrajectoryProcessor(forcedPitch, initialVelocity, gravity, throwerImpulse, friction, level);
+		return new FragileHorizontalModTrajectoryProcessor(forcedPitch, initialVelocity, gravity, throwerImpulse, friction, level);
 	}
 	static TrajectoryProcessor ofBouncy(BlockGetter level, float initialVelocity, float pitchOffset, float gravity, double throwerImpulse, Vector3f friction, BouncyTrajectoryProcessor.BounceFunction bounceFunction)
 	{
 		return new BouncyTrajectoryProcessor(pitchOffset, initialVelocity, gravity, throwerImpulse, friction, bounceFunction, level);
 	}
-	interface FragileTrajectoryBase extends TrajectoryMaker, TrajectoryCollider
+	interface FragileTrajectoryBase extends TrajectoryUpdater, TrajectoryCollider
 	{
 		default boolean process(AtomicReference<Vec3> currentPos, AtomicReference<Vec3> currentVelocity)
 		{
@@ -56,7 +56,7 @@ public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
 	record FragileNoEntityTrajectoryProcessor(float pitchOffset, float initialVelocity, float gravity,
 	                                          double throwerImpulse,
 	                                          Vector3f friction,
-	                                          BlockGetter level) implements TrajectoryProcessor, SimpleStartLauncher, OnlyLevelCollider, FragileTrajectoryBase
+	                                          BlockGetter level) implements TrajectoryProcessor, SimpleTrajectoryLauncher, OnlyLevelCollider, FragileTrajectoryBase
 	{
 		@Override
 		public @NotNull HitResult getHitResult(Vec3 currentPos, Vec3 nextPos)
@@ -64,10 +64,10 @@ public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
 			return OnlyLevelCollider.super.getHitResult(currentPos, nextPos);
 		}
 	}
-	record FragileForcedPitchTrajectoryProcessor(float forcedPitch, float initialVelocity, float gravity,
-	                                             double throwerImpulse,
-	                                             Vector3f friction,
-	                                             BlockGetter level) implements TrajectoryProcessor, ForcedPitchStartLauncher, OnlyLevelCollider, FragileTrajectoryBase
+	record FragileHorizontalModTrajectoryProcessor(float pitchOffset, float initialVelocity, float gravity,
+	                                               double throwerImpulse,
+	                                               Vector3f friction,
+	                                               BlockGetter level) implements TrajectoryProcessor, HorizontalModTrajectoryLauncher, OnlyLevelCollider, FragileTrajectoryBase
 	{
 		@Override
 		public @NotNull HitResult getHitResult(Vec3 currentPos, Vec3 nextPos)
@@ -78,7 +78,7 @@ public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
 	record FragileTrajectoryProcessor(float pitchOffset, float initialVelocity, float gravity, double throwerImpulse,
 	                                  float margin, Vector3f friction,
 	                                  Level level,
-	                                  Predicate<Entity> filter) implements TrajectoryProcessor, SimpleStartLauncher, LevelEntityCollider, FragileTrajectoryBase
+	                                  Predicate<Entity> filter) implements TrajectoryProcessor, SimpleTrajectoryLauncher, LevelEntityCollider, FragileTrajectoryBase
 	{
 		@Override
 		public @NotNull HitResult getHitResult(Vec3 currentPos, Vec3 nextPos)
@@ -88,7 +88,7 @@ public interface TrajectoryProcessor extends StartLauncher, TrajectoryMaker
 	}
 	record BouncyTrajectoryProcessor(float pitchOffset, float initialVelocity, float gravity, double throwerImpulse,
 	                                 Vector3f friction, BounceFunction bounceFunction,
-	                                 BlockGetter level) implements TrajectoryProcessor, SimpleStartLauncher, TrajectoryMaker
+	                                 BlockGetter level) implements TrajectoryProcessor, SimpleTrajectoryLauncher, TrajectoryUpdater
 	{
 		@Override
 		public boolean process(AtomicReference<Vec3> currentPos, AtomicReference<Vec3> currentVelocity)

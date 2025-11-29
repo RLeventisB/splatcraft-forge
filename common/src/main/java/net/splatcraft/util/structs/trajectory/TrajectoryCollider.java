@@ -37,6 +37,7 @@ interface LevelEntityCollider extends TrajectoryCollider
 		AABB aabb = AABB.ofSize(currentPos, margin(), margin(), margin()).expandTowards(nextPos.subtract(currentPos)).inflate(1.0);
 		Optional<Vec3> collisionPoint = Optional.empty();
 		double minDist = Double.POSITIVE_INFINITY;
+		Entity selectedEntity = null;
 		for (LivingEntity entity : level().getEntities(EntityTypeTest.forClass(LivingEntity.class), aabb, filter()))
 		{
 			AABB entityAabb = entity.getBoundingBox().inflate(0.3f);
@@ -49,11 +50,12 @@ interface LevelEntityCollider extends TrajectoryCollider
 				
 				collisionPoint = clip;
 				minDist = distance;
+				selectedEntity = entity;
 			}
 		}
 		
 		if (collisionPoint.isPresent())
-			return new EntityHitResult(null, collisionPoint.get());
+			return new EntityHitResult(selectedEntity, collisionPoint.get());
 		
 		return level().clip(new ClipContext(currentPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
 	}

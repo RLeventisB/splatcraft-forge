@@ -1,13 +1,14 @@
 package net.splatcraft.util.structs.trajectory;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-interface StartLauncher
+interface TrajectoryLauncher
 {
 	Vec3 getInitialVelocity(LivingEntity entity, float partialTicks);
 }
-interface SimpleStartLauncher extends StartLauncher
+interface SimpleTrajectoryLauncher extends TrajectoryLauncher
 {
 	default Vec3 getInitialVelocity(LivingEntity entity, float partialTicks)
 	{
@@ -19,15 +20,20 @@ interface SimpleStartLauncher extends StartLauncher
 	double throwerImpulse();
 	float pitchOffset();
 }
-interface ForcedPitchStartLauncher extends StartLauncher
+interface HorizontalModTrajectoryLauncher extends TrajectoryLauncher
 {
 	default Vec3 getInitialVelocity(LivingEntity entity, float partialTicks)
 	{
-		Vec3 projectileVelocity = Vec3.directionFromRotation(forcedPitch(), entity.getViewYRot(partialTicks)).scale(initialVelocity());
+		float throwXRot = Mth.clamp(entity.getViewXRot(partialTicks) + pitchOffset(), -89, 89);
+		Vec3 projectileVelocity = Vec3.directionFromRotation(throwXRot, entity.getViewYRot(partialTicks)).scale(initialVelocity());
+		
+		double yVelocity = projectileVelocity.y();
+		projectileVelocity = projectileVelocity.multiply(1, 0, 1).normalize().scale(initialVelocity()).add(0, yVelocity, 0);
+		
 		Vec3 throwerVelocity = entity.getDeltaMovement().scale(throwerImpulse());
 		return projectileVelocity.add(throwerVelocity);
 	}
 	float initialVelocity();
 	double throwerImpulse();
-	float forcedPitch();
+	float pitchOffset();
 }

@@ -63,7 +63,9 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 			proj.setCookScale(cookProgress);
 			proj.setInitialFuseTime(curlingData.fuseTime().getValue(cookProgress));
 			proj.setItem(stack);
-			proj.setDeltaMovement(entity, 0, entity.getYRot(), curlingData.throwAngle(), curlingData.travelSpeedRange().getValue(cookProgress), 0, 0);
+			float throwXRot = Mth.clamp(entity.getXRot() + curlingData.throwAngle(), -89, 89);
+			proj.setDeltaMovement(entity,
+				throwXRot, entity.getYRot(), 0, curlingData.travelSpeedRange().getValue(cookProgress), 0, 0);
 			level.addFreshEntity(proj);
 		}
 		level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.subThrow, SoundSource.PLAYERS, 0.7F, 1);
@@ -102,6 +104,6 @@ public class CurlingSubWeaponItem extends SubWeaponItem<CurlingBombDataRecord>
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings(stack);
 		CurlingBombDataRecord subData = settings.subDataRecord;
 		
-		return TrajectoryProcessor.ofFragileForcedPitch(entity.level(), subData.travelSpeedRange().getValue(Math.min(cookProgress + partialTicks / settings.dataRecord.holdTime(), 1)), subData.throwAngle(), 0.09f, 0, new Vector3f(1f));
+		return TrajectoryProcessor.ofFragileHorizontalMod(entity.level(), subData.travelSpeedRange().getValue(Math.min(cookProgress + partialTicks / settings.dataRecord.holdTime(), 1)), subData.throwAngle(), 0.09f, 0, new Vector3f(1f));
 	}
 }
