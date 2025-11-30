@@ -348,9 +348,9 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 		VertexConsumer consumer = provider.getBuffer(RenderType.armorCutoutNoCull(RECALL_ICON_TEXTURE));
 		Vector3f quadCenter = startPos.toVector3f().add(0, 0.5f, 0).sub(camera.getPosition().toVector3f());
 		
-		consumer.addVertex((new Vector3f(size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 0).setUv1(0, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
-		consumer.addVertex((new Vector3f(size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 1).setUv1(0, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
-		consumer.addVertex((new Vector3f(-size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 1).setUv1(16, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
-		consumer.addVertex((new Vector3f(-size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 0).setUv1(16, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 0).setUv1(0, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(0, 1).setUv1(0, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(-size, -size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 1).setUv1(16, 16).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
+		consumer.addVertex((new Vector3f(-size, size, 0f)).rotate(quaternion).add(quadCenter)).setColor(color).setUv(1, 0).setUv1(16, 0).setNormal(1, 0, 0).setLight(LightTexture.FULL_BRIGHT);
 	}
 }

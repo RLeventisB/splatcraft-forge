@@ -124,10 +124,10 @@ public class SuperJumpCommand
 		
 		if (Components.SQUID_INFO.hasChangedAfterUpdateOrCreate(player, info -> info.setSquid(true)))
 		{
-			SplatcraftPacketHandler.sendToTrackers(new PlayerSetSquidS2CPacket(player.getUUID(), true), player);
+			SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerSetSquidS2CPacket(player.getUUID(), true), player);
 		}
 		
-		SplatcraftPacketHandler.sendToPlayer(UpdateEntityActionOnlyPacket.create(player), player);
+		SplatcraftPacketHandler.sendToTrackersAndSelf(UpdateEntityActionOnlyPacket.create(player), player);
 		
 		return true;
 	}
@@ -227,7 +227,7 @@ public class SuperJumpCommand
 					if (entity instanceof Player player)
 						player.getAbilities().flying = false;
 					setTime(getTime() + 1);
-					return null;
+					return ActionEndResult.dontEnd(this);
 				}
 				start = entity.position();
 				canStart = true;
