@@ -345,7 +345,7 @@ public class RendererHandler
 			
 			RenderableEntityAction action = EntityAction.getSpecificEntityAction(living, RenderableEntityAction.class);
 			if (action == null)
-				return;
+				continue;
 			
 			PoseStack poseStack = data.poseStack();
 			poseStack.pushPose();
