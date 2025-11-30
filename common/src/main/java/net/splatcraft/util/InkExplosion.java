@@ -1,10 +1,12 @@
 package net.splatcraft.util;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -25,41 +27,40 @@ import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.InkDropEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
+import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.s2c.SendPlayerHitPacket;
+import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.structs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class InkExplosion
 {
-	private final double x;
-	private final double y;
-	private final double z;
 	private final AttackId attackId;
 	@Nullable
 	private final Entity exploder;
 	private final float paintRadius;
-	private final List<BlockFace> affectedBlockPositions = Lists.newArrayList();
+	private final List<BlockFace> affectedBlockFaces = Lists.newArrayList();
 	private final Vec3 position;
 	private final InkBlockUtils.InkType inkType;
 	private final RangedValueCollection dmgCalculator;
 	private final ItemStack weapon;
 	private final InkColor color;
-	public InkExplosion(@Nullable Entity source, double x, double y, double z, RangedValueCollection damageCalculator, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
+	public InkExplosion(@Nullable Entity source, Vec3 pos, RangedValueCollection damageCalculator, float paintRadius, InkBlockUtils.InkType inkType, ItemStack weapon, AttackId attackId)
 	{
 		exploder = source;
 		this.paintRadius = paintRadius;
-		this.x = x;
-		this.y = y;
-		this.z = z;
 		this.attackId = attackId;
-		position = new Vec3(this.x, this.y, this.z);
+		position = pos;
 		
 		this.inkType = inkType;
 		dmgCalculator = damageCalculator;
@@ -75,31 +76,53 @@ public class InkExplosion
 		};
 		return pos.relative(normal, modifier);
 	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float damage, InkBlockUtils.InkType type, ItemStack weapon)
-	{
-		createInkExplosion(source, pos, paintRadius, RangedValueCollection.createDamageSimpleLerped(damage, damageRadius), type, weapon, AttackId.NONE);
-	}
-	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, float damageRadius, float closeDamage, float farDamage, InkBlockUtils.InkType type, ItemStack weapon)
-	{
-		createInkExplosion(source, pos, paintRadius, RangedValueCollection.createDamageSimpleLerped(closeDamage, farDamage, damageRadius), type, weapon, AttackId.NONE);
-	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, null, type, weapon, AttackId.NONE, null);
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon)
 	{
-		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, AttackId.NONE);
+		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, AttackId.NONE, null);
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId)
+	{
+		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, attackId, null);
+	}
+	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId, Consumer<Entity> onHit)
 	{
 		if (source == null || source.level().isClientSide)
 			return;
 		
-		InkExplosion inksplosion = new InkExplosion(source, pos.x, pos.y, pos.z, damageManager, paintRadius, type, weapon, attackId);
+		InkExplosion inksplosion = new InkExplosion(source, pos, damageManager, paintRadius, type, weapon, attackId);
 		
-		inksplosion.doExplosionA();
+		inksplosion.doExplosionA(onHit);
 		inksplosion.doExplosionCosmetics(false);
+	}
+	public static void createInkExplosionWithSound(Entity source, Vec3 pos, float paintRadius, RangedValueCollection damageManager, InkBlockUtils.InkType type, ItemStack weapon, AttackId attackId, @Nullable Vector3f soundPos)
+	{
+		if (source instanceof ServerPlayer serverPlayer)
+		{
+			ImmutableList.Builder<Vector3f> builder = ImmutableList.builder();
+			
+			createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, attackId, e ->
+			{
+				builder.add(e.getBoundingBox().getCenter().toVector3f());
+			});
+			
+			ImmutableList<Vector3f> positions = builder.build();
+			if (positions.isEmpty())
+				return;
+			
+			if (soundPos == null)
+				soundPos = positions.getFirst();
+			
+			SplatcraftPacketHandler.sendToPlayer(
+				new SendPlayerHitPacket(positions, soundPos, SplatcraftSounds.shotHit, 0.7f), serverPlayer);
+			
+			return;
+		}
+		
+		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, attackId, null);
 	}
 	public static void doSplashes(@Nullable Entity owner, Vec3 center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType, ItemStack weapon)
 	{
@@ -135,22 +158,22 @@ public class InkExplosion
 	/**
 	 * Does the first part of the explosion (destroy blocks)
 	 */
-	public void doExplosionA()
+	public void doExplosionA(@Nullable Consumer<Entity> onHit)
 	{
 		List<BlockFace> set = new ArrayList<>();
 		ServerLevel world = (ServerLevel) exploder.level();
 		getBlocksInSphereWithNoise(set, world);
 		
-		affectedBlockPositions.addAll(set);
+		affectedBlockFaces.addAll(set);
 		if (RangedValueCollection.isInsignificant(dmgCalculator))
 			return;
 		float radiusSquared = dmgCalculator.getMaxKey() * dmgCalculator.getMaxKey();
-		int k1 = Mth.floor(x - dmgCalculator.getMaxKey() - 1F);
-		int l1 = Mth.floor(x + dmgCalculator.getMaxKey() + 1F);
-		int i2 = Mth.floor(y - dmgCalculator.getMaxKey() - 1F);
-		int i1 = Mth.floor(y + dmgCalculator.getMaxKey() + 1F);
-		int j2 = Mth.floor(z - dmgCalculator.getMaxKey() - 1F);
-		int j1 = Mth.floor(z + dmgCalculator.getMaxKey() + 1F);
+		int k1 = Mth.floor(position.x - dmgCalculator.getMaxKey() - 1F);
+		int l1 = Mth.floor(position.x + dmgCalculator.getMaxKey() + 1F);
+		int i2 = Mth.floor(position.y - dmgCalculator.getMaxKey() - 1F);
+		int i1 = Mth.floor(position.y + dmgCalculator.getMaxKey() + 1F);
+		int j2 = Mth.floor(position.z - dmgCalculator.getMaxKey() - 1F);
+		int j1 = Mth.floor(position.z + dmgCalculator.getMaxKey() + 1F);
 		AABB box = new AABB(k1, i2, j2, l1, i1, j1);
 		List<Entity> possibleTargets = new ArrayList<>();
 		List<SpawnShieldEntity> spawnShields = new ArrayList<>();
@@ -200,12 +223,13 @@ public class InkExplosion
 					continue;
 				
 				float seenPercent = Explosion.getSeenPercent(position, entity);
-				InkDamageUtils.doSplatDamage(entity, dmgCalculator.getValue(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId);
+				if (InkDamageUtils.doSplatDamage(entity, dmgCalculator.getValue(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId) && onHit != null)
+					onHit.accept(entity);
 			}
 			
 			DyeColor dyeColor = color.getDyeColor();
 			
-			if (dyeColor != null && entity instanceof Sheep sheep)
+			if (entity instanceof Sheep sheep)
 			{
 				sheep.setColor(dyeColor);
 			}
@@ -258,7 +282,7 @@ public class InkExplosion
 	 */
 	public void doExplosionCosmetics(boolean spawnParticles)
 	{
-		Vec3 explosionPos = new Vec3(x + 0.5f, y + 0.5f, z + 0.5f);
+		Vec3 explosionPos = new Vec3(position.x + 0.5f, position.y + 0.5f, position.z + 0.5f);
 		
 		Level world = exploder.level();
 		
@@ -266,16 +290,16 @@ public class InkExplosion
 		{
 			if (paintRadius < 2.0F)
 			{
-				world.addParticle(ParticleTypes.EXPLOSION, x, y, z, 1.0D, 0.0D, 0.0D);
+				world.addParticle(ParticleTypes.EXPLOSION, position.x, position.y, position.z, 1.0D, 0.0D, 0.0D);
 			}
 			else
 			{
-				world.addParticle(ParticleTypes.EXPLOSION_EMITTER, x, y, z, 1.0D, 0.0D, 0.0D);
+				world.addParticle(ParticleTypes.EXPLOSION_EMITTER, position.x, position.y, position.z, 1.0D, 0.0D, 0.0D);
 			}
 		}
 		
 		int pointsToAward = 0;
-		for (BlockFace blockFace : affectedBlockPositions)
+		for (BlockFace blockFace : affectedBlockFaces)
 		{
 			BlockState blockstate = world.getBlockState(blockFace.pos());
 			if (!blockstate.isAir())
@@ -579,22 +603,6 @@ public class InkExplosion
 		public BlockPos getBlockPos(FaceData face)
 		{
 			return blockPositions.get(face.blockPosIndex);
-		}
-		public enum Space // for oct-trees, if implemented
-		{
-			POSX_POSY_POSZ(1),
-			POSX_POSY_NEGZ(2),
-			POSX_NEGY_POSZ(3),
-			POSX_NEGY_NEGZ(4),
-			NEGX_POSY_POSZ(5),
-			NEGX_POSY_NEGZ(6),
-			NEGX_NEGY_POSZ(7),
-			NEGX_NEGY_NEGZ(8);
-			public final byte id;
-			Space(int id)
-			{
-				this.id = (byte) id;
-			}
 		}
 		public interface Vector3Base
 		{

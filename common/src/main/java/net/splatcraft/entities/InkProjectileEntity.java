@@ -6,7 +6,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
@@ -25,7 +25,6 @@ import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.items.weapons.settings.*;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
-import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendPlayerHitPacket;
 import net.splatcraft.registries.SplatcraftComponents;
 import net.splatcraft.registries.SplatcraftDamageTypes;
@@ -254,7 +253,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null && explodesOnExpire)
 				{
-					InkExplosion.createInkExplosion(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE);
+					InkExplosion.createInkExplosionWithSound(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE, position().toVector3f());
 					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
 					level().broadcastEntityEvent(this, BLAST_PARTICLE);
 					level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
@@ -427,18 +426,16 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (didDamage)
 		{
 			hitEnemies.add(target.getId());
-			if (owner instanceof ServerPlayer playerOwner)
+			
+			ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
+			if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
+				Objects.equals(getProjectileType(), Types.BLASTER))
 			{
-				ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
-				if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
-					Objects.equals(getProjectileType(), Types.BLASTER))
-				{
-					SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(impactPos.add(0, getBbHeight() / 2, 0), SplatcraftSounds.shotDirectHit, 1.2f), playerOwner);
-				}
-				else
-				{
-					SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(impactPos.add(0, getBbHeight() / 2, 0), SplatcraftSounds.shotHit, 1f), playerOwner);
-				}
+				accumulateHitPacket(impactPos, SplatcraftSounds.shotDirectHit, 1.2f);
+			}
+			else
+			{
+				accumulateHitPacket(impactPos, SplatcraftSounds.shotHit, 1f);
 			}
 		}
 		
@@ -447,7 +444,12 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
-				InkExplosion.createInkExplosion(owner, impactPos, explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+				InkExplosion.createInkExplosionWithSound(
+					owner, impactPos, explosionData.explosionPaint,
+					explosionData.getRadiuses(false, damageMultiplier),
+					inkType, sourceWeapon,
+					explosionData.newAttackId ? AttackId.NONE : attackId, impactPos.toVector3f());
+				
 				level().broadcastEntityEvent(this, BLAST_PARTICLE);
 				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 			}
@@ -456,6 +458,10 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			
 			discard();
 		}
+	}
+	private void accumulateHitPacket(Vec3 impactPos, SoundEvent shotSound, float scale)
+	{
+		SendPlayerHitPacket.accumulateHitPositions(impactPos.toVector3f(), shotSound, scale);
 	}
 	private float calculateDamage(Vec3 impactPos, boolean setPos)
 	{
@@ -478,7 +484,6 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	protected void onHitBlock(@NotNull BlockHitResult result)
 	{
-		
 		if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
 			return;
 		
@@ -522,7 +527,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
-				InkExplosion.createInkExplosion(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(true, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId);
+				InkExplosion.createInkExplosionWithSound(getOwner(), impactPos, explosionData.explosionPaint, explosionData.getRadiuses(true, damageMultiplier), inkType, sourceWeapon, explosionData.newAttackId ? AttackId.NONE : attackId, impactPos.toVector3f());
 				level().broadcastEntityEvent(this, BLAST_PARTICLE);
 			}
 			else
@@ -607,6 +612,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 				hitTargetOrDeflectSelf(hitresult);
 			}
 		}
+		SendPlayerHitPacket.releaseHitPositions(getOwner());
 	}
 	@Override
 	public boolean canHitEntity(@NotNull Entity entity)
