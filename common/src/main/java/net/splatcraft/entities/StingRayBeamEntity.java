@@ -1,6 +1,5 @@
 package net.splatcraft.entities;
 
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -36,6 +35,7 @@ import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import oshi.util.tuples.Triplet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,6 +193,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 	}
 	public void doCollisions(Vec3 forward)
 	{
+		Vector3f floatForward = forward.toVector3f();
 		// every 4 ticks send particles and sound to the owner
 		Optional<List<Vector3f>> particlePositions = getLifespan() % 4 == 0 && getOwner() instanceof ServerPlayer ? Optional.of(new ArrayList<>()) : Optional.empty();
 		AABB stingRayHitArea = CommonUtils.createInfiniteAABBFor(position(), forward, getRayWidth());
@@ -206,15 +207,15 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				continue;
 			
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Pair<Double, Vector3f> impactData = CommonUtils.getDistance(forward, relativeBox);
+			Triplet<Float, Vector3f, Float> impactData = CommonUtils.getRayDistance(floatForward, relativeBox);
 			
-			if (impactData.getFirst() < getRayWidth())
+			if (impactData.getA() < getRayWidth())
 			{
-				hit(entity, rayDamage, particlePositions, impactData.getSecond());
+				hit(entity, rayDamage, particlePositions, impactData.getB());
 			}
-			else if (hasStartedToShowTheHellspawn() && impactData.getFirst() < getShockwaveWidth())
+			else if (hasStartedToShowTheHellspawn() && impactData.getA() < getShockwaveWidth())
 			{
-				hit(entity, shockwaveDamage, particlePositions, impactData.getSecond());
+				hit(entity, shockwaveDamage, particlePositions, impactData.getB());
 			}
 		}
 		

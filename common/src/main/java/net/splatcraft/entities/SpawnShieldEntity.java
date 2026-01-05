@@ -111,6 +111,11 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 			super.kill();
 	}
 	@Override
+	public boolean isPickable()
+	{
+		return !isRemoved();
+	}
+	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder builder)
 	{
 		builder.define(ACTIVE_TIME, 0);

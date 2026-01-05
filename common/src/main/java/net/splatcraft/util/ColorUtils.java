@@ -263,6 +263,13 @@ public class ColorUtils
 	{
 		return colorA.getColor() == colorB.getColor();
 	}
+	public static boolean colorEquals(Level world, BlockPos posA, BlockPos posB, InkColor colorA, InkColor colorB)
+	{
+		return
+			SplatcraftGameRules.getLocalizedRule(world, posA, SplatcraftGameRules.UNIVERSAL_INK) ||
+				SplatcraftGameRules.getLocalizedRule(world, posB, SplatcraftGameRules.UNIVERSAL_INK) ||
+				colorEquals(colorA, colorB);
+	}
 	public static boolean colorEquals(Level world, BlockPos pos, InkColor colorA, InkColor colorB)
 	{
 		return SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.UNIVERSAL_INK) || colorEquals(colorA, colorB);
@@ -285,7 +292,20 @@ public class ColorUtils
 		
 		if (!entityColor.isValid() || !inkColor.isValid())
 			return false;
-		return colorEquals(entity.level(), te.getBlockPos(), entityColor, inkColor);
+		return colorEquals(entity.level(), entity.blockPosition(), te.getBlockPos(), entityColor, inkColor);
+	}
+	public static boolean colorEquals(Entity entityA, Entity entityB)
+	{
+		if (entityA == null || entityB == null)
+			return false;
+		
+		InkColor color1 = getEntityColor(entityA);
+		InkColor color2 = getEntityColor(entityB);
+		
+		if (color1.isInvalid() || color2.isInvalid())
+			return false;
+		
+		return colorEquals(entityA.level(), entityA.blockPosition(), entityB.blockPosition(), color1, color2);
 	}
 	public static boolean colorEquals(LivingEntity entity, ItemStack stack)
 	{

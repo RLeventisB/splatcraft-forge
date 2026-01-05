@@ -68,7 +68,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	{
 		if (remainingUseTicks != stack.getUseDuration(entity))
 			return;
-		
+
 		SlosherWeaponSettings settings = getSettings(stack);
 		Optional<SloshAction> action = EntityAction.getSpecificEntityActionOptional(entity, SloshAction.class);
 		if (action.isPresent())
@@ -87,7 +87,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 	{
 		if (EntityAction.hasSpecificEntityActionAnd(entity, roll -> !roll.didSound, SloshAction.class))
 			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
-		
+
 		return Optional.of(() ->
 			EntityAction.setEntityAction(entity, null));
 	}
@@ -144,7 +144,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			yaw = yRotOld = entity.getYRot();
 			this.sloshData = settings;
 			this.endlag = settings.shotData.miscEndlagTicks();
-			
+
 			calculateSloshes();
 		}
 		public SloshAction(ItemStack storedStack, float time, float maxTime, EntitySlot itemSlot, ResourceLocation sloshDataId, boolean didSound, boolean queuedReSlosh, boolean inkCheck, int endlag, float pitch, Float xDelta, float yaw, Float yDelta, Float xRotOld, Float yRotOld)
@@ -152,7 +152,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			super(time, maxTime);
 			sloshData = (SlosherWeaponSettings) DataHandler.WeaponStatsListener.SETTINGS.get(sloshDataId);
 			calculateSloshes();
-			
+
 			this.storedStack = storedStack;
 			this.itemSlot = itemSlot;
 			this.didSound = didSound;
@@ -185,21 +185,22 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		public ActionEndResult tick(LivingEntity entity)
 		{
 			Level world = entity.level();
-			
+			entity.setYBodyRot(entity.getVisualRotationYInDegrees());
+
 			if (sloshData == null)
 				return null;
-			
+
 			float frame = getMaxTime() - getTime();
 			SlosherWeaponSettings.SlosherShotDataRecord shotSetting = sloshData.shotData;
 			SlosherItem slosherItem = (SlosherItem) storedStack.getItem();
-			
+
 			if (shotSetting.allowFlicking())
 			{
 				xDelta = xDelta * 0.7f + (Mth.degreesDifference(pitch, entity.getXRot())) * 0.12f;
 				yDelta = yDelta * 0.7f + (Mth.degreesDifference(yaw, entity.getYRot())) * 0.12f;
 				xRotOld = pitch;
 				yRotOld = yaw;
-				
+
 				pitch += xDelta * (didSound ? 1 : 0.4f);
 				yaw += yDelta * (didSound ? 1 : 0.4f);
 			}
@@ -210,7 +211,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 				pitch = entity.getXRot();
 				yaw = entity.getYRot();
 			}
-			
+
 			for (int i = 0; i < sloshes.size(); i++)
 			{
 				CalculatedSloshData calculatedSloshData = sloshes.get(i);
@@ -222,7 +223,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 					{
 						inkCheck = reduceInk(entity, slosherItem, shotSetting.inkConsumption(), shotSetting.inkRecoveryCooldown(), true);
 					}
-					
+
 					if (inkCheck)
 					{
 						SlosherWeaponSettings.SingularSloshShotData projectileSetting = shotSetting.sloshes().get(calculatedSloshData.sloshDataIndex);
@@ -231,16 +232,16 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 							shootSlosh(entity, calculatedSloshData, world, partialTick, projectileSetting, shotSetting, slosherItem, extraTime);
 						}
 					}
-					
+
 					if (!didSound)
 					{
 						CommonUtils.setSquidDelay(entity, endlag);
-						
+
 						if (inkCheck)
 							world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.slosherShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(world.getRandom(), 0.95F, 0.095F));
 						didSound = true;
 					}
-					
+
 					sloshes.remove(i);
 					i--;
 				}
@@ -251,10 +252,10 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		{
 			CommonRecords.ProjectileDataRecord projectileData = sloshData.getProjectileDataAtIndex(calculatedSloshData.sloshDataIndex);
 			float speed = calculatedSloshData.sloshSpeed();
-			
+
 			InkProjectileEntity proj = new InkProjectileEntity(world, entity, storedStack, InkBlockUtils.getInkType(entity), projectileData.size(), DamageCalculator.empty());
 			proj.setSlosherStats(projectileData);
-			
+
 			float xRotation = Mth.rotLerp(partialTick, yRotOld, yaw);
 			proj.shootFromRotation(
 				entity,
@@ -266,7 +267,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			proj.setAttackId(attackId);
 			proj.moveTo(proj.position().add(EntityAccessor.invokeGetInputVector(new Vec3(-0.4, -1, 0), 1, xRotation)));
 			proj.damage = DamageCalculator.slosher((float) proj.getY(), projectileData);
-			
+
 			switch (slosherItem.slosherType)
 			{
 				case EXPLODING:
@@ -281,7 +282,7 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 					proj.canPierce = true;
 			}
 			world.addFreshEntity(proj);
-			
+
 			proj.tick(extraTime);
 		}
 		@Override
@@ -291,12 +292,12 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			{
 				setTime(getTime() + getMaxTime());
 				calculateSloshes();
-				
+
 				xRotOld = pitch;
 				yRotOld = yaw;
 				pitch = entity.getXRot();
 				yaw = entity.getYRot();
-				
+
 				queuedReSlosh = false;
 				didSound = false;
 				return ActionEndResult.dontEnd(this);
@@ -322,11 +323,11 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 		{
 			if (Objects.equals(sloshData.name, settings.name))
 				return;
-			
+
 			maxTime = settings.shotData.endlagTicks();
 			endlag = settings.shotData.miscEndlagTicks();
 			sloshData = settings;
-			
+
 			calculateSloshes();
 		}
 		public record CalculatedSloshData(float time, byte subIndex, int sloshDataIndex, float sloshSpeed)

@@ -1,6 +1,5 @@
 package net.splatcraft.entities;
 
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.GraphicsStatus;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -42,6 +41,7 @@ import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import oshi.util.tuples.Triplet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -183,7 +183,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 	{
 		AABB cloudHitArea = AABB.ofSize(position(), getRadius() * 2, 0, getRadius() * 2);
 		cloudHitArea = cloudHitArea.setMinY(Double.NEGATIVE_INFINITY).expandTowards(getDeltaMovement().scale(-300));
-		Vec3 damageDirection = getDeltaMovement().reverse().add(0, -1, 0);
+		Vector3f damageDirection = getDeltaMovement().reverse().add(0, -1, 0).toVector3f();
 		
 		for (Entity entity : level().getEntities().getAll())
 		{
@@ -215,9 +215,9 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 				continue;
 			
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Pair<Double, Vector3f> impactData = CommonUtils.getDistance(damageDirection, relativeBox);
+			Triplet<Float, Vector3f, Float> impactData = CommonUtils.getRayDistance(damageDirection, relativeBox);
 			
-			if (impactData.getFirst() < getRadius())
+			if (impactData.getA() < getRadius())
 			{
 				hit(entity, damage);
 			}

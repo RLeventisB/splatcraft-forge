@@ -3,17 +3,21 @@ package net.splatcraft.client.renderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.SquidBumperColorLayer;
 import net.splatcraft.client.models.SquidBumperModel;
 import net.splatcraft.entities.SquidBumperEntity;
+import net.splatcraft.util.ClientUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity, SquidBumperModel> implements RenderLayerParent<SquidBumperEntity, SquidBumperModel>
@@ -22,7 +26,7 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 	public SquidBumperRenderer(EntityRendererProvider.Context context)
 	{
 		super(context, new SquidBumperModel(context.bakeLayer(SquidBumperModel.LAYER_LOCATION)), 0.5f);
-		addLayer(new SquidBumperColorLayer(this, context.getModelSet()));
+		addLayer(new SquidBumperColorLayer(this, context.getModelSet(), this::isBodyVisible));
 		//addLayer(new SquidBumperOverlayLayer(this, context.getModelSet()));
 	}
 	@Override
@@ -58,6 +62,19 @@ public class SquidBumperRenderer extends LivingEntityRenderer<SquidBumperEntity,
 		{
 			matrices.mulPose(Axis.ZP.rotationDegrees(Mth.sin(hurtTime / 1.5F * (float) Math.PI) * 3.0F));
 		}
+	}
+	@Override
+	public void render(@NotNull SquidBumperEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, MultiBufferSource buffer, int packedLight)
+	{
+		// if an entity is invisible, their hitboxes aren't show, which is fine
+		// however why would you make a squid bumper invisible >:( also this helps for testing projectile hitboxes
+		if (ClientUtils.getClient().getEntityRenderDispatcher().shouldRenderHitBoxes() && !isBodyVisible(entity))
+		{
+			AABB aabb = entity.getBoundingBox().move(-entity.getX(), -entity.getY(), -entity.getZ());
+			LevelRenderer.renderLineBox(poseStack, buffer.getBuffer(RenderType.lines()), aabb, 1f, 1f, 1f, 1.0F);
+		}
+		
+		super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
 	}
 	@Override
 	public @NotNull ResourceLocation getTextureLocation(@NotNull SquidBumperEntity entity)

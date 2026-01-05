@@ -16,25 +16,31 @@ import net.splatcraft.util.ColorUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
 public class SquidBumperColorLayer extends RenderLayer<SquidBumperEntity, SquidBumperModel>
 {
 	private static final ResourceLocation TEXTURE = Splatcraft.identifierOf("textures/entity/squid_bumper.png");
 	private final SquidBumperModel model;
-	public SquidBumperColorLayer(RenderLayerParent<SquidBumperEntity, SquidBumperModel> renderer, EntityModelSet modelSet)
+	private final Predicate<SquidBumperEntity> isBodyVisible;
+	public SquidBumperColorLayer(RenderLayerParent<SquidBumperEntity, SquidBumperModel> renderer, EntityModelSet modelSet, Predicate<SquidBumperEntity> isBodyVisible)
 	{
 		super(renderer);
 		model = new SquidBumperModel(modelSet.bakeLayer(SquidBumperModel.LAYER_LOCATION));
+		this.isBodyVisible = isBodyVisible;
 	}
 	@Override
-	public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
+	public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight, @NotNull SquidBumperEntity entity, float limbSwing, float limbSwingAmount, float partialTickTime, float ageInTicks, float netHeadYaw, float headPitch)
 	{
+		if (isBodyVisible != null && !isBodyVisible.test(entity)) return;
+		
 		InkColor color = ColorUtils.getColorLockedIfConfig(ColorUtils.getEntityColor(entity));
 		
 		getParentModel().copyPropertiesTo(model);
 		model.prepareMobModel(entity, limbSwing, limbSwingAmount, headPitch);
 		model.setupAnim(entity, limbSwing, limbSwingAmount, partialTickTime, ageInTicks, netHeadYaw);
 		
-		VertexConsumer ivertexbuilder = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+		VertexConsumer ivertexbuilder = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
 		model.renderToBuffer(poseStack, ivertexbuilder, packedLight, LivingEntityRenderer.getOverlayCoords(entity, 0.0F), color.getColor());
 	}
 }
