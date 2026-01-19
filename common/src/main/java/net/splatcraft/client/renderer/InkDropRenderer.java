@@ -23,7 +23,7 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
 	public InkDropRenderer(EntityRendererProvider.Context context)
 	{
 		super(context);
-		
+
 		MODEL = new InkDropModel(context.bakeLayer(ShooterInkProjectileModel.LAYER_LOCATION));
 	}
 	@Override
@@ -31,28 +31,27 @@ public class InkDropRenderer extends EntityRenderer<InkDropEntity> implements Re
 	{
 		if (entity.isInvisible())
 			return;
-		
+
 		double distance = entityRenderDispatcher.camera.getPosition().distanceToSqr(entity.getPosition(partialTicks));
 		if (distance >= 2)
 		{
 			float size = InkDropEntity.DROP_SIZE * entity.getImpactCoverage();
 			InkColor color = ColorUtils.getColorLockedIfConfig(entity.getColor());
-			
+
 			int rgb = color.getColorWithAlpha((int) Math.min(255, distance));
-			
+
 			//0.30000001192092896D
 			matrixStack.pushPose();
-			matrixStack.translate(0, entity.getBbHeight() / 2, 0);
 			matrixStack.mulPose(Axis.YP.rotationDegrees(entityYaw - 180.0F));
 			matrixStack.mulPose(Axis.XP.rotationDegrees(entity.getViewXRot(partialTicks)));
 			matrixStack.scale(size, size, (float) (size + size * entity.getDeltaMovement().length()));
-			
+
 			InkDropModel model = MODEL;
-			
+
 			model.setupAnim(entity, 0, 0, handleRotationFloat(entity, partialTicks), entityYaw, entity.getViewXRot(partialTicks));
 			model.renderToBuffer(matrixStack, provider.getBuffer(model.renderType(getTextureLocation(entity))), packetLight, OverlayTexture.NO_OVERLAY, rgb);
 			matrixStack.popPose();
-			
+
 			super.render(entity, entityYaw, partialTicks, matrixStack, provider, packetLight);
 		}
 	}

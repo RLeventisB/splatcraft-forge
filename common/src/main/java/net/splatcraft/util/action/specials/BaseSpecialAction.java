@@ -69,17 +69,17 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		Level level = entity.level();
 		ItemStack stack = entity.getItemBySlot(EquipmentSlot.CHEST);
-		
+
 		if (stack.has(SplatcraftComponents.TANK_DATA))
 		{
 			InkTankItem.refill(stack);
 		}
-		
+
 		if (level.isClientSide())
 		{
 			playSpecialUsageSound(entity, level);
 		}
-		
+
 		if (!entity.level().isClientSide() && entity instanceof ServerPlayer serverPlayer)
 			SplatcraftPacketHandler.sendToPlayer(new SendSquidDisablePacket(), serverPlayer);
 	}
@@ -113,5 +113,9 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	public boolean setSquidKeyToHold()
 	{
 		return false;
+	}
+	public boolean hideWeaponGui()
+	{
+		return true;
 	}
 }

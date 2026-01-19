@@ -61,7 +61,7 @@ public class InkExplosion
 		this.paintRadius = paintRadius;
 		this.attackId = attackId;
 		position = pos;
-		
+
 		this.inkType = inkType;
 		dmgCalculator = damageCalculator;
 		this.weapon = weapon;
@@ -92,9 +92,9 @@ public class InkExplosion
 	{
 		if (source == null || source.level().isClientSide)
 			return;
-		
+
 		InkExplosion inksplosion = new InkExplosion(source, pos, damageManager, paintRadius, type, weapon, attackId);
-		
+
 		inksplosion.doExplosionA(onHit);
 		inksplosion.doExplosionCosmetics(false);
 	}
@@ -103,32 +103,32 @@ public class InkExplosion
 		if (source instanceof ServerPlayer serverPlayer)
 		{
 			ImmutableList.Builder<Vector3f> builder = ImmutableList.builder();
-			
+
 			createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, attackId, e ->
 			{
 				builder.add(e.getBoundingBox().getCenter().toVector3f());
 			});
-			
+
 			ImmutableList<Vector3f> positions = builder.build();
 			if (positions.isEmpty())
 				return;
-			
+
 			if (soundPos == null)
 				soundPos = positions.getFirst();
-			
+
 			SplatcraftPacketHandler.sendToPlayer(
 				new SendPlayerHitPacket(positions, soundPos, SplatcraftSounds.shotHit, 0.7f), serverPlayer);
-			
+
 			return;
 		}
-		
+
 		createInkExplosion(source, pos, paintRadius, damageManager, type, weapon, attackId, null);
 	}
 	public static void doSplashes(@Nullable Entity owner, Vec3 center, SubWeaponSettings.SplashAroundDataRecord splashData, InkColor color, InkBlockUtils.InkType inkType, ItemStack weapon)
 	{
 		if (owner == null)
 			return;
-		
+
 		Level world = owner.level();
 		RandomSource random = world.getRandom();
 		// this is not because i feel this is nice in terms of syntax this is because im a dumbass microoptimizer and i do this in c# too
@@ -152,7 +152,7 @@ public class InkExplosion
 		float g = -Mth.sin(pitch);
 		float h = Mth.cos(yaw) * Mth.cos(pitch);
 		drop.shoot(f, g, h, speed, 0);
-		
+
 		world.addFreshEntity(drop);
 	}
 	/**
@@ -240,31 +240,31 @@ public class InkExplosion
 		// explosion is inside a block, everything is occluded
 		if (!world.noCollision(new AABB(position, position)))
 			return;
-		
+
 		final float noiseRange = 0.2f;
 		int cubeSizeHalf = ((int) Math.ceil(paintRadius + noiseRange) >> 1) + 1;
 		FaceMap map = new FaceMap(position, world, paintRadius, noiseRange, world.random);
-		
+
 		for (int x = -cubeSizeHalf; x <= cubeSizeHalf; x++)
 			for (int y = -cubeSizeHalf; y <= cubeSizeHalf; y++)
 				for (int z = -cubeSizeHalf; z <= cubeSizeHalf; z++)
 				{
 					BlockPos pos = BlockPos.containing(position.x + x, position.y + y, position.z + z);
 					BlockState blockState = world.getBlockState(pos);
-					
+
 					if (!canPassIfBarrier(color, world, pos, blockState))
 						continue;
-					
+
 					VoxelShape shape = blockState.getCollisionShape(world, pos);
 					Vec3 relativePos = position.subtract(pos.getCenter());
-					
+
 					double dist = relativePos.length();
 					if (dist <= paintRadius + Mth.SQRT_OF_TWO)
 					{
 						map.register(pos, blockState, shape);
 					}
 				}
-		
+
 		map.processAndCull();
 		set.addAll(map.faces.stream().map(v -> new BlockFace(map.blockPositions.get(v.blockPosIndex), v.faceNormalDir)).collect(Collectors.toSet()));
 	}
@@ -283,9 +283,9 @@ public class InkExplosion
 	public void doExplosionCosmetics(boolean spawnParticles)
 	{
 		Vec3 explosionPos = new Vec3(position.x + 0.5f, position.y + 0.5f, position.z + 0.5f);
-		
+
 		Level world = exploder.level();
-		
+
 		if (spawnParticles)
 		{
 			if (paintRadius < 2.0F)
@@ -297,7 +297,7 @@ public class InkExplosion
 				world.addParticle(ParticleTypes.EXPLOSION_EMITTER, position.x, position.y, position.z, 1.0D, 0.0D, 0.0D);
 			}
 		}
-		
+
 		int pointsToAward = 0;
 		for (BlockFace blockFace : affectedBlockFaces)
 		{
@@ -333,7 +333,7 @@ public class InkExplosion
 		{
 			this.blockPosIndex = blockPosIndex;
 			this.faceNormalDir = faceNormalDir;
-			
+
 			// corners should be in order:
 			// bottom left
 			// bottom right
@@ -363,7 +363,7 @@ public class InkExplosion
 						new Vector3d(minCoord1, maxCoord2, planeCoord)
 					};
 			});
-			
+
 			centroid = new PointData(switch (faceNormalDir.getAxis())
 			{
 				case X -> new Vector3d(planeCoord, (minCoord1 + maxCoord1) / 2, (minCoord2 + maxCoord2) / 2);
@@ -374,43 +374,43 @@ public class InkExplosion
 		public static List<FaceData> getFacesFromBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int blockPosIndex, Predicate<FaceData> facePredicate)
 		{
 			List<FaceData> list = new ArrayList<>(3);
-			
+
 			// negative X
 			if (minX > 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.WEST,
 					minX, minY, maxY, maxZ, minZ
 				));
-			
+
 			// positive x
 			if (maxX < 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.EAST,
 					maxX, minY, maxY, minZ, maxZ
 				));
-			
+
 			// negative y
 			if (minY > 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.DOWN,
 					minY, maxX, minX, minZ, maxZ
 				));
-			
+
 			// positive y
 			if (maxY < 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.UP,
 					maxY, minX, maxX, minZ, maxZ
 				));
-			
+
 			// negative z
 			if (minZ > 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.NORTH,
 					minZ, minX, maxX, minY, maxY
 				));
-			
+
 			// positive z
 			if (maxZ < 0)
 				addToListIfValid(list, facePredicate, new FaceData(blockPosIndex, Direction.SOUTH,
 					maxZ, maxX, minX, minY, maxY
 				));
-			
+
 			return list;
 		}
 		private static void addToListIfValid(List<FaceData> list, Predicate<FaceData> facePredicate, FaceData faceData)
@@ -431,13 +431,13 @@ public class InkExplosion
 		public String toString()
 		{
 			return "FaceData[" +
-				"blockPosIndex=" + blockPosIndex + ", " +
-				"faceNormalDir=" + faceNormalDir + ", " +
-				"centroid=" + centroid + ", " +
-				"bottom left=" + corners[0] + ", " +
-				"bottom right=" + corners[1] + ", " +
-				"top right=" + corners[2] + ", " +
-				"top left=" + corners[3] + "]";
+			       "blockPosIndex=" + blockPosIndex + ", " +
+			       "faceNormalDir=" + faceNormalDir + ", " +
+			       "centroid=" + centroid + ", " +
+			       "bottom left=" + corners[0] + ", " +
+			       "bottom right=" + corners[1] + ", " +
+			       "top right=" + corners[2] + ", " +
+			       "top left=" + corners[3] + "]";
 		}
 		@Override
 		public boolean equals(Object o)
@@ -474,9 +474,9 @@ public class InkExplosion
 			public String toString()
 			{
 				return "PointData{" +
-					"obstructed=" + obstructed +
-					", point=" + point +
-					'}';
+				       "obstructed=" + obstructed +
+				       ", point=" + point +
+				       '}';
 			}
 			public boolean isObstructed()
 			{
@@ -520,7 +520,7 @@ public class InkExplosion
 				double maxX = -worldOrigin.x + xmax + pos.getX();
 				double maxY = -worldOrigin.y + ymax + pos.getY();
 				double maxZ = -worldOrigin.z + zmax + pos.getZ();
-				
+
 				List<FaceData> facesList = FaceData.getFacesFromBox(minX, minY, minZ, maxX, maxY, maxZ, blockPositions.size(), (FaceData face) -> checkCloseEnoughAndVisible(face, state, pos));
 				if (!facesList.isEmpty())
 				{
@@ -537,11 +537,11 @@ public class InkExplosion
 			{
 				// if close enough check if there isn't another block fully occluding the face
 				BlockPos forwardPos = pos.relative(face.faceNormalDir);
-				
+
 				BlockState occludingBlockState = world.getBlockState(forwardPos);
 				VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFaceShape(face.faceNormalDir);
 				VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, forwardPos).getFaceShape(face.faceNormalDir.getOpposite());
-				
+
 				return !Shapes.blockOccudes(blockCollision, occludingCollision, face.faceNormalDir);
 			}
 			return false;
@@ -550,30 +550,30 @@ public class InkExplosion
 		{
 			// sort ascending so the first that are processed are the closest, which should occlude the most
 			faces.sort(Comparator.comparing(FaceData::getCentroid));
-			
+
 			// god fucking lord this was hard to search for
 			QuadFrustum frustum = new QuadFrustum();
 			List<Integer> obstructedFaces = new ArrayList<>(faces.size());
-			
+
 			for (int i = 0; i < faces.size(); i++)
 			{
 				// this iterares through all faces!!! unless it has been obstructed
 				if (obstructedFaces.contains(i))
 					continue;
-				
+
 				// gets the current face, and creates a frustom that consists of 5 planes: quad plane (the back of the face as a plane,
 				// used to check quickly if a point is obstructed) and 4 aditional planes: right, bottom, up, left for more precise checking
 				FaceData currentFace = faces.get(i);
 				frustum.createFor(currentFace);
-				
+
 				for (int j = 0; j < faces.size(); j++)
 				{
 					FaceData otherFace = faces.get(j);
-					
+
 					// if a face was already obstructed (by another face) just skip processing it
 					if (obstructedFaces.contains(j) || i == j || !frustum.isAbleToBeObstructed(otherFace))
 						continue;
-					
+
 					// if a face is obstructed (centroid and all corners are "above" these 5 planes) by the current face,
 					// it is added to a list to remove after the entire loop, and skips processing the face
 					QuadFrustum.FaceState state = frustum.isFaceObstructed(otherFace);
@@ -583,9 +583,9 @@ public class InkExplosion
 					}
 				}
 			}
-			
+
 			sortAndRemoveIndices(obstructedFaces);
-			
+
 			// ok most of the time removing a face that has it's centroid obstructed but not it's corners is ok because
 			// it was skipped by that small epsilon in the plane check so this should be fine
 			faces.removeIf(v -> v.centroid.obstructed);
@@ -629,16 +629,16 @@ public class InkExplosion
 			{
 				if (point.isObstructed())
 					return true;
-				
+
 				boolean pointObstructed =
 					left.isAbove(point.point) &&
-						up.isAbove(point.point) &&
-						right.isAbove(point.point) &&
-						down.isAbove(point.point);
-				
+					up.isAbove(point.point) &&
+					right.isAbove(point.point) &&
+					down.isAbove(point.point);
+
 				if (pointObstructed)
 					point.markObstructed();
-				
+
 				return pointObstructed;
 			}
 			public FaceState isFaceObstructed(FaceData otherFace)
@@ -648,7 +648,7 @@ public class InkExplosion
 				boolean c2 = isPointObstructed(otherFace.corners[1]);
 				boolean c3 = isPointObstructed(otherFace.corners[2]);
 				boolean c4 = isPointObstructed(otherFace.corners[3]);
-				
+
 				if (centroid && c1 && c2 && c3 && c4)
 					return FaceState.FULLY_OBSTRUCTED;
 				else if (centroid || c1 || c2 || c3 || c4)
@@ -673,9 +673,9 @@ public class InkExplosion
 			{
 				Vector3d a = corners[index].point;
 				Vector3d b = corners[(index + 1) % 4].point;
-				
+
 				// it isn't necessary to normalize since we're only checking if a point is above a plane, not how far it is
-				
+
 				// thank you c# system.numerics.plane.CreateFromVertices code for existing
 				normal = new Vector3DoubleImpl(a.cross(b, new Vector3d()).normalize());
 			}
@@ -700,7 +700,7 @@ public class InkExplosion
 			public void setForPointAndNormal(Vector3d point, Vector3i normal)
 			{
 				this.normal = new Vector3IntImpl(normal.negate(new Vector3i()));
-				
+
 				// since the dot product of the normal and the point must be 0 (lies in the plane) ax + by + cz = d HOLY FUCKIGN SHIT I AM LEARNGIN geometry
 				// note: distance is inverted since normal is inverted to detect points that are in the "back"
 				distance = -this.normal.dot(point);

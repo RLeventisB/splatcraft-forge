@@ -100,19 +100,19 @@ public class SquidFormHandler
 			if (alternativeInkHealth && !player.level().isClientSide())
 				inkTouchData.remove(player);
 		}
-		
+
 		if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isUnderWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
 			player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.WATER), 8f);
-		
+
 		@NotNull SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
 		tickSquidState(player, info);
-		
+
 		boolean canSquidHide = InkBlockUtils.canSquidHide(player);
 		if (alternativeInkHealth && !player.level().isClientSide())
 		{
 			doAlternativeHealing(player, accesor, canSquidHide, info);
 		}
-		
+
 		if (info.isSquid())
 		{
 			if (!player.getAbilities().flying)
@@ -120,41 +120,41 @@ public class SquidFormHandler
 				player.setSprinting(player.isUnderWater());
 				player.walkDist = player.walkDistO;
 			}
-			
+
 			player.setPose(Pose.SWIMMING);
 			player.releaseUsingItem();
-			
+
 			player.awardStat(SplatcraftStats.SQUID_TIME);
-			
+
 			if (canSquidHide)
 			{
 				if (!alternativeInkHealth)
 				{
 					if (player.getHealth() < player.getMaxHealth() &&
-						SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
-						player.tickCount % 5 == 0 &&
-						!hasDamageOvertime(player))
+					    SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
+					    player.tickCount % 5 == 0 &&
+					    !hasDamageOvertime(player))
 					{
 						player.heal(0.5f);
 						if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
 							player.causeFoodExhaustion(0.25f);
-						
+
 						Components.INK_OVERLAY.getOrCreate(player).addAmount(-0.49f);
 					}
 				}
-				
+
 				boolean crouch = player.isShiftKeyDown();
 				if (!crouch && player.level().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
 				{
 					ColorUtils.addInkSplashParticle(player.level(), player, 1.1f, true);
 				}
 			}
-			
+
 			if (!info.isDoingSquidSurge() && player.level().getRandom().nextFloat() <= info.squidSurgeState() / SquidInfo.MAX_SQUID_SURGE_CHARGE)
 			{
 				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f, true);
 			}
-			
+
 			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
 			posBelowOptional.ifPresent(posBelow ->
 			{
@@ -168,16 +168,16 @@ public class SquidFormHandler
 						blockBelow = player.level().getBlockState(newPos).getBlock();
 					}
 				}
-				
+
 				if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
 				{
 					ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
 				}
-				
+
 				if (blockBelow instanceof SpawnPadBlock)
 				{
 					InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
-					
+
 					if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
 					{
 						serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
@@ -195,16 +195,16 @@ public class SquidFormHandler
 		if (player.level().getGameTime() - accesor.getLastDamageStamp() > 20 && !inkTouchData.containsKey(player))
 		{
 			if (player.getHealth() < player.getMaxHealth() &&
-				SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
-				!hasDamageOvertime(player))
+			    SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING) &&
+			    !hasDamageOvertime(player))
 			{
 				player.heal(canSquidHide && info.isSquid() ? 1f : 0.125f);
 				if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.INK_HEALING_CONSUMES_HUNGER))
 					player.causeFoodExhaustion(0.05f);
-				
+
 				InkOverlayData overlayInfo = Components.INK_OVERLAY.getOrCreate(player);
 				overlayInfo.setAmount((player.getMaxHealth() - player.getHealth()));
-				
+
 				SplatcraftPacketHandler.sendToTrackersAndSelf(new UpdateInkOverlayPacket(player, overlayInfo), player);
 			}
 		}
@@ -213,26 +213,26 @@ public class SquidFormHandler
 	{
 		long gameTime = entity.level().getGameTime();
 		EnemyInkData enemyInkData = inkTouchData.computeIfAbsent(entity, (no) -> new EnemyInkData(gameTime, 0f));
-		
+
 		long touchTimestamp = enemyInkData.damageTimestamp();
 		float totalDamageDone = enemyInkData.totalDamage();
 		float maxDamage = (float) entity.getAttributeValue(SplatcraftAttributes.maxEnemyInkDamage);
-		
+
 		if (gameTime - touchTimestamp >= entity.getAttributeValue(SplatcraftAttributes.enemyInkResistanceTime))
 		{
 			if (totalDamageDone < maxDamage)
 			{
 				float health = entity.getHealth();
 				float damage = 0.18f;
-				
+
 				if (health - damage <= 1)
 					damage = health - 1;
-				
+
 				if (damage <= 0) // failsafe for "negative" damage because sometimes this happens and idk why
 					WeaponHandler.accumulateAltEnemyInkDamage(entity, InkColor.INVALID, 0, true);
 				else
 					WeaponHandler.accumulateAltEnemyInkDamageWithLimit(entity, InkColor.INVALID, damage, totalDamageDone, maxDamage);
-				
+
 				inkTouchData.put(entity, enemyInkData.withTotalDamage(totalDamageDone + damage));
 			}
 			else
@@ -249,7 +249,7 @@ public class SquidFormHandler
 	private static void tickSquidState(LivingEntity entity, SquidInfo info)
 	{
 		SquidState state = info.squidState(); // this is more readable with enums though :(
-		
+
 		if (InkBlockUtils.canSquidHide(entity) && info.isSquid())
 		{
 			if (state == SquidState.SUBMERGING)
@@ -264,11 +264,11 @@ public class SquidFormHandler
 			else if (state != SquidState.SURFACED)
 				state = SquidState.SURFACING;
 		}
-		
+
 		if (state == SquidState.SUBMERGING)
 		{
 			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkSubmerge, SoundSource.PLAYERS, 0.5F, ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
-			
+
 			if (entity.level() instanceof ServerLevel)
 			{
 				for (int i = 0; i < 2; i++)
@@ -279,7 +279,7 @@ public class SquidFormHandler
 		{
 			entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.inkSurface, SoundSource.PLAYERS, 0.5F, ((entity.level().getRandom().nextFloat() - entity.level().getRandom().nextFloat()) * 0.2F + 1.0F) * 0.95F);
 		}
-		
+
 		SquidState finalState = state;
 		Components.SQUID_INFO.update(entity, v -> v.withSquidState(finalState));
 	}
@@ -332,12 +332,12 @@ public class SquidFormHandler
 	{
 		if (!entity.level().isClientSide() || !(entity instanceof LivingEntity living))
 			return;
-		
+
 		if (Components.INK_OVERLAY.has(living))
 		{
 			InkOverlayData info = Components.INK_OVERLAY.getOrCreate(living);
 			Vec3 prev = WeaponHandler.getEntityPrevPos(living).oldOldPosition;
-			
+
 			info.setSquidPitch((float) (Math.abs(living.getY() - prev.y) * living.position().subtract(prev).normalize().y));
 		}
 	}
@@ -352,10 +352,10 @@ public class SquidFormHandler
 	{
 		if (!Components.SQUID_INFO.hasChangedAfterUpdateOrCreate(entity, info -> info.setSquid(newSquid)))
 			return;
-		
+
 		if (!newSquid)
 			Components.WEAPON_INFO.updateOrCreate(entity, WeaponInfo::flagSquidCancel);
-		
+
 		if (newSquid)
 		{
 			boolean didStoreCharge = false;
@@ -364,13 +364,13 @@ public class SquidFormHandler
 				ItemStack stack = entity.getItemInHand(hand);
 				if (!(stack.getItem() instanceof IChargeableWeapon chargeable))
 					continue;
-				
+
 				if (!didStoreCharge && chargeable.canStore(stack))
 				{
 					EntityStoredCharge.storeCharge(entity, stack);
 					didStoreCharge = true;
 				}
-				
+
 				chargeable.setCharge(stack, 0f);
 				WeaponBaseItem<?> weaponItem = (WeaponBaseItem<?>) stack.getItem();
 				weaponItem.getResetShootingAction(stack, entity).ifPresent(SpecialHandler.ResetAction::run);
@@ -385,7 +385,7 @@ public class SquidFormHandler
 					ItemStack stack = entity.getItemInHand(hand);
 					if (!EntityStoredCharge.chargeMatches(entity, stack))
 						continue;
-					
+
 					EntityStoredCharge.retrieveCharge(entity, stack);
 					entity.startUsingItem(hand);
 					break;

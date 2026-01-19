@@ -72,12 +72,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import oshi.util.tuples.Quartet;
+import oshi.util.tuples.Quintet;
 import oshi.util.tuples.Triplet;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -110,10 +114,6 @@ public class CommonUtils
 		}
 		return builder.toString();
 	}
-	public static void spawnTestParticle(Vec3 pos)
-	{
-		spawnTestParticle(getCurrentWorld(), new DustParticleOptions(new Vector3f(1, 0, 0), 1), pos);
-	}
 	public static TimedTextDisplayEntity spawnTestText(Level world, Vec3 pos, String text, int durationTicks)
 	{
 		return spawnTestText(world, pos, Component.literal(text), durationTicks);
@@ -132,11 +132,15 @@ public class CommonUtils
 
 		return entity;
 	}
+	public static void spawnTestParticle(Vec3 pos)
+	{
+		spawnTestParticle(pos, Color.red);
+	}
 	public static void spawnTestParticle(Vec3 pos, Color color)
 	{
 		float[] rgb = color.getRGBColorComponents(null);
 
-		spawnTestParticle(getCurrentWorld(), new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 3), pos);
+		spawnTestParticle(getCurrentWorld(), new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 1), pos);
 	}
 	public static void spawnTestBlockParticle(Vec3 pos, BlockState state)
 	{
@@ -149,15 +153,16 @@ public class CommonUtils
 	}
 	public static void spawnTestParticle(Level world, ParticleOptions options, Vec3 pos)
 	{
-		if (world != null)
+		if (world == null)
 		{
-			if (world instanceof ServerLevel serverLevel)
-			{
-				serverLevel.sendParticles(options, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
-				return;
-			}
-			world.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
+			return;
 		}
+		if (world instanceof ServerLevel serverLevel)
+		{
+			serverLevel.sendParticles(options, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+			return;
+		}
+		world.addParticle(options, true, pos.x, pos.y, pos.z, 0, 0, 0);
 	}
 	public static void showBoundingBoxCorners(Level level, AABB aabb)
 	{
@@ -820,6 +825,31 @@ public class CommonUtils
 		pairs[8] = new Pair<>(aabb.getCenter(), 5f);
 
 		return pairs;
+	}
+	// this is my son he is every boilerplate definition
+	public static <A, B, C, D> Quartet<A, B, C, D> merge(A value, Triplet<B, C, D> triplet)
+	{
+		return new Quartet<>(value, triplet.getA(), triplet.getB(), triplet.getC());
+	}
+	public static <A, B, C, D, E> Quintet<A, B, C, D, E> merge(A value, Quartet<B, C, D, E> quartet)
+	{
+		return new Quintet<>(value, quartet.getA(), quartet.getB(), quartet.getC(), quartet.getD());
+	}
+	public static <A, B, C, D, E> Quintet<A, B, C, D, E> merge(A value1, B value2, Triplet<C, D, E> triplet)
+	{
+		return new Quintet<>(value1, value2, triplet.getA(), triplet.getB(), triplet.getC());
+	}
+	public static <A, B, C, D> Quartet<A, B, C, D> merge(Triplet<A, B, C> triplet, D value)
+	{
+		return new Quartet<>(triplet.getA(), triplet.getB(), triplet.getC(), value);
+	}
+	public static <A, B, C, D, E> Quintet<A, B, C, D, E> merge(Quartet<A, B, C, D> quartet, E value)
+	{
+		return new Quintet<>(quartet.getA(), quartet.getB(), quartet.getC(), quartet.getD(), value);
+	}
+	public static <A, B, C, D, E> Quintet<A, B, C, D, E> merge(Triplet<A, B, C> triplet, D value1, E value2)
+	{
+		return new Quintet<>(triplet.getA(), triplet.getB(), triplet.getC(), value1, value2);
 	}
 	public record Result(float delay, float value)
 	{

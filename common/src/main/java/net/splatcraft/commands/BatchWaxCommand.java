@@ -87,7 +87,7 @@ public class BatchWaxCommand
 			{
 				if (source.getLevel().isEmptyBlock(pos) || (mask != null && !mask.test(source.getLevel().getBlockState(pos).getBlockHolder())))
 					continue;
-				
+
 				RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 				ChunkInk worldInk = ChunkInkCapability.getOrCreate(source.getLevel(), pos);
 				ChunkInk.BlockEntry ink = worldInk.getInk(offset);
@@ -97,7 +97,7 @@ public class BatchWaxCommand
 						worldInk.markInmutable(offset);
 					else
 						worldInk.markMutable(offset);
-					
+
 					ChunkInkHandler.addInkToUpdate(source.getLevel(), new BlockPos(pos));
 					BlockState state = source.getLevel().getBlockState(pos);
 					source.getLevel().sendBlockUpdated(pos, state, state, 0);
@@ -121,7 +121,7 @@ public class BatchWaxCommand
 				ChunkInk worldInk = ChunkInkCapability.get(level, pos);
 				if (worldInk == null)
 					continue;
-				
+
 				ChunkInk.BlockEntry inkEntry = worldInk.getInk(offset);
 				if (inkEntry != null && inkEntry.immutable)
 				{
@@ -131,7 +131,7 @@ public class BatchWaxCommand
 						case PARTICLE:
 							Vec3 center = pos.getCenter();
 							createParticle(source, center.x, center.y, center.z, Blocks.BARRIER);
-							
+
 							break;
 						case EDGE_PARTICLE:
 							waxedPositions.add(new BlockPos(pos));
@@ -141,7 +141,7 @@ public class BatchWaxCommand
 			}
 			return Component.literal("Found " + count + " waxed blocks.");
 		}, true);
-		
+
 		if (highlightType == HighlightTypeArgument.HighlightType.EDGE_PARTICLE)
 		{
 			for (VoxelShape shape : CommonUtils.createShapes(level, waxedPositions, pos1))

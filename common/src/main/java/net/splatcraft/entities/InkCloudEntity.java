@@ -68,7 +68,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 	{
 		AbstractWeaponSettings<?, ?> settings = DataHandler.WeaponStatsListener.SETTINGS.get(dataId);
 		Optional<ItemStack> provider = providerSlot.tryGetItemFrom(owner).filter(v -> v.has(SplatcraftComponents.SPECIAL_PROVIDER_DATA));
-		
+
 		if (settings instanceof SpecialWeaponSettings<?> specialSettings && specialSettings.specialDataRecord instanceof SpecialWeaponRecords.InkStormDataRecord stormData)
 		{
 			int duration = (int) (stormData.specialCooldown() * 20);
@@ -80,7 +80,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 				stack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA, SplatcraftComponents.SpecialProviderData.DEFAULT,
 					v -> v.withDelay(duration, duration).withStoredCharge(0f));
 			});
-			
+
 			return cloud;
 		}
 		provider.ifPresent(stack ->
@@ -88,7 +88,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 			stack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA, SplatcraftComponents.SpecialProviderData.DEFAULT,
 				v -> v.withDelay(0).withStoredCharge(0f));
 		});
-		
+
 		return null;
 	}
 	public InkCloudEntity(EntityType<InkCloudEntity> type, Level level)
@@ -113,7 +113,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		this.duration = duration;
 		this.dropletRadius = dropletRadius;
 		this.dropletFrequency = dropletFrequency;
-		
+
 		setRadius(cloudRadius);
 	}
 	public InkCloudEntity(Level level,
@@ -126,7 +126,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 	                      float dropletRadius,
 	                      float dropletFrequency,
 	                      float cloudRadius
-	
+
 	)
 	{
 		this(SplatcraftEntities.INK_CLOUD.get(), level, moveSpeed, damage, formationTime, duration, dropletRadius, dropletFrequency, cloudRadius);
@@ -134,7 +134,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		setOwner(owner);
 		updateRotation();
 		inkType = InkBlockUtils.getInkType(owner);
-		
+
 		xRotO = getXRot();
 		yRotO = getYRot();
 	}
@@ -142,12 +142,12 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 	public void tick()
 	{
 		super.tick();
-		
+
 		int activeTickCount = tickCount - formationTime;
-		
+
 		if (activeTickCount > 0 && tickCount < duration + DISSAPEAR_TICKS / 3)
 			processDamage();
-		
+
 		if (level().isClientSide())
 		{
 			tickParticleData(activeTickCount);
@@ -165,9 +165,9 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 					InkDropEntity drop = new InkDropEntity(level(), spawnPos, getOwner(), getColor(), inkType, dropletRadius, ItemStack.EMPTY);
 					drop.setNoGravity(true);
 					drop.setDeltaMovement(0, -0.8, 0);
-					
+
 					level().addFreshEntity(drop);
-					
+
 					dropletCounter -= dropletFrequency;
 					if (dropletFrequency == 0)
 						break;
@@ -176,7 +176,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		}
 		if (activeTickCount > duration + DISSAPEAR_TICKS)
 			kill();
-		
+
 		setPos(position().add(getDeltaMovement()));
 	}
 	private void processDamage()
@@ -184,15 +184,15 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		AABB cloudHitArea = AABB.ofSize(position(), getRadius() * 2, 0, getRadius() * 2);
 		cloudHitArea = cloudHitArea.setMinY(Double.NEGATIVE_INFINITY).expandTowards(getDeltaMovement().scale(-300));
 		Vector3f damageDirection = getDeltaMovement().reverse().add(0, -1, 0).toVector3f();
-		
+
 		for (Entity entity : level().getEntities().getAll())
 		{
 			if (!canHitEntity(entity))
 				continue;
-			
+
 			if (!cloudHitArea.intersects(entity.getBoundingBox()))
 				continue;
-			
+
 			// check if the enemy is visible from the sky
 			Vec3 from = entity.position();
 			Vec3 to = new Vec3(entity.getX(), getY(), entity.getZ());
@@ -200,23 +200,23 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 				{
 					if (InkBlockUtils.canInkPassthrough(level(), pos))
 						return null;
-					
+
 					BlockState state = level().getBlockState(pos);
 					VoxelShape shape = state.getCollisionShape(level(), pos);
 					BlockHitResult result = shape.clip(from, to, pos);
 					if (result == null || result.getType() == HitResult.Type.MISS)
 						return null;
-					
+
 					return true;
 				}, (no) ->
 					false
 			);
 			if (collided)
 				continue;
-			
+
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
 			Triplet<Float, Vector3f, Float> impactData = CommonUtils.getRayDistance(damageDirection, relativeBox);
-			
+
 			if (impactData.getA() < getRadius())
 			{
 				hit(entity, damage);
@@ -229,11 +229,11 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		{
 			return;
 		}
-		
+
 		if (target instanceof LivingEntity livingTarget)
 		{
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
-			
+
 			if (SplatcraftGameRules.getLocalizedRule(target.level(), target.blockPosition(), SplatcraftGameRules.ALTERNATIVE_INK_HEALTH))
 			{
 				if (!target.level().isClientSide())
@@ -249,14 +249,14 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		{
 			cloudParticleRenderData = new ArrayList<>();
 		}
-		
+
 		if (activeTickCount <= duration - 30)
 		{
 			cloudParticleRenderData.add(ParticleData.create(random, getRadius()));
 			if (ClientUtils.getClient().options.graphicsMode().get() != GraphicsStatus.FAST)
 				cloudParticleRenderData.add(ParticleData.create(random, getRadius()));
 		}
-		
+
 		for (int i = 0; i < cloudParticleRenderData.size(); i++)
 		{
 			ParticleData data = cloudParticleRenderData.get(i);
@@ -330,7 +330,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		dropletRadius = nbt.getFloat("DropletPaint");
 		dropletFrequency = nbt.getFloat("DropletFrequency");
 		dropletCounter = nbt.getFloat("DropletCounter");
-		
+
 		setColor(InkColor.getFromNbt(nbt.get("Color")));
 		setRadius((nbt.getFloat("Radius")));
 		inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, nbt.get("InkType")).result().orElse(InkBlockUtils.InkType.NORMAL);
@@ -346,10 +346,10 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		nbt.putFloat("DropletPaint", dropletRadius);
 		nbt.putFloat("DropletFrequency", dropletFrequency);
 		nbt.putFloat("DropletCounter", dropletCounter);
-		
+
 		nbt.put("Color", getColor().getNbt());
 		nbt.putFloat("Radius", getRadius());
-		
+
 		if (inkType != null)
 			nbt.putString("InkType", inkType.name());
 	}
@@ -411,7 +411,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 		{
 			float angle = random.nextFloat() * Mth.TWO_PI;
 			float magnitude = random.nextFloat() * radius;
-			
+
 			ParticleData data = new ParticleData(
 				new Vector3f(Mth.cos(angle) * magnitude, (random.nextFloat() * 2 - 1), Mth.sin(angle) * magnitude),
 				new Vector3f(random.nextFloat() * 2 - 1, random.nextFloat() * 2 - 1, random.nextFloat() * 2 - 1).mul(random.nextFloat() * 0.1f),
