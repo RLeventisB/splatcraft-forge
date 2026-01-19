@@ -1,8 +1,10 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 4,
-        "visual_size": 7,
+        "size": {
+            "hitbox_radius": 4,
+            "visual_size": 7
+        },
         "ink_coverage_on_impact": 0,
         "straight_shot_ticks": 8,
         "ink_drop_coverage": 13,

@@ -1,5 +1,12 @@
 package net.splatcraft.entities;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.math.DoubleMath;
+import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.doubles.DoubleUnaryOperator;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -12,18 +19,24 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.*;
+import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.blocks.IColoredBlock;
 import net.splatcraft.blocks.StageBarrierBlock;
 import net.splatcraft.client.particles.InkExplosionParticleData;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.items.weapons.settings.*;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileSizeRecord;
 import net.splatcraft.items.weapons.settings.RollerWeaponSettings.RollerProjectileDataRecord;
 import net.splatcraft.network.s2c.SendPlayerHitPacket;
 import net.splatcraft.registries.SplatcraftComponents;
@@ -36,16 +49,22 @@ import net.splatcraft.util.structs.AttackId;
 import net.splatcraft.util.structs.DamageCalculator;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2f;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import oshi.util.tuples.Quartet;
+import oshi.util.tuples.Quintet;
+import oshi.util.tuples.Triplet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class InkProjectileEntity extends ThrowableProjectile implements IColoredEntity, ISetVelocityExtension
 {
 	private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
 	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
-	private static final EntityDataAccessor<Vector2f> PROJ_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.VEC2_DATA_HANDLER);
+	private static final EntityDataAccessor<Float> WORLD_HITBOX_LENGTH = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> HITBOX_RADIUS = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> VISUAL_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> GRAVITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> STRAIGHT_SHOT_TIME = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
@@ -73,23 +92,23 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		super(type, world);
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage, ItemStack sourceWeapon)
+	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, ProjectileSizeRecord size, DamageCalculator damage, ItemStack sourceWeapon)
 	{
 		super(SplatcraftEntities.INK_PROJECTILE.get(), thrower, world);
 		setColor(color);
-		setProjectileSize(projectileSize);
-		impactCoverage = projectileSize * 0.85f;
+		setProjectileSize(size);
+		impactCoverage = getProjectileHitboxRadius() * 0.85f;
 		this.damage = damage;
 		this.inkType = inkType;
 		this.sourceWeapon = sourceWeapon;
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage)
+	public InkProjectileEntity(Level world, LivingEntity thrower, InkColor color, InkBlockUtils.InkType inkType, ProjectileSizeRecord size, DamageCalculator damage)
 	{
-		this(world, thrower, color, inkType, projectileSize, damage, ItemStack.EMPTY);
+		this(world, thrower, color, inkType, size, damage, ItemStack.EMPTY);
 	}
-	public InkProjectileEntity(Level world, LivingEntity thrower, ItemStack sourceWeapon, InkBlockUtils.InkType inkType, float projectileSize, DamageCalculator damage)
+	public InkProjectileEntity(Level world, LivingEntity thrower, ItemStack sourceWeapon, InkBlockUtils.InkType inkType, ProjectileSizeRecord size, DamageCalculator damage)
 	{
-		this(world, thrower, ColorUtils.getInkColor(sourceWeapon), inkType, projectileSize, damage, sourceWeapon);
+		this(world, thrower, ColorUtils.getInkColor(sourceWeapon), inkType, size, damage, sourceWeapon);
 	}
 	public InkProjectileEntity setChargerStats(float charge, ChargerWeaponSettings.ChargerProjectileDataRecord settings)
 	{
@@ -99,7 +118,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 		lifespan = settings.range().getValue(charge) / settings.speed().getValue(charge);
 		impactCoverage = settings.inkCoverageImpact().getValue(charge);
-		
+
 		setGravity(0);
 		canPierce = charge >= settings.piercesAtCharge();
 		setProjectileType(Types.CHARGER);
@@ -128,7 +147,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	public InkProjectileEntity setSplatlingStats(SplatlingWeaponSettings<?> settings, float dataIndex)
 	{
 		CommonRecords.ProjectileDataRecord projectileData = settings.interpolateData(dataIndex).getFirst();
-		
+
 		setCommonProjectileStats(projectileData);
 		setProjectileType(Types.SHOOTER);
 		return this;
@@ -142,13 +161,13 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	public InkProjectileEntity setBrushSwingStats(RollerWeaponSettings settings, boolean weak)
 	{
 		setProjectileType(Types.ROLLER);
-		
+
 		return setRollerProjectileStats(settings.swingData.projectileData(), weak, true);
 	}
 	public InkProjectileEntity setRollerSwingStats(RollerWeaponSettings settings, boolean airborne, boolean weak)
 	{
 		setProjectileType(Types.ROLLER);
-		
+
 		if (airborne)
 		{
 			return setRollerProjectileStats(settings.flingData.projectileData(), weak, false);
@@ -162,15 +181,15 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (distanceBetweenDrops > 0)
 			accumulatedDrops = CommonUtils.nextFloat(random, 0, 1);
 		impactCoverage = settings.inkCoverageImpact();
-		
-		setProjectileVisualSize(settings.visualSize());
+
+		setProjectileSize(settings.size());
 		setGravity(settings.gravity());
 		setStraightShotTime(settings.straightShotTicks());
-		
+
 		lifespan = settings.lifeTicks();
 		setHorizontalDrag(settings.horizontalDrag());
 		setGravitySpeedMult(settings.delaySpeedMult());
-		
+
 		return this;
 	}
 	public InkProjectileEntity setRollerProjectileStats(RollerProjectileDataRecord settings, boolean weak, boolean fromBrush)
@@ -178,23 +197,23 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		dropImpactSize = settings.inkDropCoverage();
 		distanceBetweenDrops = settings.distanceBetweenInkDrops();
 		impactCoverage = settings.inkCoverageImpact();
-		
-		setProjectileVisualSize(settings.visualSize());
+
+		setProjectileSize(settings.size());
 		setGravity(settings.gravity());
 		setStraightShotTime(settings.straightShotTicks());
-		
+
 		lifespan = 600;
 		setHorizontalDrag(settings.horizontalDrag());
 		setGravitySpeedMult(settings.delaySpeedMult());
-		
+
 		if (fromBrush && weak)
 		{
 			dropImpactSize *= 0.8f;
 			impactCoverage *= 0.8f;
 			setStraightShotTime(settings.straightShotTicks() * 0.6f);
-			setProjectileVisualSize(settings.visualSize() * 0.6f);
+			setProjectileVisualSize(getProjectileVisualSize() * 0.6f);
 		}
-		
+
 		return this;
 	}
 	@Override
@@ -202,7 +221,9 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		builder.define(PROJ_TYPE, Types.SHOOTER);
 		builder.define(COLOR, ColorUtils.getDefaultColor());
-		builder.define(PROJ_SIZE, new Vector2f(0.2F, 0.6F));
+		builder.define(WORLD_HITBOX_LENGTH, 0.2f);
+		builder.define(HITBOX_RADIUS, 0.2f);
+		builder.define(VISUAL_SIZE, 0.6f);
 		builder.define(GRAVITY, 0.175F);
 		builder.define(STRAIGHT_SHOT_TIME, 0F);
 		builder.define(SPEED, 0f);
@@ -214,11 +235,11 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> data)
 	{
-		if (PROJ_SIZE.equals(data))
+		if (WORLD_HITBOX_LENGTH.equals(data))
 			refreshDimensions();
 		else if (STRAIGHT_SHOT_TIME.equals(data))
 			straightShotTime = entityData.get(STRAIGHT_SHOT_TIME);
-		
+
 		super.onSyncedDataUpdated(data);
 	}
 	@Override
@@ -230,50 +251,207 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		if (timeDelta > lifespan)
 			timeDelta = lifespan;
-		
+
 		Vec3 lastPosition = position();
 		Vec3 velocity = getShootVelocity(timeDelta);
 		setDeltaMovement(velocity.x, velocity.y, velocity.z);
-		
-		super.tick();
-		
-		straightShotTime -= timeDelta;
-		if (isUnderWater())
+
+		velocity = processCollisions(velocity, Math.min(1f, lifespan));
+
+		checkInsideBlocks();
+		double nextX = getX() + velocity.x;
+		double nextY = getY() + velocity.y;
+		double nextZ = getZ() + velocity.z;
+		updateRotation();
+		if (isInWater())
 		{
+			for (int i = 0; i < 4; i++)
+			{
+				level().addParticle(ParticleTypes.BUBBLE, nextX - velocity.x * 0.25, nextY - velocity.y * 0.25, nextZ - velocity.z * 0.25, velocity.x, velocity.y, velocity.z);
+			}
+
 			discard();
 			return;
 		}
-		
-		if (isRemoved()) return;
-		
-		if (!level().isClientSide())
+
+		applyGravity();
+		setPos(nextX, nextY, nextZ);
+
+		straightShotTime -= timeDelta;
+
+		if (level().isClientSide())
+			return;
+
+		lifespan -= timeDelta;
+		if (!persistent && lifespan <= 0 && !isRemoved())
 		{
-			if (!persistent && (lifespan -= timeDelta) <= 0)
+			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
+			if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null && explodesOnExpire)
 			{
-				ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
-				if (Objects.equals(getProjectileType(), Types.BLASTER) && explosionData != null && explodesOnExpire)
-				{
-					InkExplosion.createInkExplosionWithSound(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE, position().toVector3f());
-					createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
-					level().broadcastEntityEvent(this, BLAST_PARTICLE);
-					level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
-				}
-				else
-				{
-					InkExplosion.createInkExplosion(getOwner(), position(), impactCoverage, inkType, sourceWeapon);
-				}
-				calculateDrops(lastPosition);
-				discard();
+				InkExplosion.createInkExplosionWithSound(getOwner(), position(), explosionData.explosionPaint, explosionData.getRadiuses(false, damageMultiplier), inkType, sourceWeapon, AttackId.NONE, position().toVector3f());
+				createDrop(getX(), getY(), getZ(), 0, explosionData.explosionPaint);
+				level().broadcastEntityEvent(this, BLAST_PARTICLE);
+				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 			}
-			else if (dropImpactSize > 0)
+			else
 			{
-				if (!isInvisible())
-				{
-					level().broadcastEntityEvent(this, DROP_PARTICLE);
-				}
-				calculateDrops(lastPosition);
+				InkExplosion.createInkExplosion(getOwner(), position(), impactCoverage, inkType, sourceWeapon);
+			}
+			calculateDrops(lastPosition);
+			discard();
+		}
+		else if (dropImpactSize > 0)
+		{
+			if (!isInvisible())
+			{
+				level().broadcastEntityEvent(this, DROP_PARTICLE);
+			}
+			calculateDrops(lastPosition);
+		}
+	}
+	private @NotNull Vec3 processCollisions(Vec3 velocity, double currentCoefficient)
+	{
+		// oh no
+
+		AABB searchAABB = getBoundingBox().expandTowards(velocity);
+		Vec3 reversedPosition = position().reverse();
+		float radiusSqrd = Mth.square(getProjectileHitboxRadius());
+
+		List<Entity> possibleEntityCollisions = level().getEntities(this, searchAABB, this::canHitEntity);
+
+		List<Entity> possibleShieldingEntityCollisions = possibleEntityCollisions.stream().filter(v -> v instanceof ShieldingEntity).toList();
+
+		Quintet<Entity, Double, Vec3, Vec3, Vec3> limitCollision = processLimitingCollision(possibleShieldingEntityCollisions, searchAABB, velocity, reversedPosition, radiusSqrd);
+
+		DoubleUnaryOperator orthogonalCoefficientOperator;
+
+		if (limitCollision != null)
+		{
+			// resize the search box since we will collide with an ShieldingEntity / WorldBorder and will not travel the entire velocity vector
+			// esto hace nan cuando coeficiente es 0 !
+			double factor = DoubleMath.fuzzyEquals(limitCollision.getB(), 0, 10e-7) ? 1 : currentCoefficient / limitCollision.getB();
+			orthogonalCoefficientOperator = (v) -> Math.clamp(v, 0, limitCollision.getB() * factor);
+
+			velocity = limitCollision.getC();
+			currentCoefficient = limitCollision.getB();
+
+			searchAABB = getBoundingBox().expandTowards(velocity);
+		}
+		else
+		{
+			orthogonalCoefficientOperator = (v) -> Math.clamp(v, 0, 1);
+		}
+
+		AABB finalSearchAABB = searchAABB;
+		if (limitCollision != null)
+			possibleEntityCollisions = possibleEntityCollisions.stream().filter(v -> v.getBoundingBox().intersects(finalSearchAABB)).toList();
+
+		List<Pair<BlockPos, VoxelShape>> possibleWorldCollisions = ImmutableList.copyOf(() -> new BlockCollisions<>(level(), this, finalSearchAABB, false, (blockPos, shape) -> Pair.of(blockPos.immutable(), shape)));
+		Optional<Quintet<BlockPos, Vec3, Vec3, Boolean, Double>> collisionData = CollisionUtils.findFirstBlock(position(), velocity, CommonUtils.createVec3(getProjectileWorldHitboxLength()), possibleWorldCollisions, orthogonalCoefficientOperator);
+
+		if (collisionData.isPresent())
+		{
+			Quintet<BlockPos, Vec3, Vec3, Boolean, Double> collision = collisionData.get();
+
+			onHitBlock(collision.getA(), collision.getB(), velocity.normalize().scale(-1), collision.getE().floatValue(), collision.getD());
+
+			if (currentCoefficient > collision.getE())
+			{
+				// resize the search box AGAIN since we will collide with a block and will not travel the entire velocity vector, that was previously resized
+
+				double factor = DoubleMath.fuzzyEquals(collision.getE(), 0, 10e-7) ? 10e-5 : currentCoefficient / collision.getE();
+
+				orthogonalCoefficientOperator = (v) -> Math.clamp(v, 0, collision.getE() * factor);
+
+				currentCoefficient = collision.getE();
+				velocity = velocity.scale(factor);
+
+				searchAABB = getBoundingBox().expandTowards(velocity);
 			}
 		}
+
+		// todo: maybe recalculate the entities since the searchAABB was modified
+		List<Entity> possibleNonShieldingEntityCollisions = possibleEntityCollisions.stream().filter(v -> !(v instanceof ShieldingEntity)).toList();
+
+		return processEntityCollisions(
+			possibleNonShieldingEntityCollisions,
+			velocity,
+			limitCollision != null ? new Quartet<>(limitCollision.getA(), limitCollision.getD(), limitCollision.getE(), limitCollision.getB()) : null,
+			orthogonalCoefficientOperator);
+	}
+	private @Nullable Quintet<Entity, Double, Vec3, Vec3, Vec3> processLimitingCollision(List<Entity> possibleShieldingEntityCollisions, AABB searchAABB, Vec3 finalVelocity, Vec3 reversedPosition, float radiusSqrd)
+	{
+		// method that searches for shielding entities and the world border to collide with, since colliding with these should stop all the other collisions
+
+		List<Pair<AABB, Entity>> possibleInitialCollisions = new ArrayList<>();
+		for (Entity entity : possibleShieldingEntityCollisions)
+		{
+			if (!(entity instanceof ShieldingEntity shieldingEntity)) continue;
+
+			// todo: give more complex collisions to ShieldingEntity, like multiple bounding boxes
+			possibleInitialCollisions.add(Pair.of(entity.getBoundingBox(), entity));
+		}
+
+		WorldBorder worldBorder = level().getWorldBorder();
+		if (worldBorder.isInsideCloseToBorder(this, searchAABB))
+			possibleInitialCollisions.addAll(level().getWorldBorder().getCollisionShape().toAabbs().stream().map(v -> Pair.of(v, (Entity) null)).toList());
+
+		Triplet<Integer, Double, Triplet<Vec3, Vec3, Vec3>> collisionData = CollisionUtils.findFirstToCollide(possibleInitialCollisions, pair ->
+		{
+			AABB aabb = pair.getFirst();
+			Triplet<Vec3, Vec3, Double> segmentDistance = CollisionUtils.calculateOrthogonalPoint(finalVelocity, aabb.move(reversedPosition), v -> Math.clamp(v, 0, 1));
+
+			if (segmentDistance.getB().distanceToSqr(segmentDistance.getA()) > radiusSqrd) return null;
+
+			return Pair.of(segmentDistance.getC(), new Triplet<>(finalVelocity.scale(segmentDistance.getC()), segmentDistance.getA(), segmentDistance.getB()));
+		});
+
+		if (collisionData == null) return null;
+
+		return CommonUtils.merge(possibleInitialCollisions.get(collisionData.getA()).getSecond(), collisionData.getB(), collisionData.getC());
+	}
+	private Vec3 processEntityCollisions(List<Entity> possibleNonShieldingEntityCollisions, Vec3 velocity, Quartet<Entity, Vec3, Vec3, Double> finalShieldingEntity, DoubleUnaryOperator orthogonalCoefficientOperator)
+	{
+		AtomicReference<Vec3> velocityReference = new AtomicReference<>(velocity);
+		List<Quartet<Entity, Vec3, Vec3, Double>> collisions = new ArrayList<>();
+		if (canPierce)
+		{
+			collisions.addAll(CollisionUtils.findEntityCollisions(
+				position(),
+				velocity,
+				getProjectileHitboxRadius(),
+				possibleNonShieldingEntityCollisions,
+				orthogonalCoefficientOperator)
+			);
+
+			if (finalShieldingEntity != null)
+			{
+				collisions.add(finalShieldingEntity);
+			}
+		}
+		else
+		{
+			CollisionUtils.findFirstEntityCollisions(
+				position(),
+				velocity,
+				getProjectileHitboxRadius(),
+				possibleNonShieldingEntityCollisions,
+				orthogonalCoefficientOperator
+			).ifPresent(e ->
+			{
+				velocityReference.set(e.getB().subtract(position()));
+				collisions.add(e);
+			});
+		}
+
+		for (Quartet<Entity, Vec3, Vec3, Double> entity : collisions)
+		{
+			onHitEntity(entity.getA(), entity.getB(), entity.getC(), entity.getD().floatValue());
+		}
+
+		SendPlayerHitPacket.releaseHitPositions(getOwner());
+
+		return velocityReference.get();
 	}
 	private void calculateDrops(Vec3 lastPosition)
 	{
@@ -291,7 +469,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		if (distanceBetweenDrops < 0)
 			return;
-		
+
 		if (distanceBetweenDrops == 0)
 		{
 			createDrop(getX(), getY(), getZ(), 0, 0);
@@ -301,18 +479,19 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		if (dropsTravelled > 0)
 		{
 			accumulatedDrops += dropsTravelled;
-			
+
 			while (accumulatedDrops >= 1)
 			{
 				accumulatedDrops -= 1;
-				
+
 				float progress = accumulatedDrops / dropsTravelled;
-				
+
 				Vec3 dropPos = currentPosition.lerp(lastPosition, progress);
-				
+
+				// todo: fix this and not depend on world.noCollision
 				if (doRayCheck && !level().noCollision(AABB.ofSize(dropPos, 1, 1, 1)))
 					break;
-				
+
 				createDrop(dropPos.x, dropPos.y, dropPos.z, progress, dropImpactSize);
 			}
 		}
@@ -341,7 +520,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		float fallenFramesNext = fallenFrames + timeDelta;
 		if (timeDelta == 0)
 			return new float[] {0, fallenFramesNext};
-		
+
 		if (fallenFramesNext < 0) // not close to falling
 		{
 			return new float[] {speed * timeDelta, fallenFramesNext};
@@ -358,7 +537,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	public void updateRotation()
 	{
 		Vec3 motion = getDeltaMovement();
-		
+
 		if (!Vec3.ZERO.equals(motion))
 		{
 			float pitch = (float) (Mth.atan2(motion.y, motion.horizontalDistance()) * Mth.RAD_TO_DEG);
@@ -389,141 +568,144 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			{
 				Vector3f velocity = getShotDirection().mul(entityData.get(SPEED) / 2f);
 				if (getProjectileType().equals(Types.CHARGER))
-					level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
+					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
 				else
-					level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
+					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
 			}
 			case PROJECTILE_IMPACT ->
-				level().addParticle(new InkSplashParticleData(getColor(), getProjectileSize() * 2), getX(), getY(), getZ(), 0, 0, 0);
+				level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 2), getX(), getY(), getZ(), 0, 0, 0);
 			case BLAST_PARTICLE ->
-				level().addParticle(new InkExplosionParticleData(getColor(), getProjectileSize() * 2), getX(), getY(), getZ(), 0, 0, 0);
+				level().addParticle(new InkExplosionParticleData(getColor(), getProjectileWorldHitboxLength() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
+	@Deprecated
 	@Override
-	protected void onHitEntity(@NotNull EntityHitResult result)
+	public void onHit(@NotNull HitResult result)
 	{
-		super.onHitEntity(result);
-		
+		return; // use the other method
+
+/*
+		HitResult.Type rayType = result.getType();
+		if (rayType == HitResult.Type.ENTITY)
+		{
+			onHitEntity((EntityHitResult) result);
+		}
+		else if (rayType == HitResult.Type.BLOCK)
+		{
+			onHitBlock((BlockHitResult) result);
+		}
+
+		if (canPierce)
+		{
+			HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+			if (hitresult.getType() == HitResult.Type.ENTITY)
+			{
+				hitTargetOrDeflectSelf(hitresult);
+			}
+		}
+		SendPlayerHitPacket.releaseHitPositions(getOwner());
+*/
+	}
+	@Override
+	public boolean canHitEntity(@NotNull Entity entity)
+	{
+		return entity != getOwner() && entity.canBeHitByProjectile() && InkDamageUtils.canDamage(entity, entityData.get(COLOR)) && !hitEnemies.contains(entity.getId());
+	}
+	protected void onHitEntity(Entity target, Vec3 closestPointInsideBox, Vec3 collisionNormal, float framesAdvanced)
+	{
 		if (level().isClientSide())
 			return;
-		
-		Entity target = result.getEntity();
-		Vec3 impactPos = result.getLocation();
-		
-		float dmg = calculateDamage(impactPos, !canPierce);
-		
+
+		float dmg = calculateDamage(framesAdvanced);
+
 		if (target instanceof SpawnShieldEntity && !InkDamageUtils.canDamage(target, this))
 		{
 			discard();
 			level().broadcastEntityEvent(this, BARRIER_DENY);
 		}
-		
+
 		Entity owner = getOwner();
-		
+
 		if (InkDamageUtils.isSplatted(target)) return;
-		
+
 		boolean didDamage = InkDamageUtils.doDamage(target, dmg, owner, this, sourceWeapon, SplatcraftDamageTypes.INK_SPLAT, causesHurtCooldown, attackId);
 		if (didDamage)
 		{
 			hitEnemies.add(target.getId());
-			
+
 			ExtraSaveData.ChargeExtraData chargeData = getExtraDatas().getFirstExtraData(ExtraSaveData.ChargeExtraData.class);
 			if (Objects.equals(getProjectileType(), Types.CHARGER) && chargeData != null && chargeData.charge >= 1.0f && InkDamageUtils.isSplatted(target) && dmg > 20 ||
-				Objects.equals(getProjectileType(), Types.BLASTER))
+			    Objects.equals(getProjectileType(), Types.BLASTER))
 			{
-				accumulateHitPacket(impactPos, SplatcraftSounds.shotDirectHit, 1.2f);
+				accumulateHitPacket(closestPointInsideBox, SplatcraftSounds.shotDirectHit, 1.2f);
 			}
 			else
 			{
-				accumulateHitPacket(impactPos, SplatcraftSounds.shotHit, 1f);
+				accumulateHitPacket(closestPointInsideBox, SplatcraftSounds.shotHit, 1f);
 			}
 		}
-		
+
 		if (!canPierce)
 		{
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
 				InkExplosion.createInkExplosionWithSound(
-					owner, impactPos, explosionData.explosionPaint,
+					owner, closestPointInsideBox, explosionData.explosionPaint,
 					explosionData.getRadiuses(false, damageMultiplier),
 					inkType, sourceWeapon,
-					explosionData.newAttackId ? AttackId.NONE : attackId, impactPos.toVector3f());
-				
+					explosionData.newAttackId ? AttackId.NONE : attackId, closestPointInsideBox.toVector3f());
+
 				level().broadcastEntityEvent(this, BLAST_PARTICLE);
 				level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.blasterExplosion, SoundSource.PLAYERS, 0.8F, CommonUtils.nextTriangular(level().getRandom(), 0.95F, 0.095F));
 			}
 			else
 				level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
-			
+
 			discard();
 		}
 	}
-	private void accumulateHitPacket(Vec3 impactPos, SoundEvent shotSound, float scale)
+	private void onHitBlock(BlockPos collidedPos, Vec3 closestPointToBlock, Vec3 collisionNormal, float framesAdvanced, boolean inside)
 	{
-		SendPlayerHitPacket.accumulateHitPositions(impactPos.toVector3f(), shotSound, scale);
-	}
-	private float calculateDamage(Vec3 impactPos, boolean setPos)
-	{
-		float storedCrystalSoundIntensity = crystalSoundIntensity;
-		
-		// idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
-		// lol i didnt even use it
-		
-		Vec3 nextPosition = position().add(getDeltaMovement());
-		
-		crystalSoundIntensity = (float) CommonUtils.getDeltaBetweenVectors(impactPos, position(), nextPosition, 0.5);
-		
-		if (setPos)
-			setPos(impactPos);
-		
-		float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
-		crystalSoundIntensity = storedCrystalSoundIntensity;
-		return dmg;
-	}
-	@Override
-	protected void onHitBlock(@NotNull BlockHitResult result)
-	{
-		if (InkBlockUtils.canInkPassthrough(level(), result.getBlockPos()))
+		if (InkBlockUtils.canInkPassthrough(level(), collidedPos))
 			return;
-		
-		BlockState state = level().getBlockState(result.getBlockPos());
+
+		BlockState state = level().getBlockState(collidedPos);
 		if (state.getBlock() instanceof ColoredBarrierBlock coloredBarrierBlock &&
-			coloredBarrierBlock.canAllowThrough(result.getBlockPos(), this))
+		    coloredBarrierBlock.canAllowThrough(collidedPos, this))
 			return;
-		
+
 		if (state.getBlock() instanceof IColoredBlock coloredBlock)
 		{
-			coloredBlock.inkBlock(level(), result.getBlockPos(), getColor(), calculateDamage(result.getLocation(), true), inkType);
-			return;
+			coloredBlock.inkBlock(level(), collidedPos, getColor(), calculateDamage(framesAdvanced), inkType);
 		}
-		if (level().getBlockEntity(result.getBlockPos()) instanceof InkProjectileListener listener)
-			listener.onCollide(this, result);
-		
+		if (level().getBlockEntity(collidedPos) instanceof InkProjectileListener listener)
+			listener.onCollide(this, collidedPos, closestPointToBlock, collisionNormal);
+
+		Direction closestDirection = Direction.getNearest(collisionNormal.x, collisionNormal.y, collisionNormal.z);
+		BlockHitResult result = new BlockHitResult(closestPointToBlock, closestDirection, collidedPos, inside);
 		super.onHitBlock(result);
 		if (level().isClientSide())
 		{
 			return;
 		}
-		
+
 		Vec3 nextPosition = position().add(getDeltaMovement());
-		double framesAdvanced = CommonUtils.getDeltaBetweenVectors(result.getLocation(), position(), nextPosition, 0);
-		// todo: fix this and not depend on world.isSpaceEmpty
 		calculateDrops(position(), nextPosition, (float) (framesAdvanced * getDeltaMovement().length()), true);
-		
-		if (level().getBlockState(result.getBlockPos()).getBlock() instanceof StageBarrierBlock)
+
+		if (level().getBlockState(collidedPos).getBlock() instanceof StageBarrierBlock)
 			level().broadcastEntityEvent(this, BARRIER_DENY);
 		else
 		{
 			level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
-			Vec3 impactPos = InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), this);
+			Vec3 impactPos = closestPointToBlock.add(collisionNormal.scale(0.01));
 			
 			ExtraSaveData.ImpactSoundExtraData soundData = getExtraDatas().getFirstExtraData(ExtraSaveData.ImpactSoundExtraData.class);
 			if (soundData != null)
 			{
 				level().playSound(null, getX(), getY(), getZ(), soundData.sound, SoundSource.PLAYERS, 1f, 1f);
 			}
-			
+
 			ExtraSaveData.ExplosionExtraData explosionData = getExtraDatas().getFirstExtraData(ExtraSaveData.ExplosionExtraData.class);
 			if (explodes && explosionData != null)
 			{
@@ -535,8 +717,27 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 				InkExplosion.createInkExplosion(getOwner(), impactPos, impactCoverage, inkType, sourceWeapon);
 			}
 		}
-		if (!level().isClientSide())
-			discard();
+
+		discard();
+	}
+	private void accumulateHitPacket(Vec3 impactPos, SoundEvent shotSound, float scale)
+	{
+		SendPlayerHitPacket.accumulateHitPositions(impactPos.toVector3f(), shotSound, scale);
+	}
+	private float calculateDamage(float partialTick)
+	{
+		float storedCrystalSoundIntensity = crystalSoundIntensity;
+
+		// idk vector math so i read https://discussions.unity.com/t/inverselerp-for-vector3/177038 for this
+		// lol i didnt even use it
+
+		Vec3 nextPosition = position().add(getDeltaMovement());
+
+		crystalSoundIntensity = partialTick;
+
+		float dmg = damage.calculateDamage(this, getExtraDatas()) * damageMultiplier;
+		crystalSoundIntensity = storedCrystalSoundIntensity;
+		return dmg;
 	}
 	@Override
 	public void shootFromRotation(@NotNull Entity shooter, float pitch, float yaw, float roll, float speed, float divergence)
@@ -553,7 +754,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		if (inaccuracy == 0)
 			return new Vec3(x, y, z).normalize();
-		
+
 		float xRand = 0, yRand = 0;
 		if (random.nextBoolean())
 		{
@@ -579,7 +780,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	public void onVelocityCalculated(Vec3 direction, float speed)
 	{
 		hasImpulse = true;
-		
+
 		double d0 = direction.horizontalDistance();
 		float yaw = (float) (Mth.atan2(direction.x, direction.z) * Mth.RAD_TO_DEG);
 		float pitch = (float) (Mth.atan2(direction.y, d0) * Mth.RAD_TO_DEG);
@@ -588,56 +789,30 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		yRotO = yaw;
 		xRotO = pitch;
 		setDeltaMovement(direction);
-		
+
 		entityData.set(SPEED, speed);
-	}
-	@Override
-	public void onHit(HitResult result)
-	{
-		HitResult.Type rayType = result.getType();
-		if (rayType == HitResult.Type.ENTITY)
-		{
-			onHitEntity((EntityHitResult) result);
-		}
-		else if (rayType == HitResult.Type.BLOCK)
-		{
-			onHitBlock((BlockHitResult) result);
-		}
-		
-		if (canPierce)
-		{
-			HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-			if (hitresult.getType() == HitResult.Type.ENTITY)
-			{
-				hitTargetOrDeflectSelf(hitresult);
-			}
-		}
-		SendPlayerHitPacket.releaseHitPositions(getOwner());
-	}
-	@Override
-	public boolean canHitEntity(@NotNull Entity entity)
-	{
-		return entity != getOwner() && entity.canBeHitByProjectile() && InkDamageUtils.canDamage(entity, entityData.get(COLOR)) && !hitEnemies.contains(entity.getId());
 	}
 	@Override
 	public void readAdditionalSaveData(@NotNull CompoundTag nbt)
 	{
 		super.readAdditionalSaveData(nbt);
-		
-		if (nbt.contains("Size"))
-			setProjectileSize(nbt.getFloat("Size"));
+
+		if (nbt.contains("TerrainSize"))
+			setProjectileWorldHitboxLength(nbt.getFloat("TerrainSize"));
+		if (nbt.contains("CollisionSize"))
+			setProjectileHitboxRadius(nbt.getFloat("CollisionSize"));
 		if (nbt.contains("VisualSize"))
 			setProjectileVisualSize(nbt.getFloat("VisualSize"));
-		
-		impactCoverage = nbt.contains("ImpactCoverage") ? nbt.getFloat("ImpactCoverage") : getProjectileSize() * 0.85f;
-		
+
+		impactCoverage = nbt.contains("ImpactCoverage") ? nbt.getFloat("ImpactCoverage") : getProjectileWorldHitboxLength() * 0.85f;
+
 		if (nbt.contains("Color"))
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
-		
+
 		entityData.set(SPEED, nbt.getFloat("Speed"));
 		setHorizontalDrag(nbt.getFloat("HorizontalDrag"));
 		setGravitySpeedMult(nbt.getFloat("GravitySpeedMult"));
-		
+
 		if (nbt.contains("Gravity"))
 			setGravity(nbt.getFloat("Gravity"));
 		if (nbt.contains("Lifespan"))
@@ -646,12 +821,12 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			setStraightShotTime(nbt.getFloat("StraightShotTime"));
 		if (nbt.contains("StraightShotTime"))
 			straightShotTime = nbt.getFloat("StraightShotTime");
-		
+
 		ExtraCodecs.VECTOR3F.parse(NbtOps.INSTANCE, nbt.get("Direction")).result().ifPresent(direction ->
 		{
 			entityData.set(SHOOT_DIRECTION, direction);
 		});
-		
+
 		distanceBetweenDrops = nbt.getFloat("TrailFrequency");
 		dropImpactSize = nbt.getFloat("TrailSize");
 		bypassMobDamageMultiplier = nbt.getBoolean("BypassMobDamageMultiplier");
@@ -660,40 +835,41 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		explodesOnExpire = nbt.getBoolean("ExplodesOnExpire");
 		persistent = nbt.getBoolean("Persistent");
 		causesHurtCooldown = nbt.getBoolean("CausesHurtCooldown");
-		
+
 		setInvisible(nbt.getBoolean("Invisible"));
-		
+
 		String type = nbt.getString("ProjectileType");
 		setProjectileType(type.isEmpty() ? Types.DEFAULT : type);
 		inkType = InkBlockUtils.InkType.CODEC.parse(NbtOps.INSTANCE, nbt.get("InkType")).result().orElse(InkBlockUtils.InkType.NORMAL);
-		
+
 		sourceWeapon = ItemStack.parseOptional(registryAccess(), nbt.getCompound("SourceWeapon"));
-		
+
 		if (nbt.contains("DamageCalculator"))
 		{
 			DamageCalculator.parseDamageCalculator(NbtOps.INSTANCE, nbt.get("DamageCalculator")).ifSuccess(
 				damage -> this.damage = damage
 			);
 		}
-		
+
 		if (nbt.contains("AttackId"))
 			attackId = AttackId.parseAttackId(NbtOps.INSTANCE, nbt.getCompound("AttackId"));
 	}
 	@Override
 	public void addAdditionalSaveData(CompoundTag nbt)
 	{
-		nbt.putFloat("Size", getProjectileSize());
+		nbt.putFloat("TerrainSize", getProjectileWorldHitboxLength());
+		nbt.putFloat("CollisionSize", getProjectileHitboxRadius());
 		nbt.putFloat("VisualSize", getProjectileVisualSize());
 		nbt.put("Color", getColor().getNbt());
-		
+
 		nbt.putFloat("Speed", entityData.get(SPEED));
 		nbt.putFloat("HorizontalDrag", getHorizontalDrag());
 		nbt.putFloat("GravitySpeedMult", getGravitySpeedMult());
 		nbt.putFloat("MaxStraightShotTime", getMaxStraightShotTime());
 		nbt.putFloat("StraightShotTime", straightShotTime);
-		
+
 		ExtraCodecs.VECTOR3F.encodeStart(NbtOps.INSTANCE, getShotDirection()).result().ifPresent(tag -> nbt.put("Direction", tag));
-		
+
 		nbt.putDouble("Gravity", getDefaultGravity());
 		nbt.putFloat("Lifespan", lifespan);
 		nbt.putFloat("TrailSize", dropImpactSize);
@@ -704,9 +880,9 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		nbt.putBoolean("ExplodesOnExpire", explodesOnExpire);
 		nbt.putBoolean("Persistent", persistent);
 		nbt.putBoolean("CausesHurtCooldown", causesHurtCooldown);
-		
+
 		nbt.putBoolean("Invisible", isInvisible());
-		
+
 		nbt.putString("ProjectileType", getProjectileType());
 		nbt.putString("InkType", inkType.name());
 		nbt.put("SourceWeapon", sourceWeapon.saveOptional(level().registryAccess()));
@@ -717,14 +893,14 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 				nbt.put("Settings", tag);
 			});
 		});
-		
+
 		DamageCalculator.encodeDamageCalculator(NbtOps.INSTANCE, damage).ifSuccess(
 			tag -> nbt.put("DamageCalculator", tag)
 		);
-		
+
 		if (attackId != AttackId.NONE)
 			nbt.put("AttackId", AttackId.encodeAttackId(NbtOps.INSTANCE, attackId));
-		
+
 		super.addAdditionalSaveData(nbt);
 	}
 	private @NotNull Float getGravitySpeedMult()
@@ -768,7 +944,12 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull Pose pose)
 	{
-		return super.getDimensions(pose).scale(getProjectileSize() / 2f);
+		return super.getDimensions(pose).scale(getProjectileWorldHitboxLength());
+	}
+	@Override
+	protected @NotNull AABB makeBoundingBox()
+	{
+		return dimensions.makeBoundingBox(getX(), getY() - getBbHeight() / 2, getZ());
 	}
 	@Override
 	public double getDefaultGravity()
@@ -791,7 +972,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		// getMaxStraightShotTime() - straightShotTime is just age but it counts the partial ticks too (and time delta!!! yay i hate myself)
 		double age = getMaxStraightShotTime() - straightShotTime + crystalSoundIntensity;
-		
+
 		double diff = age - startTick;
 		if (diff < 0)
 			return baseDamage;
@@ -810,23 +991,43 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		return true;
 	}
-	public float getProjectileSize()
+	public void setProjectileSize(CommonRecords.ProjectileSizeRecord size)
 	{
-		return entityData.get(PROJ_SIZE).x;
+		setProjectileWorldHitboxLength(size.worldHitboxLength());
+		setProjectileVisualSize(size.visualSize() * 3);
+		setProjectileHitboxRadius(size.hitboxRadius());
 	}
-	public void setProjectileSize(float size)
+	public void setProjectileOverallSize(float size)
 	{
-		entityData.set(PROJ_SIZE, new Vector2f(size, size * 3));
+		setProjectileWorldHitboxLength(size);
+		setProjectileVisualSize(size * 3);
+		setProjectileHitboxRadius(size);
+	}
+	public float getProjectileWorldHitboxLength()
+	{
+		return entityData.get(WORLD_HITBOX_LENGTH);
+	}
+	public void setProjectileWorldHitboxLength(float length)
+	{
+		entityData.set(WORLD_HITBOX_LENGTH, length);
 		reapplyPosition();
 		refreshDimensions();
 	}
 	public float getProjectileVisualSize()
 	{
-		return entityData.get(PROJ_SIZE).y;
+		return entityData.get(VISUAL_SIZE);
 	}
 	public void setProjectileVisualSize(float visualSize)
 	{
-		entityData.set(PROJ_SIZE, new Vector2f(getProjectileSize(), visualSize));
+		entityData.set(VISUAL_SIZE, visualSize);
+	}
+	public float getProjectileHitboxRadius()
+	{
+		return entityData.get(HITBOX_RADIUS);
+	}
+	public void setProjectileHitboxRadius(float size)
+	{
+		entityData.set(HITBOX_RADIUS, size);
 	}
 	@Override
 	public void remove(@NotNull RemovalReason pReason)

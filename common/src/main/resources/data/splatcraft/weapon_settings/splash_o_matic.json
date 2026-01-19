@@ -1,10 +1,12 @@
 {
     "type": "splatcraft:shooter",
     "projectile": {
-        "size": 2,
+        "size": {
+            "hitbox_radius": 2
+        },
         "delay_speed_mult": 0.40,
         "ink_coverage_on_impact": 16.5,
-        "ink_drop_coverage": 12.8,
+        "ink_drop_coverage": 12.4,
         "distance_between_drops": 95,
         "straight_shot_ticks": 2,
         "base_damage": 28,
@@ -18,7 +20,7 @@
         "repeat_ticks": 5,
         "endlag_ticks": 3,
         "other_actions_endlag_ticks": 3,
-        "speed": 39.2,
+        "speed": 40.4,
         "ink_consumption": 0.8,
         "ink_recovery_cooldown": 20
     },

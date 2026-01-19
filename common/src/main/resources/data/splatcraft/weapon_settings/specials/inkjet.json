@@ -33,8 +33,10 @@
         ]
     },
     "projectile": {
-        "size": 3,
-        "visual_size": 6,
+        "size": {
+            "hitbox_radius": 3,
+            "visual_size": 6
+        },
         "lifespan": 34,
         "delay_speed_mult": 1,
         "horizontal_drag": 1,

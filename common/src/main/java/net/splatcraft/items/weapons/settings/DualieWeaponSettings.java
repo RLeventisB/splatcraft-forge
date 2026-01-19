@@ -88,11 +88,19 @@ public class DualieWeaponSettings extends AbstractWeaponSettings<DualieWeaponSet
 	}
 	public ShotDataRecord getShotData(LivingEntity entity)
 	{
-		return CommonUtils.isOnTurretState(entity) ? turretShotData : standardShotData;
+		return getShotData(CommonUtils.isOnTurretState(entity));
+	}
+	public ShotDataRecord getShotData(boolean rolling)
+	{
+		return rolling ? turretShotData : standardShotData;
 	}
 	public ProjectileDataRecord getProjectileData(LivingEntity entity)
 	{
-		return CommonUtils.isOnTurretState(entity) ? turretProjectileData : standardProjectileData;
+		return getProjectileData(CommonUtils.isOnTurretState(entity));
+	}
+	public ProjectileDataRecord getProjectileData(boolean rolling)
+	{
+		return rolling ? turretProjectileData : standardProjectileData;
 	}
 	public record DataRecord(
 		ProjectileDataRecord projectile,

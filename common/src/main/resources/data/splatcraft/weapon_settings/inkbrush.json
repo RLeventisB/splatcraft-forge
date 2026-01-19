@@ -10,8 +10,11 @@
     },
     "swing": {
         "projectile": {
-            "size": 13,
-            "visual_size": 8,
+            "size": {
+                "hitbox_radius": 13,
+                "visual_size": 8,
+                "world_hitbox_length": 8
+            },
             "straight_shot_ticks": 7,
             "ink_coverage_on_impact": 18,
             "distance_between_drops": -1,

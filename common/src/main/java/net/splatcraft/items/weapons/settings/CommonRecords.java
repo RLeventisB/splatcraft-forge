@@ -39,8 +39,7 @@ public class CommonRecords
 	// distance ->          y = x / divisor
 	// drag ->              y = x ^ 3
 	public record ProjectileDataRecord(
-		float size,
-		float visualSize,
+		ProjectileSizeRecord size,
 		float lifeTicks,
 		float delaySpeedMult,
 		float horizontalDrag,
@@ -57,8 +56,7 @@ public class CommonRecords
 	{
 		public static final MapCodec<ProjectileDataRecord> MAP_CODEC = RecordCodecBuilder.mapCodec(
 			instance -> instance.group(
-				Codec.FLOAT.fieldOf("size").forGetter(ProjectileDataRecord::size),
-				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
+				ProjectileSizeRecord.CODEC.fieldOf("size").forGetter(ProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("lifespan", 600f).forGetter(ProjectileDataRecord::lifeTicks),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.5f).forGetter(ProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(ProjectileDataRecord::horizontalDrag),
@@ -74,18 +72,17 @@ public class CommonRecords
 			).apply(instance, ProjectileDataRecord::create)
 		);
 		public static final Codec<ProjectileDataRecord> CODEC = MAP_CODEC.codec();
-		public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(0, 0, 600, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
-		public static ProjectileDataRecord create(float size, Optional<Float> visualSize, float lifeTicks, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
+		public static final ProjectileDataRecord DEFAULT = new ProjectileDataRecord(ProjectileSizeRecord.DEFAULT, 600, 0.5f, 0.64F, 0, 0.7F, 0, 0, 48, 0, 0, 0, 0);
+		public static ProjectileDataRecord create(ProjectileSizeRecord size, float lifeTicks, float delaySpeedMult, float horizontalDrag, float straightShotTicks, float gravity, Optional<Float> inkCoverageImpact, Optional<Float> inkDropCoverage, float distanceBetweenInkDrops, float baseDamage, Optional<Float> decayedDamage, float damageDecayStartTick, float damageDecayPerTick)
 		{
 			return new ProjectileDataRecord(size,
-				visualSize.orElse(size * 3),
 				lifeTicks,
 				delaySpeedMult,
 				horizontalDrag,
 				straightShotTicks,
 				gravity,
-				inkCoverageImpact.orElse(size * 0.85f),
-				inkDropCoverage.orElse(size * 0.75f),
+				inkCoverageImpact.orElse(size.hitboxRadius() * 0.85f),
+				inkDropCoverage.orElse(size.hitboxRadius() * 0.75f),
 				distanceBetweenInkDrops,
 				baseDamage,
 				decayedDamage.orElse(baseDamage),
@@ -93,27 +90,8 @@ public class CommonRecords
 				damageDecayPerTick);
 		}
 	}
-	public record ProjectileSizeRecord(
-		float hitboxSize,
-		float visualScale,
-		float worldHitboxSize
-	)
-	{
-		public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
-			instance -> instance.group(
-				Codec.FLOAT.optionalFieldOf("hitbox_size", 2f).forGetter(ProjectileSizeRecord::hitboxSize),
-				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualScale())),
-				Codec.FLOAT.optionalFieldOf("world_hitbox_size").forGetter(t -> Optional.of(t.worldHitboxSize()))
-			).apply(instance, ProjectileSizeRecord::create)
-		);
-		private static ProjectileSizeRecord create(float hitboxSize, Optional<Float> visualSize, Optional<Float> worldHitboxSize)
-		{
-			return new ProjectileSizeRecord(hitboxSize, visualSize.orElse(hitboxSize * 3), worldHitboxSize.orElse(hitboxSize));
-		}
-	}
 	public record OptionalProjectileDataRecord(
-		Optional<Float> size,
-		Optional<Float> visualSize,
+		Optional<OptionalProjectileSizeRecord> size,
 		Optional<Float> lifeTicks,
 		Optional<Float> delaySpeedMult,
 		Optional<Float> horizontalDrag,
@@ -130,8 +108,7 @@ public class CommonRecords
 	{
 		public static final Codec<OptionalProjectileDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
-				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileDataRecord::visualSize),
+				OptionalProjectileSizeRecord.CODEC.optionalFieldOf("size").forGetter(OptionalProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("lifespan").forGetter(OptionalProjectileDataRecord::lifeTicks),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult").forGetter(OptionalProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag").forGetter(OptionalProjectileDataRecord::horizontalDrag),
@@ -159,14 +136,12 @@ public class CommonRecords
 			Optional.empty(),
 			Optional.empty(),
 			Optional.empty(),
-			Optional.empty(),
 			Optional.empty()
 		);
 		public static OptionalProjectileDataRecord from(ProjectileDataRecord projectile) // this is horrible
 		{
 			return new OptionalProjectileDataRecord(
-				Optional.of(projectile.size),
-				Optional.of(projectile.visualSize),
+				Optional.of(OptionalProjectileSizeRecord.from(projectile.size)),
 				Optional.of(projectile.lifeTicks),
 				Optional.of(projectile.delaySpeedMult),
 				Optional.of(projectile.horizontalDrag),
@@ -188,8 +163,7 @@ public class CommonRecords
 
 			OptionalProjectileDataRecord modifiedGet = modified.get();
 			return new ProjectileDataRecord(
-				modifiedGet.size().orElse(base.size()),
-				modifiedGet.visualSize().orElse(base.visualSize()),
+				OptionalProjectileSizeRecord.mergeWithBase(modifiedGet.size(), base.size()),
 				modifiedGet.lifeTicks().orElse(base.lifeTicks()),
 				modifiedGet.delaySpeedMult().orElse(base.delaySpeedMult()),
 				modifiedGet.horizontalDrag().orElse(base.horizontalDrag()),
@@ -203,6 +177,96 @@ public class CommonRecords
 				modifiedGet.damageDecayStartTick().orElse(base.damageDecayStartTick()),
 				modifiedGet.damageDecayPerTick().orElse(base.damageDecayPerTick())
 			);
+		}
+	}
+	public record ProjectileSizeRecord(
+		float hitboxRadius,
+		float visualSize,
+		float worldHitboxLength
+	)
+	{
+		public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
+			instance -> instance.group(
+				Codec.FLOAT.optionalFieldOf("hitbox_radius", 2f).forGetter(ProjectileSizeRecord::hitboxRadius),
+				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualSize())),
+				Codec.FLOAT.optionalFieldOf("world_hitbox_length").forGetter(t -> Optional.of(t.worldHitboxLength()))
+			).apply(instance, ProjectileSizeRecord::create)
+		);
+		public static final ProjectileSizeRecord DEFAULT = new ProjectileSizeRecord(2f, 6f, 2f);
+		private static ProjectileSizeRecord create(float hitboxSize, Optional<Float> visualSize, Optional<Float> worldHitboxSize)
+		{
+			return new ProjectileSizeRecord(hitboxSize, visualSize.orElse(hitboxSize * 3), worldHitboxSize.orElse(hitboxSize * 2));
+		}
+		public static ProjectileSizeRecord lerp(float delta, ProjectileSizeRecord size1, ProjectileSizeRecord size2)
+		{
+			return new ProjectileSizeRecord(
+				Mth.lerp(delta, size1.hitboxRadius(), size2.hitboxRadius()),
+				Mth.lerp(delta, size1.visualSize(), size2.visualSize()),
+				Mth.lerp(delta, size1.worldHitboxLength(), size2.worldHitboxLength())
+			);
+		}
+		public ProjectileSizeRecord scale(float hitboxScale, float visualScale, float worldScale)
+		{
+			return new ProjectileSizeRecord(
+				hitboxRadius() * hitboxScale,
+				visualSize() * visualScale,
+				worldHitboxLength() * worldScale
+			);
+		}
+		public ProjectileSizeRecord divide(float denominatorHitbox, float denominatorVisual, float denominatorWorld)
+		{
+			return scale(1f / denominatorHitbox, 1f / denominatorVisual, 1f / denominatorWorld);
+		}
+	}
+	public record OptionalProjectileSizeRecord(
+		Optional<Float> hitboxRadius,
+		Optional<Float> visualSize,
+		Optional<Float> worldHitboxLength
+	)
+	{
+		public static final Codec<OptionalProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
+			instance -> instance.group(
+				Codec.FLOAT.optionalFieldOf("hitbox_radius").forGetter(OptionalProjectileSizeRecord::hitboxRadius),
+				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileSizeRecord::visualSize),
+				Codec.FLOAT.optionalFieldOf("world_hitbox_length").forGetter(OptionalProjectileSizeRecord::worldHitboxLength)
+			).apply(instance, OptionalProjectileSizeRecord::new)
+		);
+		public static final OptionalProjectileSizeRecord DEFAULT = new OptionalProjectileSizeRecord(
+			Optional.empty(),
+			Optional.empty(),
+			Optional.empty()
+		);
+		public static OptionalProjectileSizeRecord from(ProjectileSizeRecord size)
+		{
+			return new OptionalProjectileSizeRecord(
+				Optional.of(size.hitboxRadius),
+				Optional.of(size.visualSize),
+				Optional.of(size.worldHitboxLength)
+			);
+		}
+		public static ProjectileSizeRecord mergeWithBase(Optional<OptionalProjectileSizeRecord> modified, ProjectileSizeRecord base)
+		{
+			if (modified.isEmpty())
+				return base;
+
+			OptionalProjectileSizeRecord modifiedGet = modified.get();
+			return new ProjectileSizeRecord(
+				modifiedGet.hitboxRadius().orElse(base.hitboxRadius()),
+				modifiedGet.visualSize().orElse(base.visualSize()),
+				modifiedGet.worldHitboxLength().orElse(base.worldHitboxLength())
+			);
+		}
+		public OptionalProjectileSizeRecord scale(float hitboxScale, float visualScale, float worldScale)
+		{
+			return new OptionalProjectileSizeRecord(
+				hitboxRadius().map(v -> v * hitboxScale),
+				visualSize().map(v -> v * visualScale),
+				worldHitboxLength().map(v -> v * worldScale)
+			);
+		}
+		public OptionalProjectileSizeRecord divide(float denominatorHitbox, float denominatorVisual, float denominatorWorld)
+		{
+			return scale(1f / denominatorHitbox, 1f / denominatorVisual, 1f / denominatorWorld);
 		}
 	}
 	public record ShotDataRecord(
@@ -326,15 +390,12 @@ public class CommonRecords
 	public record ShotDeviationDataRecord(
 		float groundShotDeviation,
 		float airborneShotDeviation,
-
 		float minDeviateChance,
 		float maxDeviateChance,
 		float deviationChanceWhenAirborne,
 		float chanceIncreasePerShot,
-
 		float chanceDecreaseDelay,
 		float chanceDecreasePerTick,
-
 		float airborneContractDelay,
 		float airborneContractTimeToDecrease
 	)

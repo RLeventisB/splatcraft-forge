@@ -97,11 +97,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		setOwner(owner);
 		setStartup(startup);
 		setShockwaveDelay(shockwaveDelay);
-		
+
 		setXRot(owner.getXRot());
 		setYRot(owner.getYHeadRot());
 		updateRotation();
-		
+
 		updatePosForward(owner);
 		refreshDimensions();
 		reapplyPosition();
@@ -118,22 +118,22 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			playSound(this);
 		}
-		
+
 		super.tick();
-		
+
 		updateRotation();
-		
+
 		if (!(getOwner() instanceof LivingEntity owner) || !owner.isAlive())
 		{
 			discard();
 			return;
 		}
-		
+
 		if (!owner.isUsingItem() || !EntityAction.hasSpecificEntityAction(owner, StingRayAction.class) || CommonUtils.isSquid(owner))
 		{
 			markOwnerStopShooting();
 		}
-		
+
 		int lifespan = getLifespan();
 		if (hasOwnerStopShooting())
 		{
@@ -145,13 +145,13 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 			setLifespan(lifespan + 1);
 			return;
 		}
-		
+
 		tickRay(owner, lifespan);
 	}
 	public void tickRay(LivingEntity owner, int lifespan)
 	{
 		Vec3 forward = updatePosForward(owner);
-		
+
 		if (isBeamActive())
 		{
 			if (level().isClientSide)
@@ -172,7 +172,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				doCollisions(forward);
 			}
 		}
-		
+
 		setLifespan(lifespan + 1);
 	}
 	public float paint(Vec3 forward)
@@ -181,7 +181,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		BlockHitResult result = level().clip(context);
 		if (result.getType() == HitResult.Type.MISS)
 			return Float.POSITIVE_INFINITY;
-		
+
 		InkExplosion.createInkExplosion(this, InkExplosion.adjustPosition(result.getLocation(), result.getDirection(), null), paintingRadius, inkType, ItemStack.EMPTY);
 		return (float) position().distanceToSqr(result.getLocation());
 	}
@@ -202,13 +202,13 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			if (!canHitEntity(entity))
 				continue;
-			
+
 			if (!stingRayHitArea.intersects(entity.getBoundingBox()))
 				continue;
-			
+
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Triplet<Float, Vector3f, Float> impactData = CommonUtils.getRayDistance(floatForward, relativeBox);
-			
+			Triplet<Float, Vector3f, Float> impactData = CollisionUtils.getRayDistance(floatForward, relativeBox);
+
 			if (impactData.getA() < getRayWidth())
 			{
 				hit(entity, rayDamage, particlePositions, impactData.getB());
@@ -218,7 +218,7 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 				hit(entity, shockwaveDamage, particlePositions, impactData.getB());
 			}
 		}
-		
+
 		particlePositions.ifPresent(positions ->
 		{
 			if (getOwner() instanceof ServerPlayer serverOwner && !positions.isEmpty())
@@ -234,11 +234,11 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-		
+
 		if (target instanceof LivingEntity livingTarget)
 		{
 			if (InkDamageUtils.isSplatted(livingTarget)) return;
-			
+
 			boolean didDamage = InkDamageUtils.doDamage(livingTarget, dmg, getOwner(), this, ItemStack.EMPTY, SplatcraftDamageTypes.INK_SPLAT, false, AttackId.NONE);
 			if (!level().isClientSide && didDamage)
 			{
@@ -279,10 +279,10 @@ public class StingRayBeamEntity extends Projectile implements IColoredEntity
 		{
 			return;
 		}
-		
+
 		xRotO = getXRot();
 		yRotO = getYRot();
-		
+
 		float finalTurningValue = hasStartedToShowTheHellspawn() ? getTurningValueWithShockwave() : getTurningValue();
 		setXRot(Mth.rotLerp(finalTurningValue, getXRot(), owner.getXRot()));
 		setYRot(Mth.rotLerp(finalTurningValue, getYRot(), owner.getYRot()));

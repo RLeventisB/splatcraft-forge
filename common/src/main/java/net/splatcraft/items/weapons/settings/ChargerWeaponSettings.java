@@ -97,7 +97,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 		);
 	}
 	public record ChargerProjectileDataRecord(
-		float size,
+		CommonRecords.ProjectileSizeRecord size,
 		ChargeValueRecord speed,
 		ChargeValueRecord range,
 		ChargeValueRecord inkCoverageImpact,
@@ -109,7 +109,7 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 	{
 		public static final Codec<ChargerProjectileDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.fieldOf("size").forGetter(ChargerProjectileDataRecord::size),
+				CommonRecords.ProjectileSizeRecord.CODEC.fieldOf("size").forGetter(ChargerProjectileDataRecord::size),
 				ChargeValueRecord.CODEC.fieldOf("speed").forGetter(ChargerProjectileDataRecord::speed),
 				ChargeValueRecord.CODEC.fieldOf("range").forGetter(ChargerProjectileDataRecord::range),
 				ChargeValueRecord.CODEC.optionalFieldOf("ink_coverage_on_impact").forGetter(v -> Optional.of(v.inkCoverageImpact)),
@@ -119,8 +119,8 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 				Codec.FLOAT.optionalFieldOf("pierces_at_charge", 1f).forGetter(ChargerProjectileDataRecord::piercesAtCharge)
 			).apply(instance, ChargerProjectileDataRecord::create)
 		);
-		public static final ChargerProjectileDataRecord DEFAULT = new ChargerProjectileDataRecord(0, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, 2f);
-		public static ChargerProjectileDataRecord create(float size,
+		public static final ChargerProjectileDataRecord DEFAULT = new ChargerProjectileDataRecord(CommonRecords.ProjectileSizeRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, ChargeValueRecord.DEFAULT, 2f);
+		public static ChargerProjectileDataRecord create(CommonRecords.ProjectileSizeRecord size,
 		                                                 ChargeValueRecord speed,
 		                                                 ChargeValueRecord range,
 		                                                 Optional<ChargeValueRecord> inkCoverageImpact,
@@ -134,8 +134,8 @@ public class ChargerWeaponSettings extends AbstractWeaponSettings<ChargerWeaponS
 				size,
 				speed,
 				range,
-				inkCoverageImpact.orElse(ChargeValueRecord.create(size * 0.85f)),
-				inkDropCoverage.orElse(ChargeValueRecord.create(size * 1.1f)),
+				inkCoverageImpact.orElse(ChargeValueRecord.create(size.hitboxRadius() * 0.85f)),
+				inkDropCoverage.orElse(ChargeValueRecord.create(size.hitboxRadius() * 1.1f)),
 				distanceBetweenInkDrops,
 				damage,
 				piercesAtCharge

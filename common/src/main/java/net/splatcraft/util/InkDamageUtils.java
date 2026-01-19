@@ -15,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.splatcraft.commands.SuperJumpCommand;
 import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.entities.IColoredEntity;
+import net.splatcraft.entities.ShieldingEntity;
 import net.splatcraft.entities.SpawnShieldEntity;
 import net.splatcraft.entities.SquidBumperEntity;
 import net.splatcraft.network.SplatcraftPacketHandler;
@@ -58,7 +59,7 @@ public class InkDamageUtils
 		InkColor targetColor = ColorUtils.getEntityColor(target);
 		boolean canDamage = canDamageColor(target.level(), target.blockPosition(), targetColor, color);
 		
-		if (canDamage && SpawnShieldEntity.isSpawnShieldPresent(target.level(), target.blockPosition(), target.getBoundingBox(), targetColor))
+		if (canDamage && !(target instanceof ShieldingEntity) && SpawnShieldEntity.isSpawnShieldPresent(target.level(), target.blockPosition(), target.getBoundingBox(), targetColor))
 			return false;
 		
 		return canDamage;

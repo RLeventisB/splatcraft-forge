@@ -1,8 +1,10 @@
 {
     "type": "splatcraft:slosher",
     "base_projectile": {
-        "size": 8,
-        "visual_size": 8,
+        "size": {
+            "hitbox_radius": 8,
+            "visual_size": 8
+        },
         "ink_coverage_on_impact": 14,
         "straight_shot_ticks": 3,
         "direct_damage": 62,
@@ -25,8 +27,10 @@
                 "speed_substract_per_projectile": 1.6,
                 "overriden_base_speed": 12.23,
                 "slosh_projectile_modifications": {
-                    "size": 9,
-                    "visual_size": 14,
+                    "size": {
+                        "hitbox_radius": 9,
+                        "visual_size": 14
+                    },
                     "ink_coverage_on_impact": 27
                 }
             },
@@ -42,8 +46,10 @@
                 "offset_angle": 15,
                 "overriden_base_speed": 9,
                 "slosh_projectile_modifications": {
-                    "size": 7,
-                    "visual_size": 10,
+                    "size": {
+                        "hitbox_radius": 7,
+                        "visual_size": 10
+                    },
                     "ink_coverage_on_impact": 15
                 }
             },
@@ -53,8 +59,10 @@
                 "offset_angle": -15,
                 "overriden_base_speed": 9,
                 "slosh_projectile_modifications": {
-                    "size": 7,
-                    "visual_size": 10,
+                    "size": {
+                        "hitbox_radius": 7,
+                        "visual_size": 10
+                    },
                     "ink_coverage_on_impact": 15
                 }
             }

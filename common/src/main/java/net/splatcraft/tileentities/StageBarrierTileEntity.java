@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.SplatcraftConfig;
@@ -45,12 +45,12 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		{
 			activeTime--;
 		}
-		
+
 		for (Entity entity : level.getEntitiesOfClass(Entity.class, new AABB(getBlockPos()).inflate(0.05), entity -> !(entity instanceof SpawnShieldEntity)))
 		{
 			onEntityCollide(entity);
 		}
-		
+
 		if (level.isClientSide)
 			tickClient();
 	}
@@ -58,7 +58,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	{
 		resetActiveTime();
 		if (getBlockState().getBlock() instanceof StageBarrierBlock stageBarrierBlock && stageBarrierBlock.damagesPlayer &&
-			entity instanceof Player)
+		    entity instanceof Player)
 		{
 			entity.hurt(SplatcraftDamageTypes.of(level, SplatcraftDamageTypes.OUT_OF_STAGE), Float.MAX_VALUE);
 		}
@@ -71,11 +71,11 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 			boolean canRender = true;
 			Player player = ClientUtils.getClientPlayer();
 			int renderDistance = SplatcraftConfig.get("splatcraft.barrierRenderDistance");
-			
+
 			if ((Boolean) SplatcraftConfig.get("splatcraft.holdBarrierToRender") && (player.distanceToSqr(getBlockPos().getCenter()) < 1024))
 			{
 				canRender = player.getMainHandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS) ||
-					player.getOffhandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
+				            player.getOffhandItem().is(SplatcraftTags.Items.REVEALS_BARRIERS);
 			}
 			else if (player.distanceToSqr(getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ()) > renderDistance * renderDistance)
 				canRender = false;
@@ -95,7 +95,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 	public void loadAdditional(@NotNull CompoundTag nbt, HolderLookup.@NotNull Provider wrapperLookup)
 	{
 		super.loadAdditional(nbt, wrapperLookup);
-		
+
 		if (nbt.contains("ActiveTime"))
 		{
 			activeTime = nbt.getInt("ActiveTime");
@@ -140,7 +140,7 @@ public class StageBarrierTileEntity extends BlockEntity implements ISplatcraftFo
 		return activeTime;
 	}
 	@Override
-	public void onCollide(InkProjectileEntity projectile, @NotNull BlockHitResult result)
+	public void onCollide(InkProjectileEntity projectile, BlockPos collidedPos, Vec3 closestPointInsideBox, Vec3 collisionNormal)
 	{
 		onEntityCollide(projectile);
 	}

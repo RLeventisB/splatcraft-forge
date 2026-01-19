@@ -1,5 +1,6 @@
 package net.splatcraft.entities;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.data.SplatcraftTags;
 import net.splatcraft.entities.subs.AbstractSubWeaponEntity;
 import net.splatcraft.registries.SplatcraftEntities;
@@ -21,7 +23,7 @@ import net.splatcraft.util.action.specials.StingRayAction;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 
-public class SpawnShieldEntity extends Entity implements IColoredEntity
+public class SpawnShieldEntity extends Entity implements IColoredEntity, ShieldingEntity
 {
 	private static final EntityDataAccessor<Integer> ACTIVE_TIME = SynchedEntityData.defineId(SpawnShieldEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(SpawnShieldEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
@@ -48,40 +50,40 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 	{
 		if (SIZE.equals(data))
 			refreshDimensions();
-		
+
 		super.onSyncedDataUpdated(data);
 	}
 	@Override
 	public void tick()
 	{
 		super.tick();
-		
+
 		if (level().isClientSide())
 			return;
-		
+
 		if (!(getSpawnPadPos() != null && level().getBlockEntity(getSpawnPadPos()) instanceof SpawnPadTileEntity spawnPad &&
-			spawnPad.isSpawnShield(this)))
+		      spawnPad.isSpawnShield(this)))
 		{
 			discard();
 			return;
 		}
-		
+
 		if (spawnPad.getInkColor() != getColor())
 			setColor(spawnPad.getInkColor());
-		
+
 		if (getActiveTime() > 0)
 			setActiveTime(getActiveTime() - 1);
-		
+
 		for (Entity entity : level().getEntities(this, getBoundingBox(), EntitySelector.NO_SPECTATORS))
 		{
 			if (
 				(!entity.getType().is(SplatcraftTags.EntityTypes.BYPASSES_SPAWN_SHIELD) &&
-					!ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor()))
-					|| (entity instanceof LivingEntity living && EntityAction.hasSpecificEntityAction(living, StingRayAction.class))
+				 !ColorUtils.colorEquals(level(), blockPosition(), ColorUtils.getEntityColor(entity), getColor()))
+				|| (entity instanceof LivingEntity living && EntityAction.hasSpecificEntityAction(living, StingRayAction.class))
 			)
 			{
 				setActiveTime(MAX_ACTIVE_TIME);
-				
+
 				// todo: maybe move this to the sub weapon class instead of here??
 				if (entity instanceof ObjectCollideListenerEntity listener)
 				{
@@ -96,7 +98,7 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 				{
 					if (entity instanceof Player player && player.isPassenger())
 						player.stopRiding();
-					
+
 					entity.setDeltaMovement(entity.position().subtract(position().x, position().y, position().z).normalize().scale(.5));
 					entity.hurtMarked = true;
 				}
@@ -187,5 +189,33 @@ public class SpawnShieldEntity extends Entity implements IColoredEntity
 			getEntitiesOfClass(SpawnShieldEntity.class, aabb,
 				(shield) -> ColorUtils.colorEquals(level, pos, ColorUtils.getEntityColor(shield), spawnShieldColor)
 			).isEmpty();
+	}
+	@Override
+	public Vec3 collideWithEntity(Entity collider, Vec3 startPos, Vec3 velocity, Vec3 impactPos)
+	{
+		return impactPos.subtract(startPos);
+	}
+	@Override
+	public float getExplosionHitPercent(Entity target, Vec3 explosionCenter)
+	{
+		AABB boundingBox = getBoundingBox();
+		if (boundingBox.contains(explosionCenter))
+			return 0f;
+
+		AABB targetBoundingBox = target.getBoundingBox();
+		Pair<Vec3, Float>[] pointsToTest = CommonUtils.getWeightedBoundingBoxTestPoints(targetBoundingBox);
+
+		float sum = 0f;
+		float max = 0f;
+		for (Pair<Vec3, Float> pointToTest : pointsToTest)
+		{
+			max += pointToTest.getSecond();
+			if (boundingBox.clip(explosionCenter, pointToTest.getFirst()).isEmpty())
+			{
+				sum += pointToTest.getSecond();
+			}
+		}
+
+		return sum / max;
 	}
 }

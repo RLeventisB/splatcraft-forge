@@ -1,14 +1,17 @@
 package net.splatcraft.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.SplatcraftConfig;
 import net.splatcraft.client.models.projectiles.BlasterInkProjectileModel;
@@ -28,7 +31,7 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 	public InkProjectileRenderer(EntityRendererProvider.Context context)
 	{
 		super(context);
-		
+
 		MODELS = new TreeMap<>()
 		{{
 			put(InkProjectileEntity.Types.DEFAULT, new InkProjectileModel(context.bakeLayer(InkProjectileModel.LAYER_LOCATION)));
@@ -39,38 +42,62 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 		}};
 	}
 	@Override
-	public void render(InkProjectileEntity entityIn, float entityYaw, float partialTicks, @NotNull PoseStack matrixStackIn, @NotNull MultiBufferSource bufferIn, int packedLightIn)
+	public void render(InkProjectileEntity entity, float entityYaw, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight)
 	{
-		if (entityIn.isInvisible())
+		if (entity.isInvisible())
 			return;
-		
-		if (entityRenderDispatcher.camera.getPosition().distanceToSqr(entityIn.getPosition(partialTicks)) >= 2D)
+
+		if (entityRenderDispatcher.shouldRenderHitBoxes())
 		{
-			float visualSize = entityIn.getProjectileVisualSize();
-			float scale = visualSize * (entityIn.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
-			InkColor color = ColorUtils.getColorLockedIfConfig(entityIn.getColor());
-			
+			// render collision sphere!!
+			VertexConsumer builder = buffer.getBuffer(RenderType.LINE_STRIP);
+
+			float radius = entity.getProjectileHitboxRadius();
+			float step = 45 * (Mth.PI / 180);
+
+			for (float pitch = -Mth.PI; pitch <= Mth.PI; pitch += step)
+			{
+				for (float yaw = -Mth.PI; yaw <= Mth.PI; yaw += step)
+				{
+					float x = Mth.sin(yaw) * -Mth.cos(pitch) * radius;
+					float y = Mth.sin(pitch) * radius;
+					float z = Mth.cos(yaw) * -Mth.cos(pitch) * radius;
+
+					builder.addVertex(poseStack.last(), x, y, z).setColor(255, 255, 255, 255).setNormal(poseStack.last(), 1.0F, 0.0F, 0.0F);
+
+					if (Math.abs(pitch) == 180) // only render one line, since we're on the top/bottom of the sphere
+						break;
+				}
+			}
+		}
+
+		if (entityRenderDispatcher.camera.getPosition().distanceToSqr(entity.getPosition(partialTicks)) >= 2D)
+		{
+			float visualSize = entity.getProjectileVisualSize();
+			float scale = visualSize * (entity.getProjectileType().equals(InkProjectileEntity.Types.DEFAULT) ? 1 : 2.5f);
+			InkColor color = ColorUtils.getColorLockedIfConfig(entity.getColor());
+
 			boolean shinier = SplatcraftConfig.get("splatcraft.makeShinier");
 			if (shinier)
 			{
 				color = InkColor.constructOrReuse(ColorUtils.makeBrighter(color));
-				packedLightIn = 0x00F00000;
+				packedLight = 0x00F00000;
 			}
-			
+
 			//0.30000001192092896D
-			matrixStackIn.pushPose();
-			matrixStackIn.translate(0.0D, visualSize / 4, 0.0D);
-			matrixStackIn.mulPose(Axis.YP.rotationDegrees(entityYaw - 180.0F));
-			matrixStackIn.mulPose(Axis.XP.rotationDegrees(entityIn.getViewXRot(partialTicks)));
-			matrixStackIn.scale(scale, scale, scale);
-			
-			InkProjectileModel model = MODELS.getOrDefault(entityIn.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
-			
-			model.setupAnim(entityIn, 0, 0, handleRotationFloat(entityIn, partialTicks), entityYaw, entityIn.getViewXRot(partialTicks));
-			model.renderToBuffer(matrixStackIn, bufferIn.getBuffer(model.renderType(getTextureLocation(entityIn))), shinier ? LightTexture.FULL_BRIGHT : packedLightIn, OverlayTexture.NO_OVERLAY, color.getColorWithAlpha(255));
-			matrixStackIn.popPose();
-			
-			super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
+			poseStack.pushPose();
+			poseStack.translate(0.0D, visualSize / 8, 0.0D);
+			poseStack.mulPose(Axis.YP.rotationDegrees(entityYaw - 180.0F));
+			poseStack.mulPose(Axis.XP.rotationDegrees(entity.getViewXRot(partialTicks)));
+			poseStack.scale(scale, scale, scale);
+
+			InkProjectileModel model = MODELS.getOrDefault(entity.getProjectileType(), MODELS.get(InkProjectileEntity.Types.DEFAULT));
+
+			model.setupAnim(entity, 0, 0, handleRotationFloat(entity, partialTicks), entityYaw, entity.getViewXRot(partialTicks));
+			model.renderToBuffer(poseStack, buffer.getBuffer(model.renderType(getTextureLocation(entity))), shinier ? LightTexture.FULL_BRIGHT : packedLight, OverlayTexture.NO_OVERLAY, color.getColorWithAlpha(255));
+			poseStack.popPose();
+
+			super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
 		}
 	}
 	protected float handleRotationFloat(InkProjectileEntity livingBase, float partialTicks)

@@ -1,10 +1,10 @@
 package net.splatcraft.tileentities;
 
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.splatcraft.entities.InkProjectileEntity;
-import org.jetbrains.annotations.NotNull;
 
 public interface InkProjectileListener
 {
-	void onCollide(InkProjectileEntity projectile, @NotNull BlockHitResult result);
+	void onCollide(InkProjectileEntity projectile, BlockPos collidedPos, Vec3 closestPointInsideBox, Vec3 collisionNormal);
 }

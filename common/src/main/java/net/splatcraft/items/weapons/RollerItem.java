@@ -61,7 +61,7 @@ import java.util.Optional;
 public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 {
 	public static final ArrayList<RollerItem> rollers = Lists.newArrayList();
-	public boolean isMoving;
+	public boolean isMoving; // oh no, item instances are shared so these are basically static fields
 	public boolean usedOnGround;
 	protected RollerItem(String settings)
 	{
@@ -341,6 +341,11 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	{
 		return EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || entity.getUseItem().equals(stack);
 	}
+	@Override
+	public boolean preventsChargingInkTank(ItemStack stack, LivingEntity entity)
+	{
+		return isMoving;
+	}
 	public static class InitialSwingAction extends EntityActionWithTime
 	{
 		public static final Codec<InitialSwingAction> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -399,7 +404,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 		}
 		private static List<Vector3f> calculateAngleAndSpeeds(RandomSource random, FloatRange speedRange, float swingAngle, float projectileSize, float straightShotFrames, float yaw)
 		{
-			return poissonDiskSampling(random, swingAngle, projectileSize / straightShotFrames * 1.1f, speedRange.min() * speedRange.min() / (straightShotFrames * straightShotFrames), speedRange.max(), 30, yaw);
+			return poissonDiskSampling(random, swingAngle, projectileSize / straightShotFrames * 1.7f, speedRange.min() * speedRange.min() / (straightShotFrames * straightShotFrames), speedRange.max(), 30, yaw);
 		}
 		public boolean isGrounded()
 		{

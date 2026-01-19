@@ -22,6 +22,7 @@ import net.splatcraft.commands.arguments.HighlightTypeArgument;
 import net.splatcraft.data.capabilities.ChunkInkCapability;
 import net.splatcraft.data.capabilities.structs.ChunkInk;
 import net.splatcraft.handlers.ChunkInkHandler;
+import net.splatcraft.util.CollisionUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.structs.RelativeBlockPos;
 
@@ -144,7 +145,7 @@ public class BatchWaxCommand
 
 		if (highlightType == HighlightTypeArgument.HighlightType.EDGE_PARTICLE)
 		{
-			for (VoxelShape shape : CommonUtils.createShapes(level, waxedPositions, pos1))
+			for (VoxelShape shape : CollisionUtils.collectAndConnectShapes(level, waxedPositions, pos1))
 			{
 				shape.forAllEdges((x1, y1, z1, x2, y2, z2) ->
 				{

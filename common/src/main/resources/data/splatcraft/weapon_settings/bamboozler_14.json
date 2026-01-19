@@ -1,13 +1,16 @@
 {
     "type": "splatcraft:charger",
     "projectile": {
-        "size": 2,
+        "size": {
+            "hitbox_radius": 2
+        },
         "speed": [40],
         "range": [195],
         "ink_drop_coverage": [9, 12],
         "ink_coverage_on_impact": [9, 21, 25],
         "distance_between_drops": [7, 17, 19],
-        "damage": [30, 85]
+        "damage": [30, 85],
+        "pierces_at_charge": 10
     },
     "shot": {
         "endlag_ticks": 1,

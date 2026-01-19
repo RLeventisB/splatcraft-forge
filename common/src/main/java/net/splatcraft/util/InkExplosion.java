@@ -25,7 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.entities.IColoredEntity;
 import net.splatcraft.entities.InkDropEntity;
-import net.splatcraft.entities.SpawnShieldEntity;
+import net.splatcraft.entities.ShieldingEntity;
 import net.splatcraft.items.weapons.settings.SubWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
 import net.splatcraft.network.s2c.SendPlayerHitPacket;
@@ -75,6 +75,10 @@ public class InkExplosion
 			case Y -> entity.getBbHeight() / 2;
 		};
 		return pos.relative(normal, modifier);
+	}
+	public static Vec3 adjustPosition(final Vec3 pos, final Vec3 normal)
+	{
+		return pos.add(normal.normalize().scale(0.01));
 	}
 	public static void createInkExplosion(Entity source, Vec3 pos, float paintRadius, InkBlockUtils.InkType type, ItemStack weapon)
 	{
@@ -163,7 +167,8 @@ public class InkExplosion
 		List<BlockFace> set = new ArrayList<>();
 		ServerLevel world = (ServerLevel) exploder.level();
 		getBlocksInSphereWithNoise(set, world);
-		
+
+		BlockPos blockPos = BlockPos.containing(position);
 		affectedBlockFaces.addAll(set);
 		if (RangedValueCollection.isInsignificant(dmgCalculator))
 			return;
@@ -176,59 +181,61 @@ public class InkExplosion
 		int j1 = Mth.floor(position.z + dmgCalculator.getMaxKey() + 1F);
 		AABB box = new AABB(k1, i2, j2, l1, i1, j1);
 		List<Entity> possibleTargets = new ArrayList<>();
-		List<SpawnShieldEntity> spawnShields = new ArrayList<>();
+		List<ShieldingEntity> shieldingEntities = new ArrayList<>();
 		world.getEntities().get(box, (v) ->
 		{
 			if (!v.isSpectator())
 			{
 				if (v instanceof LivingEntity || v instanceof IColoredEntity)
 				{
-					possibleTargets.add(v);
+					if (!ColorUtils.colorEquals(world, v.blockPosition(), blockPos, color, ColorUtils.getEntityColor(v)))
+						possibleTargets.add(v);
 				}
-				else if (v instanceof SpawnShieldEntity spawnShield)
+				if (v instanceof ShieldingEntity spawnShield)
 				{
-					spawnShields.add(spawnShield);
+					shieldingEntities.add(spawnShield);
 				}
 			}
 		});
-		
+
 		for (Entity entity : possibleTargets)
 		{
 			AABB boundingBox = entity.getBoundingBox();
 			Vec3 closestPos = CommonUtils.limitTo(boundingBox, position);
-			
+
 			float distance = (float) position.distanceToSqr(closestPos);
 			if (distance > radiusSquared)
 				continue;
-			
+
 			InkColor targetColor = ColorUtils.getEntityColor(entity);
-			if (!targetColor.isValid() || (color != targetColor && targetColor.isValid()))
+
+			// find shields that can protect entities of same color
+			float seenPercent = 1f;
+			for (ShieldingEntity shieldEntity : shieldingEntities)
 			{
-				Vec3 boundingBoxCenter = boundingBox.getCenter();
-				
-				// find shields that can protect entities of same color
-				boolean spawnShieldBlocked = false;
-				for (SpawnShieldEntity shieldEntity : spawnShields)
-				{
-					AABB shieldBb = shieldEntity.getBoundingBox();
-					// if only using shieldBb.contains(boundingBox) some accuracy might be lost!!!
-					// since an entity can be damaged even if they're obstructed (but not inside) the shield thingy
-					if (shieldEntity.getColor() == ColorUtils.getEntityColor(entity) && shieldBb.contains(position) || shieldBb.clip(position, boundingBoxCenter).isPresent())
-					{
-						spawnShieldBlocked = true;
-						break;
-					}
-				}
-				if (spawnShieldBlocked)
+				Entity shieldEntityCasted = (Entity) shieldEntity;
+				if (entity == shieldEntity)
 					continue;
-				
-				float seenPercent = Explosion.getSeenPercent(position, entity);
-				if (InkDamageUtils.doSplatDamage(entity, dmgCalculator.getValue(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId) && onHit != null)
-					onHit.accept(entity);
+
+				InkColor shieldColor = ColorUtils.getEntityColor(shieldEntityCasted);
+				if (ColorUtils.colorEquals(world, blockPos, (shieldEntityCasted).blockPosition(), shieldColor, color))
+					continue;
+
+				seenPercent *= shieldEntity.getExplosionHitPercent(entity, position);
+				if (seenPercent == 0)
+					break;
 			}
-			
+
+			if (seenPercent == 0)
+				continue;
+
+			seenPercent *= Explosion.getSeenPercent(position, entity);
+
+			if (InkDamageUtils.doSplatDamage(entity, dmgCalculator.getValue(Mth.sqrt(distance)) * seenPercent, exploder, weapon, attackId) && onHit != null)
+				onHit.accept(entity);
+
 			DyeColor dyeColor = color.getDyeColor();
-			
+
 			if (entity instanceof Sheep sheep)
 			{
 				sheep.setColor(dyeColor);

@@ -246,8 +246,7 @@ public class SplatlingWeaponSettings<T extends DynamicDataRecord<T>> extends Dyn
 	public ProjectileDataRecord lerpProjectileData(float progress, ProjectileDataRecord dataStart, ProjectileDataRecord dataEnd)
 	{
 		return new ProjectileDataRecord(
-			Mth.lerp(progress, dataStart.size(), dataEnd.size()),
-			Mth.lerp(progress, dataStart.visualSize(), dataEnd.visualSize()),
+			CommonRecords.ProjectileSizeRecord.lerp(progress, dataStart.size(), dataEnd.size()),
 			Mth.lerp(progress, dataStart.lifeTicks(), dataEnd.lifeTicks()),
 			Mth.lerp(progress, dataStart.delaySpeedMult(), dataEnd.delaySpeedMult()),
 			Mth.lerp(progress, dataStart.horizontalDrag(), dataEnd.horizontalDrag()),

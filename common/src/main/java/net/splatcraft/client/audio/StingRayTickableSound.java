@@ -12,7 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.entities.StingRayBeamEntity;
 import net.splatcraft.registries.SplatcraftSounds;
-import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.CollisionUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.StingRayAction;
 
@@ -49,7 +49,7 @@ public class StingRayTickableSound extends MovingSoundInstanceButTheIdCanBeChang
 			try
 			{
 				Vec3 cameraPos = Minecraft.getInstance().cameraEntity.getEyePosition();
-				Vec3 closestRelativePoint = CommonUtils.getClosestPoint(beam.getLookAngle(), cameraPos.subtract(beam.position()));
+				Vec3 closestRelativePoint = CollisionUtils.getClosestPoint(beam.getLookAngle(), cameraPos.subtract(beam.position()));
 				x = closestRelativePoint.x + cameraPos.x;
 				y = closestRelativePoint.y + cameraPos.y;
 				z = closestRelativePoint.z + cameraPos.z;

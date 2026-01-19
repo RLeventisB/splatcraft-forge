@@ -54,9 +54,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	protected DualieItem(String settings)
 	{
 		super(settings, properties -> properties.component(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT));
-		
+
 		this.settings = settings;
-		
+
 		dualies.add(this);
 	}
 	public static RegistrySupplier<DualieItem> create(DeferredRegister<Item> registry, String settings)
@@ -79,7 +79,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		if (stack.getItem() instanceof DualieItem dualie)
 			return dualie.getSettings(stack).rollData.turretDuration();
-		
+
 		return 0;
 	}
 	public static int getRollCount(LivingEntity player)
@@ -120,12 +120,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public void performRoll(LivingEntity entity, ItemStack activeDualie, EntitySlot dualieSlot, Vec2 rollPotency)
 	{
 		int rollCount = getRollCount(entity);
-		
+
 		DualieWeaponSettings activeSettings = getSettings(activeDualie);
-		
+
 		DualieWeaponSettings.RollDataRecord rollData = activeSettings.rollData;
 		if (reduceInk(entity, this, getInkForRoll(activeDualie), rollData.inkRecoveryCooldown(), !entity.level().isClientSide()) &&
-			(!EntityAction.hasEntityAction(entity) || EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class)))
+		    (!EntityAction.hasEntityAction(entity) || EntityAction.hasSpecificEntityActionAnd(entity, DodgeRollAction::canCancelRoll, DodgeRollAction.class)))
 		{
 			if (rollData.canShoot())
 			{
@@ -138,9 +138,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				entity.getOffhandItem().set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT);
 				entity.stopUsingItem();
 			}
-			
+
 			int turretDuration = getRollTurretDuration(activeDualie);
-			
+
 			boolean allowFlying = entity instanceof Player player && player.getAbilities().mayfly;
 			Optional<DodgeRollAction> previousDodgeRoll = EntityAction.getSpecificEntityActionOptional(entity, DodgeRollAction.class);
 			if (previousDodgeRoll.isPresent())
@@ -148,7 +148,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				allowFlying = previousDodgeRoll.get().didAllowFlying;
 			}
 			EntityAction.setEntityAction(entity, new DodgeRollAction(activeDualie, dualieSlot, rollPotency, rollData.rollStartup(), rollData.rollDuration(), rollData.rollEndlag(), (byte) turretDuration, rollData.canMove(), rollData.canShoot(), allowFlying));
-			
+
 			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(rollCount + 1));
 		}
 	}
@@ -156,9 +156,9 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		if (!(stack.getItem() instanceof DualieItem dualieItem))
 			return;
-		
+
 		ShotDataRecord shotData = dualieItem.getSettings(stack).standardShotData;
-		
+
 		stack.update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
 			v -> v.updateShootingData(shotData.startupTicks(), shotData.repeatTicks(), shotData.endlagTicks()));
 	}
@@ -173,7 +173,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			boolean mainLeft = entity.getMainArm().equals(HumanoidArm.LEFT);
 			return
 				mainLeft && ItemStack.isSameItem(entity.getMainHandItem(), stack) ||
-					!mainLeft && ItemStack.isSameItem(entity.getOffhandItem(), stack) ? 1 : 0;
+				!mainLeft && ItemStack.isSameItem(entity.getOffhandItem(), stack) ? 1 : 0;
 		};
 	}
 	@Override
@@ -189,18 +189,18 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	public void inventoryTick(@NotNull ItemStack stack, @NotNull Level world, @NotNull Entity entity, int itemSlot, boolean isSelected)
 	{
 		super.inventoryTick(stack, world, entity, itemSlot, isSelected);
-		
+
 		if (entity instanceof LivingEntity living)
 		{
 			InteractionHand hand = living.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-			
+
 			if (living.getItemInHand(hand).equals(stack) && living.getItemInHand(CommonUtils.otherHand(hand)).is(stack.getItem()))
 			{
 				stack.set(SplatcraftComponents.IS_PLURAL, true);
 			}
-			
+
 			DualieWeaponSettings settings = getSettings(stack);
-			
+
 			stack.update(
 				SplatcraftComponents.SHOOTER_FIRING_DATA,
 				SplatcraftComponents.ShooterFiringData.DEFAULT,
@@ -235,7 +235,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			offhandDualie = user.getOffhandItem();
 		}
-		
+
 		int rollCount = getRollCount(user);
 		int maxRolls = getMaxRollCount(user);
 		if (rollCount > 0 && !EntityAction.hasEntityAction(user)) // fix just in case
@@ -256,12 +256,12 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			DualieWeaponSettings.RollDataRecord activeSettings = getSettings(activeDualie).rollData;
 			// why does vec2 use floats but vec3 use doubles
-			
+
 			if (enoughInk(user, this, getInkForRoll(activeDualie), activeSettings.inkRecoveryCooldown(), false))
 			{
 				Vec2 rollPotency = getDodgeRollVector(user, activeSettings.getRollImpulse());
 				EntitySlot usedDualie = EntitySlot.searchAndCreateWithStack(user, activeDualie, EntitySlot.StackComparator.ONLY_REFERENCE);
-				
+
 				performRoll(user, activeDualie, usedDualie, rollPotency);
 				SplatcraftPacketHandler.sendToServer(new DodgeRollPacket(user.getUUID(), activeDualie, usedDualie, rollPotency));
 			}
@@ -274,27 +274,37 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		player.setYBodyRot(player.getVisualRotationYInDegrees()); // actually uncanny in third person but itll be useful when making dualies shoot actually from their muzzles
 		ShotDataRecord mainShotData = getSettings(stack).getShotData(entity);
 		float mainStartup = CommonUtils.startupSquidSwitch(entity, mainShotData);
-		
+
 		stack.update(
 			SplatcraftComponents.SHOOTER_FIRING_DATA,
 			SplatcraftComponents.ShooterFiringData.DEFAULT,
 			data ->
 				data.notifyUsing(entity, mainShotData, mainStartup, mainStartup)
 		);
-		
+
 		InteractionHand hand = entity.getItemInHand(InteractionHand.MAIN_HAND).equals(stack) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 		ItemStack itemInOtherHand = entity.getItemInHand(CommonUtils.otherHand(hand));
-		
+
 		// returns if the other stack is empty, or isnt a dualie, or is already shooting
-		if (
-			itemInOtherHand.isEmpty() ||
-				!(itemInOtherHand.getItem() instanceof DualieItem otherDualie) ||
-				SplatcraftComponents.getOptional(itemInOtherHand, SplatcraftComponents.SHOOTER_FIRING_DATA)
-					.map(SplatcraftComponents.ShooterFiringData::preventsChanging).orElse(true)) return;
-		
+		if (itemInOtherHand.isEmpty())
+		{
+			return;
+		}
+
+		if (!(itemInOtherHand.getItem() instanceof DualieItem otherDualie))
+		{
+			return;
+		}
+
+		if (SplatcraftComponents.getOptional(itemInOtherHand, SplatcraftComponents.SHOOTER_FIRING_DATA)
+			.map(SplatcraftComponents.ShooterFiringData::preventsChanging).orElse(true))
+		{
+			return;
+		}
+
 		ShotDataRecord offhandShotData = otherDualie.getSettings(itemInOtherHand).getShotData(entity);
 		float otherStartup = mainStartup + offhandShotData.repeatTicks() / 2f;
-		
+
 		itemInOtherHand.update(
 			SplatcraftComponents.SHOOTER_FIRING_DATA,
 			SplatcraftComponents.ShooterFiringData.DEFAULT,
@@ -306,11 +316,11 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		ShotDataRecord shotData = settings.getShotData(entity);
 		ProjectileDataRecord projectileData = settings.getProjectileData(entity);
-		
+
 		if (reduceInk(entity, this, shotData.inkConsumption(), shotData.inkRecoveryCooldown(), true))
 		{
 			CommonUtils.setSquidDelay(entity, shotData.miscEndlagTicks());
-			
+
 			if (!level.isClientSide)
 			{
 				float inaccuracy = ShotDeviationHelper.updateShotDeviation(stack, level.getRandom(), shotData.accuracyData());
@@ -323,13 +333,13 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 				for (int i = 0; i < shotData.projectileCount(); i++)
 				{
 					InkProjectileEntity proj = new InkProjectileEntity(level, entity, stack, InkBlockUtils.getInkType(entity), projectileData.size(), DamageCalculator.basic(projectileData));
-					
+
 					proj.shootFromRotation(entity, entity.getXRot(), entity.getYRot(), shotData.pitchCompensation(), shotData.speed(), inaccuracy);
 					proj.setDualieStats(projectileData);
 					level.addFreshEntity(proj);
 					proj.tick(accumulatedTime);
 				}
-				
+
 				level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SplatcraftSounds.dualieShot, SoundSource.PLAYERS, 0.7F, CommonUtils.nextTriangular(level.getRandom(), 0.95F, 0.095F));
 			}
 		}
@@ -339,7 +349,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 	{
 		if (stack.get(SplatcraftComponents.SHOOTER_FIRING_DATA).counter() > 0)
 			return Optional.of(SpecialHandler.ResetAction.RESET_FAILED);
-		
+
 		return Optional.of(() ->
 			stack.set(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT)
 		);
@@ -433,7 +443,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 								InkExplosion.createInkExplosion(entity, entity.position().add(0, 10e-5, 0), 1.2f, InkBlockUtils.getInkType(entity), storedStack);
 							}
 							entity.setDiscardFriction(true);
-							
+
 							entity.setDeltaMovement(rollDirection.x, -0.5, rollDirection.y);
 							rollState = RollState.ROLL;
 							break;
@@ -444,7 +454,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						if (getTime() <= rollEndFrame)
 						{
 							entity.setDiscardFriction(false);
-							
+
 							rollState = RollState.AFTER_ROLL;
 							break;
 						}
@@ -455,10 +465,10 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 						{
 							if (canShootOnRoll)
 							{
-								updateDualieShotData(entity.getMainHandItem());
-								updateDualieShotData(entity.getOffhandItem());
+								updateDualieShotData(entity.getMainHandItem(), true);
+								updateDualieShotData(entity.getOffhandItem(), true);
 							}
-							
+
 							rollState = RollState.TURRET;
 							break;
 						}
@@ -471,13 +481,13 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 			}
 			return ActionEndResult.dontEnd(this);
 		}
-		private void updateDualieShotData(ItemStack stack)
+		private void updateDualieShotData(ItemStack stack, boolean useRollData)
 		{
 			if (!(stack.getItem() instanceof DualieItem dualieItem))
 				return;
-			
-			ShotDataRecord shotData = dualieItem.getSettings(stack).turretShotData;
-			
+
+			ShotDataRecord shotData = dualieItem.getSettings(stack).getShotData(useRollData);
+
 			stack.update(SplatcraftComponents.SHOOTER_FIRING_DATA, SplatcraftComponents.ShooterFiringData.DEFAULT,
 				v -> v.updateShootingData(shotData.startupTicks(), shotData.repeatTicks(), shotData.endlagTicks()));
 		}
@@ -491,21 +501,24 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			if (endType == EndType.CANCELLED)
 				return ActionEndResult.END_ACTION;
-			
+
 			boolean endedTurretMode = entity.jumping ||
-				entity.zza != 0 || entity.xxa != 0 || // these work in the client side
-				WeaponHandler.getEntityPrevPos(entity).oldOldPosition.distanceToSqr(entity.position()) > 0.01 || // this works in the server side
-				!entity.isUsingItem() || entity.getDeltaMovement().y > 0.1;
+			                          entity.zza != 0 || entity.xxa != 0 || // these work in the client side
+			                          WeaponHandler.getEntityPrevPos(entity).oldOldPosition.distanceToSqr(entity.position()) > 0.01 || // this works in the server side
+			                          !entity.isUsingItem() || entity.getDeltaMovement().y > 0.1;
 			if (endedTurretMode)
 			{
 				Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(0));
+				updateDualieShotData(entity.getMainHandItem(), false);
+				updateDualieShotData(entity.getOffhandItem(), false);
+
 				if (entity instanceof Player player)
 				{
 					player.getAbilities().mayfly = didAllowFlying;
 				}
 				return ActionEndResult.END_ACTION;
 			}
-			
+
 			return ActionEndResult.dontEnd(this);
 		}
 		@Override
@@ -513,7 +526,7 @@ public class DualieItem extends WeaponBaseItem<DualieWeaponSettings>
 		{
 			if (rollState == RollState.ROLL)
 				entity.setDiscardFriction(false);
-			
+
 			Components.WEAPON_INFO.updateOrCreate(entity, info -> info.withDodgeCount(0));
 			if (entity instanceof Player player)
 			{

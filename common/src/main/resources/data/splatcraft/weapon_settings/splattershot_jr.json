@@ -1,7 +1,9 @@
 {
     "type": "splatcraft:shooter",
     "projectile": {
-        "size": 2,
+        "size": {
+            "hitbox_radius": 2
+        },
         "delay_speed_mult": 0.86,
         "ink_coverage_on_impact": 16.5,
         "ink_drop_coverage": 12.9,

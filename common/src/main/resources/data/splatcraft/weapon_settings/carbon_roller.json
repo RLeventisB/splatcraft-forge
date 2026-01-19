@@ -12,8 +12,10 @@
     },
     "swing": {
         "projectile": {
-            "size": 7.5,
-            "visual_size": 8,
+            "size": {
+                "hitbox_radius": 7.5,
+                "visual_size": 8
+            },
             "straight_shot_ticks": 6,
             "ink_coverage_on_impact": 15,
             "distance_between_drops": -1,
@@ -57,8 +59,10 @@
     },
     "fling": {
         "projectile": {
-            "size": 7,
-            "visual_size": 4.5,
+            "size": {
+                "hitbox_radius": 7,
+                "visual_size": 4.5
+            },
             "horizontal_drag": 0.9,
             "delay_speed_mult": 0.7,
             "straight_shot_ticks": 6,

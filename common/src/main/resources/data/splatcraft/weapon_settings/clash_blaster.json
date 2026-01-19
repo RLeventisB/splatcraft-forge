@@ -1,11 +1,13 @@
 {
     "type": "splatcraft:blaster",
     "projectile": {
-        "size": 2,
-        "visual_size": 8,
+        "size": {
+            "hitbox_radius": 2,
+            "visual_size": 8
+        },
         "straight_shot_ticks": 7,
         "ink_coverage_on_impact": 18,
-        "ink_drop_coverage": 10.7,
+        "ink_drop_coverage": 12.1,
         "distance_between_drops": 32,
         "base_damage": 60,
         "lifespan": 12

@@ -2,7 +2,6 @@ package net.splatcraft.util;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import io.netty.buffer.ByteBuf;
@@ -15,7 +14,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
@@ -49,7 +47,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.*;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.Splatcraft;
@@ -61,13 +58,11 @@ import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.items.weapons.DualieItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.CommonRecords;
-import net.splatcraft.mixin.accessors.VoxelShapeAccessor;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.ModSide;
 import net.splatcraft.platform.Services;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.structs.InkColor;
-import org.apache.commons.lang3.math.IEEE754rUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
@@ -79,12 +74,10 @@ import oshi.util.tuples.Triplet;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class CommonUtils
 {
@@ -528,270 +521,10 @@ public class CommonUtils
 	{
 		return new ReseteableMemoizedSupplier<>(supplier);
 	}
-	public static List<VoxelShape> createShapes(BlockGetter getter, Collection<BlockPos> blocks, BlockPos localZero)
-	{
-		if (blocks.isEmpty())
-			return List.of();
-
-		// ew
-		final Vec3i[] offsets = new Vec3i[] {
-			new Vec3i(0, 1, 0),
-			new Vec3i(-1, 0, 0),
-			new Vec3i(0, 0, 1),
-			new Vec3i(0, 0, -1),
-			new Vec3i(1, 0, 0),
-			new Vec3i(0, -1, 0),
-			new Vec3i(0, 1, 1),
-			new Vec3i(0, 1, -1),
-			new Vec3i(1, 1, 0),
-			new Vec3i(0, -1, 1),
-			new Vec3i(0, -1, -1),
-			new Vec3i(-1, 1, 0),
-			new Vec3i(1, 0, 1),
-			new Vec3i(-1, 0, 1),
-			new Vec3i(-1, 0, -1),
-			new Vec3i(-1, -1, 0),
-			new Vec3i(1, 0, -1),
-			new Vec3i(1, -1, 0),
-			new Vec3i(1, 1, -1),
-			new Vec3i(-1, -1, -1),
-			new Vec3i(1, -1, -1),
-			new Vec3i(-1, 1, 1),
-			new Vec3i(-1, 1, -1),
-			new Vec3i(-1, -1, 1),
-			new Vec3i(1, -1, 1),
-			new Vec3i(1, 1, 1)
-		};
-
-		HashMap<BlockPos, VoxelShape> shapes = blocks.stream().map(v ->
-		{
-			BlockPos localPos = v.subtract(localZero);
-			VoxelShape shape = getter.getBlockState(v).getVisualShape(getter, v, CollisionContext.empty());
-			if (shape.isEmpty())
-				return null;
-
-			DiscreteVoxelShape bounds = ((VoxelShapeAccessor) shape).getShape();
-			if (bounds.getXSize() < 1 || bounds.getZSize() < 1)
-			{
-				return null;
-			}
-			return Map.entry(localPos, shape.move(localPos.getX(), localPos.getY(), localPos.getZ()).optimize());
-		}).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x, HashMap::new));
-
-		ImmutableList.Builder<VoxelShape> builder = ImmutableList.builder();
-
-		while (!shapes.isEmpty())
-		{
-			Map.Entry<BlockPos, VoxelShape> firstEntry = Iterables.getFirst(shapes.entrySet(), null);
-			final VoxelShape[] currentShape = {firstEntry.getValue()};
-			while (true)
-			{
-				// TODO: optimize this correctly pls i cannot do Breadth-first search without processing the same block twice
-				boolean joined = false;
-				List<Map.Entry<BlockPos, VoxelShape>> shapesToAdd = new ArrayList<>();
-				for (Map.Entry<BlockPos, VoxelShape> entry : shapes.entrySet())
-				{
-					if (shapesCollide(currentShape[0], entry.getValue()))
-					{
-						shapesToAdd.add(entry);
-						joined = true;
-					}
-				}
-
-				shapesToAdd.forEach(v ->
-				{
-					currentShape[0] = Shapes.joinUnoptimized(currentShape[0], v.getValue(), BooleanOp.OR);
-					shapes.remove(v.getKey());
-				});
-				shapesToAdd.clear();
-
-				if (!joined)
-					break;
-			}
-			
-/*
-			while (true)
-			{
-				boolean searchingAdjacent = true;
-				
-				for (Vec3i offset : offsets)
-				{
-					BlockPos newPos = cursor.offset(offset);
-					
-					if (!shapes.containsKey(newPos))
-						continue;
-					
-					VoxelShape otherShape = shapes.get(newPos);
-					
-					if (shapesCollide(currentShape, otherShape))
-					{
-						currentShape = Shapes.join(currentShape, otherShape, BooleanOp.OR);
-						
-						cursor = newPos;
-						searchingAdjacent = false;
-					}
-				}
-				if (counter == 10)
-				{
-//					currentShape = currentShape.optimize();
-					counter = -1;
-				}
-				
-				counter++;
-				
-				if (searchingAdjacent)
-					break;
-			}
-*/
-
-			builder.add(currentShape[0].optimize().optimize());
-		}
-
-		return builder.build();
-	}
-	private static boolean shapesCollide(VoxelShape shape1, VoxelShape shape2)
-	{
-		AtomicBoolean result = new AtomicBoolean(false);
-
-		shape1.forAllBoxes((x1, y1, z1, x2, y2, z2) ->
-		{
-			if (result.get())
-				return;
-
-			shape2.forAllBoxes((x3, y3, z3, x4, y4, z4) ->
-			{
-				if (result.get())
-					return;
-
-				double tolerance = 10e-5;
-
-				if (x1 - x4 <= tolerance && x2 - x3 >= -tolerance && y1 - y4 <= tolerance && y2 - y3 >= -tolerance && z1 - z4 <= tolerance && z2 - z3 >= -tolerance)
-					result.set(true);
-			});
-		});
-
-		return result.get();
-	}
 	public static AABB createInfiniteAABBFor(Vec3 position, Vec3 forward, float margin)
 	{
 		AABB infiniteAABB = new AABB(position, forward.scale(Double.POSITIVE_INFINITY));
 		return infiniteAABB.inflate(margin, margin, margin);
-	}
-	/**
-	 * Some collision thing that returns collision data of an "relative" bounding box with a ray.
-	 *
-	 * @param rayDirection The normalized direction vector of the ray to check with.
-	 * @param relativeBox  An {@link AABB} that has relative coordinates in terms of the ray.
-	 * @return A {@link Pair} that has the distance as the first element, and the relative impact position as the second.
-	 */
-	// these 5 methods comes from https://stackoverflow.com/questions/34952680/distance-between-a-ray-and-a-bound-box
-	// yes stack overflow (and Raidho Coaxil with 41 of reputation score and 3 bronze badges who probably had access
-	// to better search engines than now i suppose because i cant find this code anywhere else) comes to save
-	// me from eternal torment
-	public static Triplet<Double, Vec3, Double> getRayDistance(Vec3 rayDirection, AABB relativeBox)
-	{
-		Vec3 impactPos = getClosestPointToRay(rayDirection, relativeBox);
-
-		double t = Math.max(0.0, rayDirection.dot(impactPos) / rayDirection.lengthSqr()); // orthogonal projection??? in my code???? its more likely than you think!
-		double x = rayDirection.x * t - impactPos.x();
-		double y = rayDirection.y * t - impactPos.y();
-		double z = rayDirection.z * t - impactPos.z();
-		return new Triplet<>(Math.sqrt(x * x + y * y + z * z), impactPos, t);
-	}
-	public static Triplet<Float, Vector3f, Float> getRayDistance(Vector3f rayDirection, AABB relativeBox)
-	{
-		Vector3f impactPos = getClosestPointToRay(rayDirection, relativeBox);
-
-		float t = Math.max(0.0f, rayDirection.dot(impactPos) / rayDirection.lengthSquared());
-		float x = rayDirection.x * t - impactPos.x();
-		float y = rayDirection.y * t - impactPos.y();
-		float z = rayDirection.z * t - impactPos.z();
-		return new Triplet<>(Mth.sqrt(x * x + y * y + z * z), impactPos, t);
-	}
-	/**
-	 * Some collision thing that returns collision data of an "relative" bounding box with an segment.
-	 *
-	 * @param lineVector  The line vector to check with.
-	 * @param relativeBox An {@link AABB} that has relative coordinates in terms of the ray.
-	 * @return A {@link Pair} that has the distance of the AABB to the line as the first element, and the relative impact position as the second.
-	 */
-	public static Triplet<Double, Vec3, Double> getLineDistance(Vec3 lineVector, AABB relativeBox)
-	{
-		Vec3 impactPos = getClosestPointToRay(lineVector, relativeBox);
-
-		double t = Math.clamp(lineVector.dot(impactPos) / lineVector.lengthSqr(), 0.0, 1.0);
-		double x = lineVector.x * t - impactPos.x();
-		double y = lineVector.y * t - impactPos.y();
-		double z = lineVector.z * t - impactPos.z();
-		return new Triplet<>(Math.sqrt(x * x + y * y + z * z), impactPos, t);
-	}
-	public static Triplet<Float, Vector3f, Float> getLineDistance(Vector3f lineVector, AABB relativeBox)
-	{
-		Vector3f impactPos = getClosestPointToRay(lineVector, relativeBox);
-
-		float t = Math.clamp(lineVector.dot(impactPos) / lineVector.lengthSquared(), 0.0f, 1.0f);
-		float x = lineVector.x * t - impactPos.x();
-		float y = lineVector.y * t - impactPos.y();
-		float z = lineVector.z * t - impactPos.z();
-		return new Triplet<>(Mth.sqrt(x * x + y * y + z * z), impactPos, t);
-	}
-	private static @NotNull Vec3 getClosestPointToRay(Vec3 lineVector, AABB relativeBox)
-	{
-		double tx1 = relativeBox.minX / lineVector.x;
-		double tx2 = relativeBox.maxX / lineVector.x;
-		double ty1 = relativeBox.minY / lineVector.y;
-		double ty2 = relativeBox.maxY / lineVector.y;
-		double tz1 = relativeBox.minZ / lineVector.z;
-		double tz2 = relativeBox.maxZ / lineVector.z;
-
-		double[] xPair = lineVector.x < 0 ? new double[] {tx2, tx1} : new double[] {tx1, tx2};
-		double[] yPair = lineVector.y < 0 ? new double[] {ty2, ty1} : new double[] {ty1, ty2};
-		double[] zPair = lineVector.z < 0 ? new double[] {tz2, tz1} : new double[] {tz1, tz2};
-
-		double p1 = Math.max(0.0, IEEE754rUtils.max(xPair[0], yPair[0], zPair[0]));
-		double p2 = Math.max(0.0, IEEE754rUtils.min(xPair[1], yPair[1], zPair[1]));
-		double pSum = p1 + p2;
-
-		double x = Mth.clamp((lineVector.x * pSum) / 2, relativeBox.minX, relativeBox.maxX);
-		double y = Mth.clamp((lineVector.y * pSum) / 2, relativeBox.minY, relativeBox.maxY);
-		double z = Mth.clamp((lineVector.z * pSum) / 2, relativeBox.minZ, relativeBox.maxZ);
-		return new Vec3(x, y, z);
-	}
-	private static @NotNull Vector3f getClosestPointToRay(Vector3f lineVector, AABB relativeBox)
-	{
-		float minX = (float) relativeBox.minX;
-		float maxX = (float) relativeBox.maxX;
-		float minY = (float) relativeBox.minY;
-		float maxY = (float) relativeBox.maxY;
-		float minZ = (float) relativeBox.minZ;
-		float maxZ = (float) relativeBox.maxZ;
-
-		float tx1 = minX / lineVector.x;
-		float tx2 = maxX / lineVector.x;
-		float ty1 = minY / lineVector.y;
-		float ty2 = maxY / lineVector.y;
-		float tz1 = minZ / lineVector.z;
-		float tz2 = maxZ / lineVector.z;
-
-		float[] xPair = lineVector.x < 0 ? new float[] {tx2, tx1} : new float[] {tx1, tx2};
-		float[] yPair = lineVector.y < 0 ? new float[] {ty2, ty1} : new float[] {ty1, ty2};
-		float[] zPair = lineVector.z < 0 ? new float[] {tz2, tz1} : new float[] {tz1, tz2};
-
-		float p1 = Math.max(0.0f, IEEE754rUtils.max(xPair[0], yPair[0], zPair[0]));
-		float p2 = Math.max(0.0f, IEEE754rUtils.min(xPair[1], yPair[1], zPair[1]));
-
-		float pSum = p1 + p2;
-
-		float x = Mth.clamp((lineVector.x * pSum) / 2, minX, maxX);
-		float y = Mth.clamp((lineVector.y * pSum) / 2, minY, maxY);
-		float z = Mth.clamp((lineVector.z * pSum) / 2, minZ, maxZ);
-		return new Vector3f(x, y, z);
-	}
-	public static Vec3 getClosestPoint(Vec3 rayDirection, Vec3 relativePoint)
-	{
-		double t = Math.max(0.0, rayDirection.dot(relativePoint) / rayDirection.lengthSqr());
-
-		return rayDirection.scale(t - 1);
 	}
 	public static Vec3 @NotNull [] getBoundingBoxCorners(AABB aabb)
 	{

@@ -1,7 +1,9 @@
 {
     "type": "splatcraft:splatling",
     "projectile": {
-        "size": 2,
+        "size": {
+            "hitbox_radius": 2
+        },
         "delay_speed_mult": 0.87,
         "ink_coverage_on_impact": 20.4,
         "ink_drop_coverage": 12.6,

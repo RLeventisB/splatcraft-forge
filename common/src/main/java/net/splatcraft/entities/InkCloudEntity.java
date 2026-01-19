@@ -215,7 +215,7 @@ public class InkCloudEntity extends Projectile implements IColoredEntity, ISetVe
 				continue;
 
 			AABB relativeBox = entity.getBoundingBox().move(position().reverse());
-			Triplet<Float, Vector3f, Float> impactData = CommonUtils.getRayDistance(damageDirection, relativeBox);
+			Triplet<Float, Vector3f, Float> impactData = CollisionUtils.getRayDistance(damageDirection, relativeBox);
 
 			if (impactData.getA() < getRadius())
 			{

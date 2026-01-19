@@ -1,8 +1,10 @@
 {
     "type": "splatcraft:blaster",
     "projectile": {
-        "size": 2,
-        "visual_size": 4,
+        "size": {
+            "hitbox_radius": 2,
+            "visual_size": 4
+        },
         "straight_shot_ticks": 11,
         "ink_coverage_on_impact": 19,
         "ink_drop_coverage": 11,

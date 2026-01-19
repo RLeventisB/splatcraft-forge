@@ -8,6 +8,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.splatcraft.data.SplatcraftConvertors;
+import net.splatcraft.items.weapons.settings.CommonRecords.ProjectileSizeRecord;
 import net.splatcraft.util.structs.NumberRange.FloatRange;
 import net.splatcraft.util.structs.RangedValueCollection;
 import net.splatcraft.util.structs.WeaponTooltip;
@@ -122,8 +123,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		);
 	}
 	public record RollerProjectileDataRecord(
-		float size,
-		float visualSize,
+		ProjectileSizeRecord size,
 		float delaySpeedMult,
 		float horizontalDrag,
 		float straightShotTicks,
@@ -140,8 +140,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 	{
 		public static final Codec<RollerProjectileDataRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
-				Codec.FLOAT.fieldOf("size").forGetter(RollerProjectileDataRecord::size),
-				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(r -> Optional.of(r.visualSize)),
+				ProjectileSizeRecord.CODEC.fieldOf("size").forGetter(RollerProjectileDataRecord::size),
 				Codec.FLOAT.optionalFieldOf("delay_speed_mult", 0.7f).forGetter(RollerProjectileDataRecord::delaySpeedMult),
 				Codec.FLOAT.optionalFieldOf("horizontal_drag", 0.64F).forGetter(RollerProjectileDataRecord::horizontalDrag),
 				Codec.FLOAT.optionalFieldOf("straight_shot_ticks", 2f).forGetter(RollerProjectileDataRecord::straightShotTicks),
@@ -157,9 +156,8 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 
 			).apply(instance, RollerProjectileDataRecord::create)
 		);
-		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(1, 1, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, RangedValueCollection.EMPTY, Optional.empty());
-		public static RollerProjectileDataRecord create(float size,
-		                                                Optional<Float> visualSize,
+		public static final RollerProjectileDataRecord DEFAULT = new RollerProjectileDataRecord(ProjectileSizeRecord.DEFAULT, 1f, 0.64f, 2f, 0.7f, 1f, 0.5f, 30, 25f, 45f, 0.5f, RangedValueCollection.EMPTY, Optional.empty());
+		public static RollerProjectileDataRecord create(ProjectileSizeRecord size,
 		                                                float delaySpeedMult,
 		                                                float horizontalDrag,
 		                                                float straightShotTicks,
@@ -174,13 +172,12 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		                                                Optional<RangedValueCollection> weakDamageRanges)
 		{
 			return new RollerProjectileDataRecord(size,
-				visualSize.orElse(size * 3),
 				delaySpeedMult,
 				horizontalDrag,
 				straightShotTicks,
 				gravity,
-				inkCoverageImpact.orElse(size * 0.85f),
-				inkDropCoverage.orElse(size * 0.75f),
+				inkCoverageImpact.orElse(size.hitboxRadius() * 0.85f),
+				inkDropCoverage.orElse(size.hitboxRadius() * 0.75f),
 				distanceBetweenInkDrops,
 				damageFalloffStartTick,
 				damageFalloffEndTick,
@@ -252,7 +249,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 		public static final SwingDataRecord DEFAULT = new SwingDataRecord(RollerProjectileDataRecord.DEFAULT, RollerAttackDataRecord.DEFAULT, false, 0.5f, 18f, 16f, new IntRange(2, 3));
 		public int calculateBrushProjectileCount()
 		{
-			return Math.round((attackAngle() * Mth.PI / 180f) * (attackData.speedRange.average()) * projectileData.straightShotTicks / (projectileData.size()));
+			return Math.round((attackAngle() * Mth.PI / 180f) * (attackData.speedRange.average()) * projectileData.straightShotTicks / (projectileData.size().hitboxRadius()));
 		}
 	}
 	public record FlingDataRecord(
@@ -289,7 +286,7 @@ public class RollerWeaponSettings extends AbstractWeaponSettings<RollerWeaponSet
 							attackData.speedRange.min(),
 							projectileData.delaySpeedMult,
 							600)
-					) / projectileData.size)
+					) / projectileData.size.hitboxRadius())
 			);
 		}
 	}

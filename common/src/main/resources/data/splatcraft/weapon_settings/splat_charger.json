@@ -1,7 +1,9 @@
 {
     "type": "splatcraft:charger",
     "projectile": {
-        "size": 1,
+        "size": {
+            "hitbox_radius": 1
+        },
         "speed": [24, 48],
         "range": [90, 240],
         "ink_drop_coverage": [8, 15],
