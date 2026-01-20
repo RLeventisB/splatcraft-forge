@@ -69,7 +69,7 @@ public abstract class AttackId
 		{
 			throw new AssertionError("Error upon reading Identifier for an AttackId, field was not found.\n" + identifierField.error().get().message());
 		}
-		
+
 		DataResult<ResourceLocation> identifierDataResult = ResourceLocation.CODEC.parse(ops, identifierField.getOrThrow());
 		if (identifierDataResult.isError())
 		{
@@ -94,20 +94,20 @@ public abstract class AttackId
 		{
 			throw new AssertionError("AttackId failed encoding, invalid id.");
 		}
-		
+
 		DataResult<T> identifierDataResult = ResourceLocation.CODEC.encodeStart(ops, id);
 		if (identifierDataResult.isError())
 		{
 			throw new AssertionError("AttackId failed encoding, error upon encoding id %s.\n%s".formatted(id, identifierDataResult.error().get().message()));
 		}
-		
+
 		DataResult<T> dataResult = attackId.getCodec().codec().encodeStart(ops, attackId);
-		
+
 		if (dataResult.isError())
 		{
 			throw new AssertionError("AttackId failed encoding, error upon encoding AttackId %s.\n%s".formatted(attackId, dataResult.error().get().message()));
 		}
-		
+
 		RecordBuilder<T> builder = ops.mapBuilder().add("identifier", identifierDataResult);
 		return builder.build(dataResult).getOrThrow();
 	}
@@ -158,7 +158,7 @@ public abstract class AttackId
 			{
 				if (!attackIdList.remove(this))
 				{
-					Splatcraft.LOGGER.warn("Error trying removing attack id " + id);
+					Splatcraft.LOGGER.warn("Error trying removing attack id {}", id);
 				}
 			}
 		}
@@ -174,13 +174,13 @@ public abstract class AttackId
 		public DefaultAttackId(Short id)
 		{
 			super(id);
-			
+
 			hitEnemies = new ObjectOpenHashSet<>();
 		}
 		public DefaultAttackId(Short id, int expected)
 		{
 			super(id);
-			
+
 			hitEnemies = new ObjectOpenHashSet<>(expected);
 		}
 		public DefaultAttackId(short id, byte projectileCount, ObjectOpenHashSet<UUID> hitEnemies)
@@ -220,7 +220,7 @@ public abstract class AttackId
 		@Override
 		public void projectileRemoved()
 		{
-		
+
 		}
 		@Override
 		public MapCodec<EmptyAttackId> getCodec()

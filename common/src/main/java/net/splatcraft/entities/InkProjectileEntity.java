@@ -1032,7 +1032,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public void remove(@NotNull RemovalReason pReason)
 	{
-		if (!level().isClientSide())
+		if (!level().isClientSide() && !isRemoved())
 			attackId.projectileRemoved();
 		super.remove(pReason);
 	}
