@@ -17,9 +17,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.blocks.InkwellBlock;
 import net.splatcraft.blocks.SpawnPadBlock;
@@ -46,7 +44,6 @@ import net.splatcraft.util.EntityStoredCharge;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashMap;
@@ -58,13 +55,13 @@ public class SquidFormHandler
 	public static Map<LivingEntity, EnemyInkData> inkTouchData = new HashMap<>();
 	public static void registerEvents()
 	{
-		Services.PLATFORM.registerListener(PlayerEvents.AttackEntity.class, SquidFormHandler::onPlayerAttackEntity);
-		Services.PLATFORM.registerListener(InteractionEvents.ClientLeftClickAir.class, SquidFormHandler::onPlayerInteract);
-		Services.PLATFORM.registerListener(InteractionEvents.ClientRightClickAir.class, SquidFormHandler::onPlayerInteract);
-		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SquidFormHandler::onPlayerInteract);
-		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, SquidFormHandler::onPlayerInteract);
-		Services.PLATFORM.registerListener(InteractionEvents.RightClickItem.class, SquidFormHandler::onPlayerInteractItem);
-		Services.PLATFORM.registerListener(InteractionEvents.InteractEntity.class, SquidFormHandler::onPlayerInteract);
+		Services.PLATFORM.registerListener(PlayerEvents.AttackEntity.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.ClientLeftClickAir.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.ClientRightClickAir.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.LeftClickBlock.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickBlock.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.RightClickItem.class, SquidFormHandler::interruptIfSquid);
+		Services.PLATFORM.registerListener(InteractionEvents.InteractEntity.class, SquidFormHandler::interruptIfSquid);
 		Services.PLATFORM.registerListener(TickEvents.PlayerAfter.class, SquidFormHandler::playerTick);
 	}
 	public static void onLivingHurt(LivingEntity entity, DamageSource source, CallbackInfoReturnable<Boolean> cir)
@@ -78,22 +75,7 @@ public class SquidFormHandler
 		boolean alternativeInkHealth = SplatcraftGameRules.getLocalizedRule(player, SplatcraftGameRules.ALTERNATIVE_INK_HEALTH);
 		if (InkBlockUtils.onEnemyInk(player))
 		{
-			if (player.level().getDifficulty() != Difficulty.PEACEFUL)
-			{
-				if (alternativeInkHealth && !player.level().isClientSide())
-				{
-					doAlternativeEnemyInkDamage(player);
-				}
-				else
-				{
-					if (player.tickCount % 20 == 0 && player.getHealth() > 4)
-						player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
-				}
-			}
-			if (player.level().getRandom().nextFloat() < 0.5f)
-			{
-				ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
-			}
+			doEnemyInkDamage(player, alternativeInkHealth);
 		}
 		else
 		{
@@ -101,7 +83,10 @@ public class SquidFormHandler
 				inkTouchData.remove(player);
 		}
 
-		if (SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) && player.isUnderWater() && player.tickCount % 10 == 0 && !MobEffectUtil.hasWaterBreathing(player))
+		if (player.tickCount % 10 == 0 &&
+		    player.isUnderWater() &&
+		    SplatcraftGameRules.getLocalizedRule(player.level(), player.blockPosition(), SplatcraftGameRules.WATER_DAMAGE) &&
+		    !MobEffectUtil.hasWaterBreathing(player))
 			player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.WATER), 8f);
 
 		@NotNull SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
@@ -117,6 +102,7 @@ public class SquidFormHandler
 		{
 			if (!player.getAbilities().flying)
 			{
+				// this is for easier movement when underwater without sprinting, dont know what the walkDist is for tho
 				player.setSprinting(player.isUnderWater());
 				player.walkDist = player.walkDistO;
 			}
@@ -144,50 +130,95 @@ public class SquidFormHandler
 				}
 
 				boolean crouch = player.isShiftKeyDown();
-				if (!crouch && player.level().getRandom().nextFloat() <= 0.6f && (Math.abs(player.getX() - player.xo) > 0.14 || Math.abs(player.getY() - player.yo) > 0.07 || Math.abs(player.getZ() - player.zo) > 0.14))
+				if (!crouch &&
+				    player.level().getRandom().nextFloat() <= 0.6f &&
+				    (Math.abs(player.getX() - player.xo) > 0.14 ||
+				     Math.abs(player.getY() - player.yo) > 0.07 ||
+				     Math.abs(player.getZ() - player.zo) > 0.14))
 				{
 					ColorUtils.addInkSplashParticle(player.level(), player, 1.1f, true);
 				}
 			}
 
-			if (!info.isDoingSquidSurge() && player.level().getRandom().nextFloat() <= info.squidSurgeState() / SquidInfo.MAX_SQUID_SURGE_CHARGE)
+			// do surge particles when charging
+			if (!info.isDoingSquidSurge() &&
+			    player.level().getRandom().nextFloat() <= info.squidSurgeState() / SquidInfo.MAX_SQUID_SURGE_CHARGE)
 			{
 				ColorUtils.addInkSplashParticle(player.level(), player, 0.9f, true);
 			}
 
-			Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
-			posBelowOptional.ifPresent(posBelow ->
-			{
-				Block blockBelow = player.level().getBlockState(posBelow).getBlock();
-				if (blockBelow instanceof SpawnPadBlock.Aux aux)
-				{
-					BlockPos newPos = aux.getParentPos(player.level().getBlockState(posBelow), posBelow);
-					if (player.level().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
-					{
-						posBelow = newPos;
-						blockBelow = player.level().getBlockState(newPos).getBlock();
-					}
-				}
-
-				if (blockBelow instanceof InkwellBlock || (SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK) && blockBelow instanceof SpawnPadBlock))
-				{
-					ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
-				}
-
-				if (blockBelow instanceof SpawnPadBlock)
-				{
-					InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
-
-					if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
-					{
-						serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
-					}
-				}
-			});
+			doActionsWithBlockBelow(player);
 		}
+
+		// remove ink overlay passively
 		if (Components.INK_OVERLAY.has(player) && !alternativeInkHealth)
 		{
 			Components.INK_OVERLAY.get(player).addAmount(-0.01f);
+		}
+	}
+	private static void doActionsWithBlockBelow(Player player)
+	{
+		Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
+		if (posBelowOptional.isEmpty())
+			return;
+
+		BlockPos posBelow = posBelowOptional.get();
+		Block blockBelow = player.level().getBlockState(posBelow).getBlock();
+
+		switch (blockBelow)
+		{
+			case
+				SpawnPadBlock ignored when SplatcraftGameRules.getLocalizedRule(player.level(), posBelow, SplatcraftGameRules.UNIVERSAL_INK):
+				ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
+				break;
+
+			case InkwellBlock ignored:
+				ColorUtils.setPlayerColor(player, ColorUtils.getEffectiveColor(player.level(), posBelow));
+				break;
+
+			case SpawnPadBlock.Aux aux:
+				BlockPos newPos = aux.getParentPos(player.level().getBlockState(posBelow), posBelow);
+				if (player.level().getBlockState(newPos).getBlock() instanceof SpawnPadBlock)
+				{
+					setSpawnPadSpawnpoint(player, newPos);
+				}
+				break;
+			case SpawnPadBlock ignored:
+				setSpawnPadSpawnpoint(player, posBelow);
+
+			default:
+				break;
+		}
+	}
+	private static void setSpawnPadSpawnpoint(Player player, BlockPos posBelow)
+	{
+		InkColorTileEntity spawnPad = (InkColorTileEntity) player.level().getBlockEntity(posBelow);
+
+		if (player instanceof ServerPlayer serverPlayer && ColorUtils.colorEquals(player, spawnPad))
+		{
+			serverPlayer.setRespawnPosition(player.level().dimension(), posBelow, player.level().getBlockState(posBelow).getValue(SpawnPadBlock.DIRECTION).toYRot(), false, true);
+		}
+	}
+	private static void doEnemyInkDamage(Player player, boolean alternativeInkHealth)
+	{
+		if (player.level().getDifficulty() != Difficulty.PEACEFUL)
+		{
+			if (alternativeInkHealth)
+			{
+				if (!player.level().isClientSide())
+				{
+					doAlternativeEnemyInkDamage(player);
+				}
+			}
+			else
+			{
+				if (player.tickCount % 20 == 0 && player.getHealth() > 4)
+					player.hurt(SplatcraftDamageTypes.of(player.level(), SplatcraftDamageTypes.ENEMY_INK), Math.min(player.getHealth() - 4, 2f));
+			}
+		}
+		if (player.level().getRandom().nextFloat() < 0.5f)
+		{
+			ColorUtils.addStandingInkSplashParticle(player.level(), player, 1);
 		}
 	}
 	private static void doAlternativeHealing(Player player, LivingEntityAccesor accesor, boolean canSquidHide, @NotNull SquidInfo info)
@@ -285,15 +316,18 @@ public class SquidFormHandler
 	}
 	public static void cancelDamageIfSquid(LivingEntity entity, float fallDistance, CallbackInfoReturnable<Boolean> cir)
 	{
-		if (CommonUtils.isSquid(entity))
+		if (!CommonUtils.isSquid(entity))
 		{
-			if (InkBlockUtils.canSquidHide(entity))
-			{
-				if (entity instanceof ServerPlayer player)
-					SplatcraftStats.FALL_INTO_INK_TRIGGER.value().trigger(player, fallDistance);
-				cir.setReturnValue(false);
-			}
+			return;
 		}
+		if (!InkBlockUtils.canSquidHide(entity))
+		{
+			return;
+		}
+
+		if (entity instanceof ServerPlayer player)
+			SplatcraftStats.FALL_INTO_INK_TRIGGER.value().trigger(player, fallDistance);
+		cir.setReturnValue(false);
 	}
 	public static double modifyVisibility(LivingEntity entity, double original)
 	{
@@ -310,19 +344,7 @@ public class SquidFormHandler
 		Components.SQUID_INFO.updateOrCreate(player, info -> info.setSquid(false));
 		SplatcraftPacketHandler.sendToTrackersAndSelf(new PlayerSetSquidS2CPacket(player.getUUID(), false), player);
 	}
-	public static EventResult onPlayerAttackEntity(Player player, Level level, Entity target, InteractionHand hand, @Nullable EntityHitResult result)
-	{
-		if (CommonUtils.isSquid(player))
-			return EventResult.interruptFalse();
-		return EventResult.pass();
-	}
-	public static EventResult onPlayerInteract(Player player, Object... params)
-	{
-		if (CommonUtils.isSquid(player))
-			return EventResult.interruptFalse();
-		return EventResult.pass();
-	}
-	public static EventResult onPlayerInteractItem(Player player, Object... params)
+	private static @NotNull EventResult interruptIfSquid(Player player, Object... params)
 	{
 		if (CommonUtils.isSquid(player))
 			return EventResult.interruptFalse();

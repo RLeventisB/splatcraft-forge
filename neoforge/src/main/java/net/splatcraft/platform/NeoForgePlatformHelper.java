@@ -105,7 +105,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 		INSTANCE = this;
 		if (isClientSide())
 			registerClientSideEvents();
-		
+
 		EventHelper.registerEvent(RegisterCommandsEvent.class, (evt) ->
 			invokeConsumerEvent(CommandRegistrationEvent.class, evt.getDispatcher(), evt.getBuildContext(), evt.getCommandSelection())
 		);
@@ -157,7 +157,8 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 		EventHelper.registerEvent(PlayerInteractEvent.LeftClickBlock.class, (evt) ->
 			{
 				EventResult result = invokeEvent(InteractionEvents.LeftClickBlock.class, evt.getEntity(), evt.getHand(), evt.getFace(), evt.getItemStack(), evt.getLevel(), evt.getPos());
-				result.value.ifPresent(evt::setCanceled);
+				if (result.interrupts)
+					evt.setCanceled(true);
 			}
 		);
 		EventHelper.registerEvent(PlayerInteractEvent.RightClickBlock.class, (evt) ->
@@ -387,7 +388,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 			{
 				if (currentStage.getStage() != stage1)
 					return;
-				
+
 				callback1.render(convertToNeoforge(currentStage));
 			}
 		);
