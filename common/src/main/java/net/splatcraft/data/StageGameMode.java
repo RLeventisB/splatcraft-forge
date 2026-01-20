@@ -34,7 +34,7 @@ public enum StageGameMode implements StringRepresentable
 		StageGameMode::splatZonesOnStart,
 		StageGameMode::splatZonesTick,
 		StageGameMode::splatZonesOnEnd,
-		RecordCodecBuilder.<Object>create(inst -> inst.group(
+		RecordCodecBuilder.create(inst -> inst.group(
 			Codec.INT.fieldOf("counter").forGetter(v -> (int) ((Object[]) v)[0]),
 			InkColor.CODEC.optionalFieldOf("last_color").forGetter(v -> (Optional<InkColor>) ((Object[]) v)[1]),
 			Codec.INT.fieldOf("penalty_counter").forGetter(v -> (int) ((Object[]) v)[2])
@@ -103,7 +103,7 @@ public enum StageGameMode implements StringRepresentable
 	public static boolean cleanOnStart(Stage stage, ServerLevel world)
 	{
 		InkDisruptorItem.clearInk(world, stage.getMinCorner(), stage.getMaxCorner(), false);
-		
+
 		return true;
 	}
 	public static float noOvertime(PlaySession session, Level world)
@@ -129,11 +129,11 @@ public enum StageGameMode implements StringRepresentable
 		{
 			if (hasAnyZone.get())
 				return;
-			
+
 			List<StageMarkerTileEntity> markers = StageMarkerBlock.getMarkersInChunkPos(stage.getStageWorld(Services.PLATFORM.getServerInstance()), pos);
 			hasAnyZone.set(markers.stream().anyMatch(v -> v.getMarkerType() == StageMarkerTileEntity.MarkerType.SPLAT_ZONE && stage.getBounds().intersects(v.getAABB())));
 		});
-		
+
 		return hasAnyZone.get();
 	}
 	public static float splatZonesCheckOvertime(PlaySession session, Level level)
@@ -142,7 +142,7 @@ public enum StageGameMode implements StringRepresentable
 		Map.Entry<InkColor, PlaySession.TeamScore> colorWithMostPoints = session.scores.entrySet().stream().max(Comparator.comparingInt(x -> x.getValue().score())).get();
 		int mostScore = colorWithMostPoints.getValue().score() / SPLAT_ZONES_COUNTER_TICKS * SPLAT_ZONES_COUNTER_TICKS;
 		boolean moreThanOneOfSameColor = session.scores.entrySet().stream().filter(v -> v.getValue().score() / SPLAT_ZONES_COUNTER_TICKS * SPLAT_ZONES_COUNTER_TICKS == mostScore).count() > 1;
-		
+
 		if (activeColor.isEmpty())
 		{
 			if (session.customData != null)
@@ -150,14 +150,14 @@ public enum StageGameMode implements StringRepresentable
 				Object[] dataList = (Object[]) session.customData;
 				int counter = (int) dataList[0];
 				Optional<InkColor> lastColor = (Optional<InkColor>) dataList[1];
-				
+
 				if (lastColor.isEmpty() || !moreThanOneOfSameColor && lastColor.get().equals(colorWithMostPoints.getKey()))
 					return 0f;
 				return (200 - counter) / 200f;
 			}
 			return 0f;
 		}
-		
+
 		if (activeColor.get().equals(colorWithMostPoints.getKey()) && !moreThanOneOfSameColor)
 			return 0f;
 		return 1f;
@@ -168,7 +168,7 @@ public enum StageGameMode implements StringRepresentable
 		session.resetTeamPoints();
 		session.getMarkers(true).forEach(marker -> marker.setActive(marker.getMarkerType() == StageMarkerTileEntity.MarkerType.SPLAT_ZONE));
 		InkDisruptorItem.clearInk(level, stage.getMinCorner(), stage.getMaxCorner(), false);
-		
+
 		int counter = 0;
 		Optional<InkColor> lastColor = Optional.empty();
 		int penaltyCounter = 0;
@@ -186,7 +186,7 @@ public enum StageGameMode implements StringRepresentable
 			lastColor = (Optional<InkColor>) dataList[1];
 			penaltyCounter = (int) dataList[2];
 		}
-		
+
 		// stores the last color that was active for 10 seconds (for overtime)
 		Optional<InkColor> activeColor = getActiveColor(session.getMarkers(true));
 		if (activeColor.isEmpty())
@@ -202,7 +202,7 @@ public enum StageGameMode implements StringRepresentable
 				session.scores.computeIfPresent(lastColor.get(), (col, score) -> score.withPenalty(score.penalty() + (int) (finalPenaltyCounter * 0.75f)));
 				penaltyCounter = -1;
 			}
-			
+
 			PlaySession.TeamScore currentScore = session.scores.computeIfPresent(activeColor.get(), (col, score) ->
 			{
 				if (score.penalty() > 0)
@@ -211,14 +211,14 @@ public enum StageGameMode implements StringRepresentable
 			});
 			if (currentScore == null || currentScore.score() > SPLAT_ZONES_COUNTER_TICKS * 100)
 				return false;
-			
+
 			lastColor = activeColor;
 			counter = 0;
-			
+
 			if (currentScore.penalty() == 0)
 				penaltyCounter++;
 		}
-		
+
 		session.customData = new Object[] {counter, lastColor, penaltyCounter};
 		return true;
 	}
@@ -243,7 +243,7 @@ public enum StageGameMode implements StringRepresentable
 			Optional<InkColor> currentColor = marker.getCurrentColor();
 			if (currentColor.isEmpty())
 				return Optional.empty();
-			
+
 			if (color == null)
 				color = currentColor.get();
 			else if (!color.equals(currentColor.get()))

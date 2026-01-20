@@ -52,7 +52,7 @@ public final class PlaySession
 	public static final MapCodec<PlaySession> CODEC = new MapCodec<>()
 	{
 		public static final MapCodec<PlaySession> NO_CUSTOM_DATA_CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-			
+
 			UUIDUtil.CODEC.listOf().fieldOf("players").forGetter(v -> v.playerUuids),
 			BlockPos.CODEC.listOf().fieldOf("cached_positions").forGetter(v -> v.markerCachedPositions),
 			StageGameMode.CODEC.fieldOf("game_mode").forGetter(v -> v.gameMode),
@@ -143,10 +143,10 @@ public final class PlaySession
 		{
 			player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 1, false, false));
 			WeaponHandler.resetLastGroundedPos(player);
-			
+
 			Components.PLAYER_INFO.updateOrCreate(player, info -> info.setPlayingStageId(stage.id));
 			SquidFormHandler.setSquid(player, true);
-			
+
 			for (ItemStack providerStack : CommonUtils.getItemsInInventory(player, v -> v.getItem() instanceof SpecialProviderItem))
 			{
 				providerStack.update(SplatcraftComponents.SPECIAL_PROVIDER_DATA,
@@ -154,7 +154,7 @@ public final class PlaySession
 					v -> v.withDelay(0).withStoredCharge(0f));
 			}
 		});
-		
+
 		this.gameMode = gameMode;
 		stageId = stage.id;
 		customData = null;
@@ -171,7 +171,7 @@ public final class PlaySession
 		this.playerUuids = playerUuids;
 		this.gameMode = gameMode;
 		this.stageId = stageId;
-		this.hasEnded = ended;
+		hasEnded = ended;
 		this.matchStartTime = matchStartTime;
 		this.matchEndTime = matchEndTime;
 		this.sessionEndTime = sessionEndTime;
@@ -209,7 +209,7 @@ public final class PlaySession
 			if (clientWorld != null)
 				return clientWorld;
 		}
-		
+
 		return getStage().getStageWorld(server);
 	}
 	@OnlyIn(Dist.CLIENT)
@@ -238,16 +238,16 @@ public final class PlaySession
 				end(server, EndReason.NO_PLAYERS);
 				return false;
 			}
-			
+
 			long now = world.getGameTime();
-			
+
 			if (now < matchStartTime)
 				return true;
-			
+
 			if (!hasEnded)
 			{
 				boolean running = gameMode.tick.test(this, world);
-				
+
 				if (!running || now > matchEndTime && gameMode.overtimeChecker.test(this, world) == 0)
 				{
 					setEndNow(now);
@@ -270,16 +270,16 @@ public final class PlaySession
 			Stage stage = SaveInfoCapability.get().stages().get(stageId);
 			ServerLevel world = stage.getStageWorld(server);
 			gameMode.onEnd.consume(this, world);
-			
+
 			playerUuids.forEach(uuid ->
 			{
 				if (world == null)
 					return;
-				
+
 				Player plr = world.getPlayerByUUID(uuid);
 				if (plr == null)
 					return;
-				
+
 				Components.PLAYER_INFO.getOrCreate(plr).setPlayingStageId(null);
 			});
 			SaveInfoCapability.get().playSessions().remove(stageId);
@@ -297,13 +297,13 @@ public final class PlaySession
 	private void recalculateMarkerPositions()
 	{
 		markerCachedPositions.clear();
-		
+
 		List<BlockPos> builder = new ArrayList<>();
 		Stage stage = getStage();
 		stage.iterateChunkPos(pos ->
 		{
 			List<StageMarkerTileEntity> markers = StageMarkerBlock.getMarkersInChunkPos(stage.getStageWorld(Services.PLATFORM.getServerInstance()), pos);
-			
+
 			builder.addAll(markers.stream().filter(marker ->
 			{
 				return marker != null && !builder.contains(marker.getBlockPos());
@@ -322,7 +322,7 @@ public final class PlaySession
 			{
 				continue;
 			}
-			
+
 			marker.setActive(false);
 			switch (gameMode)
 			{
@@ -392,16 +392,16 @@ public final class PlaySession
 	public String toString()
 	{
 		return "PlaySession{" +
-			"customData=" + customData +
-			", playerUuids=" + playerUuids +
-			", markerCachedPositions=" + markerCachedPositions +
-			", scores=" + scores +
-			", gameMode=" + gameMode +
-			", stageId='" + stageId + '\'' +
-			", sessionEndTime=" + sessionEndTime +
-			", matchStartTime=" + matchStartTime +
-			", matchEndTime=" + matchEndTime +
-			'}';
+		       "customData=" + customData +
+		       ", playerUuids=" + playerUuids +
+		       ", markerCachedPositions=" + markerCachedPositions +
+		       ", scores=" + scores +
+		       ", gameMode=" + gameMode +
+		       ", stageId='" + stageId + '\'' +
+		       ", sessionEndTime=" + sessionEndTime +
+		       ", matchStartTime=" + matchStartTime +
+		       ", matchEndTime=" + matchEndTime +
+		       '}';
 	}
 	@Override
 	public boolean equals(Object o)

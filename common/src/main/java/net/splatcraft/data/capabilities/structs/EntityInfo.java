@@ -33,7 +33,7 @@ public record EntityInfo(
 	}
 	private EntityInfo withEntityAction(Optional<EntityAction> action)
 	{
-		if (Objects.equals(this.entityAction, action))
+		if (Objects.equals(entityAction, action))
 			return this;
 		return new EntityInfo(action);
 	}

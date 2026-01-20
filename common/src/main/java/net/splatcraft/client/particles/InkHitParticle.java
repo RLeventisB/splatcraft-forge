@@ -26,7 +26,7 @@ public class InkHitParticle extends TextureSheetParticle
 	public InkHitParticle(ClientLevel level, double x, double y, double z, int color, float scale, SpriteSet provider)
 	{
 		super(level, x, y, z, 0, 0, 0);
-		
+
 		rCol = FastColor.ARGB32.red(color) / 255f;
 		gCol = FastColor.ARGB32.green(color) / 255f;
 		bCol = FastColor.ARGB32.blue(color) / 255f;
@@ -35,7 +35,7 @@ public class InkHitParticle extends TextureSheetParticle
 		roll = level.random.nextFloat() * Mth.TWO_PI;
 		oRoll = roll;
 		quadSize *= scale;
-		
+
 		spriteProvider = provider;
 		setSpriteFromAge(provider);
 	}
@@ -61,7 +61,7 @@ public class InkHitParticle extends TextureSheetParticle
 		Vector4f screenPos = GraphicsUtils.relativeWorldToScreenSpace(new Vec3(x, y, z), projectionMatrix);
 		// todo: properly learn matrices and only get the w component (which represents the scale
 		// dependant on the distance) instead of calculating every component
-		
+
 		float size = getQuadSize(partialTicks) * Mth.sqrt(screenPos.w);
 		float u0 = getU0();
 		float u1 = getU1();
@@ -76,7 +76,7 @@ public class InkHitParticle extends TextureSheetParticle
 	private void renderVertex(VertexConsumer buffer, Quaternionf quaternion, float x, float y, float z, float xOffset, float yOffset, float quadSize, float u, float v, int packedLight)
 	{
 		Vector3f vector3f = (new Vector3f(xOffset, yOffset, 0.0F)).rotate(quaternion).mul(quadSize).add(x, y, z);
-		buffer.addVertex(vector3f.x(), vector3f.y(), vector3f.z()).setUv(u, v).setColor(this.rCol, this.gCol, this.bCol, this.alpha).setLight(packedLight);
+		buffer.addVertex(vector3f.x(), vector3f.y(), vector3f.z()).setUv(u, v).setColor(rCol, gCol, bCol, alpha).setLight(packedLight);
 	}
 	@Override
 	protected int getLightColor(float partialTick)

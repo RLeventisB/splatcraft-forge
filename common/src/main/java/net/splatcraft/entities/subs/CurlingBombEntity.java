@@ -48,7 +48,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public float bladeRot = 0;
 	public float prevBladeRot = 0;
 	private boolean playedActivationSound = false;
-	private AttackId rollAttackId = AttackId.registerAttack();
+	private final AttackId rollAttackId = AttackId.registerAttack();
 	public CurlingBombEntity(EntityType<? extends AbstractSubWeaponEntity<CurlingBombDataRecord>> type, Level world)
 	{
 		super(type, world);
@@ -74,14 +74,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public void tick()
 	{
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
-		
+
 		double spd = getDeltaMovement().horizontalDistance();
 		prevBladeRot = bladeRot;
 		bladeRot += (float) spd;
-		
+
 		prevFuseTime = fuseTime;
 		fuseTime--;
-		
+
 		CurlingBombDataRecord curlingData = settings.subDataRecord;
 		boolean slowingDown = fuseTime <= curlingData.warningFrame();
 		if (slowingDown && !playedActivationSound)
@@ -89,24 +89,24 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			level().playSound(null, getX(), getY(), getZ(), SplatcraftSounds.subDetonating, SoundSource.PLAYERS, 0.8F, 1f);
 			playedActivationSound = true;
 		}
-		
+
 		if (fuseTime <= 0)
 		{
 			Vec3 center = getBoundingBox().getCenter();
 			explode(curlingData, center);
 			return;
 		}
-		
+
 		if (!level().isClientSide())
 		{
 			doTrail(spd > 1.0E-3, settings);
 		}
-		
+
 		if (spd > 0.01 && fuseTime % (int) Math.max(1, (1 - spd) * 10) == 0)
 		{
 			level().broadcastEntityEvent(this, (byte) 2);
 		}
-		
+
 		super.tick();
 	}
 	@Override
@@ -114,14 +114,14 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	{
 		double yVelocity = direction.y();
 		Vec3 velocityWithSetHorizontalSpeed = direction.multiply(1, 0, 1).normalize().scale(speed).add(0, yVelocity, 0);
-		
+
 		super.onVelocityCalculated(velocityWithSetHorizontalSpeed, speed);
 	}
 	@Override
 	public void handleMovement()
 	{
 		Pair<Vec3, Vec3> collidedAndNewVelocity = doBounceLogic(this, getDeltaMovement(), this::canHitEntity, getSettings().subDataRecord.bounceOnEntityHit());
-		
+
 		setDeltaMovement(collidedAndNewVelocity.getSecond());
 		setPos(position().add(collidedAndNewVelocity.getFirst()));
 	}
@@ -141,7 +141,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 			{
 				setOnGround(false);
 			}
-		
+
 		return IBouncyEntity.super.reflectVelocity(axis, newVelocity, oldVelocity);
 	}
 	@Override
@@ -171,10 +171,10 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		float horizontalFriction = 1f;
 		if (onGround())
 			horizontalFriction = level().getBlockState(getOnPos()).getBlock().getFriction() / 0.6f;
-		
+
 		CurlingBombDataRecord curlingData = getSettings().subDataRecord;
 		boolean slowingDown = fuseTime <= curlingData.warningFrame();
-		
+
 		if (slowingDown)
 		{
 			horizontalFriction *= 0.8f;
@@ -235,10 +235,10 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	public Vec3 onHitEntity(EntityHitResult result, Vec3 velocity, Direction hitDirecion)
 	{
 		InkDamageUtils.doRollDamage(result.getEntity(), getSettings().subDataRecord.contactDamage(), getOwner(), this, sourceWeapon, rollAttackId);
-		
+
 		if (hitDirecion == null)
 			return velocity;
-		
+
 		if (hitDirecion.getAxis() == Direction.Axis.X)
 			velocity = new Vec3(-velocity.x, velocity.y, velocity.z);
 		if (Math.abs(velocity.y) >= .05 && Math.abs(velocity.y) >= Math.abs(velocity.x) && Math.abs(velocity.y) >= Math.abs(velocity.z))
@@ -257,7 +257,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		SubWeaponSettings<CurlingBombDataRecord> settings = getSettings();
 		if (settings.subDataRecord == null)
 			return 0;
-		
+
 		if (fuseTime <= settings.subDataRecord.warningFrame() && !isItem)
 		{
 			return settings.subDataRecord.warningFrame() - (fuseTime - partialTicks) * 0.85f;
@@ -297,7 +297,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 	{
 		if (INIT_FUSE_TIME.equals(data))
 			fuseTime = getInitialFuseTime();
-		
+
 		super.onSyncedDataUpdated(data);
 	}
 	@Override

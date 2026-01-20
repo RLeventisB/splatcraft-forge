@@ -30,7 +30,9 @@ import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.tileentities.InkColorTileEntity;
 import net.splatcraft.tileentities.InkedBlockTileEntity;
-import net.splatcraft.util.*;
+import net.splatcraft.util.ColorUtils;
+import net.splatcraft.util.CommonUtils;
+import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.structs.BlockInkedResult;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
@@ -60,26 +62,26 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	{
 		boolean flag = false;
 		BlockPos.MutableBlockPos blockpos$mutable = pos.mutable();
-		
+
 		BlockState currentState = reader.getBlockState(pos);
-		
+
 		if (currentState.hasProperty(BlockStateProperties.WATERLOGGED) && currentState.getValue(BlockStateProperties.WATERLOGGED))
 		{
 			return true;
 		}
-		
+
 		for (Direction direction : directions)
 		{
 			blockpos$mutable.setWithOffset(pos, direction);
 			BlockState blockstate = reader.getBlockState(blockpos$mutable);
-			
+
 			if (causesClear(reader, pos, blockstate, direction))
 			{
 				flag = true;
 				break;
 			}
 		}
-		
+
 		return flag;
 	}
 	public static boolean causesClear(BlockGetter level, BlockPos pos, BlockState state)
@@ -90,10 +92,10 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	{
 		if (state.is(SplatcraftTags.Blocks.INK_CLEARING_BLOCKS))
 			return true;
-		
+
 		if (dir != Direction.DOWN && state.getFluidState().is(FluidTags.WATER))
 			return !state.isFaceSturdy(level, pos, dir.getOpposite());
-		
+
 		return false;
 	}
 	public static InkedBlock glowing()
@@ -124,7 +126,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 			BlockState savedState = blockEntity.getSavedState();
 			return CommonUtils.callGetPickItemStack(savedState, target, level, pos, player);
 		}
-		
+
 		return ItemStack.EMPTY;
 	}
 	@Override
@@ -164,7 +166,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 		if (!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity tileEntity))
 			return super.getCollisionShape(state, levelIn, pos, context);
 		BlockState savedState = tileEntity.getSavedState();
-		
+
 		if (savedState == null || savedState.getBlock().equals(this))
 		{
 			return super.getCollisionShape(state, levelIn, pos, context);
@@ -180,7 +182,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 		if (!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity))
 			return super.getVisualShape(state, levelIn, pos, context);
 		BlockState savedState = ((InkedBlockTileEntity) levelIn.getBlockEntity(pos)).getSavedState();
-		
+
 		if (savedState == null || savedState.getBlock().equals(this))
 		{
 			return super.getVisualShape(state, levelIn, pos, context);
@@ -200,10 +202,10 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	{
 		if (!(levelIn.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
 			return super.getDestroyProgress(state, player, levelIn, pos);
-		
+
 		if (te.getSavedState().getBlock() instanceof InkedBlock)
 			return super.getDestroyProgress(state, player, levelIn, pos);
-		
+
 		return te.getSavedState().getDestroyProgress(player, levelIn, pos);
 	}
 	@Override
@@ -211,10 +213,10 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	{
 		if (!(level.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
 			return super.getExplosionResistance();
-		
+
 		if (te.getSavedState().getBlock() instanceof InkedBlock)
 			return super.getExplosionResistance();
-		
+
 		return ((ISplatcraftForgeBlockDummy) te.getSavedState().getBlock()).phGetExplosionResistance(te.getSavedState(), level, pos, explosion);
 	}
 	@Override
@@ -235,7 +237,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 		if (SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.INK_DECAY) && world.getBlockEntity(pos) instanceof InkedBlockTileEntity)
 		{
 			boolean decay = world.isRainingAt(pos);
-			
+
 			if (!decay)
 			{
 				int i = 0;
@@ -244,7 +246,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 						i++;
 				decay = i <= 0 || randomSource.nextInt(i * 2) == 0;
 			}
-			
+
 			if (decay)
 				world.sendBlockUpdated(pos, world.getBlockState(pos), clearInk(world, pos), 3);
 		}
@@ -257,20 +259,20 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 			if (levelIn.getBlockEntity(currentPos) instanceof InkedBlockTileEntity)
 				return clearInk(levelIn, currentPos);
 		}
-		
+
 		if (levelIn.getBlockEntity(currentPos) instanceof InkedBlockTileEntity inkedBlock)
 		{
 			BlockState savedState = inkedBlock.getSavedState();
-			
+
 			if (savedState != null && !savedState.getBlock().equals(this))
 			{
 				if (levelIn.getBlockEntity(facingPos) instanceof InkedBlockTileEntity facedInkedBlock)
 					facingState = facedInkedBlock.getSavedState();
-				
+
 				inkedBlock.setSavedState(savedState.updateShape(facing, facingState, levelIn, currentPos, facingPos));
 			}
 		}
-		
+
 		return super.updateShape(stateIn, facing, facingState, levelIn, currentPos, facingPos);
 	}
 	@Override
@@ -300,7 +302,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	@Override
 	public boolean remoteColorChange(Level world, BlockPos pos, InkColor newColor)
 	{
-		
+
 		return false;
 	}
 	@Override
@@ -310,7 +312,7 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 		if (world.getBlockEntity(pos) instanceof InkedBlockTileEntity blockEntity)
 		{
 			InkColor color = blockEntity.getInkColor();
-			
+
 			if (clearInk(world, pos).equals(oldState) && (!(world.getBlockEntity(pos) instanceof InkedBlockTileEntity blockEntity2) || blockEntity2.getInkColor() == color))
 				return false;
 			world.sendBlockUpdated(pos, oldState, world.getBlockState(pos), 3);
@@ -323,30 +325,29 @@ public class InkedBlock extends Block implements EntityBlock, IColoredBlock, ISp
 	{
 		if (!(world.getBlockEntity(pos) instanceof InkedBlockTileEntity te))
 			return BlockInkedResult.FAIL;
-		
+
 		BlockState oldState = world.getBlockState(pos);
 		BlockState state = world.getBlockState(pos);
 		boolean changeColor = te.getInkColor() != color;
-		
+
 		if (changeColor)
 			te.setColor(color);
 		BlockState inkState = InkBlockUtils.getInkState(inkType);
-		
+
 		if (inkState.getBlock() != state.getBlock())
 		{
 			state = inkState;
 			world.setBlock(pos, state, 2);
-			InkedBlockTileEntity newTe = (InkedBlockTileEntity) world.getBlockEntity(pos);
-			newTe.setSavedState(te.getSavedState());
-			newTe.setSavedColor(te.getSavedColor());
-			newTe.setColor(te.getInkColor());
-			newTe.setPermanentInkType(te.getPermanentInkType());
-			newTe.setPermanentColor(te.getPermanentColor());
-			
+			te.setSavedState(te.getSavedState());
+			te.setSavedColor(te.getSavedColor());
+			te.setColor(te.getInkColor());
+			te.setPermanentInkType(te.getPermanentInkType());
+			te.setPermanentColor(te.getPermanentColor());
+
 			//level.setBlockEntity(pos, newTe);
 		}
 		world.sendBlockUpdated(pos, oldState, state, 2);
-		
+
 		return changeColor ? BlockInkedResult.SUCCESS : BlockInkedResult.ALREADY_INKED;
 	}
 }

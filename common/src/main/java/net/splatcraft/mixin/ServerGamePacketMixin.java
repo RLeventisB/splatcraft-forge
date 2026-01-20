@@ -47,7 +47,6 @@ public class ServerGamePacketMixin
 		{
 			aboveGroundTickCount = 0;
 			cir.setReturnValue(Integer.MAX_VALUE);
-			return;
 		}
 	}
 }

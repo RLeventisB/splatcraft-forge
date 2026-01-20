@@ -34,7 +34,7 @@ public abstract class BaseSpecialAction extends EntityActionWithTime
 	{
 		super(time, duration);
 		this.weaponSlot = weaponSlot;
-		this.providerSlot = providerEntitySlot;
+		providerSlot = providerEntitySlot;
 	}
 	public BaseSpecialAction(float duration, EntitySlot weaponSlot, EntitySlot providerSlot)
 	{

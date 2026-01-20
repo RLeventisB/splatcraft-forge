@@ -44,22 +44,22 @@ public record PlayerInfo(
 	{
 		if (Objects.equals(this.matchInventory, matchInventory))
 			return this;
-		
+
 		return new PlayerInfo(isInitialized, matchInventory, playingData, inkBand);
 	}
 	public PlayerInfo setPlayingData(Optional<PlayingData> playingData)
 	{
 		if (Objects.equals(this.playingData, playingData))
 			return this;
-		
+
 		if (playingData.isPresent() && playingData.get().playingStageId == null)
 			return new PlayerInfo(isInitialized, matchInventory, Optional.empty(), inkBand);
-		
+
 		return new PlayerInfo(isInitialized, matchInventory, playingData, inkBand);
 	}
 	public PlayerInfo setInkBand(ItemStack stack)
 	{
-		if (Objects.equals(this.inkBand, stack))
+		if (Objects.equals(inkBand, stack))
 			return this;
 		return new PlayerInfo(isInitialized, matchInventory, playingData, stack);
 	}

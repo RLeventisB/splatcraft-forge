@@ -85,7 +85,7 @@ public class MenuButton extends Button
 	}
 	public void setHovered(boolean hovered)
 	{
-		this.isHovered = hovered;
+		isHovered = hovered;
 	}
 	public ButtonColor getColor()
 	{

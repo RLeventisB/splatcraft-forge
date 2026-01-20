@@ -31,9 +31,9 @@ public class StageMarkerEditorScreen extends Screen
 	public final StageMarkerTileEntity marker;
 	private EditBox[] relativePosButtons;
 	private CycleButton markerTypeButton;
-	private List<AbstractWidget> typeDependantWidgets = new ArrayList<>();
+	private final List<AbstractWidget> typeDependantWidgets = new ArrayList<>();
 	private double accumulatedScrollY;
-	private List<EditBox> editBoxes = new ArrayList<>();
+	private final List<EditBox> editBoxes = new ArrayList<>();
 	public StageMarkerEditorScreen(StageMarkerTileEntity marker)
 	{
 		super(Component.empty());
@@ -47,7 +47,7 @@ public class StageMarkerEditorScreen extends Screen
 			createRelativeCoordinateButton(Direction.Axis.Y, marker),
 			createRelativeCoordinateButton(Direction.Axis.Z, marker)
 		};
-		
+
 		markerTypeButton = (CycleButton.<StageMarkerTileEntity.MarkerType>builder((type) ->
 				Component.translatable("gui.stage_marker.marker_type." + type.name().toLowerCase())).withValues(StageMarkerTileEntity.MarkerType.values())
 			.displayOnlyValue().withInitialValue(marker.getMarkerType())
@@ -59,12 +59,12 @@ public class StageMarkerEditorScreen extends Screen
 					loadTypeDependantWidgets();
 				}));
 		addRenderableWidget(markerTypeButton);
-		
+
 		addRenderableWidget(Checkbox.builder(ACTIVE_LABEL, font).pos(width / 2 + 130, 90).selected(marker.isActive()).onValueChange((box, state) ->
 		{
 			marker.setActive(state);
 		}).build());
-		
+
 		loadTypeDependantWidgets();
 	}
 	private EditBox createRelativeCoordinateButton(Direction.Axis axis, StageMarkerTileEntity marker)
@@ -92,7 +92,7 @@ public class StageMarkerEditorScreen extends Screen
 			marker.getOffset().get(axis),
 			onChange);
 		addRenderableWidget(box);
-		
+
 		return box;
 	}
 	private void loadTypeDependantWidgets()
@@ -102,7 +102,7 @@ public class StageMarkerEditorScreen extends Screen
 			removeWidget(widget);
 		}
 		typeDependantWidgets.clear();
-		
+
 		switch (marker.getMarkerType())
 		{
 			case SPLAT_ZONE ->
@@ -127,7 +127,7 @@ public class StageMarkerEditorScreen extends Screen
 							marker.notifyChange();
 						};
 					};
-					
+
 					typeDependantWidgets.add(createNumberBox(width / 2 - 100 + 50 * axis.ordinal(), 130, 40, 20,
 						Component.literal("Splat zone " + axis.name() + " size"), marker.intDatas[axis.ordinal()], onChange));
 				}
@@ -145,12 +145,12 @@ public class StageMarkerEditorScreen extends Screen
 			{
 			}
 		}
-		
+
 		for (AbstractWidget widget : typeDependantWidgets)
 		{
 			addRenderableWidget(widget);
 		}
-		
+
 		updateEditBoxList();
 	}
 	public void updateEditBoxList()
@@ -171,7 +171,7 @@ public class StageMarkerEditorScreen extends Screen
 		{
 			ClientUtils.getClient().setScreen(null);
 		}
-		
+
 		boolean resetScroll = true;
 		for (EditBox box : editBoxes)
 		{
@@ -184,16 +184,16 @@ public class StageMarkerEditorScreen extends Screen
 					int steps = (int) accumulatedScrollY;
 					value += steps;
 					accumulatedScrollY -= steps;
-					
+
 					box.setValue(Integer.toString(value));
 				}
-				
+
 				resetScroll = false;
-				
+
 				break;
 			}
 		}
-		
+
 		if (resetScroll)
 			accumulatedScrollY = 0;
 	}
@@ -203,7 +203,7 @@ public class StageMarkerEditorScreen extends Screen
 		guiGraphics.drawCenteredString(font, TITLE, width / 2, 20, 16777215);
 		guiGraphics.drawCenteredString(font, RELATIVE_LABEL, width / 2 - 50, 40, 16777215);
 		guiGraphics.drawCenteredString(font, MARKER_TYPE_LABEL, width / 2 - 50, 80, 16777215);
-		
+
 		switch (marker.getMarkerType())
 		{
 			case SPLAT_ZONE ->
@@ -223,7 +223,7 @@ public class StageMarkerEditorScreen extends Screen
 			{
 			}
 		}
-		
+
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 	}
 	@Override

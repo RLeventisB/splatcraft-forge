@@ -34,10 +34,10 @@ public interface EntityAction extends Cloneable
 		public <T> RecordBuilder<T> encode(EntityAction input, DynamicOps<T> ops, RecordBuilder<T> builder)
 		{
 			ResourceLocation id = CLASS_REGISTRY.getKey(input.getClass());
-			
+
 			builder.add("id", ResourceLocation.CODEC.encodeStart(ops, id));
 			builder.add("data", ops.withEncoder(CODEC_REGISTRY.get(id).get()).apply(input));
-			
+
 			return builder;
 		}
 		@Override
@@ -139,7 +139,7 @@ public interface EntityAction extends Cloneable
 	{
 		if (entity == null || !Components.ENTITY_INFO.has(entity))
 			return false;
-		
+
 		EntityAction cooldown = Components.ENTITY_INFO.get(entity).getEntityAction();
 		return cooldown != null;
 	}
@@ -147,7 +147,7 @@ public interface EntityAction extends Cloneable
 	{
 		if (entity == null || !Components.ENTITY_INFO.has(entity))
 			return false;
-		
+
 		EntityAction cooldown = Components.ENTITY_INFO.get(entity).getEntityAction();
 		return clazz.isInstance(cooldown);
 	}
@@ -222,9 +222,9 @@ public interface EntityAction extends Cloneable
 	 */
 	default void beforeForcedEnd(LivingEntity entity)
 	{
-	
+
 	}
-	public enum EndType
+	enum EndType
 	{
 		TIME,
 		CANCELLED

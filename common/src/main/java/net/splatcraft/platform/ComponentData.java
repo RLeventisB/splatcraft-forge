@@ -32,7 +32,7 @@ public final class ComponentData<OBJ, COMPONENT>
 		this.componentClass = componentClass;
 		this.codec = codec;
 		this.streamCodec = streamCodec;
-		this.bitId = Components.getNextBitId(this);
+		bitId = Components.getNextBitId(this);
 	}
 	public static <OBJ, COMPONENT> void registerExecutor(ComponentData<OBJ, COMPONENT> componentData,
 	                                                     ComponentExecutor<OBJ, COMPONENT> executor)
@@ -93,7 +93,7 @@ public final class ComponentData<OBJ, COMPONENT>
 		COMPONENT component = get(holder);
 		if (component == null)
 			component = defaultComponent;
-		
+
 		COMPONENT applied = updator.apply(component);
 		set(holder, applied);
 		return applied;
@@ -181,14 +181,14 @@ public final class ComponentData<OBJ, COMPONENT>
 	public String toString()
 	{
 		return "ComponentData{" +
-			"bitId=" + bitId +
-			", id=" + id +
-			", holderClass=" + holderClass +
-			", componentClass=" + componentClass +
-			", codec=" + codec +
-			", streamCodec=" + streamCodec +
-			", executor=" + executor +
-			'}';
+		       "bitId=" + bitId +
+		       ", id=" + id +
+		       ", holderClass=" + holderClass +
+		       ", componentClass=" + componentClass +
+		       ", codec=" + codec +
+		       ", streamCodec=" + streamCodec +
+		       ", executor=" + executor +
+		       '}';
 	}
 	public record ComponentExecutor<OBJ, COMPONENT>(
 		Function<@NotNull OBJ, COMPONENT> getter,

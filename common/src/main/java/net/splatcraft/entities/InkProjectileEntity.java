@@ -582,7 +582,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public void onHit(@NotNull HitResult result)
 	{
-		return; // use the other method
+		// use the other method
 
 /*
 		HitResult.Type rayType = result.getType();
@@ -699,7 +699,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		{
 			level().broadcastEntityEvent(this, PROJECTILE_IMPACT);
 			Vec3 impactPos = closestPointToBlock.add(collisionNormal.scale(0.01));
-			
+
 			ExtraSaveData.ImpactSoundExtraData soundData = getExtraDatas().getFirstExtraData(ExtraSaveData.ImpactSoundExtraData.class);
 			if (soundData != null)
 			{

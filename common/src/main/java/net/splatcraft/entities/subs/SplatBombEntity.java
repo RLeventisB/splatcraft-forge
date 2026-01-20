@@ -40,9 +40,9 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 	public void tick()
 	{
 		super.tick();
-		
+
 		SubWeaponSettings<ThrowableExplodingSubDataRecord> settings = getSettings();
-		
+
 		if (onGround())
 		{
 			fuseTime++;
@@ -50,7 +50,6 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		if (fuseTime >= settings.subDataRecord.fuseTime() && isAlive())
 		{
 			explode(settings, getBoundingBox().getCenter());
-			return;
 		}
 		else if (!playedActivationSound && fuseTime >= settings.subDataRecord.fuseTime() - 18)
 		{
@@ -74,21 +73,21 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		double f1 = 0.94;
 		if (onGround())
 			f1 = level().getBlockState(getOnPos()).getBlock().getFriction() * 1.2f;
-		
+
 		f1 = Math.min(0.94, f1);
-		
+
 		return new Vec3(f1, 0.94, f1);
 	}
 	@Override
 	public void handleMovement()
 	{
 		Vec3 oldDeltaMovement = getDeltaMovement();
-		
+
 		Pair<Vec3, Vec3> collidedAndNewVelocity = doBounceLogic(this, oldDeltaMovement, this::canHitEntity, false);
-		
+
 		setDeltaMovement(collidedAndNewVelocity.getSecond());
 		setPos(position().add(collidedAndNewVelocity.getFirst()));
-		
+
 		setOnGroundWithMovement(oldDeltaMovement.y < collidedAndNewVelocity.getFirst().y && oldDeltaMovement.y < 0, collidedAndNewVelocity.getFirst());
 	}
 	@Override
@@ -102,7 +101,7 @@ public class SplatBombEntity extends AbstractSubWeaponEntity<ThrowableExplodingS
 		if (axis == Direction.Axis.Y)
 			if (oldVelocity.y < newVelocity.y && newVelocity.y <= 0 && oldVelocity.y <= -0.6 && oldVelocity.horizontalDistanceSqr() < 1.1)
 				return oldVelocity.with(Direction.Axis.Y, 0);
-		
+
 		return IBouncyEntity.super.reflectVelocity(axis, newVelocity, oldVelocity);
 	}
 	@Override

@@ -44,7 +44,7 @@ public class SendPlayerHitPacket extends PlayS2CPacket
 		ByteBufCodecs.FLOAT, v -> v.scale,
 		SendPlayerHitPacket::new
 	);
-	private static Map<Pair<SoundEvent, Float>, List<Vector3f>> sharedPositions = new Object2ObjectArrayMap<>();
+	private static final Map<Pair<SoundEvent, Float>, List<Vector3f>> sharedPositions = new Object2ObjectArrayMap<>();
 	private final List<Vector3f> impactPositions;
 	private final Optional<Pair<Vector3f, SoundEvent>> soundOptional;
 	private final float scale;
@@ -87,7 +87,7 @@ public class SendPlayerHitPacket extends PlayS2CPacket
 		Player player = ClientUtils.getClientPlayer();
 		if (player == null)
 			return;
-		
+
 		Level level = player.level();
 		soundOptional.ifPresent(soundData ->
 		{
@@ -112,7 +112,7 @@ public class SendPlayerHitPacket extends PlayS2CPacket
 			sharedPositions.clear();
 			return;
 		}
-		
+
 		sharedPositions.forEach((soundData, hitPositions) ->
 		{
 			SplatcraftPacketHandler.sendToPlayer(new SendPlayerHitPacket(hitPositions, hitPositions.getFirst(), soundData.getFirst(), soundData.getSecond()), serverPlayer);

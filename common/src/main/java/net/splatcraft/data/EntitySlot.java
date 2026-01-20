@@ -137,7 +137,7 @@ public interface EntitySlot
 		{
 			return createWithHand(InteractionHand.OFF_HAND, comparator);
 		}
-		
+
 		throw new AssertionError("The given stack isn't contained by the given entity");
 	}
 	static EntitySlot createWithSlot(int slot)
@@ -288,7 +288,7 @@ public interface EntitySlot
 		private final StackComparator comparator;
 		public PlayerInventorySlot(int slot, InteractionHand hand, StackComparator comparator)
 		{
-			this.selectedSlot = slot;
+			selectedSlot = slot;
 			this.hand = hand;
 			this.comparator = comparator;
 		}
@@ -301,10 +301,10 @@ public interface EntitySlot
 		{
 			if (hand == InteractionHand.OFF_HAND)
 				return comparator.areEquals(entity.getOffhandItem(), stack);
-			
+
 			if (!(entity instanceof Player player))
 				return false;
-			
+
 			return comparator.areEquals(player.getInventory().getItem(selectedSlot), stack);
 		}
 		@Override
@@ -312,7 +312,7 @@ public interface EntitySlot
 		{
 			if (!(entity instanceof Player player))
 				return false;
-			
+
 			return player.getInventory().selected == selectedSlot && this.hand == hand;
 		}
 		@Override
@@ -320,7 +320,7 @@ public interface EntitySlot
 		{
 			if (entity instanceof Player player)
 				return Optional.of(player.getInventory().getItem(selectedSlot));
-			
+
 			return Optional.empty();
 		}
 		@Override

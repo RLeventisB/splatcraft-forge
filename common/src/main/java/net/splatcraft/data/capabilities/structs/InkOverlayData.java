@@ -32,8 +32,8 @@ public class InkOverlayData
 		this.color = color;
 		this.amount = amount;
 		this.inkproof = inkproof;
-		this.squidPitch = squidRot;
-		this.squidPitchO = squidRotO;
+		squidPitch = squidRot;
+		squidPitchO = squidRotO;
 	}
 	public Optional<InkColor> getColor()
 	{

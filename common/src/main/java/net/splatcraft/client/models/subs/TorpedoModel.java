@@ -24,23 +24,23 @@ public class TorpedoModel extends AbstractSubWeaponModel<TorpedoEntity>
 	private boolean renderClosed;
 	public TorpedoModel(ModelPart root)
 	{
-		this.open = root.getChild("open");
-		this.openPropeller = root.getChild("open").getChild("propeller");
-		this.closed = root.getChild("closed");
+		open = root.getChild("open");
+		openPropeller = root.getChild("open").getChild("propeller");
+		closed = root.getChild("closed");
 	}
 	public static LayerDefinition createBodyLayer()
 	{
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-		
+
 		PartDefinition open = partdefinition.addOrReplaceChild("open", CubeListBuilder.create().texOffs(0, 0).addBox(-7.0F, -5.0F, -5.0F, 12.0F, 12.0F, 12.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 36).addBox(-5.0F, -3.0F, -7.0F, 8.0F, 8.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(1.0F, -1.0F, -1.0F));
-		
+
 		PartDefinition propeller = open.addOrReplaceChild("propeller", CubeListBuilder.create().texOffs(0, 60).addBox(-8.0F, -1.0F, -1.0F, 16.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, 1.0F, 8.0F));
-		
+
 		PartDefinition closed = partdefinition.addOrReplaceChild("closed", CubeListBuilder.create().texOffs(0, 36).addBox(-4.0F, -4.0F, -2.0F, 8.0F, 8.0F, 8.0F, new CubeDeformation(0.0F))
 			.texOffs(48, 24).addBox(-2.0F, -2.0F, -4.0F, 4.0F, 4.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -2.0F));
-		
+
 		return LayerDefinition.create(meshdefinition, 64, 64);
 	}
 	@Override

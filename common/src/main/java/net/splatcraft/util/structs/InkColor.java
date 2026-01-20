@@ -53,19 +53,19 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 			{
 				return DataResult.error(() -> "Input InkColor is not valid");
 			}
-			
+
 			return DataResult.success(ops.createInt(input.getColor()));
 		}
 		@Override
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
 		{
 			DataResult<Number> hexValue = ops.getNumberValue(input);
-			
+
 			if (hexValue.isSuccess())
 			{
 				return DataResult.success(Pair.of(constructOrReuse(hexValue.map(Number::intValue).getOrThrow()), input));
 			}
-			
+
 			return DataResult.error(() -> "InkColor wasn't formatted correctly, should've been an raw number.");
 		}
 	};
@@ -75,7 +75,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
 		{
 			InkColor inkColor = null;
-			
+
 			DataResult<String> stringValue = ops.getStringValue(input);
 			if (stringValue.isSuccess())
 			{
@@ -86,7 +86,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 				}
 				catch (NumberFormatException ignored)
 				{
-				
+
 				}
 			}
 			if (inkColor == null)
@@ -109,7 +109,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 		public <T> DataResult<Pair<InkColor, T>> decode(DynamicOps<T> ops, T input)
 		{
 			InkColor inkColor = null;
-			
+
 			DataResult<ResourceLocation> idResult = ResourceLocation.CODEC.parse(ops, input);
 			if (idResult.isSuccess())
 			{
@@ -118,7 +118,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 			}
 			if (inkColor == null)
 				return DataResult.error(() -> "Invalid InkColor color, didn't find a valid alias");
-			
+
 			return DataResult.success(Pair.of(inkColor, input));
 		}
 		@Override
@@ -176,7 +176,7 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 	public String getTranslationKey()
 	{
 		ResourceLocation alias = InkColorRegistry.getFirstAliasForColor(hexCode);
-		
+
 		if (alias != null)
 		{
 			return "ink_color." + alias.toShortLanguageKey();
@@ -220,18 +220,18 @@ public record InkColor(int hexCode) implements Comparable<InkColor>
 	{
 		int id = -1;
 		int colorDifference = Integer.MAX_VALUE;
-		
+
 		int currentColorR = FastColor.ARGB32.red(hexCode);
 		int currentColorG = FastColor.ARGB32.green(hexCode);
 		int currentColorB = FastColor.ARGB32.blue(hexCode);
-		
+
 		for (DyeColor color : DyeColor.values())
 		{
 			int colorValue = propertySelector.apply(color);
 			int r = FastColor.ARGB32.red(colorValue);
 			int g = FastColor.ARGB32.green(colorValue);
 			int b = FastColor.ARGB32.blue(colorValue);
-			
+
 			int difference = Mth.square(r - currentColorR) + Mth.square(g - currentColorG) + Mth.square(b - currentColorB);
 			if (colorDifference > difference)
 			{

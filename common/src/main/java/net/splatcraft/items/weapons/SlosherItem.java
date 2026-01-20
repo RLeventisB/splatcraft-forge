@@ -142,8 +142,8 @@ public class SlosherItem extends WeaponBaseItem<SlosherWeaponSettings>
 			this.itemSlot = itemSlot;
 			pitch = xRotOld = entity.getXRot();
 			yaw = yRotOld = entity.getYRot();
-			this.sloshData = settings;
-			this.endlag = settings.shotData.miscEndlagTicks();
+			sloshData = settings;
+			endlag = settings.shotData.miscEndlagTicks();
 
 			calculateSloshes();
 		}

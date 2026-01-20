@@ -27,9 +27,9 @@ public class DebugUtils
 {
 	public static <T, B> String dumpCodecFormat(Codec<T> codec)
 	{
-		if (codec instanceof MapCodec.MapCodecCodec<T> mapCodecCodec)
+		if (codec instanceof MapCodec.MapCodecCodec<T>(MapCodec<T> codec1))
 		{
-			RecordBuilder<JsonElement> codecFormatMap = processCodec(mapCodecCodec.codec());
+			RecordBuilder<JsonElement> codecFormatMap = processCodec(codec1);
 			JsonElement result = codecFormatMap.build(JsonOps.INSTANCE.empty()).getOrThrow();
 
 			final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -47,9 +47,9 @@ public class DebugUtils
 			@NotNull List<CodecData> stringCodecPair = loopUntilDecoderHasName(builder);
 			stringCodecPair.forEach(data ->
 			{
-				if (data.codec instanceof MapCodec.MapCodecCodec<?> mapCodecCodec)
+				if (data.codec instanceof MapCodec.MapCodecCodec<?>(MapCodec<?> codec))
 				{
-					map.add(data.fieldName, processCodec(mapCodecCodec.codec()).build(JsonOps.INSTANCE.empty()));
+					map.add(data.fieldName, processCodec(codec).build(JsonOps.INSTANCE.empty()));
 				}
 				else
 				{
@@ -170,12 +170,11 @@ public class DebugUtils
 	}
 	public record CodecData(String fieldName, Codec<?> codec, boolean optional, String extraDescription)
 	{
-
 		public CodecData sanitizeCodec()
 		{
 			if (codec instanceof PrimitiveCodec<?> ||
-				codec instanceof StringRepresentable.StringRepresentableCodec<?> ||
-				codec instanceof MapCodec.MapCodecCodec<?>)
+			    codec instanceof StringRepresentable.StringRepresentableCodec<?> ||
+			    codec instanceof MapCodec.MapCodecCodec<?>)
 			{
 				return this;
 			}

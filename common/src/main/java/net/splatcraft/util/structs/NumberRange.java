@@ -79,7 +79,7 @@ public interface NumberRange<NUMTYPE extends Number>
 	{
 		public static final FloatRangeShifted ZERO = new FloatRangeShifted(0f, 0f, 0, 1f);
 		public static final Codec<FloatRangeShifted> CODEC = RecordCodecBuilder.create(
-			inst -> NumberRange.objectCodecStart(inst, Codec.FLOAT).and(
+			inst -> objectCodecStart(inst, Codec.FLOAT).and(
 				inst.group(
 					Codec.FLOAT.fieldOf("min_progress").forGetter(FloatRangeShifted::minProgress),
 					Codec.FLOAT.fieldOf("max_progress").forGetter(FloatRangeShifted::maxProgress)

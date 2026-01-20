@@ -74,7 +74,6 @@ public abstract class DynamicWeaponSettings<SELF extends AbstractWeaponSettings<
 		{
 			processResult(common.getPartialOrThrow(), null);
 		}
-		return;
 	}
 	@Override
 	public final Codec<COMMONDATA> getCodec()

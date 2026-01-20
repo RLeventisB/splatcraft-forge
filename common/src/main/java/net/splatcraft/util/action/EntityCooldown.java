@@ -19,10 +19,10 @@ public class EntityCooldown extends EntityActionWithTime
 					Codec.BOOL.optionalFieldOf("cancellable", false).forGetter(v -> v.cancellable),
 					EntitySlot.SERIALIZER_CODEC.fieldOf("item_slot").forGetter(v -> v.itemSlot),
 					Codec.BOOL.fieldOf("can_move").forGetter(v -> v.canMove),
-					Codec.BOOL.fieldOf("force_crouch").<EntityCooldown>forGetter(v -> v.forceCrouch),
-					Codec.BOOL.fieldOf("prevent_weapon_use").<EntityCooldown>forGetter(v -> v.preventWeaponUse),
-					Codec.BOOL.fieldOf("is_grounded").<EntityCooldown>forGetter(v -> v.isGrounded),
-					Codec.BOOL.fieldOf("prevent_stop_using").<EntityCooldown>forGetter(v -> v.preventStopUsing)
+					Codec.BOOL.fieldOf("force_crouch").forGetter(v -> v.forceCrouch),
+					Codec.BOOL.fieldOf("prevent_weapon_use").forGetter(v -> v.preventWeaponUse),
+					Codec.BOOL.fieldOf("is_grounded").forGetter(v -> v.isGrounded),
+					Codec.BOOL.fieldOf("prevent_stop_using").forGetter(v -> v.preventStopUsing)
 				)
 			).apply(inst, EntityCooldown::new)
 	);

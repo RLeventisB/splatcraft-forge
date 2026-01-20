@@ -15,7 +15,7 @@ import java.util.List;
 public class Components
 {
 	private static byte nextBitId = 1;
-	private static List<ComponentData> registeredComponents = new ArrayList<>();
+	private static final List<ComponentData> registeredComponents = new ArrayList<>();
 	public static byte getNextBitId(ComponentData component)
 	{
 		registeredComponents.add(component);
@@ -42,7 +42,7 @@ public class Components
 				ComponentData component = components[i];
 				if (!registeredComponents.contains(component))
 					continue;
-				
+
 				result |= component.getBitId();
 			}
 			return result;
@@ -58,7 +58,7 @@ public class Components
 					builder.add(component);
 				}
 			}
-			
+
 			return builder.build();
 		}
 		public static <HOLDER> List<ComponentData<HOLDER, Object>> getComponents(byte flag, Class<HOLDER> holderClass)
@@ -68,14 +68,14 @@ public class Components
 			{
 				if (!holderClass.isAssignableFrom(component.getHolderClass()))
 					continue;
-				
+
 				byte id = component.getBitId();
 				if ((flag & id) == id)
 				{
 					builder.add(component);
 				}
 			}
-			
+
 			return builder.build();
 		}
 		public static <HOLDER> Iterator<ComponentData<HOLDER, Object>> getComponentIterator(byte flag, Class<HOLDER> holderClass)
@@ -89,10 +89,10 @@ public class Components
 			private final Class<HOLDER> holderClass;
 			public ComponentIterator(byte flag, Class<HOLDER> holderClass)
 			{
-				this.componentsFlag = flag;
+				componentsFlag = flag;
 				this.holderClass = holderClass;
 				cursor = 0;
-				
+
 				while ((flag & 1) != 1)
 				{
 					flag >>= 1;
@@ -122,7 +122,7 @@ public class Components
 				}
 				while (
 					(!holderClass.isAssignableFrom(currentData.getHolderClass()) ||
-						(componentsFlag & currentData.getBitId()) != currentData.getBitId()
+					 (componentsFlag & currentData.getBitId()) != currentData.getBitId()
 					) && nextCursor < registeredComponents.size());
 				return nextCursor;
 			}

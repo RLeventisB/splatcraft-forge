@@ -590,7 +590,7 @@ public class CommonUtils
 	public static class InteractionEventResultDummy
 	{
 		private final boolean canceled;
-		private boolean handSwing;
+		private final boolean handSwing;
 		public InteractionEventResultDummy(boolean handSwing, boolean canceled)
 		{
 			this.handSwing = handSwing;
