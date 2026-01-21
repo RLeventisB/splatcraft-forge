@@ -17,10 +17,13 @@ import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.resources.ResourceKey;
@@ -34,6 +37,7 @@ import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -81,6 +85,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -92,6 +97,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	private static final Supplier<NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>>> ARGUMENT_REGISTRY =
 		Suppliers.memoize(() -> new NeoForgeDeferredRegister<>(BuiltInRegistries.COMMAND_ARGUMENT_TYPE, Splatcraft.MODID));
 	public static NeoForgePlatformHelper INSTANCE;
+	private Optional<ResourceKey<Attribute>> swimAttributeKeyOptional;
 	public static NeoForgeDeferredRegister<ArgumentTypeInfo<?, ?>> getArgumentRegistry()
 	{
 		return ARGUMENT_REGISTRY.get();
@@ -103,6 +109,11 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public void init()
 	{
 		INSTANCE = this;
+
+		swimAttributeKeyOptional = Optional.ofNullable(ResourceLocation.tryBuild("neoforge", "swim_speed"))
+			.map(location -> ResourceKey.create(Registries.ATTRIBUTE, location)
+			);
+
 		if (isClientSide())
 			registerClientSideEvents();
 
@@ -318,6 +329,14 @@ public class NeoForgePlatformHelper implements IPlatformHelper
 	public Collection<ModInfo> getMods()
 	{
 		return FMLLoader.getLoadingModList().getMods().stream().map(NeoForgePlatformHelper::createModInfo).toList();
+	}
+	@Override
+	public Optional<Holder<Attribute>> getSwimSpeedAttributeHolder(RegistryAccess registryAccess)
+	{
+		return swimAttributeKeyOptional
+			.flatMap(swimAttributeKey -> registryAccess
+				.registry(Registries.ATTRIBUTE)
+				.flatMap(registry -> registry.getHolder(swimAttributeKey)));
 	}
 	private static ModInfo createModInfo(net.neoforged.fml.loading.moddiscovery.ModInfo modInfo)
 	{

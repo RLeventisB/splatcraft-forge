@@ -12,7 +12,9 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.syncher.EntityDataSerializer;
@@ -25,6 +27,7 @@ import net.minecraft.server.packs.resources.ResourceProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -43,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -120,6 +124,7 @@ public interface IPlatformHelper extends IEventMap
 	{
 		return getMods().stream().anyMatch(predicate);
 	}
+	Optional<Holder<Attribute>> getSwimSpeedAttributeHolder(RegistryAccess registryAccess);
 	@FunctionalInterface
 	@OnlyIn(Dist.CLIENT)
 	interface ParticleRegistration<T extends ParticleOptions>

@@ -25,6 +25,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.blocks.ColoredBarrierBlock;
 import net.splatcraft.client.audio.RollerRollTickableSound;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.client.particles.InkSplashParticleData;
 import net.splatcraft.data.EntitySlot;
 import net.splatcraft.entities.InkProjectileEntity;
@@ -40,7 +41,6 @@ import net.splatcraft.network.s2c.UpdateEntityActionOnlyPacket;
 import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.registries.SplatcraftComponents;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.*;
 import net.splatcraft.util.action.ActionEndResult;
@@ -320,7 +320,7 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 			appliedMobility = 0.7;
 		}
 
-		return new AttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		return new AttributeModifier(PlayerMovementHandler.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 	@Override
 	public PlayerPosingHandler.WeaponPose getPose(Player player, ItemStack stack)

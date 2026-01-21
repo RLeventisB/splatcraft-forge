@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.splatcraft.client.audio.SplatlingChargingTickableSound;
+import net.splatcraft.client.handlers.PlayerMovementHandler;
 import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.PlayerPosingHandler;
 import net.splatcraft.handlers.SpecialHandler;
@@ -29,7 +30,6 @@ import net.splatcraft.platform.DeferredRegister;
 import net.splatcraft.platform.RegistrySupplier;
 import net.splatcraft.platform.Services;
 import net.splatcraft.registries.SplatcraftComponents;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.ClientUtils;
 import net.splatcraft.util.CommonUtils;
@@ -204,7 +204,7 @@ public class SplatlingItem<T extends DynamicDataRecord<T>> extends WeaponBaseIte
 		boolean charging = firingData.charging().equals(Optional.of(true));
 		double appliedMobility = settings.getMoveSpeed(charging, settings.getShotTypeIndex(getCharge(stack), firingData.shotTypeData()));
 
-		return new AttributeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+		return new AttributeModifier(PlayerMovementHandler.SPEED_MOD_IDENTIFIER, appliedMobility - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	}
 	@Override
 	public int getChargeLevels(ItemStack stack)

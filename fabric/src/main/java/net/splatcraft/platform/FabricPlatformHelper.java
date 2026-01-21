@@ -33,7 +33,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.syncher.EntityDataSerializer;
@@ -49,6 +51,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -67,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -85,7 +89,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 		{
 			registerClientSideEvents();
 		}
-		
+
 		ServerLifecycleEvents.SERVER_STARTING.register(server1 ->
 		{
 			invokeConsumerEvent(LifecycleEvents.ServerStarting.class, server1);
@@ -138,7 +142,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void postConsumerEvent(String eventClassName, Object... params)
 	{
-	
+
 	}
 	@Override
 	public Object postEvent(String eventClassName, Object... params)
@@ -151,6 +155,12 @@ public class FabricPlatformHelper implements IPlatformHelper
 		return FabricLoader.getInstance().getAllMods().stream()
 			.map(ModContainer::getMetadata)
 			.map(FabricPlatformHelper::getModInfo).toList();
+	}
+	@Override
+	public Optional<Holder<Attribute>> getSwimSpeedAttributeHolder(RegistryAccess registryAccess)
+	{
+		// todo: wtf do i do with this fabric doesn't have a swim speed attribute
+		return Optional.empty();
 	}
 	private static ModInfo getModInfo(ModMetadata metadata)
 	{
@@ -212,7 +222,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 			case AFTER_SKY:
 				WorldRenderEvents.START.register(context ->
 					callback.render(convertToFabric(context)));
-				
+
 				break;
 			case AFTER_BLOCKS:
 				WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, hitResult) ->
@@ -224,7 +234,7 @@ public class FabricPlatformHelper implements IPlatformHelper
 			case AFTER_ENTITIES:
 				WorldRenderEvents.AFTER_ENTITIES.register(context ->
 					callback.render(convertToFabric(context)));
-				
+
 				break;
 			case AFTER_PARTICLES:
 				WorldRenderEvents.AFTER_TRANSLUCENT.register(context ->
@@ -296,17 +306,17 @@ public class FabricPlatformHelper implements IPlatformHelper
 	@Override
 	public void registerAttribute(Supplier<? extends EntityType<? extends LivingEntity>> type, Supplier<AttributeSupplier.Builder> attribute)
 	{
-	
+
 	}
 	@Override
 	public void loadConfig()
 	{
-	
+
 	}
 	@Override
 	public void initializeConfigs()
 	{
-	
+
 	}
 	@Override
 	public Path getModConfigPath()

@@ -31,7 +31,6 @@ import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftAttributes;
-import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
@@ -46,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PlayerMovementHandler
 {
 	public static final HashMap<Player, Input> unmodifiedInput = new HashMap<>();
+	public static final ResourceLocation SPEED_MOD_IDENTIFIER = ResourceLocation.withDefaultNamespace("generic.movement_speed");
 	private static final AttributeModifier INK_SWIM_SPEED = new AttributeModifier(Splatcraft.identifierOf("ink_movement_boost"), 0D, AttributeModifier.Operation.ADD_VALUE);
 	private static final AttributeModifier SQUID_SWIM_SPEED = new AttributeModifier(Splatcraft.identifierOf("squid_swim_speed"), 0.2D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 	private static final AttributeModifier ENEMY_INK_SPEED = new AttributeModifier(Splatcraft.identifierOf("enemy_ink_penalty"), -0.5D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -66,13 +66,17 @@ public class PlayerMovementHandler
 	public static void playerMovement(Player player)
 	{
 		SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
-		
+
 		Optional<EntityAction> action = EntityAction.getEntityActionOptional(player);
-		
+
 		AttributeInstance speedAttribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
 		AttributeInstance gravityAttribute = player.getAttribute(Attributes.GRAVITY);
-//		EntityAttributeInstance swimAttribute = player.getAttributeInstance(attributes.SWIM_SPEED.get());
-		
+
+		// there is no swim attribute key in vanilla lol!!
+		Optional<AttributeInstance> swimAttributeOptional = Services.PLATFORM
+			.getSwimSpeedAttributeHolder(player.registryAccess())
+			.map(player::getAttribute);
+
 		if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 			speedAttribute.removeModifier(INK_SWIM_SPEED);
 		if (speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
@@ -81,49 +85,57 @@ public class PlayerMovementHandler
 			speedAttribute.removeModifier(SPECIAL_BONUS_ID);
 		if (gravityAttribute.hasModifier(SPECIAL_BONUS_ID))
 			gravityAttribute.removeModifier(SPECIAL_BONUS_ID);
-//            if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
-//                swimAttribute.removeModifier(SQUID_SWIM_SPEED);
-		
-		if (speedAttribute.hasModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER))
-			speedAttribute.removeModifier(SplatcraftItems.SPEED_MOD_IDENTIFIER);
-		
+		swimAttributeOptional.ifPresent(swimAttribute ->
+		{
+			if (swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
+				swimAttribute.removeModifier(SQUID_SWIM_SPEED);
+		});
+
+		if (speedAttribute.hasModifier(SPEED_MOD_IDENTIFIER))
+			speedAttribute.removeModifier(SPEED_MOD_IDENTIFIER);
+
 		if (InkBlockUtils.onEnemyInk(player))
 		{
 			//player.setVelocity(player.getVelocity().x, Math.min(player.getVelocity().y, 0.05f), player.getVelocity().z);
 			if (!speedAttribute.hasModifier(ENEMY_INK_SPEED.id()))
 				speedAttribute.addTransientModifier(ENEMY_INK_SPEED);
 		}
-		
-		if (EntityAction.hasSpecificEntityAction(player, BaseSpecialAction.class))
-		{
-			BaseSpecialAction specialAction = EntityAction.getSpecificEntityAction(player, BaseSpecialAction.class);
-			specialAction.mobility(player).ifPresent(bonus ->
+
+		EntityAction.getSpecificEntityActionOptional(player, BaseSpecialAction.class).ifPresent(
+			specialAction ->
 			{
-				speedAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, bonus - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-			});
-			if (specialAction instanceof InkjetAction)
-			{
-				gravityAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, -0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+				specialAction.mobility(player).ifPresent(bonus ->
+				{
+					speedAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, bonus - 1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+				});
+				if (specialAction instanceof InkjetAction)
+				{
+					gravityAttribute.addOrUpdateTransientModifier(new AttributeModifier(SPECIAL_BONUS_ID, -0.3, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+				}
 			}
-		}
-		
+		);
+
 		if (info.isSquid())
 		{
 			if (InkBlockUtils.canSquidSwim(player) && !speedAttribute.hasModifier(INK_SWIM_SPEED.id()) && player.onGround())
 				speedAttribute.addTransientModifier(INK_SWIM_SPEED);
-//                if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
-//                    swimAttribute.addTemporaryModifier(SQUID_SWIM_SPEED);
+			swimAttributeOptional.ifPresent(swimAttribute ->
+			{
+				if (!swimAttribute.hasModifier(SQUID_SWIM_SPEED.id()))
+					swimAttribute.addTransientModifier(SQUID_SWIM_SPEED);
+			});
+
 //			handleSquidMovement(info, player, 0, 0, false, false);
 		}
-		
+
 		action.ifPresent(v ->
 		{
 			if (v.getItemSlot() instanceof EntitySlot.PlayerInventorySlot playerSlot)
 				player.getInventory().selected = playerSlot.getSlotIndex();
 		});
-		
+
 		tickWeaponMobilityAttribute(player, speedAttribute);
-		
+
 		if (!player.getAbilities().flying && info.climbedDirection().isEmpty())
 			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
 				player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
@@ -132,7 +144,7 @@ public class PlayerMovementHandler
 	{
 		if (speedAttribute.hasModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID))
 			speedAttribute.removeModifier(AbstractWeaponSettings.WEAPON_MOBILITY_ATTIBUTE_ID);
-		
+
 		ItemStack useStack = entity.getMainHandItem();
 		if (useStack.getItem() instanceof WeaponBaseItem<?> weapon && weapon.preventsChanging(useStack, entity) && weapon.hasSpeedModifier(entity, useStack))
 		{
@@ -155,10 +167,10 @@ public class PlayerMovementHandler
 	public static void onInputUpdate(LocalPlayer player, Input input)
 	{
 		SquidInfo info = Components.SQUID_INFO.getOrCreate(player);
-		
+
 		Input clonedInput = unmodifiedInput.computeIfAbsent(player, v -> new Input());
 		copyTo(input, clonedInput);
-		
+
 		if (Components.PLAYER_INFO.hasAnd(player, v -> v.calculateMatchState(player).movementDisabled))
 		{
 			input.leftImpulse = 0;
@@ -167,12 +179,12 @@ public class PlayerMovementHandler
 			input.shiftKeyDown = false;
 			return;
 		}
-		
+
 		float speedMod = !input.shiftKeyDown ? info.isSquid() && InkBlockUtils.canSquidHide(player) ? 15f : 2f : 1f;
-		
+
 		input.forwardImpulse *= speedMod;
 		input.leftImpulse *= speedMod;
-		
+
 		if (info.isSquid())
 		{
 			handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
@@ -182,7 +194,7 @@ public class PlayerMovementHandler
 			Components.SQUID_INFO.update(player, v -> v.setSquidSurgeState(0));
 			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.climbedDirection(), info.getSquidSurgeCharge()));
 		}
-		
+
 		if (player.isUsingItem())
 		{
 			ItemStack stack = player.getUseItem();
@@ -195,7 +207,7 @@ public class PlayerMovementHandler
 				}
 			}
 		}
-		
+
 		EntityAction.getEntityActionOptional(player).ifPresent(action ->
 		{
 			if (!action.canMove())
@@ -232,10 +244,10 @@ public class PlayerMovementHandler
 	private static void handleSquidMovement(SquidInfo info, LivingEntity entity, float movementSideways, float movementForward, boolean jumping, boolean sneaking)
 	{
 		Optional<Direction> climbDirectionOptional = InkBlockUtils.getSquidClimbDirection(entity, movementSideways, movementForward, info.climbedDirection());
-		
+
 		if (climbDirectionOptional.map(v -> v.getAxis() == Direction.Axis.Y).orElse(false))
 			climbDirectionOptional = Optional.empty();
-		
+
 		info = info.setClimbedDirection(climbDirectionOptional);
 		climbDirectionOptional.ifPresent(climbDirection ->
 			{
@@ -249,12 +261,12 @@ public class PlayerMovementHandler
 				}
 				else if (gravity.hasModifier(SLOW_FALLING.id()))
 					gravity.removeModifier(SLOW_FALLING);
-				
+
 				Vec3 finalImpulse = Vec3.ZERO;
 				if (movementSideways != 0 || movementForward != 0)
 				{
 					finalImpulse = getWallImpulse(climbDirection, movementSideways, movementForward, entity.getYRot());
-					
+
 					Vec3 deltaMovement = entity.getDeltaMovement();
 					if (deltaMovement.y() < 0.4f)
 					{
@@ -265,12 +277,12 @@ public class PlayerMovementHandler
 					}
 					if (deltaMovement.horizontalDistanceSqr() < 0.1f)
 						deltaMovement = deltaMovement.add(finalImpulse.x * 0.01f, 0, finalImpulse.z * 0.01f);
-					
+
 					entity.setDeltaMovement(deltaMovement);
 				}
 				if ((falling || (entity.getDeltaMovement().y < 0.035f && finalImpulse.y > 0)) && !sneaking) // make squid "floatier"
 					entity.moveRelative(0.035f, new Vec3(0.0f, 1, 0.0f));
-				
+
 				entity.addDeltaMovement(Vec3.atLowerCornerOf(climbDirection.getNormal()).scale(-0.03));
 				if (sneaking)
 					entity.setDeltaMovement(entity.getDeltaMovement().x, Math.max(0, entity.getDeltaMovement().y()), entity.getDeltaMovement().z);
@@ -278,7 +290,7 @@ public class PlayerMovementHandler
 		);
 		info = tickSquidSurge(entity, info, jumping);
 		Components.SQUID_INFO.set(entity, info);
-		
+
 		SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(
 			info.climbedDirection(),
 			info.squidSurgeState()));
@@ -320,7 +332,7 @@ public class PlayerMovementHandler
 			if (info.climbedDirection().isPresent())
 			{
 				deltaMovement.set(new Vec3(0, 0.25 + squidSurgePower / 60f, 0));
-				
+
 				AABB extendedBox = entity.getBoundingBox().expandTowards(0, deltaMovement.get().y, 0);
 				if (!entity.level().noCollision(entity, extendedBox))
 					info = info.flagSquidSurgeEnd();
@@ -340,7 +352,7 @@ public class PlayerMovementHandler
 					if (jumping && (deltaMovement.get().y < 0.3)) // charge squid surge
 					{
 						deltaMovement.set(deltaMovement.get().scale(1f / (1f + info.squidSurgeState() / 2f)));
-						
+
 						info = info.chargeSquidSurge();
 					}
 					else // release squid surge

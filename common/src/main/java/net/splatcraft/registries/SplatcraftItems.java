@@ -42,7 +42,6 @@ public class SplatcraftItems
 	public static final DeferredRegister<Item> REGISTRY = Splatcraft.deferredRegistryOf(BuiltInRegistries.ITEM);
 	public static final List<WeaponBaseItem<?>> weapons = new ArrayList<>();
 	public static final ArrayList<Item> inkColoredItems = new ArrayList<>();
-	public static final ResourceLocation SPEED_MOD_IDENTIFIER = ResourceLocation.withDefaultNamespace("generic.movement_speed");
 	//Armor Materials
 	public static final RegistrySupplier<ArmorMaterial> INK_CLOTH = createArmorMaterial("ink_cloth", SoundEvents.ARMOR_EQUIP_LEATHER, 0, 0, 0, null);
 	public static final RegistrySupplier<ArmorMaterial> ARMORED_INK_TANK_MATERIAL = createArmorMaterial("armored_ink_tank", SoundEvents.ARMOR_EQUIP_IRON, 3, 0, 0.05f, null);
@@ -218,7 +217,7 @@ public class SplatcraftItems
 			add(allowedColorBarrier.value());
 			add(deniedColorBarrier.value());
 		}});
-		
+
 		DispenserBlock.registerBehavior(emptyInkwell.value(), new PlaceBlockDispenseBehavior());
 		DispenserBlock.registerBehavior(inkwell.value(), new PlaceBlockDispenseBehavior());
 	}
@@ -240,34 +239,34 @@ public class SplatcraftItems
 		ResourceLocation inkProperty = Splatcraft.identifierOf("ink");
 		ResourceLocation isLeftProperty = Splatcraft.identifierOf("is_left");
 		ResourceLocation unfoldedProperty = Splatcraft.identifierOf("unfolded");
-		
+
 		for (RemoteItem remote : RemoteItem.remotes)
 		{
 			Services.PLATFORM.registerItemProperty(remote, activeProperty, remote.getActiveProperty());
 			Services.PLATFORM.registerItemProperty(remote, modeProperty, remote.getModeProperty());
 		}
-		
+
 		for (InkTankItem tank : InkTankItem.inkTanks)
 		{
 			Services.PLATFORM.registerItemProperty(tank, inkProperty, (stack, level, entity, seed) -> InkTankItem.getInkPercentage(stack));
 		}
-		
+
 		for (DualieItem dualie : DualieItem.dualies)
 		{
 			Services.PLATFORM.registerItemProperty(dualie, isLeftProperty, dualie.getIsLeft());
 		}
-		
+
 		for (RollerItem roller : RollerItem.rollers)
 		{
 			Services.PLATFORM.registerItemProperty(roller, unfoldedProperty, roller.getUnfolded());
 		}
-		
+
 		ClampedItemPropertyFunction coloredProperty = (stack, level, entity, seed) -> !ColorUtils.getInkColor(stack).isValid() ? 0 : 1;
 		Services.PLATFORM.registerItemProperty(canvas.value(), Splatcraft.identifierOf("inked"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coralite.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteSlab.value(), Splatcraft.identifierOf("colored"), coloredProperty);
 		Services.PLATFORM.registerItemProperty(coraliteStairs.value(), Splatcraft.identifierOf("colored"), coloredProperty);
-		
+
 		InkTankFeature.register(inkTank.value(), InkTankModel.LAYER_LOCATION, InkTankModel::new);
 		InkTankFeature.register(classicInkTank.value(), ClassicInkTankModel.LAYER_LOCATION, ClassicInkTankModel::new);
 		InkTankFeature.register(inkTankJr.value(), InkTankJrModel.LAYER_LOCATION, InkTankJrModel::new);
