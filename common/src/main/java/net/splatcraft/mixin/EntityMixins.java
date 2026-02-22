@@ -4,7 +4,9 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,6 +25,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.splatcraft.client.handlers.RendererHandler;
+import net.splatcraft.entities.InkProjectileEntity;
 import net.splatcraft.handlers.SplatcraftCommonHandler;
 import net.splatcraft.handlers.SquidFormHandler;
 import net.splatcraft.items.weapons.DualieItem;
@@ -61,7 +64,7 @@ public class EntityMixins
 			{
 				return;
 			}
-			
+
 			if (InkBlockUtils.canSquidHide(living) && CommonUtils.isSquid(living))
 				cir.setReturnValue(true);
 		}
@@ -91,7 +94,7 @@ public class EntityMixins
 					entity.getY(world.getRandom().nextFloat() * 0.3f), entity.getZ() + world.getRandom().nextFloat() * entity.getBbWidth() - entity.getBbWidth() * 0.5, 0.3f + world.random.nextFloat() * 0.4f);
 				return RenderShape.MODEL;
 			}
-			
+
 			return original.call(instance);
 		}
 		@Inject(method = "playStepSound", at = @At(value = "HEAD"))
@@ -164,7 +167,7 @@ public class EntityMixins
 				splatcraft$processItemForJumpRng(entity.getMainHandItem(), entity);
 				splatcraft$processItemForJumpRng(entity.getOffhandItem(), entity);
 			}
-			
+
 			SplatcraftCommonHandler.onEntityJump(entity);
 			SquidFormHandler.modifyJumpSpeed(entity);
 		}
@@ -192,7 +195,7 @@ public class EntityMixins
 			if (stack.getItem() instanceof WeaponBaseItem<?> weaponItem)
 			{
 				CommonRecords.ShotDeviationDataRecord deviationData = weaponItem.getSettings(stack).getShotDeviationData(stack, entity);
-				
+
 				ShotDeviationHelper.registerJumpForShotDeviation(stack, deviationData);
 			}
 		}
@@ -207,7 +210,7 @@ public class EntityMixins
 		{
 			LivingEntity entity = (LivingEntity) (Object) this;
 			BlockPos pos = entity.getOnPosLegacy();
-			
+
 			if (InkBlockUtils.isInked(entity.level(), pos, Direction.UP))
 			{
 				ColorUtils.addInkSplashParticle(entity.level(), InkBlockUtils.getInkBlock(entity.level(), pos).color(Direction.UP.get3DDataValue()), entity.getX(), entity.getY(entity.level().getRandom().nextFloat() * 0.3f), entity.getZ(), (float) (Math.sqrt(i) * 0.3f));
@@ -247,8 +250,22 @@ public class EntityMixins
 		{
 			if (!(entity instanceof LivingEntity living))
 				return;
-			
+
 			RendererHandler.processHidingEntity(cir, living);
+		}
+	}
+	@Mixin(EntityRenderDispatcher.class)
+	public static class EntityRenderDispatcherMixin
+	{
+		@WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V"))
+		public void splatcraft$skipVanillaHitboxRendering(PoseStack poseStack, VertexConsumer buffer, Entity entity, float red, float green, float blue, float alpha, Operation<Void> original)
+		{
+			if (entity instanceof InkProjectileEntity)
+			{
+				return;
+			}
+
+			original.call(poseStack, buffer, entity, red, green, blue, alpha);
 		}
 	}
 }

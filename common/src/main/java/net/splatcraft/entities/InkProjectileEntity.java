@@ -62,7 +62,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 {
 	private static final EntityDataAccessor<String> PROJ_TYPE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.STRING);
 	private static final EntityDataAccessor<InkColor> COLOR = SynchedEntityData.defineId(InkProjectileEntity.class, CommonUtils.INKCOLOR_DATA_HANDLER);
-	private static final EntityDataAccessor<Float> WORLD_HITBOX_LENGTH = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
+	private static final EntityDataAccessor<Float> WORLD_HITBOX_RADIUS = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> HITBOX_RADIUS = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> VISUAL_SIZE = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> GRAVITY = SynchedEntityData.defineId(InkProjectileEntity.class, EntityDataSerializers.FLOAT);
@@ -221,7 +221,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	{
 		builder.define(PROJ_TYPE, Types.SHOOTER);
 		builder.define(COLOR, ColorUtils.getDefaultColor());
-		builder.define(WORLD_HITBOX_LENGTH, 0.2f);
+		builder.define(WORLD_HITBOX_RADIUS, 0.2f);
 		builder.define(HITBOX_RADIUS, 0.2f);
 		builder.define(VISUAL_SIZE, 0.6f);
 		builder.define(GRAVITY, 0.175F);
@@ -235,7 +235,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> data)
 	{
-		if (WORLD_HITBOX_LENGTH.equals(data))
+		if (WORLD_HITBOX_RADIUS.equals(data))
 			refreshDimensions();
 		else if (STRAIGHT_SHOT_TIME.equals(data))
 			straightShotTime = entityData.get(STRAIGHT_SHOT_TIME);
@@ -347,7 +347,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			possibleEntityCollisions = possibleEntityCollisions.stream().filter(v -> v.getBoundingBox().intersects(finalSearchAABB)).toList();
 
 		List<Pair<BlockPos, VoxelShape>> possibleWorldCollisions = ImmutableList.copyOf(() -> new BlockCollisions<>(level(), this, finalSearchAABB, false, (blockPos, shape) -> Pair.of(blockPos.immutable(), shape)));
-		Optional<Quintet<BlockPos, Vec3, Vec3, Boolean, Double>> collisionData = CollisionUtils.findFirstBlock(position(), velocity, CommonUtils.createVec3(getProjectileWorldHitboxLength()), possibleWorldCollisions, orthogonalCoefficientOperator);
+		Optional<Quintet<BlockPos, Vec3, Vec3, Boolean, Double>> collisionData = CollisionUtils.findFirstBlock(position(), velocity, getProjectileWorldHitboxRadius(), possibleWorldCollisions, orthogonalCoefficientOperator);
 
 		if (collisionData.isPresent())
 		{
@@ -568,14 +568,14 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 			{
 				Vector3f velocity = getShotDirection().mul(entityData.get(SPEED) / 2f);
 				if (getProjectileType().equals(Types.CHARGER))
-					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
+					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxRadius() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, 0, -0.1, 0);
 				else
-					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
+					level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxRadius() * 0.8f), getX() - velocity.x * 0.25D, getY() + getBbHeight() * 0.5f - velocity.y * 0.25D, getZ() - velocity.z * 0.25D, velocity.x, velocity.y, velocity.z);
 			}
 			case PROJECTILE_IMPACT ->
-				level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxLength() * 2), getX(), getY(), getZ(), 0, 0, 0);
+				level().addParticle(new InkSplashParticleData(getColor(), getProjectileWorldHitboxRadius() * 2), getX(), getY(), getZ(), 0, 0, 0);
 			case BLAST_PARTICLE ->
-				level().addParticle(new InkExplosionParticleData(getColor(), getProjectileWorldHitboxLength() * 2), getX(), getY(), getZ(), 0, 0, 0);
+				level().addParticle(new InkExplosionParticleData(getColor(), getProjectileWorldHitboxRadius() * 2), getX(), getY(), getZ(), 0, 0, 0);
 		}
 	}
 	@Deprecated
@@ -798,13 +798,13 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 		super.readAdditionalSaveData(nbt);
 
 		if (nbt.contains("TerrainSize"))
-			setProjectileWorldHitboxLength(nbt.getFloat("TerrainSize"));
+			setProjectileWorldHitboxRadius(nbt.getFloat("TerrainSize"));
 		if (nbt.contains("CollisionSize"))
 			setProjectileHitboxRadius(nbt.getFloat("CollisionSize"));
 		if (nbt.contains("VisualSize"))
 			setProjectileVisualSize(nbt.getFloat("VisualSize"));
 
-		impactCoverage = nbt.contains("ImpactCoverage") ? nbt.getFloat("ImpactCoverage") : getProjectileWorldHitboxLength() * 0.85f;
+		impactCoverage = nbt.contains("ImpactCoverage") ? nbt.getFloat("ImpactCoverage") : getProjectileWorldHitboxRadius() * 0.85f;
 
 		if (nbt.contains("Color"))
 			setColor(InkColor.getFromNbt(nbt.get("Color")));
@@ -857,7 +857,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public void addAdditionalSaveData(CompoundTag nbt)
 	{
-		nbt.putFloat("TerrainSize", getProjectileWorldHitboxLength());
+		nbt.putFloat("TerrainSize", getProjectileWorldHitboxRadius());
 		nbt.putFloat("CollisionSize", getProjectileHitboxRadius());
 		nbt.putFloat("VisualSize", getProjectileVisualSize());
 		nbt.put("Color", getColor().getNbt());
@@ -944,7 +944,7 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	@Override
 	public @NotNull EntityDimensions getDimensions(@NotNull Pose pose)
 	{
-		return super.getDimensions(pose).scale(getProjectileWorldHitboxLength());
+		return super.getDimensions(pose).scale(getProjectileWorldHitboxRadius());
 	}
 	@Override
 	protected @NotNull AABB makeBoundingBox()
@@ -993,23 +993,23 @@ public class InkProjectileEntity extends ThrowableProjectile implements IColored
 	}
 	public void setProjectileSize(CommonRecords.ProjectileSizeRecord size)
 	{
-		setProjectileWorldHitboxLength(size.worldHitboxLength());
+		setProjectileWorldHitboxRadius(size.worldHitboxRadius());
 		setProjectileVisualSize(size.visualSize() * 3);
 		setProjectileHitboxRadius(size.hitboxRadius());
 	}
 	public void setProjectileOverallSize(float size)
 	{
-		setProjectileWorldHitboxLength(size);
+		setProjectileWorldHitboxRadius(size);
 		setProjectileVisualSize(size * 3);
 		setProjectileHitboxRadius(size);
 	}
-	public float getProjectileWorldHitboxLength()
+	public float getProjectileWorldHitboxRadius()
 	{
-		return entityData.get(WORLD_HITBOX_LENGTH);
+		return entityData.get(WORLD_HITBOX_RADIUS);
 	}
-	public void setProjectileWorldHitboxLength(float length)
+	public void setProjectileWorldHitboxRadius(float radius)
 	{
-		entityData.set(WORLD_HITBOX_LENGTH, length);
+		entityData.set(WORLD_HITBOX_RADIUS, radius);
 		reapplyPosition();
 		refreshDimensions();
 	}

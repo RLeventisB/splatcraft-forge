@@ -341,11 +341,6 @@ public class RollerItem extends WeaponBaseItem<RollerWeaponSettings>
 	{
 		return EntityAction.hasSpecificEntityAction(entity, RollerItem.InitialSwingAction.class) || entity.getUseItem().equals(stack);
 	}
-	@Override
-	public boolean preventsChargingInkTank(ItemStack stack, LivingEntity entity)
-	{
-		return isMoving;
-	}
 	public static class InitialSwingAction extends EntityActionWithTime
 	{
 		public static final Codec<InitialSwingAction> CODEC = RecordCodecBuilder.create(inst -> inst.group(

@@ -80,7 +80,7 @@ public final class ComponentData<OBJ, COMPONENT>
 	}
 	public boolean doesntHaveOrNot(@NotNull OBJ holder, Predicate<COMPONENT> predicate)
 	{
-		return hasAnd(holder, predicate);
+		return !hasAnd(holder, predicate);
 	}
 	public COMPONENT update(@NotNull OBJ holder, UnaryOperator<COMPONENT> updator)
 	{

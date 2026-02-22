@@ -52,20 +52,35 @@ public class InkProjectileRenderer extends EntityRenderer<InkProjectileEntity> i
 			// render collision sphere!!
 			VertexConsumer builder = buffer.getBuffer(RenderType.LINE_STRIP);
 
-			float radius = entity.getProjectileHitboxRadius();
+			float hitboxRadius = entity.getProjectileHitboxRadius();
+			float worldHitboxRadius = entity.getProjectileWorldHitboxRadius();
 			float step = 45 * (Mth.PI / 180);
 
 			for (float pitch = -Mth.PI; pitch <= Mth.PI; pitch += step)
 			{
 				for (float yaw = -Mth.PI; yaw <= Mth.PI; yaw += step)
 				{
-					float x = Mth.sin(yaw) * -Mth.cos(pitch) * radius;
-					float y = Mth.sin(pitch) * radius;
-					float z = Mth.cos(yaw) * -Mth.cos(pitch) * radius;
+					float x = Mth.sin(yaw) * -Mth.cos(pitch) * hitboxRadius;
+					float y = Mth.sin(pitch) * hitboxRadius;
+					float z = Mth.cos(yaw) * -Mth.cos(pitch) * hitboxRadius;
 
 					builder.addVertex(poseStack.last(), x, y, z).setColor(255, 255, 255, 255).setNormal(poseStack.last(), 1.0F, 0.0F, 0.0F);
-
+					
 					if (Math.abs(pitch) == 180) // only render one line, since we're on the top/bottom of the sphere
+						break;
+				}
+			}
+			for (float pitch = -Mth.PI; pitch <= Mth.PI; pitch += step)
+			{
+				for (float yaw = -Mth.PI; yaw <= Mth.PI; yaw += step)
+				{
+					float x = Mth.sin(yaw) * -Mth.cos(pitch) * worldHitboxRadius;
+					float y = Mth.sin(pitch) * worldHitboxRadius;
+					float z = Mth.cos(yaw) * -Mth.cos(pitch) * worldHitboxRadius;
+
+					builder.addVertex(poseStack.last(), x, y, z).setColor(255, 192, 192, 255).setNormal(poseStack.last(), 0.0F, 0.0F, 1.0F);
+
+					if (Math.abs(pitch) == 180)
 						break;
 				}
 			}

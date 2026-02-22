@@ -182,27 +182,27 @@ public class CommonRecords
 	public record ProjectileSizeRecord(
 		float hitboxRadius,
 		float visualSize,
-		float worldHitboxLength
+		float worldHitboxRadius
 	)
 	{
 		public static final Codec<ProjectileSizeRecord> CODEC = RecordCodecBuilder.create(
 			instance -> instance.group(
 				Codec.FLOAT.optionalFieldOf("hitbox_radius", 2f).forGetter(ProjectileSizeRecord::hitboxRadius),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(t -> Optional.of(t.visualSize())),
-				Codec.FLOAT.optionalFieldOf("world_hitbox_length").forGetter(t -> Optional.of(t.worldHitboxLength()))
+				Codec.FLOAT.optionalFieldOf("world_hitbox_radius").forGetter(t -> Optional.of(t.worldHitboxRadius()))
 			).apply(instance, ProjectileSizeRecord::create)
 		);
 		public static final ProjectileSizeRecord DEFAULT = new ProjectileSizeRecord(2f, 6f, 2f);
-		private static ProjectileSizeRecord create(float hitboxSize, Optional<Float> visualSize, Optional<Float> worldHitboxSize)
+		private static ProjectileSizeRecord create(float hitboxRadius, Optional<Float> visualSize, Optional<Float> worldHitboxRadius)
 		{
-			return new ProjectileSizeRecord(hitboxSize, visualSize.orElse(hitboxSize * 3), worldHitboxSize.orElse(hitboxSize * 2));
+			return new ProjectileSizeRecord(hitboxRadius, visualSize.orElse(hitboxRadius * 3), worldHitboxRadius.orElse(hitboxRadius));
 		}
 		public static ProjectileSizeRecord lerp(float delta, ProjectileSizeRecord size1, ProjectileSizeRecord size2)
 		{
 			return new ProjectileSizeRecord(
 				Mth.lerp(delta, size1.hitboxRadius(), size2.hitboxRadius()),
 				Mth.lerp(delta, size1.visualSize(), size2.visualSize()),
-				Mth.lerp(delta, size1.worldHitboxLength(), size2.worldHitboxLength())
+				Mth.lerp(delta, size1.worldHitboxRadius(), size2.worldHitboxRadius())
 			);
 		}
 		public ProjectileSizeRecord scale(float hitboxScale, float visualScale, float worldScale)
@@ -210,7 +210,7 @@ public class CommonRecords
 			return new ProjectileSizeRecord(
 				hitboxRadius() * hitboxScale,
 				visualSize() * visualScale,
-				worldHitboxLength() * worldScale
+				worldHitboxRadius() * worldScale
 			);
 		}
 		public ProjectileSizeRecord divide(float denominatorHitbox, float denominatorVisual, float denominatorWorld)
@@ -228,7 +228,7 @@ public class CommonRecords
 			instance -> instance.group(
 				Codec.FLOAT.optionalFieldOf("hitbox_radius").forGetter(OptionalProjectileSizeRecord::hitboxRadius),
 				Codec.FLOAT.optionalFieldOf("visual_size").forGetter(OptionalProjectileSizeRecord::visualSize),
-				Codec.FLOAT.optionalFieldOf("world_hitbox_length").forGetter(OptionalProjectileSizeRecord::worldHitboxLength)
+				Codec.FLOAT.optionalFieldOf("world_hitbox_radius").forGetter(OptionalProjectileSizeRecord::worldHitboxLength)
 			).apply(instance, OptionalProjectileSizeRecord::new)
 		);
 		public static final OptionalProjectileSizeRecord DEFAULT = new OptionalProjectileSizeRecord(
@@ -241,7 +241,7 @@ public class CommonRecords
 			return new OptionalProjectileSizeRecord(
 				Optional.of(size.hitboxRadius),
 				Optional.of(size.visualSize),
-				Optional.of(size.worldHitboxLength)
+				Optional.of(size.worldHitboxRadius)
 			);
 		}
 		public static ProjectileSizeRecord mergeWithBase(Optional<OptionalProjectileSizeRecord> modified, ProjectileSizeRecord base)
@@ -253,7 +253,7 @@ public class CommonRecords
 			return new ProjectileSizeRecord(
 				modifiedGet.hitboxRadius().orElse(base.hitboxRadius()),
 				modifiedGet.visualSize().orElse(base.visualSize()),
-				modifiedGet.worldHitboxLength().orElse(base.worldHitboxLength())
+				modifiedGet.worldHitboxLength().orElse(base.worldHitboxRadius())
 			);
 		}
 		public OptionalProjectileSizeRecord scale(float hitboxScale, float visualScale, float worldScale)

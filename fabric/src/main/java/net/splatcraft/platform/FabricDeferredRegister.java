@@ -22,9 +22,9 @@ public class FabricDeferredRegister<T> implements DeferredRegister<T>
 		Holder.Reference<R> holder = (Holder.Reference<R>) Registry.registerForHolder(registry, ResourceLocation.fromNamespaceAndPath(modid, path), r);
 		return new RegistrySupplier<>(holder);
 	}
-
 	@Override
-	public void registerEntries() {
+	public void registerEntries()
+	{
 
 	}
 }

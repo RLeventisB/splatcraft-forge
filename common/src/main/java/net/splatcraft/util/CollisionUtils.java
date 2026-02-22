@@ -35,13 +35,14 @@ import java.util.stream.Collectors;
 
 public class CollisionUtils
 {
-	public static Optional<Quintet<BlockPos, Vec3, Vec3, Boolean, Double>> findFirstBlock(Vec3 position, Vec3 velocity, Vec3 size, List<Pair<BlockPos, VoxelShape>> possibleCollisions, DoubleUnaryOperator orthogonalCoefficientOperator)
+	public static Optional<Quintet<BlockPos, Vec3, Vec3, Boolean, Double>> findFirstBlock(Vec3 position, Vec3 velocity, float radius, List<Pair<BlockPos, VoxelShape>> possibleCollisions, DoubleUnaryOperator orthogonalCoefficientOperator)
 	{
 		// welcome to oshi.util.tuples usage hell where every return value changes so making records for every single one of these will clutter up the file very quickly (i think)
 		// so i will use ambiguously-named methods instead!!! (i miss c# named-tuples :( )
 		// also warning!!!! the "position inside the box that is closest to the segment" is sometimes unreliable
 
 		Vec3 reversedPosition = position.reverse();
+		float radiusSqrd = radius * radius;
 
 		// iterate for every posible collision, and get the closest block to collide with.
 		Triplet<Integer, Double, Quartet<BlockPos, Vec3, Vec3, Boolean>> firstBlockToCollide = findFirstToCollide(possibleCollisions, blockData ->
@@ -51,15 +52,13 @@ public class CollisionUtils
 			{
 				AABB relativeBox = aabb.move(reversedPosition);
 
-				Optional<Triplet<Vec3, Vec3, Double>> collision = isCubeInsideSegmentCollidingWithAABB(velocity, relativeBox, size, orthogonalCoefficientOperator);
-				if (collision.isEmpty()) return null; // no collision
+				Triplet<Vec3, Vec3, Double> collision = calculateOrthogonalPoint(velocity, relativeBox, orthogonalCoefficientOperator);
 
-				// return the coefficient (used as partialTick), relative closest point inside segment, relative closest point inside aabb, and whether the position is inside the box.
-				Triplet<Vec3, Vec3, Double> collisionData = collision.get();
+				if (collision.getA().distanceToSqr(collision.getB()) > radiusSqrd) return null;
 
-				return Pair.of(collisionData.getC(), new Triplet<>(
-					collisionData.getA().add(position), // make these points absolute
-					collisionData.getB().add(position),
+				return Pair.of(collision.getC(), new Triplet<>(
+					collision.getA().add(position), // make these points absolute
+					collision.getB().add(position),
 					relativeBox.contains(Vec3.ZERO)));
 			});
 

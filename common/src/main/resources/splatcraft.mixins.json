@@ -30,6 +30,7 @@
         "CooldownSlotMixin$MinecraftPart",
         "CooldownSlotMixin$MouseHandlerPart",
         "EntityLayerMixin",
+        "EntityMixins$EntityRenderDispatcherMixin",
         "EntityMixins$EntityRendererMixin",
         "GameRendererMixin",
         "ItemRenderingMixins$HeldItemRendererMixin",

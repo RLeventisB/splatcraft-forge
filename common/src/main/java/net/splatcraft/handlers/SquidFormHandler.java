@@ -361,6 +361,8 @@ public class SquidFormHandler
 			Vec3 prev = WeaponHandler.getEntityPrevPos(living).oldOldPosition;
 
 			info.setSquidPitch((float) (Math.abs(living.getY() - prev.y) * living.position().subtract(prev).normalize().y));
+			
+			Components.INK_OVERLAY.set(living, info);
 		}
 	}
 	public static void modifyJumpSpeed(LivingEntity entity)
