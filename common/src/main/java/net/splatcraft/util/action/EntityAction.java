@@ -161,6 +161,7 @@ public interface EntityAction extends Cloneable
 		register("sting_ray_special_action", StingRayAction.class, () -> StingRayAction.CODEC);
 		register("inkjet_special_action", InkjetAction.class, () -> InkjetAction.CODEC);
 		register("ink_storm_special_action", InkStormAction.class, () -> InkStormAction.CODEC);
+		register("squid_roll_action", SquidRollAction.class, () -> SquidRollAction.CODEC);
 	}
 	static <T extends EntityAction> void register(String name, Class<T> clazz, Supplier<Codec<T>> codecSupplier)
 	{

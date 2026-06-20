@@ -16,6 +16,8 @@ import net.splatcraft.Splatcraft;
 import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.platform.Components;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.SquidRollAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -37,43 +39,43 @@ public class InkSquidModel extends EntityModel<LivingEntity>
 	{
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
-		
+
 		PartDefinition squid = partdefinition.addOrReplaceChild("squid", CubeListBuilder.create(), PartPose.offset(0.0F, 24.0F, 0.0F));
-		
+
 		PartDefinition Body = squid.addOrReplaceChild("Body", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -4.0F, -2.0F, 8.0F, 4.0F, 4.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 9).addBox(-6.0F, -5.0F, -6.0F, 12.0F, 5.0F, 4.0F, new CubeDeformation(0.0F))
 			.texOffs(27, 0).addBox(-5.0F, -4.0F, -8.0F, 10.0F, 4.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(32, 6).addBox(-4.0F, -3.0F, -10.0F, 8.0F, 3.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(32, 12).addBox(-2.0F, -2.0F, -12.0F, 4.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
-		
+
 		Body.addOrReplaceChild("eyes", CubeListBuilder.create().texOffs(18, 19).addBox(-2.5F, -5.0F, -2.0F, 5.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 19).addBox(-3.0F, -4.5F, -2.25F, 6.0F, 1.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
-		
+
 		Body.addOrReplaceChild("tentacles", CubeListBuilder.create().texOffs(56, 0).addBox(-2.6593F, -3.75F, 6.6593F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 0).addBox(-1.495F, -3.75F, 5.495F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 0).addBox(-0.1161F, -2.25F, 4.1161F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 0).addBox(-1.495F, -2.25F, 5.495F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 0).addBox(-0.1161F, -3.75F, 4.1161F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F))
 			.texOffs(56, 0).addBox(0.9875F, -3.75F, 2.9671F, 2.0F, 1.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(4.0F, 0.0F, -2.25F, 0.0F, -0.7854F, 0.0F));
-		
+
 		squid.addOrReplaceChild("LeftLimb", CubeListBuilder.create().texOffs(0, 23).addBox(0.0F, -3.0F, 0.0F, 2.0F, 3.0F, 3.0F, new CubeDeformation(0.0F))
 			.texOffs(0, 29).addBox(-1.0F, -3.0F, 3.0F, 3.0F, 3.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, 0.0F, 2.0F));
-		
+
 		squid.addOrReplaceChild("RightLimb", CubeListBuilder.create().texOffs(10, 23).mirror().addBox(-2.0F, -3.0F, 0.0F, 2.0F, 3.0F, 3.0F, new CubeDeformation(0.0F)).mirror(false)
 			.texOffs(14, 29).mirror().addBox(-2.0F, -3.0F, 3.0F, 3.0F, 3.0F, 4.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(-2.0F, 0.0F, 2.0F));
-		
+
 		return LayerDefinition.create(meshdefinition, 64, 64);
 	}
 	@Override
 	public void setupAnim(@NotNull LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch)
 	{
-	
+
 	}
 	@Override
 	public void copyPropertiesTo(@NotNull EntityModel<LivingEntity> other)
 	{
 		super.copyPropertiesTo(other);
-		
+
 		if (other instanceof InkSquidModel otherSquid)
 		{
 			otherSquid.squid.copyFrom(squid);
@@ -86,14 +88,22 @@ public class InkSquidModel extends EntityModel<LivingEntity>
 	{
 		super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTickTime);
 		boolean isSwimming = entity.isSwimming();
-		
+		squid.zRot = 0;
+
 		if (!entity.isPassenger())
 		{
 			InkOverlayData overlayInfo = Components.INK_OVERLAY.getOrCreate(entity);
 			Optional<SquidInfo> infoOptional = Components.SQUID_INFO.getOptional(entity);
 			float angle = Float.NaN;
-			
-			if (infoOptional.isPresent())
+
+			Optional<SquidRollAction> rollActionOptional = EntityAction.getSpecificEntityActionOptional(entity, SquidRollAction.class);
+			if (rollActionOptional.isPresent())
+			{
+//				SquidRollAction rollAction = rollActionOptional.get();
+//				squid.yRot = rollAction.getHorizontalAngle(partialTickTime);
+//				squid.zRot = rollAction.getTime() + partialTickTime;
+			}
+			else if (infoOptional.isPresent())
 			{
 				SquidInfo info = infoOptional.get();
 				if (info.climbedDirection().isPresent())
@@ -124,15 +134,15 @@ public class InkSquidModel extends EntityModel<LivingEntity>
 					angle = -Mth.HALF_PI * (Mth.sqrt(1 - x / SquidInfo.SQUID_SURGE_ENDLAG));
 				}
 			}
-			
+
 			if (Float.isNaN(angle))
 			{
-				angle = isSwimming ? -(entity.getXRot() * Mth.DEG_TO_RAD) : -Mth.lerp(partialTickTime, overlayInfo.getPreviousSquidPitch(), overlayInfo.getSquidPitch()) * 1.1f;
+				angle = isSwimming ? (entity.getXRot() * Mth.DEG_TO_RAD) : -Mth.lerp(partialTickTime, overlayInfo.getPreviousSquidPitch(), overlayInfo.getSquidPitch()) * 1.1f;
 				squid.yRot = 0;
 			}
 			squid.xRot = Mth.clamp(angle, -Mth.HALF_PI, Mth.HALF_PI);
 		}
-		
+
 		if (entity.onGround() || isSwimming)
 		{
 			rightLimb.yRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount / (isSwimming ? 2.2f : 1.5f);

@@ -13,6 +13,7 @@ public class SplatcraftSounds
 	public static SoundEvent squidRevert;
 	public static SoundEvent inkSubmerge;
 	public static SoundEvent inkSurface;
+	public static SoundEvent squidRollJump;
 	public static SoundEvent enemyInkDamage;
 	public static SoundEvent noInkMain;
 	public static SoundEvent noInkSub;
@@ -84,11 +85,12 @@ public class SplatcraftSounds
 		inkedBlockPlace = createSoundEvent("block.inked_block.place");
 		inkedBlockHit = createSoundEvent("block.inked_block.hit");
 		inkedBlockFall = createSoundEvent("block.inked_block.fall");
-		
+
 		squidTransform = createSoundEvent("squid_transform");
 		squidRevert = createSoundEvent("squid_revert");
 		inkSubmerge = createSoundEvent("ink_submerge");
 		inkSurface = createSoundEvent("ink_surface");
+		squidRollJump = createSoundEvent("squid_roll_jump");
 		enemyInkDamage = createSoundEvent("enemy_ink_damage");
 		noInkMain = createSoundEvent("no_ink");
 		noInkSub = createSoundEvent("no_ink_sub");
@@ -125,23 +127,23 @@ public class SplatcraftSounds
 		squidBumperBreak = createSoundEvent("squid_bumper_break");
 		splatSwitchPoweredOn = createSoundEvent("splat_switch_powered_on");
 		splatSwitchPoweredOff = createSoundEvent("splat_switch_powered_off");
-		
+
 		superjumpStart = createSoundEvent("superjump_start");
 		superjumpLand = createSoundEvent("superjump_land");
-		
+
 		specialReady = createSoundEvent("special_ready");
 		specialUsage = createSoundEvent("special_use");
-		
+
 		rankedAdvantage = createSoundEvent("ranked_advantage");
 		rankedNeutral = createSoundEvent("ranked_neutral");
 		rankedDisadvantage = createSoundEvent("ranked_disadvantage");
 		rankedLead = createSoundEvent("ranked_lead");
 		rankedCheckpointPassed = createSoundEvent("ranked_checkpoint_passed");
-		
+
 		stingRayStart = createSoundEvent("sting_ray_prepare");
 		stingRayBeamUse = createSoundEvent("sting_ray_loop");
 		stingRayShockwave = createSoundEvent("sting_ray_loop2");
-		
+
 		inkjetStart = createSoundEvent("inkjet_start");
 		inkjetShot = createSoundEvent("inkjet_shot");
 		inkjetShotExplosion = createSoundEvent("inkjet_shot_explosion");
@@ -149,7 +151,7 @@ public class SplatcraftSounds
 		inkjetBreak = createSoundEvent("inkjet_break");
 		inkjetCounter = createSoundEvent("inkjet_counter");
 		inkjetReturn = createSoundEvent("inkjet_return");
-		
+
 		SOUND_TYPE_INK = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockStep, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 		SOUND_TYPE_SWIMMING = new SoundType(1.0F, 1.0F, inkedBlockBreak, inkedBlockSwim, inkedBlockPlace, inkedBlockHit, inkedBlockFall);
 	}

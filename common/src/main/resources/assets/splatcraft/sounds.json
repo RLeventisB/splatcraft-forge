@@ -290,6 +290,12 @@
             "splatcraft:ink_surface"
         ]
     },
+    "squid_roll_jump": {
+        "subtitle": "subtitle.squid_roll_jump",
+        "sounds": [
+            "splatcraft:squid_roll_jump"
+        ]
+    },
     "enemy_ink_damage": {
         "subtitle": "subtitle.enemy_ink_damage",
         "sounds": [

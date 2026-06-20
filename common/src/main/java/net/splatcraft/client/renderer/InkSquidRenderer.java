@@ -2,6 +2,7 @@ package net.splatcraft.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -20,11 +21,15 @@ import net.minecraft.world.phys.Vec3;
 import net.splatcraft.Splatcraft;
 import net.splatcraft.client.layer.InkSquidColorLayer;
 import net.splatcraft.client.models.InkSquidModel;
+import net.splatcraft.data.capabilities.structs.InkOverlayData;
 import net.splatcraft.data.capabilities.structs.SquidInfo;
 import net.splatcraft.entities.InkSquidEntity;
 import net.splatcraft.platform.Components;
+import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.SquidRollAction;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.Optional;
 
@@ -36,7 +41,7 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	{
 		super(context, new InkSquidModel(context.bakeLayer(InkSquidModel.LAYER_LOCATION)), 0.5f);
 		addLayer(new InkSquidColorLayer(this, context.getModelSet()));
-		
+
 		if (InkSquidRenderer.context == null)
 			InkSquidRenderer.context = context;
 	}
@@ -68,7 +73,8 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	@Override
 	protected void setupRotations(@NotNull LivingEntity entity, @NotNull PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale)
 	{
-		Optional<Direction> directionOptional = Components.SQUID_INFO.getOptional(entity).flatMap(SquidInfo::climbedDirection);
+		Optional<SquidInfo> squidInfoOptional = Components.SQUID_INFO.getOptional(entity);
+		Optional<Direction> directionOptional = squidInfoOptional.flatMap(SquidInfo::climbedDirection);
 		if (directionOptional.isPresent())
 		{
 			yBodyRot = 0;
@@ -76,13 +82,34 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 			float offset = -0.5f * scale;
 			poseStack.translate(normal.getX() * offset, 0, normal.getZ() * offset);
 		}
+		Optional<SquidRollAction> rollActionOptional = EntityAction.getSpecificEntityActionOptional(entity, SquidRollAction.class);
+		if (rollActionOptional.isPresent())
+		{
+			SquidRollAction rollAction = rollActionOptional.get();
+			yBodyRot = rollAction.getHorizontalAngle(partialTick);
+		}
 		super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+		if (rollActionOptional.isPresent())
+		{
+			SquidRollAction rollAction = rollActionOptional.get();
+
+			Optional<InkOverlayData> overlayInfoOptional = Components.INK_OVERLAY.getOptional(entity);
+
+			Vector3f axis = new Vector3f(0, 0, 1);
+			overlayInfoOptional.ifPresent(overlayData ->
+				{
+					float squidPitch = Mth.lerp(partialTick, overlayData.getPreviousSquidPitch(), overlayData.getSquidPitch()) * 1.1f;
+					axis.rotateX(Mth.clamp(squidPitch, -Mth.HALF_PI, Mth.HALF_PI));
+				}
+			);
+			poseStack.mulPose(Axis.of(axis).rotation(rollAction.getTime() + partialTick));
+		}
 	}
 	@Override
 	public void render(@NotNull LivingEntity entity, float p_115309_, float partialTicks, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int light)
 	{
 		super.render(entity, p_115309_, partialTicks, poseStack, bufferSource, light);
-		
+
 		if (entity instanceof InkSquidEntity squid)
 			renderLeash(squid, partialTicks, poseStack, bufferSource);
 	}
@@ -94,10 +121,10 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 	private void renderLeash(InkSquidEntity squid, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferSource)
 	{
 		Entity holder = squid.getLeashHolder();
-		
+
 		if (holder == null)
 			return;
-		
+
 		matrixStack.pushPose();
 		Vec3 vec3 = holder.getRopeHoldPosition(partialTicks);
 		float d0 = (squid.getPreciseBodyRotation(partialTicks) * Mth.DEG_TO_RAD) + Mth.HALF_PI;
@@ -122,17 +149,17 @@ public class InkSquidRenderer extends LivingEntityRenderer<LivingEntity, InkSqui
 		int j = getHolderBlockLightLevel(holder, blockpos1);
 		int k = squid.level().getBrightness(LightLayer.SKY, blockpos);
 		int l = squid.level().getBrightness(LightLayer.SKY, blockpos1);
-		
+
 		for (int i1 = 0; i1 <= 24; ++i1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.025F, f5, f6, i1, false);
 		}
-		
+
 		for (int j1 = 24; j1 >= 0; --j1)
 		{
 			addVertexPair(vertexconsumer, matrix4f, f, f1, f2, i, j, k, l, 0.025F, 0.0F, f5, f6, j1, true);
 		}
-		
+
 		matrixStack.popPose();
 	}
 	protected int getHolderBlockLightLevel(Entity entity, BlockPos pos)

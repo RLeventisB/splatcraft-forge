@@ -1,5 +1,6 @@
 package net.splatcraft.client.handlers;
 
+import com.google.common.math.DoubleMath;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -26,6 +27,7 @@ import net.splatcraft.items.weapons.RollerItem;
 import net.splatcraft.items.weapons.WeaponBaseItem;
 import net.splatcraft.items.weapons.settings.AbstractWeaponSettings;
 import net.splatcraft.network.SplatcraftPacketHandler;
+import net.splatcraft.network.c2s.SendSquidRollDataPacket;
 import net.splatcraft.network.c2s.SendSquidSurgePacket;
 import net.splatcraft.platform.Components;
 import net.splatcraft.platform.Services;
@@ -33,17 +35,24 @@ import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.SplatcraftAttributes;
 import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.action.EntityAction;
+import net.splatcraft.util.action.SquidRollAction;
 import net.splatcraft.util.action.specials.BaseSpecialAction;
 import net.splatcraft.util.action.specials.InkjetAction;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.IEEE754rUtils;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerMovementHandler
 {
+	private static final HashMap<UUID, ArrayDeque<Vector2f>> previousMovementAngles = new HashMap<>();
 	public static final HashMap<Player, Input> unmodifiedInput = new HashMap<>();
 	public static final ResourceLocation SPEED_MOD_IDENTIFIER = ResourceLocation.withDefaultNamespace("generic.movement_speed");
 	private static final AttributeModifier INK_SWIM_SPEED = new AttributeModifier(Splatcraft.identifierOf("ink_movement_boost"), 0D, AttributeModifier.Operation.ADD_VALUE);
@@ -125,6 +134,9 @@ public class PlayerMovementHandler
 					swimAttribute.addTransientModifier(SQUID_SWIM_SPEED);
 			});
 
+			info = tickSquidRollTimers(info);
+			Components.SQUID_INFO.set(player, info);
+
 //			handleSquidMovement(info, player, 0, 0, false, false);
 		}
 
@@ -136,9 +148,10 @@ public class PlayerMovementHandler
 
 		tickWeaponMobilityAttribute(player, speedAttribute);
 
-		if (!player.getAbilities().flying && info.climbedDirection().isEmpty())
-			if (speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
-				player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
+		if (!player.getAbilities().flying &&
+		    info.climbedDirection().isEmpty() &&
+		    speedAttribute.hasModifier(INK_SWIM_SPEED.id()))
+			player.moveRelative((float) player.getAttributeValue(SplatcraftAttributes.inkSwimSpeed) * (player.onGround() ? 1 : 0.75f), new Vec3(player.xxa, 0.0f, player.zza).normalize());
 	}
 	private static void tickWeaponMobilityAttribute(LivingEntity entity, AttributeInstance speedAttribute)
 	{
@@ -189,10 +202,19 @@ public class PlayerMovementHandler
 		{
 			handleSquidMovement(info, player, input.leftImpulse, input.forwardImpulse, player.jumping, player.isShiftKeyDown());
 		}
-		else if (info.squidSurgeState() != 0)
+		else
 		{
-			Components.SQUID_INFO.update(player, v -> v.setSquidSurgeState(0));
-			SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.climbedDirection(), info.getSquidSurgeCharge()));
+			if (info.squidSurgeState() != 0)
+			{
+				Components.SQUID_INFO.update(player, v -> v.setSquidSurgeState(0));
+				SplatcraftPacketHandler.sendToServer(new SendSquidSurgePacket(info.climbedDirection(), info.getSquidSurgeCharge()));
+			}
+			if (previousMovementAngles.containsKey(player.getUUID()))
+			{
+				Components.SQUID_INFO.update(player, v -> v.setIsRollRepeated(false).setRollRepeatPunishmentTime(0).setRollLeniencyTime(0));
+				previousMovementAngles.remove(player.getUUID());
+				SplatcraftPacketHandler.sendToServer(new SendSquidRollDataPacket(info.rollLeniencyTime(), info.rollRepeatPunishmentTime(), info.isRollRepeated()));
+			}
 		}
 
 		if (player.isUsingItem())
@@ -229,6 +251,112 @@ public class PlayerMovementHandler
 				input.shiftKeyDown = !player.getAbilities().flying;
 			}
 		});
+
+		if (info.isSquid())
+			tickSquidRoll(player, input);
+	}
+	private static void tickSquidRoll(Player player, Input input)
+	{
+		Optional<Vector2f> inputAngle = tickSquidRollConditionAndGetAngle(player, input);
+
+		if (inputAngle.isEmpty() || !input.jumping || EntityAction.hasSpecificEntityAction(player, SquidRollAction.class))
+			return;
+
+		Components.SQUID_INFO.update(player, v -> v.doSquidRoll(player, inputAngle.get(), false));
+	}
+	private static Optional<Vector2f> tickSquidRollConditionAndGetAngle(Player player, Input input)
+	{
+		SquidInfo info = Components.SQUID_INFO.get(player);
+
+		if (input.leftImpulse == 0 && input.forwardImpulse == 0)
+		{
+			Components.SQUID_INFO.set(player, info);
+			return Optional.empty();
+		}
+
+		Vector2f inputDirection = getInputDirection(player, input);
+		float inputSquaredSize = inputDirection.lengthSquared();
+
+		ArrayDeque<Vector2f> angleQueue = previousMovementAngles.computeIfAbsent(player.getUUID(), ignored -> new ArrayDeque<>(SquidInfo.ROLL_LENIENCY_FRAMES));
+
+		while (angleQueue.size() >= SquidInfo.ROLL_LENIENCY_FRAMES)
+			angleQueue.removeFirst();
+
+		getMovementDirection(player, info).ifPresent(angleQueue::addLast);
+
+		if (!player.onGround() || angleQueue.isEmpty())
+		{
+			Components.SQUID_INFO.set(player, info);
+			return Optional.empty();
+		}
+
+		float[] previousSquaredSpeeds = ArrayUtils.toPrimitive(angleQueue.stream().map(Vector2f::lengthSquared).toArray(Float[]::new));
+		float maximumPreviousSquaredSpeed = IEEE754rUtils.max(previousSquaredSpeeds);
+
+		if (maximumPreviousSquaredSpeed < SquidInfo.ROLL_REQUIRED_SPEED * SquidInfo.ROLL_REQUIRED_SPEED)
+		{
+			Components.SQUID_INFO.set(player, info);
+			return Optional.empty();
+		}
+
+		for (Vector2f previousMovement : angleQueue)
+		{
+			float cosineSimilarity = previousMovement.dot(inputDirection) / Mth.sqrt(inputSquaredSize * previousMovement.lengthSquared());
+
+			if (cosineSimilarity > Math.cos(SquidInfo.ROLL_MIN_ANGLE_DIFFERENCE)) continue;
+
+			Components.SQUID_INFO.set(player, info.setRollLeniencyTime(SquidInfo.ROLL_LENIENCY_FRAMES));
+			return Optional.of(inputDirection.normalize().mul(Mth.sqrt(maximumPreviousSquaredSpeed)));
+		}
+
+		Components.SQUID_INFO.set(player, info);
+		return Optional.empty();
+	}
+	private static SquidInfo tickSquidRollTimers(SquidInfo info)
+	{
+		if (info.rollLeniencyTime() > 0)
+			info = info.setRollLeniencyTime(info.rollLeniencyTime() - 1);
+		if (info.rollRepeatPunishmentTime() > 0)
+		{
+			info = info.setRollRepeatPunishmentTime(info.rollRepeatPunishmentTime() - 1);
+			if (info.rollRepeatPunishmentTime() <= 0)
+				info = info.setIsRollRepeated(false);
+		}
+		return info;
+	}
+	private static @NotNull Vector2f getInputDirection(Player player, Input input)
+	{
+		Vector2f inputDirection = new Vector2f(input.leftImpulse, input.forwardImpulse);
+		float yaw = player.getYRot() * Mth.DEG_TO_RAD;
+		float f = Mth.sin(yaw);
+		float f1 = Mth.cos(yaw);
+		return new Vector2f(inputDirection.x * f1 - inputDirection.y * f, inputDirection.y * f1 + inputDirection.x * f);
+	}
+	private static Optional<Vector2f> getMovementDirection(Player player, SquidInfo info)
+	{
+		Vector3f deltaMovement = player.getDeltaMovement().toVector3f();
+		Vector2f resultantVector;
+		if (info.climbedDirection().isPresent())
+		{
+			Direction direction = info.climbedDirection().get();
+			float horizontalCoefficient = direction.getAxisDirection().getStep();
+			if (direction.getAxis() == Direction.Axis.X)
+			{
+				resultantVector = new Vector2f(deltaMovement.y, deltaMovement.z);
+			}
+			else
+			{
+				resultantVector = new Vector2f(deltaMovement.y, deltaMovement.x);
+			}
+		}
+		else
+		{
+			resultantVector = new Vector2f(deltaMovement.x, deltaMovement.z);
+		}
+
+		if (DoubleMath.fuzzyEquals(resultantVector.lengthSquared(), 0, 10e-7)) return Optional.empty();
+
+		return Optional.of(resultantVector);
 	}
 	private static void copyTo(Input from, Input to)
 	{

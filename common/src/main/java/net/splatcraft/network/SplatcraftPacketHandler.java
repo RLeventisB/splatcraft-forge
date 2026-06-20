@@ -40,10 +40,15 @@ public class SplatcraftPacketHandler
 		registerMessage(UpdateBlockColorPacket.ID, UpdateBlockColorPacket.class, UpdateBlockColorPacket::decode);
 		registerMessage(DodgeRollPacket.ID, DodgeRollPacket.class, DodgeRollPacket::decode);
 		registerMessage(OverwriteJumpingStatePacket.ID, OverwriteJumpingStatePacket.class, OverwriteJumpingStatePacket::decode);
-		
+
 		registerMessage(SendSquidSurgePacket.ID, SendSquidSurgePacket.class, SendSquidSurgePacket::decode);
 		registerMessage(UpdateSquidSurgePacket.ID, UpdateSquidSurgePacket.class, UpdateSquidSurgePacket::decode);
-		
+
+		registerMessage(SendSquidRollDataPacket.ID, SendSquidRollDataPacket.class, SendSquidRollDataPacket::decode);
+		registerMessage(SendSquidRollPacket.ID, SendSquidRollPacket.class, SendSquidRollPacket::decode);
+		registerMessage(UpdateSquidRollDataPacket.ID, UpdateSquidRollDataPacket.class, UpdateSquidRollDataPacket::decode);
+		registerMessage(UpdateSquidRollPacket.ID, UpdateSquidRollDataPacket.class, UpdateSquidRollDataPacket::decode);
+
 		registerMessage(CraftWeaponPacket.ID, CraftWeaponPacket.class, CraftWeaponPacket::decode);
 		registerMessage(SendColorRegistryPacket.ID, SendColorRegistryPacket.class, SendColorRegistryPacket::decode);
 		registerMessage(UpdateInkOverlayPacket.ID, UpdateInkOverlayPacket.class, UpdateInkOverlayPacket::decode);
@@ -69,7 +74,7 @@ public class SplatcraftPacketHandler
 		registerMessage(SendSquidDisablePacket.ID, SendSquidDisablePacket.class, SendSquidDisablePacket::decode);
 		registerMessage(SendEnemyInkDamagePacket.ID, SendEnemyInkDamagePacket.class, SendEnemyInkDamagePacket::decode);
 		registerMessage(SendPlayerHitPacket.ID, SendPlayerHitPacket.class, SendPlayerHitPacket::decode);
-		
+
 		//Stage Pad packets
 		registerMessage(SuperJumpToStagePacket.ID, SuperJumpToStagePacket.class, SuperJumpToStagePacket::decode);
 		registerMessage(SendStageWarpDataToPadPacket.ID, SendStageWarpDataToPadPacket.class, SendStageWarpDataToPadPacket::decode);
