@@ -28,8 +28,8 @@
             "delay_to_decrease_airborne_deviation": 40,
             "time_to_decrease_airborne_deviation": 30
         },
-        "ink_consumption": 8.0,
-        "ink_recovery_cooldown": 50
+        "ink_consumption": 9.12,
+        "ink_recovery_cooldown": 60
     },
     "blaster_data": {
         "damage_data": {

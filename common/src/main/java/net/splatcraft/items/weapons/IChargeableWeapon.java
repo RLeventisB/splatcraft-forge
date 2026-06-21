@@ -18,7 +18,7 @@ public interface IChargeableWeapon
 	int getStorageTime(ItemStack stack);
 	default void retrieveCharge(LivingEntity entity, ItemStack stack, float charge)
 	{
-		stack.update(SplatcraftComponents.CHARGE_DATA, SplatcraftComponents.ChargeData.DEFAULT, v -> v.withCharge(charge, charge));
+		stack.update(SplatcraftComponents.CHARGE_DATA, SplatcraftComponents.ChargeData.DEFAULT, v -> v.withCharge(charge, charge).registerChargeDeltaTime(1));
 	}
 	default boolean canStore(ItemStack stack)
 	{

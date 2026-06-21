@@ -29,10 +29,7 @@ import org.joml.Vector2f;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 import java.util.stream.Stream;
 
 public class CodecUtils
@@ -446,8 +443,8 @@ public class CodecUtils
 			if (obj == null || obj.getClass() != getClass()) return false;
 			var that = (MapCodecNotToBeConfusedWithAMapCodec) obj;
 			return Objects.equals(keyCodec, that.keyCodec) &&
-				Objects.equals(elementCodec, that.elementCodec) &&
-				Objects.equals(mapCreator, that.mapCreator);
+			       Objects.equals(elementCodec, that.elementCodec) &&
+			       Objects.equals(mapCreator, that.mapCreator);
 		}
 		@Override
 		public int hashCode()
@@ -506,7 +503,7 @@ public class CodecUtils
 			if (obj == null || obj.getClass() != getClass()) return false;
 			var that = (CollectionCodec) obj;
 			return Objects.equals(elementCodec, that.elementCodec) &&
-				Objects.equals(collectionCreator, that.collectionCreator);
+			       Objects.equals(collectionCreator, that.collectionCreator);
 		}
 		@Override
 		public int hashCode()

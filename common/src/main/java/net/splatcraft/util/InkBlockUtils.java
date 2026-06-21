@@ -18,18 +18,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.splatcraft.Splatcraft;
@@ -66,12 +62,12 @@ public class InkBlockUtils
 	public static BlockInkedResult playerInkBlock(@Nullable Player player, Level world, BlockPos pos, InkColor color, Direction direction, InkType inkType, float damage)
 	{
 		BlockInkedResult inked = inkBlock(world, pos, color, direction, inkType, damage);
-		
+
 		if (player != null && inked == BlockInkedResult.SUCCESS)
 		{
 			player.awardStat(SplatcraftStats.BLOCKS_INKED);
 		}
-		
+
 		return inked;
 	}
 	public static Direction getRandomInkedFace(Level world, BlockPos pos)
@@ -94,10 +90,10 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
-		
+
 		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
-		
+
 		if (worldInk.isInkedAny(offset))
 		{
 			if (worldInk.clearInk(offset, index, removePermanent))
@@ -109,7 +105,7 @@ public class InkBlockUtils
 					else
 						ChunkInkHandler.addInkToRemove(world, pos);
 				}
-				
+
 				return true;
 			}
 		}
@@ -119,7 +115,7 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return false;
-		
+
 		ChunkInk worldInk = ChunkInkCapability.getOrCreate(world, pos);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
@@ -161,11 +157,11 @@ public class InkBlockUtils
 	{
 		if (!(weaponStack.getItem() instanceof WeaponBaseItem<?> weaponItem))
 			return;
-		
+
 		ResourceLocation weaponId = weaponItem.getSettingsAndValidId(weaponStack).getFirst();
 		if (weaponId == null)
 			return;
-		
+
 		// todo: OPTIMIZE THIS!!!! i suspect this will be pretty expensive
 		ItemStack providerStack = CommonUtils.getStackAndIndexInInventory(entity, stack ->
 		{
@@ -178,7 +174,7 @@ public class InkBlockUtils
 		}).getFirst();
 		if (providerStack.isEmpty())
 			return;
-		
+
 		SpecialProviderItem providerItem = (SpecialProviderItem) providerStack.getItem();
 		providerItem.setData(providerStack, applier.apply(providerItem.getData(providerStack)));
 	}
@@ -190,10 +186,10 @@ public class InkBlockUtils
 	{
 		if (isUninkable(world, pos, Direction.from3DDataValue(index)))
 			return BlockInkedResult.FAIL;
-		
+
 		if (!world.getEntitiesOfClass(SpawnShieldEntity.class, new AABB(pos), v -> !ColorUtils.colorEquals(world, pos, ColorUtils.getEntityColor(v), color)).isEmpty())
 			return BlockInkedResult.FAIL;
-		
+
 		BlockState state = world.getBlockState(pos);
 		if (state.getBlock() instanceof IColoredBlock coloredBlock)
 		{
@@ -201,37 +197,37 @@ public class InkBlockUtils
 			if (result != BlockInkedResult.PASS)
 				return result;
 		}
-		
+
 		if (!SplatcraftGameRules.getLocalizedRule(world, pos, SplatcraftGameRules.INKABLE_GROUND))
 			return BlockInkedResult.FAIL;
-		
+
 		LevelChunk chunk = world.getChunkAt(pos);
 		ChunkInk worldInk = ChunkInkCapability.getOrCreate(chunk);
 		RelativeBlockPos offset = RelativeBlockPos.fromAbsolute(pos);
 		ChunkInk.BlockEntry entry = worldInk.getInk(offset);
-		
+
 		boolean isInked = entry != null && entry.isInked(index);
 		if (entry != null && entry.immutable)
 			return BlockInkedResult.IS_PERMANENT;
-		
+
 		boolean sameColor = isInked && entry.color(index) == color;
-		
+
 		if (sameColor && entry.type(index) == inkType)
 			return BlockInkedResult.ALREADY_INKED;
-		
+
 		worldInk.ink(offset, index, color, inkType);
 		chunk.setUnsaved(true);
-		
+
 		if (index == 1) // facing up
 		{
 			if (SplatcraftGameRules.getLocalizedRule(world, pos.above(), SplatcraftGameRules.INK_DESTROYS_FOLIAGE) &&
-				isBlockFoliage(world.getBlockState(pos.above())))
+			    isBlockFoliage(world.getBlockState(pos.above())))
 				world.destroyBlock(pos.above(), true);
 		}
-		
+
 		if (!world.isClientSide())
 			ChunkInkHandler.addInkToUpdate(world, pos);
-		
+
 		return sameColor ? BlockInkedResult.ALREADY_INKED : BlockInkedResult.SUCCESS;
 	}
 	public static void forEachInkedBlockInBounds(Level world, final AABB bounds, InkedBlockConsumer action)
@@ -274,18 +270,18 @@ public class InkBlockUtils
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;
-		
+
 		return ChunkInkCapability.getOrCreate(world, pos).getInk(RelativeBlockPos.fromAbsolute(pos));
 	}
 	public static @Nullable ChunkInk.InkEntry getInkInFace(Level world, BlockPos pos, Direction direction)
 	{
 		if (!ChunkInkCapability.hasAndNotEmpty(world, pos))
 			return null;
-		
+
 		ChunkInk.BlockEntry inkBlock = getInkBlock(world, pos);
 		if (inkBlock == null)
 			return null;
-		
+
 		return inkBlock.get(direction.get3DDataValue());
 	}
 	public static boolean isInked(Level world, BlockPos pos, Direction direction)
@@ -308,10 +304,10 @@ public class InkBlockUtils
 	{
 		if (InkedBlock.isTouchingLiquid(world, pos, direction))
 			return true;
-		
+
 		if (isBlockUninkable(world, pos))
 			return true;
-		
+
 		return blockIsFullyObstructedOnFace(world, pos, direction, checkObstruction);
 	}
 	private static boolean blockIsFullyObstructedOnFace(Level world, BlockPos pos, Direction direction, boolean checkObstruction)
@@ -319,36 +315,36 @@ public class InkBlockUtils
 		BlockPos occludingPos = pos.relative(direction);
 		if (canInkPassthrough(world, occludingPos))
 			return false;
-		
+
 		if (world.getBlockState(occludingPos).is(SplatcraftTags.Blocks.BLOCKS_INK))
 			return true;
-		
+
 		if (!checkObstruction)
 			return false;
-		
+
 		BlockState blockState = world.getBlockState(pos);
 		BlockState occludingBlockState = world.getBlockState(occludingPos);
 		VoxelShape blockCollision = blockState.getCollisionShape(world, pos).getFaceShape(direction);
 		VoxelShape occludingCollision = occludingBlockState.getCollisionShape(world, occludingPos).getFaceShape(direction.getOpposite());
-		
+
 		return Shapes.blockOccudes(blockCollision, occludingCollision, direction);
 	}
 	public static boolean isBlockUninkable(Level world, BlockPos pos)
 	{
 		BlockState state = world.getBlockState(pos);
-		
+
 		if (state.is(SplatcraftTags.Blocks.UNINKABLE_BLOCKS))
 			return true;
-		
+
 		if (!state.is(SplatcraftTags.Blocks.RENDER_AS_CUBE) && state.getRenderShape() != RenderShape.MODEL)
 			return true;
-		
+
 		return canInkPassthrough(world, pos);
 	}
 	public static boolean canInkPassthrough(Level world, BlockPos pos)
 	{
 		BlockState state = world.getBlockState(pos);
-		
+
 		return state.getCollisionShape(world, pos).isEmpty() || world.getBlockState(pos).is(SplatcraftTags.Blocks.INK_PASSTHROUGH);
 	}
 	public static boolean canSquidHide(LivingEntity entity)
@@ -357,70 +353,42 @@ public class InkBlockUtils
 		{
 			return false;
 		}
-		
+
 		SquidInfo info = Components.SQUID_INFO.get(entity);
 		if (info == null)
 			return false;
-		
+
 		if (info.squidSurgeState() >= SquidInfo.MIN_SQUID_SURGE_CHARGE)
 			return false;
-		
+
 		return !entity.isSpectator() && (canSquidSwim(entity) || info.climbedDirection().isPresent());
 	}
 	public static boolean canSquidSwim(LivingEntity entity)
 	{
 		boolean canSwim = false;
-		
-		Optional<BlockPos> down = entity.mainSupportingBlockPos;
+
+		Optional<BlockPos> down = CollisionUtils.getBlockBelowOrSupportingPos(entity);
 		if (down.isEmpty())
 			return false;
 		Block standingBlock = entity.level().getBlockState(down.get()).getBlock();
-		
+
 		if (isInked(entity.level(), down.get(), Direction.UP))
 			return ColorUtils.colorEquals(entity.level(), down.get(), ColorUtils.getEntityColor(entity), getInkBlock(entity.level(), down.get()).color(Direction.UP.get3DDataValue()));
-		
+
 		if (standingBlock instanceof IColoredBlock coloredBlock)
 			canSwim = coloredBlock.canSwim();
-		
+
 		return canSwim && ColorUtils.colorEquals(entity, entity.level().getBlockEntity(down.get()));
-	}
-	public static Optional<BlockPos> getBlockBelowPos(Entity entity)
-	{
-		return getBlockBelowPos(entity, 0.1);
-	}
-	public static Optional<BlockPos> getBlockBelowPos(Entity entity, double maxDepth)
-	{
-		return getBlockBelowPos(entity.position(), entity.level(), maxDepth, entity);
-	}
-	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth)
-	{
-		return getBlockBelowPos(position, level, maxDepth, null);
-	}
-	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth, Entity clipContextEntity)
-	{
-		BlockHitResult result = level.clip(new ClipContext(position, position.subtract(0, maxDepth, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
-		if (result.getType() == HitResult.Type.MISS)
-			return Optional.empty();
-		return Optional.of(result.getBlockPos());
-	}
-	public static Optional<Float> getDistanceToFloor(Vec3 startPoint, Level level, float maxDepth, Entity clipContextEntity)
-	{
-		Vec3 endPoint = startPoint.subtract(0, maxDepth, 0);
-		BlockHitResult result = level.clip(new ClipContext(startPoint, endPoint, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
-		
-		if (result.getType() == HitResult.Type.MISS)
-			return Optional.empty();
-		return Optional.of((float) startPoint.distanceTo(result.getLocation()));
 	}
 	public static boolean onEnemyInk(LivingEntity entity)
 	{
 		if (!entity.onGround())
 			return false;
-		
-		Optional<BlockPos> pos = entity.mainSupportingBlockPos;
+
+		Optional<BlockPos> pos = CollisionUtils.getBlockBelowOrSupportingPos(entity);
 		if (pos.isEmpty())
 			return false;
-		
+
 		if (isInked(entity.level(), pos.get(), Direction.UP))
 			return !canSquidSwim(entity);
 		else if (entity.level().getBlockState(pos.get()).getBlock() instanceof IColoredBlock coloredBlock)
@@ -431,16 +399,16 @@ public class InkBlockUtils
 	{
 		if (onEnemyInk(entity))
 			return Optional.empty();
-		
+
 		final Vector2f rotatedImpulse = PlayerMovementHandler.getRotatedImpulse(movementSideways, movementForward, entity.getYRot());
 		final AABB originalBox = entity.getBoundingBox();
 		final Vec3 deltaMovement = entity.getDeltaMovement().add(0, entity.isNoGravity() ? 0 : entity.getGravity(), 0);
-		
+
 		AABB extendedBox = originalBox.expandTowards(deltaMovement);
 //		CommonUtils.showBoundingBoxCorners(entity.level(), extendedBox);
-		
+
 		Optional<Triplet<Direction, VoxelShape, BlockPos>> collisionData = checkSquidCollisions(entity, extendedBox);
-		
+
 		// this normally executes if the player is on a wall but is not inputting anything / only going upwards, since going downwards is treated like going out of the wall
 		if (collisionData.isEmpty())
 		{
@@ -451,7 +419,7 @@ public class InkBlockUtils
 				{
 					Vec3 normal = Vec3.atLowerCornerOf(previousDirection.get().getNormal()).scale(-0.1);
 					extendedBox = originalBox.expandTowards(normal);
-					
+
 					collisionData = checkSquidCollisions(entity, extendedBox);
 					if (!collisionData.map(Triplet::getA).equals(previousDirection))
 						return Optional.empty();
@@ -487,35 +455,35 @@ public class InkBlockUtils
 	{
 		final Direction.Axis[] horizontalAxis = {Direction.Axis.X, Direction.Axis.Z};
 		final VoxelShape collisionShape = Shapes.create(extendedBox);
-		
+
 		double minDistanceToBlock = Double.POSITIVE_INFINITY;
-		
+
 		Direction collidedDirection = null;
 		VoxelShape usedJoined = null;
 		BlockPos usedBlockPos = null;
 		final BlockCollisions<Pair<BlockPos, VoxelShape>> collisions = new BlockCollisions<>(entity.level(), entity, extendedBox, false, Pair::of);
-		
+
 		while (collisions.hasNext())
 		{
 			Pair<BlockPos, VoxelShape> collidedBlock = collisions.next();
 			BlockPos blockPos = collidedBlock.getFirst();
 			VoxelShape voxelShape = collidedBlock.getSecond();
-			
+
 			if (voxelShape.isEmpty())
 				continue;
-			
+
 			VoxelShape joined = Shapes.join(voxelShape, collisionShape, BooleanOp.AND)
 				.move(
 					-entityCenter.x(), -entityCenter.y(), -entityCenter.z());
-			
+
 			if (joined.isEmpty())
 				continue;
-			
+
 			for (Direction.Axis axis : horizontalAxis)
 			{
 				double minDist = joined.min(axis);
 				double maxDist = joined.max(axis);
-				
+
 				// since the joined shape is relative to the entity, having the same sign in an axis means the collision on the given axis was on a face, or something
 				if (Math.signum(minDist) == Math.signum(maxDist))
 				{
@@ -524,18 +492,18 @@ public class InkBlockUtils
 					if (distanceToBlock < minDistanceToBlock)
 					{
 						minDistanceToBlock = distanceToBlock;
-						
+
 						Direction.AxisDirection axisDirection = Math.signum(minDist) == 1 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE;
 						Direction directionCandidate = Direction.fromAxisAndDirection(axis, axisDirection).getOpposite();
-						
+
 						ChunkInk.BlockEntry inkData = getInkBlock(entity.level(), blockPos);
 						if (inkData == null || inkData.get(directionCandidate.get3DDataValue()) == null ||
-							!ColorUtils.colorEquals(entity.level(), blockPos, ColorUtils.getEntityColor(entity), inkData.color(directionCandidate.get3DDataValue()))
+						    !ColorUtils.colorEquals(entity.level(), blockPos, ColorUtils.getEntityColor(entity), inkData.color(directionCandidate.get3DDataValue()))
 						)
 						{
 							continue;
 						}
-						
+
 						collidedDirection = directionCandidate;
 						usedJoined = joined;
 						usedBlockPos = blockPos;
@@ -559,7 +527,7 @@ public class InkBlockUtils
 			for (InkType t : InkType.values())
 				if (t.getRepItem().equals(stack.getItem()))
 					return t;
-		
+
 		return InkType.NORMAL;
 	}
 	public static boolean hasInkType(ItemStack stack)

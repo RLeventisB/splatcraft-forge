@@ -18,7 +18,8 @@
     },
     "charge": {
         "charge_time_ticks": 92,
-        "charge_storage_ticks": 75
+        "charge_storage_ticks": 75,
+        "charge_storage_shooting_lag": 31
     },
     "full_damage_to_mobs": false,
     "mobility": 0.15

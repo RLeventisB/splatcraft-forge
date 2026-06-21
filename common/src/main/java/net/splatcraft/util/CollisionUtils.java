@@ -14,9 +14,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.*;
 import net.splatcraft.mixin.accessors.VoxelShapeAccessor;
@@ -502,5 +505,48 @@ public class CollisionUtils
 		double t = Math.max(0.0, rayDirection.dot(relativePoint) / rayDirection.lengthSqr());
 
 		return rayDirection.scale(t);
+	}
+	public static Optional<BlockPos> getBlockBelowPos(Entity entity)
+	{
+		return getBlockBelowPos(entity, 0.1);
+	}
+	public static Optional<BlockPos> getBlockBelowPos(Entity entity, double maxDepth)
+	{
+		return getBlockBelowPos(entity.position(), entity.level(), maxDepth, entity);
+	}
+	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth)
+	{
+		return getBlockBelowPos(position, level, maxDepth, null);
+	}
+	public static Optional<BlockPos> getBlockBelowPos(Vec3 position, Level level, double maxDepth, Entity clipContextEntity)
+	{
+		BlockHitResult result = level.clip(new ClipContext(position, position.subtract(0, maxDepth, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
+		if (result.getType() == HitResult.Type.MISS)
+			return Optional.empty();
+		return Optional.of(result.getBlockPos());
+	}
+	public static Optional<BlockPos> getBlockBelowOrSupportingPos(Entity entity)
+	{
+		return getBlockBelowOrSupportingPos(entity, 0.1);
+	}
+	public static Optional<BlockPos> getBlockBelowOrSupportingPos(Entity entity, double maxDepth)
+	{
+		if (entity.mainSupportingBlockPos.isPresent())
+		{
+			return entity.mainSupportingBlockPos;
+		}
+		BlockHitResult result = entity.level().clip(new ClipContext(entity.position(), entity.position().subtract(0, maxDepth, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.of(entity)));
+		if (result.getType() == HitResult.Type.MISS)
+			return Optional.empty();
+		return Optional.of(result.getBlockPos());
+	}
+	public static Optional<Float> getDistanceToFloor(Vec3 startPoint, Level level, float maxDepth, Entity clipContextEntity)
+	{
+		Vec3 endPoint = startPoint.subtract(0, maxDepth, 0);
+		BlockHitResult result = level.clip(new ClipContext(startPoint, endPoint, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, clipContextEntity == null ? CollisionContext.empty() : CollisionContext.of(clipContextEntity)));
+
+		if (result.getType() == HitResult.Type.MISS)
+			return Optional.empty();
+		return Optional.of((float) startPoint.distanceTo(result.getLocation()));
 	}
 }

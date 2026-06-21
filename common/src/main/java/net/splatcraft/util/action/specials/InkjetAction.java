@@ -196,7 +196,7 @@ public class InkjetAction extends BaseSpecialAction implements RenderableEntityA
 
 		float maxDistance = specialData.thrustData().getMaxKey();
 		Vec3 startPoint = entity.position().add(entity.getDeltaMovement().scale(3f));
-		Optional<Float> distanceToFloor = InkBlockUtils.getDistanceToFloor(startPoint, entity.level(), maxDistance, entity);
+		Optional<Float> distanceToFloor = CollisionUtils.getDistanceToFloor(startPoint, entity.level(), maxDistance, entity);
 		float yDepth = distanceToFloor.orElse(maxDistance);
 		impulseY += distanceToFloor
 			.map(distance -> specialData.thrustData().getValue(distance))

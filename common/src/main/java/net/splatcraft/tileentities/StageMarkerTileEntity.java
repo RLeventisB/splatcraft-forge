@@ -32,6 +32,7 @@ import net.splatcraft.dummys.ISplatcraftForgeBlockEntityDummy;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.registries.SplatcraftTileEntities;
 import net.splatcraft.util.CodecUtils;
+import net.splatcraft.util.CollisionUtils;
 import net.splatcraft.util.CommonUtils;
 import net.splatcraft.util.CommonUtils.ReseteableMemoizedSupplier;
 import net.splatcraft.util.InkBlockUtils;
@@ -55,7 +56,7 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 		// returns a list of list of vectors to render as a line
 		// the vectors in a list represent the corners that are facing upwards and are in the border of the zone blocks
 		// nvm that is too complex
-		
+
 		BlockPos minPos = getMinBoundPos();
 		BlockPos maxPos = getMaxBoundPos();
 		float maxDepth = maxPos.getY() - minPos.getY() + 1;
@@ -65,14 +66,14 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 			new Vec3(maxPos.getX() + 1 - 10e-5, maxPos.getY() + 1, maxPos.getZ() + 1 - 10e-5),
 			new Vec3(minPos.getX() + 10e-5, maxPos.getY() + 1, maxPos.getZ() + 1 - 10e-5)
 		};
-		
+
 		ImmutableList.Builder<List<Vector3f>> builder = ImmutableList.builder();
 		ImmutableList.Builder<Vector3f> vertexBuilder = ImmutableList.builder();
 		BlockPos offsettedPos = getOffsetedPosition();
 		for (int i = 0; i < 4; i++)
 		{
 			Vec3 corner = corners[i];
-			float distanceToFloor = InkBlockUtils.getDistanceToFloor(corner, level, maxDepth, null).orElse(maxDepth);
+			float distanceToFloor = CollisionUtils.getDistanceToFloor(corner, level, maxDepth, null).orElse(maxDepth);
 			Vector3f point = new Vector3f((float) (corner.x - offsettedPos.getX()), (float) (corner.y - offsettedPos.getY() - distanceToFloor), (float) (corner.z - offsettedPos.getZ()));
 			vertexBuilder.add(point);
 		}
@@ -290,7 +291,7 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 	public void notifyChange()
 	{
 		relativePositionSupplier.reset();
-		
+
 		switch (type)
 		{
 			case SPLAT_ZONE ->
@@ -300,7 +301,7 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 				minBoundSupplier.reset();
 				maxBoundSupplier.reset();
 				renderingCorners.reset();
-				
+
 				StageMarkerBlock.updateSplatZoneMap(this);
 			}
 			case RAINMAKER_SPAWN ->
@@ -321,9 +322,9 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 	{
 		if (!active)
 			return;
-		
+
 		Optional<InkColor> currentColor = getCurrentColor();
-		
+
 		Iterable<BlockPos> blocks = BlockPos.betweenClosed(getMinBoundPos(), getMaxBoundPos());
 		List<BlockPos> blocksWithExposedUpFace = new ArrayList<>();
 		Map<InkColor, Float> colorCount = new HashMap<>();
@@ -342,20 +343,20 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 				totalFaces += 1;
 			}
 		}
-		
+
 		int finalTotalFaces = totalFaces;
 		colorCount.replaceAll((color, count) -> count / finalTotalFaces);
-		
+
 		if (colorCount.isEmpty())
 		{
 			setCurrentColor(null);
 			level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
 			return;
 		}
-		
+
 		InkColor mostCoveredColor = null;
 		float mostCoveredPercent = 0f;
-		
+
 		for (Entry<InkColor, Float> entry : colorCount.entrySet())
 		{
 			if (entry.getValue() > mostCoveredPercent)
@@ -364,7 +365,7 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 				mostCoveredPercent = entry.getValue();
 			}
 		}
-		
+
 		if (currentColor.isEmpty())
 		{
 			if (mostCoveredPercent > 0.7f)
@@ -413,17 +414,17 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 	{
 		BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("RelativePos")).ifSuccess(pos -> offset = pos);
 		MarkerType.CODEC.parse(NbtOps.INSTANCE, nbt.get("MarketType")).ifSuccess(type -> this.type = type);
-		
+
 		intDatas = nbt.getIntArray("IntData");
 		ListTag list = nbt.getList("FloatData", FloatTag.TAG_FLOAT);
 		active = nbt.getBoolean("Active");
-		
+
 		floatDatas = new float[list.size()];
 		for (int i = 0; i < list.size(); i++)
 		{
 			floatDatas[i] = ((FloatTag) list.get(i)).getAsFloat();
 		}
-		
+
 		super.loadAdditional(nbt, wrapperLookup);
 	}
 	@Override
@@ -441,10 +442,10 @@ public class StageMarkerTileEntity extends BlockEntity implements ISplatcraftFor
 		{
 			list.add(FloatTag.valueOf(data));
 		}
-		
+
 		nbt.put("FloatData", list);
 		nbt.putBoolean("Active", active);
-		
+
 		super.saveAdditional(nbt, wrapperLookup);
 	}
 	public BlockPos getMinBoundPos()

@@ -38,10 +38,7 @@ import net.splatcraft.platform.event.PlayerEvents;
 import net.splatcraft.platform.event.TickEvents;
 import net.splatcraft.registries.*;
 import net.splatcraft.tileentities.InkColorTileEntity;
-import net.splatcraft.util.ColorUtils;
-import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.EntityStoredCharge;
-import net.splatcraft.util.InkBlockUtils;
+import net.splatcraft.util.*;
 import net.splatcraft.util.structs.InkColor;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -158,7 +155,7 @@ public class SquidFormHandler
 	}
 	private static void doActionsWithBlockBelow(Player player)
 	{
-		Optional<BlockPos> posBelowOptional = InkBlockUtils.getBlockBelowPos(player);
+		Optional<BlockPos> posBelowOptional = CollisionUtils.getBlockBelowOrSupportingPos(player);
 		if (posBelowOptional.isEmpty())
 			return;
 
@@ -361,7 +358,7 @@ public class SquidFormHandler
 			Vec3 prev = WeaponHandler.getEntityPrevPos(living).oldOldPosition;
 
 			info.setSquidPitch((float) (Math.abs(living.getY() - prev.y) * living.position().subtract(prev).normalize().y));
-			
+
 			Components.INK_OVERLAY.set(living, info);
 		}
 	}

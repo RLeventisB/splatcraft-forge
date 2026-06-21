@@ -1,7 +1,6 @@
 package net.splatcraft.entities.subs;
 
 import com.mojang.datafixers.util.Pair;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -11,7 +10,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -25,14 +23,10 @@ import net.splatcraft.mixin.accessors.EntityAccessor;
 import net.splatcraft.registries.SplatcraftItems;
 import net.splatcraft.registries.SplatcraftSounds;
 import net.splatcraft.util.CommonUtils;
-import net.splatcraft.util.InkBlockUtils;
 import net.splatcraft.util.InkDamageUtils;
 import net.splatcraft.util.InkExplosion;
 import net.splatcraft.util.structs.AttackId;
-import net.splatcraft.util.structs.BlockInkedResult;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Optional;
 
 public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRecord> implements ObjectCollideListenerEntity, IBouncyEntity
 {
@@ -99,7 +93,7 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 
 		if (!level().isClientSide())
 		{
-			doTrail(spd > 1.0E-3, settings);
+			doTrail(settings);
 		}
 
 		if (spd > 0.01 && fuseTime % (int) Math.max(1, (1 - spd) * 10) == 0)
@@ -182,40 +176,10 @@ public class CurlingBombEntity extends AbstractSubWeaponEntity<CurlingBombDataRe
 		horizontalFriction = Mth.clamp(horizontalFriction, 0, 1);
 		return new Vec3(horizontalFriction, 1f, horizontalFriction);
 	}
-	private void doTrail(boolean fastEnough, SubWeaponSettings<CurlingBombDataRecord> settings)
+	private void doTrail(SubWeaponSettings<CurlingBombDataRecord> settings)
 	{
 		float trailWidth = settings.subDataRecord.trailSizeRange().getValue(getCookProgress());
-		float trailStep = CommonUtils.calculateStep(trailWidth, Mth.SQRT_OF_TWO / 2f);
-		if (fastEnough)
-		{
-			Vec3 normalized = getDeltaMovement().multiply(1, 0, 1).normalize();
-			double sideX = -normalized.z;
-			double sideZ = normalized.x;
-			for (float j = -trailWidth; j <= trailWidth; j += trailStep)
-			{
-				Optional<BlockPos> optionalPos = InkBlockUtils.getBlockBelowPos(new Vec3(getX() + sideX * j, getY() + 10e-5, getZ() + sideZ * j), level(), 1, this);
-				optionalPos.ifPresent(blockPos ->
-				{
-					if (!InkBlockUtils.isUninkable(level(), blockPos, Direction.UP))
-					{
-						BlockInkedResult result = InkBlockUtils.inkBlock(getOwner(), level(), blockPos, getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
-						if (result == BlockInkedResult.SUCCESS)
-							InkBlockUtils.awardTurfPoints((LivingEntity) getOwner(), sourceWeapon, 1);
-					}
-				});
-			}
-		}
-		else
-		{
-			for (int i = 0; i <= 2; i++)
-			{
-				if (!InkBlockUtils.isUninkable(level(), blockPosition().below(i), Direction.UP))
-				{
-					InkBlockUtils.inkBlock(getOwner(), level(), blockPosition().below(i), getColor(), Direction.UP, inkType, settings.subDataRecord.contactDamage());
-					break;
-				}
-			}
-		}
+		InkExplosion.createInkExplosion(this, position().add(0, 10e-5, 0), trailWidth, inkType, sourceWeapon);
 	}
 	@Override
 	public void handleEntityEvent(byte id)
